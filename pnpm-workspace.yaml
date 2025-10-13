@@ -1,7 +1,0 @@
-packages:
-  - 'apps/*'
-  - 'wario-shared'
-  - 'wario-ux-shared'
-  - 'wario-fe-menu'
-  - 'wario-backend-dashboard'
-  - '!**/test/**'
