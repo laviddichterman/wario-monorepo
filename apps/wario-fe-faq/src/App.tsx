@@ -2,7 +2,7 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { ScopedCssBaseline } from '@mui/material';
 
-import { themeOptions } from '@wcp/wario-ux-shared';
+import { themeOptions } from '@wcp/wario-fe-ux-shared';
 import WNestedInfoComponent from './components/WNestedInfoComponent';
 const theme = createTheme(themeOptions);
 function App() {
