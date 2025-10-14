@@ -5,7 +5,9 @@ export default defineConfig({
     plugins: [react(), dts({ tsconfigPath: './tsconfig.json', entryRoot: 'src', outDir: 'dist/types' })],
     build: {
         target: 'es2022',
-        lib: { entry: 'src/index.ts', formats: ['es'], name: 'WarioFeUxShared' },
+        lib: {
+            entry: 'src/index.ts', formats: ['es'], fileName: () => 'index.js'
+        },
         rollupOptions: {
             // keep deps external to avoid bundling react/mui
             external: ['react', 'react-dom', '@mui/material', '@emotion/react', '@emotion/styled'],
