@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 0.1.1
+
+### Patch Changes
+
+- initial publish using monorepo
+
 ## 0.1.0
 
 ### Minor Changes

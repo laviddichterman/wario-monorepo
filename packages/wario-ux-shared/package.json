@@ -1,6 +1,6 @@
 {
   "name": "@wcp/wario-ux-shared",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Shared UX elements across WARIO",
   "type": "module",
   "main": "./dist/index.js",

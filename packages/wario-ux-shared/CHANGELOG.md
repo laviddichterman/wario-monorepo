@@ -1,5 +1,13 @@
 # @wcp/wario-ux-shared
 
+## 3.0.1
+
+### Patch Changes
+
+- initial publish using monorepo
+- Updated dependencies
+  - @wcp/wario-shared@0.1.1
+
 ## 3.0.0
 
 ### Minor Changes
