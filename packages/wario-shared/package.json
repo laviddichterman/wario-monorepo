@@ -2,8 +2,18 @@
   "name": "@wcp/wario-shared",
   "version": "0.0.1",
   "type": "module",
-  "private": "false",
   "sideEffects": false,
+  "private": "false",
+  "license": "GPL-3.0-or-later",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/laviddichterman/wario-monorepo.git",
+    "directory": "packages/wario-shared"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -14,7 +24,9 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --sourcemap",
