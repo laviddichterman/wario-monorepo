@@ -12,7 +12,10 @@
     "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
     "typecheck": "pnpm -r --filter \"./{apps,packages}/*\" run typecheck",
     "lint": "pnpm -r --filter \"./{apps,packages}/*\" run lint",
-    "clean": "git clean -Xdf && pnpm -r --filter \"./{apps,packages}/*\" run clean || true"
+    "clean": "git clean -Xdf && pnpm -r --filter \"./{apps,packages}/*\" run clean || true",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm -r --filter './packages/*' run build && changeset publish"
   },
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.18.2",
