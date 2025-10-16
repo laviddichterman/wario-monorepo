@@ -39,6 +39,9 @@
     "lodash": "^4.17.21",
     "rrule": "^2.8.1"
   },
+  "peerDependencies": {
+    "geojson": "^0.5.0"
+  },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
     "@types/geojson": "^7946.0.16",
