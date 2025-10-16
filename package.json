@@ -15,7 +15,7 @@
     "clean": "git clean -Xdf && pnpm -r --filter \"./{apps,packages}/*\" run clean || true",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "pnpm -r --filter './packages/*' run build && changeset publish"
+    "ci:publish": "pnpm publish -r"
   },
   "license": "GPL-3.0-only",
   "packageManager": "pnpm@10.18.2",
