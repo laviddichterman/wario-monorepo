@@ -14,19 +14,6 @@ interface InfoSection {
 const NestedInfoData: InfoSection = {
   menutitle: "Frequently Asked Questions",
   subsections: [
-    // {
-    //   menutitle: "About us",
-    //   subsections: [
-    //     {
-    //       menutitle: "Who are we?",
-    //       subsections: [],
-    //       content: (<div>
-    //         <Typography variant="h6">Windy City Pie</Typography>
-    //         <Typography variant="body1">We are a Seattle-based pizza company specializing in Chicago-style deep-dish and tavern-style thin-crust pizzas. We also offer a hybrid Chicago/Detroit pan pizza. Our pizzas are made with a long-ferment sourdough crust, a blend of Wisconsin Brick Cheese and Mozzarella, and a variety of toppings. We are not affiliated with any other pizza company with a similar name.</Typography>
-    //       </div>),
-    //     }
-    //   ]
-    // },
     {
       menutitle: "Our pizza",
       subsections: [
@@ -243,7 +230,6 @@ const NestedInfoData: InfoSection = {
         },
         {
           menutitle: "Thin Crust (Tavern) Pizza Reheating",
-          // content: `ByLorem ipsunsamdsdkjnadkjsdancsdkajn`,
           subsections: [
             {
               menutitle: "Slices or whole pizza",
@@ -264,7 +250,6 @@ const NestedInfoData: InfoSection = {
     },
     {
       menutitle: "Everything Else!",
-      // content: `Lorem ipsunsamdsdkjnadkjsdancsdkajn`,
       subsections: [
         {
           menutitle: "How can I contact you?",
