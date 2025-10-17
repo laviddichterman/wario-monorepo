@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 0.1.2
+
+### Patch Changes
+
+- try again
+
 ## 0.1.1
 
 ### Patch Changes

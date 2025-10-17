@@ -1,5 +1,13 @@
 # @wcp/wario-ux-shared
 
+## 3.0.2
+
+### Patch Changes
+
+- try again
+- Updated dependencies
+  - @wcp/wario-shared@0.1.2
+
 ## 3.0.1
 
 ### Patch Changes
