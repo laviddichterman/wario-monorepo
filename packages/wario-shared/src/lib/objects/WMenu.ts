@@ -1,6 +1,8 @@
 import { DisableDataCheck } from "../common";
-import {   OptionPlacement,
-  DISABLE_REASON } from '../types';
+import {
+  OptionPlacement,
+  DISABLE_REASON
+} from '../types';
 import type {
   IProductInstance,
   ICatalogSelectors,

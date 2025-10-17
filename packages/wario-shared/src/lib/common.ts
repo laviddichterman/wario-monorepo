@@ -113,8 +113,8 @@ export function DisableDataCheck(disable_data: IWInterval | null, availabilities
             }
           }
         }
-        catch (_) {
-          console.error(`Unable to parse recurrence rule from ${availability.rrule}. Returning unavailable for this rule.`);
+        catch (error) {
+          console.error(`Unable to parse recurrence rule from ${availability.rrule}. Returning unavailable for this rule. Error: ${JSON.stringify(error)}`);
         }
       }
     }

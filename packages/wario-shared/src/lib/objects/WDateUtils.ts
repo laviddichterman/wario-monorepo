@@ -14,7 +14,7 @@ import {
   subDays,
   differenceInMinutes
 } from 'date-fns';
-import { DayOfTheWeek } from '../types';
+import { type DayOfTheWeek } from '../types';
 import type { AvailabilityInfoMap, DateIntervalsEntries, FulfillmentTime, IWInterval, OperatingHourSpecification } from '../types';
 import type { FulfillmentConfig } from '../types';
 
@@ -126,22 +126,22 @@ export class WDateUtils {
     const retval = [];
     let i = 0;
     let j = 0;
-    // eslint-disable-next-line no-plusplus
+
     for (let a_idx = i; a_idx < a.length; ++a_idx) {
       let should_add = true;
-      // eslint-disable-next-line no-plusplus
+
       for (let b_idx = j; b_idx < b.length; ++b_idx) {
         if (a[a_idx].start > b[b_idx].end) { // a is entirely after b 
           // then we don't need to look at b[j] anymore
           // assert: j === b_idx
           j += 1;
-          // eslint-disable-next-line no-continue
+
           continue;
         }
         else { // (a[a_idx][0] <= b[b_idx][1])
           // if b's end time is greater than or equal to a's start time and b's start time is less than or eq to a's end time
           // ... a0 <= b1, b0 <= b1, b0 <= a1, a0 <= a1
-          // eslint-disable-next-line no-lonely-if
+
           if (a[a_idx].end >= b[b_idx].start) {
             // b0 <= a0 <= b1 <= a1
             if (a[a_idx].end >= b[b_idx].start) {

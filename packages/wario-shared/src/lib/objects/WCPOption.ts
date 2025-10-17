@@ -1,7 +1,7 @@
 import { GetPlacementFromMIDOID } from "../common";
 
 import {
-  OptionPlacement,
+  type OptionPlacement,
   PRODUCT_LOCATION,
   DISABLE_REASON,
   DISPLAY_AS,

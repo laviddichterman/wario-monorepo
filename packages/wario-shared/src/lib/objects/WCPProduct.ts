@@ -60,9 +60,7 @@ export function ComputePotentialPrices(metadata: WProductMetadata, catModSelecto
 
   while (prices.length >= 2) {
     const combined_prices: { [index: number]: boolean } = {};
-    // eslint-disable-next-line no-restricted-syntax
     for (const price0 of prices[0]) {
-      // eslint-disable-next-line no-restricted-syntax
       for (const price1 of prices[1]) {
         combined_prices[price0 + price1] = true;
       }
