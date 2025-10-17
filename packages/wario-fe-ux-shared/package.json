@@ -3,7 +3,6 @@
   "version": "0.1.2",
   "type": "module",
   "sideEffects": false,
-  "private": "false",
   "license": "GPL-3.0-or-later",
   "publishConfig": {
     "access": "public",
