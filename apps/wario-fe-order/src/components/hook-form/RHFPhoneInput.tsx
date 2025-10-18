@@ -1,6 +1,6 @@
-import PhoneInput, { Country, } from 'react-phone-number-input/react-hook-form-input-core'
-import { TextField, TextFieldProps } from '@mui/material';
-import { FieldError, useFormContext } from 'react-hook-form';
+import PhoneInput, { type Country, } from 'react-phone-number-input/react-hook-form-input-core'
+import { TextField, type TextFieldProps } from '@mui/material';
+import { type FieldError, useFormContext } from 'react-hook-form';
 import { LIBPHONE_METADATA } from '../common';
 import React from 'react';
 interface IPhoneInputParams {
@@ -35,8 +35,8 @@ export function RHFPhoneInput({ placeholder, error, label, country, name, ...oth
       metadata={LIBPHONE_METADATA}
       country={country}
       inputComponent={InputComponent}
-       />
+    />
   );
 
-  
+
 }

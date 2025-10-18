@@ -1,11 +1,11 @@
 // form
 import { useFormContext, Controller } from 'react-hook-form';
 // @mui
-import { TextField, TextFieldProps } from '@mui/material';
+import { TextField, type TextFieldProps } from '@mui/material';
 // mailcheck
 import Mailcheck from 'mailcheck';
 import { useCallback } from 'react';
-import * as yup from "yup";
+import type * as yup from "yup";
 
 export const YupValidateEmail = (schema: yup.StringSchema) =>
   schema.ensure()

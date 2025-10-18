@@ -35,26 +35,29 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",
+    "react-phone-number-input": "^3.4.12",
     "react-redux": "^9.2.0",
     "react-square-web-payments-sdk": "^3.2.4-beta.1",
     "reselect": "^5.1.1",
+    "socket.io-client": "^4.8.1",
     "yup": "^1.7.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.37.0",
+    "@eslint/js": "^9.38.0",
     "@mui/x-license": "7.24.0",
     "@types/lodash": "^4.17.20",
-    "@types/node": "^24.7.2",
+    "@types/mailcheck": "^1.1.37",
+    "@types/node": "^24.8.1",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@types/yup": "^0.29.14",
     "@vitejs/plugin-react-swc": "^4.1.0",
-    "eslint": "^9.37.0",
+    "eslint": "^9.38.0",
     "eslint-plugin-react-hooks": "^7.0.0",
-    "eslint-plugin-react-refresh": "^0.4.23",
+    "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.4.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.46.1",
-    "vite": "^7.1.9"
+    "vite": "^7.1.10"
   }
 }
