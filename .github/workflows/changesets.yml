@@ -38,10 +38,11 @@ jobs:
         uses: changesets/action@v1
         with:
           publish: pnpm changeset publish
-          #createGithubReleases: true
+          createGithubReleases: true
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           # Enable npm provenance on publish
-          # NPM_CONFIG_PROVENANCE: true
+          NPM_CONFIG_PROVENANCE: true
 
