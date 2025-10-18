@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { type Metrics } from "@wcp/wario-shared";
-import { NUM_STAGES, type STEPPER_STAGE_ENUM } from "../../config";
+import { NUM_STAGES, type STEPPER_STAGE_ENUM } from "./StepperSlice";
 import PACKAGE_INFO from '../../../package.json'
 
 const initialState: Omit<Metrics, 'pageLoadTime'> = {

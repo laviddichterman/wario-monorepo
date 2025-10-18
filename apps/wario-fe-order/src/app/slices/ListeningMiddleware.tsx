@@ -8,10 +8,9 @@ import { CanThisBeOrderedAtThisTimeAndFulfillmentCatalog, type CartEntry, WCPPro
 
 
 import { incrementTimeBumps, setTimeToStage } from './WMetricsSlice';
-import { STEPPER_STAGE_ENUM } from '../../config';
 import { addToCart, getCart, getDeadCart, killAllCartEntries, removeFromCart, reviveAllCartEntries, updateCartQuantity, updateManyCartProducts } from './WCartSlice';
 import { setSelectedTimeExpired, setService, setTime, setDate, setSelectedDateExpired, SelectServiceDateTime } from './WFulfillmentSlice';
-import { backStage, nextStage, setStage } from './StepperSlice';
+import { backStage, nextStage, setStage, STEPPER_STAGE_ENUM } from './StepperSlice';
 import { clearCustomizer, updateCustomizerProduct } from './WCustomizerSlice';
 
 

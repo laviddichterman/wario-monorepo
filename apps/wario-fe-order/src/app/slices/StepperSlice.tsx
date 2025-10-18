@@ -1,5 +1,15 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { STEPPER_STAGE_ENUM } from "../../config";
+
+export enum STEPPER_STAGE_ENUM {
+  TIMING,
+  ADD_MAIN_PRODUCT,
+  ADD_SUPP_PRODUCT,
+  CUSTOMER_INFO,
+  REVIEW_ORDER,
+  CHECK_OUT
+};
+
+export const NUM_STAGES = (Object.keys(STEPPER_STAGE_ENUM).length / 2);
 
 export interface StepperState {
   stage: STEPPER_STAGE_ENUM;
