@@ -14,4 +14,5 @@ export * from './redux/SocketIoMiddleware';
 export * from './redux/SocketIoSlice';
 export * from './redux/thunks';
 export * from './styled/styled';
+export * from './styled/styled.constants';
 
