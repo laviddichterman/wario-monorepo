@@ -11,7 +11,7 @@ type IProps = {
 
 type Props = IProps & TextFieldProps;
 
-export function RHFTextField({ name, readOnly, inputProps, ...other }: Props) {
+export function RHFTextField({ name, readOnly, slotProps, ...other }: Props) {
   const { control } = useFormContext();
 
   return (
@@ -26,7 +26,7 @@ export function RHFTextField({ name, readOnly, inputProps, ...other }: Props) {
           error={!!error}
           helperText={error?.message ?? " "}
           {...other}
-          inputProps={{ readOnly: readOnly, ...inputProps }}
+          slotProps={{ ...slotProps, input: { readOnly: readOnly, ...slotProps?.input } }}
         />
       )}
     />

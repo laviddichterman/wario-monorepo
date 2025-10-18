@@ -1,23 +1,25 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import * as yup from "yup";
+import { z } from "zod";
 import { type DeliveryInfoDto, type DineInInfoDto, type FulfillmentDto, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
 import { CreateValidateDeliveryAddressThunk } from "@wcp/wario-ux-shared";
 import axiosInstance from "../../utils/axios";
 
-export const deliveryAddressSchema = yup.object().shape({
-  address: yup.string().ensure().required("Please enter your street address"),
-  address2: yup.string().ensure().notRequired(),
-  zipcode: yup.string().ensure().required()
-    .matches(/^[0-9]+$/, "Please enter a 5 digit zipcode")
-    .min(5, "Please enter a 5 digit zipcode")
-    .max(5, "Please enter a 5 digit zipcode"),
-  //deliveryInstructions: yup.string().ensure().notRequired()
+export const deliveryAddressSchema = z.object({
+  address: z.string().min(1, "Please enter your street address"),
+  address2: z.string(),
+  zipcode: z.string()
+    .regex(/^[0-9]+$/, "Please enter a 5 digit zipcode")
+    .length(5, "Please enter a 5 digit zipcode"),
+  deliveryInstructions: z.string(),
+  fulfillmentId: z.string()
 });
 
-export const dineInSchema = yup.object().shape({
-  partySize: yup.number().integer().min(1).required("Please specify the size of your party.")
+export const dineInSchema = z.object({
+  partySize: z.coerce.number()
+    .refine((n) => !Number.isNaN(n), { message: "Please specify the size of your party." })
+    .int()
+    .min(1, "Please specify the size of your party.")
 });
-
 
 export type DeliveryInfoFormData = Omit<DeliveryInfoDto, "validation"> & { fulfillmentId: string; };
 

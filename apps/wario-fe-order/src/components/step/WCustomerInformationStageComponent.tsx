@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Typography, Grid } from '@mui/material';
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { type CustomerInfoRHF, customerInfoSchema, setCustomerInfo } from '../../app/slices/WCustomerInfoSlice';
 import { FormProvider, RHFTextField, RHFPhoneInput } from '../hook-form';
 import { useAppDispatch, useAppSelector } from '../../app/useHooks';
@@ -20,9 +20,9 @@ function useCIForm() {
       mobileNum: useAppSelector(s => s.ci.mobileNum),
       mobileNumRaw: useAppSelector(s => s.ci.mobileNumRaw),
       email: useAppSelector(s => s.ci.email),
-      referral: useAppSelector(s => s.ci.referral)
+      referral: useAppSelector(s => s.ci.referral) || "",
     },
-    resolver: yupResolver(customerInfoSchema),
+    resolver: zodResolver(customerInfoSchema),
     mode: "onBlur",
 
   });

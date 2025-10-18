@@ -5,16 +5,13 @@ import { TextField, type TextFieldProps } from '@mui/material';
 // mailcheck
 import Mailcheck from 'mailcheck';
 import { useCallback } from 'react';
-import type * as yup from "yup";
+import { z } from "zod";
 
-export const YupValidateEmail = (schema: yup.StringSchema) =>
-  schema.ensure()
-    .email("Please enter a valid e-mail address.")
-    .required("Please enter a valid e-mail address.")
-    .min(5, "Valid e-mail addresses are longer.")
-    .test('DotCon',
-      ".con is not a valid TLD. Did you mean .com?",
-      (v) => !v || v.substring(v.length - 3) === 'con' ? false : true)
+
+export const ZodEmailSchema = z.email()
+  .min(5, "Valid e-mail addresses are longer.")
+  .refine((v) => !v.endsWith('con'), { message: ".con is not a valid TLD. Did you mean .com?" })
+  .refine((v) => !v.endsWith('ney'), { message: ".ney is not a valid TLD. Did you mean .net?" });
 // ----------------------------------------------------------------------
 type IProps = {
   name: string;
@@ -23,7 +20,7 @@ type IProps = {
 
 type Props = IProps & TextFieldProps;
 
-export function RHFMailTextField({ name, error, readOnly, inputProps, ...other }: Props) {
+export function RHFMailTextField({ name, error, readOnly, slotProps, ...other }: Props) {
   const { control } = useFormContext();
   const getSuggestion = useCallback((value: string) => {
     let sug = ""
@@ -46,7 +43,7 @@ export function RHFMailTextField({ name, error, readOnly, inputProps, ...other }
             value={field.value || ""}
             error={!!fsError || error}
             helperText={fsError?.message || (suggestion ? `Did you mean ${suggestion}?` : " ")}
-            inputProps={{ readOnly: readOnly, ...inputProps }}
+            slotProps={{ ...slotProps, input: { readOnly: readOnly, ...slotProps?.input } }}
             {...other}
           />
         )

@@ -1,7 +1,7 @@
 import { Clear } from '@mui/icons-material';
 import { Button, IconButton, Link } from '@mui/material';
 import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppDispatch, useAppSelector } from '../app/useHooks';
 import { FormProvider, RHFTextField } from './hook-form';
 
@@ -10,15 +10,14 @@ import { ErrorResponseOutput, OkResponseOutput, SelectDeliveryAreaLink } from '@
 
 
 function useDeliveryInfoForm() {
-  const preExisitingDeliveryInfo = useAppSelector(s => s.fulfillment.deliveryInfo);
   const useFormApi = useForm<DeliveryInfoFormData>({
     defaultValues: {
-      address: preExisitingDeliveryInfo?.address ?? "",
-      address2: preExisitingDeliveryInfo?.address2 ?? "",
-      deliveryInstructions: preExisitingDeliveryInfo?.deliveryInstructions ?? "",
-      zipcode: preExisitingDeliveryInfo?.zipcode ?? ""
+      address: useAppSelector(s => s.fulfillment.deliveryInfo?.address ?? ""),
+      address2: useAppSelector(s => s.fulfillment.deliveryInfo?.address2 ?? ""),
+      deliveryInstructions: useAppSelector(s => s.fulfillment.deliveryInfo?.deliveryInstructions ?? ""),
+      zipcode: useAppSelector(s => s.fulfillment.deliveryInfo?.zipcode ?? ""),
     },
-    resolver: yupResolver(deliveryAddressSchema),
+    resolver: zodResolver(deliveryAddressSchema),
     mode: 'onBlur'
   });
 

@@ -1,29 +1,25 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import * as yup from "yup";
+import { z } from "zod";
 import {
   parsePhoneNumber,
 } from 'libphonenumber-js/core';
 import { LIBPHONE_METADATA } from "../../components/common";
-import { YupValidateEmail } from "../../components/hook-form/RHFMailTextField";
+import { ZodEmailSchema } from "../../components/hook-form/RHFMailTextField";
 import { type CustomerInfoDto } from "@wcp/wario-shared";
 
 export type CustomerInfoRHF = CustomerInfoDto & { mobileNumRaw: string };
-export const customerInfoSchema = yup.object().shape({
-  givenName: yup.string().ensure().required("Please enter your given name.").min(2, "Please enter the full name."),
-  familyName: yup.string().ensure().required("Please enter your family name.").min(2, "Please enter the full name."),
-  mobileNumRaw: yup.string().ensure().required("Please enter a valid US mobile phone number.").test('mobileNumRaw',
-    "Please enter a valid US mobile phone number.",
-    (v) => {
-      try {
-        const parsedNumber = parsePhoneNumber(v, LIBPHONE_METADATA);
-        return parsedNumber.isValid();
-      }
-      catch (e) {
-        return false;
-      }
-    }),
-  email: YupValidateEmail(yup.string()),
-  referral: yup.string().ensure().notRequired()
+export const customerInfoSchema = z.object({
+  givenName: z.string().min(1, "Please enter your given name.").min(2, "Please enter the full name."),
+  familyName: z.string().min(1, "Please enter your family name.").min(2, "Please enter the full name."),
+  mobileNum: z.string(),
+  mobileNumRaw: z.string()
+    .min(1, "Please enter a valid US mobile phone number.")
+    .refine((v) => {
+      try { return parsePhoneNumber(v, LIBPHONE_METADATA).isValid(); }
+      catch { return false; }
+    }, { message: "Please enter a valid US mobile phone number. If you don't have one please, send us an email so we can provide alternate instructions." }),
+  email: ZodEmailSchema,
+  referral: z.string(),
 });
 
 const initialState: CustomerInfoRHF = {
@@ -43,7 +39,8 @@ const WCustomerInfoSlice = createSlice({
       try {
         const parsedNumber = parsePhoneNumber(action.payload.mobileNumRaw, LIBPHONE_METADATA);
         state.mobileNum = parsedNumber.formatNational();
-      } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (e: unknown) {
         return;
       }
       state.mobileNumRaw = action.payload.mobileNumRaw;

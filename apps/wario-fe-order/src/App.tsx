@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect } from 'react';
 import { SnackbarProvider } from 'notistack';
-import { LazyMotion, domMax } from "framer-motion"
+import { LazyMotion, domMax } from "motion/react"
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { ScopedCssBaseline } from '@mui/material';
 
@@ -10,11 +10,7 @@ import { setUserAgent } from './app/slices/WMetricsSlice';
 import { useAppDispatch, useAppSelector } from "./app/useHooks";
 import { themeOptions } from "@wcp/wario-fe-ux-shared";
 
-//import React from 'react';
-// import WStoreCreditPurchase from './components/WStoreCreditPurchase';
-import WMenuComponent from './components/menu/WMenuComponent';
-// import WOrderingComponent from './components/WOrderingComponent';
-// import WNestedInfoComponent from './components/menu/WNestedInfoComponent';
+import WOrderingComponent from './components/WOrderingComponent';
 
 const theme = createTheme(themeOptions);
 
@@ -57,11 +53,7 @@ const App = () => {
           {!isSocketDataLoaded || currentTimeNotLoaded ?
             <LazyLoadingPage /> :
             <div id="WARIO_order">
-              {/* <Grid item xs={12} height={100} sx={{ pb: 5, minHeight: 100 }}>&nbsp;</Grid> */}
-              {/* {<WStoreCreditPurchase />} */}
-              <WMenuComponent />
-              {/* {<WOrderingComponent />} */}
-              {/* {<WNestedInfoComponent />} */}
+              {<WOrderingComponent />}
             </div>
           }
         </SnackbarProvider>

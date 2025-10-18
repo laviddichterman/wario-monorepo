@@ -4,7 +4,7 @@ import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { WarioButton } from '@wcp/wario-ux-shared';
 import { useAppSelector } from '../app/useHooks';
-import { NUM_STAGES } from '../config';
+import { NUM_STAGES } from '../app/slices/StepperSlice';
 
 export interface NavigationProps {
   hasBack?: boolean;

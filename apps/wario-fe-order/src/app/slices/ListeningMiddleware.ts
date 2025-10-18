@@ -1,5 +1,5 @@
-import { createListenerMiddleware, addListener, type ListenerEffectAPI, isAnyOf } from '@reduxjs/toolkit'
-import type { TypedStartListening, TypedAddListener } from '@reduxjs/toolkit'
+import { createListenerMiddleware, type ListenerEffectAPI, isAnyOf } from '@reduxjs/toolkit'
+import type { TypedStartListening } from '@reduxjs/toolkit'
 import { type RootState, type AppDispatch, GetNextAvailableServiceDateTime, SelectCategoryExistsAndIsAllowedForFulfillment } from '../store'
 import { SelectOptionsForServicesAndDate } from '../store'
 import { SelectCatalogSelectors, scrollToIdOffsetAfterDelay, setCurrentTime, receiveFulfillments, receiveSettings, receiveCatalog, getFulfillmentById } from '@wcp/wario-ux-shared';
@@ -18,11 +18,10 @@ export const ListeningMiddleware = createListenerMiddleware()
 
 export type AppStartListening = TypedStartListening<RootState, AppDispatch>
 
-export const startAppListening = ListeningMiddleware.startListening as AppStartListening;
+export const startAppListening = ListeningMiddleware.startListening.withTypes<RootState, AppDispatch>();
+//export const addAppListener = addListener.withTypes<RootState, AppDispatch>();
 
-export const addAppListener = addListener as TypedAddListener<RootState, AppDispatch>;
-
-ListeningMiddleware.startListening({
+startAppListening({
   matcher: isAnyOf(setCurrentTime,
     setService,
     receiveFulfillments,
@@ -69,23 +68,23 @@ ListeningMiddleware.startListening({
 });
 
 // handle scrolling on transitions
-ListeningMiddleware.startListening({
+startAppListening({
   matcher: isAnyOf(nextStage, backStage, setStage),
-  effect: (_, api: ListenerEffectAPI<RootState, AppDispatch>) => {
+  effect: (_, _api: ListenerEffectAPI<RootState, AppDispatch>) => {
     //const toId = `WARIO_step_${api.getState().stepper.stage}`;
     scrollToIdOffsetAfterDelay("WARIO_order", 500);
   }
 });
 
 // listener for stage progression time metrics
-ListeningMiddleware.startListening({
+startAppListening({
   actionCreator: nextStage,
   effect: (_, api: ListenerEffectAPI<RootState, AppDispatch>) => {
     api.dispatch(setTimeToStage({ stage: api.getOriginalState().stepper.stage, ticks: Date.now() }));
   }
 });
 
-ListeningMiddleware.startListening({
+startAppListening({
   matcher: isAnyOf(receiveCatalog, setTime, setDate, setService),
   effect: (_: any, api: ListenerEffectAPI<RootState, AppDispatch>) => {
     const socketIoState = api.getState().ws;

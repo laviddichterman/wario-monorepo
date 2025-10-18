@@ -20,7 +20,7 @@ export function RHFCheckbox({ name, readOnly, ...other }: RHFCheckboxProps) {
           name={name}
           control={control}
           render={({ field, formState: { errors } }) => <>
-            <Checkbox {...field} readOnly checked={field.value === true} />
+            <Checkbox {...field} readOnly={readOnly} checked={field.value === true} />
             <ErrorMessage errors={errors} name={name} render={({ message }) => <FormHelperText error>{message}</FormHelperText>} />
           </>
           }

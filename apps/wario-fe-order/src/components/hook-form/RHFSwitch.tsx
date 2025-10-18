@@ -13,7 +13,7 @@ export function RHFSwitch({ name, label, ...other }: { name: string, label: Reac
       control={
         <Controller name={name} control={control} render={({ field }) => <Switch {...field} checked={field.value} />} />
       }
-      label
+      label={label}
       {...other}
     />
   );
