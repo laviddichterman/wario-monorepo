@@ -11,8 +11,8 @@ export default defineConfig({
     },
     rollupOptions: {
       // keep deps external to avoid bundling react/mui
-      external: ['react', 'react-dom', '@mui/material', '@mui/system', '@emotion/react', '@emotion/styled', 'framer-motion', 'date-fns'],
-      output: { preserveModules: true, preserveModulesRoot: 'src' }
+      external: ['react', 'react-dom', '@mui/material', '@mui/system', '@emotion/react', '@emotion/styled', 'motion', 'date-fns'],
+      //output: { preserveModules: true, preserveModulesRoot: 'src' }
     }
   }
 });
