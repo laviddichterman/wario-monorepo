@@ -1,3 +1,5 @@
+autoInstallPeers: true
+strictPeerDependencies: false
 packages:
   - apps/*
   - packages/*
