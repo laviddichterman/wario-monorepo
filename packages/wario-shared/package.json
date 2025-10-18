@@ -1,6 +1,6 @@
 {
   "name": "@wcp/wario-shared",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/laviddichterman/wario-monorepo.git",

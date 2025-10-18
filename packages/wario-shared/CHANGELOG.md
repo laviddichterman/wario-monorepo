@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 0.2.0
+
+### Minor Changes
+
+- first version that compiles across most of the stack
+
 ## 0.1.2
 
 ### Patch Changes
