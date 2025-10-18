@@ -4,7 +4,8 @@ import { styled } from '@mui/material/styles';
 import { ComputePotentialPrices, MoneyToDisplayString, PriceDisplay, WProductDisplayOptions } from '@wcp/wario-shared';
 import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared';
 import { useMemo } from 'react';
-import { AdornedSxProps, Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '../styled/styled';
+import { Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '../styled/styled';
+import { AdornedSxProps } from '../styled/styled.constants';
 
 interface WProductComponentProps {
   catalogSelectors: ICatalogSelectors;
@@ -17,7 +18,7 @@ interface WProductComponentProps {
 };
 
 function WProductComponent({ catalogSelectors, productMetadata, description, allowAdornment, dots, displayContext, price, sx, ...other }: WProductComponentProps & BoxProps) {
-  const productInstance = useMemo(() => catalogSelectors.productInstance(productMetadata.pi[0]), [catalogSelectors.productInstance, productMetadata.pi])
+  const productInstance = useMemo(() => catalogSelectors.productInstance(productMetadata.pi[0]), [catalogSelectors, productMetadata.pi])
   const adornmentHTML = useMemo(() => allowAdornment && productInstance && productInstance.displayFlags[displayContext].adornment ? productInstance.displayFlags[displayContext].adornment : "", [allowAdornment, productInstance, displayContext]);
   const descriptionHTML = useMemo(() => description && productMetadata.description ? productMetadata.description : "", [description, productMetadata.description]);
   const optionsSections = useMemo(() => {
@@ -26,7 +27,7 @@ function WProductComponent({ catalogSelectors, productMetadata, description, all
     }
     const options = WProductDisplayOptions(catalogSelectors, productMetadata.exhaustive_modifiers);
     return !(options.length === 1 && options[0][1] === productMetadata.name) ? options : [[]];
-  }, [description, displayContext, productInstance, productMetadata.exhaustive_modifiers, productMetadata.name]);
+  }, [catalogSelectors, description, displayContext, productInstance, productMetadata.exhaustive_modifiers, productMetadata.name]);
   const priceText = useMemo(() => {
     if (productInstance && productMetadata.incomplete) {
       switch (productInstance.displayFlags[displayContext].price_display) {

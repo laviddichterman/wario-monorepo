@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { m } from 'framer-motion';
+import { m } from 'motion/react';
 // @mui
 import { alpha } from '@mui/material/styles';
 import { Box } from '@mui/material';
