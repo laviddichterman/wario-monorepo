@@ -1,6 +1,7 @@
-import { createAsyncThunk, createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import * as yup from "yup";
-import { type DeliveryAddressValidateRequest, type DeliveryAddressValidateResponse, type DeliveryInfoDto, type DineInInfoDto, type FulfillmentDto, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
+import { type DeliveryInfoDto, type DineInInfoDto, type FulfillmentDto, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
+import { CreateValidateDeliveryAddressThunk } from "@wcp/wario-ux-shared";
 import axiosInstance from "../../utils/axios";
 
 export const deliveryAddressSchema = yup.object().shape({
@@ -17,19 +18,6 @@ export const dineInSchema = yup.object().shape({
   partySize: yup.number().integer().min(1).required("Please specify the size of your party.")
 });
 
-// export const fulfillmentSchemaInstance = (fulfillments: Record<string, FulfillmentConfig>) =>
-//   yup.object().shape({
-//     serviceNum: yup.string().ensure().required("Please select a service."),
-//     serviceDate: yup.date().required("Please select a service date."),
-//     serviceTime: yup.number().integer().min(0).max(1439).required(),
-//     hasAgreedToTerms: yup.bool().when('serviceNum', (serviceNum, s) => {
-//       return serviceNum && 
-//         Object.hasOwn(fulfillments, serviceNum) && 
-//         fulfillments[serviceNum].terms.length > 0 ?
-//         s.test('hasAgreedToTerms', "Please accept the terms of service.", (v: boolean | undefined) => v === true) :
-//         s
-//     })
-//   });
 
 export type DeliveryInfoFormData = Omit<DeliveryInfoDto, "validation"> & { fulfillmentId: string; };
 
@@ -40,22 +28,8 @@ export type WFulfillmentState = {
   deliveryValidationStatus: 'IDLE' | 'PENDING' | 'VALID' | 'INVALID' | 'OUTSIDE_RANGE';
 } & NullablePartial<Omit<FulfillmentDto, 'status' | 'thirdPartyInfo'>>;
 
-export const validateDeliveryAddress = createAsyncThunk<DeliveryAddressValidateResponse, DeliveryInfoFormData>(
-  'addressRequest/validate',
-  async (req) => {
-    const request: DeliveryAddressValidateRequest = {
-      fulfillmentId: req.fulfillmentId,
-      address: req.address,
-      city: "Seattle",
-      state: "WA",
-      zipcode: req.zipcode
-    };
-    const response = await axiosInstance.get('/api/v1/addresses', {
-      params: request,
-    });
-    return response.data;
-  }
-);
+
+export const validateDeliveryAddress = CreateValidateDeliveryAddressThunk(axiosInstance);
 
 const initialState: WFulfillmentState = {
   hasSelectedTimeExpired: false,
