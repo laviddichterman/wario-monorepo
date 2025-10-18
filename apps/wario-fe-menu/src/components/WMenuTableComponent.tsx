@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAppSelector } from "../../app/useHooks";
-import { store } from '../../app/store';
+import { useAppSelector } from "../app/useHooks";
+import { store, type RootState } from '../app/store';
 import { Typography, Grid, Stack, Box } from '@mui/material';
 import { getProductInstanceById, Separator, WarioToggleButton, weakMapCreateSelector } from '@wcp/wario-ux-shared';
 import { isEqual } from 'lodash';
@@ -20,7 +20,6 @@ import {
 } from '@mui/x-data-grid-premium';
 import { createStructuredSelector } from 'reselect';
 import { SelectProductInstanceIdsInCategoryForNextAvailableTime, SelectProductMetadataForMenu } from './WMenuComponent';
-import { type RootState } from '../../app/store';
 
 export interface ToolbarAction {
   size: number; elt: React.ReactNode;

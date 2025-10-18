@@ -1,11 +1,11 @@
 import { Grid, Box } from "@mui/material";
 import { ProductPrice, ProductTitle, ProductDescription, getModifierOptionById, getModifierTypeEntryById, SelectParentProductEntryFromProductInstanceId, SelectDefaultFulfillmentId, SelectCatalogSelectors, getProductInstanceById } from "@wcp/wario-ux-shared";
 import { DISABLE_REASON, DisableDataCheck, type IProductModifier, MoneyToDisplayString, WDateUtils } from "@wcp/wario-shared";
-import { useAppSelector } from "../../app/useHooks";
-import { FilterUnselectableModifierOption, GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "../../app/store";
+import { useAppSelector } from "../app/useHooks";
+import { FilterUnselectableModifierOption, GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "../app/store";
 import { SelectProductMetadataForMenu } from "./WMenuComponent";
 import { createSelector } from "@reduxjs/toolkit";
-import { ModifierOptionTooltip } from "../ModifierOptionTooltip";
+import { ModifierOptionTooltip } from "./ModifierOptionTooltip";
 
 
 const MenuSelectOrderedModifiersVisibleForProductInstanceId = createSelector(

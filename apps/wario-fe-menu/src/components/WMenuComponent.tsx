@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ProductDisplay } from '../WProductComponent';
+import { ProductDisplay } from './WProductComponent';
 import { WModifiersComponent } from './WModifiersComponent';
-import { useAppDispatch, useAppSelector } from "../../app/useHooks";
-import { Box, Tab, Typography, Accordion, AccordionSummary, AccordionDetails, TypographyProps } from '@mui/material';
+import { useAppDispatch, useAppSelector } from "../app/useHooks";
+import { Box, Tab, Typography, Accordion, AccordionSummary, AccordionDetails, type TypographyProps } from '@mui/material';
 import { TabList, TabPanel, TabContext } from '@mui/lab'
 import { WDateUtils, CategoryDisplay } from '@wcp/wario-shared';
-import { GetNextAvailableServiceDateTimeForMenu, RootState, SelectMenuCategoryId, SelectMenuFooterFromCategoryById, SelectMenuNameFromCategoryById, SelectMenuNestingFromCategoryById, SelectMenuSubtitleFromCategoryById } from '../../app/store';
-import { getProductInstanceById, LoadingScreen, ProductCategoryFilter, scrollToElementOffsetAfterDelay, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory, SelectProductMetadata, Separator } from '@wcp/wario-ux-shared';
-import { setService } from '../../app/slices/WFulfillmentSlice';
+import { GetNextAvailableServiceDateTimeForMenu, type RootState, SelectMenuCategoryId, SelectMenuFooterFromCategoryById, SelectMenuNameFromCategoryById, SelectMenuNestingFromCategoryById, SelectMenuSubtitleFromCategoryById } from '../app/store';
+import { getProductInstanceById, LoadingScreen, type ProductCategoryFilter, scrollToElementOffsetAfterDelay, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory, SelectProductMetadata, Separator } from '@wcp/wario-ux-shared';
+
 import { ExpandMore } from '@mui/icons-material';
 import { createSelector } from '@reduxjs/toolkit';
+import { setService } from '../app/slices/WFulfillmentSlice';
 import { WMenuDataGrid } from './WMenuTableComponent';
 
 export const SelectProductMetadataForMenu = createSelector(
@@ -221,8 +222,6 @@ WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
   const nesting = useAppSelector(s => SelectMenuNestingFromCategoryById(s.ws.categories, categoryId));
   const hasPopulatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu').length > 0);
   switch (nesting) {
-    case CategoryDisplay.FLAT:
-      return <WMenuFlat categoryId={categoryId} />;
     case CategoryDisplay.TAB:
       return hasPopulatedSubcategories ? <WMenuTabbed categoryId={categoryId} /> : <WMenuFlat categoryId={categoryId} />;
     case CategoryDisplay.ACCORDION:
@@ -234,6 +233,9 @@ WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
       // metadata fields used to populate columns
       // description used to 
       return <WMenuDataGrid categoryId={categoryId} />;
+    case CategoryDisplay.FLAT:
+    default:
+      return <WMenuFlat categoryId={categoryId} />;
   }
 }
 
