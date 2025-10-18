@@ -7,13 +7,5 @@
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@wcp/wario-backend",
-    "@wcp/wario-fe-menu",
-    "@wcp/wario-fe-order",
-    "@wcp/wario-fe-faq",
-    "@wcp/wario-fe-credit",
-    "@wcp/wario-pos"
-  ],
   "privatePackages": { "version": true, "tag": true }
 }
