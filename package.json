@@ -9,7 +9,7 @@
     "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
     "changeset": "changeset",
     "checkall": "pnpm build && pnpm lint && pnpm typecheck",
-    "ci:publish": "changeset publish",
+    "ci:publish": "changeset publish --access public",
     "clean": "git clean -Xdf && pnpm -r --filter \"./{apps,packages}/*\" run clean || true",
     "dev": "pnpm -r --parallel --filter \"./apps/*\" run dev",
     "dev:credit": "pnpm --filter ./apps/wario-fe-credit dev",
