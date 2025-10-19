@@ -1,0 +1,176 @@
+{
+  "folders": [
+    {
+      "name": "root",
+      "path": "."
+    },
+    {
+      "name": "wario-fe-menu",
+      "path": "apps/wario-fe-menu"
+    },
+    {
+      "name": "wario-fe-order",
+      "path": "apps/wario-fe-order"
+    },
+    {
+      "name": "wario-fe-faq",
+      "path": "apps/wario-fe-faq"
+    },
+    {
+      "name": "wario-fe-credit",
+      "path": "apps/wario-fe-credit"
+    },
+    {
+      "name": "wario-pos",
+      "path": "apps/wario-pos"
+    },
+    {
+      "name": "wario-backend",
+      "path": "apps/wario-backend"
+    },
+    {
+      "name": "wario-fe-ux-shared",
+      "path": "packages/wario-fe-ux-shared"
+    },
+    {
+      "name": "wario-ux-shared",
+      "path": "packages/wario-ux-shared"
+    },
+    {
+      "name": "wario-shared",
+      "path": "packages/wario-shared"
+    }
+  ],
+  "settings": {
+    // Use ESLint as the formatter + sort imports everywhere
+    "eslint.useFlatConfig": true,
+    "eslint.workingDirectories": [
+      {
+        "pattern": "apps/*/"
+      },
+      {
+        "pattern": "packages/*/"
+      }
+    ],
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.formatOnSave": true,
+    "eslint.validate": [
+      "typescript",
+      "typescriptreact"
+    ],
+    "files.associations": {
+      "*.tsx": "typescriptreact"
+    },
+    // Make search/watching snappy in a monorepo
+    "files.exclude": {
+      "**/dist": true,
+      "**/build": true,
+      "**/.turbo": true,
+      "**/.next": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/.pnpm/**": true,
+      "**/dist/**": true,
+      "**/build/**": true
+    },
+    // Optional: prefer non-relative imports when available (e.g., @wcp/*)
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    // If you want to ensure VS Code uses a workspace TS 5.9+:
+    // (Pick one of the options in section 3 below; leave commented if using VS Code's built-in TS)
+    "typescript.tsdk": "packages/wario-shared/node_modules/typescript/lib"
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Backend: Nest debug (inspect 9229)",
+        "type": "node",
+        "request": "attach",
+        "port": 9229,
+        "restart": true,
+        "protocol": "inspector",
+        "cwd": "${workspaceFolder:wario-backend}"
+      },
+      {
+        "name": "Chrome: wario-pos (http://localhost:5173)",
+        "type": "pwa-chrome",
+        "request": "launch",
+        "url": "http://localhost:5173",
+        "webRoot": "${workspaceFolder:wario-pos}/src"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "Run POS + Backend (attach)",
+        "configurations": [
+          "Backend: Nest debug (inspect 9229)",
+          "Chrome: wario-pos (http://localhost:5173)"
+        ]
+      }
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "dev:pos",
+        "type": "shell",
+        "command": "pnpm --filter @wcp/wario-pos dev",
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "dev:menu",
+        "type": "shell",
+        "command": "pnpm --filter @wcp/wario-fe-menu dev",
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "dev:backend:debug",
+        "type": "shell",
+        "command": "pnpm --filter @wcp/wario-backend run start:debug",
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "dev:all (pos+backend)",
+        "dependsOn": [
+          "dev:backend:debug",
+          "dev:pos"
+        ],
+        "dependsOrder": "parallel"
+      },
+      {
+        "label": "lint:all",
+        "type": "shell",
+        "command": "pnpm -r run lint",
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        }
+      },
+      {
+        "label": "typecheck:all",
+        "type": "shell",
+        "command": "pnpm -r run typecheck",
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        }
+      }
+    ]
+  }
+}
