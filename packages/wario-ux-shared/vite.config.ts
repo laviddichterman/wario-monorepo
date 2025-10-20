@@ -1,11 +1,27 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react-swc';
 import dts from 'vite-plugin-dts';
+import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
+import checker from 'vite-plugin-checker';
+import react from '@vitejs/plugin-react-swc';
 
 
 export default defineConfig({
-  plugins: [react(), dts({ tsconfigPath: './tsconfig.json', entryRoot: 'src', outDir: 'dist/types' })],
+  plugins: [
+    react(),
+    dts({ tsconfigPath: './tsconfig.json', entryRoot: 'src', outDir: 'dist/types' }),
+    checker({
+      typescript: true,
+      eslint: {
+        useFlatConfig: true,
+        lintCommand: 'eslint "./src/**/*.{js,jsx,ts,tsx}"',
+        dev: { logLevel: ['error'] },
+      },
+      overlay: {
+        position: 'tl',
+        initialIsOpen: false,
+      },
+    }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

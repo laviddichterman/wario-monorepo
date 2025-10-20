@@ -61,7 +61,8 @@
       "typescriptreact"
     ],
     "files.associations": {
-      "*.tsx": "typescriptreact"
+      "*.tsx": "typescriptreact",
+      "*.ts": "typescript"
     },
     // Make search/watching snappy in a monorepo
     "files.exclude": {

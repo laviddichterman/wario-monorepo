@@ -26,16 +26,18 @@
   "devDependencies": {
     "@changesets/cli": "^2.29.7",
     "@types/node": "^24.8.1",
-    "@typescript-eslint/eslint-plugin": "^8.46.1",
-    "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.38.0",
+    "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-package-json": "^0.57.0",
+    "eslint-plugin-perfectionist": "^4.15.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "jsonc-eslint-parser": "^2.4.1",
     "tsup": "^8.5.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.1"
   },
   "packageManager": "pnpm@10.18.2",
   "engines": {
