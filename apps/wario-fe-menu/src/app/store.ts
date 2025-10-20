@@ -4,9 +4,7 @@ import { formatISO } from "date-fns";
 import {
   type CatalogCategoryEntry,
   type CatalogModifierEntry,
-  ComputeCartSubTotal,
   ComputeCategoryTreeIdList,
-  ComputeProductCategoryMatchCount,
   DISABLE_REASON,
   type FulfillmentConfig,
   GetNextAvailableServiceDate,
@@ -32,12 +30,10 @@ import {
 } from '@wcp/wario-ux-shared';
 
 import { SocketIoMiddleware } from "./slices/SocketIoMiddleware";
-import WCartReducer, { getCart } from './slices/WCartSlice';
 import WFulfillmentReducer, { SelectServiceDateTime } from './slices/WFulfillmentSlice';
 
 export const RootReducer = combineReducers({
   fulfillment: WFulfillmentReducer,
-  cart: WCartReducer,
   ws: SocketIoReducer,
 });
 
@@ -108,11 +104,6 @@ export const SelectServiceTimeDisplayString = createSelector(
     minDuration !== null && service !== null && selectedTime !== null ?
       (minDuration === 0 ? WDateUtils.MinutesToPrintTime(selectedTime) : `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}`) : "");
 
-export const SelectCartSubTotal = createSelector(
-  (s: RootState) => getCart(s.cart.cart),
-  ComputeCartSubTotal
-);
-
 export const SelectOrderForServiceFeeComputation = createSelector(
   (_: RootState) => 0,
   (nothing) => nothing
@@ -122,12 +113,6 @@ export const SelectMainCategoryTreeIdList = createSelector(
   (s: RootState) => SelectMainCategoryId(s),
   (s: RootState) => s.ws.categories,
   (cId, categories) => cId ? ComputeCategoryTreeIdList(cId, (id: string) => getCategoryEntryById(categories, id)) : []
-)
-
-export const SelectMainProductCategoryCount = createSelector(
-  SelectMainCategoryTreeIdList,
-  (s: RootState) => getCart(s.cart.cart),
-  ComputeProductCategoryMatchCount
 )
 
 export const SelectHasOperatingHoursForService = createSelector(

@@ -1,13 +1,15 @@
-import { WDateUtils, DISABLE_REASON, DisableDataCheck, MoneyToDisplayString, type IProductModifier } from "@wcp/wario-shared";
-import { ProductPrice, ProductTitle, ProductDescription, getModifierOptionById, SelectCatalogSelectors, getProductInstanceById, getModifierTypeEntryById, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId } from "@wcp/wario-ux-shared";
 import { createSelector } from "@reduxjs/toolkit";
 
 import { Box, Grid } from "@mui/material";
 
-import { type RootState, GetNextAvailableServiceDateTime, FilterUnselectableModifierOption, SelectShouldFilterModifierTypeDisplay } from "../app/store";
-import { useAppSelector } from "../app/useHooks";
-import { SelectProductMetadataForMenu } from "./WMenuComponent";
+import { DISABLE_REASON, DisableDataCheck, type IProductModifier, MoneyToDisplayString, WDateUtils } from "@wcp/wario-shared";
+import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceById, ProductDescription, ProductPrice, ProductTitle, SelectCatalogSelectors, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId } from "@wcp/wario-ux-shared";
+
+import { FilterUnselectableModifierOption, GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "@/app/store";
+import { useAppSelector } from "@/app/useHooks";
+
 import { ModifierOptionTooltip } from "./ModifierOptionTooltip";
+import { SelectProductMetadataForMenu } from "./WMenuComponent";
 
 
 const MenuSelectOrderedModifiersVisibleForProductInstanceId = createSelector(
@@ -19,7 +21,8 @@ const MenuSelectOrderedModifiersVisibleForProductInstanceId = createSelector(
   (metadata, productEntry, fulfillmentId, shouldFilter, getOrdinal) => productEntry ?
     // TODO: do we need/want to check the product modifier definition enable function?
     productEntry.product.modifiers
-      .filter(x => x.serviceDisable.indexOf(fulfillmentId) === -1)
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      .filter(x => x.serviceDisable.indexOf(fulfillmentId!) === -1)
       .filter(x => shouldFilter(x.mtid, metadata.modifier_map[x.mtid].has_selectable))
       .sort((a, b) => getOrdinal(a.mtid) - getOrdinal(b.mtid)) : []
 );
@@ -34,7 +37,11 @@ const MenuSelectVisibleModifierOptions = createSelector(
     const mmEntry = metadata.modifier_map[modifierType.modifierType.id];
     return modifierType.options.map(o => modifierOptionSelector(o))
       .sort((a, b) => a.ordinal - b.ordinal)
-      .filter((o) => DisableDataCheck(o.disabled, o.availability, serviceDateTime) && (!filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id)))
+      .filter((o) => {
+        const disableInfo = DisableDataCheck(o.disabled, o.availability, serviceDateTime).enable;
+        const isUnavailableButStillVisible = (!filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id));
+        return disableInfo === DISABLE_REASON.ENABLED && isUnavailableButStillVisible;
+      })
       .map(x => x.id);
   }
 );

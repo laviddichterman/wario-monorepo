@@ -1,26 +1,28 @@
 import { isEqual } from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createStructuredSelector } from 'reselect';
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { Separator, WarioToggleButton, weakMapCreateSelector, getProductInstanceById } from '@wcp/wario-ux-shared';
 
-import {
-  gridClasses,
-  useGridApiRef,
-  type GridRowId,
-  DataGridPremium,
-  GridToolbarContainer,
-  type GridFilterModel,
-  GridToolbarQuickFilter,
-  type GridEventListener,
-  getGridStringOperators,
-  useKeepGroupedColumnsHidden,
-  type GridToolbarQuickFilterProps
-} from '@mui/x-data-grid-premium';
 import { Box, Grid, Stack, Typography } from '@mui/material';
+import {
+  DataGridPremium,
+  getGridStringOperators,
+  gridClasses,
+  type GridEventListener,
+  type GridFilterModel,
+  type GridRowId,
+  GridToolbarContainer,
+  GridToolbarQuickFilter,
+  type GridToolbarQuickFilterProps,
+  useGridApiRef,
+  useKeepGroupedColumnsHidden
+} from '@mui/x-data-grid-premium';
 
+import { getProductInstanceById, Separator, WarioToggleButton, weakMapCreateSelector } from '@wcp/wario-ux-shared';
+
+import { type RootState, store } from '../app/store';
 import { useAppSelector } from "../app/useHooks";
-import { store, type RootState } from '../app/store';
-import { SelectProductMetadataForMenu, SelectProductInstanceIdsInCategoryForNextAvailableTime } from './WMenuComponent';
+
+import { SelectProductInstanceIdsInCategoryForNextAvailableTime, SelectProductMetadataForMenu } from './WMenuComponent';
 
 export interface ToolbarAction {
   size: number; elt: React.ReactNode;
@@ -69,7 +71,7 @@ type RowType = {
   subcategory3: string;
   name: string;
   price: number;
-  metadata: {};
+  metadata: Record<string, string>;
   id: string;
 }
 interface WMenuDisplayProps { categoryId: string; };
@@ -101,6 +103,7 @@ const SelectProductInstanceForMenu = createStructuredSelector(
   {
     categories: (s: RootState, productInstanceId: string) => {
       const pi = getProductInstanceById(s.ws.productInstances, productInstanceId);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       return pi ? (pi.externalIDs.find(ext => ext.key === "Categories")?.value ?? "").split(',') : []
     },
     name: (s: RootState, productInstanceId: string) => SelectProductMetadataForMenu(s, productInstanceId).name,
@@ -138,9 +141,9 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
 
   const getFilteredRowsCount = useCallback(
     (filterModel: GridFilterModel) => {
-      const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current?.getFilterState(filterModel) ?? { filteredRowsLookup: {} };
+      const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current.getFilterState(filterModel);
       return Object.keys(filteredRowsLookup).filter(
-        (rowId) => filteredRowsLookup[rowId] === true,
+        (rowId) => filteredRowsLookup[rowId],
       ).length;
     }, [apiRef]);
   // return a list of predefined filters for each subcategory0
@@ -198,7 +201,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
 
   const onRowClick = React.useCallback<GridEventListener<'rowClick'>>(
     (params) => {
-      const rowNode = apiRef.current?.getRowNode(params.id);
+      const rowNode = apiRef.current.getRowNode(params.id);
       if (rowNode && rowNode.type === 'group') {
         apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
       }
@@ -271,25 +274,25 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     setSelectedFilterModel1(0);
     setSelectedFilterModel2(0);
     setSelectedFilterModel3(0);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel0[index].filterModel);
+    apiRef.current.setFilterModel(predefinedFiltersForLevel0[index].filterModel);
   }, [apiRef, setSelectedFilterModel0, predefinedFiltersForLevel0]);
 
   const handleSelectFilterModelLevel1 = useCallback((index: number) => {
     setSelectedFilterModel1(index);
     setSelectedFilterModel2(0);
     setSelectedFilterModel3(0);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel1[index].filterModel);
+    apiRef.current.setFilterModel(predefinedFiltersForLevel1[index].filterModel);
   }, [apiRef, setSelectedFilterModel1, predefinedFiltersForLevel1]);
 
   const handleSelectFilterModelLevel2 = useCallback((index: number) => {
     setSelectedFilterModel2(index);
     setSelectedFilterModel3(0);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel2[index].filterModel);
+    apiRef.current.setFilterModel(predefinedFiltersForLevel2[index].filterModel);
   }, [apiRef, setSelectedFilterModel2, predefinedFiltersForLevel2]);
 
   const handleSelectFilterModelLevel3 = useCallback((index: number) => {
     setSelectedFilterModel3(index);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
+    apiRef.current.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
   }, [apiRef, setSelectedFilterModel3, predefinedFiltersForLevel3]);
 
   const initialState = useKeepGroupedColumnsHidden({
@@ -315,10 +318,10 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
               <WarioToggleButton
                 sx={{ px: "9px", }}
                 key={predefinedFiltersForLevel0[index].label}
-                onClick={() => handleSelectFilterModelLevel0(index)}
+                onClick={() => { handleSelectFilterModelLevel0(index); }}
                 selected={selectedFilterModel0 === index}
                 value={index} >
-                {`${predefinedFiltersForLevel0[index].label} (${count})`}
+                {`${predefinedFiltersForLevel0[index].label} (${count.toString()})`}
               </WarioToggleButton>
             );
           })}
@@ -334,10 +337,10 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
                   <WarioToggleButton
                     sx={{ px: "9px", }}
                     key={predefinedFiltersForLevel1[index].label}
-                    onClick={() => handleSelectFilterModelLevel1(index)}
+                    onClick={() => { handleSelectFilterModelLevel1(index); }}
                     selected={selectedFilterModel1 === index}
                     value={index} >
-                    {`${predefinedFiltersForLevel1[index].label} (${count})`}
+                    {`${predefinedFiltersForLevel1[index].label} (${count.toString()})`}
                   </WarioToggleButton>
                 );
               })}</Stack>
@@ -355,10 +358,10 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
                   <WarioToggleButton
                     sx={{ px: "9px", }}
                     key={predefinedFiltersForLevel2[index].label}
-                    onClick={() => handleSelectFilterModelLevel2(index)}
+                    onClick={() => { handleSelectFilterModelLevel2(index); }}
                     selected={selectedFilterModel2 === index}
                     value={index} >
-                    {`${predefinedFiltersForLevel2[index].label} (${count})`}
+                    {`${predefinedFiltersForLevel2[index].label} (${count.toString()})`}
                   </WarioToggleButton>
                 );
               })}</Stack>
@@ -375,10 +378,10 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
                   <WarioToggleButton
                     sx={{ px: "9px", }}
                     key={predefinedFiltersForLevel3[index].label}
-                    onClick={() => handleSelectFilterModelLevel3(index)}
+                    onClick={() => { handleSelectFilterModelLevel3(index); }}
                     selected={selectedFilterModel3 === index}
                     value={index} >
-                    {`${predefinedFiltersForLevel3[index].label} (${count})`}
+                    {`${predefinedFiltersForLevel3[index].label} (${count.toString()})`}
                   </WarioToggleButton>
                 );
               })}</Stack>
