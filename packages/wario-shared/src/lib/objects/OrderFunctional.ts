@@ -1,4 +1,4 @@
-import { startCase, snakeCase } from "lodash";
+import { startCase, snakeCase } from "es-toolkit/compat";
 import {
   ConstLiteralDiscriminator,
   OptionPlacement,

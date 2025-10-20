@@ -3,7 +3,7 @@ import { WFunctional } from "./WFunctional";
 import type { IProduct, IProductInstance, ProductModifierEntry, WCPProduct, WProductMetadata, MTID_MOID, IOptionInstance, MetadataModifierMap, ModifierDisplayListByLocation, MetadataModifierOptionMapEntry, WProduct, WCPProductV2Dto, IMoney, Selector, CatalogModifierEntry, ICatalogSelectors, ICatalogModifierSelectors, IOption, IProductModifier } from '../types';
 import { MODIFIER_MATCH, PRODUCT_LOCATION, DISPLAY_AS, DISABLE_REASON, OptionPlacement, OptionQualifier } from '../types';
 import { HandleOptionCurry, HandleOptionNameFilterOmitByName, HandleOptionNameNoFilter, IsOptionEnabled } from './WCPOption';
-import { cloneDeep } from 'lodash';
+import { cloneDeep } from 'es-toolkit/compat';
 // import { memoize } from 'lodash';
 
 /* TODO: we need to pull out the computations into memoizable functions
