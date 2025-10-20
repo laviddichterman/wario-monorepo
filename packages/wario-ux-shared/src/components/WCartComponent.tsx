@@ -2,9 +2,9 @@ import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 import { DiscountMethod, MoneyToDisplayString, PaymentMethod, TenderBaseStatus } from '@wcp/wario-shared';
 import type { CoreCartEntry, ICatalogSelectors, IMoney, OrderLineDiscount, OrderPayment, WProduct } from '@wcp/wario-shared';
 import { useCallback, useMemo } from 'react';
-import { fPercent } from '../common/numbers';
-import { ProductPrice, ProductTitle } from '../styled/styled';
-import { ProductDisplay } from './WProductComponent';
+import { fPercent } from '@/common/numbers';
+import { ProductPrice, ProductTitle } from '@/styled/styled';
+import { ProductDisplay } from '@/components/WProductComponent';
 
 export interface WCheckoutCartComponentProps {
   selectedService: string;

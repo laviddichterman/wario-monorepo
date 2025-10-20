@@ -4,8 +4,8 @@ import { styled } from '@mui/material/styles';
 import { ComputePotentialPrices, MoneyToDisplayString, PriceDisplay, WProductDisplayOptions } from '@wcp/wario-shared';
 import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared';
 import { useMemo } from 'react';
-import { Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '../styled/styled';
-import { AdornedSxProps } from '../styled/styled.constants';
+import { Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '@/styled/styled';
+import { AdornedSxProps } from '@/styled/styled.constants';
 
 interface WProductComponentProps {
   catalogSelectors: ICatalogSelectors;

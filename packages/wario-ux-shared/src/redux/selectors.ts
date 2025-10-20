@@ -1,9 +1,9 @@
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 import { createSelector } from "@reduxjs/toolkit";
 import type { CoreCartEntry, WProduct } from "@wcp/wario-shared";
-import { AdapterCurrentTimeOverrideUtils } from "../common/DateFnsAdapter";
-import { getCategoryEntryById } from "./SocketIoSlice";
-import type { SocketIoState } from "./SocketIoSlice";
+import { AdapterCurrentTimeOverrideUtils } from "@/common/DateFnsAdapter";
+import { getCategoryEntryById, type SocketIoState } from "@/redux/SocketIoSlice";
+
 
 export const selectGroupedAndOrderedCart = <RootState extends { ws: SocketIoState }, T extends CoreCartEntry<WProduct>>(s: RootState, cart: T[]) => {
   return Object.entries(cart.reduce((cartMap: Record<string, T[]>, entry: T) =>
