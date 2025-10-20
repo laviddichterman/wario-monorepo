@@ -1,22 +1,23 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import {
-  addDays,
-  addMinutes,
-  compareAsc,
   getDay,
+  addDays,
+  subDays,
   getHours,
-  getMinutes,
   isBefore,
+  parseISO,
   isSameDay,
   formatISO,
-  parseISO,
+  addMinutes,
+  compareAsc,
+  getMinutes,
   startOfDay,
   subMinutes,
-  subDays,
   differenceInMinutes
 } from 'date-fns';
-import { type DayOfTheWeek } from '../types';
-import type { AvailabilityInfoMap, DateIntervalsEntries, FulfillmentTime, IWInterval, OperatingHourSpecification } from '../types';
-import type { FulfillmentConfig } from '../types';
+
+import type { DayOfTheWeek, FulfillmentConfig } from '../types';
+import type { IWInterval, FulfillmentTime, AvailabilityInfoMap, DateIntervalsEntries, OperatingHourSpecification } from '../types';
 
 /**
  * 
@@ -61,6 +62,7 @@ export function BlockedOffIntervalsForServicesAndDate(blockedOffs: DateIntervals
   }, []));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class WDateUtils {
 
   static get ISODateTimeNoOffset() {
@@ -218,10 +220,10 @@ export class WDateUtils {
     configs: Pick<FulfillmentConfig, 'operatingHours' | 'specialHours'>[],
     isoDate: string,
     day_index: DayOfTheWeek) {
-    const allHours = configs.reduce((acc, config) => {
+    const allHours = configs.reduce<IWInterval[]>((acc, config) => {
       const specialHoursForDateIndex = config.specialHours.findIndex(x => x.key === isoDate);
       return acc.concat(specialHoursForDateIndex !== -1 ? config.specialHours[specialHoursForDateIndex].value : config.operatingHours[day_index]);
-    }, [] as IWInterval[]);
+    }, []);
 
     return ComputeUnionsForIWInterval(allHours);
   }
@@ -368,7 +370,8 @@ export const GetNextAvailableServiceDate = (fulfillmentConfigs: Pick<Fulfillment
   }
   let dateAttempted = startOfDay(parseISO(now));
 
-  while (1) {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  while (true) {
     const isoDate = WDateUtils.formatISODate(dateAttempted);
     const INFO = WDateUtils.GetInfoMapForAvailabilityComputation(fulfillmentConfigs, isoDate, cartBasedLeadTime);
     const firstAvailableTime = WDateUtils.ComputeFirstAvailableTimeForDate(INFO, isoDate, now);

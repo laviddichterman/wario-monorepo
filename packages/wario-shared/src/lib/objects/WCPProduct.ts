@@ -1,10 +1,13 @@
-import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
-import { WFunctional } from "./WFunctional";
-import type { IProduct, IProductInstance, ProductModifierEntry, WCPProduct, WProductMetadata, MTID_MOID, IOptionInstance, MetadataModifierMap, ModifierDisplayListByLocation, MetadataModifierOptionMapEntry, WProduct, WCPProductV2Dto, IMoney, Selector, CatalogModifierEntry, ICatalogSelectors, ICatalogModifierSelectors, IOption, IProductModifier } from '../types';
-import { MODIFIER_MATCH, PRODUCT_LOCATION, DISPLAY_AS, DISABLE_REASON, OptionPlacement, OptionQualifier } from '../types';
-import { HandleOptionCurry, HandleOptionNameFilterOmitByName, HandleOptionNameNoFilter, IsOptionEnabled } from './WCPOption';
+/* eslint-disable @typescript-eslint/only-throw-error */
+
 import { cloneDeep } from 'es-toolkit/compat';
-// import { memoize } from 'lodash';
+
+import { DISPLAY_AS, MODIFIER_MATCH, DISABLE_REASON, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../types';
+import { IsOptionEnabled, HandleOptionCurry, HandleOptionNameNoFilter, HandleOptionNameFilterOmitByName } from './WCPOption';
+import { WFunctional } from "./WFunctional";
+import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
+
+import type { IMoney, IOption, IProduct, WProduct, Selector, MTID_MOID, WCPProduct, IOptionInstance, WCPProductV2Dto, IProductInstance, WProductMetadata, IProductModifier, ICatalogSelectors, MetadataModifierMap, ProductModifierEntry, CatalogModifierEntry, ICatalogModifierSelectors, ModifierDisplayListByLocation, MetadataModifierOptionMapEntry } from '../types';
 
 /* TODO: we need to pull out the computations into memoizable functions
 this should remove the dependencies on the menu
@@ -28,9 +31,11 @@ const ExtractMatch = (matrix: SIDE_MODIFIER_MATCH_MATRIX): MODIFIER_MATCH => (
   Math.min(EXACT_MATCH, Math.min.apply(null, matrix.map((modCompareArr) => Math.min.apply(null, modCompareArr))))
 );
 
-const ComponentsList = (source: IOption[], getter: (x: IOption) => any) => source.map((x) => getter(x));
+const ComponentsList = <T>(source: IOption[], getter: (x: IOption) => T): T[] => source.map((x) => getter(x));
+
 
 const FilterByOmitFromName = (source: IOption[]) => (source.filter(x => !x.displayFlags || !x.displayFlags.omit_from_name));
+
 const FilterByOmitFromShortname = (source: IOption[]) => (source.filter(x => !x.displayFlags || !x.displayFlags.omit_from_shortname));
 
 const ComponentsListName = (source: IOption[]) => ComponentsList(source, (x: IOption) => x.displayName);
@@ -129,9 +134,9 @@ function WProductCompareGeneric(productModifierDefinition: IProductModifier[], a
   // elements of the modifiers_match_matrix are arrays of <LEFT_MATCH, RIGHT_MATCH> tuples
   const modifiers_match_matrix: LR_MODIFIER_MATCH_MATRIX = [[], []];
   productModifierDefinition.forEach((modifier) => {
-    const modifierOptionsLength = selectModifierEntry(modifier.mtid)?.options?.length ?? 0;
-    modifiers_match_matrix[LEFT_SIDE].push(Array(modifierOptionsLength).fill(EXACT_MATCH));
-    modifiers_match_matrix[RIGHT_SIDE].push(Array(modifierOptionsLength).fill(EXACT_MATCH));
+    const modifierOptionsLength = selectModifierEntry(modifier.mtid)?.options.length ?? 0;
+    modifiers_match_matrix[LEFT_SIDE].push(Array<MODIFIER_MATCH>(modifierOptionsLength).fill(EXACT_MATCH));
+    modifiers_match_matrix[RIGHT_SIDE].push(Array<MODIFIER_MATCH>(modifierOptionsLength).fill(EXACT_MATCH));
   })
   let is_mirror = true;
   // main comparison loop!
@@ -258,7 +263,7 @@ const RunTemplating = (product: IProduct, catModSelectors: ICatalogModifierSelec
       return;
     }
     const modifier_flags = modifierEntry.modifierType.displayFlags;
-    if (modifier_flags && modifier_flags.template_string !== "") {
+    if (modifier_flags.template_string !== "") {
       const template_string_with_braces = `{${modifier_flags.template_string}}`;
       const template_in_name = Object.hasOwn(name_template_match_obj, template_string_with_braces);
       const template_in_description = Object.hasOwn(description_template_match_obj, template_string_with_braces);
@@ -295,10 +300,6 @@ export function WCPProductGenerateMetadata(productId: string, modifiers: Product
     throw (errMsg);
   }
   const PRODUCT_CLASS = PRODUCT_CLASS_ENTRY.product;
-
-  const bake_count: [number, number] = [0, 0];
-  const flavor_count: [number, number] = [0, 0];
-  let is_split = false;
 
   const match_info = {
     product: [null, null],
@@ -345,8 +346,22 @@ export function WCPProductGenerateMetadata(productId: string, modifiers: Product
     throw (`Unable to determine product metadata. Match info for PC_ID ${PRODUCT_CLASS.id} with modifiers of ${JSON.stringify(modifiers)}: ${JSON.stringify(match_info)}.`);
   }
 
-  let price = PRODUCT_CLASS.price.amount;
-
+  const metadata: WProductMetadata = {
+    name: '',
+    description: '',
+    shortname: '',
+    pi: [leftPI.id, rightPI.id],
+    is_split: false,
+    price: { currency: PRODUCT_CLASS.price.currency, amount: PRODUCT_CLASS.price.amount },
+    incomplete: false,
+    modifier_map: {} as MetadataModifierMap,
+    advanced_option_eligible: false,
+    advanced_option_selected: false,
+    additional_modifiers: { left: [], right: [], whole: [] } as ModifierDisplayListByLocation,
+    exhaustive_modifiers: { left: [], right: [], whole: [] } as ModifierDisplayListByLocation,
+    bake_count: [0, 0],
+    flavor_count: [0, 0],
+  };
   // We need to compute this before the modifier match matrix, otherwise the metadata limits won't be pre-computed
   modifiers.forEach((modifierEntry: ProductModifierEntry) => {
     modifierEntry.options.forEach((opt: IOptionInstance) => {
@@ -356,34 +371,17 @@ export function WCPProductGenerateMetadata(productId: string, modifiers: Product
         return;
       }
       if (opt.placement === OptionPlacement.LEFT || opt.placement === OptionPlacement.WHOLE) {
-        bake_count[LEFT_SIDE] += mo.metadata.bake_factor;
-        flavor_count[LEFT_SIDE] += mo.metadata.flavor_factor;
+        metadata.bake_count[LEFT_SIDE] += mo.metadata.bake_factor;
+        metadata.flavor_count[LEFT_SIDE] += mo.metadata.flavor_factor;
       }
       if (opt.placement === OptionPlacement.RIGHT || opt.placement === OptionPlacement.WHOLE) {
-        bake_count[RIGHT_SIDE] += mo.metadata.bake_factor;
-        flavor_count[RIGHT_SIDE] += mo.metadata.flavor_factor;
+        metadata.bake_count[RIGHT_SIDE] += mo.metadata.bake_factor;
+        metadata.flavor_count[RIGHT_SIDE] += mo.metadata.flavor_factor;
       }
-      if (opt.placement !== OptionPlacement.NONE) { price += mo.price.amount; }
-      is_split ||= opt.placement === OptionPlacement.LEFT || opt.placement === OptionPlacement.RIGHT;
+      if (opt.placement !== OptionPlacement.NONE) { metadata.price.amount += mo.price.amount; }
+      metadata.is_split = metadata.is_split || opt.placement === OptionPlacement.LEFT || opt.placement === OptionPlacement.RIGHT;
     });
   });
-
-  const metadata: WProductMetadata = {
-    name: '',
-    description: '',
-    shortname: '',
-    pi: [leftPI.id, rightPI.id],
-    is_split,
-    price: { currency: PRODUCT_CLASS.price.currency, amount: price },
-    incomplete: false,
-    modifier_map: {} as MetadataModifierMap,
-    advanced_option_eligible: false,
-    advanced_option_selected: false,
-    additional_modifiers: { left: [], right: [], whole: [] } as ModifierDisplayListByLocation,
-    exhaustive_modifiers: { left: [], right: [], whole: [] } as ModifierDisplayListByLocation,
-    bake_count,
-    flavor_count,
-  };
 
   // determine if we're comparing to the base product on the left and right sides
   const is_compare_to_base = [
@@ -492,7 +490,7 @@ export function WCPProductGenerateMetadata(productId: string, modifiers: Product
     });
 
   // check for an exact match before going through all the name computation
-  if (!is_split && match_info.comparison_value[LEFT_SIDE] === EXACT_MATCH && match_info.comparison_value[RIGHT_SIDE] === EXACT_MATCH) {
+  if (!metadata.is_split && match_info.comparison_value[LEFT_SIDE] === EXACT_MATCH && match_info.comparison_value[RIGHT_SIDE] === EXACT_MATCH) {
     // if we're an unmodified product instance from the catalog,
     // we should find that product and assume its name.
     metadata.name = leftPI.displayName;
@@ -535,7 +533,7 @@ export function WCPProductGenerateMetadata(productId: string, modifiers: Product
   if (metadata.is_split) {
     name_components_list = ComponentsListName(FilterByOmitFromName(additional_options_objects.whole));
     shortname_components_list = ComponentsListShortname(FilterByOmitFromShortname(additional_options_objects.whole));
-    if (String(leftPI.id) === String(rightPI.id)) {
+    if (leftPI.id === rightPI.id) {
       if (!is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS.displayFlags.show_name_of_base_product) {
         name_components_list.unshift(leftPI.displayName);
         shortname_components_list.unshift(leftPI.displayName);

@@ -835,6 +835,7 @@ export interface ValidateLockAndSpendRequest {
 
 export interface ValidateLockAndSpendSuccess {
   success: true;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entry: any[];
   index: number;
 };

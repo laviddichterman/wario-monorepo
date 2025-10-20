@@ -1,32 +1,30 @@
+/* eslint-disable @typescript-eslint/only-throw-error */
+import { WFunctional } from "./WFunctional";
 import { GetPlacementFromMIDOID } from "../common";
-
 import {
-  type OptionPlacement,
-  PRODUCT_LOCATION,
-  DISABLE_REASON,
   DISPLAY_AS,
+  DISABLE_REASON,
+  PRODUCT_LOCATION,
+  type OptionPlacement,
 } from '../types';
 
 import type {
-  WCPProduct,
-  OptionEnableState,
-  CatalogModifierEntry,
   IOption,
   Selector,
   MTID_MOID,
-  ICatalogModifierSelectors,
-  ICatalogSelectors
+  WCPProduct,
+  OptionEnableState,
+  ICatalogSelectors,
+  CatalogModifierEntry,
+  ICatalogModifierSelectors
 } from '../types';
-
-
-import { WFunctional } from "./WFunctional";
 
 // matrix of proposed_delta indexed by [current placement][proposed placement]
 const DELTA_MATRIX = [
-  [[+0, +0], [+1, +0], [+0, +1], [+1, +1]], // NONE
-  [[-1, +0], [-1, +0], [-1, +1], [+0, +1]], // LEFT
-  [[+0, -1], [+1, -1], [+0, -1], [+1, +0]], // RIGHT
-  [[-1, -1], [+0, -1], [-1, +0], [-1, -1]], // WHOLE
+  [[0, 0], [1, 0], [0, 1], [1, 1]], // NONE
+  [[-1, 0], [-1, 0], [-1, 1], [0, 1]], // LEFT
+  [[0, -1], [1, -1], [0, -1], [1, 0]], // RIGHT
+  [[-1, -1], [0, -1], [-1, 0], [-1, -1]], // WHOLE
   // [[ NONE ], [ LEFT ], [ RIGHT], [ WHOLE]]
 ];
 
@@ -53,7 +51,7 @@ export const HandleOptionCurry = (catModSelectors: ICatalogModifierSelectors, ge
     const CATALOG_MODIFIER_INFO = catModSelectors.modifierEntry(x[0]);
     if (CATALOG_MODIFIER_INFO) {
       switch (CATALOG_MODIFIER_INFO.modifierType.displayFlags.empty_display_as) {
-        case DISPLAY_AS.YOUR_CHOICE_OF: return `Your choice of ${CATALOG_MODIFIER_INFO.modifierType.displayName ?? CATALOG_MODIFIER_INFO.modifierType.name}`;
+        case DISPLAY_AS.YOUR_CHOICE_OF: return `Your choice of ${CATALOG_MODIFIER_INFO.modifierType.displayName || CATALOG_MODIFIER_INFO.modifierType.name}`;
         case DISPLAY_AS.LIST_CHOICES: return ListModifierChoicesByDisplayName(CATALOG_MODIFIER_INFO, catModSelectors.option);
         // DISPLAY_AS.OMIT is handled elsewhere
         default: throw (`Unknown value for empty_display_as flag: ${CATALOG_MODIFIER_INFO.modifierType.displayFlags.empty_display_as}`);
@@ -67,6 +65,7 @@ export function IsOptionEnabled(option: IOption, product: WCPProduct, bake_count
   // TODO: needs to factor in disable data for time based disable
   // TODO: needs to return false if we would exceed the limit for this modifier, IF that limit is > 1, because if it's === 1
   // we would handle the limitation by using smarts at the wcpmodifierdir level
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const productClassEntry = catalogSelectors.productEntry(product.productId)!
   const placement = GetPlacementFromMIDOID(product.modifiers, option.modifierTypeId, option.id);
   // TODO: bake and flavor stuff should move into the enable_filter itself, the option itself should just hold generalized metadata the enable filter function can use/reference
@@ -90,6 +89,7 @@ export function IsOptionEnabled(option: IOption, product: WCPProduct, bake_count
   const enableFunction = option.enable ? catalogSelectors.productInstanceFunction(option.enable) : undefined;
   const passesEnableFunction = !enableFunction || WFunctional.ProcessProductInstanceFunction(product.modifiers, enableFunction, catalogSelectors) as boolean;
   if (!passesEnableFunction) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return { enable: DISABLE_REASON.DISABLED_FUNCTION, functionId: option.enable! };
   }
   return { enable: DISABLE_REASON.ENABLED };

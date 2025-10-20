@@ -1,21 +1,25 @@
+
 import { startCase, snakeCase } from "es-toolkit/compat";
+
 import {
-  ConstLiteralDiscriminator,
   OptionPlacement,
   OptionQualifier,
   LogicalFunctionOperator,
+  ConstLiteralDiscriminator,
   OrderInstanceFunctionType,
 } from '../types';
+import { LogicalFunctionOperatorToHumanString } from "./WFunctional";
+
 import type {
-  IConstLiteralExpression,
   IIfElseExpression,
   ILogicalExpression,
   WOrderInstancePartial,
-  AbstractOrderExpression,
   OrderInstanceFunction,
+  IConstLiteralExpression,
+  AbstractOrderExpression,
   ICatalogModifierSelectors
 } from '../types';
-import { LogicalFunctionOperatorToHumanString } from "./WFunctional";
+
 
 export class OrderFunctional {
 
@@ -88,15 +92,15 @@ export class OrderFunctional {
       case OrderInstanceFunctionType.ConstLiteral:
         switch (stmt.expr.discriminator) {
           case ConstLiteralDiscriminator.BOOLEAN:
-            return stmt.expr.value === true ? "True" : "False";
+            return stmt.expr.value ? "True" : "False";
           case ConstLiteralDiscriminator.NUMBER:
-            return Number(stmt.expr.value).toString();
+            return stmt.expr.value.toString();
           case ConstLiteralDiscriminator.STRING:
-            return String(stmt.expr.value);
+            return stmt.expr.value;
           case ConstLiteralDiscriminator.MODIFIER_PLACEMENT:
-            return String(OptionPlacement[stmt.expr.value]);
+            return OptionPlacement[stmt.expr.value];
           case ConstLiteralDiscriminator.MODIFIER_QUALIFIER:
-            return String(OptionQualifier[stmt.expr.value]);
+            return OptionQualifier[stmt.expr.value];
         }
       case OrderInstanceFunctionType.IfElse:
         return `IF(${OrderFunctional.AbstractOrderExpressionStatementToString(stmt.expr.test, catSelectors)}) { ${OrderFunctional.AbstractOrderExpressionStatementToString(stmt.expr.true_branch, catSelectors)} } ELSE { ${OrderFunctional.AbstractOrderExpressionStatementToString(stmt.expr.false_branch, catSelectors)} }`;
@@ -118,11 +122,11 @@ export class OrderFunctional {
       case OrderInstanceFunctionType.ConstLiteral:
         switch (stmt.expr.discriminator) {
           case ConstLiteralDiscriminator.BOOLEAN:
-            return stmt.expr.value === true ? "True" : "False";
+            return stmt.expr.value ? "True" : "False";
           case ConstLiteralDiscriminator.NUMBER:
-            return Number(stmt.expr.value).toString();
+            return stmt.expr.value.toString();
           case ConstLiteralDiscriminator.STRING:
-            return String(stmt.expr.value);
+            return stmt.expr.value;
           case ConstLiteralDiscriminator.MODIFIER_PLACEMENT:
             return startCase(snakeCase((OptionPlacement[stmt.expr.value])));
           case ConstLiteralDiscriminator.MODIFIER_QUALIFIER:

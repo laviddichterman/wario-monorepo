@@ -133,7 +133,7 @@ const tsConfig = {
   },
   settings: { react: { version: "detect" } },
   extends: [
-    //typescriptEslintConfigs.recommendedTypeChecked
+    typescriptEslintConfigs.strictTypeChecked
   ],
   rules: {
     ...basicRules(),

@@ -1,29 +1,29 @@
 import { DisableDataCheck } from "../common";
 import {
-  OptionPlacement,
-  DISABLE_REASON
+  DISABLE_REASON,
+  OptionPlacement
 } from '../types';
-import type {
-  IProductInstance,
-  ICatalogSelectors,
-  CatalogCategoryEntry,
-  IProduct,
-  ProductModifierEntry,
-  IProductDisplayFlags,
-  IOption,
-  WProductMetadata,
-  Selector
-} from "../types";
-
 import {
-  // CreateWCPProduct, 
   WCPProductGenerateMetadata
 } from "./WCPProduct";
+
+import type {
+  IOption,
+  IProduct,
+  Selector,
+  IProductInstance,
+  WProductMetadata,
+  ICatalogSelectors,
+  CatalogCategoryEntry,
+  ProductModifierEntry,
+  IProductDisplayFlags
+} from "../types";
 
 export const CheckRequiredModifiersAreAvailable = (product: IProduct, modifiers: ProductModifierEntry[], optionSelector: ICatalogSelectors['option'], order_time: Date | number, fulfillmentId: string) => {
   let passes = true;
   modifiers.forEach((productModifierEntry) => {
     // TODO: for incomplete product instances, this should check for a viable way to order the product
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const productModifierDefinition = product.modifiers.find(x => x.mtid === productModifierEntry.modifierTypeId)!;
     passes &&= productModifierDefinition.serviceDisable.indexOf(fulfillmentId) === -1 &&
       productModifierEntry.options.reduce((acc: boolean, x) => {
@@ -37,8 +37,8 @@ export const CheckRequiredModifiersAreAvailable = (product: IProduct, modifiers:
 
 type DisableFlagGetterType = (x: Pick<IProductDisplayFlags, "menu"> | Pick<IProductDisplayFlags, "order">) => boolean;
 
-export const GetMenuHideDisplayFlag: DisableFlagGetterType = (x) => (x as Pick<IProductDisplayFlags, "menu">).menu.hide === false;
-export const GetOrderHideDisplayFlag: DisableFlagGetterType = (x) => (x as Pick<IProductDisplayFlags, "order">).order.hide === false;
+export const GetMenuHideDisplayFlag: DisableFlagGetterType = (x) => !(x as Pick<IProductDisplayFlags, "menu">).menu.hide;
+export const GetOrderHideDisplayFlag: DisableFlagGetterType = (x) => !(x as Pick<IProductDisplayFlags, "order">).order.hide;
 export const IgnoreHideDisplayFlags: DisableFlagGetterType = (_x) => true;
 
 /**
@@ -114,7 +114,7 @@ export function IsThisCategoryVisibleForFulfillment(categorySelector: ICatalogSe
 export function FilterProductSelector(product: IProduct, modifiers: ProductModifierEntry[], metadata: WProductMetadata, optionSelector: Selector<IOption>, order_time: Date | number, fulfillmentId: string, filterIncomplete: boolean) {
   const failsIncompleteCheck = !filterIncomplete || !metadata.incomplete;
   return failsIncompleteCheck &&
-    product !== undefined && product.serviceDisable.indexOf(fulfillmentId) === -1 &&
+    product.serviceDisable.indexOf(fulfillmentId) === -1 &&
     DisableDataCheck(product.disabled, product.availability, order_time).enable === DISABLE_REASON.ENABLED &&
     modifiers.reduce((acc, modifier) => {
       const mdModifier = metadata.modifier_map[modifier.modifierTypeId];
@@ -150,11 +150,11 @@ export function CanThisBeOrderedAtThisTimeAndFulfillmentCatalog(productId: strin
 }
 
 export function SelectProductInstancesInCategory(catalogCategory: CatalogCategoryEntry, productSelector: ICatalogSelectors['productEntry']) {
-  return catalogCategory.products.reduce((acc, productId) => {
+  return catalogCategory.products.reduce<string[]>((acc, productId) => {
     const product = productSelector(productId);
     if (product) {
       return [...acc, ...product.instances];
     }
     return acc;
-  }, [] as string[])
+  }, [])
 }

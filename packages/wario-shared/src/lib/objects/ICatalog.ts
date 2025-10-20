@@ -4,14 +4,15 @@
 // product_map is mapping from productId to { product, instances (list of instance objects)}
 
 import { ReduceArrayToMapByKey } from "../common";
-import type { ICatalog, SEMVER, ICatalogModifiers, ICatalogCategories, ICategory, IProduct, IProductInstance, RecordOrderInstanceFunctions, RecordProductInstanceFunctions, ICatalogProducts, IOptionType, IOption, ICatalogSelectors } from "../types";
+
+import type { SEMVER, IOption, ICatalog, IProduct, ICategory, IOptionType, IProductInstance, ICatalogProducts, ICatalogModifiers, ICatalogSelectors, ICatalogCategories, RecordOrderInstanceFunctions, RecordProductInstanceFunctions } from "../types";
 
 // orphan_products is list of orphan product ids
 const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], product_instances: IProductInstance[]): [ICatalogCategories, ICatalogProducts] => {
   const category_map: ICatalogCategories = categories.reduce((acc, cat) => ({ ...acc, [cat.id]: { category: cat, children: [], products: [] } }), {});
   categories.forEach((curr) => {
     if (curr.parent_id) {
-      if (category_map[curr.parent_id]) {
+      if (Object.hasOwn(category_map, curr.parent_id)) {
         category_map[curr.parent_id].children.push(curr.id);
       }
       else {
@@ -22,7 +23,12 @@ const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], prod
   const product_map: ICatalogProducts = products.reduce((acc, p) => {
     if (p.category_ids.length !== 0) {
       p.category_ids.forEach((cid) => {
-        category_map[cid] ? category_map[cid].products.push(p.id) : console.error(`Missing category ID: ${cid} in product: ${JSON.stringify(p)}`);
+        if (Object.hasOwn(category_map, cid)) {
+          category_map[cid].products.push(p.id)
+        }
+        else {
+          console.error(`Category ID ${cid} referenced by Product ${p.id} not found!`);
+        }
       });
     }
     return { ...acc, [p.id]: { product: p, instances: [] } };
@@ -34,7 +40,7 @@ const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], prod
 };
 
 const ModifierTypeMapGenerator = (modifier_types: IOptionType[], options: IOption[]) => {
-  const modifier_types_map = modifier_types.reduce((acc, m) => ({ ...acc, [m.id]: { options: [], modifierType: m } }), {} as ICatalogModifiers);
+  const modifier_types_map = modifier_types.reduce<ICatalogModifiers>((acc, m) => ({ ...acc, [m.id]: { options: [], modifierType: m } }), {});
   options.forEach(o => {
     if (Object.hasOwn(modifier_types_map, o.modifierTypeId)) {
       modifier_types_map[o.modifierTypeId].options.push(o.id);

@@ -1,26 +1,29 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { startCase, snakeCase } from "es-toolkit/compat";
+
 import { GetPlacementFromMIDOID } from "../common";
 import {
-  ConstLiteralDiscriminator,
   MetadataField,
   OptionPlacement,
   OptionQualifier,
-  LogicalFunctionOperator,
-  ProductInstanceFunctionType,
   PRODUCT_LOCATION,
+  LogicalFunctionOperator,
+  ConstLiteralDiscriminator,
+  ProductInstanceFunctionType,
 } from '../types';
+
 import type {
-  ConstModifierPlacementLiteralExpression,
-  IAbstractExpression,
-  IConstLiteralExpression,
-  IHasAnyOfModifierExpression,
+  WCPProduct,
   IIfElseExpression,
   ILogicalExpression,
-  IModifierPlacementExpression,
+  IAbstractExpression,
+  IConstLiteralExpression,
   IProductInstanceFunction,
   ProductMetadataExpression,
-  WCPProduct,
-  ICatalogModifierSelectors
+  ICatalogModifierSelectors,
+  IHasAnyOfModifierExpression,
+  IModifierPlacementExpression,
+  ConstModifierPlacementLiteralExpression
 } from '../types';
 
 
@@ -85,6 +88,7 @@ const ModifierPlacementCompareToPlacementHumanReadable = function (placementExtr
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class WFunctional {
   static ProcessIfElseStatement(prodModifers: WCPProduct['modifiers'], stmt: IIfElseExpression<IAbstractExpression>, catModSelectors: ICatalogModifierSelectors) {
     const branch_test = WFunctional.ProcessAbstractExpressionStatement(prodModifers, stmt.test, catModSelectors);
@@ -277,15 +281,15 @@ export class WFunctional {
       case ProductInstanceFunctionType.ConstLiteral:
         switch (stmt.expr.discriminator) {
           case ConstLiteralDiscriminator.BOOLEAN:
-            return stmt.expr.value === true ? "True" : "False";
+            return stmt.expr.value ? "True" : "False";
           case ConstLiteralDiscriminator.NUMBER:
-            return Number(stmt.expr.value).toString();
+            return stmt.expr.value.toString();
           case ConstLiteralDiscriminator.STRING:
-            return String(stmt.expr.value);
+            return stmt.expr.value;
           case ConstLiteralDiscriminator.MODIFIER_PLACEMENT:
-            return String(OptionPlacement[stmt.expr.value]);
+            return OptionPlacement[stmt.expr.value];
           case ConstLiteralDiscriminator.MODIFIER_QUALIFIER:
-            return String(OptionQualifier[stmt.expr.value]);
+            return OptionQualifier[stmt.expr.value];
         }
       case ProductInstanceFunctionType.IfElse:
         return `IF(${WFunctional.AbstractExpressionStatementToString(stmt.expr.test, catModSelectors)}) { ${WFunctional.AbstractExpressionStatementToString(stmt.expr.true_branch, catModSelectors)} } ELSE { ${WFunctional.AbstractExpressionStatementToString(stmt.expr.false_branch, catModSelectors)} }`;
@@ -334,17 +338,17 @@ export class WFunctional {
       if (!opt) {
         return "UNDEFINED";
       }
-      return `${opt.displayName}`;
+      return opt.displayName;
     }
     switch (stmt.discriminator) {
       case ProductInstanceFunctionType.ConstLiteral:
         switch (stmt.expr.discriminator) {
           case ConstLiteralDiscriminator.BOOLEAN:
-            return stmt.expr.value === true ? "True" : "False";
+            return stmt.expr.value ? "True" : "False";
           case ConstLiteralDiscriminator.NUMBER:
-            return Number(stmt.expr.value).toString();
+            return stmt.expr.value.toString();
           case ConstLiteralDiscriminator.STRING:
-            return String(stmt.expr.value);
+            return stmt.expr.value;
           case ConstLiteralDiscriminator.MODIFIER_PLACEMENT:
             return startCase(snakeCase((OptionPlacement[stmt.expr.value])));
           case ConstLiteralDiscriminator.MODIFIER_QUALIFIER:
@@ -357,7 +361,7 @@ export class WFunctional {
       case ProductInstanceFunctionType.ModifierPlacement:
         return modifierPlacement(stmt.expr);
       case ProductInstanceFunctionType.HasAnyOfModifierType:
-        return `any ${catModSelectors.modifierEntry((stmt.expr).mtid)?.modifierType?.name ?? "UNDEFINED"} modifiers selected`;
+        return `any ${catModSelectors.modifierEntry((stmt.expr).mtid)?.modifierType.name ?? "UNDEFINED"} modifiers selected`;
       case ProductInstanceFunctionType.ProductMetadata:
         return `:${MetadataField[stmt.expr.field]}@${PRODUCT_LOCATION[stmt.expr.location]}`;
     }

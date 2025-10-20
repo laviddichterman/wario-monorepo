@@ -1,16 +1,19 @@
-import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { RRule } from "rrule";
+import { getTime, isSameDay, addMinutes, startOfDay } from "date-fns";
+
+import WDateUtils from "./objects/WDateUtils";
 import { OrderFunctional } from "./objects/OrderFunctional";
 import { CreateProductWithMetadataFromV2Dto } from "./objects/WCPProduct";
-import WDateUtils from "./objects/WDateUtils";
-import type { CoreCartEntry, CategorizedRebuiltCart, ICatalogSelectors, IProductInstance, Selector, WProduct, WCPProductV2Dto, WNormalizedInterval, CatalogProductEntry, CatalogCategoryEntry, IWInterval, IRecurringInterval, IMoney, TipSelection, IOptionInstance, FulfillmentTime, OrderLineDiscount, UnresolvedDiscount, OrderPayment, UnresolvedPayment, WOrderInstancePartial, RecomputeTotalsResult, ProductModifierEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto } from "./types";
-import { CURRENCY, DISABLE_REASON, OptionPlacement, OptionQualifier, DiscountMethod, PaymentMethod, PRODUCT_LOCATION, CALL_LINE_DISPLAY } from "./types";
-import { RRule } from "rrule";
+import { CURRENCY, PaymentMethod, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PRODUCT_LOCATION, CALL_LINE_DISPLAY } from "./types";
+
+import type { IMoney, Selector, WProduct, IWInterval, TipSelection, OrderPayment, CoreCartEntry, DineInInfoDto, FulfillmentDto, WCPProductV2Dto, IOptionInstance, FulfillmentTime, IProductInstance, ICatalogSelectors, OrderLineDiscount, UnresolvedPayment, FulfillmentConfig, IRecurringInterval, UnresolvedDiscount, WNormalizedInterval, CatalogProductEntry, CatalogCategoryEntry, ProductModifierEntry, WOrderInstancePartial, RecomputeTotalsResult, CategorizedRebuiltCart } from "./types";
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
 
 export const PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX = /(\{[A-Za-z0-9]+\})/g;
 
-export function ReduceArrayToMapByKey<T, Key extends keyof T>(xs: T[], key: Key) {
+export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
   return Object.fromEntries(xs.map(x => [x[key], x])) as Record<string, T>;
 };
 
@@ -41,7 +44,7 @@ export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelec
 
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
 export const DetermineCartBasedLeadTime = (cart: CoreCartEntry<WCPProductV2Dto>[], productSelector: Selector<CatalogProductEntry>): number => {
-  const leadTimeMap: Record<number, { base: number; quant: number; }> = cart.reduce((acc, cartLine) => {
+  const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number; }>>((acc, cartLine) => {
     const product = productSelector(cartLine.product.pid);
     return product?.product.timing ? {
       ...acc,
@@ -54,7 +57,7 @@ export const DetermineCartBasedLeadTime = (cart: CoreCartEntry<WCPProductV2Dto>[
         quant: (product.product.timing.additionalUnitPrepTime * cartLine.quantity)
       }
     } : acc;
-  }, {} as Record<number, { base: number; quant: number; }>);
+  }, {});
   return Object.values(leadTimeMap).reduce((acc, entry) => Math.max(acc, entry.base + entry.quant), 0);
 }
 
@@ -134,7 +137,7 @@ export const GenerateShortCode = function (productInstanceSelector: Selector<IPr
   return productInstanceSelector(p.m.pi[PRODUCT_LOCATION.LEFT])?.shortcode ?? "UNDEFINED";
 }
 
-export const GenerateDineInGuestCountString = (dineInInfo: DineInInfoDto | null) => dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize})` : "";
+export const GenerateDineInGuestCountString = (dineInInfo: DineInInfoDto | null) => dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize.toString()})` : "";
 
 const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'productInstance' | 'category'>, cart: CoreCartEntry<WProduct>[]) => {
   if (cart.length === 0) {
@@ -144,25 +147,25 @@ const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'pro
   if (!category) {
     return ''
   }
-  const callLineName = category.display_flags.call_line_name ?? "";
+  const callLineName = category.display_flags.call_line_name || "";
   const callLineNameWithSpaceIfNeeded = callLineName.length > 0 ? `${callLineName} ` : "";
   const callLineDisplay = category.display_flags.call_line_display;
   switch (callLineDisplay) {
     case CALL_LINE_DISPLAY.SHORTCODE: {
       const { total, shortcodes } = cart.reduce((acc: { total: number; shortcodes: string[] }, entry) => ({
         total: acc.total + entry.quantity,
-        shortcodes: [...acc.shortcodes, ...Array(entry.quantity).fill(GenerateShortCode(catalogSelectors.productInstance, entry.product))]
+        shortcodes: [...acc.shortcodes, ...Array<string>(entry.quantity).fill(GenerateShortCode(catalogSelectors.productInstance, entry.product))]
       }), { total: 0, shortcodes: [] });
       return `${callLineNameWithSpaceIfNeeded} ${total.toString(10)}x ${shortcodes.join(" ")}`;
     }
     case CALL_LINE_DISPLAY.SHORTNAME: {
-      const shortnames: string[] = cart.map(item => `${item.quantity}x${item.product.m.shortname}`);
+      const shortnames: string[] = cart.map(item => `${item.quantity.toString()}x${item.product.m.shortname}`);
       return `${callLineNameWithSpaceIfNeeded}${shortnames.join(" ")}`;
     }
     case CALL_LINE_DISPLAY.QUANTITY: {
       // would be nice to have a 
       const total = cart.reduce((total, entry) => total + entry.quantity, 0);
-      return `${total.toString(10)}${callLineName ?? 'x'}`;
+      return `${total.toString(10)}${callLineName || 'x'}`;
     }
   }
 }
@@ -171,7 +174,7 @@ export const EventTitleStringBuilder = (catalogSelectors: Pick<ICatalogSelectors
   const has_special_instructions = special_instructions && special_instructions.length > 0;
   const mainCategoryTree = ComputeCategoryTreeIdList(fulfillmentConfig.orderBaseCategoryId, catalogSelectors.category);
   const mainCategorySection = mainCategoryTree.map(x => EventTitleSectionBuilder(catalogSelectors, cart[x] ?? [])).filter(x => x.length > 0).join(" ");
-  const fulfillmentShortcode = fulfillmentDto.thirdPartyInfo?.source ? fulfillmentDto.thirdPartyInfo?.source.slice(0, 2).toUpperCase() : fulfillmentConfig.shortcode
+  const fulfillmentShortcode = fulfillmentDto.thirdPartyInfo?.source ? fulfillmentDto.thirdPartyInfo.source.slice(0, 2).toUpperCase() : fulfillmentConfig.shortcode
   const supplementalSections = Object.entries(cart).filter(([cid, _]) => mainCategoryTree.findIndex(x => x === cid) === -1)
     .sort(([cIdA, _], [cIdB, __]) => catalogSelectors.category(cIdA)!.category.ordinal - catalogSelectors.category(cIdB)!.category.ordinal)
     .map(([_, catCart]) => EventTitleSectionBuilder(catalogSelectors, catCart))
@@ -189,7 +192,7 @@ export function MoneyToDisplayString(money: IMoney, showCurrencyUnit: boolean) {
  * @param cart 
  * @returns the number products in the category ID list
  */
-export function ComputeProductCategoryMatchCount(catIds: string[], cart: CoreCartEntry<any>[]) {
+export function ComputeProductCategoryMatchCount(catIds: string[], cart: CoreCartEntry<unknown>[]) {
   return cart.reduce((acc, e) => acc + (catIds.indexOf(e.categoryId) !== -1 ? e.quantity : 0), 0)
 }
 
