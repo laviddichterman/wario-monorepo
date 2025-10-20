@@ -27,76 +27,88 @@ const basicRules = () => {
   };
 };
 
-
-/* @rules sort or imports/exports
- * from 'eslint-plugin-perfectionist'.
- */
 const sortImportsRules = () => {
-  const customGroups = {
-    mui: ['custom-mui'],
-    auth: ['custom-auth'],
-    hooks: ['custom-hooks'],
-    utils: ['custom-utils'],
-    types: ['custom-types'],
-    routes: ['custom-routes'],
-    sections: ['custom-sections'],
-    components: ['custom-components'],
+  const groups = {
+    mui: 'custom-mui',
+    auth: 'custom-auth',
+    hooks: 'custom-hooks',
+    utils: 'custom-utils',
+    types: 'custom-types',
+    routes: 'custom-routes',
+    sections: 'custom-sections',
+    components: 'custom-components',
   };
 
   return {
-    'perfectionist/sort-named-imports': [1, { type: 'line-length', order: 'asc' }],
-    'perfectionist/sort-named-exports': [1, { type: 'line-length', order: 'asc' }],
-    'perfectionist/sort-exports': [
-      1,
-      {
-        order: 'asc',
-        type: 'line-length',
-        groupKind: 'values-first',
-      },
-    ],
-    'perfectionist/sort-imports': [
-      2,
-      {
-        order: 'asc',
-        ignoreCase: true,
-        type: 'line-length',
-        environment: 'node',
-        maxLineLength: 120,
-        newlinesBetween: 'always',
-        internalPattern: ["^@/.+", "^src/.+"],
-        groups: [
-          'style',
-          'side-effect',
-          'type',
-          ['builtin', 'external'],
-          customGroups.mui,
-          customGroups.routes,
-          customGroups.hooks,
-          customGroups.utils,
-          customGroups.components,
-          customGroups.sections,
-          customGroups.auth,
-          customGroups.types,
-          'internal',
-          ['parent', 'sibling', 'index'],
-          ['parent-type', 'sibling-type', 'index-type'],
-          'object',
-          'unknown',
-        ],
-        customGroups: {
-          value: {
-            [customGroups.mui]: ['^@mui/.+'],
-            [customGroups.auth]: ['^src/auth/.+', '^@/auth/.+'],
-            [customGroups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
-            [customGroups.utils]: ['^src/utils/.+', '^@/utils/.+'],
-            [customGroups.types]: ['^src/types/.+', '^@/types/.+'],
-            [customGroups.routes]: ['^src/routes/.+', '^@/routes/.+'],
-            [customGroups.sections]: ['^src/sections/.+', '^@/sections/.+'],
-            [customGroups.components]: ['^src/components/.+', '^@/components/.+'],
-          },
+    // 1) Whole import statement ordering
+    'perfectionist/sort-imports': ['warn', {
+      type: 'natural',
+      order: 'asc',
+      ignoreCase: true,
+      environment: 'node',
+      // classify internal paths (monorepo + common app aliases)
+      internalPattern: ['^@/.+', '^src/.+', '^\.\./', '^\./'],
+
+      // one blank line between groups (stable, readable)
+      newlinesBetween: 1,
+
+      // explicit, predictable groups (value/type pairs)
+      groups: [
+        'side-effect-style',                 // e.g. import './reset.css'
+        'side-effect-import',                // e.g. import './setup'
+        ['value-builtin', 'type-builtin'],
+        ['value-external', 'type-external'],
+
+        // your custom buckets come next
+        groups.mui,
+        groups.routes,
+        groups.hooks,
+        groups.utils,
+        groups.components,
+        groups.sections,
+        groups.auth,
+        groups.types,
+
+        ['value-internal', 'type-internal'],
+        ['value-parent', 'type-parent'],
+        ['value-sibling', 'type-sibling'],
+        ['value-index', 'type-index'],
+
+        'value-style',
+        'unknown'
+      ],
+
+      // mirror patterns for value and type, so type-only imports stick with their group
+      customGroups: {
+        value: {
+          [groups.mui]: ['^@mui/.+'],
+          [groups.auth]: ['^src/auth/.+', '^@/auth/.+'],
+          [groups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
+          [groups.utils]: ['^src/utils/.+', '^@/utils/.+'],
+          [groups.types]: ['^src/types/.+', '^@/types/.+'],
+          [groups.routes]: ['^src/routes/.+', '^@/routes/.+'],
+          [groups.sections]: ['^src/sections/.+', '^@/sections/.+'],
+          [groups.components]: ['^src/components/.+', '^@/components/.+'],
         },
-      },
-    ],
+        type: {
+          [groups.mui]: ['^@mui/.+'],
+          [groups.auth]: ['^src/auth/.+', '^@/auth/.+'],
+          [groups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
+          [groups.utils]: ['^src/utils/.+', '^@/utils/.+'],
+          [groups.types]: ['^src/types/.+', '^@/types/.+'],
+          [groups.routes]: ['^src/routes/.+', '^@/routes/.+'],
+          [groups.sections]: ['^src/sections/.+', '^@/sections/.+'],
+          [groups.components]: ['^src/components/.+', '^@/components/.+'],
+        }
+      }
+    }],
+
+    // 2) Named specifier ordering (inside a single import/export)
+    'perfectionist/sort-named-imports': ['warn', { type: 'natural', order: 'asc', ignoreCase: true }],
+    'perfectionist/sort-named-exports': ['warn', { type: 'natural', order: 'asc', ignoreCase: true }],
+
+    // 3) Exports order (by statement)
+    'perfectionist/sort-exports': ['warn', { type: 'natural', order: 'asc', groupKind: 'values-first' }],
   };
 };
 
@@ -138,24 +150,6 @@ const tsConfig = {
   rules: {
     ...basicRules(),
     ...sortImportsRules(),
-    // // Perfectionist: common-sense in-line ordering
-    // "perfectionist/sort-named-imports": ["warn", { type: "natural", order: "asc", ignoreCase: true }],
-    // "perfectionist/sort-named-exports": ["warn", { type: "natural", order: "asc", ignoreCase: true }],
-    // "perfectionist/sort-interfaces": [
-    //   "warn",
-    //   { type: "natural", order: "asc", ignoreCase: true, partitionByNewLine: true }
-    // ],
-    // "perfectionist/sort-union-types": ["warn", { type: "natural", order: "asc", ignoreCase: true }],
-    // "perfectionist/sort-intersection-types": ["warn", { type: "natural", order: "asc", ignoreCase: true }],
-    // "perfectionist/sort-objects": [
-    //   "warn",
-    //   {
-    //     type: "natural",
-    //     order: "asc",
-    //     ignoreCase: true,
-    //     partitionByNewLine: true
-    //   }
-    // ]
   }
 };
 
