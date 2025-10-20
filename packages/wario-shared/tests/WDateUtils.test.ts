@@ -1,5 +1,4 @@
-import { WDateUtils } from '../src/lib/objects/WDateUtils';
-import { DayOfTheWeek } from '../src';
+import { WDateUtils, DayOfTheWeek } from '../src/index';
 import { describe, expect, it } from '@jest/globals';
 
 describe('WDateUtils.AreWeOpenNow', () => {

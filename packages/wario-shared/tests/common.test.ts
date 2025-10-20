@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { DisableDataCheck, DISABLE_REASON, IWInterval, IRecurringInterval, WDateUtils } from '../src/';
+import { DisableDataCheck, DISABLE_REASON, type IWInterval, type IRecurringInterval, WDateUtils } from '../src/index';
 import { addHours, getTime, subHours } from 'date-fns';
 
 test('DisableDataCheck: should return ENABLED when disable_data is null and availabilities is empty', () => {
