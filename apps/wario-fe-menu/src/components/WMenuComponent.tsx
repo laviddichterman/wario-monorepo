@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { ProductDisplay } from './WProductComponent';
-import { WModifiersComponent } from './WModifiersComponent';
-import { useAppDispatch, useAppSelector } from "../app/useHooks";
-import { Box, Tab, Typography, Accordion, AccordionSummary, AccordionDetails, type TypographyProps } from '@mui/material';
-import { TabList, TabPanel, TabContext } from '@mui/lab'
-import { WDateUtils, CategoryDisplay } from '@wcp/wario-shared';
-import { GetNextAvailableServiceDateTimeForMenu, type RootState, SelectMenuCategoryId, SelectMenuFooterFromCategoryById, SelectMenuNameFromCategoryById, SelectMenuNestingFromCategoryById, SelectMenuSubtitleFromCategoryById } from '../app/store';
-import { getProductInstanceById, LoadingScreen, type ProductCategoryFilter, scrollToElementOffsetAfterDelay, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory, SelectProductMetadata, Separator } from '@wcp/wario-ux-shared';
-
-import { ExpandMore } from '@mui/icons-material';
+import { Separator, LoadingScreen, SelectProductMetadata, getProductInstanceById, type ProductCategoryFilter, SelectDefaultFulfillmentId, scrollToElementOffsetAfterDelay, SelectProductInstanceIdsInCategory, SelectPopulatedSubcategoryIdsInCategory, SelectParentProductEntryFromProductInstanceId } from '@wcp/wario-ux-shared';
 import { createSelector } from '@reduxjs/toolkit';
-import { setService } from '../app/slices/WFulfillmentSlice';
+import React, { useState, useEffect, useCallback } from 'react';
+import { WDateUtils, CategoryDisplay } from '@wcp/wario-shared';
+
+import { Box, Tab, Accordion, Typography, AccordionSummary, AccordionDetails, type TypographyProps } from '@mui/material';
+import { ExpandMore } from '@mui/icons-material';
+import { TabList, TabPanel, TabContext } from '@mui/lab'
+
+import { type RootState, SelectMenuCategoryId, SelectMenuNameFromCategoryById, SelectMenuFooterFromCategoryById, SelectMenuNestingFromCategoryById, SelectMenuSubtitleFromCategoryById, GetNextAvailableServiceDateTimeForMenu } from '../app/store';
+import { ProductDisplay } from './WProductComponent';
 import { WMenuDataGrid } from './WMenuTableComponent';
+import { WModifiersComponent } from './WModifiersComponent';
+import { setService } from '../app/slices/WFulfillmentSlice';
+import { useAppDispatch, useAppSelector } from "../app/useHooks";
 
 export const SelectProductMetadataForMenu = createSelector(
   (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId),
@@ -95,6 +96,7 @@ function WMenuSection({ categoryId }: WMenuDisplayProps) {
   );
 };
 
+// eslint-disable-next-line prefer-const
 let WMenuRecursive: ({ categoryId }: WMenuDisplayProps) => React.JSX.Element;
 
 function WMenuAccordion({ categoryId }: WMenuDisplayProps) {
@@ -160,7 +162,7 @@ function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
             TabIndicatorProps={{ hidden: true }}
             scrollButtons={false}
             centered
-            onChange={(_, v) => setActive(v)}
+            onChange={(_, v: string) => setActive(v)}
             aria-label={`${menuName} tab navigation`}
           >
             {populatedSubcategories.map((section, i) => (

@@ -1,25 +1,26 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useAppSelector } from "../app/useHooks";
-import { store, type RootState } from '../app/store';
-import { Typography, Grid, Stack, Box } from '@mui/material';
-import { getProductInstanceById, Separator, WarioToggleButton, weakMapCreateSelector } from '@wcp/wario-ux-shared';
 import { isEqual } from 'lodash';
+import { createStructuredSelector } from 'reselect';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import { Separator, WarioToggleButton, weakMapCreateSelector, getProductInstanceById } from '@wcp/wario-ux-shared';
 
 import {
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
-  type GridToolbarQuickFilterProps,
-  DataGridPremium,
-  useKeepGroupedColumnsHidden,
-  useGridApiRef,
-  type GridEventListener,
   gridClasses,
+  useGridApiRef,
+  type GridRowId,
+  DataGridPremium,
+  GridToolbarContainer,
   type GridFilterModel,
+  GridToolbarQuickFilter,
+  type GridEventListener,
   getGridStringOperators,
-  type GridRowId
+  useKeepGroupedColumnsHidden,
+  type GridToolbarQuickFilterProps
 } from '@mui/x-data-grid-premium';
-import { createStructuredSelector } from 'reselect';
-import { SelectProductInstanceIdsInCategoryForNextAvailableTime, SelectProductMetadataForMenu } from './WMenuComponent';
+import { Box, Grid, Stack, Typography } from '@mui/material';
+
+import { useAppSelector } from "../app/useHooks";
+import { store, type RootState } from '../app/store';
+import { SelectProductMetadataForMenu, SelectProductInstanceIdsInCategoryForNextAvailableTime } from './WMenuComponent';
 
 export interface ToolbarAction {
   size: number; elt: React.ReactNode;
@@ -32,6 +33,7 @@ export interface CustomToolbarProps {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function CustomToolbar({ showQuickFilter, quickFilterProps, title, actions = [] }: CustomToolbarProps) {
   const actionSizeSum = actions.reduce((acc, x) => acc + x.size, 0);
   return (
@@ -71,8 +73,8 @@ type RowType = {
   id: string;
 }
 interface WMenuDisplayProps { categoryId: string; };
-interface DGEmbeddedMetadata { size: number; ordinal: number; key: string };
-const DataGridMetadataPrefix = /DG_(S(?<size>\d)_)?(O(?<ordinal>-?\d)_)?(?<name>.*)/;
+// interface DGEmbeddedMetadata { size: number; ordinal: number; key: string };
+// const DataGridMetadataPrefix = /DG_(S(?<size>\d)_)?(O(?<ordinal>-?\d)_)?(?<name>.*)/;
 
 // interface HierarchicalProductStructure {
 //   category: string;
@@ -103,7 +105,7 @@ const SelectProductInstanceForMenu = createStructuredSelector(
     },
     name: (s: RootState, productInstanceId: string) => SelectProductMetadataForMenu(s, productInstanceId).name,
     price: (s: RootState, productInstanceId: string) => SelectProductMetadataForMenu(s, productInstanceId).price,
-    metadata: (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId)!.externalIDs.reduce((acc, kv) => kv.value.length ? { ...acc, [kv.key]: kv.value } : acc, {})
+    metadata: (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId).externalIDs.reduce((acc, kv) => kv.value.length ? { ...acc, [kv.key]: kv.value } : acc, {})
   },
   weakMapCreateSelector
 );
@@ -198,7 +200,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     (params) => {
       const rowNode = apiRef.current?.getRowNode(params.id);
       if (rowNode && rowNode.type === 'group') {
-        apiRef.current!.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
+        apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
       }
     },
     [apiRef],

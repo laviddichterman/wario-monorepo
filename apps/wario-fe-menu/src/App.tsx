@@ -1,13 +1,13 @@
+import { domMax, LazyMotion } from "motion/react"
 import { useEffect, useLayoutEffect } from 'react';
-import { LazyMotion, domMax } from "motion/react"
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { ScopedCssBaseline } from '@mui/material';
 
-import { scrollToIdOffsetAfterDelay, LoadingScreen, IsSocketDataLoaded, startConnection } from '@wcp/wario-ux-shared';
+import { ScopedCssBaseline } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+import { themeOptions } from "@wcp/wario-fe-ux-shared";
+import { IsSocketDataLoaded, LoadingScreen, scrollToIdOffsetAfterDelay, startConnection } from '@wcp/wario-ux-shared';
 
 import { useAppDispatch, useAppSelector } from "./app/useHooks";
-import { themeOptions } from "@wcp/wario-fe-ux-shared";
-
 import WMenuComponent from './components/WMenuComponent';
 
 const theme = createTheme(themeOptions);

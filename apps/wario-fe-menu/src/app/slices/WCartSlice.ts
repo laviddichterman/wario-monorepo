@@ -1,4 +1,5 @@
-import { createSlice, type PayloadAction, createEntityAdapter, type EntityState } from "@reduxjs/toolkit";
+import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit";
+
 import { type CartEntry, type CatalogModifierEntry, type CatalogProductEntry, type Selector, type WCPProduct, type WProduct, WProductCompare, WProductEquals } from "@wcp/wario-shared";
 
 
@@ -24,7 +25,7 @@ const WCartSlice = createSlice({
   reducers: {
     addToCart(state, action: PayloadAction<{ categoryId: string, product: WProduct }>) {
       // PRECONDITION: we've already checked for duplicates
-      const id = Number(state.indexCounter++).toString(10);
+      const id = (state.indexCounter++).toString(10);
       // should not need a deep copy here per customizer working on mutable data, but it might be not how redux works and this needs to be a deep copy
       const newEntry = { categoryId: action.payload.categoryId, product: action.payload.product, id, isLocked: false, quantity: 1 };
       WCartAdapter.addOne(state.cart, newEntry);

@@ -1,10 +1,12 @@
-import { Grid, Box } from "@mui/material";
-import { ProductPrice, ProductTitle, ProductDescription, getModifierOptionById, getModifierTypeEntryById, SelectParentProductEntryFromProductInstanceId, SelectDefaultFulfillmentId, SelectCatalogSelectors, getProductInstanceById } from "@wcp/wario-ux-shared";
-import { DISABLE_REASON, DisableDataCheck, type IProductModifier, MoneyToDisplayString, WDateUtils } from "@wcp/wario-shared";
-import { useAppSelector } from "../app/useHooks";
-import { FilterUnselectableModifierOption, GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "../app/store";
-import { SelectProductMetadataForMenu } from "./WMenuComponent";
+import { WDateUtils, DISABLE_REASON, DisableDataCheck, MoneyToDisplayString, type IProductModifier } from "@wcp/wario-shared";
+import { ProductPrice, ProductTitle, ProductDescription, getModifierOptionById, SelectCatalogSelectors, getProductInstanceById, getModifierTypeEntryById, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId } from "@wcp/wario-ux-shared";
 import { createSelector } from "@reduxjs/toolkit";
+
+import { Box, Grid } from "@mui/material";
+
+import { type RootState, GetNextAvailableServiceDateTime, FilterUnselectableModifierOption, SelectShouldFilterModifierTypeDisplay } from "../app/store";
+import { useAppSelector } from "../app/useHooks";
+import { SelectProductMetadataForMenu } from "./WMenuComponent";
 import { ModifierOptionTooltip } from "./ModifierOptionTooltip";
 
 
