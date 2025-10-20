@@ -1,14 +1,14 @@
-import type { WProduct, CoreCartEntry } from "@wcp/wario-shared";
-
 import { createSelector } from "@reduxjs/toolkit";
 
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
 
+import type { CoreCartEntry, WProduct } from "@wcp/wario-shared";
+
 import { AdapterCurrentTimeOverrideUtils } from "@/common/DateFnsAdapter";
-import { type SocketIoState, getCategoryEntryById } from "@/redux/SocketIoSlice";
+import { getCategoryEntryById, type SocketIoState } from "@/redux/SocketIoSlice";
 
 
-export const selectGroupedAndOrderedCart = <RootState extends { ws: SocketIoState }, T extends CoreCartEntry<WProduct>>(s: RootState, cart: T[]) => {
+export const selectGroupedAndOrderedCart = <T extends CoreCartEntry<WProduct>>(s: { ws: SocketIoState }, cart: T[]) => {
   return Object.entries(cart.reduce((cartMap: Record<string, T[]>, entry: T) =>
     Object.hasOwn(cartMap, entry.categoryId) ?
       { ...cartMap, [entry.categoryId]: [...cartMap[entry.categoryId], entry] } :
@@ -33,22 +33,21 @@ export const selectGroupedAndOrderedCart = <RootState extends { ws: SocketIoStat
 // export const SelectMessageRequestWellDone = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.SPECIAL_REQUEST_MESSAGES.WELLDONE as string ?? "";
 // export const SelectMessageRequestSlicing = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.SPECIAL_REQUEST_MESSAGES.SLICING as string ?? "";
 
-export const SelectSquareAppId = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings?.config.SQUARE_APPLICATION_ID as string ?? "";
-export const SelectSquareLocationId = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings?.config.SQUARE_LOCATION as string ?? "";
-export const SelectDefaultFulfillmentId = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings?.config.DEFAULT_FULFILLMENTID as string ?? null;
-export const SelectAllowAdvanced = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings?.config.ALLOW_ADVANCED as boolean ?? false;
-export const SelectGratuityServiceCharge = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings?.config.SERVICE_CHARGE as number ?? 0;
-export const SelectDeliveryAreaLink = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.DELIVERY_LINK as string;
-export const SelectTipPreamble = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.TIP_PREAMBLE as string ?? "";
-export const SelectTaxRate = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.TAX_RATE as number;
-export const SelectAutoGratutityThreshold = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.AUTOGRAT_THRESHOLD as number ?? 5;
-export const SelectMessageRequestVegan = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.MESSAGE_REQUEST_VEGAN as string ?? "";
-export const SelectMessageRequestHalf = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.MESSAGE_REQUEST_HALF as string ?? "";
-export const SelectMessageRequestWellDone = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.MESSAGE_REQUEST_WELLDONE as string ?? "";
-export const SelectMessageRequestSlicing = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.MESSAGE_REQUEST_SLICING as string ?? "";
+export const SelectSquareAppId = (s: { ws: SocketIoState }) => s.ws.settings?.config.SQUARE_APPLICATION_ID as string || "";
+export const SelectSquareLocationId = (s: { ws: SocketIoState }) => s.ws.settings?.config.SQUARE_LOCATION as string || "";
+export const SelectDefaultFulfillmentId = (s: { ws: SocketIoState }) => s.ws.settings?.config.DEFAULT_FULFILLMENTID as string || null;
+export const SelectAllowAdvanced = (s: { ws: SocketIoState }) => s.ws.settings?.config.ALLOW_ADVANCED as boolean || false;
+export const SelectGratuityServiceCharge = (s: { ws: SocketIoState }) => s.ws.settings?.config.SERVICE_CHARGE as number || 0;
+export const SelectDeliveryAreaLink = (s: { ws: SocketIoState }) => s.ws.settings?.config.DELIVERY_LINK as string || "";
+export const SelectTipPreamble = (s: { ws: SocketIoState }) => s.ws.settings?.config.TIP_PREAMBLE as string || "";
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+export const SelectTaxRate = (s: { ws: SocketIoState }) => s.ws.settings!.config.TAX_RATE as number;
+export const SelectAutoGratutityThreshold = (s: { ws: SocketIoState }) => s.ws.settings?.config.AUTOGRAT_THRESHOLD as number || 5;
+export const SelectMessageRequestVegan = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_VEGAN as string || "";
+export const SelectMessageRequestHalf = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_HALF as string || "";
+export const SelectMessageRequestWellDone = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_WELLDONE as string || "";
+export const SelectMessageRequestSlicing = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_SLICING as string || "";
 
 export const SelectDateFnsAdapter = createSelector(
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-  (s: any) => s.ws.currentTime,
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+  (s: { ws: { currentTime: number } }) => s.ws.currentTime,
   (currentTime) => currentTime !== 0 ? AdapterCurrentTimeOverrideUtils(currentTime) : AdapterDateFns);

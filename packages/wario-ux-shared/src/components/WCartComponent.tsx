@@ -1,9 +1,9 @@
-import type { IMoney, WProduct, OrderPayment, CoreCartEntry, ICatalogSelectors, OrderLineDiscount } from '@wcp/wario-shared';
+import { useCallback, useMemo } from 'react';
 
-import { useMemo, useCallback } from 'react';
-import { PaymentMethod, DiscountMethod, TenderBaseStatus, MoneyToDisplayString } from '@wcp/wario-shared';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 
-import { Paper, Table, TableRow, TableBody, TableCell, TableHead, Typography, TableContainer } from '@mui/material';
+import type { CoreCartEntry, ICatalogSelectors, IMoney, OrderLineDiscount, OrderPayment, WProduct } from '@wcp/wario-shared';
+import { DiscountMethod, MoneyToDisplayString, PaymentMethod, TenderBaseStatus } from '@wcp/wario-shared';
 
 import { ProductDisplay } from '@/components/WProductComponent';
 

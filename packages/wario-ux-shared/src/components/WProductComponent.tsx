@@ -1,14 +1,15 @@
-import type { BoxProps } from '@mui/material';
-import type { WProductMetadata, ICatalogSelectors } from '@wcp/wario-shared';
-
+/* eslint-disable @typescript-eslint/no-misused-spread */
 import { useMemo } from 'react';
-import { PriceDisplay, MoneyToDisplayString, ComputePotentialPrices, WProductDisplayOptions } from '@wcp/wario-shared';
 
+import type { BoxProps } from '@mui/material';
 import { Box } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
+import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared';
+import { ComputePotentialPrices, MoneyToDisplayString, PriceDisplay, WProductDisplayOptions } from '@wcp/wario-shared';
+
+import { Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '@/styled/styled';
 import { AdornedSxProps } from '@/styled/styled.constants';
-import { Dots, ProductPrice, ProductTitle, ProductAdornment, ProductDescription } from '@/styled/styled';
 
 interface WProductComponentProps {
   catalogSelectors: ICatalogSelectors;
@@ -38,7 +39,7 @@ function WProductComponent({ catalogSelectors, productMetadata, description, all
         case PriceDisplay.VARIES: return "MP";
         case PriceDisplay.MIN_TO_MAX: {
           const prices = ComputePotentialPrices(productMetadata, catalogSelectors);
-          return prices.length > 1 && prices[0] !== prices[prices.length - 1] ? `from ${MoneyToDisplayString(prices[0], false)} to ${MoneyToDisplayString(prices[prices.length - 1], false)}` : `${MoneyToDisplayString(prices[0], false)}`;
+          return prices.length > 1 && prices[0] !== prices[prices.length - 1] ? `from ${MoneyToDisplayString(prices[0], false)} to ${MoneyToDisplayString(prices[prices.length - 1], false)}` : MoneyToDisplayString(prices[0], false);
         }
         case PriceDisplay.LIST: return ComputePotentialPrices(productMetadata, catalogSelectors).map(x => MoneyToDisplayString(x, false)).join("/");
         case PriceDisplay.ALWAYS: default: return MoneyToDisplayString(productMetadata.price, false);

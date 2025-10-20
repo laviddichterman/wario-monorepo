@@ -30,6 +30,7 @@ const basicRules = () => {
 const sortImportsRules = () => {
   const groups = {
     mui: 'custom-mui',
+    wcp: 'custom-wcp',
     auth: 'custom-auth',
     hooks: 'custom-hooks',
     utils: 'custom-utils',
@@ -61,6 +62,7 @@ const sortImportsRules = () => {
 
         // your custom buckets come next
         groups.mui,
+        groups.wcp,
         groups.routes,
         groups.hooks,
         groups.utils,
@@ -82,6 +84,7 @@ const sortImportsRules = () => {
       customGroups: {
         value: {
           [groups.mui]: ['^@mui/.+'],
+          [groups.wcp]: ['^@wcp/.+'],
           [groups.auth]: ['^src/auth/.+', '^@/auth/.+'],
           [groups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
           [groups.utils]: ['^src/utils/.+', '^@/utils/.+'],
@@ -92,6 +95,7 @@ const sortImportsRules = () => {
         },
         type: {
           [groups.mui]: ['^@mui/.+'],
+          [groups.wcp]: ['^@wcp/.+'],
           [groups.auth]: ['^src/auth/.+', '^@/auth/.+'],
           [groups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
           [groups.utils]: ['^src/utils/.+', '^@/utils/.+'],
@@ -127,7 +131,6 @@ const packageJsonConfig = {
 
 const tsConfig = {
   files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
-  ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**"],
   languageOptions: {
     parser: tsParser,
     globals: {},
@@ -154,6 +157,9 @@ const tsConfig = {
 };
 
 export default defineConfig([
+  {
+    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**", "**/node_modules/**", "**/*eslint.config.js"],
+  },
   tsConfig,
   packageJsonConfig
 ]);

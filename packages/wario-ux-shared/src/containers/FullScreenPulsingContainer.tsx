@@ -1,8 +1,7 @@
+import { m } from 'motion/react';
 import type { ReactNode } from 'react';
 
-import { m } from 'motion/react';
-
-import { Box, alpha, styled } from '@mui/material';
+import { alpha, Box, styled } from '@mui/material';
 
 export const RootStyle = styled('div')(({ theme }) => ({
   right: 0,

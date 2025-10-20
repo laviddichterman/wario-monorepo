@@ -1,4 +1,4 @@
-import { Dialog, DialogTitle, Divider, type DialogProps } from '@mui/material';
+import { Dialog, type DialogProps, DialogTitle, Divider } from '@mui/material';
 
 export interface IDialogContainer {
   onClose: Exclude<DialogProps['onClose'], undefined>;

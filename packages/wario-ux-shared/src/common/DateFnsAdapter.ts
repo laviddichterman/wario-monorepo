@@ -1,8 +1,7 @@
-import type { DateBuilderReturnType } from '@mui/x-date-pickers/models';
-
 import { toDate as toDateBase } from 'date-fns';
 
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import type { DateBuilderReturnType } from '@mui/x-date-pickers/models';
 
 export const AdapterCurrentTimeOverrideUtils = (now: Date | number) =>
   class AdapterDateFnsWrapper extends AdapterDateFns {
@@ -14,6 +13,7 @@ export const AdapterCurrentTimeOverrideUtils = (now: Date | number) =>
         return <R>toDateBase(now);
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (value === null) {
         return <R>null;
       }

@@ -1,5 +1,4 @@
-import { Button, FormControlLabel, ToggleButton, Typography } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Button, FormControlLabel, styled, ToggleButton, Typography } from '@mui/material';
 
 export const OkResponseOutput = styled('div')(() => ({
   margin: '2em .5em 1em', padding: ".2em 1em", border: "2px solid blue"

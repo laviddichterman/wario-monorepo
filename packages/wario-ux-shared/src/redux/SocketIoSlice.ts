@@ -1,11 +1,11 @@
-import type { IOption, ICatalog, IWSettings, IProductInstance, FulfillmentConfig, CatalogProductEntry, CatalogCategoryEntry, CatalogModifierEntry, ProductModifierEntry, OrderInstanceFunction, IProductInstanceFunction } from "@wcp/wario-shared";
 import type { EntityState, PayloadAction } from "@reduxjs/toolkit";
-
-import { GetMenuHideDisplayFlag, IgnoreHideDisplayFlags, GetOrderHideDisplayFlag, FilterProductUsingCatalog, WCPProductGenerateMetadata } from "@wcp/wario-shared";
+import { createEntityAdapter, createSelector, createSlice } from "@reduxjs/toolkit";
 import { parseISO } from 'date-fns';
-import { createSlice, createSelector, createEntityAdapter } from "@reduxjs/toolkit";
 
-import { weakMapCreateSelector, lruMemoizeOptionsWithSize } from "./selectorHelpers";
+import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, FulfillmentConfig, ICatalog, IOption, IProductInstance, IProductInstanceFunction, IWSettings, OrderInstanceFunction, ProductModifierEntry } from "@wcp/wario-shared";
+import { FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, IgnoreHideDisplayFlags, WCPProductGenerateMetadata } from "@wcp/wario-shared";
+
+import { lruMemoizeOptionsWithSize, weakMapCreateSelector } from "./selectorHelpers";
 
 export const TIMING_POLLING_INTERVAL = 30000;
 
@@ -132,6 +132,7 @@ const SocketIoSlice = createSlice({
       const computedTicksSinceLoad = state.roughTicksSinceLoad + computedTicksElapsedBetweenCalls;
       const ticks = Math.max(computedTicksSinceLoad, totalTicksBetweenLocalTime);
       state.currentLocalTime = currentLocalTime;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       state.currentTime = parseISO(state.serverTime!.time).valueOf() + ticks;
       state.roughTicksSinceLoad = ticks;
       console.log("Current Time: ", state.currentTime);
@@ -168,12 +169,14 @@ export const SelectCatalogSelectors = createSelector(
 
 export const { receiveCatalog, receiveFulfillments, receiveServerTime, receiveSettings, setConnected, setCurrentTime, setFailed, startConnection } = SocketIoSlice.actions;
 export const SocketIoReducer = SocketIoSlice.reducer;
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 export const IsSocketDataLoaded = (s: SocketIoState) => s.serverTime !== null && s.fulfillments !== null && s.catalog !== null && s.settings !== null;
 
 export const SelectParentProductEntryFromProductInstanceId = weakMapCreateSelector(
   (s: SocketIoState) => s.products,
   (s: SocketIoState, productInstanceId: string) => getProductInstanceById(s.productInstances, productInstanceId),
   (products, productInstance) =>
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     productInstance ? getProductEntryById(products, productInstance.productId) : undefined,
 );
 
@@ -188,7 +191,8 @@ export const SelectBaseProductNameByProductId = weakMapCreateSelector(
   (s: SocketIoState, productClassId: string) => getProductEntryById(s.products, productClassId),
   (s: SocketIoState, _: string) => s.productInstances,
   (productEntry, productInstances) =>
-    productEntry ? getProductInstanceById(productInstances, productEntry.product.baseProductId)?.displayName ?? "UNDEFINED" : "UNDEFINED",
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    productEntry ? getProductInstanceById(productInstances, productEntry.product.baseProductId).displayName || "UNDEFINED" : "UNDEFINED",
 );
 
 export const SelectProductMetadata = createSelector(
@@ -232,17 +236,17 @@ export const SelectProductInstanceIdsInCategory = weakMapCreateSelector(
     if (category.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
       return [];
     }
-    const categoryProductInstances = category.products.reduce((acc: IProductInstance[], productId) => {
+    const categoryProductInstances = category.products.reduce<IProductInstance[]>((acc: IProductInstance[], productId) => {
       const product = getProductEntryById(products, productId);
       if (!product.product.disabled || product.product.disabled.start <= product.product.disabled.end) {
-        return [...acc, ...product.instances.reduce((accB, pIId) => {
+        return [...acc, ...product.instances.reduce<IProductInstance[]>((accB, pIId) => {
           const pi = getProductInstanceById(productInstances, pIId) satisfies IProductInstance;
           const passesFilter = FilterProductUsingCatalog(productId, pi.modifiers, pi.displayFlags, { option: id => getModifierOptionById(options, id), productEntry: id => getProductEntryById(products, id) }, filter === 'Menu' ? GetMenuHideDisplayFlag : (filter === "Order" ? GetOrderHideDisplayFlag : IgnoreHideDisplayFlags), order_time, fulfillmentId);
           return passesFilter ? [...accB, pi] : accB;
-        }, [] as IProductInstance[])];
+        }, [])];
       }
       return acc;
-    }, [] as IProductInstance[]);
+    }, []);
     switch (filter) {
       case 'Menu':
         categoryProductInstances.sort((a, b) => (a.displayFlags.menu.ordinal - b.displayFlags.menu.ordinal)); break;

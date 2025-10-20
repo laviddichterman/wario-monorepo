@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import type { DeliveryAddressValidateRequest, DeliveryAddressValidateResponse, DeliveryInfoDto, ValidateAndLockCreditResponse } from "@wcp/wario-shared";
 import type { AxiosInstance } from "axios";
+
+import type { DeliveryAddressValidateRequest, DeliveryAddressValidateResponse, DeliveryInfoDto, ValidateAndLockCreditResponse } from "@wcp/wario-shared";
 
 export const CreateValidateStoreCreditThunk =
   (axiosInstance: AxiosInstance) =>
@@ -10,6 +11,7 @@ export const CreateValidateStoreCreditThunk =
         const response = await axiosInstance.get('/api/v1/payments/storecredit/validate', {
           params: { code },
         });
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return response.data;
       }
     );
@@ -31,6 +33,7 @@ export const CreateValidateDeliveryAddressThunk =
       const response = await axiosInstance.get('/api/v1/addresses', {
         params: request,
       });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return response.data;
     }
   );
