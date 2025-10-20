@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 import checker from 'vite-plugin-checker';
 import react from '@vitejs/plugin-react-swc';
 export default defineConfig({
@@ -18,5 +19,11 @@ export default defineConfig({
     }),
   ],
   build: { target: 'es2022' },
-  optimizeDeps: { esbuildOptions: { target: 'es2022' } }
+  optimizeDeps: { esbuildOptions: { target: 'es2022' } },
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'src': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
 });

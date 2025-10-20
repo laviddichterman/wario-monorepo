@@ -1,6 +1,15 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "baseUrl": ".", // enable paths below
+    "paths": {
+      "@/*": [
+        "src/*"
+      ], // e.g. import { X } from "@/utils/x"
+      "src/*": [
+        "src/*"
+      ] // e.g. import { X } from "src/utils/x"
+    },
     "lib": [
       "ES2022",
       "DOM",
