@@ -1,9 +1,11 @@
-import { createEntityAdapter, createSelector, createSlice } from "@reduxjs/toolkit";
+import type { IOption, ICatalog, IWSettings, IProductInstance, FulfillmentConfig, CatalogProductEntry, CatalogCategoryEntry, CatalogModifierEntry, ProductModifierEntry, OrderInstanceFunction, IProductInstanceFunction } from "@wcp/wario-shared";
 import type { EntityState, PayloadAction } from "@reduxjs/toolkit";
-import { FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, IgnoreHideDisplayFlags, WCPProductGenerateMetadata } from "@wcp/wario-shared";
-import type { ICatalog, CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, IOption, IProductInstance, IProductInstanceFunction, IWSettings, OrderInstanceFunction, FulfillmentConfig, ProductModifierEntry } from "@wcp/wario-shared";
+
+import { GetMenuHideDisplayFlag, IgnoreHideDisplayFlags, GetOrderHideDisplayFlag, FilterProductUsingCatalog, WCPProductGenerateMetadata } from "@wcp/wario-shared";
 import { parseISO } from 'date-fns';
-import { lruMemoizeOptionsWithSize, weakMapCreateSelector } from "./selectorHelpers";
+import { createSlice, createSelector, createEntityAdapter } from "@reduxjs/toolkit";
+
+import { weakMapCreateSelector, lruMemoizeOptionsWithSize } from "./selectorHelpers";
 
 export const TIMING_POLLING_INTERVAL = 30000;
 
@@ -147,19 +149,19 @@ export const SelectCatalogSelectors = createSelector(
   (state: SocketIoState) => state.orderInstanceFunctions,
   (categories, modifierEntries, modifierOptions, products, productInstances, productInstanceFunctions, orderInstanceFunctions) =>
   ({
-    categories: () => getCategoryEntryIds(categories) as string[],
+    categories: () => getCategoryEntryIds(categories),
     category: (id: string) => getCategoryEntryById(categories, id),
-    modifierEntries: () => getModifierTypeEntryIds(modifierEntries) as string[],
+    modifierEntries: () => getModifierTypeEntryIds(modifierEntries),
     modifierEntry: (id: string) => getModifierTypeEntryById(modifierEntries, id),
-    options: () => getModifierOptionIds(modifierOptions) as string[],
+    options: () => getModifierOptionIds(modifierOptions),
     option: (id: string) => getModifierOptionById(modifierOptions, id),
-    productEntries: () => getProductEntryIds(products) as string[],
+    productEntries: () => getProductEntryIds(products),
     productEntry: (id: string) => getProductEntryById(products, id),
-    productInstances: () => getProductInstanceIds(productInstances) as string[],
+    productInstances: () => getProductInstanceIds(productInstances),
     productInstance: (id: string) => getProductInstanceById(productInstances, id),
-    orderInstanceFunctions: () => getOrderInstanceFunctionIds(orderInstanceFunctions) as string[],
+    orderInstanceFunctions: () => getOrderInstanceFunctionIds(orderInstanceFunctions),
     orderInstanceFunction: (id: string) => getOrderInstanceFunctionById(orderInstanceFunctions, id),
-    productInstanceFunctions: () => getProductInstanceFunctionIds(productInstanceFunctions) as string[],
+    productInstanceFunctions: () => getProductInstanceFunctionIds(productInstanceFunctions),
     productInstanceFunction: (id: string) => getProductInstanceFunctionById(productInstanceFunctions, id)
   })
 );

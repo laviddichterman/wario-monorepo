@@ -1,10 +1,14 @@
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
-import { DiscountMethod, MoneyToDisplayString, PaymentMethod, TenderBaseStatus } from '@wcp/wario-shared';
-import type { CoreCartEntry, ICatalogSelectors, IMoney, OrderLineDiscount, OrderPayment, WProduct } from '@wcp/wario-shared';
-import { useCallback, useMemo } from 'react';
+import type { IMoney, WProduct, OrderPayment, CoreCartEntry, ICatalogSelectors, OrderLineDiscount } from '@wcp/wario-shared';
+
+import { useMemo, useCallback } from 'react';
+import { PaymentMethod, DiscountMethod, TenderBaseStatus, MoneyToDisplayString } from '@wcp/wario-shared';
+
+import { Paper, Table, TableRow, TableBody, TableCell, TableHead, Typography, TableContainer } from '@mui/material';
+
+import { ProductDisplay } from '@/components/WProductComponent';
+
 import { fPercent } from '@/common/numbers';
 import { ProductPrice, ProductTitle } from '@/styled/styled';
-import { ProductDisplay } from '@/components/WProductComponent';
 
 export interface WCheckoutCartComponentProps {
   selectedService: string;
@@ -73,7 +77,7 @@ export function WCheckoutCartComponent(props: WCheckoutCartComponentProps) {
           ))}
           <TableRow />
           {props.discounts.map((discount, i) =>
-            <TableRow key={`${discount.t}${i}`}>
+            <TableRow key={`${discount.t}${i.toString()}`}>
               <TableCell colSpan={3} >
                 {generateDiscountLine(discount)}
               </TableCell>
@@ -103,7 +107,7 @@ export function WCheckoutCartComponent(props: WCheckoutCartComponentProps) {
             <TableCell colSpan={2} align="right"><ProductPrice>{MoneyToDisplayString(props.total, false)}</ProductPrice></TableCell>
           </TableRow>}
           {props.payments.map((payment, i) =>
-            <TableRow key={`PAYMENT_${i}`}>
+            <TableRow key={`PAYMENT_${i.toString()}`}>
               <TableCell colSpan={3} >
                 {generatePaymentLine(payment)}
               </TableCell>

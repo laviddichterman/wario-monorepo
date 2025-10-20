@@ -1,8 +1,11 @@
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
+import type { WProduct, CoreCartEntry } from "@wcp/wario-shared";
+
 import { createSelector } from "@reduxjs/toolkit";
-import type { CoreCartEntry, WProduct } from "@wcp/wario-shared";
+
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
+
 import { AdapterCurrentTimeOverrideUtils } from "@/common/DateFnsAdapter";
-import { getCategoryEntryById, type SocketIoState } from "@/redux/SocketIoSlice";
+import { type SocketIoState, getCategoryEntryById } from "@/redux/SocketIoSlice";
 
 
 export const selectGroupedAndOrderedCart = <RootState extends { ws: SocketIoState }, T extends CoreCartEntry<WProduct>>(s: RootState, cart: T[]) => {
@@ -10,7 +13,7 @@ export const selectGroupedAndOrderedCart = <RootState extends { ws: SocketIoStat
     Object.hasOwn(cartMap, entry.categoryId) ?
       { ...cartMap, [entry.categoryId]: [...cartMap[entry.categoryId], entry] } :
       { ...cartMap, [entry.categoryId]: [entry] },
-    {})).sort(([keyA, _], [keyB, __]) => getCategoryEntryById(s.ws.categories, keyA)!.category.ordinal - getCategoryEntryById(s.ws.categories, keyB)!.category.ordinal);
+    {})).sort(([keyA, _], [keyB, __]) => getCategoryEntryById(s.ws.categories, keyA).category.ordinal - getCategoryEntryById(s.ws.categories, keyB).category.ordinal);
 }
 
 // export const SelectSquareAppId = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings?.SQUARE_APPLICATION_ID as string ?? "";
@@ -45,5 +48,7 @@ export const SelectMessageRequestWellDone = <RootState extends { ws: SocketIoSta
 export const SelectMessageRequestSlicing = <RootState extends { ws: SocketIoState }>(s: RootState) => s.ws.settings!.config.MESSAGE_REQUEST_SLICING as string ?? "";
 
 export const SelectDateFnsAdapter = createSelector(
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
   (s: any) => s.ws.currentTime,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   (currentTime) => currentTime !== 0 ? AdapterCurrentTimeOverrideUtils(currentTime) : AdapterDateFns);

@@ -1,11 +1,14 @@
-import type { FulfillmentConfig, ICatalog, IWSettings } from '@wcp/wario-shared';
 import type { Middleware } from 'redux';
+import type { ICatalog, IWSettings, FulfillmentConfig } from '@wcp/wario-shared';
+
 import { io, type Socket } from "socket.io-client";
-import { receiveCatalog, receiveFulfillments, receiveServerTime, receiveSettings, setConnected, setCurrentTime, setFailed, startConnection, TIMING_POLLING_INTERVAL } from './SocketIoSlice';
+
+import { setFailed, setConnected, receiveCatalog, setCurrentTime, receiveSettings, startConnection, receiveServerTime, receiveFulfillments, TIMING_POLLING_INTERVAL } from './SocketIoSlice';
+
 import type { SocketIoState } from './SocketIoSlice';
 
 export const SocketIoMiddleware = <RootStateType extends { ws: SocketIoState }>(hostAPI: string, namespace: string) => {
-  const CurrySocketIoMiddleware: Middleware<{}, RootStateType> = store => {
+  const CurrySocketIoMiddleware: Middleware<unknown, RootStateType> = store => {
     let socket: Socket;
 
     return next => action => {

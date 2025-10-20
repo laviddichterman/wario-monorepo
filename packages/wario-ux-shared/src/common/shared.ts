@@ -5,7 +5,7 @@ export const scrollToElementOffsetAfterDelay = (element: Element, delay: number,
       element.scrollIntoView({ behavior: 'smooth', block: location });
     } else {
       const bbox = element.getBoundingClientRect();
-      let loc = (location === 'start' ? bbox.top : ((bbox.top + bbox.bottom) / 2)) + offsetY;
+      const loc = (location === 'start' ? bbox.top : ((bbox.top + bbox.bottom) / 2)) + offsetY;
       // console.log(`${element.nodeName} has bbox of ${JSON.stringify(bbox)}, scrolling to ${loc}`);
       window.scrollTo({ behavior: 'smooth', top: loc });
     }
