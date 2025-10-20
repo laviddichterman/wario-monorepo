@@ -1,2 +1,2 @@
-export * from './components/ModifierOptionTooltip';
-export { themeOptions } from './theme';
+export * from '@/components/ModifierOptionTooltip';
+export { themeOptions } from '@/theme';

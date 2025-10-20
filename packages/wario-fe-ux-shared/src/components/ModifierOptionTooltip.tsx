@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
-import { type OptionEnableState, DISABLE_REASON, WFunctional, type IOption, type WCPProduct, type ICatalogSelectors, type FulfillmentConfig } from '@wcp/wario-shared';
+
 import { Tooltip } from '@mui/material';
+
+import { DISABLE_REASON, type FulfillmentConfig, type ICatalogSelectors, type IOption, type OptionEnableState, type WCPProduct, WFunctional } from '@wcp/wario-shared';
 
 interface ModifierOptionTooltipProps {
   enableState: OptionEnableState;
@@ -27,7 +29,7 @@ export function ModifierOptionTooltip({ enableState, option, product, children, 
       case DISABLE_REASON.DISABLED_WEIGHT:
         return `Adding ${displayName} would exceed maximum weight.`;
       case DISABLE_REASON.DISABLED_FULFILLMENT_TYPE:
-        return `${displayName} is disabled for ${fulfillments.find(x => x.id === enableState.fulfillment)!.displayName}.`;
+        return `${displayName} is disabled for ${fulfillments.find(x => x.id === enableState.fulfillment)?.displayName || "this fulfillment."}.`;
       case DISABLE_REASON.DISABLED_NO_SPLITTING:
         return `${displayName} is disabled as a split modifier.`;
       case DISABLE_REASON.DISABLED_SPLIT_DIFFERENTIAL:

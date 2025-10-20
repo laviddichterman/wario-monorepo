@@ -1,10 +1,10 @@
-import type { FulfillmentDto, CustomerInfoDto, FulfillmentConfig } from '@wcp/wario-shared';
-
-import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { WDateUtils, ComputeServiceTimeDisplayString } from '@wcp/wario-shared';
+import { useMemo } from 'react';
 
-import { Paper, Table, TableRow, TableBody, TableCell, TableContainer } from '@mui/material';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
+
+import type { CustomerInfoDto, FulfillmentConfig, FulfillmentDto } from '@wcp/wario-shared';
+import { ComputeServiceTimeDisplayString, WDateUtils } from '@wcp/wario-shared';
 
 export interface ServiceInfoTableComponentProps {
   customerInfo: CustomerInfoDto;
