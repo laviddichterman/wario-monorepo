@@ -1,13 +1,14 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/only-throw-error */
 
 import { cloneDeep } from 'es-toolkit/compat';
 
-import { DISPLAY_AS, MODIFIER_MATCH, DISABLE_REASON, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../types';
-import { IsOptionEnabled, HandleOptionCurry, HandleOptionNameNoFilter, HandleOptionNameFilterOmitByName } from './WCPOption';
-import { WFunctional } from "./WFunctional";
 import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
+import { DISABLE_REASON, DISPLAY_AS, MODIFIER_MATCH, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../types';
+import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, Selector, WCPProduct, WCPProductV2Dto, WProduct, WProductMetadata } from '../types';
 
-import type { IMoney, IOption, IProduct, WProduct, Selector, MTID_MOID, WCPProduct, IOptionInstance, WCPProductV2Dto, IProductInstance, WProductMetadata, IProductModifier, ICatalogSelectors, MetadataModifierMap, ProductModifierEntry, CatalogModifierEntry, ICatalogModifierSelectors, ModifierDisplayListByLocation, MetadataModifierOptionMapEntry } from '../types';
+import { HandleOptionCurry, HandleOptionNameFilterOmitByName, HandleOptionNameNoFilter, IsOptionEnabled } from './WCPOption';
+import { WFunctional } from "./WFunctional";
 
 /* TODO: we need to pull out the computations into memoizable functions
 this should remove the dependencies on the menu
@@ -33,9 +34,9 @@ const ExtractMatch = (matrix: SIDE_MODIFIER_MATCH_MATRIX): MODIFIER_MATCH => (
 
 const ComponentsList = <T>(source: IOption[], getter: (x: IOption) => T): T[] => source.map((x) => getter(x));
 
-
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 const FilterByOmitFromName = (source: IOption[]) => (source.filter(x => !x.displayFlags || !x.displayFlags.omit_from_name));
-
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 const FilterByOmitFromShortname = (source: IOption[]) => (source.filter(x => !x.displayFlags || !x.displayFlags.omit_from_shortname));
 
 const ComponentsListName = (source: IOption[]) => ComponentsList(source, (x: IOption) => x.displayName);

@@ -1,26 +1,27 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { startCase, snakeCase } from "es-toolkit/compat";
+import { snakeCase, startCase } from "es-toolkit/compat";
 
 import {
+  ConstLiteralDiscriminator,
+  LogicalFunctionOperator,
   OptionPlacement,
   OptionQualifier,
-  LogicalFunctionOperator,
-  ConstLiteralDiscriminator,
   OrderInstanceFunctionType,
 } from '../types';
-import { LogicalFunctionOperatorToHumanString } from "./WFunctional";
-
 import type {
+  AbstractOrderExpression,
+  ICatalogModifierSelectors,
+  IConstLiteralExpression,
   IIfElseExpression,
   ILogicalExpression,
-  WOrderInstancePartial,
   OrderInstanceFunction,
-  IConstLiteralExpression,
-  AbstractOrderExpression,
-  ICatalogModifierSelectors
+  WOrderInstancePartial
 } from '../types';
 
+import { LogicalFunctionOperatorToHumanString } from "./WFunctional";
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class OrderFunctional {
 
   // TODO: this can be made generic with the product instance version

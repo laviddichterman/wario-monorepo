@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import {
-  getDay,
   addDays,
-  subDays,
-  getHours,
-  isBefore,
-  parseISO,
-  isSameDay,
-  formatISO,
   addMinutes,
   compareAsc,
+  differenceInMinutes,
+  formatISO,
+  getDay,
+  getHours,
   getMinutes,
+  isBefore,
+  isSameDay,
+  parseISO,
   startOfDay,
-  subMinutes,
-  differenceInMinutes
+  subDays,
+  subMinutes
 } from 'date-fns';
 
 import type { DayOfTheWeek, FulfillmentConfig } from '../types';
-import type { IWInterval, FulfillmentTime, AvailabilityInfoMap, DateIntervalsEntries, OperatingHourSpecification } from '../types';
+import type { AvailabilityInfoMap, DateIntervalsEntries, FulfillmentTime, IWInterval, OperatingHourSpecification } from '../types';
 
 /**
  * 

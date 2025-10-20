@@ -1,23 +1,23 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
-import { WFunctional } from "./WFunctional";
 import { GetPlacementFromMIDOID } from "../common";
 import {
-  DISPLAY_AS,
   DISABLE_REASON,
-  PRODUCT_LOCATION,
+  DISPLAY_AS,
   type OptionPlacement,
+  PRODUCT_LOCATION,
+} from '../types';
+import type {
+  CatalogModifierEntry,
+  ICatalogModifierSelectors,
+  ICatalogSelectors,
+  IOption,
+  MTID_MOID,
+  OptionEnableState,
+  Selector,
+  WCPProduct
 } from '../types';
 
-import type {
-  IOption,
-  Selector,
-  MTID_MOID,
-  WCPProduct,
-  OptionEnableState,
-  ICatalogSelectors,
-  CatalogModifierEntry,
-  ICatalogModifierSelectors
-} from '../types';
+import { WFunctional } from "./WFunctional";
 
 // matrix of proposed_delta indexed by [current placement][proposed placement]
 const DELTA_MATRIX = [

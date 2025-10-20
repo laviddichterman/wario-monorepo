@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
 import { RRule } from "rrule";
-import { getTime, isSameDay, addMinutes, startOfDay } from "date-fns";
 
-import WDateUtils from "./objects/WDateUtils";
 import { OrderFunctional } from "./objects/OrderFunctional";
 import { CreateProductWithMetadataFromV2Dto } from "./objects/WCPProduct";
-import { CURRENCY, PaymentMethod, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PRODUCT_LOCATION, CALL_LINE_DISPLAY } from "./types";
-
-import type { IMoney, Selector, WProduct, IWInterval, TipSelection, OrderPayment, CoreCartEntry, DineInInfoDto, FulfillmentDto, WCPProductV2Dto, IOptionInstance, FulfillmentTime, IProductInstance, ICatalogSelectors, OrderLineDiscount, UnresolvedPayment, FulfillmentConfig, IRecurringInterval, UnresolvedDiscount, WNormalizedInterval, CatalogProductEntry, CatalogCategoryEntry, ProductModifierEntry, WOrderInstancePartial, RecomputeTotalsResult, CategorizedRebuiltCart } from "./types";
+import WDateUtils from "./objects/WDateUtils";
+import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION } from "./types";
+import type { CatalogCategoryEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto, FulfillmentTime, ICatalogSelectors, IMoney, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, Selector, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2Dto, WNormalizedInterval, WOrderInstancePartial, WProduct } from "./types";
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
 

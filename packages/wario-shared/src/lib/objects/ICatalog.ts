@@ -4,8 +4,7 @@
 // product_map is mapping from productId to { product, instances (list of instance objects)}
 
 import { ReduceArrayToMapByKey } from "../common";
-
-import type { SEMVER, IOption, ICatalog, IProduct, ICategory, IOptionType, IProductInstance, ICatalogProducts, ICatalogModifiers, ICatalogSelectors, ICatalogCategories, RecordOrderInstanceFunctions, RecordProductInstanceFunctions } from "../types";
+import type { ICatalog, ICatalogCategories, ICatalogModifiers, ICatalogProducts, ICatalogSelectors, ICategory, IOption, IOptionType, IProduct, IProductInstance, RecordOrderInstanceFunctions, RecordProductInstanceFunctions, SEMVER } from "../types";
 
 // orphan_products is list of orphan product ids
 const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], product_instances: IProductInstance[]): [ICatalogCategories, ICatalogProducts] => {

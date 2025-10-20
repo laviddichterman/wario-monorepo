@@ -3,21 +3,21 @@ import {
   DISABLE_REASON,
   OptionPlacement
 } from '../types';
+import type {
+  CatalogCategoryEntry,
+  ICatalogSelectors,
+  IOption,
+  IProduct,
+  IProductDisplayFlags,
+  IProductInstance,
+  ProductModifierEntry,
+  Selector,
+  WProductMetadata
+} from "../types";
+
 import {
   WCPProductGenerateMetadata
 } from "./WCPProduct";
-
-import type {
-  IOption,
-  IProduct,
-  Selector,
-  IProductInstance,
-  WProductMetadata,
-  ICatalogSelectors,
-  CatalogCategoryEntry,
-  ProductModifierEntry,
-  IProductDisplayFlags
-} from "../types";
 
 export const CheckRequiredModifiersAreAvailable = (product: IProduct, modifiers: ProductModifierEntry[], optionSelector: ICatalogSelectors['option'], order_time: Date | number, fulfillmentId: string) => {
   let passes = true;

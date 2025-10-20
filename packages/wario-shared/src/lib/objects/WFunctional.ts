@@ -1,29 +1,28 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { startCase, snakeCase } from "es-toolkit/compat";
+import { snakeCase, startCase } from "es-toolkit/compat";
 
 import { GetPlacementFromMIDOID } from "../common";
 import {
+  ConstLiteralDiscriminator,
+  LogicalFunctionOperator,
   MetadataField,
   OptionPlacement,
   OptionQualifier,
   PRODUCT_LOCATION,
-  LogicalFunctionOperator,
-  ConstLiteralDiscriminator,
   ProductInstanceFunctionType,
 } from '../types';
-
 import type {
-  WCPProduct,
+  ConstModifierPlacementLiteralExpression,
+  IAbstractExpression,
+  ICatalogModifierSelectors,
+  IConstLiteralExpression,
+  IHasAnyOfModifierExpression,
   IIfElseExpression,
   ILogicalExpression,
-  IAbstractExpression,
-  IConstLiteralExpression,
+  IModifierPlacementExpression,
   IProductInstanceFunction,
   ProductMetadataExpression,
-  ICatalogModifierSelectors,
-  IHasAnyOfModifierExpression,
-  IModifierPlacementExpression,
-  ConstModifierPlacementLiteralExpression
+  WCPProduct
 } from '../types';
 
 
