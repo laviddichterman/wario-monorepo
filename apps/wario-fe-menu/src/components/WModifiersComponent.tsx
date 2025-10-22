@@ -2,10 +2,10 @@ import { createSelector } from "@reduxjs/toolkit";
 
 import { Box, Grid } from "@mui/material";
 
-import { DISABLE_REASON, DisableDataCheck, type IProductModifier, MoneyToDisplayString, WDateUtils } from "@wcp/wario-shared";
+import { DISABLE_REASON, type IOption, type IProductModifier, MoneyToDisplayString, SortAndFilterModifierOptions, WDateUtils } from "@wcp/wario-shared";
 import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceById, ProductDescription, ProductPrice, ProductTitle, SelectCatalogSelectors, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId } from "@wcp/wario-ux-shared";
 
-import { FilterUnselectableModifierOption, GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "@/app/store";
+import { GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "@/app/store";
 import { useAppSelector } from "@/app/useHooks";
 
 import { ModifierOptionTooltip } from "./ModifierOptionTooltip";
@@ -33,16 +33,9 @@ const MenuSelectVisibleModifierOptions = createSelector(
   (s: RootState, _productInstanceId: string, _mtId: string) => SelectCatalogSelectors(s.ws).option,
   (s: RootState, _productInstanceId: string, _mtId: string) => WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTime(s)),
   (metadata, modifierType, modifierOptionSelector, serviceDateTime) => {
-    const filterUnavailable = modifierType.modifierType.displayFlags.omit_options_if_not_available;
-    const mmEntry = metadata.modifier_map[modifierType.modifierType.id];
-    return modifierType.options.map(o => modifierOptionSelector(o))
-      .sort((a, b) => a.ordinal - b.ordinal)
-      .filter((o) => {
-        const disableInfo = DisableDataCheck(o.disabled, o.availability, serviceDateTime).enable;
-        const isUnavailableButStillVisible = (!filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id));
-        return disableInfo === DISABLE_REASON.ENABLED && isUnavailableButStillVisible;
-      })
-      .map(x => x.id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const sortedVisibleOptions = SortAndFilterModifierOptions(metadata, modifierType, modifierOptionSelector, serviceDateTime) as IOption[];
+    return sortedVisibleOptions.map(x => x.id);
   }
 );
 
