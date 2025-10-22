@@ -1,5 +1,26 @@
 # @wcp/wario-fe-menu
 
+## 0.1.0
+
+### Minor Changes
+
+- eea19da: - wario-fe-menu linting fixes
+  - linting found MenuSelectVisibleModifierOptions was incorrectly assuming all disable info returned true, fixed by checking the enabled field
+  - remove WCartSlice from redux state
+
+### Patch Changes
+
+- bbc9a96: linting fixes for wario-fe-menu
+- f130413: switch off lodash in wario-fe-menu
+- Updated dependencies [04b6b4e]
+- Updated dependencies [39cc9ff]
+- Updated dependencies [05b2fcb]
+- Updated dependencies [1d70e2c]
+- Updated dependencies [04b6b4e]
+  - @wcp/wario-shared@0.2.1
+  - @wcp/wario-ux-shared@4.0.1
+  - @wcp/wario-fe-ux-shared@1.0.1
+
 ## 0.0.4
 
 ### Patch Changes
