@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { isEqual } from 'es-toolkit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createStructuredSelector } from 'reselect';
 
@@ -428,6 +428,7 @@ export function WMenuDataGrid({ categoryId }: WMenuDisplayProps) {
   const productRows = useAppSelector(s => SelectProductInstanceIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
   const [versionedProductRows, setVersionedProductRows] = useState<string[]>([]);
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     if (!isEqual(productRows, versionedProductRows)) {
       setVersionedProductRows(productRows);
     }

@@ -25,8 +25,8 @@
     "@wcp/wario-shared": "workspace:*",
     "@wcp/wario-ux-shared": "workspace:*",
     "date-fns": "^4.1.0",
-    "lodash": "^4.17.21",
     "mailcheck": "^1.1.1",
+    "es-toolkit": "^1.40.0",
     "motion": "^12.23.24",
     "notistack": "^3.0.2",
     "react": "^19.2.0",
@@ -37,7 +37,6 @@
   "devDependencies": {
     "@eslint/js": "^9.38.0",
     "@mui/x-license": "7.24.0",
-    "@types/lodash": "^4.17.20",
     "@types/node": "^24.9.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
