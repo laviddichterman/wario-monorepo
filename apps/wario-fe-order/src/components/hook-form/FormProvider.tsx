@@ -1,19 +1,20 @@
-import { type ReactNode, type FormEventHandler } from 'react';
-// form
-import { FormProvider as Form, type UseFormReturn, type FieldValues } from 'react-hook-form';
+import type { FormEventHandler, ReactNode } from 'react';
+import { type FieldValues, FormProvider as RHFForm, type UseFormReturn } from 'react-hook-form';
 
 // ----------------------------------------------------------------------
 
-type Props<TFieldValues extends FieldValues = FieldValues, TContextType extends object = object> = {
+export type FormProps<TFieldValues extends FieldValues = FieldValues, TContextType extends object = object> = {
+  onSubmit?: FormEventHandler<HTMLFormElement>;
   children: ReactNode;
   methods: UseFormReturn<TFieldValues, TContextType>;
-  onSubmit?: FormEventHandler<HTMLFormElement>;
 };
 
-export function FormProvider<TFieldValues extends FieldValues = FieldValues, TContextType extends object = object>({ children, onSubmit, methods }: Props<TFieldValues, TContextType>) {
+export function FormProvider({ children, onSubmit, methods }: FormProps) {
   return (
-    <Form {...methods}>
-      <form onSubmit={onSubmit}>{children}</form>
-    </Form>
+    <RHFForm {...methods}>
+      <form onSubmit={onSubmit} noValidate>
+        {children}
+      </form>
+    </RHFForm>
   );
 }

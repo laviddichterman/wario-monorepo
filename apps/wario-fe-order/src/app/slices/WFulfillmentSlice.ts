@@ -1,8 +1,10 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { z } from "zod";
+
 import { type DeliveryInfoDto, type DineInInfoDto, type FulfillmentDto, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
 import { CreateValidateDeliveryAddressThunk } from "@wcp/wario-ux-shared";
-import axiosInstance from "../../utils/axios";
+
+import axiosInstance from "@/utils/axios";
 
 export const deliveryAddressSchema = z.object({
   address: z.string().min(1, "Please enter your street address"),
@@ -87,6 +89,7 @@ const WFulfillmentSlice = createSlice({
     // Add reducers for additional action types here, and handle loading state as needed
     builder
       .addCase(validateDeliveryAddress.fulfilled, (state, action) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         state.deliveryInfo!.validation = action.payload;
         state.deliveryValidationStatus = action.payload.in_area ? 'VALID' : 'OUTSIDE_RANGE';
       })

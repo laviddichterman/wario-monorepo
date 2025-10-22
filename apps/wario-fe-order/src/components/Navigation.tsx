@@ -1,10 +1,13 @@
 import React from 'react';
-import { Box, useMediaQuery, type ButtonProps } from '@mui/material';
+
 import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
+import { Box, type ButtonProps, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+
 import { WarioButton } from '@wcp/wario-ux-shared';
-import { useAppSelector } from '../app/useHooks';
+
 import { NUM_STAGES } from '../app/slices/StepperSlice';
+import { useAppSelector } from '../app/useHooks';
 
 export interface NavigationProps {
   hasBack?: boolean;
@@ -39,7 +42,7 @@ export function Navigation({ canNext, canBack, nextText = "Next", backText = "Ba
     </Box>
     <Box sx={{ py: 0.5, textAlign: 'center', verticalAlign: 'center', float: 'right', my: 'auto', height: '100%', minWidth: '33.3%' }}>
       {!useVerticalStepper ?
-        <span>{`${currentStage + 1} / ${NUM_STAGES}`}</span> : <div>&nbsp;</div>
+        <span>{`${(currentStage + 1).toString()} / ${NUM_STAGES.toString()}`}</span> : <div>&nbsp;</div>
       }
     </Box>
     <Box sx={{ float: 'right', width: '33.3%', textAlign: 'left' }}>

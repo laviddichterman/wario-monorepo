@@ -1,71 +1,73 @@
-import { configureStore, createSelector, combineReducers, type EntityState } from "@reduxjs/toolkit";
+import { combineReducers, configureStore, createSelector, type EntityState } from "@reduxjs/toolkit";
+import { formatISO } from "date-fns";
+
 import {
-  SocketIoReducer,
+  type CatalogCategoryEntry,
+  type CatalogModifierEntry,
+  ComputeBalance,
+  ComputeCartSubTotal,
+  ComputeCategoryTreeIdList,
+  ComputeDiscountsApplied,
+  ComputeGratuityServiceCharge,
+  ComputePaymentsApplied,
+  ComputeProductCategoryMatchCount,
+  ComputeSubtotalAfterDiscountAndGratuity,
+  ComputeSubtotalPreDiscount,
+  ComputeTaxAmount,
+  ComputeTipBasis,
+  ComputeTipValue,
+  ComputeTotal,
+  type CoreCartEntry,
+  type CreateOrderRequestV2,
+  CURRENCY,
+  DetermineCartBasedLeadTime,
+  DISABLE_REASON,
+  DiscountMethod,
+  type FulfillmentConfig,
+  GetNextAvailableServiceDate,
+  type IMoney,
+  type IOption,
+  type IOptionInstance,
+  type MetadataModifierMap,
+  type MetadataModifierMapEntry,
+  type Metrics,
+  PaymentMethod,
+  type ProductModifierEntry,
+  type Selector,
+  StoreCreditType,
+  TenderBaseStatus,
+  type WCPProductV2Dto,
+  WDateUtils,
+  WFulfillmentStatus,
+  type WProduct
+} from "@wcp/wario-shared";
+import {
+  getCategoryEntryById,
+  getFulfillmentById,
+  getModifierTypeEntryById,
+  getProductEntryById,
+  getProductInstanceById,
   IProductInstancesAdapter,
   ProductInstanceFunctionsAdapter,
   SelectAllowAdvanced,
-  SelectTaxRate,
   SelectAutoGratutityThreshold,
   SelectDefaultFulfillmentId,
   SelectGratuityServiceCharge,
-  getProductEntryById,
-  getFulfillmentById,
-  getCategoryEntryById,
-  weakMapCreateSelector,
-  getProductInstanceById,
   SelectProductMetadata,
-  getModifierTypeEntryById,
+  SelectTaxRate,
+  SocketIoReducer,
+  weakMapCreateSelector,
 } from '@wcp/wario-ux-shared';
+
+import ListeningMiddleware from "./slices/ListeningMiddleware";
+import { SocketIoMiddleware } from "./slices/SocketIoMiddleware";
+import StepperReducer from "./slices/StepperSlice";
 import WCartReducer, { getCart, getCartEntry } from './slices/WCartSlice';
+import WCustomerInfoReducer from "./slices/WCustomerInfoSlice";
 import WCustomizerReducer from './slices/WCustomizerSlice';
 import WFulfillmentReducer, { SelectServiceDateTime } from './slices/WFulfillmentSlice';
 import WMetricsReducer from './slices/WMetricsSlice';
-import WCustomerInfoReducer from "./slices/WCustomerInfoSlice";
-import StepperReducer from "./slices/StepperSlice";
-import { SocketIoMiddleware } from "./slices/SocketIoMiddleware";
-import ListeningMiddleware from "./slices/ListeningMiddleware";
-import {
-  ComputeCartSubTotal,
-  ComputeTipBasis,
-  ComputeTipValue,
-  ComputeProductCategoryMatchCount,
-  ComputeCategoryTreeIdList,
-  ComputeTotal,
-  type MetadataModifierMap,
-  WDateUtils,
-  ComputeTaxAmount,
-  type CreateOrderRequestV2,
-  ComputeDiscountsApplied,
-  ComputePaymentsApplied,
-  ComputeBalance,
-  type CoreCartEntry,
-  DiscountMethod,
-  type WCPProductV2Dto,
-  type WProduct,
-  ComputeSubtotalAfterDiscountAndGratuity,
-  ComputeSubtotalPreDiscount,
-  type FulfillmentConfig,
-  CURRENCY,
-  StoreCreditType,
-  TenderBaseStatus,
-  type IMoney,
-  GetNextAvailableServiceDate,
-  type Metrics,
-  WFulfillmentStatus,
-  PaymentMethod,
-  ComputeGratuityServiceCharge,
-  DetermineCartBasedLeadTime,
-  type CatalogModifierEntry,
-  type ProductModifierEntry,
-  type CatalogCategoryEntry,
-  type Selector,
-  type IOption,
-  type IOptionInstance,
-  DISABLE_REASON,
-  type MetadataModifierMapEntry
-} from "@wcp/wario-shared";
 import { WPaymentReducer } from "./slices/WPaymentSlice";
-import { formatISO } from "date-fns";
 
 export const RootReducer = combineReducers({
   fulfillment: WFulfillmentReducer,
@@ -101,12 +103,12 @@ export const SelectDisplayFlagHiddenFromModifierByModifierTypeId = createSelecto
 );
 
 export const GetSelectableModifiers = (mMap: MetadataModifierMap, modifierTypeSelector: (id: string) => CatalogModifierEntry) =>
-  Object.entries(mMap).reduce((acc, [k, v]) => {
+  Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
     const modifierEntry = modifierTypeSelector(k);
     const omit_section_if_no_available_options = modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
     const hidden = modifierEntry.modifierType.displayFlags.hidden;
     return (!hidden && (!omit_section_if_no_available_options || v.has_selectable)) ? { ...acc, k: v } : acc;
-  }, {} as MetadataModifierMap);
+  }, {});
 
 
 export const SelectSelectableModifiers = createSelector(
@@ -119,8 +121,13 @@ export const SelectSelectableModifiers = createSelector(
 const SelectSomethingFromFulfillment = <T extends keyof FulfillmentConfig>(field: T) => weakMapCreateSelector(
   (s: RootState) => s.ws.fulfillments,
   (s: RootState) => s.fulfillment.selectedService,
-  (fulfillments, fulfillmentId) =>
-    fulfillmentId && getFulfillmentById(fulfillments, fulfillmentId) ? getFulfillmentById(fulfillments, fulfillmentId)[field] : null
+  (fulfillments, fulfillmentId) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!fulfillmentId || !getFulfillmentById(fulfillments, fulfillmentId)) {
+      return null;
+    }
+    return getFulfillmentById(fulfillments, fulfillmentId)[field];
+  }
 );
 
 export const SelectFulfillmentDisplayName = SelectSomethingFromFulfillment('displayName');
@@ -138,7 +145,7 @@ export const SelectFulfillmentMaxGuests = SelectSomethingFromFulfillment('maxGue
 export const selectAllowAdvancedPrompt = createSelector(
   (s: RootState) => s.customizer.selectedProduct,
   SelectAllowAdvanced,
-  (prod: WProduct | null, allowAdvanced: boolean) => allowAdvanced === true && prod !== null && prod.m.advanced_option_eligible
+  (prod: WProduct | null, allowAdvanced: boolean) => allowAdvanced && prod !== null && prod.m.advanced_option_eligible
 )
 
 export const selectCartAsDto = createSelector(
@@ -153,10 +160,10 @@ export const selectCartEntryBeingCustomized = createSelector(
 );
 
 export const selectOptionState = createSelector(
-  (s: RootState, _: string, __: string) => s.customizer.selectedProduct!.m.modifier_map,
+  (s: RootState, _: string, __: string) => s.customizer.selectedProduct?.m.modifier_map || {},
   (_: RootState, mtId: string, __: string) => mtId,
   (_: RootState, __: string, moId: string) => moId,
-  (modifierMap, mtId, moId) => modifierMap[mtId].options[moId]);
+  (modifierMap, mtId, moId) => Object.hasOwn(modifierMap, mtId) ? modifierMap[mtId].options[moId] : undefined);
 
 export const selectShowAdvanced = (s: RootState) => s.customizer.showAdvanced;
 
@@ -189,8 +196,8 @@ export const SelectOrderForServiceFeeComputation = createSelector(
 export const SelectServiceFee = createSelector(
   SelectOrderForServiceFeeComputation,
   SelectServiceFeeSetting,
-  (s: RootState) => s.ws.catalog!,
-  (partialOrder, serviceFeeFunctionId, catalog) => ({ amount: 0, currency: CURRENCY.USD })//partialOrder === null || serviceFeeFunctionId === null ? 0 : OrderFunctional.ProcessOrderInstanceFunction(partialOrder, catalog.orderInstanceFunctions[serviceFeeFunctionId], catalog)
+  // (s: RootState) => s.ws.catalog!,
+  (_partialOrder, _serviceFeeFunctionId) => ({ amount: 0, currency: CURRENCY.USD })//partialOrder === null || serviceFeeFunctionId === null ? 0 : OrderFunctional.ProcessOrderInstanceFunction(partialOrder, catalog.orderInstanceFunctions[serviceFeeFunctionId], catalog)
 );
 
 export const SelectSubtotalPreDiscount = createSelector(
@@ -326,38 +333,16 @@ export const GetNextAvailableServiceDateTimeForService = createSelector(
   (fulfillment, now, cartBasedLeadTime) => GetNextAvailableServiceDate([fulfillment], now, cartBasedLeadTime)
 );
 
-const SelectSelectedServiceFulfillment = createSelector(
+// current unused selector, but may be useful later
+export const SelectSelectedServiceFulfillment = createSelector(
   (s: RootState) => s.fulfillment.selectedService,
   (s: RootState) => s.ws.fulfillments,
   SelectDefaultFulfillmentId,
-  (selectedService, fulfillments, defaultFulfillment) =>
-    getFulfillmentById(fulfillments, selectedService ?? defaultFulfillment) ?? null
+  (selectedService, fulfillments, defaultFulfillment) => {
+    const serviceToGet = selectedService ?? defaultFulfillment;
+    return serviceToGet ? getFulfillmentById(fulfillments, serviceToGet) : null;
+  }
 );
-
-/**
- * If we don't have a selected service or if we're open now, return the current time
- * Otherwise, return the next available service date
- */
-export const GetNextAvailableServiceDateTimeForMenu = createSelector(
-  (s: RootState) => SelectSelectedServiceFulfillment(s),
-  (s: RootState) => 1746761380000,
-  (selectedServiceFulfillment, currentTime) => {
-    console.log({ currentTime, selectedServiceFulfillment });
-    const openNow = WDateUtils.AreWeOpenNow([selectedServiceFulfillment], currentTime);
-    console.log({ openNow });
-    if (selectedServiceFulfillment === null || WDateUtils.AreWeOpenNow([selectedServiceFulfillment], currentTime)) {
-      return WDateUtils.ComputeFulfillmentTime(currentTime);
-    }
-
-    const nextAvailableServiceDate = GetNextAvailableServiceDate([selectedServiceFulfillment], formatISO(currentTime), 0);
-    if (nextAvailableServiceDate) {
-      return nextAvailableServiceDate;
-    }
-    console.warn("There should be a service date available, falling back to now. Likely a config or programming error.")
-    return WDateUtils.ComputeFulfillmentTime(currentTime);
-  });
-
-
 
 // Note: this falls back to now if there's really nothing for the selected service or for dine-in
 export const GetNextAvailableServiceDateTime = createSelector(
@@ -372,7 +357,8 @@ export const GetNextAvailableServiceDateTime = createSelector(
         return nextAvailableForSelectedService;
       }
     }
-    return (nextAvailableForServiceFunction(defaultFulfillment) ??
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return (nextAvailableForServiceFunction(defaultFulfillment!) ??
       WDateUtils.ComputeFulfillmentTime(currentTime));
   });
 
@@ -402,6 +388,7 @@ export const SelectWarioSubmissionArguments = createSelector(
   selectCartAsDto,
   (s: RootState) => s.payment.specialInstructions,
   SelectMetricsForSubmission,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState) => s.payment.selectedTip!,
   SelectDiscountsApplied,
   (s: RootState, nonce: string | null) => SelectPaymentsProposedForSubmission(s, nonce),
@@ -424,7 +411,9 @@ export const SelectWarioSubmissionArguments = createSelector(
 export const SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData = createSelector(
   (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId),
   (s: RootState, _productInstanceId: string) => s.ws,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState, _productInstanceId: string) => SelectServiceDateTime(s.fulfillment)!,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState, _productInstanceId: string) => s.fulfillment.selectedService!,
   (productInstance, socketIoState, service_time, fulfillmentId) => SelectProductMetadata(socketIoState, productInstance.productId, productInstance.modifiers, service_time, fulfillmentId),
 );
@@ -437,7 +426,7 @@ export const SelectProductInstanceHasSelectableModifiersByProductInstanceId = we
 
 export const SelectModifierTypeNameFromModifierTypeId = createSelector(
   getModifierTypeEntryById,
-  (modifierTypeEntry) => modifierTypeEntry.modifierType.displayName ?? modifierTypeEntry.modifierType.name
+  (modifierTypeEntry) => modifierTypeEntry.modifierType.displayName || modifierTypeEntry.modifierType.name
 );
 
 export const SelectModifierTypeOrdinalFromModifierTypeId = createSelector(
@@ -465,7 +454,7 @@ export const SelectMenuNestingFromCategoryById = createSelector(
 export const SelectCategoryExistsAndIsAllowedForFulfillment = createSelector(
   (state: EntityState<CatalogCategoryEntry, string>, categoryId: string, _fulfillmentId: string) => getCategoryEntryById(state, categoryId),
   (_state: EntityState<CatalogCategoryEntry, string>, _categoryId: string, fulfillmentId: string) => fulfillmentId,
-  (categoryEntry, fulfillmentId) => categoryEntry && categoryEntry.category.serviceDisable.indexOf(fulfillmentId) === -1
+  (categoryEntry, fulfillmentId) => categoryEntry.category.serviceDisable.indexOf(fulfillmentId) === -1
 );
 
 /**
@@ -475,7 +464,9 @@ export const SelectProductMetadataFromCustomProductWithCurrentFulfillmentData = 
   (_s: RootState, productId: string, _modifiers: ProductModifierEntry[]) => productId,
   (_s: RootState, _productId: string, modifiers: ProductModifierEntry[]) => modifiers,
   (s: RootState, _productInstanceId: string, _modifiers: ProductModifierEntry[]) => s.ws,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState, _productInstanceId: string) => SelectServiceDateTime(s.fulfillment)!,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState, _productInstanceId: string) => s.fulfillment.selectedService!,
   (productId, modifiers, socketIoState, service_time, fulfillmentId) => SelectProductMetadata(socketIoState, productId, modifiers, service_time, fulfillmentId),
 );
@@ -487,9 +478,11 @@ export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEnt
 }
 
 export const SortProductModifierEntries = (mods: ProductModifierEntry[], modifierTypeSelector: Selector<CatalogModifierEntry>) =>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   mods.sort((a, b) => modifierTypeSelector(a.modifierTypeId)!.modifierType.ordinal - modifierTypeSelector(b.modifierTypeId)!.modifierType.ordinal)
 
 export const SortProductModifierOptions = (mods: IOptionInstance[], modifierOptionSelector: Selector<IOption>) =>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   mods.sort((a, b) => modifierOptionSelector(a.optionId)!.ordinal - modifierOptionSelector(b.optionId)!.ordinal)
 
 export const SelectShouldFilterModifierTypeDisplay = weakMapCreateSelector(

@@ -1,17 +1,17 @@
-import { createListenerMiddleware, type ListenerEffectAPI, isAnyOf } from '@reduxjs/toolkit'
+import { createListenerMiddleware, isAnyOf, type ListenerEffectAPI } from '@reduxjs/toolkit'
 import type { TypedStartListening } from '@reduxjs/toolkit'
-import { type RootState, type AppDispatch, GetNextAvailableServiceDateTime, SelectCategoryExistsAndIsAllowedForFulfillment } from '../store'
-import { SelectOptionsForServicesAndDate } from '../store'
-import { SelectCatalogSelectors, scrollToIdOffsetAfterDelay, setCurrentTime, receiveFulfillments, receiveSettings, receiveCatalog, getFulfillmentById } from '@wcp/wario-ux-shared';
 import { enqueueSnackbar } from 'notistack'
+
 import { CanThisBeOrderedAtThisTimeAndFulfillmentCatalog, type CartEntry, WCPProductGenerateMetadata, WDateUtils } from '@wcp/wario-shared';
+import { getFulfillmentById, receiveCatalog, receiveFulfillments, receiveSettings, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, setCurrentTime } from '@wcp/wario-ux-shared';
 
+import { type AppDispatch, GetNextAvailableServiceDateTime, type RootState, SelectCategoryExistsAndIsAllowedForFulfillment, SelectOptionsForServicesAndDate } from '@/app/store'
 
-import { incrementTimeBumps, setTimeToStage } from './WMetricsSlice';
-import { addToCart, getCart, getDeadCart, killAllCartEntries, removeFromCart, reviveAllCartEntries, updateCartQuantity, updateManyCartProducts } from './WCartSlice';
-import { setSelectedTimeExpired, setService, setTime, setDate, setSelectedDateExpired, SelectServiceDateTime } from './WFulfillmentSlice';
 import { backStage, nextStage, setStage, STEPPER_STAGE_ENUM } from './StepperSlice';
+import { addToCart, getCart, getDeadCart, killAllCartEntries, removeFromCart, reviveAllCartEntries, updateCartQuantity, updateManyCartProducts } from './WCartSlice';
 import { clearCustomizer, updateCustomizerProduct } from './WCustomizerSlice';
+import { SelectServiceDateTime, setDate, setSelectedDateExpired, setSelectedTimeExpired, setService, setTime } from './WFulfillmentSlice';
+import { incrementTimeBumps, setTimeToStage } from './WMetricsSlice';
 
 
 export const ListeningMiddleware = createListenerMiddleware()
@@ -19,7 +19,6 @@ export const ListeningMiddleware = createListenerMiddleware()
 export type AppStartListening = TypedStartListening<RootState, AppDispatch>
 
 export const startAppListening = ListeningMiddleware.startListening.withTypes<RootState, AppDispatch>();
-//export const addAppListener = addListener.withTypes<RootState, AppDispatch>();
 
 startAppListening({
   matcher: isAnyOf(setCurrentTime,
@@ -37,7 +36,7 @@ startAppListening({
     const previouslySelectedDate = originalState.fulfillment.selectedDate;
     const previouslySelectedTime = originalState.fulfillment.selectedTime;
     const selectedService = api.getState().fulfillment.selectedService;
-    const selectedFulfillment = api.getState().ws.fulfillments !== null && selectedService !== null ? getFulfillmentById(api.getState().ws.fulfillments!, selectedService!) : null;
+    const selectedFulfillment = selectedService !== null ? getFulfillmentById(api.getState().ws.fulfillments, selectedService) : null;
     if (previouslySelectedDate !== null && previouslySelectedTime !== null && selectedService !== null && selectedFulfillment && !isAlreadySubmitted) {
       const newOptions = SelectOptionsForServicesAndDate(api.getState(), previouslySelectedDate, [selectedService]);
       if (!newOptions.find(x => x.value === previouslySelectedTime)) {
@@ -50,7 +49,10 @@ startAppListening({
             ((previouslySelectedTime - closestEarlierOption.value) <= (closestLaterOption.value - previouslySelectedTime) ?
               closestEarlierOption : closestLaterOption) :
             (closestEarlierOption ?? closestLaterOption);
+          // we know newOption is not null because newOptions.length > 0
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion 
           api.dispatch(setTime(newOption!.value));
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           enqueueSnackbar(`Previously selected time of ${WDateUtils.MinutesToPrintTime(previouslySelectedTime)} is no longer available for your order. Updated to closest available time of ${WDateUtils.MinutesToPrintTime(newOption!.value)}.`, { variant: 'warning' });
           api.dispatch(incrementTimeBumps());
           api.dispatch(setSelectedTimeExpired());
@@ -86,12 +88,12 @@ startAppListening({
 
 startAppListening({
   matcher: isAnyOf(receiveCatalog, setTime, setDate, setService),
-  effect: (_: any, api: ListenerEffectAPI<RootState, AppDispatch>) => {
+  effect: (_: unknown, api: ListenerEffectAPI<RootState, AppDispatch>) => {
     const socketIoState = api.getState().ws;
     const catalog = SelectCatalogSelectors(socketIoState);
     const currentTime = api.getState().ws.currentTime;
     const fulfillments = api.getState().ws.fulfillments;
-    if (catalog !== null && currentTime !== 0 && fulfillments !== null) {
+    if (currentTime !== 0) {
       const service = api.getState().fulfillment.selectedService ?? Object.keys(fulfillments)[0];
       const menuTime = SelectServiceDateTime(api.getState().fulfillment) ?? WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTime(api.getState()));
       // determine if anything we have in the cart or the customizer is impacted and update accordingly
@@ -125,6 +127,8 @@ startAppListening({
         api.dispatch(killAllCartEntries(toKill));
       }
       if (regenerateCustomizerMetadata) {
+        // we know customizerProduct is not null because regenerateCustomizerMetadata is true
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         api.dispatch(updateCustomizerProduct({ p: customizerProduct!.p, m: WCPProductGenerateMetadata(customizerProduct!.p.productId, customizerProduct!.p.modifiers, catalog, menuTime, service) }));
       }
       if (toRefreshMetadata.length > 0) {

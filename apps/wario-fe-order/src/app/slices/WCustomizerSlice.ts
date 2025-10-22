@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { type CartEntry, type WProduct, type IOptionState, type MTID_MOID, OptionPlacement, OptionQualifier } from "@wcp/wario-shared";
-import { cloneDeep } from 'lodash';
+
+import { type CartEntry, type IOptionState, type MTID_MOID, OptionPlacement, OptionQualifier, type WProduct } from "@wcp/wario-shared";
 
 
 // TODO: move product modification into a shared library so backend and FE can use it.
@@ -39,13 +39,13 @@ export const WCustomizerSlice = createSlice({
       state.showAdvanced = action.payload.product.m.advanced_option_selected;
       state.cartId = action.payload.id;
       state.categoryId = action.payload.categoryId;
-      state.selectedProduct = cloneDeep(action.payload.product);
+      state.selectedProduct = structuredClone(action.payload.product);
     },
     customizeProduct(state, action: PayloadAction<{ product: WProduct, categoryId: string }>) {
       state.allowAdvanced = action.payload.product.m.advanced_option_eligible;
       state.showAdvanced = action.payload.product.m.advanced_option_selected;
       state.categoryId = action.payload.categoryId;
-      state.selectedProduct = cloneDeep(action.payload.product);
+      state.selectedProduct = structuredClone(action.payload.product);
     },
     setShowAdvanced(state, action: PayloadAction<boolean>) {
       state.showAdvanced = state.allowAdvanced && action.payload;

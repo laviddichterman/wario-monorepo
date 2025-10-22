@@ -1,11 +1,13 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { z } from "zod";
 import {
   parsePhoneNumber,
 } from 'libphonenumber-js/core';
-import { LIBPHONE_METADATA } from "../../components/common";
-import { ZodEmailSchema } from "../../components/hook-form/RHFMailTextField";
+import { z } from "zod";
+
 import { type CustomerInfoDto } from "@wcp/wario-shared";
+
+import { LIBPHONE_METADATA } from "@/components/common";
+import { ZodEmailSchema } from "@/components/hook-form/rhf-mailtextfield";
 
 export type CustomerInfoRHF = CustomerInfoDto & { mobileNumRaw: string };
 export const customerInfoSchema = z.object({

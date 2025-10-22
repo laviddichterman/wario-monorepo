@@ -1,7 +1,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+
 import { type Metrics } from "@wcp/wario-shared";
-import { NUM_STAGES, type STEPPER_STAGE_ENUM } from "./StepperSlice";
+
 import PACKAGE_INFO from '../../../package.json'
+
+import { NUM_STAGES, type STEPPER_STAGE_ENUM } from "./StepperSlice";
 
 const initialState: Omit<Metrics, 'pageLoadTime'> = {
   submitTime: 0,
@@ -9,7 +12,7 @@ const initialState: Omit<Metrics, 'pageLoadTime'> = {
   timeToServiceDate: 0,
   timeToServiceTime: 0,
   timeToFirstProduct: 0,
-  timeToStage: Array(NUM_STAGES - 1).fill(0),
+  timeToStage: Array<number>(NUM_STAGES - 1).fill(0),
   numTimeBumps: 0,
   numTipAdjusts: 0,
   numTipFixed: 0
@@ -37,7 +40,7 @@ const WMetricsSlice = createSlice({
     },
     // handled by ListenerMiddleware
     setTimeToStage(state, action: PayloadAction<{ stage: STEPPER_STAGE_ENUM, ticks: number }>) {
-      state.timeToStage![action.payload.stage] = action.payload.ticks;
+      state.timeToStage[action.payload.stage] = action.payload.ticks;
     },
     // handled by the ListenerMiddleware
     setTimeToServiceDate(state, action: PayloadAction<number>) {

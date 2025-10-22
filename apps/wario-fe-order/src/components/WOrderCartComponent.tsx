@@ -1,13 +1,16 @@
-import { ProductDisplay } from './WProductComponent';
-import { removeFromCart, updateCartQuantity, getCart } from '../app/slices/WCartSlice';
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
-import { type CartEntry } from '@wcp/wario-shared';
-import { IconButton, Grid, TableContainer, Table, TableCell, TableHead, TableBody, Typography, Paper, TableRow } from '@mui/material';
 import { Clear, Edit } from '@mui/icons-material';
-import { SelectSelectableModifiers } from '../app/store';
-import { CheckedNumericInput } from './CheckedNumericTextInput';
+import { Grid, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { styled } from '@mui/system';
+
+import { type CartEntry } from '@wcp/wario-shared';
 import { selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared';
+
+import { getCart, removeFromCart, updateCartQuantity } from '../app/slices/WCartSlice';
+import { SelectSelectableModifiers } from '../app/store';
+import { useAppDispatch, useAppSelector } from '../app/useHooks';
+
+import { CheckedNumericInput } from './CheckedNumericTextInput';
+import { ProductDisplay } from './WProductComponent';
 
 
 const RemoveFromCart = styled(Clear)(() => ({
@@ -47,19 +50,19 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
               value={cartEntry.quantity}
               disabled={cartEntry.isLocked}
 
-              onChange={(value) => setEntryQuantity(value)}
+              onChange={(value) => { setEntryQuantity(value); }}
               parseFunction={parseInt}
               allowEmpty={false} />
           </Grid>
           <Grid sx={{ py: 1, pl: 1, textAlign: 'center' }} size={6}>
-            <IconButton disabled={cartEntry.isLocked} name="remove" onClick={() => setRemoveEntry()} >
+            <IconButton disabled={cartEntry.isLocked} name="remove" onClick={() => { setRemoveEntry(); }} >
               <RemoveFromCart /></IconButton>
           </Grid>
           <Grid sx={{ py: 1, pr: 1, textAlign: 'center' }} size={6}>
             {hasSelectableModifiers &&
               <IconButton
                 disabled={isProductEditDialogOpen || cartEntry.isLocked}
-                onClick={() => setProductToEdit(cartEntry)}
+                onClick={() => { setProductToEdit(cartEntry); }}
               >
                 <Edit />
               </IconButton>}

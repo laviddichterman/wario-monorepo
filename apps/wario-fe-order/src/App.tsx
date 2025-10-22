@@ -1,16 +1,17 @@
-import { useEffect, useLayoutEffect } from 'react';
+import { domMax, LazyMotion } from "motion/react"
 import { SnackbarProvider } from 'notistack';
-import { LazyMotion, domMax } from "motion/react"
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { useEffect, useLayoutEffect } from 'react';
+
 import { ScopedCssBaseline } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import { scrollToIdOffsetAfterDelay, LoadingScreen, IsSocketDataLoaded, startConnection } from '@wcp/wario-ux-shared';
-
-import { setUserAgent } from './app/slices/WMetricsSlice';
-import { useAppDispatch, useAppSelector } from "./app/useHooks";
 import { themeOptions } from "@wcp/wario-fe-ux-shared";
+import { IsSocketDataLoaded, LoadingScreen, scrollToIdOffsetAfterDelay, startConnection } from '@wcp/wario-ux-shared';
 
-import WOrderingComponent from './components/WOrderingComponent';
+import WOrderingComponent from '@/components/WOrderingComponent';
+
+import { setUserAgent } from '@/app/slices/WMetricsSlice';
+import { useAppDispatch, useAppSelector } from "@/app/useHooks";
 
 const theme = createTheme(themeOptions);
 

@@ -1,13 +1,14 @@
-import React, { type ReactNode } from 'react';
-import { ErrorResponseOutput, OkResponseOutput, WarningResponseOutput, getProductInstanceFunctionById, getModifierTypeEntryById, getModifierOptionById, getProductEntryById } from '@wcp/wario-ux-shared';
-import { WFunctional, type ICatalogModifierSelectors, type ProductModifierEntry, type MetadataModifierMap } from '@wcp/wario-shared';
+import { createSelector } from '@reduxjs/toolkit';
+import { type ReactNode } from 'react';
+
+import { type ICatalogModifierSelectors, type MetadataModifierMap, type ProductModifierEntry, WFunctional } from '@wcp/wario-shared';
+import { ErrorResponseOutput, getModifierOptionById, getModifierTypeEntryById, getProductEntryById, getProductInstanceFunctionById, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared';
+
 import {
   type RootState,
   SelectModifierTypeNameFromModifierTypeId,
 } from '../app/store';
 import { useAppSelector } from '../app/useHooks';
-
-import { createSelector } from '@reduxjs/toolkit';
 
 const SelectCatalogModifierSelectors = createSelector(
   (s: RootState) => (oid: string) => getModifierOptionById(s.ws.modifierOptions, oid),
@@ -15,10 +16,11 @@ const SelectCatalogModifierSelectors = createSelector(
   (moselector, mtselector) => { return { modifierEntry: mtselector, option: moselector } satisfies ICatalogModifierSelectors; }
 )
 const SelectProcessProductInstanceFunction = createSelector(
-  (s: RootState, _productModifierEntries: ProductModifierEntry[], pifId: string) => SelectCatalogModifierSelectors(s),
+  (s: RootState, _productModifierEntries: ProductModifierEntry[], _pifId: string) => SelectCatalogModifierSelectors(s),
   (_s: RootState, productModifierEntries: ProductModifierEntry[], _pifId: string) => productModifierEntries,
   (s: RootState, _productModifierEntries: ProductModifierEntry[], pifId: string) => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId),
   (catModSelectors, productModifierEntries, productInstanceFunction) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (productInstanceFunction) {
       const result = WFunctional.ProcessProductInstanceFunction(productModifierEntries, productInstanceFunction, catModSelectors);
       if (result) {
@@ -39,7 +41,7 @@ export const OrderGuideMessagesComponent = ({ productId, productModifierEntries 
   return (<>
     {orderGuideWarningFunctions.map((pifId, i) =>
       <OrderGuideMessage
-        key={`${i}guide`}
+        key={`${i.toString()}guide`}
         pifId={pifId}
         productModifierEntries={productModifierEntries}
         innerComponent={(msg => <OkResponseOutput>{msg}</OkResponseOutput>)}
@@ -51,7 +53,7 @@ export const OrderGuideWarningsComponent = ({ productId, productModifierEntries 
   return (<>
     {orderGuideSuggestionFunctions.map((pifId, i) =>
       <OrderGuideMessage
-        key={`${i}warnguide`}
+        key={`${i.toString()}warnguide`}
         pifId={pifId}
         productModifierEntries={productModifierEntries}
         innerComponent={(msg => <WarningResponseOutput>{msg}</WarningResponseOutput>)}
@@ -61,14 +63,14 @@ export const OrderGuideWarningsComponent = ({ productId, productModifierEntries 
 
 const OrderGuideError = ({ mtId }: { mtId: string }) => {
   const modifierTypeName = useAppSelector(s => SelectModifierTypeNameFromModifierTypeId(s.ws.modifierEntries, mtId));
-  return <ErrorResponseOutput>{`Please select your choice of ${String(modifierTypeName).toLowerCase()}`}</ErrorResponseOutput>
+  return <ErrorResponseOutput>{`Please select your choice of ${modifierTypeName.toLowerCase()}`}</ErrorResponseOutput>
 }
 
 export const OrderGuideErrorsComponent = ({ modifierMap }: { modifierMap: MetadataModifierMap; }) => {
   return (<>
     {Object.entries(modifierMap).filter(([_, v]) => !v.meets_minimum).map(([mtId, _v], i) =>
       <OrderGuideError
-        key={`${i}err`}
+        key={`${i.toString()}err`}
         mtId={mtId}
       />)}
   </>);

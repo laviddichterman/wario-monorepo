@@ -1,7 +1,8 @@
-import { useAppSelector } from '../app/useHooks';
-import { type OptionEnableState, type IOption, type WCPProduct } from '@wcp/wario-shared';
-import { SelectCatalogSelectors, getFulfillments } from '@wcp/wario-ux-shared';
 import { ModifierOptionTooltip as ModifierOptionTooltipBase } from '@wcp/wario-fe-ux-shared';
+import { type IOption, type OptionEnableState, type WCPProduct } from '@wcp/wario-shared';
+import { getFulfillments, SelectCatalogSelectors } from '@wcp/wario-ux-shared';
+
+import { useAppSelector } from '../app/useHooks';
 
 interface ModifierOptionTooltipProps {
   enableState: OptionEnableState;
