@@ -1,12 +1,15 @@
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
 import { Clear } from '@mui/icons-material';
 import { Button, IconButton, Link } from '@mui/material';
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
-import { FormProvider, RHFTextField } from './hook-form';
 
-import { type DeliveryInfoFormData, deliveryAddressSchema, setDeliveryInfo, validateDeliveryAddress } from '../app/slices/WFulfillmentSlice';
 import { ErrorResponseOutput, OkResponseOutput, SelectDeliveryAreaLink } from '@wcp/wario-ux-shared';
+
+import { deliveryAddressSchema, type DeliveryInfoFormData, setDeliveryInfo, validateDeliveryAddress } from '../app/slices/WFulfillmentSlice';
+import { useAppDispatch, useAppSelector } from '../app/useHooks';
+
+import { FormProvider, RHFTextField } from './hook-form';
 
 
 function useDeliveryInfoForm() {
@@ -42,6 +45,7 @@ export default function DeliveryInfoForm() {
   const setDeliveryInfoAndAttemptToValidate = function (formData: DeliveryInfoFormData) {
     console.log(formData);
     if (isValid && deliveryValidationLoading !== 'PENDING') {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       dispatch(validateDeliveryAddress(formData));
     }
   }
@@ -55,7 +59,8 @@ export default function DeliveryInfoForm() {
         <OkResponseOutput>
           Found an address in our delivery area: <br />
           <span className="title cart">
-            {`${validatedDeliveryAddress}${validatedDeliveryAddress2 ? ` ${validatedDeliveryAddress2}` : ''}, ${validatedZipcode}`}
+            {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/restrict-template-expressions */}
+            {`${validatedDeliveryAddress!}${validatedDeliveryAddress2 ? ` ${validatedDeliveryAddress2}` : ''}, ${validatedZipcode}`}
             <IconButton name="remove" onClick={resetValidatedAddress}><Clear /></IconButton>
           </span>
         </OkResponseOutput>
@@ -65,7 +70,7 @@ export default function DeliveryInfoForm() {
             <span className="flexbox__item one-half">
               <RHFTextField
                 name="address"
-                readOnly={deliveryValidationLoading === 'PENDING'}
+                disabled={deliveryValidationLoading === 'PENDING'}
                 autoComplete="shipping address-line1"
                 label="Address:"
                 placeholder={"Address"}
@@ -74,7 +79,7 @@ export default function DeliveryInfoForm() {
             <span className="flexbox__item one-quarter soft-half--sides">
               <RHFTextField
                 name="address2"
-                readOnly={deliveryValidationLoading === 'PENDING'}
+                disabled={deliveryValidationLoading === 'PENDING'}
                 autoComplete="shipping address-line2"
                 label="Apt/Unit:"
               />
@@ -82,7 +87,7 @@ export default function DeliveryInfoForm() {
             <span className="flexbox__item one-quarter">
               <RHFTextField
                 name="zipcode"
-                readOnly={deliveryValidationLoading === 'PENDING'}
+                disabled={deliveryValidationLoading === 'PENDING'}
                 autoComplete="shipping postal-code"
                 label="ZIP Code:"
               />
@@ -109,7 +114,7 @@ export default function DeliveryInfoForm() {
           <input type="text" id="delivery-instructions-text" name="delivery_instructions" size={40} />
         </span>
       </span>
-      <Button type="submit" disabled={!isValid || deliveryValidationLoading === 'PENDING'} className="btn" onClick={() => handleSubmit((e) => setDeliveryInfoAndAttemptToValidate(e))()}>Validate Delivery Address</Button>
+      <Button type="submit" disabled={!isValid || deliveryValidationLoading === 'PENDING'} className="btn" onClick={() => handleSubmit((e) => { setDeliveryInfoAndAttemptToValidate(e); })()}>Validate Delivery Address</Button>
     </>
   )
 }

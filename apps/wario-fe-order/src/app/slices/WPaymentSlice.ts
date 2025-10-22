@@ -1,9 +1,14 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type * as Square from '@square/web-sdk';
+import type { AxiosResponse } from "axios";
+
+import { type CrudOrderResponse, type TipSelection, type ValidateAndLockCreditResponseValid } from "@wcp/wario-shared";
 import { CreateValidateStoreCreditThunk, scrollToIdOffsetAfterDelay, setCurrentTime } from "@wcp/wario-ux-shared";
-import { type TipSelection, type CrudOrderResponse, type ValidateAndLockCreditResponseValid } from "@wcp/wario-shared";
-import axiosInstance from "../../utils/axios";
-import { type AppDispatch, type RootState, SelectWarioSubmissionArguments } from "../store";
+
+import axiosInstance from "@/utils/axios";
+
+import { type AppDispatch, type RootState, SelectWarioSubmissionArguments } from "@/app/store";
+
 import { setSubmitTime } from "./WMetricsSlice";
 
 export const validateStoreCredit = CreateValidateStoreCreditThunk(axiosInstance);
@@ -14,15 +19,17 @@ export const submitToWario = createAsyncThunk<CrudOrderResponse, string | null, 
     thunkApi.dispatch(setSubmitTime(Date.now()));
     const request = SelectWarioSubmissionArguments(thunkApi.getState(), nonce);
     try {
-      const result = await axiosInstance.post('/api/v1/order', request);
+      const result: AxiosResponse<CrudOrderResponse> = await axiosInstance.post('/api/v1/order', request);
       return result.data;
     }
-    catch (err: any) {
+    catch (err: unknown) {
       thunkApi.dispatch(setCurrentTime({ currentLocalTime: Date.now(), ticksElapsed: 0 }));
       console.log(err);
       try {
-        thunkApi.dispatch(setOrderSubmitErrors(err!.error.map(((x: any) => x.detail))));
-      } catch (e) { }
+        if (err && typeof err === 'object' && 'error' in err && Array.isArray(err.error)) {
+          thunkApi.dispatch(setOrderSubmitErrors(err.error.map(((x: { detail: string }) => x.detail))));
+        }
+      } catch { }
       return thunkApi.rejectWithValue(err);
     }
   }

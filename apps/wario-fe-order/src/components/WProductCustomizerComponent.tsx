@@ -1,18 +1,30 @@
-import React, { forwardRef, useMemo } from 'react';
+import { createSelector } from '@reduxjs/toolkit';
 import { useSnackbar } from 'notistack';
-import { FormControl, type FormControlProps, FormGroup, FormLabel, Radio, RadioGroup, Grid, Button, IconButton, Checkbox, FormControlLabel } from '@mui/material';
-import { SettingsTwoTone, Circle, CircleOutlined } from "@mui/icons-material";
-import { ProductDisplay } from './WProductComponent';
-import { scrollToIdOffsetAfterDelay, CustomizerFormControlLabel, Separator, StageTitle, WarioButton, DialogContainer, getModifierTypeEntryById, getModifierOptionById, SelectCatalogSelectors, SelectBaseProductByProductId, getProductEntryById } from '@wcp/wario-ux-shared';
-import { type WProduct, DisableDataCheck, OptionPlacement, OptionQualifier, type IOptionState, type MTID_MOID, DISABLE_REASON, type IOption, type CatalogModifierEntry, type ProductModifierEntry, WCPProductGenerateMetadata, type ICatalogSelectors, type WCPProduct } from '@wcp/wario-shared';
+import React, { forwardRef, useMemo } from 'react';
+
+import { Circle, CircleOutlined, SettingsTwoTone } from "@mui/icons-material";
+import { Button, Checkbox, FormControl, FormControlLabel, type FormControlProps, FormGroup, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/material';
+
+import {
+  type CatalogModifierEntry, DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionInstance, type IOptionState, type MTID_MOID, OptionPlacement,
+  OptionQualifier, type ProductModifierEntry, type Selector, SortAndFilterModifierOptions, SortProductModifierEntries, SortProductModifierOptions,
+  type WCPProduct, WCPProductGenerateMetadata, type WProduct
+} from '@wcp/wario-shared';
+import {
+  CustomizerFormControlLabel, DialogContainer, getModifierOptionById, getModifierTypeEntryById, getProductEntryById, scrollToIdOffsetAfterDelay,
+  SelectBaseProductByProductId, SelectCatalogSelectors, Separator, StageTitle, WarioButton
+} from '@wcp/wario-ux-shared';
+
+import { addToCart, FindDuplicateInCart, getCart, removeFromCart, unlockCartEntry, updateCartProduct, updateCartQuantity } from '@/app/slices/WCartSlice';
 import {
   clearCustomizer,
   setAdvancedModifierOption,
   setShowAdvanced,
   updateCustomizerProduct
-} from '../app/slices/WCustomizerSlice';
+} from '@/app/slices/WCustomizerSlice';
+import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
+import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
 import {
-  FilterUnselectableModifierOption,
   type RootState,
   selectAllowAdvancedPrompt,
   selectCartEntryBeingCustomized,
@@ -23,17 +35,12 @@ import {
   selectSelectedWProduct,
   SelectShouldFilterModifierTypeDisplay,
   selectShowAdvanced,
-  SortProductModifierEntries,
-  SortProductModifierOptions
-} from '../app/store';
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
-import { addToCart, FindDuplicateInCart, getCart, removeFromCart, unlockCartEntry, updateCartProduct, updateCartQuantity } from '../app/slices/WCartSlice';
-import { SelectServiceDateTime } from '../app/slices/WFulfillmentSlice';
+} from '@/app/store';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import { ModifierOptionTooltip } from './ModifierOptionTooltip';
-import { setTimeToFirstProductIfUnset } from '../app/slices/WMetricsSlice';
-import { createSelector } from '@reduxjs/toolkit';
 import { OrderGuideErrorsComponent, OrderGuideMessagesComponent, OrderGuideWarningsComponent } from './WOrderGuideMessages';
-import { cloneDeep } from 'lodash';
+import { ProductDisplay } from './WProductComponent';
 
 interface IModifierOptionToggle {
   toggleOptionChecked: IOption;
@@ -43,9 +50,10 @@ interface IModifierOptionToggle {
 const UpdateModifierOptionStateToggleOrRadio = (mtId: string, moId: string, selectedProduct: WProduct, catalogSelectors: ICatalogSelectors, serviceTime: number | Date, fulfillmentId: string) => {
   const newModifierOptions = [{ placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR, optionId: moId }];
   const modifierEntryIndex = selectedProduct.p.modifiers.findIndex(x => x.modifierTypeId === mtId);
-  const newProductModifiers = cloneDeep(selectedProduct.p.modifiers);
+  const newProductModifiers = structuredClone(selectedProduct.p.modifiers);
   if (modifierEntryIndex === -1) {
     newProductModifiers.push({ modifierTypeId: mtId, options: newModifierOptions });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     SortProductModifierEntries(newProductModifiers, catalogSelectors.modifierEntry);
   } else {
     newProductModifiers[modifierEntryIndex].options = newModifierOptions;
@@ -57,7 +65,7 @@ const UpdateModifierOptionStateToggleOrRadio = (mtId: string, moId: string, sele
 const UpdateModifierOptionStateCheckbox = (mt: CatalogModifierEntry, mo: IOption, optionState: IOptionState, selectedProduct: WProduct, catalogSelectors: ICatalogSelectors, serviceTime: number | Date, fulfillmentId: string) => {
   const newOptInstance = { ...optionState, optionId: mo.id };
   const modifierEntryIndex = selectedProduct.p.modifiers.findIndex(x => x.modifierTypeId === mo.modifierTypeId);
-  const newProductModifiers = cloneDeep(selectedProduct.p.modifiers);
+  const newProductModifiers = structuredClone(selectedProduct.p.modifiers);
   let newModifierOptions = modifierEntryIndex !== -1 ? newProductModifiers[modifierEntryIndex].options : [];
   if (optionState.placement === OptionPlacement.NONE) {
     newModifierOptions = newModifierOptions.filter(x => x.optionId !== mo.id);
@@ -69,7 +77,8 @@ const UpdateModifierOptionStateCheckbox = (mt: CatalogModifierEntry, mo: IOption
     const moIdX = newModifierOptions.findIndex(x => x.optionId === mo.id);
     if (moIdX === -1) {
       newModifierOptions.push(newOptInstance);
-      SortProductModifierOptions(newModifierOptions, catalogSelectors.option);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      SortProductModifierOptions(newModifierOptions, catalogSelectors.option) as IOptionInstance[];
     }
     else {
       newModifierOptions[moIdX] = newOptInstance;
@@ -77,6 +86,7 @@ const UpdateModifierOptionStateCheckbox = (mt: CatalogModifierEntry, mo: IOption
   }
   if (modifierEntryIndex === -1 && newModifierOptions.length > 0) {
     newProductModifiers.push({ modifierTypeId: mo.modifierTypeId, options: newModifierOptions });
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     SortProductModifierEntries(newProductModifiers, catalogSelectors.modifierEntry);
   } else {
     if (newModifierOptions.length > 0) {
@@ -161,7 +171,8 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
       aria-labelledby={`modifier_control_${options[0].modifierTypeId}`}>
       <Grid container>
         {options.map((opt, i) => {
-          const optionState = getOptionState(opt.id);
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const optionState = getOptionState(opt.id)!;
           return (
             <Grid
               key={i}
@@ -195,10 +206,13 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
 function useModifierOptionCheckbox(option: IOption) {
   const dispatch = useAppDispatch();
   const optionState = useAppSelector(s => selectOptionState(s, option.modifierTypeId, option.id));
-  const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, option.modifierTypeId)!)
-  const isWhole = useMemo(() => optionState.placement === OptionPlacement.WHOLE, [optionState.placement]);
-  const isLeft = useMemo(() => optionState.placement === OptionPlacement.LEFT, [optionState.placement]);
-  const isRight = useMemo(() => optionState.placement === OptionPlacement.RIGHT, [optionState.placement]);
+  const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, option.modifierTypeId))
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const isWhole = useMemo(() => optionState!.placement === OptionPlacement.WHOLE, [optionState]);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const isLeft = useMemo(() => optionState!.placement === OptionPlacement.LEFT, [optionState]);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const isRight = useMemo(() => optionState!.placement === OptionPlacement.RIGHT, [optionState]);
   const selectedProduct = useAppSelector(s => s.customizer.selectedProduct);
   const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
@@ -210,13 +224,16 @@ function useModifierOptionCheckbox(option: IOption) {
     }
   };
   const onClickWhole = () => {
-    onUpdateOption({ placement: +!isWhole * OptionPlacement.WHOLE, qualifier: optionState.qualifier });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    onUpdateOption({ placement: +!isWhole * OptionPlacement.WHOLE, qualifier: optionState!.qualifier });
   }
   const onClickLeft = () => {
-    onUpdateOption({ placement: +!isLeft * OptionPlacement.LEFT, qualifier: optionState.qualifier });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    onUpdateOption({ placement: +!isLeft * OptionPlacement.LEFT, qualifier: optionState!.qualifier });
   }
   const onClickRight = () => {
-    onUpdateOption({ placement: +!isRight * OptionPlacement.RIGHT, qualifier: optionState.qualifier });
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    onUpdateOption({ placement: +!isRight * OptionPlacement.RIGHT, qualifier: optionState!.qualifier });
   }
   return {
     onClickWhole,
@@ -235,15 +252,16 @@ interface IModifierOptionCheckboxCustomizerComponent {
 }
 
 function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCustomizerComponent) {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const selectedProduct = useAppSelector(s => s.customizer.selectedProduct!);
   const dispatch = useAppDispatch();
   const { onClickWhole, onClickLeft, onClickRight,
     isWhole, isLeft, isRight,
     optionState } = useModifierOptionCheckbox(option);
   const canShowAdvanced = useAppSelector(selectShowAdvanced);
-  const showAdvanced = useMemo(() => canShowAdvanced && (optionState.enable_left || optionState.enable_right), [canShowAdvanced, optionState]);
-  const advancedOptionSelected = useMemo(() => optionState.placement === OptionPlacement.LEFT || optionState.placement === OptionPlacement.RIGHT || optionState.qualifier !== OptionQualifier.REGULAR, [optionState.placement, optionState.qualifier]);
-  if (optionState === null) {
+  const showAdvanced = useMemo(() => optionState !== undefined && canShowAdvanced && (optionState.enable_left.enable === DISABLE_REASON.ENABLED || optionState.enable_right.enable === DISABLE_REASON.ENABLED), [canShowAdvanced, optionState]);
+  const advancedOptionSelected = useMemo(() => optionState !== undefined && (optionState.placement === OptionPlacement.LEFT || optionState.placement === OptionPlacement.RIGHT || optionState.qualifier !== OptionQualifier.REGULAR), [optionState]);
+  if (optionState === undefined) {
     return null;
   }
   const onClickAdvanced = () => {
@@ -272,7 +290,7 @@ function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCus
                   disableTouchRipple
                   disabled={optionState.enable_whole.enable !== DISABLE_REASON.ENABLED}
                   checked={isWhole}
-                  onClick={() => onClickWhole()} />}
+                  onClick={() => { onClickWhole(); }} />}
               {(isLeft || (optionState.enable_whole.enable !== DISABLE_REASON.ENABLED && optionState.enable_left.enable === DISABLE_REASON.ENABLED)) &&
                 <Checkbox
                   disableRipple
@@ -280,7 +298,7 @@ function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCus
                   disableTouchRipple
                   disabled={optionState.enable_left.enable !== DISABLE_REASON.ENABLED}
                   checked={isLeft}
-                  onClick={() => onClickLeft()} />}
+                  onClick={() => { onClickLeft(); }} />}
               {(isRight || (optionState.enable_whole.enable !== DISABLE_REASON.ENABLED && optionState.enable_right.enable === DISABLE_REASON.ENABLED)) &&
                 <Checkbox
                   disableRipple
@@ -288,7 +306,7 @@ function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCus
                   disableTouchRipple
                   disabled={optionState.enable_right.enable !== DISABLE_REASON.ENABLED}
                   checked={isRight}
-                  onClick={() => onClickRight()} />}
+                  onClick={() => { onClickRight(); }} />}
             </span>}
           // onClick={() => {
           //   console.log(optionState)
@@ -313,14 +331,12 @@ const SelectVisibleModifierOptions = createSelector(
   (s: RootState, productId: string, modifiers: ProductModifierEntry[], _mtId: string) => SelectProductMetadataFromCustomProductWithCurrentFulfillmentData(s, productId, modifiers),
   (s: RootState, _productId: string, _modifiers: ProductModifierEntry[], mtId: string) => getModifierTypeEntryById(s.ws.modifierEntries, mtId),
   (s: RootState, _productId: string, _modifiers: ProductModifierEntry[], _mtId: string) => SelectCatalogSelectors(s.ws).option,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState, _productId: string, _modifiers: ProductModifierEntry[], _mtId: string) => SelectServiceDateTime(s.fulfillment)!,
 
   (metadata, modifierType, modifierOptionSelector, serviceDateTime) => {
-    const filterUnavailable = modifierType.modifierType.displayFlags.omit_options_if_not_available;
-    const mmEntry = metadata.modifier_map[modifierType.modifierType.id];
-    return modifierType.options.map(o => modifierOptionSelector(o))
-      .sort((a, b) => a.ordinal - b.ordinal)
-      .filter((o) => DisableDataCheck(o.disabled, o.availability, serviceDateTime) && (!filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id)));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    return SortAndFilterModifierOptions(metadata, modifierType, modifierOptionSelector as Selector<IOption>, serviceDateTime) as IOption[];
   }
 );
 
@@ -371,7 +387,7 @@ interface IOptionDetailModal {
 }
 function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
   const dispatch = useAppDispatch();
-  const option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, mtid_moid[1])!);
+  const option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, mtid_moid[1]));
   const { onClickWhole, onClickLeft, onClickRight, onUpdateOption,
     isWhole, isLeft, isRight,
     optionState } = useModifierOptionCheckbox(option);
@@ -400,7 +416,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
                 <Checkbox
                   disabled={!optionState.enable_left}
                   checked={isLeft}
-                  onChange={() => onClickLeft()} />
+                  onChange={() => { onClickLeft(); }} />
               }
               label={null}
             />
@@ -411,7 +427,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
                 <Checkbox
                   disabled={!optionState.enable_whole}
                   checked={isWhole}
-                  onChange={() => onClickWhole()} />
+                  onChange={() => { onClickWhole(); }} />
               }
               label={null}
             />
@@ -422,7 +438,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
                 <Checkbox
                   disabled={!optionState.enable_right}
                   checked={isRight}
-                  onChange={() => onClickRight()} />
+                  onChange={() => { onClickRight(); }} />
               }
               label={null}
             />
@@ -449,6 +465,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
 const CustomizerSelectOrderedModifiersVisibleForCustomProduct = createSelector(
   (s: RootState) => s.customizer.selectedProduct !== null ? SelectProductMetadataFromCustomProductWithCurrentFulfillmentData(s, s.customizer.selectedProduct.p.productId, s.customizer.selectedProduct.p.modifiers) : null,
   (s: RootState) => s.customizer.selectedProduct !== null ? getProductEntryById(s.ws.products, s.customizer.selectedProduct.p.productId) : null,
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   (s: RootState) => s.fulfillment.selectedService!,
   (s: RootState) => (modifierTypeId: string, hasSelectable: boolean) => SelectShouldFilterModifierTypeDisplay(s, modifierTypeId, hasSelectable),
   (s: RootState) => (modifierTypeId: string) => getModifierTypeEntryById(s.ws.modifierEntries, modifierTypeId).modifierType.ordinal,
@@ -508,7 +525,7 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
         enqueueSnackbar(`Merged duplicate ${selectedProductMetadata.name} in your order.`, { variant: 'success', autoHideDuration: 3000 });
       }
       else {
-        enqueueSnackbar(`Updated quantity of ${selectedProductMetadata.name} to ${newQuantity}`, { variant: 'success', autoHideDuration: 3000 });
+        enqueueSnackbar(`Updated quantity of ${selectedProductMetadata.name} to ${newQuantity.toString()}`, { variant: 'success', autoHideDuration: 3000 });
       }
     }
     else {

@@ -21,19 +21,14 @@ import {
   type CreateOrderRequestV2,
   CURRENCY,
   DetermineCartBasedLeadTime,
-  DISABLE_REASON,
   DiscountMethod,
   type FulfillmentConfig,
   GetNextAvailableServiceDate,
   type IMoney,
-  type IOption,
-  type IOptionInstance,
   type MetadataModifierMap,
-  type MetadataModifierMapEntry,
   type Metrics,
   PaymentMethod,
   type ProductModifierEntry,
-  type Selector,
   StoreCreditType,
   TenderBaseStatus,
   type WCPProductV2Dto,
@@ -470,20 +465,6 @@ export const SelectProductMetadataFromCustomProductWithCurrentFulfillmentData = 
   (s: RootState, _productInstanceId: string) => s.fulfillment.selectedService!,
   (productId, modifiers, socketIoState, service_time, fulfillmentId) => SelectProductMetadata(socketIoState, productId, modifiers, service_time, fulfillmentId),
 );
-
-/** move this to WCPShared */
-export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEntry, moid: string) => {
-  const optionMapEntry = mmEntry.options[moid];
-  return optionMapEntry.enable_left.enable === DISABLE_REASON.ENABLED || optionMapEntry.enable_right.enable === DISABLE_REASON.ENABLED || optionMapEntry.enable_whole.enable === DISABLE_REASON.ENABLED;
-}
-
-export const SortProductModifierEntries = (mods: ProductModifierEntry[], modifierTypeSelector: Selector<CatalogModifierEntry>) =>
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  mods.sort((a, b) => modifierTypeSelector(a.modifierTypeId)!.modifierType.ordinal - modifierTypeSelector(b.modifierTypeId)!.modifierType.ordinal)
-
-export const SortProductModifierOptions = (mods: IOptionInstance[], modifierOptionSelector: Selector<IOption>) =>
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  mods.sort((a, b) => modifierOptionSelector(a.optionId)!.ordinal - modifierOptionSelector(b.optionId)!.ordinal)
 
 export const SelectShouldFilterModifierTypeDisplay = weakMapCreateSelector(
   (s: RootState, modifierTypeId: string, _hasSelectable: boolean) => getModifierTypeEntryById(s.ws.modifierEntries, modifierTypeId),

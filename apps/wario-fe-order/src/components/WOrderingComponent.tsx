@@ -1,22 +1,24 @@
 
-import { Box, Stepper, Step, StepLabel, useMediaQuery, useTheme } from '@mui/material';
-import { PaymentForm } from 'react-square-web-payments-sdk';
 import type * as Square from '@square/web-sdk';
+import { PaymentForm } from 'react-square-web-payments-sdk';
+
+import { Box, Step, StepLabel, Stepper, useMediaQuery, useTheme } from '@mui/material';
+
 // import { useNavigate, useLocation } from "react-router-dom";
-
 // TODO: need to add an interceptor for forward/back when the user has gotten to 2nd stage or at least reasonably far
-
-import WFulfillmentStageComponent from './step/WFulfillmentStageComponent';
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
-import { WCustomerInformationStage } from './step/WCustomerInformationStageComponent';
-import WReviewOrderStage from './step/WReviewOrderStage';
-import { WCheckoutStage } from './step/WCheckoutStageComponent';
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
+import { SelectSquareAppId, SelectSquareLocationId, StepperTitle } from '@wcp/wario-ux-shared';
+
+import { setSquareTokenizationErrors, submitToWario } from '../app/slices/WPaymentSlice';
 import { SelectBalanceAfterPayments } from '../app/store';
-import { submitToWario, setSquareTokenizationErrors } from '../app/slices/WPaymentSlice';
-import { WShopForProductsContainer } from './step/WShopForProductsStageContainer';
-import { StepperTitle, SelectSquareAppId, SelectSquareLocationId } from '@wcp/wario-ux-shared';
+import { useAppDispatch, useAppSelector } from '../app/useHooks';
 import { IS_PRODUCTION } from '../config';
+
+import { WCheckoutStage } from './step/WCheckoutStageComponent';
+import { WCustomerInformationStage } from './step/WCustomerInformationStageComponent';
+import WFulfillmentStageComponent from './step/WFulfillmentStageComponent';
+import WReviewOrderStage from './step/WReviewOrderStage';
+import { WShopForProductsContainer } from './step/WShopForProductsStageContainer';
 
 const STAGES = [
   {
@@ -54,8 +56,9 @@ export default function WOrderingComponent() {
   const balanceAfterPayments = useAppSelector(SelectBalanceAfterPayments);
   const theme = useTheme();
   const useStepper = useMediaQuery(theme.breakpoints.up('md'));
-  const cardTokenizeResponseReceived = async (props: Square.TokenResult, verifiedBuyer?: Square.VerifyBuyerResponseDetails) => {
+  const cardTokenizeResponseReceived = (props: Square.TokenResult, _verifiedBuyer?: Square.VerifyBuyerResponseDetails | null) => {
     if (props.token) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       dispatch(submitToWario(props.token));
     } else if (props.errors) {
       dispatch(setSquareTokenizationErrors(props.errors));
@@ -83,7 +86,7 @@ export default function WOrderingComponent() {
       {useStepper ?
         <Stepper sx={{ px: 1, pt: 2, mx: 'auto' }} activeStep={stage} >
           {STAGES.map((stg, i) => (
-            <Step key={i} id={`WARIO_step_${i}`} completed={stage > i || submitToWarioStatus === 'SUCCEEDED'}>
+            <Step key={i} id={`WARIO_step_${i.toString()}`} completed={stage.valueOf() > i || submitToWarioStatus === 'SUCCEEDED'}>
               <StepLabel><StepperTitle>{stg.stepperTitle}</StepperTitle></StepLabel>
             </Step>))}
         </Stepper> : <></>
