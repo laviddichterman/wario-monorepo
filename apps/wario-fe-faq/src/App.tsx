@@ -1,8 +1,9 @@
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { ScopedCssBaseline } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import { themeOptions } from '@wcp/wario-fe-ux-shared';
+
 import WNestedInfoComponent from './components/WNestedInfoComponent';
 const theme = createTheme(themeOptions);
 function App() {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import type { ReactNode } from 'react';
+
+import { TabContext, TabList, TabPanel } from '@mui/lab'
 import { Box, Tab, Typography } from '@mui/material';
-import { TabList, TabPanel, TabContext } from '@mui/lab'
 
 interface InfoSection {
   menutitle: string, // just the title
