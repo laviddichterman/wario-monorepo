@@ -1,5 +1,12 @@
 # @wcp/wario-shared
 
+## 0.2.1
+
+### Patch Changes
+
+- 04b6b4e: add linting fixes
+- 05b2fcb: move SortProductModifierEntries, SortProductModifierOptions, SortAndFilterModifierOptions, FilterUnselectableModifierOption into wario-shared
+
 ## 0.2.0
 
 ### Minor Changes

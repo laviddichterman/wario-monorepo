@@ -1,5 +1,15 @@
 # @wcp/wario-ux-shared
 
+## 4.0.1
+
+### Patch Changes
+
+- 39cc9ff: linting fixes for wario-ux-shared
+- 1d70e2c: improve types in thunks
+- Updated dependencies [04b6b4e]
+- Updated dependencies [05b2fcb]
+  - @wcp/wario-shared@0.2.1
+
 ## 4.0.0
 
 ### Minor Changes
