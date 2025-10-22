@@ -5,8 +5,10 @@ import {
 } from '../types';
 import type {
   CatalogCategoryEntry,
+  CatalogModifierEntry,
   ICatalogSelectors,
   IOption,
+  IOptionInstance,
   IProduct,
   IProductDisplayFlags,
   IProductInstance,
@@ -158,3 +160,11 @@ export function SelectProductInstancesInCategory(catalogCategory: CatalogCategor
     return acc;
   }, [])
 }
+
+export const SortProductModifierEntries = (mods: ProductModifierEntry[], modifierTypeSelector: Selector<CatalogModifierEntry>) =>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  mods.sort((a, b) => modifierTypeSelector(a.modifierTypeId)!.modifierType.ordinal - modifierTypeSelector(b.modifierTypeId)!.modifierType.ordinal)
+
+export const SortProductModifierOptions = (mods: IOptionInstance[], modifierOptionSelector: Selector<IOption>) =>
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  mods.sort((a, b) => modifierOptionSelector(a.optionId)!.ordinal - modifierOptionSelector(b.optionId)!.ordinal)

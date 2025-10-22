@@ -1,3 +1,16 @@
+/**
+ * Utilities and helpers for shared order/cart/catalog logic.
+ *
+ * This module contains functions and constants used across the monorepo for:
+ * - cart rebuilding and categorization
+ * - scheduling / fulfillment time interval building
+ * - disabling/availability checks for products and modifier options
+ * - price, tax, discount, payment, tip and totals computation
+ * - assembly of event/call-line title strings
+ *
+ * Types referenced in the descriptions below are declared elsewhere in the codebase (e.g. IMoney, WProduct, CoreCartEntry, FulfillmentConfig, etc.).
+ */
+
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
 import { RRule } from "rrule";
@@ -6,16 +19,38 @@ import { OrderFunctional } from "./objects/OrderFunctional";
 import { CreateProductWithMetadataFromV2Dto } from "./objects/WCPProduct";
 import WDateUtils from "./objects/WDateUtils";
 import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION } from "./types";
-import type { CatalogCategoryEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto, FulfillmentTime, ICatalogSelectors, IMoney, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, Selector, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2Dto, WNormalizedInterval, WOrderInstancePartial, WProduct } from "./types";
+import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto, FulfillmentTime, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, MetadataModifierMapEntry, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, Selector, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2Dto, WNormalizedInterval, WOrderInstancePartial, WProduct, WProductMetadata } from "./types";
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
 
 export const PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX = /(\{[A-Za-z0-9]+\})/g;
 
+/**
+ * ReduceArrayToMapByKey
+ *
+ * Convert an array of objects into a map keyed by the specified object property.
+ *
+ * @template T - element object type
+ * @param xs - array of objects
+ * @param key - property key to index the resulting record by
+ * @returns Record<string, T> - object map where each key is the stringified property value and each value is the original object
+ */
 export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
   return Object.fromEntries(xs.map(x => [x[key], x])) as Record<string, T>;
 };
 
+/**
+ * RebuildAndSortCart
+ *
+ * Convert a cart of V2 product DTOs into a categorized rebuilt cart with WProduct objects containing metadata,
+ * using provided catalog selectors and a service time/fulfillment id for metadata resolution.
+ *
+ * @param cart - array of CoreCartEntry with WCPProductV2Dto product DTOs
+ * @param catalogSelectors - catalog selector utilities used to look up product/category metadata
+ * @param service_time - service date/time used to compute product metadata (Date | number)
+ * @param fulfillmentId - id of the fulfillment used when building product metadata
+ * @returns CategorizedRebuiltCart - map of categoryId -> array of rebuilt cart entries
+ */
 export const RebuildAndSortCart = (cart: CoreCartEntry<WCPProductV2Dto>[], catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): CategorizedRebuiltCart => {
   return cart.reduce(
     (acc: CategorizedRebuiltCart, entry) => {
@@ -25,6 +60,17 @@ export const RebuildAndSortCart = (cart: CoreCartEntry<WCPProductV2Dto>[], catal
     }, {});
 }
 
+
+/**
+ * CartByPrinterGroup
+ *
+ * Group cart entries by their product's printer group. Flattens input and uses the provided product selector
+ * to lookup printerGroup on the product; entries with no printer group are omitted.
+ *
+ * @param cart - array of CoreCartEntry with WProduct instances
+ * @param productSelector - selector function to fetch CatalogProductEntry by product id
+ * @returns Record<string, CoreCartEntry<WProduct>[]> - map of printerGroupId -> cart entries
+ */
 // TODO: this could get generified to take WCPProductV2Dto or WCPProduct or WProduct
 type MapPrinterGroupToCartEntry = Record<string, CoreCartEntry<WProduct>[]>;
 export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelector: ICatalogSelectors['productEntry']): MapPrinterGroupToCartEntry =>
@@ -41,6 +87,16 @@ export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelec
     }), {});
 
 
+/**
+ * DetermineCartBasedLeadTime
+ *
+ * Estimate a lead time (in minutes) for the given cart by grouping items by prep station and computing
+ * the max base prep time per station plus the summed additional unit prep time multiplied by quantities.
+ *
+ * @param cart - array of CoreCartEntry containing WCPProductV2Dto product DTOs
+ * @param productSelector - selector to resolve CatalogProductEntry by product id
+ * @returns number - estimated lead time in minutes
+ */
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
 export const DetermineCartBasedLeadTime = (cart: CoreCartEntry<WCPProductV2Dto>[], productSelector: Selector<CatalogProductEntry>): number => {
   const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number; }>>((acc, cartLine) => {
@@ -66,6 +122,16 @@ export const GetPlacementFromMIDOID = (modifiers: ProductModifierEntry[], mtid: 
   return modifierEntry !== undefined ? (modifierEntry.options.find((x) => x.optionId === oid) || NOT_FOUND) : NOT_FOUND;
 };
 
+/**
+ * DateTimeIntervalBuilder
+ *
+ * Build a normalized interval ({ start, end }) for a fulfillment time and a maximum fulfillment duration.
+ * Uses WDateUtils.ComputeServiceDateTime and adds fulfillmentMaxDuration minutes to compute the end.
+ *
+ * @param fulfillmentTime - FulfillmentTime describing requested fulfillment slot
+ * @param fulfillmentMaxDuration - maximum duration in minutes to extend the interval
+ * @returns WNormalizedInterval - interval with concrete Date start and end
+ */
 export const DateTimeIntervalBuilder = (fulfillmentTime: FulfillmentTime, fulfillmentMaxDuration: number) => {
   // hack for date computation on DST transition days since we're currently not open during the time jump
   const date_lower = WDateUtils.ComputeServiceDateTime(fulfillmentTime);
@@ -74,10 +140,29 @@ export const DateTimeIntervalBuilder = (fulfillmentTime: FulfillmentTime, fulfil
 };
 
 /**
- * Function to check if something is disabled
- * @param {IWInterval} disable_data - catalog sourced info as to if/when the product is enabled or disabled
- * @param {Date | number} order_time - the time to use to check for disabling
- * @returns {{ enable: DISABLE_REASON.ENABLED } | { enable: DISABLE_REASON.DISABLED_BLANKET } | { enable: DISABLE_REASON.DISABLED_TIME, interval: IWInterval } | { enable: DISABLE_REASON.DISABLED_AVAILABILITY, availability: IRecurringInterval[] }}
+ * DisableDataCheck
+ *
+ * Determine whether an item (product or option) is enabled, disabled by blanket disable, disabled by time window,
+ * or disabled by recurring availability rules.
+ *
+ * The function checks:
+ * - explicit blanket disable interval (start > end)
+ * - explicit time disable interval that contains the order time
+ * - configured recurring availability rules (supports both simple intervals and rrule strings)
+ *
+ * @param disable_data - IWInterval | null - direct disable interval information from catalog metadata
+ * @param availabilities - list of recurring availability intervals (IRecurringInterval[])
+ * @param order_time - time to check (Date | number | string)
+ * @returns one of:
+ *  - { enable: DISABLE_REASON.ENABLED }
+ *  - { enable: DISABLE_REASON.DISABLED_BLANKET }
+ *  - { enable: DISABLE_REASON.DISABLED_TIME, interval: IWInterval }
+ *  - { enable: DISABLE_REASON.DISABLED_AVAILABILITY, availability: IRecurringInterval[] }
+ *
+ * Notes:
+ * - when an rrule is provided, the function parses and checks whether the order day matches the recurrence,
+ *   then validates the selected fulfillment time against the availability interval.
+ * - parse errors of rrule result in that availability being treated as unavailable (logged to console).
  */
 export function DisableDataCheck(disable_data: IWInterval | null, availabilities: IRecurringInterval[], order_time: Date | number | string): ({ enable: DISABLE_REASON.ENABLED } |
 { enable: DISABLE_REASON.DISABLED_BLANKET } |
@@ -125,7 +210,66 @@ export function DisableDataCheck(disable_data: IWInterval | null, availabilities
   return { enable: DISABLE_REASON.ENABLED };
 }
 
+/**
+ * FilterUnselectableModifierOption
+ *
+ * Return whether a modifier option (metadata modifier map entry) should be considered selectable.
+ * The option is unselectable only when it is disabled in all placements (left, right, whole).
+ *
+ * @param mmEntry - metadata modifier map entry for the product
+ * @param moid - modifier option id to inspect
+ * @returns boolean - true if the option is selectable (enabled in at least one placement), false otherwise
+ */
+export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEntry, moid: string) => {
+  const optionMapEntry = mmEntry.options[moid];
+  return optionMapEntry.enable_left.enable === DISABLE_REASON.ENABLED ||
+    optionMapEntry.enable_right.enable === DISABLE_REASON.ENABLED ||
+    optionMapEntry.enable_whole.enable === DISABLE_REASON.ENABLED;
+}
 
+/**
+ * SortAndFilterModifierOptions
+ *
+ * Given a product's metadata and a modifier type description, return a list of modifier options
+ * that are both enabled for the specified serviceDateTime and visible per the modifier's display flags.
+ *
+ * Behavior:
+ * - resolves option entries via modifierOptionSelector
+ * - sorts options by their ordinal
+ * - filters options based on DisableDataCheck and modifier display flags.omit_options_if_not_available
+ * 
+ * @todo determine if we actually need to call DisableDataCheck per placement or if we can optimize that away 
+ * since FilterUnselectableModifierOption checks the metadata which is derived from the same logic
+ * namely the line in WCPProduct: const is_enabled = enable_modifier_type.enable === DISABLE_REASON.ENABLED ? DisableDataCheck(option_object.disabled, option_object.availability, service_time) : enable_modifier_type;
+ * 
+ * @param metadata - WProductMetadata for the product
+ * @param modifierType - CatalogModifierEntry describing the modifier type
+ * @param modifierOptionSelector - selector to resolve IOption objects for modifier options
+ * @param serviceDateTime - service date/time to use for availability checks (Date | number)
+ * @returns IOption[] - ordered list of available modifier options
+ */
+export const SortAndFilterModifierOptions = (metadata: WProductMetadata, modifierType: CatalogModifierEntry, modifierOptionSelector: Selector<IOption>, serviceDateTime: Date | number) => {
+  const filterUnavailable = modifierType.modifierType.displayFlags.omit_options_if_not_available;
+  const mmEntry = metadata.modifier_map[modifierType.modifierType.id];
+  return modifierType.options.map(o => modifierOptionSelector(o)!)
+    .sort((a, b) => a.ordinal - b.ordinal)
+    .filter((o) => {
+      const disableInfo = DisableDataCheck(o.disabled, o.availability, serviceDateTime).enable;
+      const isUnavailableButStillVisible = (!filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id));
+      return disableInfo === DISABLE_REASON.ENABLED && isUnavailableButStillVisible;
+    })
+}
+
+/**
+ * ComputeServiceTimeDisplayString
+ *
+ * Build a human-friendly display string for a service/fulfillment time range. If minDuration is zero,
+ * displays the single formatted time, otherwise shows a range "start to end".
+ *
+ * @param minDuration - minimum duration (in minutes) to append to selectedTime
+ * @param selectedTime - selected time in minutes (since midnight) or other Minutes representation consumed by WDateUtils
+ * @returns string - formatted display string (e.g. "10:00 AM to 10:15 AM" or "10:00 AM")
+ */
 export const ComputeServiceTimeDisplayString = (minDuration: number, selectedTime: number) =>
   minDuration !== 0 ? `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}` : WDateUtils.MinutesToPrintTime(selectedTime);
 
@@ -138,6 +282,19 @@ export const GenerateShortCode = function (productInstanceSelector: Selector<IPr
 
 export const GenerateDineInGuestCountString = (dineInInfo: DineInInfoDto | null) => dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize.toString()})` : "";
 
+/**
+ * EventTitleSectionBuilder
+ *
+ * Build a call-line / event title sub-section for a single category cart:
+ * - chooses presentation style based on category.display_flags.call_line_display
+ * - supports SHORTCODE, SHORTNAME and QUANTITY display modes
+ *
+ * Note: internal helper used by EventTitleStringBuilder. Returns an empty string for empty cart or missing category.
+ *
+ * @param catalogSelectors - partial catalog selectors containing productInstance and category resolvers
+ * @param cart - array of CoreCartEntry<WProduct> for a single category
+ * @returns string - formatted section string (may be empty)
+ */
 const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'productInstance' | 'category'>, cart: CoreCartEntry<WProduct>[]) => {
   if (cart.length === 0) {
     return ''
@@ -169,6 +326,26 @@ const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'pro
   }
 }
 
+/**
+ * EventTitleStringBuilder
+ *
+ * Compose a full event title string for an order (used for call-line or third-party integrations).
+ * The title integrates:
+ * - a fulfillment shortcode (either derived from thirdPartyInfo or configured shortcode)
+ * - a main category section built from the base order category tree
+ * - supplemental sections for other categories
+ * - customer name
+ * - optional dine-in guest count
+ * - indicator for special instructions
+ *
+ * @param catalogSelectors - catalog selectors with category and productInstance resolvers
+ * @param fulfillmentConfig - fulfills minimal fields: orderBaseCategoryId and shortcode
+ * @param customer - customer display name
+ * @param fulfillmentDto - FulfillmentDto containing third-party info and dineInInfo
+ * @param cart - CategorizedRebuiltCart mapping category id to cart entries
+ * @param special_instructions - freeform special instructions string
+ * @returns string - assembled event title
+ */
 export const EventTitleStringBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productInstance'>, fulfillmentConfig: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'shortcode'>, customer: string, fulfillmentDto: FulfillmentDto, cart: CategorizedRebuiltCart, special_instructions: string) => {
   const has_special_instructions = special_instructions && special_instructions.length > 0;
   const mainCategoryTree = ComputeCategoryTreeIdList(fulfillmentConfig.orderBaseCategoryId, catalogSelectors.category);
@@ -209,15 +386,47 @@ export const ComputeCategoryTreeIdList = (rootId: string, categorySelector: Sele
   return ComputeCategoryTreeIdListInternal(rootId).sort((a, b) => a.ordinal - b.ordinal).map(x => x.id);
 }
 
+
+/**
+ * RoundToTwoDecimalPlaces
+ *
+ * Round a numeric value to two decimal places in a stable manner using Number.EPSILON.
+ *
+ * @param number - numeric input
+ * @returns number - value rounded to two decimal places
+ */
 export function RoundToTwoDecimalPlaces(number: number) {
   return Math.round((number + Number.EPSILON) * 100) / 100;
 }
 
+/**
+ * ComputeCartSubTotal
+ *
+ * Sum the price * quantity for each cart entry and return as IMoney in USD.
+ *
+ * @param cart - array of CoreCartEntry<WProduct>
+ * @returns IMoney - subtotal amount in cents (or smallest currency unit) with currency USD
+ */
 export function ComputeCartSubTotal(cart: CoreCartEntry<WProduct>[]): IMoney {
   return { amount: cart.reduce((acc, entry) => acc + (entry.product.m.price.amount * entry.quantity), 0), currency: CURRENCY.USD };
 }
 
 
+/**
+ * ComputeDiscountsApplied
+ *
+ * Given a pre-credit subtotal and a list of UnresolvedDiscount validations, return a resolved list of OrderLineDiscounts
+ * that are actually applied, respecting the order of the credits and available remaining amount.
+ *
+ * Behavior:
+ * - percentage credits are applied to the current remaining balance (rounded appropriately).
+ * - amount credits (credit codes or manual amounts) deduct up to the remaining balance.
+ * - credits that would apply zero are omitted.
+ *
+ * @param subtotalPreCredits - IMoney representing the subtotal before credits
+ * @param creditValidations - array of UnresolvedDiscount describing discounts/credits to attempt to apply
+ * @returns OrderLineDiscount[] - resolved discounts that were applied with amounts normalized to USD
+ */
 type DiscountAccumulator = { remaining: number; credits: OrderLineDiscount[]; };
 export const ComputeDiscountsApplied = (subtotalPreCredits: IMoney, creditValidations: UnresolvedDiscount[]): OrderLineDiscount[] => {
   const validations = creditValidations.reduce((acc: DiscountAccumulator, credit) => {
@@ -281,11 +490,20 @@ export const ComputeDiscountsApplied = (subtotalPreCredits: IMoney, creditValida
 
 type PaymentAccumulator = { remaining: number; remainingTip: number; payments: OrderPayment[]; };
 /**
- * 
- * @param total the total due, INCLUDING THE TIP
- * @param tips the amount of the tip
- * @param paymentsToValidate the payments to validate and return resolved versions of
- * @returns 
+ * ComputePaymentsApplied
+ *
+ * Resolve a list of UnresolvedPayment entries into concrete OrderPayment entries applied toward a total due.
+ * The total parameter includes tip; tips parameter is the IMoney representing tip amounts to be applied.
+ *
+ * Rules:
+ * - StoreCredit is consumed up to the remaining balance and apportions tip as a proportional share of the amount paid.
+ * - CreditCard consumes the rest of the remaining balance and tip in full (single-card assumption).
+ * - Cash consumes up to the remaining balance, apportions tip proportionally, and records change if amountTendered > applied amount.
+ *
+ * @param total - IMoney total due (including tip)
+ * @param tips - IMoney representing tip amounts (basis for distribution)
+ * @param paymentsToValidate - UnresolvedPayment[] payments in priority order to validate/apply
+ * @returns OrderPayment[] - resolved payments applied with explicit amount and tipAmount fields and any change information
  */
 export const ComputePaymentsApplied = (total: IMoney, tips: IMoney, paymentsToValidate: UnresolvedPayment[]): OrderPayment[] => {
   const validations: PaymentAccumulator = paymentsToValidate.reduce((acc: PaymentAccumulator, payment: UnresolvedPayment) => {
@@ -345,10 +563,29 @@ export const ComputePaymentsApplied = (total: IMoney, tips: IMoney, paymentsToVa
   return validations.payments;
 }
 
+/**
+ * ComputeGratuityServiceCharge
+ *
+ * Compute a service charge (gratuity) amount given a percentage and a basis amount.
+ *
+ * @param serviceChargePercentage - fractional percentage (e.g. 0.2 for 20%)
+ * @param basis - IMoney basis from which to compute the service charge
+ * @returns IMoney - computed service charge, rounded to integer currency units
+ */
 export function ComputeGratuityServiceCharge(serviceChargePercentage: number, basis: IMoney): IMoney {
   return { currency: basis.currency, amount: Math.round(RoundToTwoDecimalPlaces(serviceChargePercentage * basis.amount)) };
 }
 
+/**
+ * ComputeHasBankersRoundingSkew
+ *
+ * Detect whether bankers rounding will produce a .5 skew for tax computation by checking whether
+ * rounding(subtotalAfterDiscount * taxRate) yields a fractional half-cent (.5).
+ *
+ * @param subtotalAfterDiscount - IMoney subtotal after discounts and gratuity
+ * @param taxRate - tax multiplier (e.g. 0.0875)
+ * @returns boolean - true if a bankers rounding skew is present
+ */
 export function ComputeHasBankersRoundingSkew(subtotalAfterDiscount: IMoney, taxRate: number): boolean {
   return RoundToTwoDecimalPlaces(subtotalAfterDiscount.amount * taxRate) % 1 === 0.5;
 }
@@ -399,6 +636,45 @@ interface RecomputeTotalsArgs {
   fulfillment: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'serviceCharge' | 'allowTipping'>;
 }
 
+
+/**
+ * RecomputeTotals
+ *
+ * Given full context (catalog configuration, order/cart state, payments, discounts, fulfillment settings),
+ * recompute all derived financial and order summary values necessary for display and further processing.
+ *
+ * The function returns a RecomputeTotalsResult containing:
+ * - mainCategoryProductCount
+ * - cartSubtotal
+ * - serviceFee
+ * - subtotalPreDiscount
+ * - subtotalAfterDiscount
+ * - serviceChargeAmount
+ * - discountApplied (resolved list)
+ * - taxAmount
+ * - tipBasis
+ * - tipMinimum (suggested/autogratuity minimum)
+ * - tipAmount (from order)
+ * - total (grand total)
+ * - paymentsApplied (resolved list)
+ * - balanceAfterPayments
+ * - hasBankersRoundingTaxSkew
+ *
+ * Key behaviors:
+ * - resolves service fee using OrderFunctional.ProcessOrderInstanceFunction if configured
+ * - applies discounts in provided order and caps them to available remaining subtotal
+ * - computes service charge, tax and tip in the configured sequence
+ * - resolves and apportions payments against the total
+ *
+ * @param args - RecomputeTotalsArgs gathering:
+ *   - config: TAX_RATE, SERVICE_CHARGE, AUTOGRAT_THRESHOLD, CATALOG_SELECTORS
+ *   - order: WOrderInstancePartial (order instance to inspect)
+ *   - cart: CategorizedRebuiltCart (rebuilt cart to compute subtotals)
+ *   - payments: UnresolvedPayment[] list of candidate payments (in priority order)
+ *   - discounts: UnresolvedDiscount[] list of candidate discounts (in priority order)
+ *   - fulfillment: minimal FulfillmentConfig slice (orderBaseCategoryId, serviceCharge, allowTipping)
+ * @returns RecomputeTotalsResult - full set of recomputed monetary and order summary fields
+ */
 export const RecomputeTotals = function ({ config, cart, payments, discounts, fulfillment, order }: RecomputeTotalsArgs): RecomputeTotalsResult {
   const mainCategoryTree = ComputeCategoryTreeIdList(fulfillment.orderBaseCategoryId, config.CATALOG_SELECTORS.category);
   const mainCategoryProductCount = ComputeProductCategoryMatchCount(mainCategoryTree, order.cart);

@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/only-throw-error */
 
-import { cloneDeep } from 'es-toolkit/compat';
-
 import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
 import { DISABLE_REASON, DISPLAY_AS, MODIFIER_MATCH, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../types';
 import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, Selector, WCPProduct, WCPProductV2Dto, WProduct, WProductMetadata } from '../types';
@@ -86,8 +84,7 @@ const MATCH_MATRIX: [MODIFIER_MATCH, MODIFIER_MATCH, boolean][][] = [
 ];
 
 export function CreateWCPProduct(productId: string, modifiers: ProductModifierEntry[]) {
-  // todo: check if cloneDeep is still needed here
-  return { productId: productId, modifiers: cloneDeep(modifiers) } as WCPProduct;
+  return { productId: productId, modifiers: structuredClone(modifiers) } as WCPProduct;
 }
 
 export function CreateProductWithMetadataFromV2Dto(dto: WCPProductV2Dto, catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): WProduct {
