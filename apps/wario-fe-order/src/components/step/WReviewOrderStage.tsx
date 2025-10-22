@@ -1,16 +1,18 @@
-import { useEffect, useState } from 'react';
-import { TextField, Checkbox, FormControlLabel, Table, TableBody, TableContainer, TableRow, TableCell, Paper } from '@mui/material';
-
-import { WCheckoutCart } from '../WCheckoutCart';
-import { WDateUtils } from '@wcp/wario-shared';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
-import { SelectServiceDateTime } from '../../app/slices/WFulfillmentSlice';
 import { format } from 'date-fns';
+import { useEffect, useState } from 'react';
+
+import { Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
+
+import { WDateUtils } from '@wcp/wario-shared';
+import { SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan, Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared';
+
 import { backStage, nextStage } from '../../app/slices/StepperSlice';
-import { Navigation } from '../Navigation';
+import { SelectServiceDateTime } from '../../app/slices/WFulfillmentSlice';
 import { setAcknowledgeInstructionsDialogue, setSpecialInstructions } from '../../app/slices/WPaymentSlice';
 import { SelectFulfillmentDisplayName, SelectServiceTimeDisplayString } from '../../app/store';
-import { Separator, StageTitle, WarningResponseOutput, SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan } from '@wcp/wario-ux-shared';
+import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { Navigation } from '../Navigation';
+import { WCheckoutCart } from '../WCheckoutCart';
 
 
 const REQUEST_ANY = "By adding any special instructions, the cost of your order may increase and it will take longer. Please text the restaurant with your special request before making it here.";
@@ -36,7 +38,7 @@ export default function WReviewOrderStage() {
     const special_instructions_responses = [];
     let disableorder = false;
     const lowered = specialInstructions ? specialInstructions.toLowerCase() : "";
-    if (REQUEST_ANY && acknowledgeInstructionsDialogue) {
+    if (/*REQUEST_ANY && */ acknowledgeInstructionsDialogue) {
       special_instructions_responses.push({ level: 0, text: REQUEST_ANY });
     }
     if (REQUEST_HALF && (lowered.indexOf("split") >= 0 || lowered.indexOf("half") >= 0 || lowered.indexOf("1/2") >= 0)) {
@@ -46,11 +48,11 @@ export default function WReviewOrderStage() {
       disableorder = true;
       special_instructions_responses.push({ level: 1, text: REQUEST_SLICING });
     }
-    if (REQUEST_SOONER && (lowered.indexOf("soon") >= 0 || lowered.indexOf("earl") >= 0 || lowered.indexOf("time") >= 0 || lowered.indexOf("asap") >= 0)) {
+    if (/* REQUEST_SOONER && */ (lowered.indexOf("soon") >= 0 || lowered.indexOf("earl") >= 0 || lowered.indexOf("time") >= 0 || lowered.indexOf("asap") >= 0)) {
       disableorder = true;
       special_instructions_responses.push({ level: 1, text: REQUEST_SOONER });
     }
-    if (REQUEST_RANCH && (lowered.indexOf("ranch") >= 0)) {
+    if (/* REQUEST_RANCH && */ (lowered.indexOf("ranch") >= 0)) {
       disableorder = true;
       special_instructions_responses.push({ level: 1, text: REQUEST_RANCH });
     }
@@ -59,7 +61,7 @@ export default function WReviewOrderStage() {
     }
     setDisableSubmit(disableorder);
     setSpecialInstructionsResponses(special_instructions_responses);
-  }, [specialInstructions]);
+  }, [REQUEST_HALF, REQUEST_SLICING, REQUEST_VEGAN, acknowledgeInstructionsDialogue, specialInstructions]);
 
   if (selectedServiceDisplayName === null || serviceDateTime === null) {
     return <div>You found a bug</div>;

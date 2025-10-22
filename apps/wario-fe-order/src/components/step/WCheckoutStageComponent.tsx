@@ -1,18 +1,20 @@
-import { useState, useMemo, useCallback } from 'react';
-import { Box, Typography, Grid, Input } from '@mui/material';
-import { ErrorResponseOutput, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton, LoadingScreen, SelectTipPreamble } from '@wcp/wario-ux-shared';
+import { useCallback, useMemo, useState } from 'react';
+import { useEffect } from 'react';
 import { CreditCard /*, GooglePay, ApplePay */ } from 'react-square-web-payments-sdk';
 
-import { WCheckoutCart } from '../WCheckoutCart';
-import { setTip, submitToWario } from '../../app/slices/WPaymentSlice';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
-import { SelectAllowTipping, SelectAutoGratutityEnabled, SelectBalanceAfterPayments, SelectTipBasis, SelectTipValue } from '../../app/store';
-import { StoreCreditSection } from '../StoreCreditSection';
-import { useEffect } from 'react';
+import { Box, Grid, Input, Typography } from '@mui/material';
+
+import { ComputeTipValue, CURRENCY, MoneyToDisplayString, type OrderPaymentAllocated, PaymentMethod, type TipSelection } from '@wcp/wario-shared';
+import { ErrorResponseOutput, LoadingScreen, SelectTipPreamble, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton } from '@wcp/wario-ux-shared';
+
 import { backStage } from '../../app/slices/StepperSlice';
-import { Navigation } from '../Navigation';
-import { type TipSelection, ComputeTipValue, MoneyToDisplayString, PaymentMethod, CURRENCY, type OrderPaymentAllocated } from '@wcp/wario-shared';
 import { incrementTipAdjusts, incrementTipFixes } from '../../app/slices/WMetricsSlice';
+import { setTip, submitToWario } from '../../app/slices/WPaymentSlice';
+import { SelectAllowTipping, SelectAutoGratutityEnabled, SelectBalanceAfterPayments, SelectTipBasis, SelectTipValue } from '../../app/store';
+import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { Navigation } from '../Navigation';
+import { StoreCreditSection } from '../StoreCreditSection';
+import { WCheckoutCart } from '../WCheckoutCart';
 
 const TIP_SUGGESTION_15: TipSelection = { value: .15, isSuggestion: true, isPercentage: true };
 const TIP_SUGGESTION_20: TipSelection = { value: .2, isSuggestion: true, isPercentage: true };
@@ -81,6 +83,7 @@ export function WCheckoutStage() {
     dispatch(setTip(tip));
   }
   const submitNoBalanceDue = () => {
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     dispatch(submitToWario(null))
   }
 
@@ -122,7 +125,7 @@ export function WCheckoutStage() {
         <Grid container sx={{ py: 2 }}>
           {tipSuggestionsArray.map((tip: TipSelection, i: number) =>
             <Grid key={i} sx={{ px: 0.5 }} size={4}>
-              <WarioToggleButton selected={currentTipSelection === tip} sx={{ display: 'table-cell' }} value={tip} fullWidth onClick={() => onSelectSuggestedTip(tip)} >
+              <WarioToggleButton selected={currentTipSelection === tip} sx={{ display: 'table-cell' }} value={tip} fullWidth onClick={() => { onSelectSuggestedTip(tip); }} >
                 <Grid container sx={{ py: 2 }}>
                   <Grid size={12}><Typography sx={{ color: 'white' }} variant='h4'>{((tip.value as number) * 100)}%</Typography></Grid>
                   <Grid size={12}><Typography sx={{ color: 'white' }} variant='subtitle2'>{MoneyToDisplayString(ComputeTipValue(tip, tipBasis), false)}</Typography></Grid>
@@ -131,7 +134,7 @@ export function WCheckoutStage() {
             </Grid>
           )}
           <Grid sx={{ px: 0.5, pt: 1 }} size={12}>
-            <WarioToggleButton selected={isCustomTipSelected} fullWidth value={customTipAmount} onClick={() => setCustomTipHandler(customTipAmount)} >
+            <WarioToggleButton selected={isCustomTipSelected} fullWidth value={customTipAmount} onClick={() => { setCustomTipHandler(customTipAmount); }} >
               <Grid container>
                 <Grid size={12}>
                   <Typography variant='h4' sx={{ color: 'white' }}>Custom Tip Amount</Typography>
@@ -143,8 +146,8 @@ export function WCheckoutStage() {
                       size='small'
                       disableUnderline
                       value={customTipAmount}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomTipAmount(e.target.value)}
-                      onBlur={(e: React.FocusEvent<HTMLInputElement>) => setCustomTipHandler(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setCustomTipAmount(e.target.value); }}
+                      onBlur={(e: React.FocusEvent<HTMLInputElement>) => { setCustomTipHandler(e.target.value); }}
                       type="number"
                       inputProps={{ inputMode: 'decimal', min: 0, sx: { pt: 0, textAlign: 'center', color: 'white' }, step: 1 }}
                     /> : " "}
@@ -165,7 +168,7 @@ export function WCheckoutStage() {
                 {/* <ApplePay>Pay with Apple Pay</ApplePay>
                 <GooglePay>Pay with Google Pay</GooglePay> */}
                 <CreditCard
-                  // @ts-ignore 
+                  // @ts-expect-error remove once verified this isn't needed https://github.com/weareseeed/react-square-web-payments-sdk/pull/74/commits/d16cce8ba6ab50de35d632352f2cb01c9217ad05
                   focus={""}
                   buttonProps={{
                     isLoading: submitToWarioStatus === 'PENDING', css: SquareButtonCSS
@@ -175,11 +178,11 @@ export function WCheckoutStage() {
 
 
               </> :
-              <WarioButton disabled={submitToWarioStatus === 'PENDING'} fullWidth onClick={() => submitNoBalanceDue()} >Submit Order</WarioButton>}
+              <WarioButton disabled={submitToWarioStatus === 'PENDING'} fullWidth onClick={() => { submitNoBalanceDue(); }} >Submit Order</WarioButton>}
             {squareTokenErrors.length > 0 &&
-              squareTokenErrors.map((e, i) => <Grid key={i} size={12}><ErrorResponseOutput key={`${i}tokenerrors`}>{e.message}</ErrorResponseOutput></Grid>)}
+              squareTokenErrors.map((e, i) => <Grid key={i} size={12}><ErrorResponseOutput key={`${i.toString()}tokenerrors`}>{e.message}</ErrorResponseOutput></Grid>)}
             {orderSubmitErrors.length > 0 &&
-              orderSubmitErrors.map((e, i) => <Grid key={i} size={12}><ErrorResponseOutput key={`${i}payment`}>{e}</ErrorResponseOutput></Grid>)}
+              orderSubmitErrors.map((e, i) => <Grid key={i} size={12}><ErrorResponseOutput key={`${i.toString()}payment`}>{e}</ErrorResponseOutput></Grid>)}
             <div>Note: Once orders are submitted, they are non-refundable. We will attempt to make any changes requested, but please do your due diligence to check the order for correctness!</div>
           </Grid>
         </Grid>
@@ -191,9 +194,9 @@ export function WCheckoutStage() {
       <Separator sx={{ pb: 3 }} />
       <Typography variant='body1'>Please check your email for order confirmation.</Typography>
       <Grid container>
-        {submitToWarioResponse?.success && submitToWarioResponse!.result?.payments.map((payment, i) => {
+        {submitToWarioResponse?.success && submitToWarioResponse.result.payments.map((payment, i) => {
           return (
-            <Grid key={`${payment.t}${i}`} sx={{ pt: 1 }} size={12}>
+            <Grid key={`${payment.t}${i.toString()}`} sx={{ pt: 1 }} size={12}>
               {generatePaymentHtml(payment)}
             </Grid>
           );

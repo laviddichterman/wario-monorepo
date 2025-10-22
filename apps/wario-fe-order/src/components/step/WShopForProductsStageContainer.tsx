@@ -1,15 +1,18 @@
 import { useCallback, useMemo, useState } from 'react';
+
 import { type CartEntry } from '@wcp/wario-shared';
-import { editCartEntry } from '../../app/slices/WCustomizerSlice';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
-import { WProductCustomizerComponent } from '../WProductCustomizerComponent';
-import { SelectMainCategoryId, SelectMainProductCategoryCount, selectSelectedWProduct, SelectSupplementalCategoryId } from '../../app/store';
+import { scrollToIdOffsetAfterDelay, Separator, StageTitle } from '@wcp/wario-ux-shared';
+
+import { backStage, nextStage } from '../../app/slices/StepperSlice';
 import { getCart, lockCartEntry } from '../../app/slices/WCartSlice';
-import { nextStage, backStage } from '../../app/slices/StepperSlice';
+import { editCartEntry } from '../../app/slices/WCustomizerSlice';
+import { SelectMainCategoryId, SelectMainProductCategoryCount, selectSelectedWProduct, SelectSupplementalCategoryId } from '../../app/store';
+import { useAppDispatch, useAppSelector } from '../../app/useHooks';
 import { Navigation } from '../Navigation';
 import { WOrderCart } from '../WOrderCartComponent';
+import { WProductCustomizerComponent } from '../WProductCustomizerComponent';
+
 import { WShopForProductsStage } from './WShopForProductsStageComponent';
-import { Separator, scrollToIdOffsetAfterDelay, StageTitle } from '@wcp/wario-ux-shared';
 
 export interface WShopForProductsStageProps {
   categoryId: string;
@@ -19,7 +22,9 @@ export interface WShopForProductsStageProps {
 export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY' | 'SECONDARY' }) {
   const [scrollToOnReturn, setScrollToOnReturn] = useState('WARIO_order');
   const numMainCategoryProducts = useAppSelector(SelectMainProductCategoryCount);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const mainCategoryId = useAppSelector(SelectMainCategoryId)!;
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const supplementalCategoryId = useAppSelector(SelectSupplementalCategoryId)!;
   const cart = useAppSelector(s => getCart(s.cart.cart));
   const selectedProduct = useAppSelector(selectSelectedWProduct);
@@ -41,14 +46,15 @@ export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY
       <div hidden={selectedProduct !== null}>
         <StageTitle>{titleString}</StageTitle>
         <Separator sx={{ pb: 3 }} />
-        {productSet === 'PRIMARY' ?
+        {productSet === 'PRIMARY' &&
           <WShopForProductsStage
             setScrollToOnReturn={setScrollToOnReturn}
             categoryId={mainCategoryId}
-          /> :
+          />}
+        {productSet === 'SECONDARY' &&
           <WShopForProductsStage
             setScrollToOnReturn={setScrollToOnReturn}
-            categoryId={supplementalCategoryId!}
+            categoryId={supplementalCategoryId}
           />}
       </div>
       {selectedProduct !== null && (<WProductCustomizerComponent scrollToWhenDone={scrollToOnReturn} />)}

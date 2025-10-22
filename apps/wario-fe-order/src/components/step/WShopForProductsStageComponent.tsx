@@ -1,18 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Accordion, AccordionSummary, AccordionDetails, Grid, Typography, type BoxProps } from '@mui/material';
-import { ExpandMore } from "@mui/icons-material";
-import { ClickableProductDisplay } from '../WProductComponent';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
-import { SelectServiceDateTime } from '../../app/slices/WFulfillmentSlice';
-import { type WShopForProductsStageProps } from './WShopForProductsStageContainer';
-import { getProductInstanceById, scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory } from '@wcp/wario-ux-shared';
-import { SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById, SelectProductInstanceHasSelectableModifiersByProductInstanceId, SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '../../app/store';
-import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
-import { cloneDeep } from 'lodash';
-import { addToCart, FindDuplicateInCart, getCart, updateCartQuantity } from '../../app/slices/WCartSlice';
 import { enqueueSnackbar } from 'notistack';
+import React, { useCallback, useEffect, useState } from 'react';
+
+import { ExpandMore } from "@mui/icons-material";
+import { Accordion, AccordionDetails, AccordionSummary, type BoxProps, Grid, Typography } from '@mui/material';
+
+import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
+import { getProductInstanceById, scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory } from '@wcp/wario-ux-shared';
+
+import { addToCart, FindDuplicateInCart, getCart, updateCartQuantity } from '../../app/slices/WCartSlice';
 import { customizeProduct } from '../../app/slices/WCustomizerSlice';
+import { SelectServiceDateTime } from '../../app/slices/WFulfillmentSlice';
 import { setTimeToFirstProductIfUnset } from '../../app/slices/WMetricsSlice';
+import { SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById, SelectProductInstanceHasSelectableModifiersByProductInstanceId, SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '../../app/store';
+import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { ClickableProductDisplay } from '../WProductComponent';
+
+import { type WShopForProductsStageProps } from './WShopForProductsStageContainer';
 
 export interface ShopClickableProductDisplayProps {
   productInstanceId: string;
@@ -32,12 +35,13 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
   const productHasSelectableModifiers = useAppSelector(s => SelectProductInstanceHasSelectableModifiersByProductInstanceId(s, productInstanceId));
   const onProductSelection = useCallback(() => {
     // either dispatch to the customizer or to the cart
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (productInstance && productMetadata) {
-      const productCopy: WProduct = { p: CreateWCPProduct(productInstance.productId, productInstance.modifiers), m: cloneDeep(productMetadata) };
+      const productCopy: WProduct = { p: CreateWCPProduct(productInstance.productId, productInstance.modifiers), m: structuredClone(productMetadata) };
       if ((!productCopy.m.incomplete && productInstance.displayFlags.order.skip_customization) || !productHasSelectableModifiers) {
         const matchInCart = FindDuplicateInCart(cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, productCopy.p);
         if (matchInCart !== null) {
-          enqueueSnackbar(`Changed ${productCopy.m.name} quantity to ${matchInCart.quantity + 1}.`, { variant: 'success' });
+          enqueueSnackbar(`Changed ${productCopy.m.name} quantity to ${(matchInCart.quantity + 1).toString()}.`, { variant: 'success' });
           dispatch(updateCartQuantity({ id: matchInCart.id, newQuantity: matchInCart.quantity + 1 }));
         }
         else {
@@ -71,18 +75,20 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
 interface AccordionSubCategoryProps {
   activePanel: number;
   isExpanded: boolean;
-  toggleAccordion: (event: React.SyntheticEvent<Element, Event>, i: number) => void,
+  toggleAccordion: (event: React.SyntheticEvent, i: number) => void,
   index: number;
 }
 
 function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccordion, index, setScrollToOnReturn }: WShopForProductsStageProps & AccordionSubCategoryProps) {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const selectedService = useAppSelector(s => s.fulfillment.selectedService!);
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
   const menuName = useAppSelector(s => SelectMenuNameFromCategoryById(s.ws.categories, categoryId));
   const subtitle = useAppSelector(s => SelectMenuSubtitleFromCategoryById(s.ws.categories, categoryId));
   return (
-    <Accordion id={`accordion-${categoryId}`} key={index} expanded={activePanel === index && isExpanded} onChange={(e) => toggleAccordion(e, index)} >
+    <Accordion id={`accordion-${categoryId}`} key={index} expanded={activePanel === index && isExpanded} onChange={(e) => { toggleAccordion(e, index); }} >
       <AccordionSummary expandIcon={activePanel === index && isExpanded ? <ExpandMore /> : <ExpandMore />}>
         <Typography variant='h5' sx={{ ml: 4 }}><span dangerouslySetInnerHTML={{ __html: menuName }} /></Typography>
       </AccordionSummary>
@@ -109,9 +115,12 @@ function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccor
 
 export function WShopForProductsStage({ categoryId, setScrollToOnReturn }: WShopForProductsStageProps) {
   // TODO: we need to handle if this is null by choice. how to we bypass this stage?
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const selectedService = useAppSelector(s => s.fulfillment.selectedService!);
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const populatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
   const [activePanel, setActivePanel] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -123,7 +132,7 @@ export function WShopForProductsStage({ categoryId, setScrollToOnReturn }: WShop
     }
   }, [populatedSubcategories, activePanel]);
 
-  const toggleAccordion = useCallback((event: React.SyntheticEvent<Element, Event>, i: number) => {
+  const toggleAccordion = useCallback((event: React.SyntheticEvent, i: number) => {
     event.preventDefault();
     const ref = event.currentTarget;
     if (activePanel === i) {
