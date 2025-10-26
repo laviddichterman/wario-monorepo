@@ -2,12 +2,13 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
   parsePhoneNumber,
 } from 'libphonenumber-js/core';
+import { type MetadataJson } from 'libphonenumber-js/core';
 import { z } from "zod";
 
 import { type CustomerInfoDto } from "@wcp/wario-shared";
+import { PHONE_METADATA, ZodEmailSchema } from "@wcp/wario-ux-shared";
 
-import { LIBPHONE_METADATA } from "@/components/common";
-import { ZodEmailSchema } from "@/components/hook-form/rhf-mailtextfield";
+const LIBPHONE_METADATA = PHONE_METADATA as unknown as MetadataJson;
 
 export type CustomerInfoRHF = CustomerInfoDto & { mobileNumRaw: string };
 export const customerInfoSchema = z.object({

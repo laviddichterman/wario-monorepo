@@ -8,11 +8,12 @@ import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
 import { FulfillmentType, WDateUtils } from '@wcp/wario-shared';
 import { ErrorResponseOutput, getFulfillments, SelectDateFnsAdapter, Separator, StageTitle } from '@wcp/wario-ux-shared';
 
-import { nextStage } from '../../app/slices/StepperSlice';
-import { setDate, setDineInInfo, setHasAgreedToTerms, setService, setTime } from '../../app/slices/WFulfillmentSlice';
-import { setTimeToServiceDate, setTimeToServiceTime } from '../../app/slices/WMetricsSlice';
-import { GetNextAvailableServiceDateTime, SelectFulfillmentMaxGuests, SelectFulfillmentService, SelectFulfillmentServiceTerms, SelectHasOperatingHoursForService, SelectOptionsForServicesAndDate } from '../../app/store';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { nextStage } from '@/app/slices/StepperSlice';
+import { setDate, setDineInInfo, setHasAgreedToTerms, setService, setTime } from '@/app/slices/WFulfillmentSlice';
+import { setTimeToServiceDate, setTimeToServiceTime } from '@/app/slices/WMetricsSlice';
+import { GetNextAvailableServiceDateTime, SelectFulfillmentMaxGuests, SelectFulfillmentService, SelectFulfillmentServiceTerms, SelectHasOperatingHoursForService, SelectOptionsForServicesAndDate } from '@/app/store';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import DeliveryInfoForm from '../DeliveryValidationForm';
 import { Navigation } from '../Navigation';
 

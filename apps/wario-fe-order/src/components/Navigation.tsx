@@ -37,7 +37,7 @@ export function Navigation({ canNext, canBack, nextText = "Next", backText = "Ba
           onClick={handleNext}
           disabled={!canNext}
           {...(!canNext ? (onNextWhenDisabled ?? {}) : {})}
-        > {nextText ?? "Next"}
+        > {nextText}
         </WarioButton> : <div>&nbsp;</div>}
     </Box>
     <Box sx={{ py: 0.5, textAlign: 'center', verticalAlign: 'center', float: 'right', my: 'auto', height: '100%', minWidth: '33.3%' }}>
@@ -52,8 +52,7 @@ export function Navigation({ canNext, canBack, nextText = "Next", backText = "Ba
         disabled={!canBack}
         {...(!canBack ? onBackWhenDisabled : {})}
       >
-
-        {backText ?? "Back"}
+        {backText}
       </WarioButton> : <div>&nbsp;</div>}
     </Box>
   </Box>;

@@ -4,14 +4,13 @@ import { useForm } from "react-hook-form";
 
 import { Grid, Typography } from '@mui/material';
 
-import { Separator, StageTitle } from '@wcp/wario-ux-shared';
+import { FormProvider, RHFMailTextField, RHFPhoneInput, RHFTextField, Separator, StageTitle } from '@wcp/wario-ux-shared';
 
-import { backStage, nextStage } from '../../app/slices/StepperSlice';
-import { type CustomerInfoRHF, customerInfoSchema, setCustomerInfo } from '../../app/slices/WCustomerInfoSlice';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
-import { FormProvider, RHFPhoneInput, RHFTextField } from '../hook-form';
-import { RHFMailTextField } from '../hook-form/rhf-mailtextfield';
-import { Navigation } from '../Navigation';
+import { Navigation } from '@/components/Navigation';
+
+import { backStage, nextStage } from '@/app/slices/StepperSlice';
+import { type CustomerInfoRHF, customerInfoSchema, setCustomerInfo } from '@/app/slices/WCustomerInfoSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
 
 // TODO: use funny names as the placeholder info for the names here and randomize it. So sometimes it would be the empire carpet guy, other times eagle man
 

@@ -6,7 +6,7 @@ import { Circle, CircleOutlined, SettingsTwoTone } from "@mui/icons-material";
 import { Button, Checkbox, FormControl, FormControlLabel, type FormControlProps, FormGroup, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/material';
 
 import {
-  type CatalogModifierEntry, DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionInstance, type IOptionState, type MTID_MOID, OptionPlacement,
+  type CatalogModifierEntry, DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionState, type MTID_MOID, OptionPlacement,
   OptionQualifier, type ProductModifierEntry, type Selector, SortAndFilterModifierOptions, SortProductModifierEntries, SortProductModifierOptions,
   type WCPProduct, WCPProductGenerateMetadata, type WProduct
 } from '@wcp/wario-shared';
@@ -53,7 +53,6 @@ const UpdateModifierOptionStateToggleOrRadio = (mtId: string, moId: string, sele
   const newProductModifiers = structuredClone(selectedProduct.p.modifiers);
   if (modifierEntryIndex === -1) {
     newProductModifiers.push({ modifierTypeId: mtId, options: newModifierOptions });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     SortProductModifierEntries(newProductModifiers, catalogSelectors.modifierEntry);
   } else {
     newProductModifiers[modifierEntryIndex].options = newModifierOptions;
@@ -77,8 +76,7 @@ const UpdateModifierOptionStateCheckbox = (mt: CatalogModifierEntry, mo: IOption
     const moIdX = newModifierOptions.findIndex(x => x.optionId === mo.id);
     if (moIdX === -1) {
       newModifierOptions.push(newOptInstance);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      SortProductModifierOptions(newModifierOptions, catalogSelectors.option) as IOptionInstance[];
+      SortProductModifierOptions(newModifierOptions, catalogSelectors.option);
     }
     else {
       newModifierOptions[moIdX] = newOptInstance;
@@ -86,7 +84,6 @@ const UpdateModifierOptionStateCheckbox = (mt: CatalogModifierEntry, mo: IOption
   }
   if (modifierEntryIndex === -1 && newModifierOptions.length > 0) {
     newProductModifiers.push({ modifierTypeId: mo.modifierTypeId, options: newModifierOptions });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     SortProductModifierEntries(newProductModifiers, catalogSelectors.modifierEntry);
   } else {
     if (newModifierOptions.length > 0) {
@@ -335,8 +332,8 @@ const SelectVisibleModifierOptions = createSelector(
   (s: RootState, _productId: string, _modifiers: ProductModifierEntry[], _mtId: string) => SelectServiceDateTime(s.fulfillment)!,
 
   (metadata, modifierType, modifierOptionSelector, serviceDateTime) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    return SortAndFilterModifierOptions(metadata, modifierType, modifierOptionSelector as Selector<IOption>, serviceDateTime) as IOption[];
+
+    return SortAndFilterModifierOptions(metadata, modifierType, modifierOptionSelector as Selector<IOption>, serviceDateTime);
   }
 );
 
@@ -406,6 +403,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
     <DialogContainer
       title={`${option.displayName} options`}
       onClose={onCancelCallback} // TODO: handle the clicking outside the container but we've made changes in the modal case
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       open={option !== null}
       innerComponent={
         <Grid container spacing={3} justifyContent="center">
@@ -414,7 +412,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
             <FormControlLabel
               control={
                 <Checkbox
-                  disabled={!optionState.enable_left}
+                  disabled={!optionState?.enable_left}
                   checked={isLeft}
                   onChange={() => { onClickLeft(); }} />
               }
@@ -425,7 +423,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
             <FormControlLabel
               control={
                 <Checkbox
-                  disabled={!optionState.enable_whole}
+                  disabled={!optionState?.enable_whole}
                   checked={isWhole}
                   onChange={() => { onClickWhole(); }} />
               }
@@ -436,7 +434,7 @@ function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
             <FormControlLabel
               control={
                 <Checkbox
-                  disabled={!optionState.enable_right}
+                  disabled={!optionState?.enable_right}
                   checked={isRight}
                   onChange={() => { onClickRight(); }} />
               }
@@ -564,6 +562,7 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
       <Grid container sx={{ py: 3, flexDirection: 'row-reverse' }} size={12}>
         <Grid sx={{ display: "flex", width: "200px", justifyContent: "flex-end" }}>
           {/* We don't need to check for orderGuideErrors.length > 0 as selectedProduct.m.incomplete is the same check */}
+          {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
           <WarioButton disabled={!selectedProduct || selectedProductMetadata.incomplete}
             onClick={confirmCustomization}>
             {cartEntry === undefined ? "Add to order" : "Save changes"}

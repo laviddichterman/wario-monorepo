@@ -4,9 +4,8 @@ import { Done, Error } from '@mui/icons-material';
 import { Checkbox, FormControlLabel, Grid } from '@mui/material';
 
 import { CREDIT_REGEX } from '@wcp/wario-shared';
-import { ErrorResponseOutput } from '@wcp/wario-ux-shared';
+import { ErrorResponseOutput, StoreCreditInputComponent } from '@wcp/wario-ux-shared';
 
-import { StoreCreditInputComponent } from '../../../wario-fe-credit/src/components/StoreCreditInputComponent';
 import { clearCreditCode, validateStoreCredit } from '../app/slices/WPaymentSlice';
 import { useAppDispatch, useAppSelector } from '../app/useHooks';
 
@@ -15,9 +14,9 @@ import { useAppDispatch, useAppSelector } from '../app/useHooks';
 export function StoreCreditSection() {
   const dispatch = useAppDispatch();
   const creditValidationLoading = useAppSelector(s => s.payment.creditValidationLoading);
-  const [useCreditCheckbox, setUseCreditCheckbox] = useState(creditValidationLoading === 'SUCCEEDED');
+  const [useCreditCheckbox, setUseCreditCheckbox] = useState<boolean>(creditValidationLoading === 'SUCCEEDED');
   const storeCreditInput = useAppSelector(s => s.payment.storeCreditInput);
-  const [localCreditCode, setLocalCreditCode] = useState(storeCreditInput);
+  const [localCreditCode, setLocalCreditCode] = useState<string>(storeCreditInput);
   const setLocalCreditCodeAndAttemptToValidate = function (code: string) {
     setLocalCreditCode(code);
     if (creditValidationLoading !== 'PENDING' && creditValidationLoading !== 'SUCCEEDED' && code.length === 19 && CREDIT_REGEX.test(code)) {
@@ -51,7 +50,7 @@ export function StoreCreditSection() {
           container
           size={{
             xs: 12,
-            sm: useCreditCheckbox ? 6 : 12
+            sm: 6
           }}>
           <StoreCreditInputComponent
             autoFocus
@@ -61,7 +60,7 @@ export function StoreCreditSection() {
             id="store_credit_code"
             disabled={creditValidationLoading === 'SUCCEEDED' || creditValidationLoading === 'PENDING'}
             value={localCreditCode}
-            onChange={(e) => { setLocalCreditCodeAndAttemptToValidate(e.target.value) }}
+            onChange={(e: { target: { value: string } }) => { setLocalCreditCodeAndAttemptToValidate(e.target.value) }}
           />
         </Grid>}
       {creditValidationLoading === "FAILED" &&
