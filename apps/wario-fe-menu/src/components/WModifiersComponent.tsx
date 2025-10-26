@@ -2,7 +2,7 @@ import { createSelector } from "@reduxjs/toolkit";
 
 import { Box, Grid } from "@mui/material";
 
-import { DISABLE_REASON, type IOption, type IProductModifier, MoneyToDisplayString, SortAndFilterModifierOptions, WDateUtils } from "@wcp/wario-shared";
+import { DISABLE_REASON, type IProductModifier, MoneyToDisplayString, SortAndFilterModifierOptions, WDateUtils } from "@wcp/wario-shared";
 import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceById, ProductDescription, ProductPrice, ProductTitle, SelectCatalogSelectors, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId } from "@wcp/wario-ux-shared";
 
 import { GetNextAvailableServiceDateTime, type RootState, SelectShouldFilterModifierTypeDisplay } from "@/app/store";
@@ -33,8 +33,7 @@ const MenuSelectVisibleModifierOptions = createSelector(
   (s: RootState, _productInstanceId: string, _mtId: string) => SelectCatalogSelectors(s.ws).option,
   (s: RootState, _productInstanceId: string, _mtId: string) => WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTime(s)),
   (metadata, modifierType, modifierOptionSelector, serviceDateTime) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const sortedVisibleOptions = SortAndFilterModifierOptions(metadata, modifierType, modifierOptionSelector, serviceDateTime) as IOption[];
+    const sortedVisibleOptions = SortAndFilterModifierOptions(metadata, modifierType, modifierOptionSelector, serviceDateTime);
     return sortedVisibleOptions.map(x => x.id);
   }
 );

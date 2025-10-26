@@ -2,7 +2,7 @@ import { isEqual } from 'es-toolkit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createStructuredSelector } from 'reselect';
 
-import { Box, Grid, Stack, Typography } from '@mui/material';
+import { Box, Stack } from '@mui/material';
 import {
   DataGridPremium,
   getGridStringOperators,
@@ -10,8 +10,6 @@ import {
   type GridEventListener,
   type GridFilterModel,
   type GridRowId,
-  GridToolbarContainer,
-  GridToolbarQuickFilter,
   type GridToolbarQuickFilterProps,
   useGridApiRef,
   useKeepGroupedColumnsHidden
@@ -19,8 +17,8 @@ import {
 
 import { getProductInstanceById, Separator, WarioToggleButton, weakMapCreateSelector } from '@wcp/wario-ux-shared';
 
-import { type RootState, store } from '../app/store';
-import { useAppSelector } from "../app/useHooks";
+import { type RootState, store } from '@/app/store';
+import { useAppSelector } from "@/app/useHooks";
 
 import { SelectProductInstanceIdsInCategoryForNextAvailableTime, SelectProductMetadataForMenu } from './WMenuComponent';
 
@@ -35,34 +33,33 @@ export interface CustomToolbarProps {
 }
 
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function CustomToolbar({ showQuickFilter, quickFilterProps, title, actions = [] }: CustomToolbarProps) {
-  const actionSizeSum = actions.reduce((acc, x) => acc + x.size, 0);
-  return (
-    <GridToolbarContainer >
-      <Grid container sx={{ m: 'auto', width: '100%' }} size={12}>
-        <Grid
-          size={{
-            xs: showQuickFilter ? 12 : 12 - actionSizeSum,
-            md: showQuickFilter ? 6 : 12 - actionSizeSum
-          }}>
-          <Typography variant="h5">{title}</Typography>
-        </Grid>
-        {showQuickFilter &&
-          <Grid
-            sx={{ py: 1 }}
-            size={{
-              xs: 12 - actionSizeSum,
-              md: 6 - actionSizeSum
-            }}>
-            <GridToolbarQuickFilter {...quickFilterProps} />
-          </Grid>
-        }
-        {actions.map((action, idx) => (<Grid sx={{ py: 1 }} key={idx} size={action.size}>{action.elt}</Grid>))}
-      </Grid>
-    </GridToolbarContainer>
-  );
-}
+// function CustomToolbar({ showQuickFilter, quickFilterProps, title, actions = [] }: CustomToolbarProps) {
+//   const actionSizeSum = actions.reduce((acc, x) => acc + x.size, 0);
+//   return (
+//     <GridToolbarContainer >
+//       <Grid container sx={{ m: 'auto', width: '100%' }} size={12}>
+//         <Grid
+//           size={{
+//             xs: showQuickFilter ? 12 : 12 - actionSizeSum,
+//             md: showQuickFilter ? 6 : 12 - actionSizeSum
+//           }}>
+//           <Typography variant="h5">{title}</Typography>
+//         </Grid>
+//         {showQuickFilter &&
+//           <Grid
+//             sx={{ py: 1 }}
+//             size={{
+//               xs: 12 - actionSizeSum,
+//               md: 6 - actionSizeSum
+//             }}>
+//             <GridToolbarQuickFilter {...quickFilterProps} />
+//           </Grid>
+//         }
+//         {actions.map((action, idx) => (<Grid sx={{ py: 1 }} key={idx} size={action.size}>{action.elt}</Grid>))}
+//       </Grid>
+//     </GridToolbarContainer>
+//   );
+// }
 type RowType = {
   category: string;
   subcategory0: string;
@@ -428,7 +425,6 @@ export function WMenuDataGrid({ categoryId }: WMenuDisplayProps) {
   const productRows = useAppSelector(s => SelectProductInstanceIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
   const [versionedProductRows, setVersionedProductRows] = useState<string[]>([]);
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     if (!isEqual(productRows, versionedProductRows)) {
       setVersionedProductRows(productRows);
     }
