@@ -5,6 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import packageJsonPlugin from "eslint-plugin-package-json";
 import jsoncParser from "jsonc-eslint-parser";
 import perfectionist from "eslint-plugin-perfectionist";
+import globals from 'globals';
 import { defineConfig } from "eslint/config";
 
 const basicRules = () => {
@@ -44,7 +45,6 @@ const sortImportsRules = () => {
     // 1) Whole import statement ordering
     'perfectionist/sort-imports': ['warn', {
       type: 'natural',
-      order: 'asc',
       ignoreCase: true,
       environment: 'node',
       // classify internal paths (monorepo + common app aliases)
@@ -133,7 +133,7 @@ const tsConfig = {
   files: ['**/*.{js,mjs,cjs,ts,jsx,tsx}'],
   languageOptions: {
     parser: tsParser,
-    globals: {},
+    globals: { ...globals.browser, ...globals.node },
     parserOptions: {
       projectService: true,
       tsconfigRootDir: import.meta.dirname,
@@ -158,7 +158,7 @@ const tsConfig = {
 
 export default defineConfig([
   {
-    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**", "**/node_modules/**", "**/*eslint.config.js"],
+    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**", "**/node_modules/**", "**/eslint.config.*"],
   },
   tsConfig,
   packageJsonConfig

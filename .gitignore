@@ -24,3 +24,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+packages/wario-ux-shared/src/generated/phone-metadata.custom.json

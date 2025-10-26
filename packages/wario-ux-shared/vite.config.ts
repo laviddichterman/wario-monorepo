@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+
 
 
 export default defineConfig({
@@ -22,6 +24,11 @@ export default defineConfig({
         initialIsOpen: false,
       },
     }),
+    viteStaticCopy({
+      targets: [
+        { src: 'src/generated/phone-metadata.custom.json', dest: '.' } // => dist/phone-metadata.custom.json
+      ]
+    })
   ],
   resolve: {
     alias: {
@@ -36,7 +43,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // keep deps external to avoid bundling react/mui
-      external: ['react', 'react-dom', '@mui/material', '@mui/system', '@emotion/react', '@emotion/styled', 'motion', 'date-fns'],
+      external: ['react', 'react-dom', '@mui/material', '@mui/system', '@emotion/react', '@emotion/styled', 'motion', 'date-fns', "numeral", 'axios', 'react-hook-form', 'react-imask'],
       //output: { preserveModules: true, preserveModulesRoot: 'src' }
     }
   }
