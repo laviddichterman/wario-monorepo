@@ -9,7 +9,7 @@ export type FormProps<TFieldValues extends FieldValues = FieldValues, TContextTy
   methods: UseFormReturn<TFieldValues, TContextType>;
 };
 
-export function FormProvider({ children, onSubmit, methods }: FormProps) {
+export function FormProvider<TFieldValues extends FieldValues>({ children, onSubmit, methods }: FormProps<TFieldValues>) {
   return (
     <RHFForm {...methods}>
       <form onSubmit={onSubmit} noValidate>
