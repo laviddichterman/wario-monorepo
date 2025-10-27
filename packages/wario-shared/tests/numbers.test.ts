@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, transformValueOnBlur, transformValueOnChange } from '../src/lib/numbers';
+import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, transformValueOnBlur, transformValueOnChange, formatDecimal } from '../src/lib/numbers';
 import { RoundToTwoDecimalPlaces } from '../src/lib/numbers';
 describe('fCurrency', () => {
   // Test cases for various input values with the default locale (en-US, USD)
@@ -442,5 +442,60 @@ describe('transformValueOnBlur', () => {
       // The value should be 150, not clamped to 100.
       expect(result2).toEqual({ inputText: '150', value: 150 });
     });
+  });
+});
+
+describe('formatDecimal', () => {
+  it('should return an empty string for null input', () => {
+    expect(formatDecimal(null)).toBe('');
+  });
+
+  it('should return an empty string for undefined input', () => {
+    expect(formatDecimal(undefined)).toBe('');
+  });
+
+  it('should return an empty string for an empty string input', () => {
+    expect(formatDecimal('')).toBe('');
+  });
+
+  it('should return an empty string for an invalid string input', () => {
+    expect(formatDecimal('abc')).toBe('');
+  });
+
+  it('should format a number input with a specific number of fraction digits', () => {
+    expect(formatDecimal(123.456, 2)).toBe('123.46'); // Rounds up
+  });
+
+  it('should format a string input with a specific number of fraction digits', () => {
+    expect(formatDecimal('123.456', 2)).toBe('123.46');
+  });
+
+  it('should pad with zeros to meet the fractionDigits requirement', () => {
+    expect(formatDecimal(123, 2)).toBe('123.00');
+    expect(formatDecimal('123.4', 3)).toBe('123.400');
+  });
+
+  it('should round to an integer when fractionDigits is 0', () => {
+    expect(formatDecimal(123.5, 0)).toBe('124');
+    expect(formatDecimal('123.4', 0)).toBe('123');
+  });
+
+  it('should handle negative numbers correctly', () => {
+    expect(formatDecimal(-123.456, 2)).toBe('-123.46');
+  });
+
+  it('should handle zero correctly', () => {
+    expect(formatDecimal(0, 2)).toBe('0.00');
+  });
+
+  it('should format a number without specified fraction digits (default behavior)', () => {
+    expect(formatDecimal(1234)).toBe('1,234');
+    expect(formatDecimal(1234.5)).toBe('1,234.5');
+    expect(formatDecimal(1234.567)).toBe('1,234.567');
+    expect(formatDecimal(1234.5678)).toBe('1,234.568'); // Default maxFractionDigits is 3
+  });
+
+  it('should handle string with commas', () => {
+    expect(formatDecimal('1,234.56', 2)).toBe('1,234.56');
   });
 });

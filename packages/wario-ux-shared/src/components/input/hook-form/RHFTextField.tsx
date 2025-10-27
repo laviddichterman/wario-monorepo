@@ -1,8 +1,9 @@
-import { transformValue, transformValueOnBlur, transformValueOnChange } from 'minimal-shared/utils';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import type { TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
+
+import { formatDecimal, type InputNumberValue, parseDecimal, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
 
 // ----------------------------------------------------------------------
 
@@ -29,18 +30,18 @@ export function RHFTextField({
         <TextField
           {...field}
           fullWidth
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument
-          value={isNumberType ? transformValue(field.value) : field.value}
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          value={isNumberType ? formatDecimal(field.value as InputNumberValue) : field.value}
           onChange={(event) => {
             const transformedValue = isNumberType
-              ? transformValueOnChange(event.target.value)
+              ? transformValueOnChange({ allowEmpty: true, formatFunction: (v: InputNumberValue) => formatDecimal(v), parseFunction: parseDecimal }, event.target.value)
               : event.target.value;
 
             field.onChange(transformedValue);
           }}
           onBlur={(event) => {
             const transformedValue = isNumberType
-              ? transformValueOnBlur(event.target.value)
+              ? transformValueOnBlur({ allowEmpty: true, formatFunction: (v: InputNumberValue) => formatDecimal(v), parseFunction: parseDecimal }, event.target.value)
               : event.target.value;
 
 

@@ -3,11 +3,10 @@ import { useCallback, useMemo } from 'react';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 
 import type { CoreCartEntry, ICatalogSelectors, IMoney, OrderLineDiscount, OrderPayment, WProduct } from '@wcp/wario-shared';
-import { DiscountMethod, MoneyToDisplayString, PaymentMethod, TenderBaseStatus } from '@wcp/wario-shared';
+import { DiscountMethod, fPercent, MoneyToDisplayString, PaymentMethod, TenderBaseStatus } from '@wcp/wario-shared';
 
 import { ProductDisplay } from '@/components/WProductComponent';
 
-import { fPercent } from '@/common/numbers';
 import { ProductPrice, ProductTitle } from '@/styled/styled';
 
 export interface WCheckoutCartComponentProps {

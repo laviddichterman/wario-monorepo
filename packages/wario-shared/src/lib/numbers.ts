@@ -90,11 +90,6 @@ export interface NumberTransformPropsBase {
   /** If provided, the committed value will be clamped <= max */
   max?: number;
 
-  /** Controls empty semantics at call sites */
-  allowEmpty: boolean;
-
-  defaultValue?: number;
-
   /** Parse raw user input into a number or null (no clamping, no rounding) */
   parseFunction: NumericParseFunction;
 
@@ -178,7 +173,7 @@ export const parseInteger: NumericParseFunction = (v) => {
     : null;
 };
 
-export function formatDecimal(v: number | string | null | undefined, fractionDigits: number): string {
+export function formatDecimal(v: number | string | null | undefined, fractionDigits?: number): string {
   if (v === null || v === undefined || v === "") return "";
   const n = typeof v === "number" ? v : parseDecimal(v);
   if (n === null) return "";
