@@ -1,5 +1,17 @@
 # @wcp/wario-fe-credit
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies [3b70a44]
+- Updated dependencies [cb1c65d]
+- Updated dependencies [7dcef5d]
+- Updated dependencies [41e59f8]
+  - @wcp/wario-ux-shared@5.0.0
+  - @wcp/wario-shared@0.3.0
+  - @wcp/wario-fe-ux-shared@2.0.0
+
 ## 0.0.5
 
 ### Patch Changes
