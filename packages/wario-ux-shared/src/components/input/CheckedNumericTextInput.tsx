@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react';
 
 import { TextField, type TextFieldProps } from '@mui/material';
 
-import { type InputNumberValue, type NumberTransformProps, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
+import { type InputNumberValue, type NumberTransformPropsAllowEmpty, type NumberTransformPropsNoEmpty, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
 
 export type CheckedNumericInputProps = Omit<TextFieldProps, 'value' | 'onChange' | 'onBlur'> & {
   value: InputNumberValue;
-  onChange: (value: number | "") => void;
-  numberProps: NumberTransformProps;
   step?: number;
   inputMode: 'numeric' | 'decimal' | 'text';
   pattern?: string;
-};
+
+} & ({
+  onChange: (value: number | "") => void;
+  numberProps: NumberTransformPropsAllowEmpty;
+} | { onChange: (value: number) => void; numberProps: NumberTransformPropsNoEmpty; });
 
 export function CheckedNumericInput({ onChange, step, pattern, inputMode, value, numberProps, ...other }: CheckedNumericInputProps) {
   const [inputText, setInputText] = useState(numberProps.formatFunction(value));
@@ -33,6 +35,7 @@ export function CheckedNumericInput({ onChange, step, pattern, inputMode, value,
       onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
         const new_val = transformValueOnBlur(numberProps, e.target.value);
         setInputText(new_val.inputText);
+        // @ts-expect-error -- we know this is fine based on the props type since the onChange function will match with allowEmpty
         onChange(new_val.value);
       }}
       // eslint-disable-next-line @typescript-eslint/no-misused-spread
