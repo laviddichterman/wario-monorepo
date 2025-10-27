@@ -33,7 +33,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "prebuild": "pnpm run generate:metadata",
+    "prebuild": "mkdir -p src/generated && pnpm run generate:metadata",
     "build": "vite build",
     "generate:metadata": "libphonenumber-metadata-generator src/generated/phone-metadata.custom.json --countries US,CA --extended --types mobile,fixed_line,voip",
     "lint": "eslint .",
