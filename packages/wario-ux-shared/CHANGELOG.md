@@ -1,5 +1,22 @@
 # @wcp/wario-ux-shared
 
+## 5.0.0
+
+### Minor Changes
+
+- cb1c65d: bring input forms into wario-ux-shared, update all other package deps
+- 7dcef5d: - wario-shared: updates to numbers helper functions to allow for non-fixed precision decimal numbers
+  - wario-ux-shared: move all input components into a subdirectory
+  - wario-ux-shared: implement CheckedNumericTextInput with wario-shared number functions
+  - wario-ux-shared: implement RHFTextField with wario-shared number functions
+
+### Patch Changes
+
+- 3b70a44: small change to CheckedNumericInput to clarify the onChange function will not need to accept an empty string value if allowEmpty=false
+- Updated dependencies [7dcef5d]
+- Updated dependencies [41e59f8]
+  - @wcp/wario-shared@0.3.0
+
 ## 4.0.1
 
 ### Patch Changes

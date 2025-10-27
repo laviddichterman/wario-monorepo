@@ -1,5 +1,17 @@
 # @wcp/wario-shared
 
+## 0.3.0
+
+### Minor Changes
+
+- 7dcef5d: - wario-shared: updates to numbers helper functions to allow for non-fixed precision decimal numbers
+  - wario-ux-shared: move all input components into a subdirectory
+  - wario-ux-shared: implement CheckedNumericTextInput with wario-shared number functions
+  - wario-ux-shared: implement RHFTextField with wario-shared number functions
+- 41e59f8: Move number parsing and formatting to wario-shared
+  Move RoundToTwoDecimalPlaces to the numbers method
+  Add tests for numbers methods
+
 ## 0.2.1
 
 ### Patch Changes
