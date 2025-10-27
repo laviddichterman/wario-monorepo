@@ -64,7 +64,7 @@ export default function DeliveryInfoForm() {
           </span>
         </OkResponseOutput>
         :
-        <FormProvider methods={deliveryForm}>
+        <FormProvider<DeliveryInfoFormData> methods={deliveryForm}>
           <span className="flexbox">
             <span className="flexbox__item one-half">
               <RHFTextField
@@ -113,6 +113,7 @@ export default function DeliveryInfoForm() {
           <input type="text" id="delivery-instructions-text" name="delivery_instructions" size={40} />
         </span>
       </span>
+      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
       <Button type="submit" disabled={!isValid || deliveryValidationLoading === 'PENDING'} className="btn" onClick={() => handleSubmit((e) => { setDeliveryInfoAndAttemptToValidate(e); })()}>Validate Delivery Address</Button>
     </>
   )

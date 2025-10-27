@@ -2,14 +2,13 @@ import { Clear, Edit } from '@mui/icons-material';
 import { Grid, IconButton, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
-import { type CartEntry } from '@wcp/wario-shared';
-import { selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared';
+import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared';
+import { CheckedNumericInput, selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared';
 
 import { getCart, removeFromCart, updateCartQuantity } from '../app/slices/WCartSlice';
 import { SelectSelectableModifiers } from '../app/store';
 import { useAppDispatch, useAppSelector } from '../app/useHooks';
 
-import { CheckedNumericInput } from './CheckedNumericTextInput';
 import { ProductDisplay } from './WProductComponent';
 
 
@@ -46,13 +45,21 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
             <CheckedNumericInput
               size='small'
               fullWidth
-              inputProps={{ inputMode: 'numeric', min: 1, max: 99, pattern: '[0-9]*', step: 1 }}
+              pattern={'[0-9]*'}
+              step={1}
+              inputMode={'numeric'}
+              numberProps={{
+                allowEmpty: false,
+                defaultValue: cartEntry.quantity,
+                formatFunction: (v) => formatDecimal(v, 0),
+                parseFunction: parseInteger,
+                min: 1,
+                max: 99
+              }}
               value={cartEntry.quantity}
               disabled={cartEntry.isLocked}
-
-              onChange={(value) => { setEntryQuantity(value); }}
-              parseFunction={parseInt}
-              allowEmpty={false} />
+              onChange={(value: number) => { setEntryQuantity(value); }}
+            />
           </Grid>
           <Grid sx={{ py: 1, pl: 1, textAlign: 'center' }} size={6}>
             <IconButton disabled={cartEntry.isLocked} name="remove" onClick={() => { setRemoveEntry(); }} >

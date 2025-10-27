@@ -50,7 +50,7 @@ export function WCustomerInformationStage() {
       <StageTitle>Tell us a little about you.</StageTitle>
       <Separator sx={{ pb: 3 }} />
       <Typography>All information is used solely to facilitate the getting of your pizza to you. We don't sell or share customer information, ever.<br />By filling out this information, you agree to receive text messages relating to your order.</Typography>
-      <FormProvider methods={cIForm}>
+      <FormProvider<CustomerInfoRHF> methods={cIForm}>
         <Grid sx={{ p: 2 }} container>
           <Grid
             sx={{ p: 1 }}
@@ -101,6 +101,7 @@ export function WCustomerInformationStage() {
           </Grid>
         </Grid>
       </FormProvider>
+      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
       <Navigation canBack canNext={isValid} handleBack={() => dispatch(backStage())} handleNext={handleSubmit(handleNext)} />
     </>
   );
