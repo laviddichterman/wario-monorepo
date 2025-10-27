@@ -1,13 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
+    "isolatedModules": true,
     "types": [
       "jest",
       "node"
     ]
   },
   "include": [
-    "test/**/*.ts",
+    "tests/**/*.ts",
     "src/**/*.ts"
   ]
 }

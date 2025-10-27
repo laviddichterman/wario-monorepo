@@ -15,6 +15,7 @@
 import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
 import { RRule } from "rrule";
 
+import { RoundToTwoDecimalPlaces } from "./numbers";
 import { OrderFunctional } from "./objects/OrderFunctional";
 import { CreateProductWithMetadataFromV2Dto } from "./objects/WCPProduct";
 import WDateUtils from "./objects/WDateUtils";
@@ -384,19 +385,6 @@ export const ComputeCategoryTreeIdList = (rootId: string, categorySelector: Sele
     return [{ id: cId, ordinal: category.category.ordinal }, ...(category.children.flatMap(x => ComputeCategoryTreeIdListInternal(x)))];
   }
   return ComputeCategoryTreeIdListInternal(rootId).sort((a, b) => a.ordinal - b.ordinal).map(x => x.id);
-}
-
-
-/**
- * RoundToTwoDecimalPlaces
- *
- * Round a numeric value to two decimal places in a stable manner using Number.EPSILON.
- *
- * @param number - numeric input
- * @returns number - value rounded to two decimal places
- */
-export function RoundToTwoDecimalPlaces(number: number) {
-  return Math.round((number + Number.EPSILON) * 100) / 100;
 }
 
 /**

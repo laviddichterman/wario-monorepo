@@ -136,7 +136,7 @@ const tsConfig = {
     globals: { ...globals.browser, ...globals.node },
     parserOptions: {
       projectService: true,
-      tsconfigRootDir: import.meta.dirname,
+      tsconfigRootDir: process.cwd(),
     },
   },
   plugins: {
