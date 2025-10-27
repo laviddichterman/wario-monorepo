@@ -9,7 +9,7 @@ import { z } from "zod";
 import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
-import { CURRENCY, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces, type WError } from '@wcp/wario-shared';
+import { CURRENCY, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
 import { ErrorResponseOutput, SelectSquareAppId, SelectSquareLocationId, SquareButtonCSS } from '@wcp/wario-ux-shared';
 import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField, ZodEmailSchema } from '@wcp/wario-ux-shared';
 
@@ -32,25 +32,17 @@ interface CreditPurchaseInfo {
   recipientEmail: string;
   recipientMessage: string;
 }
-const creditPurchaseInfoSchemaBase = {
+const creditPurchaseInfoSchema = z.object({
   senderName: z.string().trim().min(1, "Please enter your name.").min(2, "Please enter your full name."),
   senderEmail: ZodEmailSchema,
   recipientNameFirst: z.string().trim().min(1, "Please enter the given name.").min(2, "Please enter the full name."),
   recipientNameFamily: z.string().min(2, "Please enter the family name."),
+  sendEmailToRecipient: z.boolean(),
+  // TODO: make conditional on sendEmailToRecipient
+  recipientEmail: ZodEmailSchema,
+  recipientMessage: z.string().max(500, "Message is too long."),
+});
 
-};
-
-const creditPurchaseInfoSchema = z.discriminatedUnion("sendEmailToRecipient", [
-  z.object({
-    ...creditPurchaseInfoSchemaBase,
-    sendEmailToRecipient: z.literal(true),
-    recipientMessage: z.string()
-  }),
-  z.object({
-    ...creditPurchaseInfoSchemaBase,
-    sendEmailToRecipient: z.literal(false),
-  })
-]);
 
 
 function useCPForm() {
@@ -89,7 +81,8 @@ const makeRequest = (token: string, amount: IMoney, values: CreditPurchaseInfo) 
     recipientEmail: values.recipientEmail,
     recipientMessage: values.recipientMessage
   };
-  return axiosInstance.post('api/v1/payments/storecredit/stopgap', typedBody);
+  const response: Promise<AxiosResponse<PurchaseStoreCreditResponse>> = axiosInstance.post('api/v1/payments/storecredit/purchase', typedBody);
+  return response;
 }
 
 export default function WStoreCreditPurchase() {
@@ -112,27 +105,26 @@ export default function WStoreCreditPurchase() {
       setDisplayPaymentForm(true);
     }
   }, [isValid])
-  const cardTokenizeResponseReceived = async (props: Square.TokenResult, _verifiedBuyer?: Square.VerifyBuyerResponseDetails) => {
+  const cardTokenizeResponseReceived = (props: Square.TokenResult /*, verifiedBuyer?: Square.VerifyBuyerResponseDetails */) => {
     const formValues = { ...getValues() };
     if (purchaseStatus !== 'PROCESSING') {
       setPurchaseStatus('PROCESSING');
       if (props.token) {
-        await makeRequest(props.token, creditAmount, formValues).then((response: AxiosResponse<PurchaseStoreCreditResponse>) => {
+        makeRequest(props.token, creditAmount, formValues).then((response: AxiosResponse<PurchaseStoreCreditResponse>) => {
           setPurchaseResponse(response.data);
           setPurchaseStatus('SUCCESS');
-        }).catch((reason: any) => {
-          if (reason && reason.error) {
-
-            console.log(reason.error);
-            setPurchaseStatus('INVALID_DATA');
-            setPaymentErrors(reason.error.map((x: WError) => x.detail ?? x.code));
-          }
-          else {
-            setPurchaseStatus('FAILED_UNKNOWN');
-          }
-        })
+        }).catch((err: unknown) => {
+          try {
+            if (err && typeof err === 'object' && 'error' in err && Array.isArray(err.error)) {
+              setPurchaseStatus('INVALID_DATA');
+              setPaymentErrors(err.error.map(((x: { detail: string }) => x.detail)));
+              return;
+            }
+          } catch { }
+          setPurchaseStatus('FAILED_UNKNOWN');
+        });
       } else if (props.errors) {
-        setPaymentErrors(props.errors?.map(x => x.message) ?? ["Unknown Error"])
+        setPaymentErrors(props.errors.map(x => x.message))
         setPurchaseStatus('FAILED_UNKNOWN');
       }
     }
@@ -154,7 +146,7 @@ export default function WStoreCreditPurchase() {
         createPaymentRequest={createPaymentRequest}
       >
         {purchaseStatus !== 'SUCCESS' &&
-          <FormProvider methods={cPForm} >
+          <FormProvider<CreditPurchaseInfo> methods={cPForm} >
 
             <Grid container justifyContent="center">
               {/* <Grid item sx={{ p: 2 }} xs={12}>
@@ -204,7 +196,7 @@ export default function WStoreCreditPurchase() {
                     autoComplete="full-name name"
                     label="Sender's Name"
                     fullWidth
-                    readOnly={purchaseStatus === 'PROCESSING'}
+                    disabled={purchaseStatus === 'PROCESSING'}
                   />
                 </Grid>
                 <Grid sx={{ p: 1 }} size={12}>
@@ -213,7 +205,7 @@ export default function WStoreCreditPurchase() {
                     autoComplete={"d"}
                     label={!errors.senderName && senderName !== "" ? `${senderName}'s e-mail address` : "Sender's e-mail address"}
                     fullWidth
-                    readOnly={purchaseStatus === 'PROCESSING'}
+                    disabled={purchaseStatus === 'PROCESSING'}
                   />
                 </Grid>
               </Grid>
@@ -227,7 +219,7 @@ export default function WStoreCreditPurchase() {
                     autoComplete="given-name name"
                     label="Recipient's first name"
                     fullWidth
-                    readOnly={purchaseStatus === 'PROCESSING'}
+                    disabled={purchaseStatus === 'PROCESSING'}
                   />
                 </Grid>
                 <Grid sx={{ p: 1, pl: 1 }} size={6}>
@@ -236,12 +228,12 @@ export default function WStoreCreditPurchase() {
                     autoComplete="family-name"
                     label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s family name` : "Recipient's family name"}
                     fullWidth
-                    readOnly={purchaseStatus === 'PROCESSING'}
+                    disabled={purchaseStatus === 'PROCESSING'}
                   />
                 </Grid>
                 <Grid size={12}>
                   <RHFCheckbox
-                    readOnly={purchaseStatus === 'PROCESSING'}
+                    disabled={purchaseStatus === 'PROCESSING'}
                     name="sendEmailToRecipient"
                     label={`Please inform ${!errors.recipientNameFirst && recipientNameFirst !== "" ? recipientNameFirst : 'the recipient'} via e-mail for me!`}
                   />
@@ -254,7 +246,7 @@ export default function WStoreCreditPurchase() {
                         autoComplete=""
                         label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s e-mail address` : "Recipient's e-mail address"}
                         fullWidth
-                        readOnly={purchaseStatus === 'PROCESSING'}
+                        disabled={purchaseStatus === 'PROCESSING'}
                       />
                     </Grid>
                     <Grid sx={{ p: 1 }} size={12}>
@@ -271,7 +263,7 @@ export default function WStoreCreditPurchase() {
                 {displayPaymentForm &&
                   <>
                     <CreditCard
-                      // @ts-ignore 
+                      // @ts-expect-error remove once verified this isn't needed https://github.com/weareseeed/react-square-web-payments-sdk/pull/74/commits/d16cce8ba6ab50de35d632352f2cb01c9217ad05
                       focus={""}
                       buttonProps={{ isLoading: purchaseStatus === 'PROCESSING' || !isValid, css: SquareButtonCSS }} />
                     {/* <ApplePay /> */}

@@ -4,7 +4,6 @@ import { PaymentForm } from 'react-square-web-payments-sdk';
 
 import { Box, Step, StepLabel, Stepper, useMediaQuery, useTheme } from '@mui/material';
 
-// import { useNavigate, useLocation } from "react-router-dom";
 // TODO: need to add an interceptor for forward/back when the user has gotten to 2nd stage or at least reasonably far
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
 import { SelectSquareAppId, SelectSquareLocationId, StepperTitle } from '@wcp/wario-ux-shared';

@@ -30,7 +30,7 @@
     "@wcp/wario-fe-ux-shared": "workspace:*",
     "@wcp/wario-shared": "workspace:*",
     "@wcp/wario-ux-shared": "workspace:*",
-    "axios": "^1.12.2",
+    "axios": "^1.13.0",
     "date-fns": "^4.1.0",
     "geojson": "^0.5.0",
     "html5-qrcode": "2.3.8",
