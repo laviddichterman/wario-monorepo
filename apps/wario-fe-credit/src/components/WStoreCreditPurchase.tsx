@@ -1,20 +1,21 @@
-import { useEffect, useState } from 'react';
-import { Box, Link, Typography, Grid, FormLabel } from '@mui/material';
-import { useAppSelector } from '../../../wario-fe-order/src/app/useHooks';
-import { MoneyInput } from '../../../wario-fe-order/src/components/MoneyInput';
-import { CURRENCY, type IMoney, MoneyToDisplayString, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces, type WError } from '@wcp/wario-shared';
-import * as yup from "yup";
-import { YupValidateEmail } from '../../../wario-fe-order/src/components/hook-form/RHFMailTextField';
-import { useForm } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import { FormProvider, RHFTextField, RHFCheckbox } from '../../../wario-fe-order/src/components/hook-form';
-import { RHFMailTextField } from '../../../wario-fe-order/src/components/hook-form/RHFMailTextField';
-import { ApplePay, CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
+import { zodResolver } from "@hookform/resolvers/zod";
 import type * as Square from '@square/web-sdk';
-import axiosInstance from '../../../wario-fe-order/src/utils/axios';
-import { styled } from '@mui/system';
-import { SelectSquareLocationId, SelectSquareAppId, ErrorResponseOutput, SquareButtonCSS } from '@wcp/wario-ux-shared';
 import { type AxiosResponse } from 'axios';
+import { useEffect, useState } from 'react';
+import { useForm } from "react-hook-form";
+import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
+import { z } from "zod";
+
+import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
+import { styled } from '@mui/system';
+
+import { CURRENCY, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces, type WError } from '@wcp/wario-shared';
+import { ErrorResponseOutput, SelectSquareAppId, SelectSquareLocationId, SquareButtonCSS } from '@wcp/wario-ux-shared';
+import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField, ZodEmailSchema } from '@wcp/wario-ux-shared';
+
+import axiosInstance from '@/utils/axios';
+
+import { useAppSelector } from '@/app/useHooks';
 
 const Title = styled(Typography)({
   fontWeight: 500,
@@ -31,20 +32,25 @@ interface CreditPurchaseInfo {
   recipientEmail: string;
   recipientMessage: string;
 }
+const creditPurchaseInfoSchemaBase = {
+  senderName: z.string().trim().min(1, "Please enter your name.").min(2, "Please enter your full name."),
+  senderEmail: ZodEmailSchema,
+  recipientNameFirst: z.string().trim().min(1, "Please enter the given name.").min(2, "Please enter the full name."),
+  recipientNameFamily: z.string().min(2, "Please enter the family name."),
 
-const creditPurchaseInfoSchema = yup.object().shape({
-  senderName: yup.string().ensure().required("Please enter your name.").min(2, "Please enter your full name."),
-  senderEmail: YupValidateEmail(yup.string()),
-  recipientNameFirst: yup.string().ensure().required("Please enter the given name.").min(2, "Please enter the full name."),
-  recipientNameFamily: yup.string().ensure().required("Please enter the family name.").min(2, "Please enter the family name."),
-  sendEmailToRecipient: yup.bool().required(),
-  recipientEmail: yup.string().when('sendEmailToRecipient', {
-    is: true,
-    then: (s) => YupValidateEmail(s),
-    otherwise: s => s
+};
+
+const creditPurchaseInfoSchema = z.discriminatedUnion("sendEmailToRecipient", [
+  z.object({
+    ...creditPurchaseInfoSchemaBase,
+    sendEmailToRecipient: z.literal(true),
+    recipientMessage: z.string()
   }),
-  recipientMessage: yup.string()
-});
+  z.object({
+    ...creditPurchaseInfoSchemaBase,
+    sendEmailToRecipient: z.literal(false),
+  })
+]);
 
 
 function useCPForm() {
@@ -60,7 +66,7 @@ function useCPForm() {
       sendEmailToRecipient: true,
       recipientMessage: ""
     },
-    resolver: yupResolver(creditPurchaseInfoSchema),
+    resolver: zodResolver(creditPurchaseInfoSchema),
     mode: "onBlur",
 
   });
@@ -87,7 +93,9 @@ const makeRequest = (token: string, amount: IMoney, values: CreditPurchaseInfo) 
 }
 
 export default function WStoreCreditPurchase() {
+
   const squareApplicationId = useAppSelector(SelectSquareAppId);
+
   const squareLocationId = useAppSelector(SelectSquareLocationId);
   const cPForm = useCPForm();
   const { getValues, watch, formState: { isValid, errors } } = cPForm;
@@ -104,7 +112,7 @@ export default function WStoreCreditPurchase() {
       setDisplayPaymentForm(true);
     }
   }, [isValid])
-  const cardTokenizeResponseReceived = async (props: Square.TokenResult, verifiedBuyer?: Square.VerifyBuyerResponseDetails) => {
+  const cardTokenizeResponseReceived = async (props: Square.TokenResult, _verifiedBuyer?: Square.VerifyBuyerResponseDetails) => {
     const formValues = { ...getValues() };
     if (purchaseStatus !== 'PROCESSING') {
       setPurchaseStatus('PROCESSING');
@@ -171,10 +179,20 @@ export default function WStoreCreditPurchase() {
                   fullWidth
                   label=""
                   autoFocus
+                  numberProps={{
+                    allowEmpty: false,
+                    defaultValue: creditAmount.amount / 100,
+                    formatFunction: (v) => formatDecimal(v, 2),
+                    parseFunction: parseDecimal,
+                    min: 2,
+                    max: 2000
+                  }}
+                  inputMode="decimal"
+                  step={1}
                   value={creditAmount.amount / 100}
-                  onChange={(e) => setCreditAmount({ ...creditAmount, amount: e * 100 })}
-                  parseFunction={parseFloat}
-                  inputProps={{ min: 2, max: 2000 }} />
+                  onChange={(e: number) => { setCreditAmount({ ...creditAmount, amount: e * 100 }); }}
+                />
+
               </Grid>
               <Grid sx={{ p: 1 }} container size={12}>
                 <Grid size={12}>
@@ -264,7 +282,7 @@ export default function WStoreCreditPurchase() {
             </Grid>
           </FormProvider>
         }
-        {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success === true &&
+        {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success &&
           <Grid container>
             <Grid size={12}>
               <Typography variant="h3">Payment of {MoneyToDisplayString(purchaseResponse.result.amount, true)} received
