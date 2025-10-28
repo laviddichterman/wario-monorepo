@@ -9,6 +9,8 @@
     "dev": "vite --open",
     "lint": "eslint .",
     "preview": "vite preview",
+    "deploy:prod": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wfaq/dist/",
+    "deploy:test": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wfaqtest/dist/",
     "start": "vite",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

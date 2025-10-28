@@ -8,6 +8,8 @@
     "clean": "rm -rf ./dist",
     "dev": "vite --open",
     "lint": "eslint .",
+    "deploy:prod": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wmenu/dist/",
+    "deploy:test": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wmenutest/dist/",
     "preview": "vite preview",
     "start": "vite",
     "typecheck": "tsc -p tsconfig.json --noEmit"
