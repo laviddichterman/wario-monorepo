@@ -1,5 +1,14 @@
 # @wcp/wario-fe-faq
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [61c16d0]
+- Updated dependencies [b51abfc]
+  - @wcp/wario-ux-shared@5.0.1
+  - @wcp/wario-fe-ux-shared@2.0.1
+
 ## 0.0.6
 
 ### Patch Changes

@@ -1,5 +1,12 @@
 # @wcp/wario-ux-shared
 
+## 5.0.1
+
+### Patch Changes
+
+- 61c16d0: add ValSetVal and other reactjs helpers to wario-ux-shared
+- b51abfc: remove debug output on RHFCheckbox
+
 ## 5.0.0
 
 ### Minor Changes
