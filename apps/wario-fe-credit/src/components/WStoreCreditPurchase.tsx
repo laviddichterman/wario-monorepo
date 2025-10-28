@@ -9,7 +9,7 @@ import { z } from "zod";
 import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
-import { CURRENCY, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
+import { CURRENCY, type DistributiveOmit, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
 import { ErrorResponseOutput, SelectSquareAppId, SelectSquareLocationId, SquareButtonCSS } from '@wcp/wario-ux-shared';
 import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField, ZodEmailSchema } from '@wcp/wario-ux-shared';
 
@@ -24,26 +24,28 @@ const Title = styled(Typography)({
   textTransform: 'uppercase'
 })
 
-interface CreditPurchaseInfo {
-  senderName: string;
-  senderEmail: string;
-  recipientNameFirst: string;
-  recipientNameFamily: string;
-  sendEmailToRecipient: boolean;
-  recipientEmail: string;
-  recipientMessage: string;
-}
-const creditPurchaseInfoSchema = z.object({
+type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount'>
+
+const creditPurchaseInfoSchemaBase = {
+  // amount: z.number().min(2, "Minimum purchase amount is $2.00").max(200000, "Maximum purchase amount is $2000.00"),
   senderName: z.string().trim().min(1, "Please enter your name.").min(2, "Please enter your full name."),
   senderEmail: ZodEmailSchema,
   recipientNameFirst: z.string().trim().min(1, "Please enter the given name.").min(2, "Please enter the full name."),
-  recipientNameFamily: z.string().min(2, "Please enter the family name."),
-  sendEmailToRecipient: z.boolean(),
-  // TODO: make conditional on sendEmailToRecipient
-  recipientEmail: ZodEmailSchema,
-  recipientMessage: z.string().max(500, "Message is too long."),
-});
+  recipientNameLast: z.string().min(2, "Please enter the family name."),
+}
 
+const creditPurchaseInfoSchema = z.discriminatedUnion("sendEmailToRecipient", [
+  z.object({
+    ...creditPurchaseInfoSchemaBase,
+    sendEmailToRecipient: z.literal(true),
+    recipientEmail: ZodEmailSchema,
+    recipientMessage: z.string().max(500, "Message is too long."),
+  }),
+  z.object({
+    ...creditPurchaseInfoSchemaBase,
+    sendEmailToRecipient: z.literal(false),
+  })
+]);
 
 
 function useCPForm() {
@@ -54,7 +56,7 @@ function useCPForm() {
       senderName: "",
       senderEmail: "",
       recipientNameFirst: "",
-      recipientNameFamily: "",
+      recipientNameLast: "",
       recipientEmail: "",
       sendEmailToRecipient: true,
       recipientMessage: ""
@@ -71,16 +73,9 @@ type PurchaseStatus = 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILED_UNKNOWN' | 'IN
 
 const makeRequest = (token: string, amount: IMoney, values: CreditPurchaseInfo) => {
   const typedBody: PurchaseStoreCreditRequest & { nonce: string } = {
+    ...values,
     nonce: token,
     amount,
-    senderName: values.senderName,
-    addedBy: "WebUI Purchase",
-    recipientNameFirst: values.recipientNameFirst,
-    recipientNameLast: values.recipientNameFamily,
-    senderEmail: values.senderEmail,
-    sendEmailToRecipient: values.sendEmailToRecipient,
-    recipientEmail: values.recipientEmail,
-    recipientMessage: values.recipientMessage
   };
   const response: Promise<AxiosResponse<PurchaseStoreCreditResponse>> = axiosInstance.post('api/v1/payments/storecredit/purchase', typedBody);
   return response;
@@ -219,6 +214,7 @@ export default function WStoreCreditPurchase() {
                 </Grid>
                 <Grid sx={{ p: 1, pr: 1 }} size={6}>
                   <RHFTextField
+                    helperText={errors.recipientNameFirst ? errors.recipientNameFirst.message : ""}
                     name="recipientNameFirst"
                     autoComplete="given-name name"
                     label="Recipient's first name"
@@ -228,7 +224,8 @@ export default function WStoreCreditPurchase() {
                 </Grid>
                 <Grid sx={{ p: 1, pl: 1 }} size={6}>
                   <RHFTextField
-                    name="recipientNameFamily"
+                    helperText={errors.recipientNameLast ? errors.recipientNameLast.message : ""}
+                    name="recipientNameLast"
                     autoComplete="family-name"
                     label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s family name` : "Recipient's family name"}
                     fullWidth
@@ -237,6 +234,7 @@ export default function WStoreCreditPurchase() {
                 </Grid>
                 <Grid size={12}>
                   <RHFCheckbox
+                    helperText={errors.sendEmailToRecipient ? errors.sendEmailToRecipient.message : ""}
                     disabled={purchaseStatus === 'PROCESSING'}
                     name="sendEmailToRecipient"
                     label={`Please inform ${!errors.recipientNameFirst && recipientNameFirst !== "" ? recipientNameFirst : 'the recipient'} via e-mail for me!`}
@@ -278,6 +276,7 @@ export default function WStoreCreditPurchase() {
             </Grid>
           </FormProvider>
         }
+        <>{JSON.stringify(getValues())} </>
         {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success &&
           <Grid container>
             <Grid size={12}>
@@ -302,7 +301,7 @@ export default function WStoreCreditPurchase() {
                 md: 4
               }}>
               <Typography variant="h4">Recipient:</Typography>
-              <span>{getValues('recipientNameFirst')} {getValues('recipientNameFamily')}</span>
+              <span>{getValues('recipientNameFirst')} {getValues('recipientNameLast')}</span>
             </Grid>
             <Grid
               size={{
