@@ -214,7 +214,6 @@ export default function WStoreCreditPurchase() {
                 </Grid>
                 <Grid sx={{ p: 1, pr: 1 }} size={6}>
                   <RHFTextField
-                    helperText={errors.recipientNameFirst ? errors.recipientNameFirst.message : ""}
                     name="recipientNameFirst"
                     autoComplete="given-name name"
                     label="Recipient's first name"
@@ -224,7 +223,6 @@ export default function WStoreCreditPurchase() {
                 </Grid>
                 <Grid sx={{ p: 1, pl: 1 }} size={6}>
                   <RHFTextField
-                    helperText={errors.recipientNameLast ? errors.recipientNameLast.message : ""}
                     name="recipientNameLast"
                     autoComplete="family-name"
                     label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s family name` : "Recipient's family name"}
@@ -234,7 +232,6 @@ export default function WStoreCreditPurchase() {
                 </Grid>
                 <Grid size={12}>
                   <RHFCheckbox
-                    helperText={errors.sendEmailToRecipient ? errors.sendEmailToRecipient.message : ""}
                     disabled={purchaseStatus === 'PROCESSING'}
                     name="sendEmailToRecipient"
                     label={`Please inform ${!errors.recipientNameFirst && recipientNameFirst !== "" ? recipientNameFirst : 'the recipient'} via e-mail for me!`}
@@ -276,7 +273,7 @@ export default function WStoreCreditPurchase() {
             </Grid>
           </FormProvider>
         }
-        <>{JSON.stringify(getValues())} </>
+        {/* <>{JSON.stringify(getValues())} </> */}
         {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success &&
           <Grid container>
             <Grid size={12}>
