@@ -11,6 +11,20 @@ export type NullablePartial<T,
 //     : `${Key}`
 //   }[keyof ObjectType & (string | number)];
 
+/**
+ * Infers a type from a given type T. Useful for debugging complex types.
+ */
+export type InferType<T> = T extends infer O ? { [K in keyof O]: O[K] } : never
+/**
+ * Omit that distributes over unions
+ */
+export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
+/**
+ * Pick that distributes over unions
+ */
+export type DistributivePick<T, K extends keyof T> = T extends unknown
+  ? Pick<T, K>
+  : never
 export type Selector<T> = (id: string) => (T | undefined);
 export type SelectIds = () => string[];
 export interface EntitySelector<T> {
@@ -800,12 +814,22 @@ export interface IssueStoreCreditRequest {
   expiration: string | null;
 };
 
-export type PurchaseStoreCreditRequest = Omit<IssueStoreCreditRequest, 'creditType' | 'reason' | 'expiration'> & {
+export type PurchaseStoreCreditRequestBase = Omit<IssueStoreCreditRequest, 'creditType' | 'reason' | 'expiration' | 'recipientEmail' | 'addedBy'> & {
   sendEmailToRecipient: boolean;
   senderName: string;
   senderEmail: string;
+};
+
+export type PurchaseStoreCreditRequestSendEmail = PurchaseStoreCreditRequestBase & {
+  sendEmailToRecipient: true;
+  recipientEmail: string;
   recipientMessage: string;
 };
+export type PurchaseStoreCreditRequestNoEmail = PurchaseStoreCreditRequestBase & {
+  sendEmailToRecipient: false;
+};
+
+export type PurchaseStoreCreditRequest = (PurchaseStoreCreditRequestSendEmail | PurchaseStoreCreditRequestNoEmail);// extends infer O ? { [K in keyof O]: O[K] } : never;
 
 export interface PurchaseStoreCreditResponseSuccess {
   referenceId: string;
