@@ -1,5 +1,13 @@
 # @wcp/wario-fe-ux-shared
 
+## 2.0.2
+
+### Patch Changes
+
+- Updated dependencies [387050c]
+  - @wcp/wario-shared@0.3.1
+  - @wcp/wario-ux-shared@5.0.2
+
 ## 2.0.1
 
 ### Patch Changes
