@@ -1,7 +1,8 @@
 import path from 'path';
+
+import react from '@vitejs/plugin-react-swc';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
-import react from '@vitejs/plugin-react-swc';
 const PORT = 3003;
 export default defineConfig({
   plugins: [

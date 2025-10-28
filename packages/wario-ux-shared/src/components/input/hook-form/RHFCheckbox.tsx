@@ -58,7 +58,6 @@ export function RHFCheckbox({
             sx={[{ mx: 0 }, ...(Array.isArray(sx) ? sx : [sx])]}
             {...other}
           />
-          <p>{JSON.stringify(field)}</p>
           <HelperText
             {...slotProps?.helperText}
             errorMessage={error?.message}
