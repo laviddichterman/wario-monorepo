@@ -16,6 +16,7 @@ import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField, 
 import axiosInstance from '@/utils/axios';
 
 import { useAppSelector } from '@/app/useHooks';
+import { IS_PRODUCTION } from "@/config";
 
 const Title = styled(Typography)({
   fontWeight: 500,
@@ -140,6 +141,9 @@ export default function WStoreCreditPurchase() {
   return (
     <Box sx={{ mx: 'auto', pt: 1 }}>
       <PaymentForm
+        overrides={
+          !IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined
+        }
         applicationId={squareApplicationId}
         locationId={squareLocationId}
         cardTokenizeResponseReceived={cardTokenizeResponseReceived}
