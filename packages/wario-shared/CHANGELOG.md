@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 0.3.1
+
+### Patch Changes
+
+- 387050c: add some helper types and improve PurchaseStoreCreditRequest
+
 ## 0.3.0
 
 ### Minor Changes
