@@ -1,5 +1,14 @@
 # @wcp/wario-fe-menu
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies [b84680e]
+  - @wcp/wario-shared@0.4.0
+  - @wcp/wario-fe-ux-shared@3.0.0
+  - @wcp/wario-ux-shared@6.0.0
+
 ## 0.1.3
 
 ### Patch Changes
