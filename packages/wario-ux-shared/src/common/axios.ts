@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { type AxiosError } from 'axios';
 
 export const CreateAxiosInstance = (host_api: string) => {
   const axiosInstance = axios.create({
@@ -10,12 +10,9 @@ export const CreateAxiosInstance = (host_api: string) => {
   });
   axiosInstance.interceptors.response.use(
     (response) => response,
-    (error) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
-      const message = error?.response?.data || 'Something went wrong';
-      console.error('Axios error:', message);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      return Promise.reject(new Error(message));
+    (error: AxiosError) => {
+      console.error(`Axios error ${error.response ? JSON.stringify(error.response) : error.message}`);
+      return Promise.reject(error);
     }
   );
   return axiosInstance;

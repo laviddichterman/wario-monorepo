@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type * as Square from '@square/web-sdk';
-import { type AxiosResponse } from 'axios';
+import { type AxiosResponse, isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
@@ -9,7 +9,7 @@ import { z } from "zod";
 import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
-import { CURRENCY, type DistributiveOmit, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
+import { CURRENCY, type DistributiveOmit, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
 import { ErrorResponseOutput, SelectSquareAppId, SelectSquareLocationId, SquareButtonCSS } from '@wcp/wario-ux-shared';
 import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField, ZodEmailSchema } from '@wcp/wario-ux-shared';
 
@@ -30,8 +30,8 @@ const creditPurchaseInfoSchemaBase = {
   // amount: z.number().min(2, "Minimum purchase amount is $2.00").max(200000, "Maximum purchase amount is $2000.00"),
   senderName: z.string().trim().min(1, "Please enter your name.").min(2, "Please enter your full name."),
   senderEmail: ZodEmailSchema,
-  recipientNameFirst: z.string().trim().min(1, "Please enter the given name.").min(2, "Please enter the full name."),
-  recipientNameLast: z.string().min(2, "Please enter the family name."),
+  recipientNameFirst: z.string().trim().min(1, "Please enter the recipient's given name.").min(2, "Please enter the recipient's full name."),
+  recipientNameLast: z.string().trim().min(1, "Please enter the recipient's family name.").min(2, "Please enter the recipient's full family name.")
 }
 
 const creditPurchaseInfoSchema = z.discriminatedUnion("sendEmailToRecipient", [
@@ -43,7 +43,7 @@ const creditPurchaseInfoSchema = z.discriminatedUnion("sendEmailToRecipient", [
   }),
   z.object({
     ...creditPurchaseInfoSchemaBase,
-    sendEmailToRecipient: z.literal(false),
+    sendEmailToRecipient: z.literal(false)
   })
 ]);
 
@@ -71,16 +71,6 @@ function useCPForm() {
 
 type PurchaseStatus = 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILED_UNKNOWN' | 'INVALID_DATA';
 
-const makeRequest = (token: string, amount: IMoney, values: CreditPurchaseInfo) => {
-  const typedBody: PurchaseStoreCreditRequest & { nonce: string } = {
-    ...values,
-    nonce: token,
-    amount,
-  };
-  const response: Promise<AxiosResponse<PurchaseStoreCreditResponse>> = axiosInstance.post('api/v1/payments/storecredit/purchase', typedBody);
-  return response;
-}
-
 export default function WStoreCreditPurchase() {
 
   const squareApplicationId = useAppSelector(SelectSquareAppId);
@@ -106,19 +96,38 @@ export default function WStoreCreditPurchase() {
     if (purchaseStatus !== 'PROCESSING') {
       setPurchaseStatus('PROCESSING');
       if (props.token) {
-        makeRequest(props.token, creditAmount, formValues).then((response: AxiosResponse<PurchaseStoreCreditResponse>) => {
-          setPurchaseResponse(response.data);
-          setPurchaseStatus('SUCCESS');
-        }).catch((err: unknown) => {
-          try {
-            if (err && typeof err === 'object' && 'error' in err && Array.isArray(err.error)) {
-              setPurchaseStatus('INVALID_DATA');
-              setPaymentErrors(err.error.map(((x: { detail: string }) => x.detail)));
-              return;
+        const typedBody: PurchaseStoreCreditRequest & { nonce: string } = {
+          ...formValues,
+          nonce: props.token,
+          amount: creditAmount,
+        };
+        axiosInstance.post<PurchaseStoreCreditResponse>('api/v1/payments/storecredit/purchase', typedBody)
+          .then((response) => {
+            console.log('Received purchase response: ', JSON.stringify(response.data));
+            setPurchaseResponse(response.data);
+            setPurchaseStatus('SUCCESS');
+          }).catch((err: unknown) => {
+            console.error(`Purchase failed, got error ${JSON.stringify(err)}`);
+            try {
+              if (isAxiosError(err)) {
+                // Now 'error' is safely typed as AxiosError
+                if (isAxiosError<ResponseFailure>(err) && err.response) {
+                  setPurchaseStatus('INVALID_DATA');
+                  setPaymentErrors(err.response.data.error.map(((x: { detail: string }) => x.detail)));
+                  console.error('Server responded with an error:', err.response.status, err.response.data);
+                  return;
+                } else if (err.request) {
+                  console.error('No response received:', err.request);
+                } else {
+                  console.error('Error during request setup:', err.message);
+                }
+              } else {
+                console.error('An unexpected error occurred:', err);
+              }
             }
-          } catch { }
-          setPurchaseStatus('FAILED_UNKNOWN');
-        });
+            catch { }
+            setPurchaseStatus('FAILED_UNKNOWN');
+          });
       } else if (props.errors) {
         setPaymentErrors(props.errors.map(x => x.message))
         setPurchaseStatus('FAILED_UNKNOWN');
@@ -144,15 +153,11 @@ export default function WStoreCreditPurchase() {
         cardTokenizeResponseReceived={cardTokenizeResponseReceived}
         createPaymentRequest={createPaymentRequest}
       >
+        {/* <>{isValid.toString()}</>
+        <>{JSON.stringify(errors)}</> */}
         {purchaseStatus !== 'SUCCESS' &&
           <FormProvider<CreditPurchaseInfo> methods={cPForm} >
-
             <Grid container justifyContent="center">
-              {/* <Grid item sx={{ p: 2 }} xs={12}>
-                <Typography variant="body1" align='center'>
-                  Use this page to purchase a gift for yourself or a loved one. It never expires and is good at both Windy City Pie and Breezy Town Pizza!
-                </Typography>
-              </Grid> */}
               <Grid sx={{ p: 1 }} size={12}>
                 <Typography variant='h4'>
                   Spread pizza,<br />electronically!
@@ -273,7 +278,8 @@ export default function WStoreCreditPurchase() {
             </Grid>
           </FormProvider>
         }
-        {/* <>{JSON.stringify(getValues())} </> */}
+        {/* <>{JSON.stringify(getValues())} </>
+        <>{JSON.stringify(errors)} </> */}
         {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success &&
           <Grid container>
             <Grid size={12}>
