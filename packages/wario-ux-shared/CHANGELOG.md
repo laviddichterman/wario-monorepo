@@ -1,5 +1,12 @@
 # @wcp/wario-ux-shared
 
+## 6.0.0
+
+### Patch Changes
+
+- Updated dependencies [b84680e]
+  - @wcp/wario-shared@0.4.0
+
 ## 5.0.2
 
 ### Patch Changes

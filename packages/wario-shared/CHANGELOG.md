@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 0.4.0
+
+### Minor Changes
+
+- b84680e: remove grouping comma for numbers, be more permissive with parseInteger
+
 ## 0.3.1
 
 ### Patch Changes
