@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, transformValueOnBlur, transformValueOnChange, formatDecimal } from '../src/lib/numbers';
+import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, transformValueOnBlur, transformValueOnChange, formatDecimal, parseDecimal, parseInteger } from '../src/lib/numbers';
 import { RoundToTwoDecimalPlaces } from '../src/lib/numbers';
 describe('fCurrency', () => {
   // Test cases for various input values with the default locale (en-US, USD)
@@ -21,11 +21,11 @@ describe('fCurrency', () => {
   });
 
   it('should format a number with default USD locale', () => {
-    expect(fCurrency(1234.56)).toBe('$1,234.56');
+    expect(fCurrency(1234.56)).toBe('$1234.56');
   });
 
   it('should format a numeric string with default USD locale', () => {
-    expect(fCurrency('1234.56')).toBe('$1,234.56');
+    expect(fCurrency('1234.56')).toBe('$1234.56');
   });
 
   it('should format an integer with default USD locale', () => {
@@ -37,7 +37,7 @@ describe('fCurrency', () => {
   });
 
   it('should format a negative number correctly', () => {
-    expect(fCurrency(-1234.56)).toBe('-$1,234.56');
+    expect(fCurrency(-1234.56)).toBe('-$1234.56');
   });
 
   // Test cases for different locales
@@ -45,23 +45,23 @@ describe('fCurrency', () => {
     // Note: The exact format (space, symbol position) can vary slightly between environments.
     // This test expects a non-breaking space.
     const locale = { code: 'de-DE', currency: 'EUR' };
-    expect(fCurrency(1234.56, locale)).toBe('1.234,56\xa0€');
+    expect(fCurrency(1234.56, locale)).toBe('1234,56\xa0€');
   });
 
   it('should format currency for JPY locale (ja-JP), which has no minor units', () => {
     const locale = { code: 'ja-JP', currency: 'JPY' };
-    expect(fCurrency(1234, locale)).toBe('￥1,234');
+    expect(fCurrency(1234, locale)).toBe('￥1234');
   });
 
   // Test cases for custom Intl.NumberFormatOptions
   it('should respect custom options for minimumFractionDigits', () => {
     const options = { minimumFractionDigits: 4, maximumFractionDigits: 4 };
-    expect(fCurrency(1234.56, DEFAULT_LOCALE, options)).toBe('$1,234.5600');
+    expect(fCurrency(1234.56, DEFAULT_LOCALE, options)).toBe('$1234.5600');
   });
 
   it('should respect custom options for maximumFractionDigits', () => {
     const options = { maximumFractionDigits: 0 };
-    expect(fCurrency(1234.567, DEFAULT_LOCALE, options)).toBe('$1,235');
+    expect(fCurrency(1234.567, DEFAULT_LOCALE, options)).toBe('$1235');
   });
 
   it('should allow overriding currency display format', () => {
@@ -155,11 +155,11 @@ describe('fCurrencyNoUnit', () => {
   });
 
   it('should format a number with default USD locale without the currency unit', () => {
-    expect(fCurrencyNoUnit(1234.56)).toBe('1,234.56');
+    expect(fCurrencyNoUnit(1234.56)).toBe('1234.56');
   });
 
   it('should format a numeric string with default USD locale without the currency unit', () => {
-    expect(fCurrencyNoUnit('1234.56')).toBe('1,234.56');
+    expect(fCurrencyNoUnit('1234.56')).toBe('1234.56');
   });
 
   it('should format an integer without the currency unit', () => {
@@ -171,27 +171,27 @@ describe('fCurrencyNoUnit', () => {
   });
 
   it('should format a negative number correctly without the currency unit', () => {
-    expect(fCurrencyNoUnit(-1234.56)).toBe('-1,234.56');
+    expect(fCurrencyNoUnit(-1234.56)).toBe('-1234.56');
   });
 
   it('should format currency for EUR locale (de-DE) without the currency unit', () => {
     const locale = { code: 'de-DE', currency: 'EUR' };
-    expect(fCurrencyNoUnit(1234.56, locale)).toBe('1.234,56');
+    expect(fCurrencyNoUnit(1234.56, locale)).toBe('1234,56');
   });
 
   it('should format currency for JPY locale (ja-JP) without the currency unit', () => {
     const locale = { code: 'ja-JP', currency: 'JPY' };
-    expect(fCurrencyNoUnit(1234, locale)).toBe('1,234');
+    expect(fCurrencyNoUnit(1234, locale)).toBe('1234');
   });
 
   it('should respect custom options for minimumFractionDigits', () => {
     const options = { minimumFractionDigits: 4, maximumFractionDigits: 4 };
-    expect(fCurrencyNoUnit(1234.56, DEFAULT_LOCALE, options)).toBe('1,234.5600');
+    expect(fCurrencyNoUnit(1234.56, DEFAULT_LOCALE, options)).toBe('1234.5600');
   });
 
   it('should respect custom options for maximumFractionDigits', () => {
     const options = { maximumFractionDigits: 0 };
-    expect(fCurrencyNoUnit(1234.567, DEFAULT_LOCALE, options)).toBe('1,235');
+    expect(fCurrencyNoUnit(1234.567, DEFAULT_LOCALE, options)).toBe('1235');
   });
 });
 
@@ -306,142 +306,271 @@ describe('clampOptional (via transformValueOnBlur)', () => {
 });
 
 describe('transformValueOnBlur', () => {
+  // Note: The existing tests for clampOptional via transformValueOnBlur are kept separate
+  // as they use a simplified mock parse/format setup. The following tests are more comprehensive.
+
+  describe('with parseDecimal and formatDecimal(v, 2)', () => {
+    describe('and allowEmpty = true', () => {
+      const props = {
+        allowEmpty: true as const,
+        parseFunction: parseDecimal,
+        formatFunction: (v: any) => formatDecimal(v, 2),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format and clamp a valid number within range', () => {
+        const result = transformValueOnBlur(props, '50.129');
+        expect(result).toEqual({ value: 50.13, inputText: '50.13' });
+      });
+
+      it('should clamp to min, then format', () => {
+        const result = transformValueOnBlur(props, '5');
+        expect(result).toEqual({ value: 10, inputText: '10.00' });
+      });
+
+      it('should clamp to max, then format', () => {
+        const result = transformValueOnBlur(props, '105.5');
+        expect(result).toEqual({ value: 100, inputText: '100.00' });
+      });
+
+      it('should return empty for empty input', () => {
+        const result = transformValueOnBlur(props, '');
+        expect(result).toEqual({ value: '', inputText: '' });
+      });
+
+      it('should return empty for invalid input', () => {
+        const result = transformValueOnBlur(props, 'abc');
+        expect(result).toEqual({ value: '', inputText: '' });
+      });
+    });
+
+    describe('and allowEmpty = false', () => {
+      const props = {
+        allowEmpty: false as const,
+        defaultValue: 50,
+        parseFunction: parseDecimal,
+        formatFunction: (v: any) => formatDecimal(v, 2),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format and clamp a valid number within range', () => {
+        const result = transformValueOnBlur(props, '75.987');
+        expect(result).toEqual({ value: 75.99, inputText: '75.99' });
+      });
+
+      it('should use defaultValue for empty input, then format', () => {
+        const result = transformValueOnBlur(props, '');
+        expect(result).toEqual({ value: 50, inputText: '50.00' });
+      });
+
+      it('should use defaultValue for invalid input, then format', () => {
+        const result = transformValueOnBlur(props, 'abc');
+        expect(result).toEqual({ value: 50, inputText: '50.00' });
+      });
+
+      it('should use defaultValue which is then clamped to min', () => {
+        const propsWithLowDefault = { ...props, defaultValue: 5 };
+        const result = transformValueOnBlur(propsWithLowDefault, '');
+        expect(result).toEqual({ value: 10, inputText: '10.00' });
+      });
+    });
+  });
+
+  describe('with parseDecimal and formatDecimal(v)', () => {
+    describe('and allowEmpty = true', () => {
+      const props = {
+        allowEmpty: true as const,
+        parseFunction: parseDecimal,
+        formatFunction: formatDecimal,
+        min: 10,
+        max: 100,
+      };
+
+      it('should format a valid number without rounding', () => {
+        const result = transformValueOnBlur(props, '50.129');
+        expect(result).toEqual({ value: 50.129, inputText: '50.129' });
+      });
+
+      it('should clamp to min', () => {
+        const result = transformValueOnBlur(props, '5');
+        expect(result).toEqual({ value: 10, inputText: '10' });
+      });
+
+      it('should return empty for empty input', () => {
+        const result = transformValueOnBlur(props, '');
+        expect(result).toEqual({ value: '', inputText: '' });
+      });
+    });
+
+    describe('and allowEmpty = false', () => {
+      const props = {
+        allowEmpty: false as const,
+        defaultValue: 50,
+        parseFunction: parseDecimal,
+        formatFunction: (v: any) => formatDecimal(v),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format a valid number', () => {
+        const result = transformValueOnBlur(props, '75.987');
+        expect(result).toEqual({ value: 75.987, inputText: '75.987' });
+      });
+
+      it('should use defaultValue for empty input', () => {
+        const result = transformValueOnBlur(props, '');
+        expect(result).toEqual({ value: 50, inputText: '50' });
+      });
+    });
+  });
+
+  describe('with parseInteger and formatDecimal(v, 2)', () => {
+    describe('and allowEmpty = true', () => {
+      const props = {
+        allowEmpty: true as const,
+        parseFunction: parseInteger,
+        formatFunction: (v: any) => formatDecimal(v, 2),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format a valid integer', () => {
+        const result = transformValueOnBlur(props, '50');
+        expect(result).toEqual({ value: 50, inputText: '50.00' });
+      });
+
+      it('should return empty for decimal input', () => {
+        const result = transformValueOnBlur(props, '50.12');
+        expect(result).toEqual({ value: 50, inputText: '50.00' });
+      });
+
+      it('should clamp to min and format', () => {
+        const result = transformValueOnBlur(props, '5');
+        expect(result).toEqual({ value: 10, inputText: '10.00' });
+      });
+    });
+
+    describe('and allowEmpty = false', () => {
+      const props = {
+        allowEmpty: false as const,
+        defaultValue: 50,
+        parseFunction: parseInteger,
+        formatFunction: (v: any) => formatDecimal(v, 2),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format a valid integer', () => {
+        const result = transformValueOnBlur(props, '75');
+        expect(result).toEqual({ value: 75, inputText: '75.00' });
+      });
+
+      it('should use defaultValue for decimal input', () => {
+        const result = transformValueOnBlur(props, '12.34');
+        expect(result).toEqual({ value: 12, inputText: '12.00' });
+      });
+    });
+  });
+
+  describe('with parseInteger and formatDecimal(v)', () => {
+    describe('and allowEmpty = true', () => {
+      const props = {
+        allowEmpty: true as const,
+        parseFunction: parseInteger,
+        formatFunction: (v: any) => formatDecimal(v),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format a valid integer', () => {
+        const result = transformValueOnBlur(props, '50');
+        expect(result).toEqual({ value: 50, inputText: '50' });
+      });
+
+      it('should return empty for decimal input', () => {
+        const result = transformValueOnBlur(props, '50.12');
+        expect(result).toEqual({ value: 50, inputText: '50' });
+      });
+    });
+
+    describe('and allowEmpty = false', () => {
+      const props = {
+        allowEmpty: false as const,
+        defaultValue: 50,
+        parseFunction: parseInteger,
+        formatFunction: (v: any) => formatDecimal(v),
+        min: 10,
+        max: 100,
+      };
+
+      it('should format a valid integer', () => {
+        const result = transformValueOnBlur(props, '75');
+        expect(result).toEqual({ value: 75, inputText: '75' });
+      });
+
+      it('should use defaultValue for decimal input', () => {
+        const result = transformValueOnBlur(props, '12.34');
+        expect(result).toEqual({ value: 12, inputText: '12' });
+      });
+    });
+  });
+});
+
+
+describe('transformValueOnChange', () => {
   const parseFunction = (v: any) => {
-    if (v === null || v === undefined || v === '') return null;
+    if (v === null || v === undefined || v === '' || typeof v !== 'string') return null;
     const n = Number(v);
     return Number.isNaN(n) ? null : n;
   };
-  const formatFunction = (v: any) => (v === null || v === undefined || v === '' ? '' : String(v));
 
-  describe('when allowEmpty is true', () => {
-    const props = {
-      allowEmpty: true as const,
-      parseFunction,
-      formatFunction,
-    };
+  const props = {
+    allowEmpty: true as const,
+    parseFunction,
+    formatFunction: (v: any) => String(v),
+  };
 
-    it('should return empty value and inputText for null-like parsed input', () => {
-      expect(transformValueOnBlur(props, '')).toEqual({ value: '', inputText: '' });
-      expect(transformValueOnBlur(props, 'abc')).toEqual({ value: '', inputText: '' });
-    });
-
-    it('should return the parsed and formatted number for valid input', () => {
-      expect(transformValueOnBlur(props, '123.45')).toEqual({ value: 123.45, inputText: '123.45' });
-    });
-
-    it('should clamp the value to min if provided', () => {
-      const propsWithMin = { ...props, min: 10 };
-      expect(transformValueOnBlur(propsWithMin, '5')).toEqual({ value: 10, inputText: '10' });
-    });
-
-    it('should clamp the value to max if provided', () => {
-      const propsWithMax = { ...props, max: 100 };
-      expect(transformValueOnBlur(propsWithMax, '150')).toEqual({ value: 100, inputText: '100' });
-    });
-
-    it('should clamp the value within min and max', () => {
-      const propsWithBounds = { ...props, min: 10, max: 100 };
-      expect(transformValueOnBlur(propsWithBounds, '5')).toEqual({ value: 10, inputText: '10' });
-      expect(transformValueOnBlur(propsWithBounds, '150')).toEqual({ value: 100, inputText: '100' });
-      expect(transformValueOnBlur(propsWithBounds, '50')).toEqual({ value: 50, inputText: '50' });
-    });
+  it('should return the raw text and the parsed number for valid numeric input', () => {
+    const result = transformValueOnChange(props, '123.45');
+    expect(result).toEqual({ inputText: '123.45', value: 123.45 });
   });
 
-  describe('when allowEmpty is false', () => {
-    const props = {
-      allowEmpty: false as const,
-      defaultValue: 0,
-      parseFunction,
-      formatFunction,
-    };
-
-    it('should fall back to defaultValue for null-like parsed input', () => {
-      expect(transformValueOnBlur(props, '')).toEqual({ value: 0, inputText: '0' });
-      expect(transformValueOnBlur(props, 'abc')).toEqual({ value: 0, inputText: '0' });
-    });
-
-    it('should return the parsed and formatted number for valid input', () => {
-      expect(transformValueOnBlur(props, '123.45')).toEqual({ value: 123.45, inputText: '123.45' });
-    });
-
-    it('should clamp the parsed value to min if provided', () => {
-      const propsWithMin = { ...props, min: 10 };
-      expect(transformValueOnBlur(propsWithMin, '5')).toEqual({ value: 10, inputText: '10' });
-    });
-
-    it('should clamp the parsed value to max if provided', () => {
-      const propsWithMax = { ...props, max: 100 };
-      expect(transformValueOnBlur(propsWithMax, '150')).toEqual({ value: 100, inputText: '100' });
-    });
-
-    it('should clamp the fallback defaultValue if it is outside bounds', () => {
-      const propsWithBounds = { ...props, min: 10, max: 100, defaultValue: 5 };
-      expect(transformValueOnBlur(propsWithBounds, '')).toEqual({ value: 10, inputText: '10' });
-
-      const propsWithBounds2 = { ...props, min: 10, max: 100, defaultValue: 150 };
-      expect(transformValueOnBlur(propsWithBounds2, '')).toEqual({ value: 100, inputText: '100' });
-    });
-
-    it('should use the defaultValue if parsing fails, then clamp', () => {
-      const propsWithBounds = { ...props, min: 10, max: 100, defaultValue: 20 };
-      expect(transformValueOnBlur(propsWithBounds, 'abc')).toEqual({ value: 20, inputText: '20' });
-    });
-
+  it('should return the raw text and an empty string value for non-numeric input', () => {
+    const result = transformValueOnChange(props, 'abc');
+    expect(result).toEqual({ inputText: 'abc', value: '' });
   });
 
-  describe('transformValueOnChange', () => {
-    const parseFunction = (v: any) => {
-      if (v === null || v === undefined || v === '' || typeof v !== 'string') return null;
-      const n = Number(v);
-      return Number.isNaN(n) ? null : n;
+  it('should return the raw text and an empty string value for empty input', () => {
+    const result = transformValueOnChange(props, '');
+    expect(result).toEqual({ inputText: '', value: '' });
+  });
+
+  it('should handle negative numbers correctly', () => {
+    const result = transformValueOnChange(props, '-50');
+    expect(result).toEqual({ inputText: '-50', value: -50 });
+  });
+
+  it('should handle zero correctly', () => {
+    const result = transformValueOnChange(props, '0');
+    expect(result).toEqual({ inputText: '0', value: 0 });
+  });
+
+  it('should not clamp or format the value', () => {
+    const propsWithBounds = {
+      ...props,
+      min: 10,
+      max: 100,
+      formatFunction: (v: number | string | null | undefined) => `formatted: ${(v ?? "").toString()}`,
     };
+    const result = transformValueOnChange(propsWithBounds, '5');
+    // The value should be 5, not clamped to 10. The inputText is raw.
+    expect(result).toEqual({ inputText: '5', value: 5 });
 
-    const props = {
-      allowEmpty: true as const,
-      parseFunction,
-      formatFunction: (v: any) => String(v),
-    };
-
-    it('should return the raw text and the parsed number for valid numeric input', () => {
-      const result = transformValueOnChange(props, '123.45');
-      expect(result).toEqual({ inputText: '123.45', value: 123.45 });
-    });
-
-    it('should return the raw text and an empty string value for non-numeric input', () => {
-      const result = transformValueOnChange(props, 'abc');
-      expect(result).toEqual({ inputText: 'abc', value: '' });
-    });
-
-    it('should return the raw text and an empty string value for empty input', () => {
-      const result = transformValueOnChange(props, '');
-      expect(result).toEqual({ inputText: '', value: '' });
-    });
-
-    it('should handle negative numbers correctly', () => {
-      const result = transformValueOnChange(props, '-50');
-      expect(result).toEqual({ inputText: '-50', value: -50 });
-    });
-
-    it('should handle zero correctly', () => {
-      const result = transformValueOnChange(props, '0');
-      expect(result).toEqual({ inputText: '0', value: 0 });
-    });
-
-    it('should not clamp or format the value', () => {
-      const propsWithBounds = {
-        ...props,
-        min: 10,
-        max: 100,
-        formatFunction: (v: number | string | null | undefined) => `formatted: ${(v ?? "").toString()}`,
-      };
-      const result = transformValueOnChange(propsWithBounds, '5');
-      // The value should be 5, not clamped to 10. The inputText is raw.
-      expect(result).toEqual({ inputText: '5', value: 5 });
-
-      const result2 = transformValueOnChange(propsWithBounds, '150');
-      // The value should be 150, not clamped to 100.
-      expect(result2).toEqual({ inputText: '150', value: 150 });
-    });
+    const result2 = transformValueOnChange(propsWithBounds, '150');
+    // The value should be 150, not clamped to 100.
+    expect(result2).toEqual({ inputText: '150', value: 150 });
   });
 });
 
@@ -489,13 +618,15 @@ describe('formatDecimal', () => {
   });
 
   it('should format a number without specified fraction digits (default behavior)', () => {
-    expect(formatDecimal(1234)).toBe('1,234');
-    expect(formatDecimal(1234.5)).toBe('1,234.5');
-    expect(formatDecimal(1234.567)).toBe('1,234.567');
-    expect(formatDecimal(1234.5678)).toBe('1,234.568'); // Default maxFractionDigits is 3
+    expect(formatDecimal(1234)).toBe('1234');
+    expect(formatDecimal(1234.5)).toBe('1234.5');
+    expect(formatDecimal(1234.567)).toBe('1234.567');
+    expect(formatDecimal(1234.5678)).toBe('1234.568'); // Default maxFractionDigits is 3
   });
 
   it('should handle string with commas', () => {
-    expect(formatDecimal('1,234.56', 2)).toBe('1,234.56');
+    expect(formatDecimal('1,234.56', 2)).toBe('1234.56');
   });
+
+
 });

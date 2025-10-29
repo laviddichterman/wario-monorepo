@@ -1,3 +1,4 @@
+
 /**
  * RoundToTwoDecimalPlaces
  *
@@ -40,7 +41,7 @@ export function fCurrency(inputValue: InputNumberValue, locale: Locale = DEFAULT
   const number = processInputNumber(inputValue);
   if (number === null) return '';
 
-  const fm = buildFormatter(locale, { ...options, style: 'currency', currency: locale.currency }).format(number);
+  const fm = buildFormatter(locale, { ...options, style: 'currency', currency: locale.currency, useGrouping: false }).format(number);
   return fm;
 }
 
@@ -55,7 +56,7 @@ export function fCurrencyNoUnit(inputValue: InputNumberValue, locale: Locale = D
       style: 'currency',
       currency: locale.currency,
       currencyDisplay: 'code',
-
+      useGrouping: false
     })
     .formatToParts(number)
     .filter(part => part.type !== 'currency')
@@ -72,6 +73,7 @@ export function fPercent(inputValue: InputNumberValue, locale: Locale = DEFAULT_
     style: 'percent',
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
+    useGrouping: false,
     ...options,
   }).format(number / 100);
 
@@ -145,13 +147,38 @@ export const parseDecimal: NumericParseFunction = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
+/**
+ * Parses an `InputNumberValue` into a safe integer, returning `null` on failure.
+ *
+ * This function is designed to robustly handle user input from fields intended for integers.
+ * - For `number` inputs, it rounds to the nearest integer and validates if it's a safe integer.
+ * - For `string` inputs, it sanitizes the value by:
+ *   - Trimming whitespace.
+ *   - Normalizing Unicode minus signs.
+ *   - Stripping common separators (`,`, ` `) and currency symbols (`$`).
+ *   - It correctly handles intermediate "still typing" states (like `"-"` or `""`) by returning `null`.
+ * - It rounds any parsed decimal values to the nearest integer (e.g., "12.7" becomes `13`).
+ * - The final value is returned only if it is a finite, safe integer (`Number.isSafeInteger`).
+ *
+ * @param v - The value to parse, which can be a `string`, `number`, `null`, or `undefined`.
+ * @returns The parsed and rounded safe integer, or `null` if the input is invalid, empty, or results in a non-safe integer.
+ * @example
+ * parseInteger(" 1,234 ")      // returns 1234
+ * parseInteger("-5.8")         // returns -6
+ * parseInteger(123.45)         // returns 123
+ * parseInteger("$100")         // returns 100
+ * parseInteger("abc")          // returns null
+ * parseInteger("")             // returns null
+ * parseInteger(null)           // returns null
+ * parseInteger(Number.MAX_SAFE_INTEGER + 1) // returns null
+ */
 export const parseInteger: NumericParseFunction = (v) => {
   if (v === null || v === undefined) return null;
 
   if (typeof v === "number") {
-    return Number.isFinite(v) && Number.isInteger(v) && Number.isSafeInteger(v)
-      ? v
-      : null;
+    if (!Number.isFinite(v)) return null;
+    const rounded = Math.round(v);
+    return Number.isSafeInteger(rounded) ? rounded : null;
   }
 
   let s = v.trim();
@@ -161,16 +188,18 @@ export const parseInteger: NumericParseFunction = (v) => {
   // "still typing" sentinels
   if (s === "" || s === "-" || s === "+" || s === ".") return null;
 
-  // Strip common decorations you allow
+  // Strip grouping/currency you choose to allow
   s = s.replace(/[, ]+/g, "").replace(/^\$/, "");
 
-  // Must be an optional sign + digits only (no decimals, no junk)
-  if (!/^[+-]?\d+$/.test(s)) return null;
+  // Optional sign + digits, with an optional decimal point (no exponent, no extra junk)
+  // Accepts "12", "-12", "12.", "12.0", "+4.499", etc.
+  if (!/^[+-]?\d+(?:\.\d*)?$/.test(s)) return null;
 
-  const n = Number(s);
-  return Number.isFinite(n) && Number.isInteger(n) && Number.isSafeInteger(n)
-    ? n
-    : null;
+  const n = Number(s); // or parseFloat(s); safe after regex
+  if (!Number.isFinite(n)) return null;
+
+  const rounded = Math.round(n);
+  return Number.isSafeInteger(rounded) ? rounded : null;
 };
 
 export function formatDecimal(v: number | string | null | undefined, fractionDigits?: number): string {
@@ -180,6 +209,8 @@ export function formatDecimal(v: number | string | null | undefined, fractionDig
   return new Intl.NumberFormat(DEFAULT_LOCALE.code, {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
+    roundingMode: "halfCeil",
+    useGrouping: false
   }).format(n);
 }
 
@@ -225,10 +256,17 @@ export function transformValueOnBlur(
       return { value: "", inputText: "" };
     }
     const next = clampOptional(parsed, props.min, props.max);
-    return { value: next, inputText: props.formatFunction(next) };
+    const nextInput = props.formatFunction(next);
+    // we know parsed is not null here
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const value = props.parseFunction(nextInput)!;
+    return { value, inputText: nextInput };
   } else {
     const base = parsed ?? props.defaultValue; // must have a valid fallback
-    const next = clampOptional(base, props.min, props.max);
-    return { value: next, inputText: props.formatFunction(next) };
+    const nextInput = props.formatFunction(clampOptional(base, props.min, props.max));
+    // we know value is not null here
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const value = props.parseFunction(nextInput)!;
+    return { value, inputText: nextInput };
   }
 }
