@@ -9,7 +9,7 @@
     "dev": "vite --open",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start:prod": "vite --open --mode production",
+    "dev:prod": "vite --open --mode production",
     "deploy:prod": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wcredit/dist/",
     "deploy:test": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wcredittest/dist/",
     "start": "vite",
