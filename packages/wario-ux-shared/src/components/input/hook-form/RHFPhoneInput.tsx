@@ -4,7 +4,7 @@ import PhoneInput, { type Country, } from 'react-phone-number-input/react-hook-f
 
 import { TextField, type TextFieldProps } from '@mui/material';
 
-import { PHONE_METADATA as LIBPHONE_METADATA } from '@/phone-metadata';
+import { PHONE_METADATA as LIBPHONE_METADATA } from '@/common/phone-metadata';
 interface IPhoneInputParams {
   name: string;
   country: Country;
