@@ -40,6 +40,8 @@ export function RHFTextField({
             field.onChange(transformedValue);
           }}
           onBlur={(event) => {
+            // IMPORTANT: trigger the field's onBlur first to ensure react-hook-form processes the blur event
+            field.onBlur();
             const transformedValue = isNumberType
               ? transformValueOnBlur({ allowEmpty: true, formatFunction: (v: InputNumberValue) => formatDecimal(v), parseFunction: parseDecimal }, event.target.value)
               : event.target.value;
