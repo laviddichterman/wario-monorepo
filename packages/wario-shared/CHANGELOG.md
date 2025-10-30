@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 0.4.1
+
+### Patch Changes
+
+- ae61940: Add CJS exports to wario-shared
+
 ## 0.4.0
 
 ### Minor Changes
