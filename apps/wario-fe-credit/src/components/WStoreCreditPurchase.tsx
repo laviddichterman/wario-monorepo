@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type * as Square from '@square/web-sdk';
-import { type AxiosResponse, isAxiosError } from 'axios';
+import { isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
@@ -206,7 +206,7 @@ export default function WStoreCreditPurchase() {
                 <Grid sx={{ p: 1 }} size={12}>
                   <RHFMailTextField
                     name="senderEmail"
-                    autoComplete={"d"}
+                    autoComplete={"email"}
                     label={!errors.senderName && senderName !== "" ? `${senderName}'s e-mail address` : "Sender's e-mail address"}
                     fullWidth
                     disabled={purchaseStatus === 'PROCESSING'}
@@ -247,7 +247,7 @@ export default function WStoreCreditPurchase() {
                     <Grid sx={{ p: 1 }} size={12}>
                       <RHFMailTextField
                         name="recipientEmail"
-                        autoComplete=""
+                        autoComplete="off"
                         label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s e-mail address` : "Recipient's e-mail address"}
                         fullWidth
                         disabled={purchaseStatus === 'PROCESSING'}
