@@ -31,10 +31,10 @@ export const scrollToIdOffsetAfterDelay = (elementId: string, delay: number, off
   }, delay);
 }
 
-export type ValSetVal<T> = { value: T; setValue: Dispatch<SetStateAction<T>> };
 export type ValField<T, field extends string> = { [K in field]: T; };
 export type ValSetField<T, field extends string> = { [K in `set${Capitalize<field>}`]: Dispatch<SetStateAction<T>>; };
 export type ValSetValNamed<T, field extends string> = ValField<T, field> & ValSetField<T, field>;
+export type ValSetVal<T> = ValSetValNamed<T, 'value'>;
 
 export function useIndexedState<S>(x: [S[], Dispatch<SetStateAction<S[]>>]) {
   return [x[0], (i: number) => (v: S) => {

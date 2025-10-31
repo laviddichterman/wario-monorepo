@@ -139,9 +139,9 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const getFilteredRowsCount = useCallback(
     (filterModel: GridFilterModel) => {
       const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current.getFilterState(filterModel);
-      return Object.keys(filteredRowsLookup).filter(
-        (rowId) => filteredRowsLookup[rowId],
-      ).length;
+      const rowIds = apiRef.current.getAllRowIds();
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
+      return rowIds.filter(rowId => filteredRowsLookup[rowId] !== false).length;
     }, [apiRef]);
   // return a list of predefined filters for each subcategory0
   const predefinedFiltersForLevel0: { label: string; filterModel: GridFilterModel }[] = useMemo(
@@ -267,6 +267,12 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   }, [apiRef, productRows, predefinedFiltersForLevel3, getFilteredRowsCount]);
 
   const handleSelectFilterModelLevel0 = useCallback((index: number) => {
+    // this implements a toggle behavior
+    // if (index === selectedFilterModel0) {
+    //   setSelectedFilterModel0(0);
+    //   apiRef.current.setFilterModel({ items: [] });
+    //   return;
+    // }
     setSelectedFilterModel0(index);
     setSelectedFilterModel1(0);
     setSelectedFilterModel2(0);
@@ -327,7 +333,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
-            {predefinedFiltersRowCountLevel1
+            {predefinedFiltersRowCountLevel1.length > 2 && predefinedFiltersRowCountLevel1
               .filter(({ index }) => ((index === 0 || predefinedFiltersRowCountLevel2.length < 2) || (index === selectedFilterModel1) || selectedFilterModel1 === 0))
               .map(({ count, index }) => {
                 return (
@@ -344,7 +350,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
         </>
       }
 
-      {selectedFilterModel1 !== 0 && predefinedFiltersRowCountLevel2.length > 1 &&
+      {selectedFilterModel1 !== 0 && predefinedFiltersRowCountLevel2.length > 2 &&
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
@@ -364,7 +370,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
               })}</Stack>
         </>
       }
-      {selectedFilterModel2 !== 0 && predefinedFiltersRowCountLevel3.length > 1 &&
+      {selectedFilterModel2 !== 0 && predefinedFiltersRowCountLevel3.length > 2 &&
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">

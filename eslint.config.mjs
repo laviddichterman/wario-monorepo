@@ -18,6 +18,8 @@ const basicRules = () => {
       "warn",
       { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
     ],
+    // Disable unified-signatures due to bug with discriminated unions in eslint/js
+    "@typescript-eslint/unified-signatures": "off",
     "react/jsx-no-target-blank": "error",
     "react-refresh/only-export-components": [
       "warn",
