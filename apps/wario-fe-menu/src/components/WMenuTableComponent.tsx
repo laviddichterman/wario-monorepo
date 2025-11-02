@@ -111,6 +111,11 @@ const SelectProductInstanceForMenu = createStructuredSelector(
 );
 
 
+const BreadcrumbArrow = () =>
+  <Box sx={{ alignSelf: 'center' }}>
+    &rarr;
+  </Box>
+
 const ComputeRows = (productRows: string[]): RowType[] => {
   return productRows.map(x => {
     const data = SelectProductInstanceForMenu(store.getState(), x);
@@ -135,6 +140,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const [selectedFilterModel1, setSelectedFilterModel1] = useState<number>(0);
   const [selectedFilterModel2, setSelectedFilterModel2] = useState<number>(0);
   const [selectedFilterModel3, setSelectedFilterModel3] = useState<number>(0);
+
 
   const getFilteredRowsCount = useCallback(
     (filterModel: GridFilterModel) => {
@@ -161,7 +167,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     () => {
       const uniqueStatuses = new Set(productRows.map(x => x.subcategory1));
       return [{
-        label: 'All',
+        label: `All ${predefinedFiltersForLevel0[selectedFilterModel0].label}`,
         filterModel: { items: selectedFilterModel0 !== 0 ? predefinedFiltersForLevel0[selectedFilterModel0].filterModel.items : [] },
       }, ...Array.from(uniqueStatuses).filter(x => x !== "").map((status) => ({
         label: status,
@@ -174,7 +180,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     () => {
       const uniqueStatuses = new Set(productRows.map(x => x.subcategory2));
       return [{
-        label: 'All',
+        label: `All ${predefinedFiltersForLevel1[selectedFilterModel1].label}`,
         filterModel: { items: [...predefinedFiltersForLevel1[selectedFilterModel1].filterModel.items] },
       }, ...Array.from(uniqueStatuses).filter(x => x !== "").map((status) => ({
         label: status,
@@ -187,7 +193,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     () => {
       const uniqueStatuses = new Set(productRows.map(x => x.subcategory3));
       return [{
-        label: 'All',
+        label: `All ${predefinedFiltersForLevel2[selectedFilterModel2].label}`,
         filterModel: { items: [...predefinedFiltersForLevel2[selectedFilterModel2].filterModel.items] },
       }, ...Array.from(uniqueStatuses).filter(x => x !== "").map((status) => ({
         label: status,
@@ -209,6 +215,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const [predefinedFiltersRowCountLevel1, setPredefinedFiltersRowCountLevel1] = useState<{ index: number; count: number; }[]>([]);
   const [predefinedFiltersRowCountLevel2, setPredefinedFiltersRowCountLevel2] = useState<{ index: number; count: number; }[]>([]);
   const [predefinedFiltersRowCountLevel3, setPredefinedFiltersRowCountLevel3] = useState<{ index: number; count: number; }[]>([]);
+  const isBreadcrumb = useMemo(() => selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1, [selectedFilterModel0, predefinedFiltersRowCountLevel1]);
 
   // Calculate the row count for predefined filters level 0
   useEffect(() => {
@@ -298,6 +305,19 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     apiRef.current.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
   }, [apiRef, setSelectedFilterModel3, predefinedFiltersForLevel3]);
 
+  const level0Buttons = useMemo(() => predefinedFiltersRowCountLevel0.length > 2 ?
+    // level 0 is special cased to always show "All" and the selected filter
+    predefinedFiltersRowCountLevel0.filter(({ index }) => (index === 0 || index === selectedFilterModel0 || selectedFilterModel0 === 0)) : [],
+    [predefinedFiltersRowCountLevel0, selectedFilterModel0]);
+  const level1Buttons = useMemo(() => predefinedFiltersRowCountLevel1.length > 1 && selectedFilterModel0 !== 0 ?
+    predefinedFiltersRowCountLevel1.filter(({ index }) => (predefinedFiltersRowCountLevel2.length < 2 || selectedFilterModel1 === 0 || index === selectedFilterModel1)) : [],
+    [predefinedFiltersRowCountLevel1, selectedFilterModel0, predefinedFiltersRowCountLevel2.length, selectedFilterModel1]);
+  const level2Buttons = useMemo(() => predefinedFiltersRowCountLevel2.length > 1 && selectedFilterModel1 !== 0 ?
+    predefinedFiltersRowCountLevel2.filter(({ index }) => (predefinedFiltersRowCountLevel3.length < 2 || selectedFilterModel2 === 0 || index === selectedFilterModel2)) : [],
+    [predefinedFiltersRowCountLevel2, selectedFilterModel1, predefinedFiltersRowCountLevel3.length, selectedFilterModel2]);
+  const level3Buttons = useMemo(() => predefinedFiltersRowCountLevel3.length > 1 && selectedFilterModel2 !== 0 ?
+    predefinedFiltersRowCountLevel3 : [],
+    [selectedFilterModel2, predefinedFiltersRowCountLevel3]);
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: {
@@ -313,144 +333,124 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   });
   return (
     <div style={{ overflow: 'hidden' }}>
-      {/* {selectedFilterModel0 !== 0 &&
-        <Stack direction="row" gap={1} m={1} flexWrap="wrap">
-          <WarioToggleButton
-            sx={{ px: "9px", }}
-            key={predefinedFiltersForLevel0[0].label}
-            onClick={() => { handleSelectFilterModelLevel0(0); }}
-            selected={selectedFilterModel0 === 0}
-            value={0} >
-            {`${predefinedFiltersForLevel0[0].label} (${predefinedFiltersRowCountLevel0[0].count.toString()})`}
-          </WarioToggleButton>
-          <Typography variant="body2" sx={{ alignSelf: 'center' }}> -&gt; </Typography>
-          <WarioToggleButton
-            sx={{ px: "9px", }}
-            key={predefinedFiltersForLevel0[selectedFilterModel0].label}
-            onClick={() => { handleSelectFilterModelLevel0(selectedFilterModel0); }}
-            selected={true}
-            value={selectedFilterModel0} >
-            {`${predefinedFiltersForLevel0[selectedFilterModel0].label} (${predefinedFiltersRowCountLevel0[selectedFilterModel0].count.toString()})`}
-          </WarioToggleButton>
-          {
-            selectedFilterModel1 !== 0 && <>
-              <Typography variant="body2" sx={{ alignSelf: 'center' }}> -&gt; </Typography>
-              <WarioToggleButton
-                sx={{ px: "9px", }}
-                key={predefinedFiltersForLevel1[selectedFilterModel1].label}
-                onClick={() => { handleSelectFilterModelLevel1(selectedFilterModel1); }}
-                selected={true}
-                value={selectedFilterModel1} >
-                {`${predefinedFiltersForLevel1[selectedFilterModel1].label} (${predefinedFiltersRowCountLevel1[selectedFilterModel1].count.toString()})`}
-              </WarioToggleButton>
-            </>
-          }
-          {
-            selectedFilterModel2 !== 0 && <>
-              <Typography variant="body2" sx={{ alignSelf: 'center' }}> -&gt; </Typography>
-              <WarioToggleButton
-                sx={{ px: "9px", }}
-                key={predefinedFiltersForLevel2[selectedFilterModel2].label}
-                onClick={() => { handleSelectFilterModelLevel2(selectedFilterModel2); }}
-                selected={true}
-                value={selectedFilterModel2} >
-                {`${predefinedFiltersForLevel2[selectedFilterModel2].label} (${predefinedFiltersForLevel3[selectedFilterModel2].toString()})`}
-              </WarioToggleButton>
-            </>
-          }
-          {
-            selectedFilterModel3 !== 0 && <>
-              <Typography variant="body2" sx={{ alignSelf: 'center' }}> -&gt; </Typography>
-              <WarioToggleButton
-                sx={{ px: "9px", }}
-                key={predefinedFiltersForLevel3[selectedFilterModel3].label}
-                onClick={() => { handleSelectFilterModelLevel3(selectedFilterModel3); }}
-                selected={true}
-                value={selectedFilterModel3} >
-                {`${predefinedFiltersForLevel3[selectedFilterModel3].label} (${predefinedFiltersForLevel3[selectedFilterModel3].count.toString()})`}
-              </WarioToggleButton>
-            </>
-          }
-        </Stack>
-      } */}
       {
-        // selectedFilterModel0 === 0 && 
         <Stack direction="row" gap={1} m={1} flexWrap="wrap">
-          {predefinedFiltersRowCountLevel0.length > 2 && predefinedFiltersRowCountLevel0
-            .filter(({ index }) => (index === 0 || predefinedFiltersRowCountLevel1.length < 2 || index === selectedFilterModel0 || selectedFilterModel0 === 0))
-            .map(({ count, index }) => {
-              return (
+          {level0Buttons.map(({ count, index }) => {
+            return (
+              <>
                 <WarioToggleButton
                   sx={{ px: "9px", }}
                   key={predefinedFiltersForLevel0[index].label}
                   onClick={() => { handleSelectFilterModelLevel0(index); }}
-                  selected={selectedFilterModel0 === index}
+                  // selectedFilterModel1 === 0 check means no level 1 filter is selected, so we should still highlight this in the breadcrumb case
+                  selected={selectedFilterModel0 === index && selectedFilterModel1 === 0}
                   value={index} >
                   {`${predefinedFiltersForLevel0[index].label} (${count.toString()})`}
                 </WarioToggleButton>
-              );
-            })}
+                {isBreadcrumb && index === 0 && <BreadcrumbArrow />}
+              </>
+            );
+          })
+          }
+          {isBreadcrumb && selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1 &&
+            <>
+              {selectedFilterModel1 !== 0 && level1Buttons.length === 1 &&
+                <>
+                  <BreadcrumbArrow />
+                  <WarioToggleButton
+                    sx={{ px: "9px", }}
+                    key={predefinedFiltersForLevel1[selectedFilterModel1].label}
+                    onClick={() => { handleSelectFilterModelLevel1(selectedFilterModel1); }}
+                    selected={selectedFilterModel2 === 0}
+                    value={selectedFilterModel1} >
+                    {`${predefinedFiltersForLevel1[selectedFilterModel1].label} (${level1Buttons[0].count.toString()})`}
+                  </WarioToggleButton>
+                  {selectedFilterModel2 !== 0 && level2Buttons.length === 1 &&
+                    <>
+                      <BreadcrumbArrow />
+                      <WarioToggleButton
+                        sx={{ px: "9px", }}
+                        key={predefinedFiltersForLevel2[selectedFilterModel2].label}
+                        onClick={() => { handleSelectFilterModelLevel2(selectedFilterModel2); }}
+                        selected={selectedFilterModel3 === 0}
+                        value={selectedFilterModel2} >
+                        {`${predefinedFiltersForLevel2[selectedFilterModel2].label} (${level2Buttons[0].count.toString()})`}
+                      </WarioToggleButton>
+                      {selectedFilterModel3 !== 0 && level3Buttons.length === 1 &&
+                        <>
+                          <BreadcrumbArrow />
+                          <WarioToggleButton
+                            sx={{ px: "9px", }}
+                            key={predefinedFiltersForLevel3[selectedFilterModel3].label}
+                            onClick={() => { handleSelectFilterModelLevel3(selectedFilterModel3); }}
+                            selected={true}
+                            value={selectedFilterModel3} >
+                            {`${predefinedFiltersForLevel3[selectedFilterModel3].label} (${level3Buttons[0].count.toString()})`}
+                          </WarioToggleButton>
+                        </>
+                      }
+                    </>
+                  }
+                </>
+              }
+            </>
+          }
+
         </Stack>
       }
-      {selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1 &&
+      {selectedFilterModel0 !== 0 && level1Buttons.length > 1 &&
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
-            {predefinedFiltersRowCountLevel1.length > 1 && predefinedFiltersRowCountLevel1
-              .filter(({ index }) => ((index === 0 || predefinedFiltersRowCountLevel2.length < 2) || (index === selectedFilterModel1) || selectedFilterModel1 === 0))
-              .map(({ count, index }) => {
-                return (
-                  <WarioToggleButton
-                    sx={{ px: "9px", }}
-                    key={predefinedFiltersForLevel1[index].label}
-                    onClick={() => { handleSelectFilterModelLevel1(index); }}
-                    selected={selectedFilterModel1 === index}
-                    value={index} >
-                    {`${predefinedFiltersForLevel1[index].label} (${count.toString()})`}
-                  </WarioToggleButton>
-                );
-              })}</Stack>
+            {level1Buttons.map(({ count, index }) => {
+              return (
+                <WarioToggleButton
+                  sx={{ px: "9px", }}
+                  key={predefinedFiltersForLevel1[index].label}
+                  onClick={() => { handleSelectFilterModelLevel1(index); }}
+                  selected={selectedFilterModel1 === index}
+                  value={index} >
+                  {`${predefinedFiltersForLevel1[index].label} (${count.toString()})`}
+                </WarioToggleButton>
+              );
+            })}</Stack>
         </>
       }
 
-      {selectedFilterModel1 !== 0 && predefinedFiltersRowCountLevel2.length > 1 &&
+      {selectedFilterModel1 !== 0 && level2Buttons.length > 1 &&
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
-            {predefinedFiltersRowCountLevel2
-              .filter(({ index }) => ((index === 0 || predefinedFiltersRowCountLevel3.length < 2) || (index === selectedFilterModel2) || selectedFilterModel2 === 0))
-              .map(({ count, index }) => {
-                return (
-                  <WarioToggleButton
-                    sx={{ px: "9px", }}
-                    key={predefinedFiltersForLevel2[index].label}
-                    onClick={() => { handleSelectFilterModelLevel2(index); }}
-                    selected={selectedFilterModel2 === index}
-                    value={index} >
-                    {`${predefinedFiltersForLevel2[index].label} (${count.toString()})`}
-                  </WarioToggleButton>
-                );
-              })}</Stack>
+            {level2Buttons.map(({ count, index }) => {
+              return (
+                <WarioToggleButton
+                  sx={{ px: "9px", }}
+                  key={predefinedFiltersForLevel2[index].label}
+                  onClick={() => { handleSelectFilterModelLevel2(index); }}
+                  selected={selectedFilterModel2 === index}
+                  value={index} >
+                  {`${predefinedFiltersForLevel2[index].label} (${count.toString()})`}
+                </WarioToggleButton>
+              );
+            })}</Stack>
         </>
       }
-      {selectedFilterModel2 !== 0 && predefinedFiltersRowCountLevel3.length > 1 &&
+      {selectedFilterModel2 !== 0 && level3Buttons.length > 1 &&
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
-            {predefinedFiltersRowCountLevel3
-              //.filter(({ index }) => ((index === 0) || (index === selectedFilterModel3) || selectedFilterModel3 === 0))
-              .map(({ count, index }) => {
-                return (
-                  <WarioToggleButton
-                    sx={{ px: "9px", }}
-                    key={predefinedFiltersForLevel3[index].label}
-                    onClick={() => { handleSelectFilterModelLevel3(index); }}
-                    selected={selectedFilterModel3 === index}
-                    value={index} >
-                    {`${predefinedFiltersForLevel3[index].label} (${count.toString()})`}
-                  </WarioToggleButton>
-                );
-              })}</Stack>
+            {level3Buttons.map(({ count, index }) => {
+              return (
+                <WarioToggleButton
+                  sx={{ px: "9px", }}
+                  key={predefinedFiltersForLevel3[index].label}
+                  onClick={() => { handleSelectFilterModelLevel3(index); }}
+                  selected={selectedFilterModel3 === index}
+                  value={index} >
+                  {`${predefinedFiltersForLevel3[index].label} (${count.toString()})`}
+                </WarioToggleButton>
+              );
+            })}</Stack>
         </>
       }
       <Box sx={{ height: 520, width: '100%' }}>
