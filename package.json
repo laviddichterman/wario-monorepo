@@ -54,6 +54,7 @@
     "order:start": "pnpm -r --filter \"./apps/wario-fe-order\" run start",
     "order:typecheck": "pnpm -r --filter \"./apps/wario-fe-order\" run typecheck",
     "pkgs:build": "pnpm -r --filter \"./packages/*\" run build",
+    "pkgs:lint": "pnpm -r --filter \"./packages/*\" run lint",
     "pos:build": "pnpm -r --filter \"./apps/wario-pos\" run build",
     "pos:clean": "pnpm -r --filter \"./apps/wario-pos\" run clean",
     "pos:deploy:prod": "pnpm -r --filter \"./apps/wario-pos\" run deploy:prod",

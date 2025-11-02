@@ -1,9 +1,15 @@
 import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type * as Square from '@square/web-sdk';
-import type { AxiosResponse } from "axios";
+import { type AxiosResponse } from "axios";
 
-import { type CrudOrderResponse, type TipSelection, type ValidateAndLockCreditResponseValid } from "@wcp/wario-shared";
-import { CreateValidateStoreCreditThunk, scrollToIdOffsetAfterDelay, setCurrentTime } from "@wcp/wario-ux-shared";
+import {
+  type CrudOrderResponse, type ResponseFailure, type TipSelection,
+  type ValidateAndLockCreditResponseValid
+} from "@wcp/wario-shared";
+import {
+  CreateValidateStoreCreditThunk, handleAxiosError,
+  scrollToIdOffsetAfterDelay, setCurrentTime
+} from "@wcp/wario-ux-shared";
 
 import axiosInstance from "@/utils/axios";
 
@@ -25,12 +31,16 @@ export const submitToWario = createAsyncThunk<CrudOrderResponse, string | null, 
     catch (err: unknown) {
       thunkApi.dispatch(setCurrentTime({ currentLocalTime: Date.now(), ticksElapsed: 0 }));
       console.log(err);
-      try {
-        if (err && typeof err === 'object' && 'error' in err && Array.isArray(err.error)) {
-          thunkApi.dispatch(setOrderSubmitErrors(err.error.map(((x: { detail: string }) => x.detail))));
-        }
-      } catch { }
-      return thunkApi.rejectWithValue(err);
+      return handleAxiosError<ResponseFailure, ReturnType<typeof thunkApi.rejectWithValue>>(
+        err,
+        (error) => {
+          return thunkApi.rejectWithValue(error);
+        },
+        (error) => {
+          thunkApi.dispatch(setOrderSubmitErrors(error.error.map(((x: { detail: string }) => x.detail))));
+          return thunkApi.rejectWithValue(error);
+        },
+      );
     }
   }
 );
@@ -126,4 +136,4 @@ const WPaymentSlice = createSlice({
 
 export const { setTip, clearCreditCode, setSquareTokenizationErrors, setOrderSubmitErrors, setSpecialInstructions, setAcknowledgeInstructionsDialogue } = WPaymentSlice.actions;
 
-export const WPaymentReducer = WPaymentSlice.reducer;
+export default WPaymentSlice.reducer;
