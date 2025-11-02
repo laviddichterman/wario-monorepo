@@ -1,6 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type * as Square from '@square/web-sdk';
-import { isAxiosError } from 'axios';
 import { useEffect, useState } from 'react';
 import { useForm } from "react-hook-form";
 import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
@@ -9,9 +8,16 @@ import { z } from "zod";
 import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
-import { CURRENCY, type DistributiveOmit, formatDecimal, type IMoney, MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest, type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
-import { ErrorResponseOutput, SelectSquareAppId, SelectSquareLocationId, SquareButtonCSS } from '@wcp/wario-ux-shared';
-import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField, ZodEmailSchema } from '@wcp/wario-ux-shared';
+import {
+  CURRENCY, type DistributiveOmit, formatDecimal, type IMoney,
+  MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest,
+  type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces
+} from '@wcp/wario-shared';
+import {
+  ErrorResponseOutput, FormProvider, handleAxiosError, MoneyInput, RHFCheckbox,
+  RHFMailTextField, RHFTextField, SelectSquareAppId, SelectSquareLocationId,
+  SquareButtonCSS, ZodEmailSchema
+} from '@wcp/wario-ux-shared';
 
 import axiosInstance from '@/utils/axios';
 
@@ -108,25 +114,15 @@ export default function WStoreCreditPurchase() {
             setPurchaseStatus('SUCCESS');
           }).catch((err: unknown) => {
             console.error(`Purchase failed, got error ${JSON.stringify(err)}`);
-            try {
-              if (isAxiosError(err)) {
-                // Now 'error' is safely typed as AxiosError
-                if (isAxiosError<ResponseFailure>(err) && err.response) {
-                  setPurchaseStatus('INVALID_DATA');
-                  setPaymentErrors(err.response.data.error.map(((x: { detail: string }) => x.detail)));
-                  console.error('Server responded with an error:', err.response.status, err.response.data);
-                  return;
-                } else if (err.request) {
-                  console.error('No response received:', err.request);
-                } else {
-                  console.error('Error during request setup:', err.message);
-                }
-              } else {
-                console.error('An unexpected error occurred:', err);
-              }
-            }
-            catch { }
-            setPurchaseStatus('FAILED_UNKNOWN');
+            handleAxiosError<ResponseFailure>(
+              err,
+              (_error) => {
+                setPurchaseStatus('FAILED_UNKNOWN');
+              },
+              (error) => {
+                setPurchaseStatus('INVALID_DATA');
+                setPaymentErrors(error.error.map(((x: { detail: string }) => x.detail)));
+              })
           });
       } else if (props.errors) {
         setPaymentErrors(props.errors.map(x => x.message))
