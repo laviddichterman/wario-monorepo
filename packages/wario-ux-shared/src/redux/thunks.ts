@@ -1,7 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import type { AxiosInstance, AxiosResponse } from "axios";
+import { type AxiosInstance, type AxiosResponse } from "axios";
 
-import type { DeliveryAddressValidateRequest, DeliveryAddressValidateResponse, DeliveryInfoDto, ValidateAndLockCreditResponse } from "@wcp/wario-shared";
+import { type DeliveryAddressValidateRequest, type DeliveryAddressValidateResponse, type DeliveryInfoDto, type ValidateAndLockCreditResponse } from "@wcp/wario-shared";
+
+import { handleAxiosError } from "@/common/axios";
 
 export const CreateValidateStoreCreditThunk =
   (axiosInstance: AxiosInstance) =>
@@ -14,7 +16,7 @@ export const CreateValidateStoreCreditThunk =
           });
           return api.fulfillWithValue(response.data);
         } catch (error) {
-          return api.rejectWithValue(error);
+          return handleAxiosError(error, (err) => { return api.rejectWithValue(err); });
         }
       }
     );
@@ -39,7 +41,7 @@ export const CreateValidateDeliveryAddressThunk =
         });
         return api.fulfillWithValue(response.data);
       } catch (error) {
-        return api.rejectWithValue(error);
+        return handleAxiosError(error, (err) => { return api.rejectWithValue(err); });
       }
     }
   );

@@ -1,4 +1,4 @@
-import axios, { type AxiosError } from 'axios';
+import axios, { type AxiosError, isAxiosError } from 'axios';
 
 export const CreateAxiosInstance = (host_api: string) => {
   const axiosInstance = axios.create({
@@ -17,3 +17,25 @@ export const CreateAxiosInstance = (host_api: string) => {
   );
   return axiosInstance;
 };
+
+
+type RejectHandler<ErrorType, ReturnType> = (error: ErrorType) => ReturnType;
+export const handleAxiosError = <ErrorType, ReturnType = unknown>(
+  error: unknown,
+  unknownHandler: RejectHandler<unknown, ReturnType>,
+  handler: RejectHandler<ErrorType, ReturnType> = unknownHandler
+): ReturnType => {
+  if (isAxiosError<ErrorType>(error)) {
+    if (error.response) {
+      return handler(error.response.data);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
+    } else {
+      console.error('Error during request setup:', error.message);
+    }
+  } else {
+    console.error('Non-Axios error occurred:', error);
+  }
+  // this means it's some other error, not the type we're expecting from the API
+  return unknownHandler(error);
+}
