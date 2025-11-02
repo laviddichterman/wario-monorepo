@@ -120,28 +120,10 @@ export const SelectHasOperatingHoursForService = createSelector(
   (fulfillment) => WDateUtils.HasOperatingHours(fulfillment.operatingHours)
 );
 
-export const SelectCartBasedLeadTime = (_: unknown) => 0;
-
-export const SelectAvailabilityForServicesDateAndProductCount = createSelector(
-  (s: RootState, _: string, __: string[]) => s.ws.fulfillments,
-  (_: RootState, selectedDate: string, __: string[]) => selectedDate,
-  (_: RootState, __: string, serviceSelection: string[]) => serviceSelection,
-  (fulfillments, selectedDate, serviceSelection) =>
-    WDateUtils.GetInfoMapForAvailabilityComputation(serviceSelection.map(x => getFulfillmentById(fulfillments, x)), selectedDate, 0)
-);
-
-export const SelectOptionsForServicesAndDate = createSelector(
-  (s: RootState, selectedDate: string, serviceSelection: string[]) => SelectAvailabilityForServicesDateAndProductCount(s, selectedDate, serviceSelection),
-  (s: RootState, _: string, __: string[]) => s.ws.currentTime,
-  (_: RootState, selectedDate: string, __: string[]) => selectedDate,
-  (infoMap, currentTime, selectedDate) => WDateUtils.GetOptionsForDate(infoMap, selectedDate, formatISO(currentTime))
-)
-
 export const GetNextAvailableServiceDateTimeForService = createSelector(
   (s: RootState, service: string, _: Date | number) => getFulfillmentById(s.ws.fulfillments, service),
   (_: RootState, __: string, now: Date | number) => formatISO(now),
-  (s: RootState, __: string, _: Date | number) => SelectCartBasedLeadTime(s),
-  (fulfillment, now, cartBasedLeadTime) => GetNextAvailableServiceDate([fulfillment], now, cartBasedLeadTime)
+  (fulfillment, now) => GetNextAvailableServiceDate([fulfillment], now, 0)
 );
 
 const SelectSelectedServiceFulfillment = createSelector(
