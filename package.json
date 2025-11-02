@@ -7,7 +7,12 @@
   "author": "Dave Lichterman / Lavid Industries LLC <dave@windycitypie.com>",
   "scripts": {
     "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
+    "build:credit": "pnpm -r --filter \"./apps/wario-fe-credit\" run build",
+    "build:faq": "pnpm -r --filter \"./apps/wario-fe-faq\" run build",
+    "build:menu": "pnpm -r --filter \"./apps/wario-fe-menu\" run build",
+    "build:order": "pnpm -r --filter \"./apps/wario-fe-order\" run build",
     "build:pkgs": "pnpm -r --filter \"./packages/*\" run build",
+    "build:pos": "pnpm -r --filter \"./apps/wario-pos\" run build",
     "changeset": "changeset",
     "checkall": "pnpm build && pnpm lint && pnpm typecheck",
     "ci:publish": "changeset publish --access public",
