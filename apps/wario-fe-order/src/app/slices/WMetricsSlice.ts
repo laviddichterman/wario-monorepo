@@ -2,8 +2,6 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import { type Metrics } from "@wcp/wario-shared";
 
-import PACKAGE_INFO from '../../../package.json'
-
 import { NUM_STAGES, type STEPPER_STAGE_ENUM } from "./StepperSlice";
 
 const initialState: Omit<Metrics, 'pageLoadTime'> = {
@@ -56,7 +54,7 @@ const WMetricsSlice = createSlice({
     },
     // handled by App.tsx
     setUserAgent(state, action: PayloadAction<string>) {
-      state.useragent = `${action.payload} FEV: ${PACKAGE_INFO.version}`;
+      state.useragent = `${action.payload} FEV: ${__APP_VERSION__}`;
     }
   }
 });

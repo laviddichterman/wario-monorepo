@@ -20,6 +20,9 @@ export default defineConfig({
       },
     }),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
   build: { target: 'es2022' },
   optimizeDeps: { esbuildOptions: { target: 'es2022' } },
   server: { port: PORT, host: true },
