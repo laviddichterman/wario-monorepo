@@ -1,8 +1,9 @@
-import dts from 'vite-plugin-dts';
-import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
-import checker from 'vite-plugin-checker';
+
 import react from '@vitejs/plugin-react-swc';
+import { defineConfig } from 'vite';
+import checker from 'vite-plugin-checker';
+import dts from 'vite-plugin-dts';
 
 export default defineConfig({
     plugins: [
