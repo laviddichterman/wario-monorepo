@@ -1,9 +1,7 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+// TODO: move product modification into a shared library so backend and FE can use it.
+import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import { type CartEntry, type IOptionState, type MTID_MOID, OptionPlacement, OptionQualifier, type WProduct } from "@wcp/wario-shared";
-
-
-// TODO: move product modification into a shared library so backend and FE can use it.
 
 export interface WCustomizerState {
   // allow the prompt to enable advanced options to appear (basically, this should be a memoized check on if there could be any advanced options)
@@ -73,6 +71,17 @@ export const WCustomizerSlice = createSlice({
     },
   }
 });
+
+export const selectShowAdvanced = (s: WCustomizerState) => s.showAdvanced;
+
+export const selectSelectedWProduct = (s: WCustomizerState) => s.selectedProduct;
+
+export const selectOptionState = createSelector(
+  (s: WCustomizerState, _: string, __: string) => s.selectedProduct?.m.modifier_map || {},
+  (_: WCustomizerState, mtId: string, __: string) => mtId,
+  (_: WCustomizerState, __: string, moId: string) => moId,
+  (modifierMap, mtId, moId) => Object.hasOwn(modifierMap, mtId) ? modifierMap[mtId].options[moId] : undefined);
+
 
 export const { editCartEntry, customizeProduct, setShowAdvanced, clearCustomizer, setAdvancedModifierOption, updateCustomizerProduct } = WCustomizerSlice.actions;
 

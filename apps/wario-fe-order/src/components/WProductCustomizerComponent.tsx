@@ -15,27 +15,27 @@ import {
   SelectBaseProductByProductId, SelectCatalogSelectors, Separator, StageTitle, WarioButton
 } from '@wcp/wario-ux-shared';
 
+import {
+  selectAllowAdvancedPrompt,
+  selectCartEntryBeingCustomized,
+  selectIProductOfSelectedProduct,
+  SelectModifierTypeNameFromModifierTypeId,
+  SelectProductMetadataFromCustomProductWithCurrentFulfillmentData,
+  SelectShouldFilterModifierTypeDisplay
+} from '@/app/selectors';
 import { addToCart, FindDuplicateInCart, getCart, removeFromCart, unlockCartEntry, updateCartProduct, updateCartQuantity } from '@/app/slices/WCartSlice';
 import {
   clearCustomizer,
+  selectOptionState,
+  selectSelectedWProduct,
+  selectShowAdvanced,
   setAdvancedModifierOption,
   setShowAdvanced,
   updateCustomizerProduct
 } from '@/app/slices/WCustomizerSlice';
 import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
 import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
-import {
-  type RootState,
-  selectAllowAdvancedPrompt,
-  selectCartEntryBeingCustomized,
-  selectIProductOfSelectedProduct,
-  SelectModifierTypeNameFromModifierTypeId,
-  selectOptionState,
-  SelectProductMetadataFromCustomProductWithCurrentFulfillmentData,
-  selectSelectedWProduct,
-  SelectShouldFilterModifierTypeDisplay,
-  selectShowAdvanced,
-} from '@/app/store';
+import { type RootState } from '@/app/store';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
 
 import { ModifierOptionTooltip } from './ModifierOptionTooltip';
@@ -102,8 +102,8 @@ function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUnchecked }: I
   const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
   const fulfillmentId = useAppSelector(s => s.fulfillment.selectedService);
-  const optionUncheckedState = useAppSelector(s => selectOptionState(s, toggleOptionUnchecked.modifierTypeId, toggleOptionUnchecked.id));
-  const optionCheckedState = useAppSelector(s => selectOptionState(s, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id));
+  const optionUncheckedState = useAppSelector(s => selectOptionState(s.customizer, toggleOptionUnchecked.modifierTypeId, toggleOptionUnchecked.id));
+  const optionCheckedState = useAppSelector(s => selectOptionState(s.customizer, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id));
   const optionValue = useMemo(() => optionCheckedState?.placement === OptionPlacement.WHOLE, [optionCheckedState?.placement]);
   if (!optionUncheckedState || !optionCheckedState || !serviceDateTime || !selectedProduct || !fulfillmentId) {
     return null;
@@ -149,7 +149,7 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
   const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const fulfillmentId = useAppSelector(s => s.fulfillment.selectedService);
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  const getOptionState = useAppSelector(s => (moId: string) => selectOptionState(s, options[0].modifierTypeId, moId));
+  const getOptionState = useAppSelector(s => (moId: string) => selectOptionState(s.customizer, options[0].modifierTypeId, moId));
   const modifierOptionState = useAppSelector(s => s.customizer.selectedProduct?.p.modifiers.find(x => x.modifierTypeId === options[0].modifierTypeId)?.options ?? [])
   if (!serviceDateTime || !selectedProduct || !fulfillmentId) {
     return null;
@@ -202,7 +202,7 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
 
 function useModifierOptionCheckbox(option: IOption) {
   const dispatch = useAppDispatch();
-  const optionState = useAppSelector(s => selectOptionState(s, option.modifierTypeId, option.id));
+  const optionState = useAppSelector(s => selectOptionState(s.customizer, option.modifierTypeId, option.id));
   const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, option.modifierTypeId))
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const isWhole = useMemo(() => optionState!.placement === OptionPlacement.WHOLE, [optionState]);
@@ -255,7 +255,7 @@ function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCus
   const { onClickWhole, onClickLeft, onClickRight,
     isWhole, isLeft, isRight,
     optionState } = useModifierOptionCheckbox(option);
-  const canShowAdvanced = useAppSelector(selectShowAdvanced);
+  const canShowAdvanced = useAppSelector(s => selectShowAdvanced(s.customizer));
   const showAdvanced = useMemo(() => optionState !== undefined && canShowAdvanced && (optionState.enable_left.enable === DISABLE_REASON.ENABLED || optionState.enable_right.enable === DISABLE_REASON.ENABLED), [canShowAdvanced, optionState]);
   const advancedOptionSelected = useMemo(() => optionState !== undefined && (optionState.placement === OptionPlacement.LEFT || optionState.placement === OptionPlacement.RIGHT || optionState.qualifier !== OptionQualifier.REGULAR), [optionState]);
   if (optionState === undefined) {
@@ -486,7 +486,7 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
   const dispatch = useAppDispatch();
   const catalog = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const categoryId = useAppSelector(s => s.customizer.categoryId);
-  const selectedProduct = useAppSelector(s => selectSelectedWProduct(s));
+  const selectedProduct = useAppSelector(s => selectSelectedWProduct(s.customizer));
   const selectedProductMetadata = useAppSelector(SelectProductMetadataFromCustomSelectedProductWithCurrentFulfillmentData)
   const customizerTitle = useAppSelector(s => {
     const selectedIProduct = selectIProductOfSelectedProduct(s);
@@ -496,7 +496,7 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
   const cartEntry = useAppSelector(selectCartEntryBeingCustomized);
   const allowAdvancedOptionPrompt = useAppSelector(s => selectAllowAdvancedPrompt(s));
   const cart = useAppSelector(s => getCart(s.cart.cart));
-  const showAdvanced = useAppSelector(s => selectShowAdvanced(s));
+  const showAdvanced = useAppSelector(s => selectShowAdvanced(s.customizer));
   const mtid_moid = useAppSelector(s => s.customizer.advancedModifierOption);
   const hasAdvancedOptionSelected = useMemo(() => selectedProductMetadata?.advanced_option_selected ?? false, [selectedProductMetadata?.advanced_option_selected]);
   if (categoryId === null || selectedProduct === null || selectedProductMetadata === null) {

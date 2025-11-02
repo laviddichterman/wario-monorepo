@@ -3,8 +3,10 @@ import type * as Square from '@square/web-sdk';
 import { type AxiosResponse } from "axios";
 
 import {
-  type CrudOrderResponse, type ResponseFailure, type TipSelection,
-  type ValidateAndLockCreditResponseValid
+  type CrudOrderResponse,
+  type ResponseFailure,
+  type TipSelection,
+  type ValidateAndLockCreditResponseValid,
 } from "@wcp/wario-shared";
 import {
   CreateValidateStoreCreditThunk, handleAxiosError,
@@ -13,7 +15,8 @@ import {
 
 import axiosInstance from "@/utils/axios";
 
-import { type AppDispatch, type RootState, SelectWarioSubmissionArguments } from "@/app/store";
+import { SelectWarioSubmissionArguments } from "@/app/selectors";
+import { type AppDispatch, type RootState } from "@/app/store";
 
 import { setSubmitTime } from "./WMetricsSlice";
 

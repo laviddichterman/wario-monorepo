@@ -6,11 +6,12 @@ import { Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableCo
 import { WDateUtils } from '@wcp/wario-shared';
 import { SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan, Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared';
 
-import { backStage, nextStage } from '../../app/slices/StepperSlice';
-import { SelectServiceDateTime } from '../../app/slices/WFulfillmentSlice';
-import { setAcknowledgeInstructionsDialogue, setSpecialInstructions } from '../../app/slices/WPaymentSlice';
-import { SelectFulfillmentDisplayName, SelectServiceTimeDisplayString } from '../../app/store';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { SelectFulfillmentDisplayName, SelectServiceTimeDisplayString } from '@/app/selectors';
+import { backStage, nextStage } from '@/app/slices/StepperSlice';
+import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
+import { setAcknowledgeInstructionsDialogue, setSpecialInstructions } from '@/app/slices/WPaymentSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import { Navigation } from '../Navigation';
 import { WCheckoutCart } from '../WCheckoutCart';
 

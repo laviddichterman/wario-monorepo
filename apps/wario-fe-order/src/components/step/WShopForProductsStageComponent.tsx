@@ -5,14 +5,22 @@ import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, type BoxProps, Grid, Typography } from '@mui/material';
 
 import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
-import { getProductInstanceById, scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory } from '@wcp/wario-ux-shared';
+import {
+  getProductInstanceById, scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay, SelectCatalogSelectors,
+  SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory
+} from '@wcp/wario-ux-shared';
 
-import { addToCart, FindDuplicateInCart, getCart, updateCartQuantity } from '../../app/slices/WCartSlice';
-import { customizeProduct } from '../../app/slices/WCustomizerSlice';
-import { SelectServiceDateTime } from '../../app/slices/WFulfillmentSlice';
-import { setTimeToFirstProductIfUnset } from '../../app/slices/WMetricsSlice';
-import { SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById, SelectProductInstanceHasSelectableModifiersByProductInstanceId, SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '../../app/store';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import {
+  SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById,
+  SelectProductInstanceHasSelectableModifiersByProductInstanceId,
+  SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData
+} from '@/app/selectors';
+import { addToCart, FindDuplicateInCart, getCart, updateCartQuantity } from '@/app/slices/WCartSlice';
+import { customizeProduct } from '@/app/slices/WCustomizerSlice';
+import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
+import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import { ClickableProductDisplay } from '../WProductComponent';
 
 import { type WShopForProductsStageProps } from './WShopForProductsStageContainer';

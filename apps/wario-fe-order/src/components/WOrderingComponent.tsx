@@ -8,9 +8,10 @@ import { Box, Step, StepLabel, Stepper, useMediaQuery, useTheme } from '@mui/mat
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
 import { SelectSquareAppId, SelectSquareLocationId, StepperTitle } from '@wcp/wario-ux-shared';
 
-import { setSquareTokenizationErrors, submitToWario } from '../app/slices/WPaymentSlice';
-import { SelectBalanceAfterPayments } from '../app/store';
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
+import { SelectBalanceAfterPayments } from '@/app/selectors';
+import { setSquareTokenizationErrors, submitToWario } from '@/app/slices/WPaymentSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import { IS_PRODUCTION } from '../config';
 
 import { WCheckoutStage } from './step/WCheckoutStageComponent';

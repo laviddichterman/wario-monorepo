@@ -5,9 +5,9 @@ import { styled } from '@mui/system';
 import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared';
 import { CheckedNumericInput, selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared';
 
-import { getCart, removeFromCart, updateCartQuantity } from '../app/slices/WCartSlice';
-import { SelectSelectableModifiers } from '../app/store';
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
+import { SelectSelectableModifiers } from '@/app/selectors';
+import { getCart, removeFromCart, updateCartQuantity } from '@/app/slices/WCartSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
 
 import { ProductDisplay } from './WProductComponent';
 

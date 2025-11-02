@@ -4,11 +4,9 @@ import { type ReactNode } from 'react';
 import { type ICatalogModifierSelectors, type MetadataModifierMap, type ProductModifierEntry, WFunctional } from '@wcp/wario-shared';
 import { ErrorResponseOutput, getModifierOptionById, getModifierTypeEntryById, getProductEntryById, getProductInstanceFunctionById, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared';
 
-import {
-  type RootState,
-  SelectModifierTypeNameFromModifierTypeId,
-} from '../app/store';
-import { useAppSelector } from '../app/useHooks';
+import { SelectModifierTypeNameFromModifierTypeId } from '@/app/selectors';
+import { type RootState } from '@/app/store';
+import { useAppSelector } from '@/app/useHooks';
 
 const SelectCatalogModifierSelectors = createSelector(
   (s: RootState) => (oid: string) => getModifierOptionById(s.ws.modifierOptions, oid),

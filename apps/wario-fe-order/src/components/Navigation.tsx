@@ -6,8 +6,8 @@ import { useTheme } from '@mui/material/styles';
 
 import { WarioButton } from '@wcp/wario-ux-shared';
 
-import { NUM_STAGES } from '../app/slices/StepperSlice';
-import { useAppSelector } from '../app/useHooks';
+import { NUM_STAGES } from '@/app/slices/StepperSlice';
+import { useAppSelector } from '@/app/useHooks';
 
 export interface NavigationProps {
   hasBack?: boolean;

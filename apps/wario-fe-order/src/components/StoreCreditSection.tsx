@@ -6,8 +6,8 @@ import { Checkbox, FormControlLabel, Grid } from '@mui/material';
 import { CREDIT_REGEX } from '@wcp/wario-shared';
 import { ErrorResponseOutput, StoreCreditInputComponent } from '@wcp/wario-ux-shared';
 
-import { clearCreditCode, validateStoreCredit } from '../app/slices/WPaymentSlice';
-import { useAppDispatch, useAppSelector } from '../app/useHooks';
+import { clearCreditCode, validateStoreCredit } from '@/app/slices/WPaymentSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
 
 
 

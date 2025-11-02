@@ -7,11 +7,13 @@ import { Box, Grid, Input, Typography } from '@mui/material';
 import { ComputeTipValue, CURRENCY, MoneyToDisplayString, type OrderPaymentAllocated, PaymentMethod, type TipSelection } from '@wcp/wario-shared';
 import { ErrorResponseOutput, LoadingScreen, SelectTipPreamble, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton } from '@wcp/wario-ux-shared';
 
-import { backStage } from '../../app/slices/StepperSlice';
-import { incrementTipAdjusts, incrementTipFixes } from '../../app/slices/WMetricsSlice';
-import { setTip, submitToWario } from '../../app/slices/WPaymentSlice';
-import { SelectAllowTipping, SelectAutoGratutityEnabled, SelectBalanceAfterPayments, SelectTipBasis, SelectTipValue } from '../../app/store';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { SelectAutoGratutityEnabled } from '@/app/selectors';
+import { SelectAllowTipping, SelectBalanceAfterPayments, SelectTipBasis, SelectTipValue } from '@/app/selectors';
+import { backStage } from '@/app/slices/StepperSlice';
+import { incrementTipAdjusts, incrementTipFixes } from '@/app/slices/WMetricsSlice';
+import { setTip, submitToWario } from '@/app/slices/WPaymentSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import { Navigation } from '../Navigation';
 import { StoreCreditSection } from '../StoreCreditSection';
 import { WCheckoutCart } from '../WCheckoutCart';

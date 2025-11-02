@@ -1,6 +1,6 @@
-import { createEntityAdapter, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit";
+import { createEntityAdapter, createSelector, createSlice, type EntityState, type PayloadAction } from "@reduxjs/toolkit";
 
-import { type CartEntry, type CatalogModifierEntry, type CatalogProductEntry, type Selector, type WCPProduct, type WProduct, WProductCompare, WProductEquals } from "@wcp/wario-shared";
+import { type CartEntry, type CatalogModifierEntry, type CatalogProductEntry, type CoreCartEntry, type Selector, type WCPProduct, type WCPProductV2Dto, type WProduct, WProductCompare, WProductEquals } from "@wcp/wario-shared";
 
 
 const DeadCartAdapter = createEntityAdapter<CartEntry>();
@@ -96,6 +96,11 @@ export const FindDuplicateInCart = (cart: CartEntry[], catalogModifierEntrySelec
   // it's a new entry!
   return null;
 }
+
+export const selectCartAsDto = createSelector(
+  (s: WCartState) => getCart(s.cart),
+  (cart) => cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })) as CoreCartEntry<WCPProductV2Dto>[]
+)
 
 export const { selectAll: getCart, selectById: getCartEntry } =
   WCartAdapter.getSelectors();

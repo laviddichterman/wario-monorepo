@@ -1,7 +1,7 @@
 import { SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectTaxRate, WCheckoutCartComponent } from '@wcp/wario-ux-shared';
 
+import { SelectDiscountsApplied, SelectPaymentsApplied, SelectTaxAmount, SelectTipValue, SelectTotal } from '@/app/selectors';
 import { getCart } from '@/app/slices/WCartSlice';
-import { SelectDiscountsApplied, SelectPaymentsApplied, SelectTaxAmount, SelectTipValue, SelectTotal } from '@/app/store';
 import { useAppSelector } from '@/app/useHooks';
 
 export function WCheckoutCart() {

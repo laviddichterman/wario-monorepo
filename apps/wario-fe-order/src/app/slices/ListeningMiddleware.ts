@@ -1,17 +1,72 @@
-import { createListenerMiddleware, isAnyOf, type ListenerEffectAPI } from '@reduxjs/toolkit'
-import type { TypedStartListening } from '@reduxjs/toolkit'
+import { createListenerMiddleware, createSelector, isAnyOf, type ListenerEffectAPI } from '@reduxjs/toolkit'
+import type { EntityState, TypedStartListening } from '@reduxjs/toolkit'
+import { formatISO } from "date-fns";
 import { enqueueSnackbar } from 'notistack'
 
-import { CanThisBeOrderedAtThisTimeAndFulfillmentCatalog, type CartEntry, WCPProductGenerateMetadata, WDateUtils } from '@wcp/wario-shared';
-import { getFulfillmentById, receiveCatalog, receiveFulfillments, receiveSettings, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, setCurrentTime } from '@wcp/wario-ux-shared';
+import { CanThisBeOrderedAtThisTimeAndFulfillmentCatalog, type CartEntry, type CatalogCategoryEntry, DetermineCartBasedLeadTime, GetNextAvailableServiceDate, WCPProductGenerateMetadata, WDateUtils } from '@wcp/wario-shared';
+import { getCategoryEntryById, getFulfillmentById, getProductEntryById, receiveCatalog, receiveFulfillments, receiveSettings, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, SelectDefaultFulfillmentId, setCurrentTime } from '@wcp/wario-ux-shared';
 
-import { type AppDispatch, GetNextAvailableServiceDateTime, type RootState, SelectCategoryExistsAndIsAllowedForFulfillment, SelectOptionsForServicesAndDate } from '@/app/store'
+import { type AppDispatch, type RootState } from '@/app/store'
 
 import { backStage, nextStage, setStage, STEPPER_STAGE_ENUM } from './StepperSlice';
 import { addToCart, getCart, getDeadCart, killAllCartEntries, removeFromCart, reviveAllCartEntries, updateCartQuantity, updateManyCartProducts } from './WCartSlice';
 import { clearCustomizer, updateCustomizerProduct } from './WCustomizerSlice';
 import { SelectServiceDateTime, setDate, setSelectedDateExpired, setSelectedTimeExpired, setService, setTime } from './WFulfillmentSlice';
 import { incrementTimeBumps, setTimeToStage } from './WMetricsSlice';
+
+// moved from store.ts to avoid circular dependencies, but they pretty much belong here anyway
+const SelectCartBasedLeadTime = createSelector(
+  (s: RootState) => getCart(s.cart.cart),
+  (s: RootState) => s.ws.products,
+  (cart, products) => DetermineCartBasedLeadTime(cart.map(x => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })), (x: string) => getProductEntryById(products, x))
+);
+
+const SelectAvailabilityForServicesDateAndProductCount = createSelector(
+  (s: RootState, _: string, __: string[]) => s.ws.fulfillments,
+  (s: RootState, __: string, ___: string[]) => SelectCartBasedLeadTime(s),
+  (_: RootState, selectedDate: string, __: string[]) => selectedDate,
+  (_: RootState, __: string, serviceSelection: string[]) => serviceSelection,
+  (fulfillments, cartBasedLeadTime, selectedDate, serviceSelection) =>
+    WDateUtils.GetInfoMapForAvailabilityComputation(serviceSelection.map(x => getFulfillmentById(fulfillments, x)), selectedDate, cartBasedLeadTime)
+);
+
+export const SelectOptionsForServicesAndDate = createSelector(
+  (s: RootState, selectedDate: string, serviceSelection: string[]) => SelectAvailabilityForServicesDateAndProductCount(s, selectedDate, serviceSelection),
+  (s: RootState, _: string, __: string[]) => s.ws.currentTime,
+  (_: RootState, selectedDate: string, __: string[]) => selectedDate,
+  (infoMap, currentTime, selectedDate) => WDateUtils.GetOptionsForDate(infoMap, selectedDate, formatISO(currentTime))
+);
+
+const GetNextAvailableServiceDateTimeForService = createSelector(
+  (s: RootState, service: string, _: Date | number) => getFulfillmentById(s.ws.fulfillments, service),
+  (_: RootState, __: string, now: Date | number) => formatISO(now),
+  (s: RootState, __: string, _: Date | number) => SelectCartBasedLeadTime(s),
+  (fulfillment, now, cartBasedLeadTime) => GetNextAvailableServiceDate([fulfillment], now, cartBasedLeadTime)
+);
+
+// Note: this falls back to now if there's really nothing for the selected service or for dine-in
+export const GetNextAvailableServiceDateTime = createSelector(
+  (s: RootState) => (service: string) => GetNextAvailableServiceDateTimeForService(s, service, s.ws.currentTime),
+  (s: RootState) => s.fulfillment.selectedService,
+  (s: RootState) => s.ws.currentTime,
+  SelectDefaultFulfillmentId,
+  (nextAvailableForServiceFunction, selectedService, currentTime, defaultFulfillment) => {
+    if (selectedService !== null) {
+      const nextAvailableForSelectedService = nextAvailableForServiceFunction(selectedService);
+      if (nextAvailableForSelectedService) {
+        return nextAvailableForSelectedService;
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return (nextAvailableForServiceFunction(defaultFulfillment!) ??
+      WDateUtils.ComputeFulfillmentTime(currentTime));
+  });
+
+const SelectCategoryExistsAndIsAllowedForFulfillment = createSelector(
+  (state: EntityState<CatalogCategoryEntry, string>, categoryId: string, _fulfillmentId: string) => getCategoryEntryById(state, categoryId),
+  (_state: EntityState<CatalogCategoryEntry, string>, _categoryId: string, fulfillmentId: string) => fulfillmentId,
+  (categoryEntry, fulfillmentId) => categoryEntry.category.serviceDisable.indexOf(fulfillmentId) === -1
+);
 
 
 export const ListeningMiddleware = createListenerMiddleware()

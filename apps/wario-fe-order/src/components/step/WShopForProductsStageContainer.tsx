@@ -3,11 +3,12 @@ import { useCallback, useMemo, useState } from 'react';
 import { type CartEntry } from '@wcp/wario-shared';
 import { scrollToIdOffsetAfterDelay, Separator, StageTitle } from '@wcp/wario-ux-shared';
 
-import { backStage, nextStage } from '../../app/slices/StepperSlice';
-import { getCart, lockCartEntry } from '../../app/slices/WCartSlice';
-import { editCartEntry } from '../../app/slices/WCustomizerSlice';
-import { SelectMainCategoryId, SelectMainProductCategoryCount, selectSelectedWProduct, SelectSupplementalCategoryId } from '../../app/store';
-import { useAppDispatch, useAppSelector } from '../../app/useHooks';
+import { SelectMainCategoryId, SelectMainProductCategoryCount, SelectSupplementalCategoryId } from '@/app/selectors';
+import { backStage, nextStage } from '@/app/slices/StepperSlice';
+import { getCart, lockCartEntry } from '@/app/slices/WCartSlice';
+import { editCartEntry, selectSelectedWProduct } from '@/app/slices/WCustomizerSlice';
+import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+
 import { Navigation } from '../Navigation';
 import { WOrderCart } from '../WOrderCartComponent';
 import { WProductCustomizerComponent } from '../WProductCustomizerComponent';
@@ -27,7 +28,7 @@ export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const supplementalCategoryId = useAppSelector(SelectSupplementalCategoryId)!;
   const cart = useAppSelector(s => getCart(s.cart.cart));
-  const selectedProduct = useAppSelector(selectSelectedWProduct);
+  const selectedProduct = useAppSelector((s) => selectSelectedWProduct(s.customizer));
   const dispatch = useAppDispatch();
   const titleString = useMemo(() => productSet === 'PRIMARY' ?
     (numMainCategoryProducts > 0 ? "Click a pizza below or next to continue." : "Click a pizza below to get started.") :
