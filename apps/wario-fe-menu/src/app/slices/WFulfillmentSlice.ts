@@ -1,13 +1,11 @@
-import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import { type FulfillmentDto, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
+import { type FulfillmentDto, type NullablePartial } from "@wcp/wario-shared";
 
-export type WFulfillmentState = NullablePartial<Pick<FulfillmentDto, 'selectedService' | 'selectedDate' | 'selectedTime'>>;
+export type WFulfillmentState = NullablePartial<Pick<FulfillmentDto, 'selectedService'>>;
 
 const initialState: WFulfillmentState = {
   selectedService: null,
-  selectedDate: null,
-  selectedTime: null,
 
 }
 
@@ -20,22 +18,10 @@ const WFulfillmentSlice = createSlice({
         state.selectedService = action.payload;
       }
     },
-    setDate(state, action: PayloadAction<string | null>) {
-      state.selectedDate = action.payload;
-    },
-    setTime(state, action: PayloadAction<number | null>) {
-      state.selectedTime = action.payload;
-    }
   }
 });
 
-export const SelectServiceDateTime = createSelector(
-  (s: WFulfillmentState) => s.selectedDate,
-  (s: WFulfillmentState) => s.selectedTime,
-  (selectedDate: string | null, selectedTime: number | null) => selectedDate !== null && selectedTime !== null ? WDateUtils.ComputeServiceDateTime({ selectedDate, selectedTime }) : null
-);
-
-export const { setService, setDate, setTime } = WFulfillmentSlice.actions;
+export const { setService } = WFulfillmentSlice.actions;
 
 
 export default WFulfillmentSlice.reducer;
