@@ -1,36 +1,24 @@
-import { combineReducers, configureStore, createSelector, type EntityState } from "@reduxjs/toolkit";
+import { combineReducers, configureStore, createSelector } from "@reduxjs/toolkit";
 import { formatISO } from "date-fns";
 
 import {
-  type CatalogCategoryEntry,
-  type CatalogModifierEntry,
-  ComputeCategoryTreeIdList,
-  DISABLE_REASON,
   type FulfillmentConfig,
   GetNextAvailableServiceDate,
-  type IOption,
-  type IOptionInstance,
-  type MetadataModifierMap,
-  type MetadataModifierMapEntry,
-  type ProductModifierEntry,
-  type Selector,
   WDateUtils
 } from "@wcp/wario-shared";
 import {
   getCategoryEntryById,
   getFulfillmentById,
   getModifierTypeEntryById,
-  getProductInstanceById,
   IProductInstancesAdapter,
   ProductInstanceFunctionsAdapter,
   SelectDefaultFulfillmentId,
-  SelectProductMetadata,
   SocketIoReducer,
   weakMapCreateSelector,
 } from '@wcp/wario-ux-shared';
 
 import { SocketIoMiddleware } from "./slices/SocketIoMiddleware";
-import WFulfillmentReducer, { SelectServiceDateTime } from './slices/WFulfillmentSlice';
+import WFulfillmentReducer from './slices/WFulfillmentSlice';
 
 export const RootReducer = combineReducers({
   fulfillment: WFulfillmentReducer,
@@ -49,31 +37,6 @@ export type AppDispatch = typeof store.dispatch;
 
 export const IProductInstancesSelectors = IProductInstancesAdapter.getSelectors((state: RootState) => state.ws.productInstances);
 export const ProductInstanceFunctionsSelectors = ProductInstanceFunctionsAdapter.getSelectors((state: RootState) => state.ws.productInstanceFunctions);
-
-export const SelectDisplayFlagOmitSectionIfNoAvailableOptionsFromModifierByModifierTypeId = createSelector(
-  (s: RootState, mtId: string) => getModifierTypeEntryById(s.ws.modifierEntries, mtId),
-  (mt) => mt.modifierType.displayFlags.omit_section_if_no_available_options
-);
-export const SelectDisplayFlagHiddenFromModifierByModifierTypeId = createSelector(
-  (s: RootState, mtId: string) => getModifierTypeEntryById(s.ws.modifierEntries, mtId),
-  (mt) => mt.modifierType.displayFlags.hidden
-);
-
-export const GetSelectableModifiers = (mMap: MetadataModifierMap, modifierTypeSelector: (id: string) => CatalogModifierEntry) =>
-  Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-    const modifierEntry = modifierTypeSelector(k);
-    const omit_section_if_no_available_options = modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
-    const hidden = modifierEntry.modifierType.displayFlags.hidden;
-    return (!hidden && (!omit_section_if_no_available_options || v.has_selectable)) ? { ...acc, k: v } : acc;
-  }, {});
-
-
-export const SelectSelectableModifiers = createSelector(
-  (s: RootState, _mMap: MetadataModifierMap) => (id: string) => getModifierTypeEntryById(s.ws.modifierEntries, id),
-  (_s: RootState, mMap: MetadataModifierMap) => mMap,
-  (modifierGetter, mMap) => GetSelectableModifiers(mMap, modifierGetter)
-);
-
 
 const SelectSomethingFromFulfillment = <T extends keyof FulfillmentConfig>(field: T) => weakMapCreateSelector(
   (s: RootState) => s.ws.fulfillments,
@@ -94,31 +57,6 @@ export const SelectFulfillmentMinDuration = SelectSomethingFromFulfillment('minD
 export const SelectFulfillmentServiceTerms = SelectSomethingFromFulfillment('terms');
 export const SelectFulfillmentService = SelectSomethingFromFulfillment('service');
 export const SelectFulfillmentMaxGuests = SelectSomethingFromFulfillment('maxGuests');
-
-
-export const SelectServiceTimeDisplayString = createSelector(
-  SelectFulfillmentMinDuration,
-  (s: RootState) => s.fulfillment.selectedService,
-  (s: RootState) => s.fulfillment.selectedTime,
-  (minDuration, service, selectedTime) =>
-    minDuration !== null && service !== null && selectedTime !== null ?
-      (minDuration === 0 ? WDateUtils.MinutesToPrintTime(selectedTime) : `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}`) : "");
-
-export const SelectOrderForServiceFeeComputation = createSelector(
-  (_: RootState) => 0,
-  (nothing) => nothing
-);
-
-export const SelectMainCategoryTreeIdList = createSelector(
-  (s: RootState) => SelectMainCategoryId(s),
-  (s: RootState) => s.ws.categories,
-  (cId, categories) => cId ? ComputeCategoryTreeIdList(cId, (id: string) => getCategoryEntryById(categories, id)) : []
-)
-
-export const SelectHasOperatingHoursForService = createSelector(
-  (s: RootState, fulfillmentId: string) => getFulfillmentById(s.ws.fulfillments, fulfillmentId),
-  (fulfillment) => WDateUtils.HasOperatingHours(fulfillment.operatingHours)
-);
 
 export const GetNextAvailableServiceDateTimeForService = createSelector(
   (s: RootState, service: string, _: Date | number) => getFulfillmentById(s.ws.fulfillments, service),
@@ -176,29 +114,6 @@ export const GetNextAvailableServiceDateTime = createSelector(
       WDateUtils.ComputeFulfillmentTime(currentTime));
   });
 
-/**
- * Selects/Computes the product metadata for a catalog product instance using the currently populated fulfillment info
- */
-export const SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData = createSelector(
-  (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId),
-  (s: RootState, _productInstanceId: string) => s.ws,
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  (s: RootState, _productInstanceId: string) => SelectServiceDateTime(s.fulfillment)!,
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  (s: RootState, _productInstanceId: string) => s.fulfillment.selectedService!,
-  (productInstance, socketIoState, service_time, fulfillmentId) => SelectProductMetadata(socketIoState, productInstance.productId, productInstance.modifiers, service_time, fulfillmentId),
-);
-
-export const SelectProductInstanceHasSelectableModifiersByProductInstanceId = weakMapCreateSelector(
-  (s: RootState, _productInstanceId: string) => s,
-  (s: RootState, productInstanceId: string) => SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(s, productInstanceId),
-  (s, metadata) => Object.values(SelectSelectableModifiers(s, metadata.modifier_map)).length > 0
-)
-
-export const SelectModifierTypeNameFromModifierTypeId = createSelector(
-  getModifierTypeEntryById,
-  (modifierTypeEntry) => modifierTypeEntry.modifierType.displayName || modifierTypeEntry.modifierType.name
-);
 
 export const SelectModifierTypeOrdinalFromModifierTypeId = createSelector(
   getModifierTypeEntryById,
@@ -222,40 +137,6 @@ export const SelectMenuNestingFromCategoryById = createSelector(
   (categoryEntry) => categoryEntry.category.display_flags.nesting
 );
 
-export const SelectCategoryExistsAndIsAllowedForFulfillment = createSelector(
-  (state: EntityState<CatalogCategoryEntry, string>, categoryId: string, _fulfillmentId: string) => getCategoryEntryById(state, categoryId),
-  (_state: EntityState<CatalogCategoryEntry, string>, _categoryId: string, fulfillmentId: string) => fulfillmentId,
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  (categoryEntry, fulfillmentId) => categoryEntry && categoryEntry.category.serviceDisable.indexOf(fulfillmentId) === -1
-);
-
-/**
-* Selects/Computes the product metadata for a potentially custom product (product class ID and selected modifiers) using the currently populated fulfillment info
-*/
-export const SelectProductMetadataFromCustomProductWithCurrentFulfillmentData = weakMapCreateSelector(
-  (_s: RootState, productId: string, _modifiers: ProductModifierEntry[]) => productId,
-  (_s: RootState, _productId: string, modifiers: ProductModifierEntry[]) => modifiers,
-  (s: RootState, _productInstanceId: string, _modifiers: ProductModifierEntry[]) => s.ws,
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  (s: RootState, _productInstanceId: string) => SelectServiceDateTime(s.fulfillment)!,
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  (s: RootState, _productInstanceId: string) => s.fulfillment.selectedService!,
-  (productId, modifiers, socketIoState, service_time, fulfillmentId) => SelectProductMetadata(socketIoState, productId, modifiers, service_time, fulfillmentId),
-);
-
-/** move this to WCPShared */
-export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEntry, moid: string) => {
-  const optionMapEntry = mmEntry.options[moid];
-  return optionMapEntry.enable_left.enable === DISABLE_REASON.ENABLED || optionMapEntry.enable_right.enable === DISABLE_REASON.ENABLED || optionMapEntry.enable_whole.enable === DISABLE_REASON.ENABLED;
-}
-
-export const SortProductModifierEntries = (mods: ProductModifierEntry[], modifierTypeSelector: Selector<CatalogModifierEntry>) =>
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  mods.sort((a, b) => modifierTypeSelector(a.modifierTypeId)!.modifierType.ordinal - modifierTypeSelector(b.modifierTypeId)!.modifierType.ordinal)
-
-export const SortProductModifierOptions = (mods: IOptionInstance[], modifierOptionSelector: Selector<IOption>) =>
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  mods.sort((a, b) => modifierOptionSelector(a.optionId)!.ordinal - modifierOptionSelector(b.optionId)!.ordinal)
 
 export const SelectShouldFilterModifierTypeDisplay = weakMapCreateSelector(
   (s: RootState, modifierTypeId: string, _hasSelectable: boolean) => getModifierTypeEntryById(s.ws.modifierEntries, modifierTypeId),
