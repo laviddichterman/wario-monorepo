@@ -1,5 +1,6 @@
-import { WDateUtils, DayOfTheWeek } from '../src/index';
 import { describe, expect, it } from '@jest/globals';
+
+import { DayOfTheWeek, WDateUtils } from '../src/index';
 
 describe('WDateUtils.AreWeOpenNow', () => {
   it('should return true if the current time is within operating hours', () => {

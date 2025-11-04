@@ -40,6 +40,7 @@
     "geojson": "^0.5.0",
     "html5-qrcode": "2.3.8",
     "motion": "^12.23.24",
+    "notistack": "^3.0.2",
     "papaparse": "^5.5.3",
     "qr-scanner": "^1.4.2",
     "react": "^19.2.0",
@@ -55,19 +56,19 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@eslint/js": "9.38.0 || ^9.39.1",
+    "@eslint/js": "^9.39.1",
     "@types/geojson": "^7946.0.16",
-    "@types/node": "^24.9.2",
+    "@types/node": "^24.10.0",
     "@types/papaparse": "^5.3.16",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react-swc": "^4.2.0",
-    "eslint": "9.38.0 || ^9.39.1",
+    "eslint": "^9.39.1",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.2",
+    "typescript-eslint": "^8.46.3",
     "vite": "^7.1.12",
     "vite-plugin-checker": "^0.11.0"
   }

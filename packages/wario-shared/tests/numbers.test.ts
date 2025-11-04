@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, transformValueOnBlur, transformValueOnChange, formatDecimal, parseDecimal, parseInteger } from '../src/lib/numbers';
+import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, formatDecimal, type InputNumberValue, parseDecimal, parseInteger, transformValueOnBlur, transformValueOnChange } from '../src/lib/numbers';
 import { RoundToTwoDecimalPlaces } from '../src/lib/numbers';
 describe('fCurrency', () => {
   // Test cases for various input values with the default locale (en-US, USD)
@@ -314,7 +314,7 @@ describe('transformValueOnBlur', () => {
       const props = {
         allowEmpty: true as const,
         parseFunction: parseDecimal,
-        formatFunction: (v: any) => formatDecimal(v, 2),
+        formatFunction: (v: InputNumberValue) => formatDecimal(v, 2),
         min: 10,
         max: 100,
       };
@@ -350,7 +350,7 @@ describe('transformValueOnBlur', () => {
         allowEmpty: false as const,
         defaultValue: 50,
         parseFunction: parseDecimal,
-        formatFunction: (v: any) => formatDecimal(v, 2),
+        formatFunction: (v: InputNumberValue) => formatDecimal(v, 2),
         min: 10,
         max: 100,
       };
@@ -409,7 +409,7 @@ describe('transformValueOnBlur', () => {
         allowEmpty: false as const,
         defaultValue: 50,
         parseFunction: parseDecimal,
-        formatFunction: (v: any) => formatDecimal(v),
+        formatFunction: formatDecimal,
         min: 10,
         max: 100,
       };
@@ -431,7 +431,7 @@ describe('transformValueOnBlur', () => {
       const props = {
         allowEmpty: true as const,
         parseFunction: parseInteger,
-        formatFunction: (v: any) => formatDecimal(v, 2),
+        formatFunction: (v: InputNumberValue) => formatDecimal(v, 2),
         min: 10,
         max: 100,
       };
@@ -457,7 +457,7 @@ describe('transformValueOnBlur', () => {
         allowEmpty: false as const,
         defaultValue: 50,
         parseFunction: parseInteger,
-        formatFunction: (v: any) => formatDecimal(v, 2),
+        formatFunction: (v: InputNumberValue) => formatDecimal(v, 2),
         min: 10,
         max: 100,
       };
@@ -479,7 +479,7 @@ describe('transformValueOnBlur', () => {
       const props = {
         allowEmpty: true as const,
         parseFunction: parseInteger,
-        formatFunction: (v: any) => formatDecimal(v),
+        formatFunction: (v: InputNumberValue) => formatDecimal(v),
         min: 10,
         max: 100,
       };
@@ -500,7 +500,7 @@ describe('transformValueOnBlur', () => {
         allowEmpty: false as const,
         defaultValue: 50,
         parseFunction: parseInteger,
-        formatFunction: (v: any) => formatDecimal(v),
+        formatFunction: (v: InputNumberValue) => formatDecimal(v),
         min: 10,
         max: 100,
       };
