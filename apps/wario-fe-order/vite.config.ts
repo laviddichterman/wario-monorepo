@@ -25,7 +25,31 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
-  build: { target: 'es2022' },
+  build: {
+    target: 'es2022',
+    //   rollupOptions: {
+    //     output: {
+    //       manualChunks(id) {
+    //         if (id.includes('node_modules')) {
+    //           // React and Redux related libs
+    //           if (/react|react-dom|react-redux|@reduxjs\/toolkit/.test(id)) {
+    //             return 'react-vendor';
+    //           }
+    //           // All MUI packages (core, icons, lab, data-grid, etc)
+    //           if (id.includes('@mui/')) {
+    //             return 'mui-vendor';
+    //           }
+    //           // Internal Wario shared packages
+    //           if (id.includes('@wcp/wario-')) {
+    //             return 'wario-shared';
+    //           }
+    //           // Fallback: other node_modules go into "vendor"
+    //           return 'vendor';
+    //         }
+    //       }
+    //     }
+    //   }
+  },
   optimizeDeps: { esbuildOptions: { target: 'es2022' } },
   server: { port: PORT, host: true },
   preview: { port: PORT, host: true },

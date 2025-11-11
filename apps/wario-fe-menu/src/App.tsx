@@ -1,11 +1,10 @@
-import { domMax, LazyMotion } from "motion/react"
 import { useEffect, useLayoutEffect } from 'react';
 
-import { ScopedCssBaseline } from '@mui/material';
+import ScopedCssBaseline from '@mui/material/ScopedCssBaseline';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import { themeOptions } from "@wcp/wario-fe-ux-shared";
-import { IsSocketDataLoaded, LoadingScreen, scrollToIdOffsetAfterDelay, startConnection } from '@wcp/wario-ux-shared';
+import { IsSocketDataLoaded, LoadingScreen, MotionLazy, scrollToIdOffsetAfterDelay, startConnection } from '@wcp/wario-ux-shared';
 
 import { useAppDispatch, useAppSelector } from "./app/useHooks";
 import WMenuComponent from './components/WMenuComponent';
@@ -32,9 +31,9 @@ const App = () => {
     <ScopedCssBaseline>
       <ThemeProvider theme={theme}>
         {!isSocketDataLoaded || currentTimeNotLoaded ?
-          <LazyMotion features={domMax}>
+          <MotionLazy>
             <LoadingScreen />
-          </LazyMotion> :
+          </MotionLazy> :
           <div id="WARIO_order">
             <WMenuComponent />
           </div>

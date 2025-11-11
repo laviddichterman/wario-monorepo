@@ -1,8 +1,13 @@
 import { enqueueSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { ExpandMore } from "@mui/icons-material";
-import { Accordion, AccordionDetails, AccordionSummary, type BoxProps, Grid, Typography } from '@mui/material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import { type BoxProps } from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 
 import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
 import {
@@ -30,7 +35,7 @@ export interface ShopClickableProductDisplayProps {
   returnToId: string;
   sourceCategoryId: string;
   setScrollToOnReturn: (value: React.SetStateAction<string>) => void
-};
+}
 
 
 function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCategoryId, setScrollToOnReturn, ...props }: ShopClickableProductDisplayProps & BoxProps) {

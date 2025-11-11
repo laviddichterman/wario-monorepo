@@ -1,6 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV3";
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 import type { CoreCartEntry, WProduct } from "@wcp/wario-shared";
 

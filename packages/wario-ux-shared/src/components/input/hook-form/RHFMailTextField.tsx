@@ -5,7 +5,8 @@ import { useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 // @mui
-import { TextField, type TextFieldProps } from '@mui/material';
+import { type TextFieldProps } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 
 
 // ----------------------------------------------------------------------

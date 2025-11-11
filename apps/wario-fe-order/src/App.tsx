@@ -2,11 +2,11 @@ import { domMax, LazyMotion } from "motion/react"
 import { SnackbarProvider } from 'notistack';
 import { useEffect, useLayoutEffect } from 'react';
 
-import { ScopedCssBaseline } from '@mui/material';
+import ScopedCssBaseline from '@mui/material/ScopedCssBaseline';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import { themeOptions } from "@wcp/wario-fe-ux-shared";
-import { IsSocketDataLoaded, LoadingScreen, scrollToIdOffsetAfterDelay, startConnection } from '@wcp/wario-ux-shared';
+import { IsSocketDataLoaded, LoadingScreen, MotionLazy, scrollToIdOffsetAfterDelay, startConnection } from '@wcp/wario-ux-shared';
 
 import WOrderingComponent from '@/components/WOrderingComponent';
 
@@ -25,9 +25,9 @@ const theme = createTheme(themeOptions);
 
 
 const LazyLoadingPage = () =>
-  <LazyMotion features={domMax}>
+  <MotionLazy>
     <LoadingScreen />
-  </LazyMotion>
+  </MotionLazy>
 
 
 const App = () => {

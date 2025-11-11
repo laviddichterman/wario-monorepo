@@ -14,6 +14,7 @@ export * from '@/components/WCartComponent';
 export * from '@/components/WProductComponent';
 export * from '@/containers/DialogContainer';
 export * from '@/containers/FullScreenPulsingContainer';
+export * from "@/containers/MotionLazy";
 export * from '@/redux/selectorHelpers';
 export * from '@/redux/selectors';
 export * from '@/redux/SocketIoMiddleware';

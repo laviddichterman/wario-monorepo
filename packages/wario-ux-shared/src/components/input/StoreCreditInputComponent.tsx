@@ -2,7 +2,10 @@ import { uniqueId } from 'es-toolkit/compat';
 import React from 'react';
 import { IMaskInput } from 'react-imask';
 
-import { FormControl, Input, type InputBaseComponentProps, InputLabel } from '@mui/material';
+import FormControl from '@mui/material/FormControl';
+import Input from '@mui/material/Input';
+import { type InputBaseComponentProps } from '@mui/material/InputBase';
+import InputLabel from '@mui/material/InputLabel';
 
 interface CustomInputProps {
   onChange: (event: { target: { name: string; value: string } }) => void;

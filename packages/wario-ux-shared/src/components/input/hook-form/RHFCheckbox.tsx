@@ -1,8 +1,11 @@
 // form
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Box, type BoxProps, Checkbox, type CheckboxProps, FormControl, FormControlLabel, type FormControlLabelProps, type FormControlProps, FormGroup, type FormGroupProps } from '@mui/material';
-// @mui
+import Box, { type BoxProps } from '@mui/material/Box';
+import Checkbox, { type CheckboxProps } from '@mui/material/Checkbox';
+import FormControl, { type FormControlProps } from '@mui/material/FormControl';
+import FormControlLabel, { type FormControlLabelProps } from '@mui/material/FormControlLabel';
+import FormGroup, { type FormGroupProps } from '@mui/material/FormGroup';
 import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 import type { FormLabelProps } from '@mui/material/FormLabel';
 import FormLabel from '@mui/material/FormLabel';

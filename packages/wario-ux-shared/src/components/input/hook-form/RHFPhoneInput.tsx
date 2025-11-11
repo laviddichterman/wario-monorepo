@@ -2,7 +2,8 @@ import React from 'react';
 import { type FieldError, useFormContext } from 'react-hook-form';
 import PhoneInput, { type Country, } from 'react-phone-number-input/react-hook-form-input-core'
 
-import { TextField, type TextFieldProps } from '@mui/material';
+import { type TextFieldProps } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 
 import { PHONE_METADATA as LIBPHONE_METADATA } from '@/common/phone-metadata';
 interface IPhoneInputParams {
@@ -12,7 +13,7 @@ interface IPhoneInputParams {
   label: React.ReactNode;
   placeholder?: TextFieldProps['placeholder'];
   [x: string]: unknown;
-};
+}
 
 export function RHFPhoneInput({ placeholder, error, label, country, name, ...other }: IPhoneInputParams & Omit<TextFieldProps, 'error' | 'name' | 'label'>) {
 

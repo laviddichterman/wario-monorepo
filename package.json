@@ -7,6 +7,7 @@
   "author": "Dave Lichterman / Lavid Industries LLC <dave@windycitypie.com>",
   "scripts": {
     "backend:start": "pnpm --filter ./apps/wario-backend start",
+    "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
     "changeset": "changeset",
     "checkall": "pnpm build && pnpm lint && pnpm typecheck",
     "ci:publish": "changeset publish --access public",
@@ -55,6 +56,7 @@
     "order:typecheck": "pnpm -r --filter \"./apps/wario-fe-order\" run typecheck",
     "pkgs:build": "pnpm -r --filter \"./packages/*\" run build",
     "pkgs:lint": "pnpm -r --filter \"./packages/*\" run lint",
+    "pkgs:typecheck": "pnpm -r --filter \"./packages/*\" run typecheck",
     "pos:build": "pnpm -r --filter \"./apps/wario-pos\" run build",
     "pos:clean": "pnpm -r --filter \"./apps/wario-pos\" run clean",
     "pos:deploy:prod": "pnpm -r --filter \"./apps/wario-pos\" run deploy:prod",
@@ -74,7 +76,7 @@
     "@types/node": "^24.10.0",
     "eslint": "^9.39.1",
     "eslint-plugin-import": "^2.32.0",
-    "eslint-plugin-package-json": "^0.59.1",
+    "eslint-plugin-package-json": "^0.65.3",
     "eslint-plugin-perfectionist": "^4.15.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
@@ -84,7 +86,7 @@
     "jsonc-eslint-parser": "^2.4.1",
     "tsup": "^8.5.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.3"
+    "typescript-eslint": "^8.46.4"
   },
   "packageManager": "pnpm@10.20.0+sha512.cf9998222162dd85864d0a8102e7892e7ba4ceadebbf5a31f9c2fce48dfce317a9c53b9f6464d1ef9042cba2e02ae02a9f7c143a2b438cd93c91840f0192b9dd",
   "engines": {

@@ -1,8 +1,11 @@
 import React from 'react';
 
-import { KeyboardArrowLeft, KeyboardArrowRight } from '@mui/icons-material';
-import { Box, type ButtonProps, useMediaQuery } from '@mui/material';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import Box from '@mui/material/Box';
+import { type ButtonProps } from '@mui/material/Button';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { WarioButton } from '@wcp/wario-ux-shared';
 

@@ -1,14 +1,14 @@
 import { toDate as toDateBase } from 'date-fns';
 
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import type { DateBuilderReturnType } from '@mui/x-date-pickers/models';
 
 export const AdapterCurrentTimeOverrideUtils = (now: Date | number) =>
   class AdapterDateFnsWrapper extends AdapterDateFns {
     public date = <T extends string | null | undefined>(
       value?: T,
-    ): DateBuilderReturnType<T, Date> => {
-      type R = DateBuilderReturnType<T, Date>;
+    ): DateBuilderReturnType<T> => {
+      type R = DateBuilderReturnType<T>;
       if (typeof value === 'undefined') {
         return <R>toDateBase(now);
       }

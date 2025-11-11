@@ -1,4 +1,4 @@
-import { LicenseInfo } from '@mui/x-license';
+import { LicenseInfo } from '@mui/x-license/utils';
 
 export const HOST_API = String(import.meta.env.VITE_HOST_API_KEY || '');
 

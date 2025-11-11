@@ -2,18 +2,12 @@ import { isEqual } from 'es-toolkit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createStructuredSelector } from 'reselect';
 
-import { Box, Stack } from '@mui/material';
-import {
-  DataGridPremium,
-  getGridStringOperators,
-  gridClasses,
-  type GridEventListener,
-  type GridFilterModel,
-  type GridRowId,
-  type GridToolbarQuickFilterProps,
-  useGridApiRef,
-  useKeepGroupedColumnsHidden
-} from '@mui/x-data-grid-premium';
+import Box from '@mui/material/Box';
+import Stack from '@mui/material/Stack';
+import { getGridStringOperators, gridClasses, gridRowNodeSelector, useGridApiRef } from '@mui/x-data-grid-premium';
+import type { GridEventListener, GridFilterModel, GridRowId } from '@mui/x-data-grid-premium';
+import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium';
+import { useKeepGroupedColumnsHidden } from '@mui/x-data-grid-premium/hooks';
 
 import { getProductInstanceById, Separator, WarioToggleButton, weakMapCreateSelector } from '@wcp/wario-ux-shared';
 
@@ -27,7 +21,7 @@ export interface ToolbarAction {
 }
 export interface CustomToolbarProps {
   showQuickFilter?: boolean;
-  quickFilterProps: GridToolbarQuickFilterProps;
+  // quickFilterProps: GridToolbarQuickFilterProps;
   title: React.ReactNode;
   actions: ToolbarAction[];
 }
@@ -71,7 +65,7 @@ type RowType = {
   metadata: Record<string, string>;
   id: string;
 }
-interface WMenuDisplayProps { categoryId: string; };
+interface WMenuDisplayProps { categoryId: string; }
 // interface DGEmbeddedMetadata { size: number; ordinal: number; key: string };
 // const DataGridMetadataPrefix = /DG_(S(?<size>\d)_)?(O(?<ordinal>-?\d)_)?(?<name>.*)/;
 
@@ -140,12 +134,13 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const [selectedFilterModel1, setSelectedFilterModel1] = useState<number>(0);
   const [selectedFilterModel2, setSelectedFilterModel2] = useState<number>(0);
   const [selectedFilterModel3, setSelectedFilterModel3] = useState<number>(0);
+  const rowNodeSelector = useCallback((rowId: GridRowId) => gridRowNodeSelector(apiRef, rowId), [apiRef]);
 
 
   const getFilteredRowsCount = useCallback(
     (filterModel: GridFilterModel) => {
-      const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current.getFilterState(filterModel);
-      const rowIds = apiRef.current.getAllRowIds();
+      const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current?.getFilterState(filterModel) || { filteredRowsLookup: {} };
+      const rowIds = apiRef.current?.getAllRowIds() || [];
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
       return rowIds.filter(rowId => filteredRowsLookup[rowId] !== false).length;
     }, [apiRef]);
@@ -204,12 +199,13 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
 
   const onRowClick = React.useCallback<GridEventListener<'rowClick'>>(
     (params) => {
-      const rowNode = apiRef.current.getRowNode(params.id);
-      if (rowNode && rowNode.type === 'group') {
+      if (!apiRef.current) return;
+      const rowNode = rowNodeSelector(params.id);
+      if (rowNode.type === 'group') {
         apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
       }
     },
-    [apiRef],
+    [apiRef, rowNodeSelector],
   );
   const [predefinedFiltersRowCountLevel0, setPredefinedFiltersRowCountLevel0] = useState<{ index: number; count: number; }[]>([]);
   const [predefinedFiltersRowCountLevel1, setPredefinedFiltersRowCountLevel1] = useState<{ index: number; count: number; }[]>([]);
@@ -284,25 +280,25 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     setSelectedFilterModel1(0);
     setSelectedFilterModel2(0);
     setSelectedFilterModel3(0);
-    apiRef.current.setFilterModel(predefinedFiltersForLevel0[index].filterModel);
+    apiRef.current?.setFilterModel(predefinedFiltersForLevel0[index].filterModel);
   }, [apiRef, setSelectedFilterModel0, predefinedFiltersForLevel0]);
 
   const handleSelectFilterModelLevel1 = useCallback((index: number) => {
     setSelectedFilterModel1(index);
     setSelectedFilterModel2(0);
     setSelectedFilterModel3(0);
-    apiRef.current.setFilterModel(predefinedFiltersForLevel1[index].filterModel);
+    apiRef.current?.setFilterModel(predefinedFiltersForLevel1[index].filterModel);
   }, [apiRef, setSelectedFilterModel1, predefinedFiltersForLevel1]);
 
   const handleSelectFilterModelLevel2 = useCallback((index: number) => {
     setSelectedFilterModel2(index);
     setSelectedFilterModel3(0);
-    apiRef.current.setFilterModel(predefinedFiltersForLevel2[index].filterModel);
+    apiRef.current?.setFilterModel(predefinedFiltersForLevel2[index].filterModel);
   }, [apiRef, setSelectedFilterModel2, predefinedFiltersForLevel2]);
 
   const handleSelectFilterModelLevel3 = useCallback((index: number) => {
     setSelectedFilterModel3(index);
-    apiRef.current.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
+    apiRef.current?.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
   }, [apiRef, setSelectedFilterModel3, predefinedFiltersForLevel3]);
 
   const level0Buttons = useMemo(() => predefinedFiltersRowCountLevel0.length > 2 ?
@@ -321,6 +317,9 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: {
+      sorting: {
+        sortModel: [{ field: 'category', sort: 'asc' }],
+      },
       columns: {
         columnVisibilityModel: {
           subcategory0: false,
@@ -455,6 +454,13 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
       }
       <Box sx={{ height: 520, width: '100%' }}>
         <DataGridPremium
+          slotProps={{
+            toolbar: {
+              printOptions: { disableToolbarButton: true },
+              csvOptions: { disableToolbarButton: true },
+              excelOptions: { disableToolbarButton: true }
+            },
+          }}
           sx={{
             [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
               outline: 'none',
@@ -470,6 +476,8 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
           initialState={initialState}
           density="compact"
           disableColumnMenu={true}
+          disableClipboardPaste={true}
+          disableEval={true}
           disableColumnSorting={true}
           // autoHeight
           columns={[

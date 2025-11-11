@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useEffect } from 'react';
 import { CreditCard /*, GooglePay, ApplePay */ } from 'react-square-web-payments-sdk';
 
-import { Box, Grid, Input, Typography } from '@mui/material';
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
+import Input from '@mui/material/Input';
+import Typography from '@mui/material/Typography';
 
 import { ComputeTipValue, CURRENCY, MoneyToDisplayString, type OrderPaymentAllocated, PaymentMethod, type TipSelection } from '@wcp/wario-shared';
 import { ErrorResponseOutput, LoadingScreen, SelectTipPreamble, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton } from '@wcp/wario-ux-shared';

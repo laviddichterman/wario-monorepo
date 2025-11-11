@@ -1,8 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { Clear } from '@mui/icons-material';
-import { Button, IconButton, Link } from '@mui/material';
+import Clear from '@mui/icons-material/Clear';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Link from '@mui/material/Link';
 
 import { ErrorResponseOutput, FormProvider, OkResponseOutput, RHFTextField, SelectDeliveryAreaLink } from '@wcp/wario-ux-shared';
 

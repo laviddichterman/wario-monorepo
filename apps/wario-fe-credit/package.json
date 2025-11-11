@@ -20,6 +20,7 @@
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.2.2",
     "@mui/material": "^7.3.5",
+    "@mui/system": "^7.3.5",
     "@reduxjs/toolkit": "^2.10.1",
     "@square/web-sdk": "^2.1.0",
     "@wcp/wario-fe-ux-shared": "workspace:*",
@@ -51,7 +52,7 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.46.3",
+    "typescript-eslint": "^8.46.4",
     "vite": "^7.2.2",
     "vite-plugin-checker": "^0.11.0"
   }

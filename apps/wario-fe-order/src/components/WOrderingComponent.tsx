@@ -2,7 +2,12 @@
 import type * as Square from '@square/web-sdk';
 import { PaymentForm } from 'react-square-web-payments-sdk';
 
-import { Box, Step, StepLabel, Stepper, useMediaQuery, useTheme } from '@mui/material';
+import Box from '@mui/material/Box';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Stepper from '@mui/material/Stepper';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 // TODO: need to add an interceptor for forward/back when the user has gotten to 2nd stage or at least reasonably far
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';

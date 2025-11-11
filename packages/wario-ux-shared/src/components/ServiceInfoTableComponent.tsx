@@ -1,7 +1,12 @@
 import { format } from 'date-fns';
 import { useMemo } from 'react';
 
-import { Paper, Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
 
 import type { CustomerInfoDto, FulfillmentConfig, FulfillmentDto } from '@wcp/wario-shared';
 import { ComputeServiceTimeDisplayString, WDateUtils } from '@wcp/wario-shared';

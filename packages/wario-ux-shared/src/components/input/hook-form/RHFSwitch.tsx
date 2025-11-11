@@ -2,8 +2,8 @@ import React from 'react';
 // form
 import { Controller, useFormContext } from 'react-hook-form';
 
-// @mui
-import { FormControlLabel, Switch } from '@mui/material';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 // ----------------------------------------------------------------------
 export function RHFSwitch({ name, label, ...other }: { name: string, label: React.ReactNode }) {

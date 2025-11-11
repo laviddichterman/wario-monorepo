@@ -1,5 +1,6 @@
 export { FormProvider } from './FormProvider';
 
+export * from './RHFAutocomplete';
 export * from './RHFCheckbox';
 
 export * from './RHFMailTextField';

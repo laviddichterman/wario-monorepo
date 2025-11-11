@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import { TextField, type TextFieldProps } from '@mui/material';
+import { type TextFieldProps } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 
 import { type DistributiveOmit, type InputNumberValue, type NumberTransformPropsAllowEmpty, type NumberTransformPropsNoEmpty, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
 

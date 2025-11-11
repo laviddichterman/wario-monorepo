@@ -1,6 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { Box, Grid } from "@mui/material";
+import Box from '@mui/material/Box';
+import Grid from '@mui/material/Grid';
 
 import { DISABLE_REASON, type IProductModifier, MoneyToDisplayString, SortAndFilterModifierOptions, WDateUtils } from "@wcp/wario-shared";
 import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceById, ProductDescription, ProductPrice, ProductTitle, SelectCatalogSelectors, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId } from "@wcp/wario-ux-shared";
@@ -96,5 +97,5 @@ export function WModifiersComponent({ productInstanceId }: { productInstanceId: 
       })}
     </>
   )
-};
+}
 

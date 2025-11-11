@@ -1,9 +1,16 @@
 import { createSelector } from '@reduxjs/toolkit';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { ExpandMore } from '@mui/icons-material';
-import { TabContext, TabList, TabPanel } from '@mui/lab'
-import { Accordion, AccordionDetails, AccordionSummary, Box, Tab, Typography, type TypographyProps } from '@mui/material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import Box from '@mui/material/Box';
+import Tab from '@mui/material/Tab';
+import Typography, { type TypographyProps } from '@mui/material/Typography';
 
 import { CategoryDisplay, WDateUtils } from '@wcp/wario-shared';
 import { getProductInstanceById, LoadingScreen, type ProductCategoryFilter, scrollToElementOffsetAfterDelay, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory, SelectProductMetadata, Separator } from '@wcp/wario-ux-shared';
@@ -52,7 +59,7 @@ export const SelectProductInstanceIdsInCategoryForNextAvailableTime = createSele
 );
 
 
-interface WMenuDisplayProps { categoryId: string; };
+interface WMenuDisplayProps { categoryId: string; }
 
 
 function MenuNameTypography({ categoryId, ...props }: WMenuDisplayProps & TypographyProps) {
@@ -98,7 +105,7 @@ function WMenuSection({ categoryId }: WMenuDisplayProps) {
       )}
     </Box>
   );
-};
+}
 
 // eslint-disable-next-line prefer-const
 let WMenuRecursive: ({ categoryId }: WMenuDisplayProps) => React.JSX.Element;

@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
-import { Done, Error } from '@mui/icons-material';
-import { Checkbox, FormControlLabel, Grid } from '@mui/material';
+import Done from '@mui/icons-material/Done';
+import Error from '@mui/icons-material/Error';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Grid from '@mui/material/Grid';
 
 import { CREDIT_REGEX } from '@wcp/wario-shared';
 import { ErrorResponseOutput, StoreCreditInputComponent } from '@wcp/wario-ux-shared';

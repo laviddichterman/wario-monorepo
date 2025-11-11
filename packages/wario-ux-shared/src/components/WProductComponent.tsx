@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-misused-spread */
 import { useMemo } from 'react';
 
-import type { BoxProps } from '@mui/material';
-import { Box } from '@mui/material';
+import type { BoxProps } from '@mui/material/Box';
+import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 
 import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared';
@@ -19,7 +19,7 @@ interface WProductComponentProps {
   dots?: boolean;
   displayContext: "order" | "menu";
   price?: boolean;
-};
+}
 
 function WProductComponent({ catalogSelectors, productMetadata, description, allowAdornment, dots, displayContext, price, sx, ...other }: WProductComponentProps & BoxProps) {
   const productInstance = useMemo(() => catalogSelectors.productInstance(productMetadata.pi[0]), [catalogSelectors, productMetadata.pi])
@@ -75,7 +75,7 @@ function WProductComponent({ catalogSelectors, productMetadata, description, all
         </ProductDescription>)}
 
     </Box>)
-};
+}
 
 
 export const ProductDisplay = styled(WProductComponent)(() => ({

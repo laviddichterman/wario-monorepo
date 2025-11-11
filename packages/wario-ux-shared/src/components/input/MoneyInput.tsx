@@ -1,4 +1,3 @@
-
 import { CheckedNumericInput, type CheckedNumericInputProps } from './CheckedNumericTextInput';
 
 // type MinMax = { min: number; max?: number; } | { min?: number; max: number; };

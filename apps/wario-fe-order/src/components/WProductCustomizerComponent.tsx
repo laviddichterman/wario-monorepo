@@ -2,8 +2,19 @@ import { createSelector } from '@reduxjs/toolkit';
 import { useSnackbar } from 'notistack';
 import React, { forwardRef, useMemo } from 'react';
 
-import { Circle, CircleOutlined, SettingsTwoTone } from "@mui/icons-material";
-import { Button, Checkbox, FormControl, FormControlLabel, type FormControlProps, FormGroup, FormLabel, Grid, IconButton, Radio, RadioGroup } from '@mui/material';
+import Circle from '@mui/icons-material/Circle';
+import CircleOutlined from '@mui/icons-material/CircleOutlined';
+import SettingsTwoTone from '@mui/icons-material/SettingsTwoTone';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl, { type FormControlProps } from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import FormLabel from '@mui/material/FormLabel';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
 
 import {
   type CatalogModifierEntry, DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionState, type MTID_MOID, OptionPlacement,
@@ -141,7 +152,7 @@ function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUnchecked }: I
 
 interface IModifierRadioCustomizerComponent {
   options: IOption[];
-};
+}
 
 export function WModifierRadioComponent({ options }: IModifierRadioCustomizerComponent) {
   const dispatch = useAppDispatch();
@@ -198,7 +209,7 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
       </Grid>
     </RadioGroup>
   );
-};
+}
 
 function useModifierOptionCheckbox(option: IOption) {
   const dispatch = useAppDispatch();
@@ -316,7 +327,7 @@ function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCus
       </ModifierOptionTooltip>
     </Grid>
   );
-};
+}
 
 
 interface IModifierTypeCustomizerComponent {

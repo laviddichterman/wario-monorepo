@@ -1,7 +1,15 @@
 import { format } from 'date-fns';
 import { useEffect, useState } from 'react';
 
-import { Checkbox, FormControlLabel, Paper, Table, TableBody, TableCell, TableContainer, TableRow, TextField } from '@mui/material';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
+import TextField from '@mui/material/TextField';
 
 import { WDateUtils } from '@wcp/wario-shared';
 import { SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan, Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared';

@@ -2,7 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from 'react';
 import { useForm } from "react-hook-form";
 
-import { Grid, Typography } from '@mui/material';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 
 import { FormProvider, RHFMailTextField, RHFPhoneInput, RHFTextField, Separator, StageTitle } from '@wcp/wario-ux-shared';
 
@@ -105,4 +106,4 @@ export function WCustomerInformationStage() {
       <Navigation canBack canNext={isValid} handleBack={() => dispatch(backStage())} handleNext={handleSubmit(handleNext)} />
     </>
   );
-};
+}

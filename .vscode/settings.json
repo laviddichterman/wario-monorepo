@@ -1,4 +1,7 @@
 {
+  "typescript.preferences.autoImportSpecifierExcludeRegexes": [
+    "^@mui/[^/]+$"
+  ],
   "eslint.useFlatConfig": true,
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "eslint.workingDirectories": [
