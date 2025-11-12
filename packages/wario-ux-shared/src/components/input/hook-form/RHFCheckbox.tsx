@@ -10,6 +10,8 @@ import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 import type { FormLabelProps } from '@mui/material/FormLabel';
 import FormLabel from '@mui/material/FormLabel';
 
+import { spreadSx } from '@/common/SxSpreadUtils';
+
 import { HelperText } from './HelpText';
 
 // ----------------------------------------------------------------------
@@ -57,8 +59,7 @@ export function RHFCheckbox({
                 }}
               />
             }
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            sx={[{ mx: 0 }, ...(Array.isArray(sx) ? sx : [sx])]}
+            sx={[{ mx: 0 }, ...spreadSx(sx)]}
             {...other}
           />
           <HelperText
@@ -142,10 +143,7 @@ export function RHFMultiCheckbox({
               {...slotProps?.formLabel}
               sx={[
                 { mb: 1, typography: 'body2' },
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                ...(Array.isArray(slotProps?.formLabel?.sx)
-                  ? slotProps.formLabel.sx
-                  : [slotProps?.formLabel?.sx]),
+                ...spreadSx(slotProps?.formLabel?.sx)
               ]}
             >
               {label}

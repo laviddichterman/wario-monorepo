@@ -2,6 +2,7 @@ export * from '@/common/axios';
 export * from '@/common/DateFnsAdapter';
 export { PHONE_METADATA } from '@/common/phone-metadata';
 export * from '@/common/shared';
+export * from '@/common/SxSpreadUtils';
 export * from '@/common/validation';
 export * from '@/components/input/CheckedNumericTextInput';
 export * from '@/components/input/hook-form';

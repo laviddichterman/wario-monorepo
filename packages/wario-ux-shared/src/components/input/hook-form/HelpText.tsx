@@ -1,6 +1,8 @@
 import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 import FormHelperText from '@mui/material/FormHelperText';
 
+import { spreadSx } from '@/common/SxSpreadUtils';
+
 // ----------------------------------------------------------------------
 
 export type HelperTextProps = FormHelperTextProps & {
@@ -25,8 +27,7 @@ export function HelperText({
   return (
     <FormHelperText
       error={!!errorMessage}
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      sx={[{ mx: disableGutters ? 0 : 1.5 }, ...(Array.isArray(sx) ? sx : [sx])]}
+      sx={[{ mx: disableGutters ? 0 : 1.5 }, ...spreadSx(sx)]}
       {...other}
     >
       {errorMessage || helperText}
