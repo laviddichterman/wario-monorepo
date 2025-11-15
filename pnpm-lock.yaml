@@ -21,8 +21,8 @@ importers:
         specifier: ^2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.46.4(eslint@9.39.1)(typescript@5.9.3))(eslint@9.39.1)
       eslint-plugin-package-json:
-        specifier: ^0.65.3
-        version: 0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-perfectionist:
         specifier: ^4.15.1
         version: 4.15.1(eslint@9.39.1)(typescript@5.9.3)
@@ -105,6 +105,9 @@ importers:
       eslint-config-prettier:
         specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.1)
+      eslint-plugin-package-json:
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-prettier:
         specifier: ^5.5.4
         version: 5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.6.2)
@@ -235,6 +238,9 @@ importers:
       eslint:
         specifier: ^9.39.1
         version: 9.39.1
+      eslint-plugin-package-json:
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -305,6 +311,9 @@ importers:
       eslint:
         specifier: ^9.39.1
         version: 9.39.1
+      eslint-plugin-package-json:
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -412,8 +421,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       eslint-plugin-package-json:
-        specifier: ^0.65.3
-        version: 0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -554,8 +563,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       eslint-plugin-package-json:
-        specifier: ^0.65.3
-        version: 0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -676,6 +685,9 @@ importers:
       i18next-resources-to-backend:
         specifier: ^1.2.1
         version: 1.2.1
+      jwt-decode:
+        specifier: 4.0.0
+        version: 4.0.0
       motion:
         specifier: ^12.23.24
         version: 12.23.24(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -764,6 +776,9 @@ importers:
       eslint:
         specifier: ^9.39.1
         version: 9.39.1
+      eslint-plugin-package-json:
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -829,8 +844,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       eslint-plugin-package-json:
-        specifier: ^0.65.3
-        version: 0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -887,8 +902,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       eslint-plugin-package-json:
-        specifier: ^0.65.3
-        version: 0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       jest:
         specifier: 30.2.0
         version: 30.2.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.15.2)(@types/node@24.10.1)(typescript@5.9.3))
@@ -1008,8 +1023,8 @@ importers:
         specifier: ^9.39.1
         version: 9.39.1
       eslint-plugin-package-json:
-        specifier: ^0.65.3
-        version: 0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
+        specifier: ^0.79.0
+        version: 0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-react-hooks:
         specifier: ^7.0.1
         version: 7.0.1(eslint@9.39.1)
@@ -4007,8 +4022,8 @@ packages:
       '@typescript-eslint/parser':
         optional: true
 
-  eslint-plugin-package-json@0.65.3:
-    resolution: {integrity: sha512-G/dHJiAKf/CFxEOyCYb2IfVOu47Ca9RFyyX8jwdR+mkK83/QLuAKdcWpgx+diFxFLdQHXE1Hnas/YB4IjKjZhg==}
+  eslint-plugin-package-json@0.79.0:
+    resolution: {integrity: sha512-SoPKPcCPslzOBrD0wgHMazNG76sLvWoULwViBYr6a3b02F3XPOY1tGzaScUGn3EjapdmGmkohyKB1zixQtCVxA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       eslint: '>=8.0.0'
@@ -4977,6 +4992,10 @@ packages:
   jszip@3.10.1:
     resolution: {integrity: sha512-xXDvecyTpGLrqFrvkrUSoxxfJI5AH7U8zxxtVclpsUtMCq4JQ290LY8AW5c7Ggnr/Y/oK+bQMbqK2qmtk3pN4g==}
 
+  jwt-decode@4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
+
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -5409,8 +5428,8 @@ packages:
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
 
-  package-json-validator@0.46.0:
-    resolution: {integrity: sha512-A3SkUv6QWUrjFpKjcckgUJIrBMoPPlsyQG74qNBYwCo2fjPQA9Ydph/KKvBJAUdSEXiSPT0kY/7w2xyMouSsNQ==}
+  package-json-validator@0.58.0:
+    resolution: {integrity: sha512-2l6UmK6eV6YcHhSu9RzxUY3Tve/MyqNOL7+1vTPRe8f2RdxT3L/sw2tlMNJEurwAT5D1frGbqbo0GPjb+uf9RQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
@@ -10048,7 +10067,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-package-json@0.65.3(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1):
+  eslint-plugin-package-json@0.79.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1):
     dependencies:
       '@altano/repository-tools': 2.0.1
       change-case: 5.4.4
@@ -10057,7 +10076,7 @@ snapshots:
       eslint: 9.39.1
       eslint-fix-utils: 0.4.0(@types/estree@1.0.8)(eslint@9.39.1)
       jsonc-eslint-parser: 2.4.1
-      package-json-validator: 0.46.0
+      package-json-validator: 0.58.0
       semver: 7.7.3
       sort-object-keys: 2.0.1
       sort-package-json: 3.4.0
@@ -11296,6 +11315,8 @@ snapshots:
       readable-stream: 2.3.8
       setimmediate: 1.0.5
 
+  jwt-decode@4.0.0: {}
+
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -11687,10 +11708,11 @@ snapshots:
 
   package-json-from-dist@1.0.1: {}
 
-  package-json-validator@0.46.0:
+  package-json-validator@0.58.0:
     dependencies:
       semver: 7.7.3
       validate-npm-package-license: 3.0.4
+      validate-npm-package-name: 7.0.0
       yargs: 18.0.0
 
   package-manager-detector@0.2.11:
