@@ -9,6 +9,8 @@ import type { PickersTextFieldProps } from '@mui/x-date-pickers/PickersTextField
 import type { TimePickerProps } from '@mui/x-date-pickers/TimePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 
+import { normalizeSlotProps } from '@/common/SxSpreadUtils';
+
 // ----------------------------------------------------------------------
 
 type DateInput = Date | string | number | null | undefined;
@@ -47,13 +49,12 @@ export function RHFDatePicker({ name, slotProps, ...other }: PickerProps<DatePic
             }
 
             const parsedValue = new Date(newValue);
-            field.onChange(isValid(parsedValue) ? formatDate(parsedValue, 'yyyy-MM-dd') : newValue);
+            field.onChange(isValid(parsedValue) ? formatDate(parsedValue, 'yyyy-MM-dd HH:mm') : newValue);
           }}
           slotProps={{
             ...slotProps,
             textField: {
-              // eslint-disable-next-line @typescript-eslint/no-misused-spread
-              ...slotProps?.textField,
+              ...normalizeSlotProps(slotProps?.textField),
               error: !!error,
               helperText: error?.message ?? slotProps?.textField?.helperText,
             },
@@ -90,8 +91,7 @@ export function RHFTimePicker({ name, slotProps, ...other }: PickerProps<TimePic
           slotProps={{
             ...slotProps,
             textField: {
-              // eslint-disable-next-line @typescript-eslint/no-misused-spread
-              ...slotProps?.textField,
+              ...normalizeSlotProps(slotProps?.textField),
               error: !!error,
               helperText: error?.message ?? slotProps?.textField?.helperText,
             },
@@ -127,8 +127,7 @@ export function RHFDateTimePicker({ name, slotProps, ...other }: PickerProps<Dat
           slotProps={{
             ...slotProps,
             textField: {
-              // eslint-disable-next-line @typescript-eslint/no-misused-spread
-              ...slotProps?.textField,
+              ...normalizeSlotProps(slotProps?.textField),
               error: !!error,
               helperText: error?.message ?? slotProps?.textField?.helperText,
             },

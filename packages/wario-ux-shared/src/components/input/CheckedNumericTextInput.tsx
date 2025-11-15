@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from 'react';
 
-import { type TextFieldProps } from '@mui/material/TextField';
+import { type TextFieldProps, type TextFieldVariants } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 
 import { type DistributiveOmit, type InputNumberValue, type NumberTransformPropsAllowEmpty, type NumberTransformPropsNoEmpty, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
 
-export type CheckedNumericInputProps = DistributiveOmit<TextFieldProps, 'value' | 'onChange' | 'onBlur'> & {
+import { normalizeSlotProps } from '@/common/SxSpreadUtils';
+
+export type CheckedNumericInputProps<Variant extends TextFieldVariants = TextFieldVariants> = DistributiveOmit<TextFieldProps<Variant>, 'value' | 'onChange' | 'onBlur'> & {
   value: InputNumberValue;
   step?: number;
   inputMode: 'numeric' | 'decimal' | 'text';
   pattern?: string;
-
 } & ({
   onChange: (value: number | "") => void;
   numberProps: NumberTransformPropsAllowEmpty;
 } | { onChange: (value: number) => void; numberProps: NumberTransformPropsNoEmpty; });
 
-export function CheckedNumericInput({ onChange, step, pattern, inputMode, value, numberProps, ...other }: CheckedNumericInputProps) {
+export function CheckedNumericInput<Variant extends TextFieldVariants = TextFieldVariants>({ onChange, step, pattern, inputMode, value, numberProps, ...other }: CheckedNumericInputProps<Variant>) {
   const [inputText, setInputText] = useState(numberProps.formatFunction(value));
   const [dirty, setDirty] = useState(false);
   // Keep local input text in sync with value prop changes
@@ -45,8 +46,12 @@ export function CheckedNumericInput({ onChange, step, pattern, inputMode, value,
         onChange(new_val.value);
         setDirty(false);
       }}
-      // eslint-disable-next-line @typescript-eslint/no-misused-spread
-      slotProps={{ ...other.slotProps, input: { inputMode }, htmlInput: { step: step, pattern: pattern, inputMode: inputMode, min: numberProps.min, max: numberProps.max, ...(other.slotProps?.htmlInput ?? {}) } }}
+
+      slotProps={{
+        ...other.slotProps,
+        input: { ...normalizeSlotProps(other.slotProps?.input), pattern: pattern, inputMode },
+        htmlInput: { step: step, pattern: pattern, min: numberProps.min, max: numberProps.max, ...normalizeSlotProps(other.slotProps?.htmlInput) }
+      }}
     />
   )
 }
