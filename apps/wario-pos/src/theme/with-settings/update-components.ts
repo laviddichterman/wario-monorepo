@@ -1,0 +1,31 @@
+import { cardClasses } from '@mui/material/Card';
+import type { Components, Theme } from '@mui/material/styles';
+
+import type { SettingsState } from '@/components/settings';
+
+// ----------------------------------------------------------------------
+
+export function applySettingsToComponents(settingsState?: SettingsState): {
+  components: Components<Theme>;
+} {
+  const MuiCssBaseline: Components<Theme>['MuiCssBaseline'] = {
+    styleOverrides: (theme: Theme) => ({
+      html: {
+        fontSize: settingsState?.fontSize,
+      },
+      body: {
+        [`& .${cardClasses.root}`]: {
+          ...(settingsState?.contrast === 'high' && {
+            '--card-shadow': theme.vars.customShadows.z1,
+          }),
+        },
+      },
+    }),
+  };
+
+  return {
+    components: {
+      MuiCssBaseline,
+    },
+  };
+}
