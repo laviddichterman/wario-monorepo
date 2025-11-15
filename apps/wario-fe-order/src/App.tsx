@@ -1,4 +1,3 @@
-import { domMax, LazyMotion } from "motion/react"
 import { SnackbarProvider } from 'notistack';
 import { useEffect, useLayoutEffect } from 'react';
 

@@ -9,8 +9,8 @@ import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
 import {
-  CURRENCY, type DistributiveOmit, formatDecimal, type IMoney,
-  MoneyToDisplayString, parseDecimal, type PurchaseStoreCreditRequest,
+  CURRENCY, type DistributiveOmit, type IMoney,
+  MoneyToDisplayString, type PurchaseStoreCreditRequest,
   type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces
 } from '@wcp/wario-shared';
 import {
@@ -174,8 +174,6 @@ export default function WStoreCreditPurchase() {
                   numberProps={{
                     allowEmpty: false,
                     defaultValue: creditAmount.amount / 100,
-                    formatFunction: (v) => formatDecimal(v, 2),
-                    parseFunction: parseDecimal,
                     min: 2,
                     max: 2000
                   }}
