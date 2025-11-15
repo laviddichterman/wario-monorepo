@@ -5,6 +5,8 @@ import Autocomplete from '@mui/material/Autocomplete';
 import type { TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 
+import { normalizeSlotProps } from '@/common/SxSpreadUtils';
+
 // ----------------------------------------------------------------------
 
 type Multiple = boolean | undefined;
@@ -61,8 +63,7 @@ export function RHFAutocomplete({
                 ...textField?.slotProps,
                 htmlInput: {
                   ...params.inputProps,
-                  // eslint-disable-next-line @typescript-eslint/no-misused-spread
-                  ...textField?.slotProps?.htmlInput,
+                  ...normalizeSlotProps(textField?.slotProps?.htmlInput),
                   autoComplete: 'new-password', // Disable autocomplete and autofill
                 },
               }}
@@ -72,8 +73,7 @@ export function RHFAutocomplete({
             ...otherSlotProps,
             chip: {
               size: 'small',
-              // eslint-disable-next-line @typescript-eslint/no-misused-spread
-              ...otherSlotProps.chip,
+              ...normalizeSlotProps(otherSlotProps.chip),
             },
           }}
           {...other}

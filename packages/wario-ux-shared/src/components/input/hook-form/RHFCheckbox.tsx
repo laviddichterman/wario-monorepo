@@ -10,7 +10,7 @@ import type { FormHelperTextProps } from '@mui/material/FormHelperText';
 import type { FormLabelProps } from '@mui/material/FormLabel';
 import FormLabel from '@mui/material/FormLabel';
 
-import { spreadSx } from '@/common/SxSpreadUtils';
+import { normalizeSlotProps, spreadSx } from '@/common/SxSpreadUtils';
 
 import { HelperText } from './HelpText';
 
@@ -53,8 +53,7 @@ export function RHFCheckbox({
                   input: {
                     id: `${name}-checkbox`,
                     ...(!label && { 'aria-label': `${name} checkbox` }),
-                    // eslint-disable-next-line @typescript-eslint/no-misused-spread
-                    ...slotProps?.checkbox?.slotProps?.input,
+                    ...normalizeSlotProps(slotProps?.checkbox?.slotProps?.input),
                   },
                 }}
               />
@@ -166,8 +165,8 @@ export function RHFMultiCheckbox({
                       input: {
                         id: `${option.label}-checkbox`,
                         ...(!option.label && { 'aria-label': `${option.label} checkbox` }),
-                        // eslint-disable-next-line @typescript-eslint/no-misused-spread
-                        ...slotProps?.checkbox?.slotProps?.input,
+
+                        ...normalizeSlotProps(slotProps?.checkbox?.slotProps?.input),
                       },
                     }}
                   />

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-spread */
 import { useMemo } from 'react';
 
 import type { BoxProps } from '@mui/material/Box';
@@ -8,6 +7,7 @@ import { styled } from '@mui/material/styles';
 import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared';
 import { ComputePotentialPrices, MoneyToDisplayString, PriceDisplay, WProductDisplayOptions } from '@wcp/wario-shared';
 
+import { spreadSx } from '@/common/SxSpreadUtils';
 import { Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '@/styled/styled';
 import { AdornedSxProps } from '@/styled/styled.constants';
 
@@ -48,10 +48,7 @@ function WProductComponent({ catalogSelectors, productMetadata, description, all
     return MoneyToDisplayString(productMetadata.price, false);
   }, [productInstance, productMetadata, displayContext, catalogSelectors]);
   return (
-    <Box component='div' {...other} sx={adornmentHTML ? {
-      ...sx,
-      ...AdornedSxProps
-    } : { ...sx }} >
+    <Box component='div' {...other} sx={adornmentHTML ? [...spreadSx(sx), AdornedSxProps] : sx} >
       {adornmentHTML ? <ProductAdornment dangerouslySetInnerHTML={{ __html: adornmentHTML }} /> : ""}
       {/* margin right is determined based on the length of the price text "from 21.00" takes up 6em, thus the priceText.length * .6 calculation */}
       <Box sx={{ position: "relative", ...(price ? { mr: `${(priceText.length * .6).toString()}em` } : {}) }}><ProductTitle sx={dots ? { bgcolor: "#fff" } : {}}>{productMetadata.name}</ProductTitle></Box>
