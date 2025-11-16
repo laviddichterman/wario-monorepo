@@ -1,10 +1,31 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router';
 
-createRoot(document.getElementById('root')!).render(
+import { ErrorBoundary } from '@/routes/components';
+import { routesSection } from '@/routes/sections';
+
+import App from '@/App';
+
+// ----------------------------------------------------------------------
+
+const router = createBrowserRouter([
+  {
+    children: routesSection,
+    Component: () => (
+      <App>
+        <Outlet />
+      </App>
+    ),
+    errorElement: <ErrorBoundary />,
+  },
+]);
+
+
+const root = createRoot(document.getElementById('root') as HTMLElement);
+
+root.render(
   <StrictMode>
-    <App />
-  </StrictMode>,
-)
+    <RouterProvider router={router} />
+  </StrictMode>
+);
