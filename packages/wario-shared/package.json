@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "date-fns": "^4.1.0",
-    "es-toolkit": "^1.41.0",
+    "es-toolkit": "^1.42.0",
     "rrule": "^2.8.1"
   },
   "devDependencies": {
@@ -43,7 +43,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
     "eslint": "^9.39.1",
-    "eslint-plugin-package-json": "^0.79.0",
+    "eslint-plugin-package-json": "^0.83.0",
     "jest": "30.2.0",
     "ts-jest": "^29.4.5",
     "tsup": "^8.5.1",
