@@ -1,10 +1,11 @@
 
 import { useEffect } from 'react';
-import { Provider as ReduxProvider } from 'react-redux';
 
-import { MotionLazy } from '@wcp/wario-ux-shared';
+import { MotionLazy, startConnection } from '@wcp/wario-ux-shared';
 
 import { usePathname } from '@/routes/hooks';
+
+import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 
 import { ProgressBar } from '@/components/progress-bar';
 import { defaultSettings, SettingsDrawer, SettingsProvider } from '@/components/settings';
@@ -14,7 +15,6 @@ import { AuthProvider as Auth0AuthProvider } from '@/auth/context/auth0';
 
 import { I18nProvider } from '@/locales/i18nProvider';
 import { LocalizationProvider } from '@/locales/localizationProvider';
-import { store } from '@/redux/store';
 import { themeConfig, ThemeProvider } from '@/theme';
 
 
@@ -23,30 +23,34 @@ type AppProps = {
 };
 
 export default function App({ children }: AppProps) {
+  const dispatch = useAppDispatch();
+  const socketIoState = useAppSelector((s) => s.ws.status);
+  useEffect(() => {
+    if (socketIoState === 'NONE') {
+      dispatch(startConnection());
+    }
+  }, [socketIoState, dispatch]);
   useScrollToTop();
   return (
-    <ReduxProvider store={store}>
-      <I18nProvider>
-        <Auth0AuthProvider>
-          <SettingsProvider defaultSettings={defaultSettings}>
-            <LocalizationProvider>
-              <ThemeProvider
-                noSsr
-                defaultMode={themeConfig.defaultMode}
-                modeStorageKey={themeConfig.modeStorageKey}
-              >
-                <MotionLazy>
-                  <Snackbar />
-                  <ProgressBar />
-                  <SettingsDrawer defaultSettings={defaultSettings} />
-                  {children}
-                </MotionLazy>
-              </ThemeProvider>
-            </LocalizationProvider>
-          </SettingsProvider>
-        </Auth0AuthProvider >
-      </I18nProvider >
-    </ReduxProvider>
+    <I18nProvider>
+      <Auth0AuthProvider>
+        <SettingsProvider defaultSettings={defaultSettings}>
+          <LocalizationProvider>
+            <ThemeProvider
+              defaultMode={themeConfig.defaultMode}
+              modeStorageKey={themeConfig.modeStorageKey}
+            >
+              <MotionLazy>
+                <Snackbar />
+                <ProgressBar />
+                <SettingsDrawer defaultSettings={defaultSettings} />
+                {children}
+              </MotionLazy>
+            </ThemeProvider>
+          </LocalizationProvider>
+        </SettingsProvider>
+      </Auth0AuthProvider >
+    </I18nProvider >
   );
 }
 

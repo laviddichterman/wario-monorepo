@@ -1,11 +1,13 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider as ReduxProvider } from 'react-redux';
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router';
 
 import { ErrorBoundary } from '@/routes/components';
 import { routesSection } from '@/routes/sections';
 
 import App from '@/App';
+import { store } from '@/redux/store';
 
 // ----------------------------------------------------------------------
 
@@ -26,6 +28,8 @@ const root = createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <ReduxProvider store={store}>
+      <RouterProvider router={router} />
+    </ReduxProvider>
   </StrictMode>
 );

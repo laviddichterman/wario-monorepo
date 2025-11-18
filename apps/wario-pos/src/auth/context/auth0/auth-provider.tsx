@@ -5,9 +5,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import axios from '@/utils/axios';
 
+import type { UserType } from '@/auth/types';
+
 import { CONFIG } from '@/config';
 
-import { AuthContext } from '../AuthContext';
+import { AuthContext } from '../auth-context';
 
 // ----------------------------------------------------------------------
 type AccessTokenClaims = {
@@ -64,7 +66,7 @@ export function AuthProvider({ children }: Props) {
 // ----------------------------------------------------------------------
 
 function AuthProviderContainer({ children }: Props) {
-  const { user, isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { user, isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0<UserType>();
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [tokenClaims, setTokenClaims] = useState<AccessTokenClaims | null>(null);
@@ -107,24 +109,24 @@ function AuthProviderContainer({ children }: Props) {
 
   // Helper functions to check scopes/permissions
   const checkHasScopes = useCallback(
-    (requiredScopes: string[], requireAll = true) => {
-      if (requiredScopes.length === 0) return true;
+    (requiredScopes: string[] | string, requireAll = true) => {
+      if (Array.isArray(requiredScopes) && requiredScopes.length === 0) return true;
       if (!tokenClaims) return false;
-      return hasScopes(tokenClaims, requiredScopes, !requireAll);
+      return hasScopes(tokenClaims, Array.isArray(requiredScopes) ? requiredScopes : [requiredScopes], !requireAll);
     },
     [tokenClaims]
   );
 
   const checkHasPermissions = useCallback(
-    (requiredPermissions: string[], requireAll = true) => {
-      if (requiredPermissions.length === 0) return true;
+    (requiredPermissions: string[] | string, requireAll = true) => {
+      if (Array.isArray(requiredPermissions) && requiredPermissions.length === 0) return true;
       if (!tokenClaims) return false;
-
+      const perms = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];
       const granted = new Set(tokenClaims.permissions ?? []);
       if (requireAll) {
-        return requiredPermissions.every((perm) => granted.has(perm));
+        return perms.every((perm) => granted.has(perm));
       }
-      return requiredPermissions.some((perm) => granted.has(perm));
+      return perms.some((perm) => granted.has(perm));
     },
     [tokenClaims]
   );
@@ -132,16 +134,15 @@ function AuthProviderContainer({ children }: Props) {
   const checkAuthenticated = isAuthenticated ? 'authenticated' : 'unauthenticated';
 
   const status = isLoading ? 'loading' : checkAuthenticated;
-
   const memoizedValue = useMemo(
     () => ({
       user: user
         ? Object.assign(user, {
           id: user.sub,
           accessToken,
-          displayName: user.name,
+          display_name: user.name,
         })
-        : null,
+        : { id: 'unknown', email: 'unknown', name: 'unknown', display_name: 'unknown' },
       loading: status === 'loading',
       authenticated: status === 'authenticated',
       unauthenticated: status === 'unauthenticated',

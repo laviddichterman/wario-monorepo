@@ -19,4 +19,4 @@ export function SignInButton({ sx, ...other }: ButtonProps) {
       Sign in
     </Button>
   );
-}
+};

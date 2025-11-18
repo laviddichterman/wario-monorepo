@@ -29,7 +29,7 @@ export function ThemeProvider({ themeOverrides, children, ...other }: ThemeProvi
   return (
     <ThemeVarsProvider disableTransitionOnChange theme={theme} {...other}>
       <CssBaseline />
-      <Rtl direction={(settings.state.direction === 'rtl' ? 'rtl' : 'ltr')}>{children}</Rtl>
+      <Rtl direction={settings.state.direction}>{children}</Rtl>
     </ThemeVarsProvider>
   );
 }

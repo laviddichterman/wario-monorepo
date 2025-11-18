@@ -41,4 +41,4 @@ export function SignOutButton({ onClose, sx, ...other }: Props) {
       Logout
     </Button>
   );
-}
+};

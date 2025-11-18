@@ -1,4 +1,13 @@
-export type UserType = Record<string, unknown> | null; // TODO: Define a proper user type based on application's needs
+export type UserType = {
+  id: string;
+  email: string;
+  name: string;
+  family_name?: string;
+  display_name: string;
+  picture?: string;
+  nickname?: string;
+  [key: string]: unknown;
+};
 
 export type AuthState = {
   user: UserType;
@@ -13,6 +22,6 @@ export type AuthContextValue = {
   scopes: string[];
   permissions: string[];
   checkUserSession?: () => Promise<void>;
-  hasScopes: (requiredScopes: string[], requireAll?: boolean) => boolean;
-  hasPermissions: (requiredPermissions: string[], requireAll?: boolean) => boolean;
+  hasScopes: (requiredScopes: string[] | string, requireAll?: boolean) => boolean;
+  hasPermissions: (requiredPermissions: string[] | string, requireAll?: boolean) => boolean;
 };

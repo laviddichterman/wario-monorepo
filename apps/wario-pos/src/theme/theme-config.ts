@@ -1,7 +1,7 @@
 import type { CommonColors, Direction, Theme, ThemeProviderProps } from '@mui/material/styles';
 
 import type { PaletteColorKey, PaletteColorNoChannels } from './core/palette';
-import type { ThemeCssVariables } from './types';
+import type { ThemeColorScheme, ThemeCssVariables } from './types';
 
 // ----------------------------------------------------------------------
 
@@ -9,7 +9,7 @@ export type ThemeConfig = {
   direction: Direction;
   classesPrefix: string;
   cssVariables: ThemeCssVariables;
-  defaultMode: ThemeProviderProps<Theme>['defaultMode'];
+  defaultMode: ThemeColorScheme;
   modeStorageKey: ThemeProviderProps<Theme>['modeStorageKey'];
   fontFamily: Record<'primary' | 'secondary', string>;
   palette: Record<PaletteColorKey, PaletteColorNoChannels> & {
@@ -24,7 +24,7 @@ export const themeConfig: ThemeConfig = {
   /** **************************************
    * Base
    *************************************** */
-  defaultMode: 'light',
+  defaultMode: 'dark',
   modeStorageKey: 'theme-mode',
   direction: 'ltr',
   classesPrefix: 'minimal',
