@@ -73,6 +73,7 @@
     "@mui/x-license": "^8.18.0",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^24.10.1",
+    "@types/nprogress": "^0.2.3",
     "@types/papaparse": "^5.5.0",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
