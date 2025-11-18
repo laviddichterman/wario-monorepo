@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 
-import { getCurrentLang } from '@/locales/localesConfig';
+import { getCurrentLang } from '@/locales/locales-config';
 
 // ----------------------------------------------------------------------
 

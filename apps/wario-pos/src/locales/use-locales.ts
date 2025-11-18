@@ -1,4 +1,3 @@
-import { setDefaultOptions } from 'date-fns';
 import type { Namespace } from 'i18next';
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,8 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useSettingsContext } from '@/components/settings';
 import { toast } from '@/components/snackbar';
 
-import type { LangCode } from './localesConfig';
-import { fallbackLng, getCurrentLang } from './localesConfig';
+import type { LangCode } from './locales-config';
+import { fallbackLng, getCurrentLang } from './locales-config';
 
 // ----------------------------------------------------------------------
 
@@ -26,19 +25,12 @@ export function useTranslate(namespace?: Namespace) {
     [i18n, settings]
   );
 
-
-  // is this needed? localization-provider now has a useEffect that might capture
-  const updateDateFnsLocale = useCallback((lang: LangCode) => {
-    const updatedLang = getCurrentLang(lang);
-    setDefaultOptions({ locale: updatedLang.adapterLocale });
-  }, []);
-
   const handleChangeLang = useCallback(
     async (lang: LangCode) => {
       try {
         const changeLangPromise = i18n.changeLanguage(lang);
 
-        void toast.promise(changeLangPromise, {
+        toast.promise(changeLangPromise, {
           loading: tMessages('languageSwitch.loading'),
           success: () => tMessages('languageSwitch.success'),
           error: () => tMessages('languageSwitch.error'),
@@ -47,12 +39,12 @@ export function useTranslate(namespace?: Namespace) {
         await changeLangPromise;
 
         updateDirection(lang);
-        updateDateFnsLocale(lang);
+        // updateDateFnsLocale(lang);
       } catch (error) {
         console.error(error);
       }
     },
-    [i18n, tMessages, updateDateFnsLocale, updateDirection]
+    [i18n, tMessages, updateDirection]
   );
 
   const handleResetLang = useCallback(() => {

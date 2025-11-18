@@ -5,8 +5,8 @@ import { initReactI18next, I18nextProvider as Provider } from 'react-i18next';
 
 import { getStorage } from '@/utils/local-storage';
 
-import type { LangCode } from './localesConfig';
-import { fallbackLng, i18nOptions, i18nResourceLoader, storageConfig } from './localesConfig';
+import type { LangCode } from './locales-config';
+import { fallbackLng, i18nOptions, i18nResourceLoader, storageConfig } from './locales-config';
 
 // ----------------------------------------------------------------------
 

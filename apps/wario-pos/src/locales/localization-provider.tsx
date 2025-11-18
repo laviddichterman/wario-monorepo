@@ -7,7 +7,7 @@ import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared';
 
 import { useAppSelector } from '@/hooks/useRedux';
 
-import { useTranslate } from './useLocales';
+import { useTranslate } from './use-locales';
 
 // ----------------------------------------------------------------------
 

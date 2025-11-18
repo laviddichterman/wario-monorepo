@@ -1,9 +1,9 @@
-export * from './i18nProvider';
+export * from './i18n-provider';
 
-export * from './localesConfig';
+export * from './locales-config';
 
-export * from './localizationProvider';
+export * from './localization-provider';
 
-export * from './useLocales';
+export * from './use-locales';
 
-export * from './utils/numberFormatLocale';
+export * from './utils/number-format-locale';
