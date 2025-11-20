@@ -1,9 +1,10 @@
-import type { EventInput } from '@fullcalendar/core';
 import { configureStore, createSelector } from '@reduxjs/toolkit';
 
 import type { CoreCartEntry, WCPProductV2Dto, WOrderInstance } from '@wcp/wario-shared';
 import { CreateProductWithMetadataFromV2Dto, DateTimeIntervalBuilder, EventTitleStringBuilder, RebuildAndSortCart, WDateUtils, WOrderStatus } from '@wcp/wario-shared';
 import { getCategoryEntryById, getFulfillmentById, getProductEntries, getProductInstanceById, lruMemoizeOptionsWithSize, SelectBaseProductNameByProductId, SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectParentProductEntryFromProductInstanceId, weakMapCreateSelector } from '@wcp/wario-ux-shared';
+
+import type { ICalendarEvent } from '@/components/calendar/types';
 
 import { rootReducer } from './rootReducer';
 import { getWOrderInstances } from './slices/OrdersSlice';
@@ -65,7 +66,7 @@ export const selectOrderAsEvent = weakMapCreateSelector(
   (s: RootState, order: WOrderInstance) => selectSelectedFulfillment(s, order).maxDuration,
   (_: RootState, order: WOrderInstance) => order,
   selectEventTitleStringForOrder,
-  (fulfillmentMaxDuration, order, eventTitle): EventInput => {
+  (fulfillmentMaxDuration, order, eventTitle): ICalendarEvent => {
     const dateTimeInterval = DateTimeIntervalBuilder(order.fulfillment, fulfillmentMaxDuration);
     return {
       id: order.id,
@@ -81,7 +82,7 @@ export const selectOrderAsEvent = weakMapCreateSelector(
 export const selectOrdersAsEvents = createSelector(
   (s: RootState) => s,
   (s: RootState) => getWOrderInstances(s.orders.orders),
-  (s, orders): EventInput[] => orders.filter(x => x.status !== WOrderStatus.CANCELED).map(x => selectOrderAsEvent(s, x)),
+  (s, orders) => orders.filter(x => x.status !== WOrderStatus.CANCELED).map(x => selectOrderAsEvent(s, x)),
   lruMemoizeOptionsWithSize(5)
 );
 
