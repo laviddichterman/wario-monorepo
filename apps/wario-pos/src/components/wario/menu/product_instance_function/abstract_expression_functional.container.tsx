@@ -70,9 +70,9 @@ const AbstractExpressionFunctionalComponent = ({
   </div>
 );
 
-let ConstLiteralFunctionalComponent: ({ value, setValue }: ValSetVal<IConstLiteralExpression>) => React.JSX.Element;
-let LogicalFunctionalComponent: ({ value, setValue }: ValSetVal<ILogicalExpression<IAbstractExpression>) => React.JSX.Element;
-let IfElseFunctionalComponent: ({ value, setValue }: ValSetVal<IIfElseExpression<IAbstractExpression>) => React.JSX.Element;
+let ConstLiteralFunctionalComponent: ({ value, setValue }: ValSetVal<IConstLiteralExpression | null>) => React.JSX.Element;
+let LogicalFunctionalComponent: ({ value, setValue }: ValSetVal<ILogicalExpression<IAbstractExpression> | null>) => React.JSX.Element;
+let IfElseFunctionalComponent: ({ value, setValue }: ValSetVal<IIfElseExpression<IAbstractExpression> | null>) => React.JSX.Element;
 let ModifierPlacementFunctionalComponent: ({ value, setValue }: ValSetVal<IModifierPlacementExpression | null>) => React.JSX.Element;
 let HasAnyOfModifierTypeFunctionalComponent: ({ value, setValue }: ValSetVal<IHasAnyOfModifierExpression | null>) => React.JSX.Element;
 let ProductMetadataFunctionalComponent: ({ value, setValue }: ValSetVal<ProductMetadataExpression | null>) => React.JSX.Element;
