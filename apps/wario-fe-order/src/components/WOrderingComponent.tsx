@@ -62,10 +62,10 @@ export default function WOrderingComponent() {
   const theme = useTheme();
   const useStepper = useMediaQuery(theme.breakpoints.up('md'));
   const cardTokenizeResponseReceived = (props: Square.TokenResult, _verifiedBuyer?: Square.VerifyBuyerResponseDetails | null) => {
-    if (props.token) {
+    if (props.status === 'OK') {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       dispatch(submitToWario(props.token));
-    } else if (props.errors) {
+    } else if (props.status === "Error") {
       dispatch(setSquareTokenizationErrors(props.errors));
     }
   }

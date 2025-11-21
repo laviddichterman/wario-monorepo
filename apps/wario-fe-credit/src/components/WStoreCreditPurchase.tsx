@@ -101,7 +101,7 @@ export default function WStoreCreditPurchase() {
     const formValues = { ...getValues() };
     if (purchaseStatus !== 'PROCESSING') {
       setPurchaseStatus('PROCESSING');
-      if (props.token) {
+      if (props.status === 'OK') {
         const typedBody: PurchaseStoreCreditRequest & { nonce: string } = {
           ...formValues,
           nonce: props.token,
@@ -124,7 +124,7 @@ export default function WStoreCreditPurchase() {
                 setPaymentErrors(error.error.map(((x: { detail: string }) => x.detail)));
               })
           });
-      } else if (props.errors) {
+      } else if (props.status === "Error") {
         setPaymentErrors(props.errors.map(x => x.message))
         setPurchaseStatus('FAILED_UNKNOWN');
       }
