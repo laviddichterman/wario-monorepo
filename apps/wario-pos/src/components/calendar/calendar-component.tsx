@@ -1,4 +1,3 @@
-import { type EventClickArg } from '@fullcalendar/core';
 import esLocale from '@fullcalendar/core/locales/es';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -7,6 +6,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 // import { startTransition } from 'react';
 import timelinePlugin from '@fullcalendar/timeline';
 
+import { DialogTitle } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -29,7 +29,7 @@ import { CalendarFiltersResult } from './calendar-filters-result';
 import { CalendarToolbar } from './calendar-toolbar';
 import { useCalendar } from './hooks/use-calendar';
 import { CalendarRoot } from './styles';
-import type { ICalendarEvent, ICalendarFilters } from './types';
+import type { ICalendarEvent, ICalendarFilters, ICalendarView } from './types';
 
 // ----------------------------------------------------------------------
 
@@ -37,16 +37,18 @@ export type CalendarProps = {
   events: ICalendarEvent[];
   eventsLoading: boolean;
   initialDate?: Date | string | number;
-  setSelectedEventId: (id: EventClickArg) => void;
+  initialView?: ICalendarView;
   eventById: (id: string) => ICalendarEvent | undefined;
-  selectOrderById: (id: string) => void;
-
+  CalendarForm: React.ComponentType<{
+    currentEvent: ICalendarEvent | null;
+    onClose: () => void;
+  }>;
   updateEvent: (event: Partial<ICalendarEvent>) => void;
 };
 
-export function CalendarComponent({ events, eventsLoading, initialDate }: CalendarProps) {
+export function CalendarComponent({ events, eventsLoading, initialDate, initialView, CalendarForm, eventById }: CalendarProps) {
   const theme = useTheme();
-
+  // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
   const openFilters = useBoolean();
 
   const filters = useSetState<ICalendarFilters>({ startDate: null, endDate: null });
@@ -72,10 +74,10 @@ export function CalendarComponent({ events, eventsLoading, initialDate }: Calend
     onCloseForm,
     /********/
     // selectedRange,
-    // selectedEventId,
+    selectedEventId,
     /********/
     onClickEventInFilters,
-  } = useCalendar();
+  } = useCalendar({ defaultDesktopView: initialView, defaultMobileView: initialView });
   const { currentLang } = useTranslate();
 
 
@@ -97,7 +99,7 @@ export function CalendarComponent({ events, eventsLoading, initialDate }: Calend
   const renderCreateFormDialog = () => (
     <Dialog
       fullWidth
-      maxWidth="xs"
+      // maxWidth="xs"
       open={openForm}
       onClose={onCloseForm}
       transitionDuration={{
@@ -115,15 +117,14 @@ export function CalendarComponent({ events, eventsLoading, initialDate }: Calend
         },
       }}
     >
-      {/* <DialogTitle sx={{ minHeight: 76 }}>
-        {openForm && <> {currentEvent?.id ? 'Edit' : 'Add'} event</>}
-      </DialogTitle> */}
+      <DialogTitle sx={{ minHeight: 76 }}>
+        {openForm && <> {eventById(selectedEventId)?.title}  event</>}
+      </DialogTitle>
 
-      {/* <CalendarForm
-        currentEvent={currentEvent}
-        colorOptions={CALENDAR_COLOR_OPTIONS}
+      <CalendarForm
+        currentEvent={eventById(selectedEventId) ?? null}
         onClose={onCloseForm}
-      /> */}
+      />
     </Dialog>
   );
 
