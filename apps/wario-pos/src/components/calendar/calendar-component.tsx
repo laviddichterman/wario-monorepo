@@ -180,6 +180,7 @@ export function CalendarComponent({ events, eventsLoading, initialDate, initialV
             onChangeView={onChangeView}
             onDateNavigation={onDateNavigation}
             onOpenFilters={openFilters.onTrue}
+            filterProps={{ filters: filters, totalResults: dataFiltered.length, sx: { mb: { xs: 3, md: 5 } } }}
             viewOptions={[
               { value: 'dayGridMonth', label: 'Month', icon: 'mingcute:calendar-month-line' },
               { value: 'timeGridWeek', label: 'Week', icon: 'mingcute:calendar-week-line' },
