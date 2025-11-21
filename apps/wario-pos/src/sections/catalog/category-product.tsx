@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { AddBox } from '@mui/icons-material';
+import AddBox from '@mui/icons-material/AddBox';
 import { FormControlLabel, IconButton, Switch, Tooltip } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import type { SxProps, Theme } from '@mui/material/styles';
@@ -10,11 +10,10 @@ import { paths } from '@/routes/paths';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
-import ProductTableContainer from '@/components/wario/menu/product/product_table.container';
+import CategoryTableContainer from '@/components/wario/menu/category/category_table.container';
 
 import { DashboardContent } from '@/layouts/dashboard';
 import { openCategoryInterstitial, setHideDisabled } from '@/redux/slices/CatalogSlice';
-import { selectProductIdsAfterDisableFilter } from '@/redux/store';
 
 // ----------------------------------------------------------------------
 
@@ -25,8 +24,7 @@ type Props = {
 };
 
 
-export function CatalogProductView(_props: Props) {
-  const productsAfterDisableFilter = useAppSelector(selectProductIdsAfterDisableFilter);
+export function CatalogCategoryProductView(_props: Props) {
   const dispatch = useAppDispatch();
   const hideDisabled = useAppSelector(s => s.catalog.hideDisabledProducts);
   const toolbarActions = useMemo(() => [
@@ -47,15 +45,15 @@ export function CatalogProductView(_props: Props) {
       elt: <Tooltip key="AddNew" title="Add new..."><IconButton onClick={() => dispatch(openCategoryInterstitial())}><AddBox /></IconButton></Tooltip>
     }
   ], [dispatch, hideDisabled]);
+
   return (
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="Products"
+          heading="Category Product Tree"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
-            { name: 'Catalog', href: paths.dashboard.catalog.root },
-            { name: 'Products' },
+            { name: 'Catalog Category Tree', href: paths.dashboard.catalog.root },
           ]}
           sx={{ mb: { xs: 3, md: 5 } }}
         />
@@ -63,15 +61,7 @@ export function CatalogProductView(_props: Props) {
 
         <Grid container spacing={2}>
           <Grid size={12}>
-
-            <ProductTableContainer
-              title="Product Table View"
-              disableToolbar={false}
-              pagination={true}
-              toolbarActions={toolbarActions}
-              product_ids={productsAfterDisableFilter}
-              setPanelsExpandedSize={() => (0)} // no need for the panels expanded size here... i don't think
-            />
+            <CategoryTableContainer toolbarActions={toolbarActions} />
           </Grid>
         </Grid>
       </DashboardContent>

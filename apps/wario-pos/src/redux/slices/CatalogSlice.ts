@@ -13,7 +13,6 @@ export interface DetailPanelSize { id: GridRowId; size: number; };
 const CatalogDetailPanelSizeAdapter = createEntityAdapter<DetailPanelSize>();
 export interface CatalogManagerState {
   dialogueState: CatalogDialog;
-  enableCategoryTreeView: boolean;
   hideDisabledProducts: boolean;
   selectedCategoryId: string | null;
   selectedProductClassId: string | null;
@@ -25,7 +24,6 @@ export interface CatalogManagerState {
 
 const initialState: CatalogManagerState = {
   dialogueState: 'NONE',
-  enableCategoryTreeView: true,
   selectedCategoryId: null,
   selectedModifierOptionId: null,
   selectedModifierTypeId: null,
@@ -43,9 +41,6 @@ const CatalogManagerSlice = createSlice({
   reducers: {
     setHideDisabled(state, action: PayloadAction<boolean>) {
       state.hideDisabledProducts = action.payload;
-    },
-    setEnableCategoryTreeView(state, action: PayloadAction<boolean>) {
-      state.enableCategoryTreeView = action.payload;
     },
     closeDialogue(state) {
       state.dialogueState = 'NONE';
@@ -164,7 +159,7 @@ const CatalogManagerSlice = createSlice({
 
 export const {
   setDetailPanelSizeForRowId,
-  setHideDisabled, setEnableCategoryTreeView,
+  setHideDisabled,
   closeDialogue, openCategoryInterstitial, openCategoryAdd, openCategoryDelete, openCategoryEdit,
   openProductClassAdd, openProductClassDelete, openProductClassEdit, openProductClassCopy, openProductClassDisable, openProductClassDisableUntilEod, openProductClassEnable,
   openHierarchicalProductImport, openProductImport,

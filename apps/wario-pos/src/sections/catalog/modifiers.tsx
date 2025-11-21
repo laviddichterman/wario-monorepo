@@ -1,5 +1,4 @@
-import Grid from 'node_modules/@mui/material/esm/Grid/Grid';
-
+import Grid from '@mui/material/Grid';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 import { paths } from '@/routes/paths';
@@ -23,7 +22,7 @@ export function CatalogModifierView(_props: Props) {
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="List"
+          heading="Modifiers"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
             { name: 'Catalog', href: paths.dashboard.catalog.root },

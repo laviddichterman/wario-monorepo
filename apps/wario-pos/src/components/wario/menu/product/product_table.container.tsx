@@ -10,6 +10,7 @@ import { GridActionsCellItem, useGridApiRef } from "@mui/x-data-grid-premium";
 import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared';
 import { getModifierTypeEntryById, getProductEntryById, getProductInstanceById, weakMapCreateSelector } from "@wcp/wario-ux-shared";
 
+import { useAuthContext } from '@/hooks/useAuthContext';
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 
 import { openProductClassCopy, openProductClassDelete, openProductClassDisable, openProductClassDisableUntilEod, openProductClassEdit, openProductClassEnable, openProductInstanceAdd } from "@/redux/slices/CatalogSlice";
@@ -72,7 +73,7 @@ const selectProductPrinterName = weakMapCreateSelector(
   (s: RootState, pid: string) => getProductEntryById(s.ws.products, pid),
   (s: RootState, _: string) => s.printerGroup.printerGroups,
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  (product, printerGroups) => product.product.printerGroup ? getPrinterGroupById(printerGroups, product.product.printerGroup).name ?? "" : ""
+  (product, printerGroups) => product.product.printerGroup ? getPrinterGroupById(printerGroups, product.product.printerGroup)?.name ?? product.product.printerGroup : ""
 );
 
 const ProductPrinterGroupName = (params: GridRenderCellParams<RowType>) => {
@@ -111,6 +112,7 @@ const ProductTableContainer = ({
   title,
   toolbarActions
 }: ProductTableContainerProps) => {
+  const { hasScopes } = useAuthContext();
   const dispatch = useAppDispatch();
   const productIdRows = useAppSelector(s => selectRows(s, product_ids));
   // const productInstancesSizeByPro  ductId = useAppSelector(s => (pid: string) => getProductEntryById(s.ws.products, pid).instances.length);
@@ -185,20 +187,20 @@ const ProductTableContainer = ({
               onClick={() => dispatch(openProductClassCopy(params.row.id))}
               showInMenu
             />);
-            const DELETE_PRODUCT = (<GridActionsCellItem
+            const DELETE_PRODUCT = hasScopes('delete:catalog') ? [(<GridActionsCellItem
               icon={<Tooltip title={`Delete ${params.row.name}`}><DeleteOutline /></Tooltip>}
               label={`Delete ${params.row.name}`}
               onClick={() => dispatch(openProductClassDelete(params.row.id))}
               showInMenu
-            />);
+            />)] : [];
             // we pass null instead of actually passing the availability because we want to make a decision based on just the .disabled value
-            return params.row.disableData.enable !== DISABLE_REASON.ENABLED ? [ADD_PRODUCT_INSTANCE, EDIT_PRODUCT, ENABLE_PRODUCT, COPY_PRODUCT, DELETE_PRODUCT] : [ADD_PRODUCT_INSTANCE, EDIT_PRODUCT, DISABLE_PRODUCT_UNTIL_EOD, DISABLE_PRODUCT, COPY_PRODUCT, DELETE_PRODUCT];
+            return params.row.disableData.enable !== DISABLE_REASON.ENABLED ? [ADD_PRODUCT_INSTANCE, EDIT_PRODUCT, ENABLE_PRODUCT, COPY_PRODUCT, ...DELETE_PRODUCT] : [ADD_PRODUCT_INSTANCE, EDIT_PRODUCT, DISABLE_PRODUCT_UNTIL_EOD, DISABLE_PRODUCT, COPY_PRODUCT, ...DELETE_PRODUCT];
           }
         },
         { headerName: "Name", field: "name", flex: 6 },
         { headerName: "Price", field: "product.price.amount", renderCell: (params) => <ProductPrice {...params} /> },
         { headerName: "Modifiers", field: "product.modifiers", renderCell: (params) => <ProductModifierList {...params} />, flex: 3 },
-        { headerName: "Printer", field: "product.printerGroup", renderCell: (params) => <ProductPrinterGroupName {...params} />, flex: 3 },
+        ...(hasScopes('write:order') ? [{ headerName: "Printer", field: "product.printerGroup", renderCell: (params: GridRenderCellParams) => <ProductPrinterGroupName {...params} />, flex: 3 }] : []),
         { headerName: "Disabled", field: "disableData", valueGetter: (v: ReturnType<typeof DisableDataCheck>) => DisableDataToString(v), flex: 1 },
         ]}
         rows={productIdRows}

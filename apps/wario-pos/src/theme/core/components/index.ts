@@ -22,6 +22,7 @@ import { form } from './form';
 import { link } from './link';
 import { list } from './list';
 import { menu } from './menu';
+import { dataGrid } from './mui-x-data-grid';
 import { datePicker } from './mui-x-date-picker';
 import { pagination } from './pagination';
 import { paper } from './paper';
@@ -87,4 +88,5 @@ export const components: Components<Theme> = {
   ...toggleButton,
   // ➤➤ MUI X ➤➤
   ...datePicker,
+  ...dataGrid,
 };

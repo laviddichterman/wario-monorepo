@@ -4,9 +4,9 @@ import { Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import {
   DataGridPremium, type DataGridPremiumProps,
-  GridToolbarContainer,
   type GridToolbarProps,
-  GridToolbarQuickFilter,
+  QuickFilter,
+  Toolbar,
   type ToolbarPropsOverrides
 } from '@mui/x-data-grid-premium';
 
@@ -26,7 +26,7 @@ declare module '@mui/x-data-grid-premium' {
 const CustomToolbar = ({ showQuickFilter, quickFilterProps, title, actions = [] }: GridToolbarProps & ToolbarPropsOverrides) => {
   const actionSizeSum = actions.reduce((acc, x) => acc + x.size, 0);
   return (
-    <GridToolbarContainer >
+    <Toolbar >
       <Grid container sx={{ m: 'auto', width: '100%' }}>
         <Grid
           size={{
@@ -40,10 +40,10 @@ const CustomToolbar = ({ showQuickFilter, quickFilterProps, title, actions = [] 
           size={{
             xs: 12 - actionSizeSum,
             md: 6 - actionSizeSum
-          }}><GridToolbarQuickFilter {...quickFilterProps} /></Grid>}
+          }}><QuickFilter {...quickFilterProps} /></Grid>}
         {actions.map((action: ToolbarAction, idx: number) => (<Grid key={idx} size={action.size}>{action.elt}</Grid>))}
       </Grid>
-    </GridToolbarContainer>
+    </Toolbar>
   );
 }
 
@@ -61,23 +61,25 @@ export const TableWrapperComponent = ({
   toolbarActions = [],
   ...forwardParams
 }: TableWrapperComponentProps & DataGridPremiumProps) => (
-  <DataGridPremium
-    slotProps={{
-      toolbar: {
-        title,
-        actions: toolbarActions,
-        showQuickFilter: enableSearch,
-        quickFilterProps: enableSearch ? { debounceMs: 500 } : undefined,
-      },
-    }}
-    slots={disableToolbar ? {} : {
-      toolbar: CustomToolbar,
-    }}
-    density="compact"
-    hideFooter
-    autoHeight
-    disableColumnReorder
-    {...forwardParams}
-  />
-
+  <div style={{ display: 'flex', flexDirection: 'column' }}>
+    <DataGridPremium
+      slotProps={{
+        toolbar: {
+          title,
+          actions: toolbarActions,
+          showQuickFilter: enableSearch,
+          quickFilterProps: enableSearch ? { debounceMs: 500 } : undefined,
+        },
+      }}
+      slots={disableToolbar ? {
+        toolbar: () => null,
+      } : {
+        toolbar: CustomToolbar,
+      }}
+      density="compact"
+      hideFooter
+      disableColumnReorder
+      {...forwardParams}
+    />
+  </div>
 );

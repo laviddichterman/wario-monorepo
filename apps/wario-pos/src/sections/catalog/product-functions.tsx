@@ -1,5 +1,4 @@
-import Grid from 'node_modules/@mui/material/esm/Grid/Grid';
-
+import Grid from '@mui/material/Grid';
 import type { SxProps, Theme } from '@mui/material/styles';
 
 import { paths } from '@/routes/paths';
@@ -23,7 +22,7 @@ export function CatalogProductFunctionView(_props: Props) {
     <>
       <DashboardContent>
         <CustomBreadcrumbs
-          heading="List"
+          heading="Product Instance Functions"
           links={[
             { name: 'Dashboard', href: paths.dashboard.root },
             { name: 'Catalog', href: paths.dashboard.catalog.root },

@@ -57,7 +57,7 @@ export const navData: NavSectionProps['data'] = [
         path: paths.dashboard.catalog.root,
         icon: ICONS.folder,
         children: [
-          { title: 'Products/Categories', path: paths.dashboard.catalog.root, icon: ICONS.product },
+          { title: 'Products/Categories', path: paths.dashboard.catalog.products.root, icon: ICONS.product },
           { title: 'Modifiers', path: paths.dashboard.catalog.modifiers, icon: ICONS.label },
           { title: 'Printer Groups', path: paths.dashboard.catalog.printergroups, icon: ICONS.folder },
           { title: 'Product Instance Functions', path: paths.dashboard.catalog.productfunctions, icon: ICONS.params },
