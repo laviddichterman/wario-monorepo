@@ -36,7 +36,7 @@ LicenseInfo.setLicenseKey(import.meta.env.VITE_MUI_KEY);
 // ----------------------------------------------------------------------
 
 export const CONFIG: ConfigValue = {
-  appName: 'Minimal UI',
+  appName: 'WARIO',
   appVersion: __APP_VERSION__,
   serverUrl: import.meta.env.VITE_HOST_API_KEY,
   assetsDir: import.meta.env.VITE_ASSETS_DIR,
