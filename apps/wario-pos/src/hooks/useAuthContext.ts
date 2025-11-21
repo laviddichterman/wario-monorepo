@@ -1,6 +1,6 @@
 import { use } from 'react';
 
-import { AuthContext } from '@/auth/context/AuthContext';
+import { AuthContext } from '@/auth/context/auth-context';
 
 // ----------------------------------------------------------------------
 
