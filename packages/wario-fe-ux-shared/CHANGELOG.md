@@ -1,5 +1,15 @@
 # @wcp/wario-fe-ux-shared
 
+## 3.0.2
+
+### Patch Changes
+
+- c2e0804: - implement proper "All" button filter with mui-data-grid
+- Updated dependencies [ba74408]
+- Updated dependencies [3120974]
+- Updated dependencies [c2e0804]
+  - @wcp/wario-ux-shared@6.0.2
+
 ## 3.0.1
 
 ### Patch Changes

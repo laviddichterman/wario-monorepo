@@ -1,5 +1,14 @@
 # @wcp/wario-ux-shared
 
+## 6.0.2
+
+### Patch Changes
+
+- ba74408: - use SxSpreadUtils in wario-ux-shared to handle typescript issues with spreading props
+  - MoneyInput has predefined formatFunction and parseFunction
+- 3120974: Add spreadSx utils to wario-ux-shared
+- c2e0804: - implement proper "All" button filter with mui-data-grid
+
 ## 6.0.1
 
 ### Patch Changes
