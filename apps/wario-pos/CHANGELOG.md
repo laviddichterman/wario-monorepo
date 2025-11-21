@@ -1,5 +1,15 @@
 # @wcp/wario-pos
 
+## 0.0.11
+
+### Patch Changes
+
+- Updated dependencies [ba74408]
+- Updated dependencies [3120974]
+- Updated dependencies [c2e0804]
+  - @wcp/wario-ux-shared@6.0.2
+  - @wcp/wario-fe-ux-shared@3.0.2
+
 ## 0.0.10
 
 ### Patch Changes
