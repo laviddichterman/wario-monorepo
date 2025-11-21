@@ -1,7 +1,7 @@
 import { lazy } from 'react';
-import { Navigate, type RouteObject } from 'react-router';
+import { type RouteObject } from 'react-router';
 
-import { CONFIG } from '@/config';
+import { RootRedirect } from '@/routes/sections/root-redirect';
 
 import { dashboardRoutes } from './dashboard';
 
@@ -9,8 +9,10 @@ const Page404 = lazy(() => import('@/pages/error/404'));
 
 export const routesSection: RouteObject[] = [
   {
+    // CRITICAL: Component to handle root path navigation
+    // Must check for OAuth callback params before redirecting
     path: '/',
-    element: <Navigate to={CONFIG.auth.redirectPath} replace />,
+    element: <RootRedirect />,
   },
 
   // Dashboard

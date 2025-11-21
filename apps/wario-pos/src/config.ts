@@ -55,7 +55,7 @@ export const CONFIG: ConfigValue = {
   auth0: {
     clientId: import.meta.env.VITE_AUTH0_CLIENT_ID,
     domain: import.meta.env.VITE_AUTH0_DOMAIN,
-    callbackUrl: window.location.origin, // import.meta.env.VITE_AUTH0_CALLBACK_URL,
+    callbackUrl: window.location.origin,
     scope: import.meta.env.VITE_AUTH0_SCOPE,
     audience: import.meta.env.VITE_AUTH0_AUDIENCE
   },
