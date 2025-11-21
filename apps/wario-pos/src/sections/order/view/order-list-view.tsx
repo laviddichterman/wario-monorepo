@@ -1,5 +1,5 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 
 import { Grid } from '@mui/material';
 
@@ -15,21 +15,13 @@ import { DashboardContent } from '@/layouts/dashboard';
 import { confirmOrder } from '@/redux/slices/OrdersSlice';
 
 
-// ----------------------------------------------------------------------
-
-
-// ----------------------------------------------------------------------
-
 export function OrderListView() {
   const dispatch = useAppDispatch();
   const { getAccessTokenSilently } = useAuth0();
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const handleConfirmOrder = useCallback(async (id: string) => {
     const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
     void dispatch(confirmOrder({ orderId: id, additionalMessage: "", token: token }));
   }, [dispatch, getAccessTokenSilently]);
-
-
   return (
     <>
       <DashboardContent>
@@ -48,7 +40,7 @@ export function OrderListView() {
             <OrderManagerComponent handleConfirmOrder={(id) => void handleConfirmOrder(id)} />
           </Grid>
           <Grid size={12}>
-            <OrderCalendar selectOrderById={setSelectedOrderId} />
+            <OrderCalendar initialView='listWeek' handleConfirmOrder={(id) => void handleConfirmOrder(id)} />
           </Grid>
         </Grid>
 
