@@ -13,8 +13,8 @@ import { Snackbar } from '@/components/snackbar';
 
 import { AuthProvider as Auth0AuthProvider } from '@/auth/context/auth0';
 
-import { I18nProvider } from '@/locales/i18nProvider';
-import { LocalizationProvider } from '@/locales/localizationProvider';
+import { I18nProvider } from '@/locales/i18n-provider';
+import { LocalizationProvider } from '@/locales/localization-provider';
 import { themeConfig, ThemeProvider } from '@/theme';
 
 
