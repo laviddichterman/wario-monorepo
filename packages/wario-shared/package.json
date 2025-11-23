@@ -33,8 +33,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "date-fns": "^4.1.0",
     "es-toolkit": "^1.42.0",
+    "reflect-metadata": "^0.2.2",
     "rrule": "^2.8.1"
   },
   "devDependencies": {

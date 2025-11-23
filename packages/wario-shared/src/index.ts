@@ -1,4 +1,5 @@
 export * from "./lib/common";
+export * from "./lib/enums";
 export * from "./lib/numbers";
 export * from "./lib/objects/ICatalog";
 export * from "./lib/objects/OrderFunctional";

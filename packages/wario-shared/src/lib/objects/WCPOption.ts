@@ -5,7 +5,7 @@ import {
   DISPLAY_AS,
   type OptionPlacement,
   PRODUCT_LOCATION,
-} from '../types';
+} from '../enums';
 import type {
   CatalogModifierEntry,
   ICatalogModifierSelectors,

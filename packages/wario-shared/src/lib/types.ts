@@ -1,5 +1,6 @@
 import type { Polygon } from 'geojson';
 
+import type { CALL_LINE_DISPLAY, CategoryDisplay, ConstLiteralDiscriminator, DayOfTheWeek, DISABLE_REASON, DiscountMethod, DISPLAY_AS, FulfillmentType, LogicalFunctionOperator, MetadataField, MODIFIER_CLASS, OptionPlacement, OptionQualifier, OrderInstanceFunctionType, PaymentMethod, PriceDisplay, PRODUCT_LOCATION, ProductInstanceFunctionType, SeatingShape, StoreCreditType, TenderBaseStatus, WFulfillmentStatus, WOrderStatus, WSeatingStatus } from './enums';
 import type { SelectIds, Selector } from './utility-types';
 
 export interface SEMVER { major: number; minor: number; patch: number; };
@@ -11,16 +12,6 @@ export interface WError {
 };
 
 export interface KeyValue { key: string; value: string; };
-
-export enum DayOfTheWeek {
-  SUNDAY,
-  MONDAY,
-  TUESDAY,
-  WEDNESDAY,
-  THURSDAY,
-  FRIDAY,
-  SATURDAY
-};
 
 /**
  * A version of {@link Interval} that has both start and end resolved to DateType or number.
@@ -48,13 +39,6 @@ export interface IRecurringInterval {
   rrule: string; // empty string means just use the interval
 }
 
-export enum FulfillmentType {
-  PickUp = 'PickUp',
-  DineIn = 'DineIn',
-  Delivery = 'Delivery',
-  Shipping = 'Shipping',
-  ThirdParty = 'ThirdParty'
-}
 
 export type OperatingHourSpecification = {
   [DayOfTheWeek.SUNDAY]: IWInterval[];
@@ -226,64 +210,6 @@ export interface AvailabilityInfoMap {
   specialHoursUnion: IWInterval[] | null;
 };
 
-export enum DISPLAY_AS {
-  OMIT = 'OMIT',
-  YOUR_CHOICE_OF = 'YOUR_CHOICE_OF',
-  LIST_CHOICES = 'LIST_CHOICES'
-};
-
-export enum MODIFIER_MATCH { NO_MATCH, AT_LEAST, EXACT_MATCH };
-
-export enum PRODUCT_LOCATION { LEFT, RIGHT };
-
-export enum PriceDisplay {
-  'FROM_X' = 'FROM_X',
-  'VARIES' = 'VARIES',
-  'ALWAYS' = 'ALWAYS',
-  'MIN_TO_MAX' = 'MIN_TO_MAX',
-  'LIST' = 'LIST'
-};
-
-export enum ProductInstanceFunctionType {
-  'ConstLiteral' = "ConstLiteral",
-  'IfElse' = 'IfElse',
-  'Logical' = 'Logical',
-  'ModifierPlacement' = 'ModifierPlacement',
-  'HasAnyOfModifierType' = 'HasAnyOfModifierType',
-  'ProductMetadata' = 'ProductMetadata'
-};
-
-export enum OrderInstanceFunctionType {
-  'ConstLiteral' = "ConstLiteral",
-  'IfElse' = 'IfElse',
-  'Logical' = 'Logical'
-};
-
-export enum MODIFIER_CLASS {
-  SIZE = 'SIZE',
-  ADD = 'ADD',
-  SUB = 'SUB',
-  REMOVAL = 'REMOVAL',
-  NOTE = 'NOTE',
-  PROMPT = 'PROMPT'
-};
-export enum CALL_LINE_DISPLAY {
-  'SHORTCODE' = 'SHORTCODE',
-  'SHORTNAME' = 'SHORTNAME',
-  'QUANTITY' = 'QUANTITY'
-};
-export enum CURRENCY {
-  USD = "USD"
-};
-
-export enum OptionPlacement {
-  'NONE', 'LEFT', 'RIGHT', 'WHOLE'
-};
-
-export enum OptionQualifier {
-  'REGULAR', 'LITE', 'HEAVY', 'OTS'
-};
-
 export interface IOptionState {
   placement: OptionPlacement;
   qualifier: OptionQualifier;
@@ -293,16 +219,6 @@ export interface IMoney {
   amount: number;
   currency: string; // CURRENCY
 };
-
-export enum ConstLiteralDiscriminator {
-  NUMBER = "NUMBER",
-  BOOLEAN = "BOOLEAN",
-  STRING = "STRING",
-  MODIFIER_PLACEMENT = "MODIFIER_PLACEMENT",
-  MODIFIER_QUALIFIER = "MODIFIER_QUALIFIER"
-};
-
-export enum MetadataField { 'FLAVOR', 'WEIGHT' };
 
 export type ConstStringLiteralExpression = {
   discriminator: ConstLiteralDiscriminator.STRING;
@@ -338,17 +254,7 @@ export interface IIfElseExpression<T> {
   test: T;
 };
 
-export enum LogicalFunctionOperator {
-  'AND' = "AND",
-  'OR' = "OR",
-  'NOT' = "NOT",
-  'EQ' = "EQ",
-  'NE' = "NE",
-  'GT' = "GT",
-  'GE' = "GE",
-  'LT' = "LT",
-  'LE' = "LE"
-};
+
 
 export interface ILogicalExpression<T> {
   operandA: T;
@@ -438,20 +344,6 @@ export interface PrinterGroup {
   externalIDs: KeyValue[];
 };
 
-// Note: Display logic might fallback to a different display option depending on live catalog data
-export enum CategoryDisplay {
-  // The child categories are displayed inline
-  'FLAT' = 'FLAT',
-  // The children categories are tabs just below the main category title
-  'TAB' = 'TAB',
-  // The children categories are displayed as expansion panels/accordions immediately below the main category title
-  'ACCORDION' = 'ACCORDION',
-  // either 0 child categories and many contained products OR no contained products to many child categories
-  // child categories have no child categories
-  // metadata fields used to populate columns
-  // child categories are used as sortable/filterable columns in the table
-  'TABLE' = 'TABLE'
-};
 
 export interface ICategory {
   id: string;
@@ -670,19 +562,7 @@ export type ICatalogSelectors = ICatalogModifierSelectors & {
   orderInstanceFunctions: SelectIds;
 }
 
-export enum DISABLE_REASON {
-  ENABLED = 0,
-  DISABLED_BLANKET,
-  DISABLED_TIME,
-  DISABLED_WEIGHT,
-  DISABLED_FLAVORS,
-  DISABLED_MAXIMUM,
-  DISABLED_FUNCTION,
-  DISABLED_NO_SPLITTING,
-  DISABLED_SPLIT_DIFFERENTIAL,
-  DISABLED_FULFILLMENT_TYPE,
-  DISABLED_AVAILABILITY
-};
+
 export type OptionEnableState =
   { enable: DISABLE_REASON.ENABLED } |
   { enable: DISABLE_REASON.DISABLED_BLANKET } |
@@ -746,7 +626,7 @@ export interface CategoryEntry {
   serviceDisable: string[];
 };
 
-export interface WCPProductV2Dto {
+export interface WCPProductV2 {
   pid: string;
   modifiers: ProductModifierEntry[];
 }
@@ -757,10 +637,6 @@ export interface EncryptStringLock {
   readonly auth: string;
 };
 
-export enum StoreCreditType {
-  'MONEY' = 'MONEY',
-  'DISCOUNT' = 'DISCOUNT'
-};
 
 export interface ValidateAndLockCreditResponseValid {
   readonly valid: true;
@@ -873,7 +749,7 @@ export interface DeliveryAddressValidateResponse {
   readonly address_components: Array<AddressComponent>;
 };
 
-export interface DeliveryInfoDto {
+export interface DeliveryInfo {
   address: string;
   address2: string;
   zipcode: string;
@@ -886,10 +762,7 @@ export interface SeatingSection {
   name: string;
 };
 
-export enum SeatingShape {
-  RECTANGLE = "RECTANGLE",
-  ELLIPSE = "ELLIPSE"
-}
+
 
 export interface SeatingResource {
   id: string;
@@ -907,16 +780,6 @@ export interface SeatingResource {
   disabled: boolean;
 };
 
-export enum WSeatingStatus {
-  "PENDING" = "PENDING", // seating not yet confirmed
-  "ASSIGNED" = "ASSIGNED", // seating has been assigned by a human
-  "WAITING_ARRIVAL" = "WAITING_ARRIVAL", // waiting for guests to arrive
-  "SEATED_WAITING" = "SEATED_WAITING", // some guests are seated, some guests still pending arrival
-  "SEATED" = "SEATED", // all guests have arrived and are seated
-  "WAITING_FOR_CHECK" = "WAITING_FOR_CHECK", // guests are waiting for the check
-  "PAID" = "PAID", // guests have paid the check
-  "COMPLETED" = "COMPLETED", // guests have left the table
-}
 
 export interface WSeatingInfo {
   tableId: [string]; // list of seating resources assigned to this order
@@ -924,7 +787,7 @@ export interface WSeatingInfo {
   mtime: number; // modification time
 };
 
-export interface DineInInfoDto {
+export interface DineInInfo {
   partySize: number;
   seating?: WSeatingInfo;
 };
@@ -940,24 +803,16 @@ export interface FulfillmentTime {
   selectedTime: number;
 }
 
-export enum WFulfillmentStatus {
-  'PROPOSED' = 'PROPOSED', // initial state of a new fulfillment
-  'SENT' = 'SENT', // fulfillment has been sent to the fulfiller, this could be a KDS or a printer
-  'CONFIRMED' = 'CONFIRMED', // confirmed by fulfiller
-  'PROCESSING' = 'PROCESSING', // fulfillment has been started
-  'COMPLETED' = 'COMPLETED', // fulfillment has been completed
-  'CANCELED' = 'CANCELED' // fulfillment has been canceled
-};
 
-export interface FulfillmentDto extends FulfillmentTime {
+export interface FulfillmentData extends FulfillmentTime {
   status: WFulfillmentStatus;
   selectedService: string;
-  dineInInfo?: DineInInfoDto;
-  deliveryInfo?: DeliveryInfoDto;
+  dineInInfo?: DineInInfo;
+  deliveryInfo?: DeliveryInfo;
   thirdPartyInfo?: ThirdPartyInfo;
 }
 
-export interface CustomerInfoDto {
+export interface CustomerInfoData {
   givenName: string;
   familyName: string;
   mobileNum: string;
@@ -1005,19 +860,7 @@ export interface Metrics {
   ipAddress?: string;
 }
 
-export enum PaymentMethod {
-  Cash = "Cash",
-  CreditCard = "CreditCard",
-  StoreCredit = "StoreCredit",
-  //  External
-}
 
-export enum TenderBaseStatus {
-  PROPOSED = 'PROPOSED',
-  AUTHORIZED = 'AUTHORIZED',
-  COMPLETED = 'COMPLETED',
-  CANCELED = 'CANCELED'
-}
 
 export type TenderBaseAllocatedStatus = Exclude<TenderBaseStatus, TenderBaseStatus.PROPOSED>;
 
@@ -1102,11 +945,7 @@ export type OrderPayment = CashPayment | CreditPayment | StoreCreditPayment; // 
 
 export type UnresolvedPayment = (Omit<StoreCreditPayment, 'amount' | 'tipAmount'> | Omit<CreditPayment, 'amount' | 'tipAmount'> | (Omit<CashPayment, 'amount' | 'tipAmount' | 'payment'> & { payment: Omit<CashPayment['payment'], 'change'> }));
 
-export enum DiscountMethod {
-  CreditCodeAmount = 'CreditCodeAmount',
-  ManualPercentage = 'ManualPercentage',
-  ManualAmount = 'ManualAmount'
-};
+
 
 export type OrderManualPercentDiscount = TenderBaseAllocated & {
   readonly t: DiscountMethod.ManualPercentage;
@@ -1145,9 +984,9 @@ export type OrderLineDiscount = OrderLineDiscountCodeAmount | OrderManualAmountD
 export type UnresolvedDiscount = (Omit<OrderLineDiscountCodeAmount, "discount"> & { discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'> }) | (Omit<OrderManualPercentDiscount, "discount"> & { discount: Omit<OrderManualPercentDiscount['discount'], 'amount'> }) | (Omit<OrderManualAmountDiscount, "discount"> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
 
 export interface WOrderInstancePartial {
-  readonly customerInfo: CustomerInfoDto;
-  readonly fulfillment: FulfillmentDto;
-  readonly cart: CoreCartEntry<WCPProductV2Dto>[];
+  readonly customerInfo: CustomerInfoData;
+  readonly fulfillment: FulfillmentData;
+  readonly cart: CoreCartEntry<WCPProductV2>[];
   readonly metrics?: Metrics;
   readonly tip: TipSelection;
   readonly specialInstructions?: string;
@@ -1159,13 +998,7 @@ export type CreateOrderRequestV2 = {
   readonly proposedDiscounts: OrderLineDiscountCodeAmount[];
 } & WOrderInstancePartial;
 
-export enum WOrderStatus {
-  'OPEN' = 'OPEN', // order submitted to WARIO, yet to be manually confirmed by staff
-  'CONFIRMED' = 'CONFIRMED', // confirmed by staff, not yet charged
-  'PROCESSING' = 'PROCESSING', // order has been started, is active
-  'COMPLETED' = 'COMPLETED', // order has been completed, fulfilled, and charged
-  'CANCELED' = 'CANCELED' // order has been canceled and refunded
-};
+
 
 export interface WOrderInstance extends WOrderInstancePartial {
   readonly id: string;

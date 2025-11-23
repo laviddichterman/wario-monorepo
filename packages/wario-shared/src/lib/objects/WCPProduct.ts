@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 
 import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
-import { DISABLE_REASON, DISPLAY_AS, MODIFIER_MATCH, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../types';
-import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, WCPProduct, WCPProductV2Dto, WProduct, WProductMetadata } from '../types';
+import { DISABLE_REASON, DISPLAY_AS, MODIFIER_MATCH, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../enums';
+import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, WCPProduct, WCPProductV2, WProduct, WProductMetadata } from '../types';
 import { type Selector } from '../utility-types';
 
 import { HandleOptionCurry, HandleOptionNameFilterOmitByName, HandleOptionNameNoFilter, IsOptionEnabled } from './WCPOption';
@@ -88,7 +88,7 @@ export function CreateWCPProduct(productId: string, modifiers: ProductModifierEn
   return { productId: productId, modifiers: structuredClone(modifiers) } as WCPProduct;
 }
 
-export function CreateProductWithMetadataFromV2Dto(dto: WCPProductV2Dto, catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): WProduct {
+export function CreateProductWithMetadataFromV2(dto: WCPProductV2, catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): WProduct {
   // TODO: remove this sort and do the sort in the metadata computation
   const wcpProduct = CreateWCPProduct(dto.pid, dto.modifiers);
   const productMetadata = WCPProductGenerateMetadata(wcpProduct.productId, wcpProduct.modifiers, catalogSelectors, service_time, fulfillmentId);

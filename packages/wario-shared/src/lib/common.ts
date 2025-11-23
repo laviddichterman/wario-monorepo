@@ -15,12 +15,12 @@
 import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
 import { RRule } from "rrule";
 
+import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION, } from "./enums";
 import { RoundToTwoDecimalPlaces } from "./numbers";
 import { OrderFunctional } from "./objects/OrderFunctional";
-import { CreateProductWithMetadataFromV2Dto } from "./objects/WCPProduct";
+import { CreateProductWithMetadataFromV2 } from "./objects/WCPProduct";
 import WDateUtils from "./objects/WDateUtils";
-import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION } from "./types";
-import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto, FulfillmentTime, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, MetadataModifierMapEntry, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2Dto, WNormalizedInterval, WOrderInstancePartial, WProduct, WProductMetadata } from "./types";
+import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfo, FulfillmentConfig, FulfillmentData, FulfillmentTime, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, MetadataModifierMapEntry, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2, WNormalizedInterval, WOrderInstancePartial, WProduct, WProductMetadata } from "./types";
 import { type Selector } from "./utility-types";
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
@@ -53,10 +53,10 @@ export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
  * @param fulfillmentId - id of the fulfillment used when building product metadata
  * @returns CategorizedRebuiltCart - map of categoryId -> array of rebuilt cart entries
  */
-export const RebuildAndSortCart = (cart: CoreCartEntry<WCPProductV2Dto>[], catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): CategorizedRebuiltCart => {
+export const RebuildAndSortCart = (cart: CoreCartEntry<WCPProductV2>[], catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): CategorizedRebuiltCart => {
   return cart.reduce(
     (acc: CategorizedRebuiltCart, entry) => {
-      const product = CreateProductWithMetadataFromV2Dto(entry.product, catalogSelectors, service_time, fulfillmentId);
+      const product = CreateProductWithMetadataFromV2(entry.product, catalogSelectors, service_time, fulfillmentId);
       const rebuiltEntry: CoreCartEntry<WProduct> = { product, categoryId: entry.categoryId, quantity: entry.quantity };
       return { ...acc, [entry.categoryId]: Object.hasOwn(acc, entry.categoryId) ? [...acc[entry.categoryId], rebuiltEntry] : [rebuiltEntry] }
     }, {});
@@ -100,7 +100,7 @@ export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelec
  * @returns number - estimated lead time in minutes
  */
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
-export const DetermineCartBasedLeadTime = (cart: CoreCartEntry<WCPProductV2Dto>[], productSelector: Selector<CatalogProductEntry>): number => {
+export const DetermineCartBasedLeadTime = (cart: CoreCartEntry<WCPProductV2>[], productSelector: Selector<CatalogProductEntry>): number => {
   const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number; }>>((acc, cartLine) => {
     const product = productSelector(cartLine.product.pid);
     return product?.product.timing ? {
@@ -282,7 +282,7 @@ export const GenerateShortCode = function (productInstanceSelector: Selector<IPr
   return productInstanceSelector(p.m.pi[PRODUCT_LOCATION.LEFT])?.shortcode ?? "UNDEFINED";
 }
 
-export const GenerateDineInGuestCountString = (dineInInfo: DineInInfoDto | null) => dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize.toString()})` : "";
+export const GenerateDineInGuestCountString = (dineInInfo: DineInInfo | null) => dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize.toString()})` : "";
 
 /**
  * EventTitleSectionBuilder
@@ -348,7 +348,7 @@ const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'pro
  * @param special_instructions - freeform special instructions string
  * @returns string - assembled event title
  */
-export const EventTitleStringBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productInstance'>, fulfillmentConfig: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'shortcode'>, customer: string, fulfillmentDto: FulfillmentDto, cart: CategorizedRebuiltCart, special_instructions: string) => {
+export const EventTitleStringBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productInstance'>, fulfillmentConfig: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'shortcode'>, customer: string, fulfillmentDto: FulfillmentData, cart: CategorizedRebuiltCart, special_instructions: string) => {
   const has_special_instructions = special_instructions && special_instructions.length > 0;
   const mainCategoryTree = ComputeCategoryTreeIdList(fulfillmentConfig.orderBaseCategoryId, catalogSelectors.category);
   const mainCategorySection = mainCategoryTree.map(x => EventTitleSectionBuilder(catalogSelectors, cart[x] ?? [])).filter(x => x.length > 0).join(" ");

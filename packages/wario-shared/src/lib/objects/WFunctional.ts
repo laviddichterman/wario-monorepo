@@ -10,7 +10,7 @@ import {
   OptionQualifier,
   PRODUCT_LOCATION,
   ProductInstanceFunctionType,
-} from '../types';
+} from '../enums';
 import type {
   ConstModifierPlacementLiteralExpression,
   IAbstractExpression,

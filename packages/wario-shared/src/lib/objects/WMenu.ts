@@ -2,7 +2,7 @@ import { DisableDataCheck } from "../common";
 import {
   DISABLE_REASON,
   OptionPlacement
-} from '../types';
+} from '../enums';
 import type {
   CatalogCategoryEntry,
   CatalogModifierEntry,

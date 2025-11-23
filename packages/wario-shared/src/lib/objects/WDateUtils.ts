@@ -16,8 +16,8 @@ import {
   subMinutes
 } from 'date-fns';
 
-import type { DayOfTheWeek, FulfillmentConfig } from '../types';
-import type { AvailabilityInfoMap, DateIntervalsEntries, FulfillmentTime, IWInterval, OperatingHourSpecification } from '../types';
+import { type DayOfTheWeek } from '../enums';
+import type { AvailabilityInfoMap, DateIntervalsEntries, FulfillmentConfig, FulfillmentTime, IWInterval, OperatingHourSpecification } from '../types';
 
 /**
  * 

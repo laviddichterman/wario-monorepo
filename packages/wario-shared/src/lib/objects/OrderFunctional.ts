@@ -8,7 +8,7 @@ import {
   OptionPlacement,
   OptionQualifier,
   OrderInstanceFunctionType,
-} from '../types';
+} from '../enums';
 import type {
   AbstractOrderExpression,
   ICatalogModifierSelectors,
