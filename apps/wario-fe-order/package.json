@@ -33,7 +33,7 @@
     "axios": "^1.13.2",
     "date-fns": "^4.1.0",
     "es-toolkit": "^1.42.0",
-    "libphonenumber-js": "^1.12.28",
+    "libphonenumber-js": "^1.12.29",
     "mailcheck": "^1.1.1",
     "motion": "^12.23.24",
     "notistack": "^3.0.2",
