@@ -17,6 +17,10 @@ type Props = FiltersResultProps & {
   filters: UseSetStateReturn<ICalendarFilters>;
 };
 
+const isFiltered = (filters: ICalendarFilters) => {
+  return !!filters.startDate && !!filters.endDate;
+}
+
 export function CalendarFiltersResult({ filters, totalResults, sx }: Props) {
   const { state: currentFilters, setState: updateFilters, resetState: resetFilters } = filters;
 
@@ -25,17 +29,19 @@ export function CalendarFiltersResult({ filters, totalResults, sx }: Props) {
   }, [updateFilters]);
 
   return (
-    <FiltersResult totalResults={totalResults} onReset={() => { resetFilters(); }} sx={sx}>
-      <FiltersBlock
-        label="Date:"
-        isShow={Boolean(currentFilters.startDate && currentFilters.endDate)}
-      >
-        <Chip
-          {...chipProps}
-          label={fDateRangeShortLabel(currentFilters.startDate, currentFilters.endDate)}
-          onDelete={handleRemoveDate}
-        />
-      </FiltersBlock>
-    </FiltersResult>
+    isFiltered(currentFilters) && (
+      <FiltersResult totalResults={totalResults} onReset={() => { resetFilters(); }} sx={sx}>
+        <FiltersBlock
+          label="Date:"
+          isShow={Boolean(currentFilters.startDate && currentFilters.endDate)}
+        >
+          <Chip
+            {...chipProps}
+            label={fDateRangeShortLabel(currentFilters.startDate, currentFilters.endDate)}
+            onDelete={handleRemoveDate}
+          />
+        </FiltersBlock>
+      </FiltersResult>
+    )
   );
 }

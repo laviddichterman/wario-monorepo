@@ -11,7 +11,7 @@ import Tooltip from '@mui/material/Tooltip';
 
 import { usePopover } from '@/hooks/usePopover';
 
-import type { CalendarFiltersResult } from '@/components/calendar/calendar-filters-result';
+import { CalendarFiltersResult } from '@/components/calendar/calendar-filters-result';
 import { CustomPopover } from 'src/components/custom-popover';
 import type { IconifyName } from 'src/components/iconify';
 import { Iconify } from 'src/components/iconify';
@@ -42,6 +42,7 @@ export function CalendarToolbar({
   onChangeView,
   onOpenFilters,
   onDateNavigation,
+  filterProps
 }: CalendarToolbarProps) {
   const mobileActions = usePopover();
 
@@ -135,6 +136,10 @@ export function CalendarToolbar({
 
   const renderTodayFiltersAndResults = () => (
     <Box sx={{ gap: 1, display: 'flex', alignItems: 'center' }}>
+      <CalendarFiltersResult {...filterProps}
+
+        sx={{ mb: { xs: 3, md: 5 } }}
+      />
       <Button
         size="small"
         color="error"

@@ -1,3 +1,4 @@
+import type { BusinessHoursInput } from '@fullcalendar/core/';
 import esLocale from '@fullcalendar/core/locales/es';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -7,25 +8,19 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import timelinePlugin from '@fullcalendar/timeline';
 
 import { DialogTitle } from '@mui/material';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import Dialog from '@mui/material/Dialog';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
-import Typography from '@mui/material/Typography';
 
 import { useBoolean } from '@/hooks/useBoolean';
 import { useSetState } from '@/hooks/useSetState';
 
 import { fIsAfter, fIsBetween } from '@/utils/dateFunctions';
 
-import { Iconify } from '@/components/iconify';
-
 import { useTranslate } from '@/locales';
 
 import { CalendarFilters } from './calendar-filters';
-import { CalendarFiltersResult } from './calendar-filters-result';
 import { CalendarToolbar } from './calendar-toolbar';
 import { useCalendar } from './hooks/use-calendar';
 import { CalendarRoot } from './styles';
@@ -44,9 +39,10 @@ export type CalendarProps = {
     onClose: () => void;
   }>;
   updateEvent: (event: Partial<ICalendarEvent>) => void;
+  businessHours?: BusinessHoursInput
 };
 
-export function CalendarComponent({ events, eventsLoading, initialDate, initialView, CalendarForm, eventById }: CalendarProps) {
+export function CalendarComponent({ events, eventsLoading, initialDate, initialView, CalendarForm, eventById, businessHours }: CalendarProps) {
   const theme = useTheme();
   // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
   const openFilters = useBoolean();
@@ -70,7 +66,6 @@ export function CalendarComponent({ events, eventsLoading, initialDate, initialV
     onDateNavigation,
     /********/
     openForm,
-    onOpenForm,
     onCloseForm,
     /********/
     // selectedRange,
@@ -140,36 +135,8 @@ export function CalendarComponent({ events, eventsLoading, initialDate, initialV
     />
   );
 
-  const renderResults = () => (
-    <CalendarFiltersResult
-      filters={filters}
-      totalResults={dataFiltered.length}
-      sx={{ mb: { xs: 3, md: 5 } }}
-    />
-  );
-
   return (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: { xs: 3, md: 5 },
-        }}
-      >
-        <Typography variant="h4">Calendar</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Iconify icon="mingcute:add-line" />}
-          onClick={onOpenForm}
-        >
-          Add event
-        </Button>
-      </Box>
-
-      {canReset && renderResults()}
-
       <Card sx={{ ...flexStyles, minHeight: '50vh' }}>
         <CalendarRoot sx={{ ...flexStyles }}>
           <CalendarToolbar
@@ -211,9 +178,7 @@ export function CalendarComponent({ events, eventsLoading, initialDate, initialV
             events={dataFiltered}
             select={onSelectRange}
             eventClick={onClickEvent}
-            // businessHours={{
-            //   daysOfWeek: [1, 2, 3, 4, 5], // Mon-Fri
-            // }}
+            businessHours={businessHours}
             // eventDrop={(arg) => {
             //   startTransition(() => {
             //     onDropEvent(arg, updateEvent);
