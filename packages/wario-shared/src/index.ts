@@ -8,3 +8,4 @@ export * from "./lib/objects/WDateUtils";
 export * from "./lib/objects/WFunctional";
 export * from "./lib/objects/WMenu";
 export * from "./lib/types";
+export * from "./lib/utility-types";

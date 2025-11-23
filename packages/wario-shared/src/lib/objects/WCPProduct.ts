@@ -3,7 +3,8 @@
 
 import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
 import { DISABLE_REASON, DISPLAY_AS, MODIFIER_MATCH, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../types';
-import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, Selector, WCPProduct, WCPProductV2Dto, WProduct, WProductMetadata } from '../types';
+import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, WCPProduct, WCPProductV2Dto, WProduct, WProductMetadata } from '../types';
+import { type Selector } from '../utility-types';
 
 import { HandleOptionCurry, HandleOptionNameFilterOmitByName, HandleOptionNameNoFilter, IsOptionEnabled } from './WCPOption';
 import { WFunctional } from "./WFunctional";

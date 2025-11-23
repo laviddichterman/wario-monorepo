@@ -20,7 +20,8 @@ import { OrderFunctional } from "./objects/OrderFunctional";
 import { CreateProductWithMetadataFromV2Dto } from "./objects/WCPProduct";
 import WDateUtils from "./objects/WDateUtils";
 import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION } from "./types";
-import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto, FulfillmentTime, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, MetadataModifierMapEntry, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, Selector, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2Dto, WNormalizedInterval, WOrderInstancePartial, WProduct, WProductMetadata } from "./types";
+import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfoDto, FulfillmentConfig, FulfillmentDto, FulfillmentTime, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, MetadataModifierMapEntry, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2Dto, WNormalizedInterval, WOrderInstancePartial, WProduct, WProductMetadata } from "./types";
+import { type Selector } from "./utility-types";
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
 

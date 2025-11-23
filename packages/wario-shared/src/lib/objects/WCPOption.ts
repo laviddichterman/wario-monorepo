@@ -13,9 +13,9 @@ import type {
   IOption,
   MTID_MOID,
   OptionEnableState,
-  Selector,
   WCPProduct
 } from '../types';
+import { type Selector } from '../utility-types';
 
 import { WFunctional } from "./WFunctional";
 

@@ -13,9 +13,9 @@ import type {
   IProductDisplayFlags,
   IProductInstance,
   ProductModifierEntry,
-  Selector,
   WProductMetadata
 } from "../types";
+import { type Selector } from '../utility-types';
 
 import {
   WCPProductGenerateMetadata
