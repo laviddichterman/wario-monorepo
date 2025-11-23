@@ -15,12 +15,13 @@
 import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
 import { RRule } from "rrule";
 
+import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CoreCartEntry, DineInInfo, FulfillmentConfig, FulfillmentData, FulfillmentTime, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, OrderLineDiscount, OrderPayment, ProductModifierEntry, TipSelection, WOrderInstancePartial } from "./derived-types";
 import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION, } from "./enums";
 import { RoundToTwoDecimalPlaces } from "./numbers";
 import { OrderFunctional } from "./objects/OrderFunctional";
 import { CreateProductWithMetadataFromV2 } from "./objects/WCPProduct";
 import WDateUtils from "./objects/WDateUtils";
-import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CategorizedRebuiltCart, CoreCartEntry, DineInInfo, FulfillmentConfig, FulfillmentData, FulfillmentTime, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, MetadataModifierMapEntry, OrderLineDiscount, OrderPayment, ProductModifierEntry, RecomputeTotalsResult, TipSelection, UnresolvedDiscount, UnresolvedPayment, WCPProductV2, WNormalizedInterval, WOrderInstancePartial, WProduct, WProductMetadata } from "./types";
+import type { CategorizedRebuiltCart, ICatalogSelectors, MetadataModifierMapEntry, UnresolvedDiscount, UnresolvedPayment, WNormalizedInterval, WProduct, WProductMetadata } from "./types";
 import { type Selector } from "./utility-types";
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
@@ -41,6 +42,24 @@ export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
   return Object.fromEntries(xs.map(x => [x[key], x])) as Record<string, T>;
 };
 
+export interface RecomputeTotalsResult {
+  mainCategoryProductCount: number;
+  cartSubtotal: IMoney;
+  serviceFee: IMoney;
+  subtotalPreDiscount: IMoney;
+  subtotalAfterDiscount: IMoney;
+  discountApplied: OrderLineDiscount[];
+  taxAmount: IMoney;
+  tipBasis: IMoney;
+  tipMinimum: IMoney;
+  tipAmount: IMoney;
+  serviceChargeAmount: IMoney;
+  total: IMoney;
+  paymentsApplied: OrderPayment[];
+  balanceAfterPayments: IMoney;
+  hasBankersRoundingTaxSkew: boolean;
+}
+
 /**
  * RebuildAndSortCart
  *
@@ -53,7 +72,7 @@ export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
  * @param fulfillmentId - id of the fulfillment used when building product metadata
  * @returns CategorizedRebuiltCart - map of categoryId -> array of rebuilt cart entries
  */
-export const RebuildAndSortCart = (cart: CoreCartEntry<WCPProductV2>[], catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): CategorizedRebuiltCart => {
+export const RebuildAndSortCart = (cart: CoreCartEntry[], catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): CategorizedRebuiltCart => {
   return cart.reduce(
     (acc: CategorizedRebuiltCart, entry) => {
       const product = CreateProductWithMetadataFromV2(entry.product, catalogSelectors, service_time, fulfillmentId);
@@ -100,7 +119,7 @@ export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelec
  * @returns number - estimated lead time in minutes
  */
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
-export const DetermineCartBasedLeadTime = (cart: CoreCartEntry<WCPProductV2>[], productSelector: Selector<CatalogProductEntry>): number => {
+export const DetermineCartBasedLeadTime = (cart: CoreCartEntry[], productSelector: Selector<CatalogProductEntry>): number => {
   const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number; }>>((acc, cartLine) => {
     const product = productSelector(cartLine.product.pid);
     return product?.product.timing ? {
@@ -400,7 +419,6 @@ export function ComputeCartSubTotal(cart: CoreCartEntry<WProduct>[]): IMoney {
   return { amount: cart.reduce((acc, entry) => acc + (entry.product.m.price.amount * entry.quantity), 0), currency: CURRENCY.USD };
 }
 
-
 /**
  * ComputeDiscountsApplied
  *
@@ -625,6 +643,23 @@ interface RecomputeTotalsArgs {
   fulfillment: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'serviceCharge' | 'allowTipping'>;
 }
 
+export interface RecomputeTotalsResult {
+  mainCategoryProductCount: number;
+  cartSubtotal: IMoney;
+  serviceFee: IMoney;
+  subtotalPreDiscount: IMoney;
+  subtotalAfterDiscount: IMoney;
+  discountApplied: OrderLineDiscount[];
+  taxAmount: IMoney;
+  tipBasis: IMoney;
+  tipMinimum: IMoney;
+  tipAmount: IMoney;
+  serviceChargeAmount: IMoney;
+  total: IMoney;
+  paymentsApplied: OrderPayment[];
+  balanceAfterPayments: IMoney;
+  hasBankersRoundingTaxSkew: boolean;
+}
 
 /**
  * RecomputeTotals
@@ -668,9 +703,10 @@ export const RecomputeTotals = function ({ config, cart, payments, discounts, fu
   const mainCategoryTree = ComputeCategoryTreeIdList(fulfillment.orderBaseCategoryId, config.CATALOG_SELECTORS.category);
   const mainCategoryProductCount = ComputeProductCategoryMatchCount(mainCategoryTree, order.cart);
   const cartSubtotal = { currency: CURRENCY.USD, amount: Object.values(cart).reduce((acc, c) => acc + ComputeCartSubTotal(c).amount, 0) };
+  const serviceChargeFunction = fulfillment.serviceCharge !== null ? config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge) : null;
   const serviceFee = {
     currency: CURRENCY.USD,
-    amount: fulfillment.serviceCharge !== null ? OrderFunctional.ProcessOrderInstanceFunction(order, config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge)!, config.CATALOG_SELECTORS) as number : 0
+    amount: serviceChargeFunction ? OrderFunctional.ProcessOrderInstanceFunction(order, serviceChargeFunction, config.CATALOG_SELECTORS) as number : 0
   };
   const subtotalPreDiscount = ComputeSubtotalPreDiscount(cartSubtotal, serviceFee);
   const discountApplied = ComputeDiscountsApplied(subtotalPreDiscount, discounts);

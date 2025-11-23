@@ -2,6 +2,14 @@
 
 import { snakeCase, startCase } from "es-toolkit/compat";
 
+import type {
+  AbstractOrderExpression,
+  IConstLiteralExpression,
+  IIfElseExpression,
+  ILogicalExpression,
+  OrderInstanceFunction,
+  WOrderInstancePartial
+} from '../derived-types';
 import {
   ConstLiteralDiscriminator,
   LogicalFunctionOperator,
@@ -9,15 +17,7 @@ import {
   OptionQualifier,
   OrderInstanceFunctionType,
 } from '../enums';
-import type {
-  AbstractOrderExpression,
-  ICatalogModifierSelectors,
-  IConstLiteralExpression,
-  IIfElseExpression,
-  ILogicalExpression,
-  OrderInstanceFunction,
-  WOrderInstancePartial
-} from '../types';
+import type { ICatalogModifierSelectors } from '../types';
 
 import { LogicalFunctionOperatorToHumanString } from "./WFunctional";
 

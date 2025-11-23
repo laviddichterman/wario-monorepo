@@ -8,13 +8,13 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 
-import type { CustomerInfoDto, FulfillmentConfig, FulfillmentDto } from '@wcp/wario-shared';
+import type { CustomerInfoData, FulfillmentConfig, FulfillmentData } from '@wcp/wario-shared';
 import { ComputeServiceTimeDisplayString, WDateUtils } from '@wcp/wario-shared';
 
 export interface ServiceInfoTableComponentProps {
-  customerInfo: CustomerInfoDto;
+  customerInfo: CustomerInfoData;
   fulfillmentConfig: Pick<FulfillmentConfig, "minDuration" | 'displayName'>;
-  fulfillment: Omit<FulfillmentDto, 'status'>;
+  fulfillment: Omit<FulfillmentData, 'status'>;
   specialInstructions: string;
 }
 

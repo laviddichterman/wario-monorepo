@@ -2,6 +2,17 @@
 import { snakeCase, startCase } from "es-toolkit/compat";
 
 import { GetPlacementFromMIDOID } from "../common";
+import type {
+  ConstModifierPlacementLiteralExpression,
+  IAbstractExpression,
+  IConstLiteralExpression,
+  IHasAnyOfModifierExpression,
+  IIfElseExpression,
+  ILogicalExpression,
+  IModifierPlacementExpression,
+  IProductInstanceFunction,
+  ProductMetadataExpression,
+} from '../derived-types';
 import {
   ConstLiteralDiscriminator,
   LogicalFunctionOperator,
@@ -12,16 +23,7 @@ import {
   ProductInstanceFunctionType,
 } from '../enums';
 import type {
-  ConstModifierPlacementLiteralExpression,
-  IAbstractExpression,
   ICatalogModifierSelectors,
-  IConstLiteralExpression,
-  IHasAnyOfModifierExpression,
-  IIfElseExpression,
-  ILogicalExpression,
-  IModifierPlacementExpression,
-  IProductInstanceFunction,
-  ProductMetadataExpression,
   WCPProduct
 } from '../types';
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 import { GetPlacementFromMIDOID } from "../common";
+import type { CatalogModifierEntry, IOption } from '../derived-types';
 import {
   DISABLE_REASON,
   DISPLAY_AS,
@@ -7,10 +8,8 @@ import {
   PRODUCT_LOCATION,
 } from '../enums';
 import type {
-  CatalogModifierEntry,
   ICatalogModifierSelectors,
   ICatalogSelectors,
-  IOption,
   MTID_MOID,
   OptionEnableState,
   WCPProduct

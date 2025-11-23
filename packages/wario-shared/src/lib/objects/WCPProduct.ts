@@ -2,8 +2,29 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 
 import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from "../common";
+import type {
+  CatalogModifierEntry,
+  IMoney,
+  IOption,
+  IOptionInstance,
+  IProduct,
+  IProductInstance,
+  IProductModifier,
+  ProductModifierEntry,
+  WCPProductV2
+} from '../derived-types';
 import { DISABLE_REASON, DISPLAY_AS, MODIFIER_MATCH, OptionPlacement, OptionQualifier, PRODUCT_LOCATION } from '../enums';
-import type { CatalogModifierEntry, ICatalogModifierSelectors, ICatalogSelectors, IMoney, IOption, IOptionInstance, IProduct, IProductInstance, IProductModifier, MetadataModifierMap, MetadataModifierOptionMapEntry, ModifierDisplayListByLocation, MTID_MOID, ProductModifierEntry, WCPProduct, WCPProductV2, WProduct, WProductMetadata } from '../types';
+import type {
+  ICatalogModifierSelectors,
+  ICatalogSelectors,
+  MetadataModifierMap,
+  MetadataModifierOptionMapEntry,
+  ModifierDisplayListByLocation,
+  MTID_MOID,
+  WCPProduct,
+  WProduct,
+  WProductMetadata
+} from '../types';
 import { type Selector } from '../utility-types';
 
 import { HandleOptionCurry, HandleOptionNameFilterOmitByName, HandleOptionNameNoFilter, IsOptionEnabled } from './WCPOption';

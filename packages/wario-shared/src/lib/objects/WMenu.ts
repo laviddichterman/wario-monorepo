@@ -1,18 +1,20 @@
 import { DisableDataCheck } from "../common";
-import {
-  DISABLE_REASON,
-  OptionPlacement
-} from '../enums';
 import type {
   CatalogCategoryEntry,
   CatalogModifierEntry,
-  ICatalogSelectors,
   IOption,
   IOptionInstance,
   IProduct,
   IProductDisplayFlags,
   IProductInstance,
   ProductModifierEntry,
+} from "../derived-types";
+import {
+  DISABLE_REASON,
+  OptionPlacement
+} from '../enums';
+import type {
+  ICatalogSelectors,
   WProductMetadata
 } from "../types";
 import { type Selector } from '../utility-types';
