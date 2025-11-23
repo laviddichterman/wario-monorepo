@@ -5,12 +5,12 @@ import {
 import { type MetadataJson } from 'libphonenumber-js/core';
 import { z } from "zod";
 
-import { type CustomerInfoDto } from "@wcp/wario-shared";
+import { type CustomerInfoData } from "@wcp/wario-shared";
 import { PHONE_METADATA, ZodEmailSchema } from "@wcp/wario-ux-shared";
 
 const LIBPHONE_METADATA = PHONE_METADATA as unknown as MetadataJson;
 
-export type CustomerInfoRHF = CustomerInfoDto & { mobileNumRaw: string };
+export type CustomerInfoRHF = CustomerInfoData & { mobileNumRaw: string };
 export const customerInfoSchema = z.object({
   givenName: z.string().min(1, "Please enter your given name.").min(2, "Please enter the full name."),
   familyName: z.string().min(1, "Please enter your family name.").min(2, "Please enter the full name."),

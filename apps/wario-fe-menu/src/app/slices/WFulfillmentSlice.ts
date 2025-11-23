@@ -1,8 +1,8 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import { type FulfillmentDto, type NullablePartial } from "@wcp/wario-shared";
+import { type FulfillmentData, type NullablePartial } from "@wcp/wario-shared";
 
-export type WFulfillmentState = NullablePartial<Pick<FulfillmentDto, 'selectedService'>>;
+export type WFulfillmentState = NullablePartial<Pick<FulfillmentData, 'selectedService'>>;
 
 const initialState: WFulfillmentState = {
   selectedService: null,

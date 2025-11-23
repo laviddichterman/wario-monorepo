@@ -1,7 +1,7 @@
 import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { z } from "zod";
 
-import { type DeliveryInfoDto, type DineInInfoDto, type FulfillmentDto, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
+import { type DeliveryInfoDto, type DineInInfoDto, type FulfillmentData, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
 import { CreateValidateDeliveryAddressThunk } from "@wcp/wario-ux-shared";
 
 import axiosInstance from "@/utils/axios";
@@ -30,7 +30,7 @@ export type WFulfillmentState = {
   hasSelectedDateExpired: boolean;
   hasAgreedToTerms: boolean;
   deliveryValidationStatus: 'IDLE' | 'PENDING' | 'VALID' | 'INVALID' | 'OUTSIDE_RANGE';
-} & NullablePartial<Omit<FulfillmentDto, 'status' | 'thirdPartyInfo'>>;
+} & NullablePartial<Omit<FulfillmentData, 'status' | 'thirdPartyInfo'>>;
 
 
 export const validateDeliveryAddress = CreateValidateDeliveryAddressThunk(axiosInstance);
