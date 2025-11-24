@@ -55,7 +55,7 @@ const ModifierOptionDisableUntilEodContainer = ({ modifier_option_id, onCloseCal
   return (
     <ElementActionComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editModifierOption}
+      onConfirmClick={() => void editModifierOption()}
       isProcessing={isProcessing}
       disableConfirmOn={isProcessing}
       confirmText="Confirm"

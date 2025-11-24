@@ -93,7 +93,7 @@ const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: Modifie
     <ModifierOptionComponent
       confirmText="Add"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={addModifierOption}
+      onConfirmClick={() => void addModifierOption()}
       isProcessing={isProcessing}
       modifierType={modifierType}
       displayName={displayName}

@@ -92,7 +92,7 @@ const ModifierOptionEditContainer = ({ modifier_option_id, onCloseCallback }: Mo
     <ModifierOptionComponent
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editModifierOption}
+      onConfirmClick={() => void editModifierOption()}
       isProcessing={isProcessing}
       modifierType={modifierTypeEntry.modifierType}
       displayName={displayName}

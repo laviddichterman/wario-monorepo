@@ -49,7 +49,7 @@ const ModifierOptionDeleteContainer = ({ modifier_option_id, onCloseCallback }: 
   return (
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={deleteModifierOption}
+      onConfirmClick={() => void deleteModifierOption()}
       name={modifier_option.displayName}
       isProcessing={isProcessing}
     />

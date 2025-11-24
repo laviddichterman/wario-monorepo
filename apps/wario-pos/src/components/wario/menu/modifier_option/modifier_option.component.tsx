@@ -180,6 +180,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           options={Object.keys(productInstanceFunctions)}
           value={props.enableFunction}
           onChange={(e, v) => { props.setEnableFunction(v); }}
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           getOptionLabel={(option) => productInstanceFunctions[option].name ?? "CORRUPT DATA"}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Enable Function Name" />}

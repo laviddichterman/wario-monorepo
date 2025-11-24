@@ -53,7 +53,7 @@ const ModifierOptionDisableContainer = ({ modifier_option_id, onCloseCallback }:
   return (
     <ElementActionComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editModifierOption}
+      onConfirmClick={() => void editModifierOption()}
       isProcessing={isProcessing}
       disableConfirmOn={isProcessing}
       confirmText="Confirm"
