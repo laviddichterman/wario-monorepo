@@ -14,6 +14,7 @@ import { KeyValuesContainer, type KeyValuesRowType } from "./keyvalues.container
 export const StoreSettingsComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const settings = useAppSelector(s => s.ws.settings!);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
@@ -53,7 +54,7 @@ export const StoreSettingsComponent = () => {
     canEdit
     canRemove
     isProcessing={isProcessing}
-    onSubmit={onSubmit}
+    onSubmit={(values) => void onSubmit(values)}
     title={"Customer Facing Store Configuration"}
     values={Object.entries(settings.config).map(([key, value]) => ({ key, value }))}
   />;

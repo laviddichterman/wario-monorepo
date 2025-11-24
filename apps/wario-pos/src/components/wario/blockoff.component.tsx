@@ -15,7 +15,6 @@ import {
   IconButton,
   List,
   ListItem,
-  ListItemSecondaryAction,
   ListItemText,
   TextField
 } from '@mui/material';
@@ -149,24 +148,20 @@ const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
         { /* Note: the blocked off array should be pre-sorted */}
         {fulfillmentBlockOffArray.map((entry) => (
           <Container key={`${props.fId}.${entry.key}`}>
-            <ListItem>
-              {format(parseISO(entry.key), WDateUtils.ServiceDateDisplayFormat)}
-              <ListItemSecondaryAction>
-                <IconButton hidden={entry.value.length === 0} edge="end" size="small" disabled={props.isProcessing} aria-label="delete" onClick={() => removeBlockedOffForDate(props.fId, entry.key)}>
+            <ListItem
+              secondaryAction={
+                <IconButton hidden={entry.value.length === 0} edge="end" size="small" disabled={props.isProcessing} aria-label="delete" onClick={() => void removeBlockedOffForDate(props.fId, entry.key)}>
                   <HighlightOff />
-                </IconButton>
-              </ListItemSecondaryAction>
+                </IconButton>}>
+              {format(parseISO(entry.key), WDateUtils.ServiceDateDisplayFormat)}
             </ListItem>
             <List sx={{ ml: 2 }}>
               {entry.value.map((interval, i) => {
                 return (
-                  <ListItem key={i}>
+                  <ListItem key={i} secondaryAction={<IconButton edge="end" size="small" disabled={props.isProcessing} aria-label="delete" onClick={() => void removeBlockedOffInterval(props.fId, entry.key, interval)}>
+                    <HighlightOff />
+                  </IconButton>}>
                     <ListItemText primary={IntervalToString(interval)} />
-                    <ListItemSecondaryAction>
-                      <IconButton edge="end" size="small" disabled={props.isProcessing} aria-label="delete" onClick={() => removeBlockedOffInterval(props.fId, entry.key, interval)}>
-                        <HighlightOff />
-                      </IconButton>
-                    </ListItemSecondaryAction>
                   </ListItem>
                 );
               })}
@@ -209,9 +204,9 @@ const DateSelector = ({ selectedDate, selectedServices, setSelectedDate }: { sel
       openTo="day"
       minDate={minDate}
       maxDate={add(minDate, { days: 60 })}
-      shouldDisableDate={e => getOptionsForDate(WDateUtils.formatISODate(e)).length === 0}
+      shouldDisableDate={(e: string | number | Date) => getOptionsForDate(WDateUtils.formatISODate(e)).length === 0}
       value={selectedDate ? parseISO(selectedDate) : null}
-      onChange={(date) => { handleSetSelectedDate(date); }}
+      onChange={(date: Date | null) => { handleSetSelectedDate(date); }}
     />
   </LocalizationProvider>)
 }
@@ -368,8 +363,7 @@ export const BlockOffComp = () => {
                   options={timeOptions.filter(x => !x.disabled).map(x => x.value)}
                   isOptionEqualToValue={(o, v) => o === v}
                   getOptionLabel={x => x !== null ? WDateUtils.MinutesToPrintTime(x) : ""}
-                  // @ts-ignore
-                  value={startTime}
+                  value={startTime ? startTime : undefined}
                   onChange={(_, v) => { setStartTime(v); }}
                   disabled={selectedDate === null}
                   renderInput={(params) => <TextField {...params} label={"Start"}
@@ -389,8 +383,7 @@ export const BlockOffComp = () => {
                   options={endTimeOptions.filter(x => !x.disabled).map(x => x.value)}
                   isOptionEqualToValue={(o, v) => o === v}
                   getOptionLabel={x => x !== null ? WDateUtils.MinutesToPrintTime(x) : ""}
-                  // @ts-ignore
-                  value={endTime}
+                  value={endTime ? endTime : undefined}
                   onChange={(_, v) => { setEndTime(v); }}
                   disabled={selectedDate === null || startTime === null}
                   renderInput={(params) => <TextField  {...params} label={"End"}
@@ -403,7 +396,7 @@ export const BlockOffComp = () => {
                   xs: 2,
                   sm: 12
                 }}>
-                <Button sx={{ m: 'auto', width: '100%', height: '100%' }} onClick={() => postBlockedOff()} disabled={!canPostBlockedOff || isProcessing}>
+                <Button sx={{ m: 'auto', width: '100%', height: '100%' }} onClick={() => void postBlockedOff()} disabled={!canPostBlockedOff || isProcessing}>
                   Add
                 </Button>
               </Grid>

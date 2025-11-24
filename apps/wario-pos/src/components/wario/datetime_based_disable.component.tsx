@@ -21,11 +21,13 @@ const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps
   const CURRENT_TIME = useAppSelector(s => s.ws.currentTime);
   const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
 
-  const updateDisabledStart = (start: number) => {
+  const updateDisabledStart = (start: Date | number) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     props.setValue({ ...props.value!, start: getTime(start) });
   };
 
-  const updateDisabledEnd = (end: number) => {
+  const updateDisabledEnd = (end: Date | number) => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     props.setValue({ ...props.value!, end: getTime(end) });
   };
 
@@ -46,9 +48,11 @@ const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps
             disabled={props.disabled}
             label="Blanket Disable"
             value={props.value.start > props.value.end}
-            setValue={(isBlanket) => { props.setValue(isBlanket ?
-              { start: 1, end: 0 } :
-              { start: CURRENT_TIME, end: getTime(endOfDay(CURRENT_TIME)) }); }}
+            setValue={(isBlanket) => {
+              props.setValue(isBlanket ?
+                { start: 1, end: 0 } :
+                { start: CURRENT_TIME, end: getTime(endOfDay(CURRENT_TIME)) });
+            }}
             labelPlacement='end'
           />
         </Grid>
@@ -60,7 +64,7 @@ const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps
               label="Disabled Start"
               disablePast
               value={props.value.start}
-              onChange={(date) => date !== null && updateDisabledStart(date)}
+              onChange={(date: Date | number | null) => { if (date !== null) updateDisabledStart(date); }}
               format="MMM dd, y hh:mm a"
               slotProps={{ textField: { fullWidth: true } }}
             />
@@ -71,7 +75,7 @@ const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps
               disablePast
               minDateTime={props.value.start}
               value={props.value.end}
-              onChange={(date) => date !== null && updateDisabledEnd(date)}
+              onChange={(date: Date | number | null) => { if (date !== null) updateDisabledEnd(date); }}
               format="MMM dd, y hh:mm a"
               slotProps={{ textField: { fullWidth: true } }}
             />

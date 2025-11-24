@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import type { IProductInstance } from "@wcp/wario-shared";
-import { PriceDisplay } from "@wcp/wario-shared";
+import { type PriceDisplay } from "@wcp/wario-shared";
 import { getProductInstanceById } from "@wcp/wario-ux-shared";
 
 import { useAppSelector } from "@/hooks/useRedux";
@@ -33,7 +33,7 @@ const ProductInstanceEditContainer = ({ product_instance_id, onCloseCallback }: 
   const [posName, setPosName] = useState(product_instance.displayFlags.pos.name);
   const [menuOrdinal, setMenuOrdinal] = useState(product_instance.displayFlags.menu.ordinal || 0);
   const [menuHide, setMenuHide] = useState(product_instance.displayFlags.menu.hide);
-  const [menuPriceDisplay, setMenuPriceDisplay] = useState(product_instance.displayFlags.menu.price_display);
+  const [menuPriceDisplay, setMenuPriceDisplay] = useState<PriceDisplay>(product_instance.displayFlags.menu.price_display);
   const [menuAdornment, setMenuAdornment] = useState(product_instance.displayFlags.menu.adornment);
   const [menuSuppressExhaustiveModifierList, setMenuSuppressExhaustiveModifierList] = useState(product_instance.displayFlags.menu.suppress_exhaustive_modifier_list);
   const [menuShowModifierOptions, setMenuShowModifierOptions] = useState(product_instance.displayFlags.menu.show_modifier_options);
@@ -41,7 +41,7 @@ const ProductInstanceEditContainer = ({ product_instance_id, onCloseCallback }: 
   const [orderMenuHide, setOrderMenuHide] = useState(product_instance.displayFlags.order.hide);
   const [orderSkipCustomization, setOrderSkipCustomization] = useState(product_instance.displayFlags.order.skip_customization);
   const [posSkipCustomization, setPosSkipCustomization] = useState(product_instance.displayFlags.pos.skip_customization);
-  const [orderPriceDisplay, setOrderPriceDisplay] = useState(product_instance.displayFlags.order.price_display);
+  const [orderPriceDisplay, setOrderPriceDisplay] = useState<PriceDisplay>(product_instance.displayFlags.order.price_display);
   const [orderAdornment, setOrderAdornment] = useState(product_instance.displayFlags.order.adornment);
   const [orderSuppressExhaustiveModifierList, setOrderSuppressExhaustiveModifierList] = useState(product_instance.displayFlags.order.suppress_exhaustive_modifier_list);
   const [isProcessing, setIsProcessing] = useState(false);

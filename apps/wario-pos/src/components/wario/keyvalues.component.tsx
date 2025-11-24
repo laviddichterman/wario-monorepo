@@ -65,6 +65,6 @@ export const KeyValuesComponent = () => {
     canRemove
     isProcessing={isProcessing}
     title="Key Value Store"
-    onSubmit={onSubmit}
+    onSubmit={(values) => void onSubmit(values)}
     values={Object.entries(KEYVALUES).map(([key, value]) => ({ key, value }))} /> : <></>
 };

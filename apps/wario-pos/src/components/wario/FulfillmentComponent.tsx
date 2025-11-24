@@ -70,8 +70,7 @@ const OperatingHoursIntervalForm = ({
           options={startOptions}
           isOptionEqualToValue={(o, v) => o === v}
           getOptionLabel={x => WDateUtils.MinutesToPrintTime(x)}
-          // @ts-ignore
-          value={start}
+          value={start ? start : undefined}
           onChange={(_, v) => { setStart(v); }}
           renderInput={(params) => <TextField {...params} label={"Start"}
           />}
@@ -84,8 +83,7 @@ const OperatingHoursIntervalForm = ({
           options={endOptions}
           isOptionEqualToValue={(o, v) => o === v}
           getOptionLabel={x => WDateUtils.MinutesToPrintTime(x)}
-          // @ts-ignore
-          value={end}
+          value={end ? end : undefined}
           disabled={start === null || disabled}
           onChange={(_, v) => { setEnd(v); }}
           renderInput={(params) => <TextField {...params} label={"End"}
@@ -122,7 +120,7 @@ const OperatingHoursComponent = function (props: IntervalsComponentBaseProps & V
       <CardHeader title={props.label} />
       <Divider sx={{ m: 1 }} />
       <Grid container spacing={2} justifyContent={'center'}>
-        {Object.keys(props.operatingHours).filter(x => x !== "_id").map((key, day: DayOfTheWeek) =>
+        {Object.keys(props.operatingHours).filter(x => x !== "_id").map((_key, day: DayOfTheWeek) =>
           <React.Fragment key={day}>
             <Grid
               size={{
@@ -322,9 +320,8 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               filterSelectedOptions
               disabled={props.isProcessing}
               options={Object.keys(catalog.categories)}
-              // @ts-ignore
-              value={props.menuCategoryId}
-              onChange={(_, v) => v && props.setMenuCategoryId(v)}
+              value={props.menuCategoryId ? props.menuCategoryId : undefined}
+              onChange={(_, v) => { if (v) props.setMenuCategoryId(v) }}
               getOptionLabel={(option) => catalog.categories[option].category.name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Menu Category" />}
@@ -342,9 +339,8 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               filterSelectedOptions
               disabled={props.isProcessing}
               options={Object.keys(catalog.categories)}
-              // @ts-ignore
-              value={props.orderCategoryId}
-              onChange={(_, v) => v && props.setOrderCategoryId(v)}
+              value={props.orderCategoryId ? props.orderCategoryId : undefined}
+              onChange={(_, v) => { if (v) props.setOrderCategoryId(v) }}
               getOptionLabel={(option) => catalog.categories[option].category.name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Order Category" />}
@@ -360,9 +356,8 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               filterSelectedOptions
               disabled={props.isProcessing}
               options={Object.keys(catalog.categories)}
-              // @ts-ignore
-              value={props.orderSupplementaryCategoryId}
-              onChange={(_, v) => v && props.setOrderSupplementaryCategoryId(v)}
+              value={props.orderSupplementaryCategoryId ? props.orderSupplementaryCategoryId : undefined}
+              onChange={(_, v) => { if (v) props.setOrderSupplementaryCategoryId(v) }}
               getOptionLabel={(option) => catalog.categories[option].category.name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Order Supplement Category" />}
@@ -412,6 +407,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               options={Object.keys(catalog.orderInstanceFunctions)}
               value={props.serviceChargeFunctionId}
               onChange={(e, v) => { props.setServiceChargeFunctionId(v); }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               getOptionLabel={(option) => catalog.orderInstanceFunctions[option].name ?? "CORRUPT DATA"}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => <TextField {...params} label="Service Charge Function" />}

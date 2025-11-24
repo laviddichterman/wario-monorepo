@@ -167,7 +167,7 @@ const FulfillmentEditContainer = ({ fulfillment, onCloseCallback }: { fulfillmen
       setServiceArea={setServiceArea}
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editFulfillment}
+      onConfirmClick={() => void editFulfillment()}
       isProcessing={isProcessing}
       disableConfirmOn={false}
     />

@@ -47,6 +47,7 @@ export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerCompon
     else {
       setHasNewOrder(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orders]);
   const suppressNotice = () => {
     setSuppressedNewOrderNotice(orders.reduce((acc, order) => ({ ...acc, [order.id]: true }), suppressedNewOrderNoticeForOrder));
@@ -63,6 +64,7 @@ export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerCompon
     void pollForOrders();
     const timer = setInterval(() => void pollForOrders(), 30000);
     return () => { clearInterval(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTime])
 
   const callUnlockOrders = async () => {

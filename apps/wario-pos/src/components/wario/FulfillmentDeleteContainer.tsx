@@ -46,7 +46,7 @@ const FulfillmentDeleteContainer = ({ fulfillment, onCloseCallback }: Fulfillmen
   return (
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={deleteFulfillment}
+      onConfirmClick={() => void deleteFulfillment()}
       name={fulfillment.displayName}
       isProcessing={isProcessing}
     />

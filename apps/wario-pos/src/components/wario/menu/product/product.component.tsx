@@ -87,7 +87,7 @@ export const ProductComponent = (props: ProductComponentPropsModeSpecific & Prod
               filterSelectedOptions
               options={Object.keys(catalog.categories)}
               value={props.parentCategories}
-              onChange={(e, v) => { props.setParentCategories(v); }}
+              onChange={(_e, v) => { props.setParentCategories(v); }}
               getOptionLabel={(option) => catalog.categories[option].category.name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Categories" />}
@@ -98,7 +98,7 @@ export const ProductComponent = (props: ProductComponentPropsModeSpecific & Prod
               filterSelectedOptions
               options={Object.keys(printerGroups)}
               value={props.printerGroup}
-              onChange={(e, v) => { props.setPrinterGroup(v); }}
+              onChange={(_e, v) => { props.setPrinterGroup(v); }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               getOptionLabel={(pgId) => printerGroups[pgId]?.name ?? "Undefined"}
               isOptionEqualToValue={(option, value) => option === value}

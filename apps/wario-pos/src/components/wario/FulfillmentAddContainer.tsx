@@ -95,7 +95,7 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
           service,
           terms: terms.filter(x => x.length > 0),
           messages: {
-            DESCRIPTION: fulfillmentDescription ?? null,
+            DESCRIPTION: fulfillmentDescription.length === 0 ? null : fulfillmentDescription,
             CONFIRMATION: confirmationMessage,
             INSTRUCTIONS: instructions,
           },
@@ -198,7 +198,7 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
       setBlockedOff={setBlockedOff}
       confirmText="Add"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={addFulfillment}
+      onConfirmClick={() => void addFulfillment()}
       isProcessing={isProcessing}
       disableConfirmOn={!canSubmit}
     />
