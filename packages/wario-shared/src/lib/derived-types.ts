@@ -80,7 +80,6 @@ import type {
   OrderManualAmountDiscountDto,
   OrderManualPercentDiscountDto,
   OrderTaxDto,
-  SeatingResourceDto,
   StoreCreditPaymentAllocatedDto,
   StoreCreditPaymentProposedDto,
   TenderBaseAllocatedDto,
@@ -89,7 +88,6 @@ import type {
   WCPProductV2Dto,
   WOrderInstanceDto,
   WOrderInstancePartialDto,
-  WSeatingInfoDto,
 } from './dto/order.dto';
 import type {
   IProductDisplayFlagsFullDto,
@@ -99,6 +97,10 @@ import type {
   PrepTimingDto,
   ProductModifierEntryDto,
 } from './dto/product.dto';
+import type {
+  SeatingResourceDto,
+  WSeatingInfoDto,
+} from './dto/seating.dto';
 import type { OrderInstanceFunctionType, ProductInstanceFunctionType } from './enums';
 import type { DistributiveOmit } from './utility-types';
 
