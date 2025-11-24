@@ -1,5 +1,7 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+
+import { PriceDisplay } from '../enums';
 
 import { IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from './common.dto';
 import { IOptionInstanceDto } from './modifier.dto';
@@ -140,9 +142,9 @@ export class IProductInstanceDisplayFlagsMenuDto {
   hide!: boolean;
 
   // governs how prices get displayed in the menu page according to the enum
-  @IsString()
+  @IsEnum(PriceDisplay)
   @IsNotEmpty()
-  price_display!: string;
+  price_display!: PriceDisplay;
 
   // HTML-friendly message wrapping the display of this PI in the menu page
   @IsString()
@@ -174,9 +176,9 @@ export class IProductInstanceDisplayFlagsOrderDto {
   skip_customization!: boolean;
 
   // governs how prices get displayed in the order page according to the enum
-  @IsString()
+  @IsEnum(PriceDisplay)
   @IsNotEmpty()
-  price_display!: string;
+  price_display!: PriceDisplay;
 
   // HTML-friendly message wrapping the display of this PI in the order page
   @IsString()
