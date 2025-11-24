@@ -34,7 +34,7 @@ function WProductComponent({ catalogSelectors, productMetadata, description, all
   }, [catalogSelectors, description, displayContext, productInstance, productMetadata.exhaustive_modifiers, productMetadata.name]);
   const priceText = useMemo(() => {
     if (productInstance && productMetadata.incomplete) {
-      switch (productInstance.displayFlags[displayContext].price_display as PriceDisplay) {
+      switch (productInstance.displayFlags[displayContext].price_display) {
         case PriceDisplay.FROM_X: return `from ${MoneyToDisplayString(productMetadata.price, false)}`;
         case PriceDisplay.VARIES: return "MP";
         case PriceDisplay.MIN_TO_MAX: {
