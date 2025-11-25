@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { type IProductInstanceFunction } from "@wcp/wario-shared";
+import { type IAbstractExpression, type IProductInstanceFunction } from "@wcp/wario-shared";
 import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared";
 
 import { useAppSelector } from "@/hooks/useRedux";
@@ -19,12 +19,12 @@ const ProductInstanceFunctionEditContainer = ({ pifId, onCloseCallback }: Produc
   const productInstanceFunction = useAppSelector(s => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId))
 
   const [functionName, setFunctionName] = useState(productInstanceFunction.name);
-  const [expression, setExpression] = useState(productInstanceFunction.expression);
+  const [expression, setExpression] = useState<IAbstractExpression | null>(productInstanceFunction.expression);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
   const editProductInstanceFunction = async () => {
-    if (!isProcessing && functionName) {
+    if (!isProcessing && functionName && expression !== null) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });

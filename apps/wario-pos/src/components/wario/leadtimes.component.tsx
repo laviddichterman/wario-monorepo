@@ -30,7 +30,7 @@ export const LeadTimesComp = () => {
       return {
         ...acc,
         [fulfillment.id]: isDirty ?
-          localLeadTime[fulfillment.id] : (fulfillment.leadTime ?? 35)
+          localLeadTime[fulfillment.id] : (fulfillment.leadTime)
       }
     }, {})
     setDirty(FULFILLMENTS.reduce((acc: Record<string, boolean>, fulfillment) => ({
@@ -38,9 +38,10 @@ export const LeadTimesComp = () => {
       [fulfillment.id]: newLocalLeadTime[fulfillment.id] !== fulfillment.leadTime
     }), {}));
     setLocalLeadTime(newLocalLeadTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [FULFILLMENTS, setDirty, setLocalLeadTime]);
 
-  const leadtimesToUpdate = useMemo(() => Object.entries(localLeadTime).reduce((acc, [key, value]) => dirty[key] ? ({ ...acc, [key]: value }) : acc, {}), [dirty, localLeadTime]);
+  const leadtimesToUpdate: Record<string, number> = useMemo(() => Object.entries(localLeadTime).reduce((acc, [key, value]) => dirty[key] ? ({ ...acc, [key]: value }) : acc, {}), [dirty, localLeadTime]);
 
   const onChangeLeadTimes = (fId: string, leadTime: number) => {
     if (localLeadTime[fId] !== leadTime) {
@@ -66,8 +67,10 @@ export const LeadTimesComp = () => {
           enqueueSnackbar(
             `
               Updated lead time(s): ${Object.entries(leadtimesToUpdate).map(([key, value]) =>
-              `${FULFILLMENTS.find(x => x.id === key)?.displayName}: ${value} minutes`
-            )}
+              `${FULFILLMENTS.find(x => x.id === key)?.displayName ?? key}: ${value.toString()} minutes`
+            ).join(', ')
+
+            }
             `)
 
           setDirty(FULFILLMENTS.reduce((acc, fulfillment) => ({ ...acc, [fulfillment.id]: false }), {}));

@@ -41,10 +41,10 @@ export const pollOpenOrders = createAsyncThunk<WOrderInstance[], { token: string
   }
 );
 
-export const unlockOrders = createAsyncThunk<void, string>(
+export const unlockOrders = createAsyncThunk<{ ok: string }, string>(
   'orders/unlock',
   async (token: string) => {
-    const response = await axiosInstance.put('/api/v1/order/unlock', {},
+    const response: AxiosResponse<{ ok: string }> = await axiosInstance.put('/api/v1/order/unlock', {},
       {
         headers: {
           Authorization: `Bearer ${token}`,

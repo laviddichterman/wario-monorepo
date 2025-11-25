@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import type { IMoney, IOption, IRecurringInterval, KeyValue } from "@wcp/wario-shared";
-import { CURRENCY } from "@wcp/wario-shared";
+import { CURRENCY, type IWInterval } from "@wcp/wario-shared";
 import { getModifierTypeEntryById } from "@wcp/wario-ux-shared";
 
 import { useAppSelector } from "@/hooks/useRedux";
@@ -36,7 +36,7 @@ const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: Modifie
   const [omitFromShortname, setOmitFromShortname] = useState(false);
   const [omitFromName, setOmitFromName] = useState(false);
   const [availability, setAvailability] = useState<IRecurringInterval[]>([]);
-  const [disabled, setDisabled] = useState(null);
+  const [disabled, setDisabled] = useState<IWInterval | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 

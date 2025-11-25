@@ -32,10 +32,10 @@ const ModifierOptionEditContainer = ({ modifier_option_id, onCloseCallback }: Mo
   const [allowHeavy, setAllowHeavy] = useState(modifier_option.metadata.allowHeavy);
   const [allowLite, setAllowLite] = useState(modifier_option.metadata.allowLite);
   const [allowOTS, setAllowOTS] = useState(modifier_option.metadata.allowOTS);
-  const [omitFromShortname, setOmitFromShortname] = useState(modifier_option.displayFlags.omit_from_shortname ?? false);
-  const [omitFromName, setOmitFromName] = useState(modifier_option.displayFlags.omit_from_name ?? false);
+  const [omitFromShortname, setOmitFromShortname] = useState(modifier_option.displayFlags.omit_from_shortname);
+  const [omitFromName, setOmitFromName] = useState(modifier_option.displayFlags.omit_from_name);
   const [disabled, setDisabled] = useState(modifier_option.disabled ?? null);
-  const [availability, setAvailability] = useState(modifier_option.availability ?? null);
+  const [availability, setAvailability] = useState(modifier_option.availability);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
