@@ -248,7 +248,7 @@ export function transformValueOnChange(
 export function transformValueOnBlur(
   props: NumberTransformProps,
   raw: string
-): BlurResultAllowEmpty | BlurResultNoEmpty {
+): BlurResultAllowEmpty { // aka BlurResultAllowEmpty | BlurResultNoEmpty
   const parsed = props.parseFunction(raw);
 
   if (props.allowEmpty) {
