@@ -22,6 +22,8 @@ interface WarioQueryProviderProps {
   children: ReactNode;
   /** Auto-connect socket on mount (default: true) */
   autoConnect?: boolean;
+  /** attach for debugging TanStack Query client */
+  attachDebugClient?: boolean;
 }
 
 /**
@@ -40,10 +42,14 @@ export function WarioQueryProvider({
   namespace,
   children,
   autoConnect = true,
+  attachDebugClient = false
 }: WarioQueryProviderProps) {
   // Create query client once and memoize it
   const queryClient = useMemo(() => createWarioQueryClient(), []);
-
+  if (attachDebugClient) {
+    // @ts-expect-error for debugging only
+    window.__TANSTACK_QUERY_CLIENT__ = queryClient;
+  }
   return (
     <QueryClientProvider client={queryClient}>
       <SocketProvider hostAPI={hostAPI} namespace={namespace} autoConnect={autoConnect}>
