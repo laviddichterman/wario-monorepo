@@ -16,6 +16,7 @@ export * from '@/components/WProductComponent';
 export * from '@/containers/DialogContainer';
 export * from '@/containers/FullScreenPulsingContainer';
 export * from "@/containers/MotionLazy";
+export * from '@/query';
 export * from '@/redux/selectorHelpers';
 export * from '@/redux/selectors';
 export * from '@/redux/SocketIoMiddleware';
@@ -23,4 +24,3 @@ export * from '@/redux/SocketIoSlice';
 export * from '@/redux/thunks';
 export * from '@/styled/styled';
 export * from '@/styled/styled.constants';
-

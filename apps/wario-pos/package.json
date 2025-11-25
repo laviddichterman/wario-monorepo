@@ -40,6 +40,7 @@
     "@mui/x-data-grid-premium": "^8.19.0",
     "@mui/x-date-pickers": "^8.19.0",
     "@reduxjs/toolkit": "^2.11.0",
+    "@tanstack/react-query": "^5.90.11",
     "@wcp/wario-fe-ux-shared": "workspace:*",
     "@wcp/wario-shared": "workspace:*",
     "@wcp/wario-ux-shared": "workspace:*",
@@ -71,7 +72,8 @@
     "socket.io-client": "^4.8.1",
     "sonner": "^2.0.7",
     "stylis-plugin-rtl": "^2.1.1",
-    "zod": "^4.1.13"
+    "zod": "^4.1.13",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
