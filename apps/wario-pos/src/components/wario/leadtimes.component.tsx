@@ -120,7 +120,7 @@ export const LeadTimesComp = () => {
               xs: 4,
               md: 2
             }}>
-            <Button sx={{ mx: 3, px: 1, py: 2 }} disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0} onClick={onSubmit}>Push Changes</Button>
+            <Button sx={{ mx: 3, px: 1, py: 2 }} disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0} onClick={() => void onSubmit()}>Push Changes</Button>
           </Grid>
         </Grid>
       </Card>

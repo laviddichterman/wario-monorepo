@@ -37,10 +37,10 @@ export const StoreCreditIssueComponent = () => {
   const [expiration, setExpiration] = useState<string | null>(WDateUtils.formatISODate(addDays(CURRENT_TIME, 60)));
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const validateRecipientEmail = () => {
-    //setRecipientEmailError(recipientEmail.length >= 1 && !EMAIL_REGEX.test(recipientEmail))
-    // TODO: use yup.isEmail
-  }
+  // const _validateRecipientEmail = () => {
+  //   //setRecipientEmailError(recipientEmail.length >= 1 && !EMAIL_REGEX.test(recipientEmail))
+  //   // TODO: use yup.isEmail
+  // }
 
   const handleSubmit = async () => {
     if (!isProcessing) {
@@ -57,7 +57,7 @@ export const StoreCreditIssueComponent = () => {
           recipientNameFirst: firstName,
           recipientNameLast: lastName
         };
-        const response = await fetch(`${HOST_API}/api/v1/payments/storecredit/issue`, {
+        await fetch(`${HOST_API}/api/v1/payments/storecredit/issue`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -165,7 +165,7 @@ export const StoreCreditIssueComponent = () => {
               minDate={addDays(CURRENT_TIME, 30)}
               label="Expiration"
               value={expiration ? parseISO(expiration) : null}
-              onChange={(date) => { setExpiration(date ? WDateUtils.formatISODate(date) : null) }}
+              onChange={(date: Date | number | null | undefined) => { setExpiration(date ? WDateUtils.formatISODate(date) : null) }}
               format={WDateUtils.ServiceDateDisplayFormat}
               slotProps={{
                 textField: { fullWidth: true },
@@ -225,7 +225,7 @@ export const StoreCreditIssueComponent = () => {
           }}>
           <Button
             sx={{ m: 'auto', width: "100%" }}
-            onClick={handleSubmit}
+            onClick={() => void handleSubmit()}
             disabled={!(!isProcessing && amount.amount >= 1 && addedBy.length >= 2 && firstName.length >= 2 && lastName.length >= 2 && reason.length > 2 && recipientEmail.length > 3)}
           >
             Generate

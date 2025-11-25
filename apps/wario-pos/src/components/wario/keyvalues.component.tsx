@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { type KeyValue } from "@wcp/wario-shared";
 
-import { HOST_API } from "../../config";
+import { HOST_API } from "@/config";
 
 import KeyValuesContainer from "./keyvalues.container";
 

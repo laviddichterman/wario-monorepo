@@ -6,7 +6,7 @@ import { GridActionsCellItem, type GridColDef, type GridRenderCellParams, type G
 
 import { TableWrapperComponent } from "./table_wrapper.component";
 
-function isOverflown(element: any) {
+function isOverflown(element: HTMLElement) {
   return element.scrollHeight > element.clientHeight ||
     element.scrollWidth > element.clientWidth;
 }
@@ -25,7 +25,7 @@ const GridCellExpand = React.memo(({ width, value }: GridCellExpandProps) => {
   const [showPopper, setShowPopper] = React.useState(false);
 
   const handleMouseEnter = () => {
-    const isCurrentlyOverflown = isOverflown(cellValue.current);
+    const isCurrentlyOverflown = cellValue.current ? isOverflown(cellValue.current) : false;
     setShowPopper(isCurrentlyOverflown);
     setAnchorEl(cellDiv.current);
     setShowFullCell(true);
