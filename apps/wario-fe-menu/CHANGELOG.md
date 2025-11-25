@@ -1,5 +1,21 @@
 # @wcp/wario-fe-menu
 
+## 0.1.6
+
+### Patch Changes
+
+- add604b: implement breadcrumb style category navigation in WMenuTableComponent
+- cbdbddc: clean up some unused logic from wario-fe-menu
+- c2e0804: - implement proper "All" button filter with mui-data-grid
+- Updated dependencies [e25448c]
+- Updated dependencies [ba74408]
+- Updated dependencies [2a53eb8]
+- Updated dependencies [3120974]
+- Updated dependencies [c2e0804]
+  - @wcp/wario-shared@1.0.0
+  - @wcp/wario-ux-shared@7.0.0
+  - @wcp/wario-fe-ux-shared@4.0.0
+
 ## 0.1.5
 
 ### Patch Changes

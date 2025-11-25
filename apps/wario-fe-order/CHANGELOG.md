@@ -1,5 +1,18 @@
 # @wcp/wario-fe-order
 
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [e25448c]
+- Updated dependencies [ba74408]
+- Updated dependencies [2a53eb8]
+- Updated dependencies [3120974]
+- Updated dependencies [c2e0804]
+  - @wcp/wario-shared@1.0.0
+  - @wcp/wario-ux-shared@7.0.0
+  - @wcp/wario-fe-ux-shared@4.0.0
+
 ## 0.1.4
 
 ### Patch Changes
