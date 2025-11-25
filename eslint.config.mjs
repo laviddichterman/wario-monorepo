@@ -5,6 +5,7 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import packageJsonPlugin from "eslint-plugin-package-json";
 import jsoncParser from "jsonc-eslint-parser";
 import perfectionist from "eslint-plugin-perfectionist";
+import pluginQuery from '@tanstack/eslint-plugin-query'
 import globals from 'globals';
 import { defineConfig } from "eslint/config";
 
@@ -144,7 +145,9 @@ const tsConfig = {
     react,
     "react-hooks": reactHooks,
     "react-refresh": reactRefresh,
-    perfectionist
+    perfectionist,
+    '@tanstack/query': pluginQuery,
+
   },
   settings: { react: { version: "detect" } },
   extends: [
@@ -153,6 +156,7 @@ const tsConfig = {
   rules: {
     ...basicRules(),
     ...sortImportsRules(),
+    '@tanstack/query/exhaustive-deps': 'error',
   }
 };
 
