@@ -202,8 +202,8 @@ const ItemCaptionIcon = styled(Iconify, { shouldForwardProp })<StyledState>(({ t
 /**
  * @slot info
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const ItemInfo = styled('span', { shouldForwardProp })<StyledState>(({ theme }) => ({
+
+const ItemInfo = styled('span', { shouldForwardProp })<StyledState>((_) => ({
   ...navItemStyles.info,
 }));
 

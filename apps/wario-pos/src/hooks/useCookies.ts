@@ -38,7 +38,7 @@ export type UseCookiesOptions = CookieOptions & {
 export type UseCookiesReturn<T> = {
   state: T;
   resetState: (defaultState?: T) => void;
-  setState: (updateState: T | Partial<T>) => void;
+  setState: (updateState: Partial<T>) => void;
   setField: (name: keyof T, updateValue: T[keyof T]) => void;
 };
 
@@ -57,9 +57,9 @@ export function useCookies<T>(
 
     if (storedValue) {
       if (isObjectState) {
-        setState((prevValue) => ({ ...prevValue, ...storedValue }));
+        setState((prevValue) => ({ ...prevValue, ...storedValue }) as T);
       } else {
-        setState(storedValue);
+        setState(storedValue as T);
       }
     } else if (initialState && initializeWithValue) {
       setCookie(key, initialState, cookieOptions);
@@ -69,7 +69,7 @@ export function useCookies<T>(
   }, []);
 
   const updateState = useCallback(
-    (newState: T | Partial<T>) => {
+    (newState: Partial<T>) => {
       if (isObjectState) {
         setState((prevValue) => {
           const updatedState = { ...prevValue, ...newState } as T;

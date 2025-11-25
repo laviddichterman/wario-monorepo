@@ -6,7 +6,6 @@ import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Grid, Switch, Typography } from "@mui/material";
 
 import type { IOption, IOptionType } from "@wcp/wario-shared";
-import { DISPLAY_AS, MODIFIER_CLASS } from "@wcp/wario-shared";
 import { getModifierTypeEntryById, useIndexedState } from "@wcp/wario-ux-shared";
 
 import { useAppSelector } from "@/hooks/useRedux";
@@ -24,29 +23,31 @@ export interface ModifierTypeCopyContainerProps {
 const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: ModifierTypeCopyContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, modifierTypeId));
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const allOptions = useAppSelector(s => s.ws.catalog!.options);
 
   const [ordinal, setOrdinal] = useState(modifierTypeEntry.modifierType.ordinal);
   const [name, setName] = useState(modifierTypeEntry.modifierType.name);
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const [displayName, setDisplayName] = useState(modifierTypeEntry.modifierType.displayName ?? "");
   const [externalIds, setExternalIds] = useState(modifierTypeEntry.modifierType.externalIDs);
   const [minSelected, setMinSelected] = useState(modifierTypeEntry.modifierType.min_selected || 0);
   const [maxSelected, setMaxSelected] = useState(modifierTypeEntry.modifierType.max_selected || null);
-  const [omitOptionIfNotAvailable, setOmitOptionIfNotAvailable] = useState(modifierTypeEntry.modifierType.displayFlags.omit_options_if_not_available ?? false);
-  const [omitSectionIfNoAvailableOptions, setOmitSectionIfNoAvailableOptions] = useState(modifierTypeEntry.modifierType.displayFlags.omit_section_if_no_available_options ?? false);
-  const [useToggleIfOnlyTwoOptions, setUseToggleIfOnlyTwoOptions] = useState(modifierTypeEntry.modifierType.displayFlags.use_toggle_if_only_two_options ?? false);
-  const [isHiddenDuringCustomization, setIsHiddenDuringCustomization] = useState(modifierTypeEntry.modifierType.displayFlags.hidden ?? false);
-  const [modifierClass, setModifierClass] = useState(modifierTypeEntry.modifierType.displayFlags.modifier_class ?? MODIFIER_CLASS.ADD);
-  const [emptyDisplayAs, setEmptyDisplayAs] = useState(modifierTypeEntry.modifierType.displayFlags.empty_display_as ?? DISPLAY_AS.OMIT);
-  const [templateString, setTemplateString] = useState(modifierTypeEntry.modifierType.displayFlags.template_string ?? "");
-  const [multipleItemSeparator, setMultipleItemSeparator] = useState(modifierTypeEntry.modifierType.displayFlags.multiple_item_separator ?? "");
-  const [nonEmptyGroupPrefix, setNonEmptyGroupPrefix] = useState(modifierTypeEntry.modifierType.displayFlags.non_empty_group_prefix ?? "");
-  const [nonEmptyGroupSuffix, setNonEmptyGroupSuffix] = useState(modifierTypeEntry.modifierType.displayFlags.non_empty_group_suffix ?? "");
+  const [omitOptionIfNotAvailable, setOmitOptionIfNotAvailable] = useState(modifierTypeEntry.modifierType.displayFlags.omit_options_if_not_available);
+  const [omitSectionIfNoAvailableOptions, setOmitSectionIfNoAvailableOptions] = useState(modifierTypeEntry.modifierType.displayFlags.omit_section_if_no_available_options);
+  const [useToggleIfOnlyTwoOptions, setUseToggleIfOnlyTwoOptions] = useState(modifierTypeEntry.modifierType.displayFlags.use_toggle_if_only_two_options);
+  const [isHiddenDuringCustomization, setIsHiddenDuringCustomization] = useState(modifierTypeEntry.modifierType.displayFlags.hidden);
+  const [modifierClass, setModifierClass] = useState(modifierTypeEntry.modifierType.displayFlags.modifier_class);
+  const [emptyDisplayAs, setEmptyDisplayAs] = useState(modifierTypeEntry.modifierType.displayFlags.empty_display_as);
+  const [templateString, setTemplateString] = useState(modifierTypeEntry.modifierType.displayFlags.template_string);
+  const [multipleItemSeparator, setMultipleItemSeparator] = useState(modifierTypeEntry.modifierType.displayFlags.multiple_item_separator);
+  const [nonEmptyGroupPrefix, setNonEmptyGroupPrefix] = useState(modifierTypeEntry.modifierType.displayFlags.non_empty_group_prefix);
+  const [nonEmptyGroupSuffix, setNonEmptyGroupSuffix] = useState(modifierTypeEntry.modifierType.displayFlags.non_empty_group_suffix);
   const [is3p, setIs3p] = useState(modifierTypeEntry.modifierType.displayFlags.is3p);
 
   // product instance indexed state
-  const [expandedPanels, setExpandedPanel] = useIndexedState(useState(Array(modifierTypeEntry.options.length).fill(false)));
-  const [copyOpFlags, setCopyOpFlag] = useIndexedState(useState(Array(modifierTypeEntry.options.length).fill(true)));
+  const [expandedPanels, setExpandedPanel] = useIndexedState(useState(Array<boolean>(modifierTypeEntry.options.length).fill(false)));
+  const [copyOpFlags, setCopyOpFlag] = useIndexedState(useState(Array<boolean>(modifierTypeEntry.options.length).fill(true)));
 
   const [opDisplayName, setOpDisplayName] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].displayName)));
   const [opDescription, setOpDescription] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].description)));
@@ -61,10 +62,10 @@ const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: Modifier
   const [opAllowHeavy, setOpAllowHeavy] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].metadata.allowHeavy)));
   const [opAllowLite, setOpAllowLite] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].metadata.allowLite)));
   const [opAllowOTS, setOpAllowOTS] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].metadata.allowOTS)));
-  const [opOmitFromShortname, setOpOmitFromShortname] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].displayFlags.omit_from_shortname ?? false)));
-  const [opOmitFromName, setOpOmitFromName] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].displayFlags.omit_from_name ?? false)));
+  const [opOmitFromShortname, setOpOmitFromShortname] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].displayFlags.omit_from_shortname)));
+  const [opOmitFromName, setOpOmitFromName] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].displayFlags.omit_from_name)));
   const [opDisabled, setOpDisabled] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].disabled ?? null)));
-  const [opAvailability, setOpAvailability] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].availability ?? null)));
+  const [opAvailability, setOpAvailability] = useIndexedState(useState(modifierTypeEntry.options.map(oId => allOptions[oId].availability)));
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
 
   // API state
@@ -72,7 +73,7 @@ const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: Modifier
   const { getAccessTokenSilently } = useAuth0();
 
   const getModifierOptionEditor = useCallback((i: number) => (
-    <Accordion sx={{ p: 2 }} key={i} expanded={expandedPanels[i] && copyOpFlags[i]} onChange={(e, ex) => { setExpandedPanel(i)(ex); }}  >
+    <Accordion sx={{ p: 2 }} key={i} expanded={expandedPanels[i] && copyOpFlags[i]} onChange={(_, ex) => { setExpandedPanel(i)(ex); }}  >
       <AccordionSummary expandIcon={<ExpandMore />}>
         <Grid container>
           <Grid size="grow">
@@ -231,7 +232,7 @@ const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: Modifier
     <ModifierTypeComponent
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={copyModifierTypeAndOptions}
+      onConfirmClick={() => void copyModifierTypeAndOptions()}
       isProcessing={isProcessing}
       disableConfirm={false}
       ordinal={ordinal}

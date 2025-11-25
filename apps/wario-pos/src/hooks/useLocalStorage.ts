@@ -38,7 +38,7 @@ export type UseLocalStorageOptions = {
 export type UseLocalStorageReturn<T> = {
   state: T;
   resetState: (defaultState?: T) => void;
-  setState: (updateState: T | Partial<T>) => void;
+  setState: (updateState: Partial<T>) => void;
   setField: (name: keyof T, updateValue: T[keyof T]) => void;
 };
 
@@ -69,7 +69,7 @@ export function useLocalStorage<T>(
   }, []);
 
   const updateState = useCallback(
-    (newState: T | Partial<T>) => {
+    (newState: Partial<T>) => {
       if (isObjectState) {
         setState((prevValue) => {
           const updatedState = { ...prevValue, ...newState } as T;

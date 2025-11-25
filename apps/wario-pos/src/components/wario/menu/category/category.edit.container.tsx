@@ -73,7 +73,7 @@ const CategoryEditContainer = ({ categoryId, onCloseCallback }: CategoryEditProp
     <CategoryComponent
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editCategory}
+      onConfirmClick={() => void editCategory()}
       isProcessing={isProcessing}
       categoryIds={categoryIds.filter(c => c !== category.id)}
       description={description}

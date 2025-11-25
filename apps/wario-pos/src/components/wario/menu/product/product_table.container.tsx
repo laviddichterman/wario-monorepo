@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useState } from "react";
 
 import { AddBox, BedtimeOff, Cancel, CheckCircle, DeleteOutline, Edit, LibraryAdd } from "@mui/icons-material";
@@ -98,7 +97,7 @@ const ProductInstancesDetailPanel = ({ row }: { row: RowType }) => {
 
 interface ProductTableContainerProps {
   product_ids: string[];
-  setPanelsExpandedSize: Dispatch<SetStateAction<number>>;
+  setPanelsExpandedSize: (size: number) => void;
   disableToolbar: boolean;
   pagination?: boolean;
   title?: string;

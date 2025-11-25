@@ -3,7 +3,7 @@ import { createSelector } from "reselect";
 
 import { DeleteOutline, Edit } from "@mui/icons-material";
 import { Tooltip } from '@mui/material';
-import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF, GRID_TREE_DATA_GROUPING_FIELD, GridActionsCellItem, GridDetailPanelToggleCell, type GridRenderCellParams, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
+import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF, GRID_TREE_DATA_GROUPING_FIELD, GridActionsCellItem, GridDetailPanelToggleCell, type GridRenderCellParams, type GridRowId, gridRowNodeSelector, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import { getCategoryEntryById, getCategoryEntryIds, weakMapCreateSelector } from "@wcp/wario-ux-shared";
 
@@ -21,7 +21,7 @@ interface RowType { path: string[]; id: string; };
 const DetailPanelContent = (params: GridRowParams<RowType>) => {
   const dispatch = useAppDispatch();
   const productsInCategory = useAppSelector(s => selectProductIdsInCategoryAfterDisableFilter(s, params.row.id));
-  return productsInCategory && <ProductTableContainer
+  return productsInCategory.length > 0 && <ProductTableContainer
     disableToolbar={true}
     product_ids={productsInCategory}
     setPanelsExpandedSize={(size: number) => dispatch(setDetailPanelSizeForRowId({ id: params.row.id, size: size }))}
@@ -106,20 +106,22 @@ interface CategoryTableContainerProps {
 const CategoryTableContainer = (props: CategoryTableContainerProps) => {
   const dispatch = useAppDispatch();
   const categories = useAppSelector(selectCategoryIdsWithTreePath);
+
   // const getDetailPanelHeight = useAppSelector(s => ({ row }: { row: CatalogCategoryEntry }) => selectDetailPanelSizeForRowId(s, row.category.id));
   const apiRef = useGridApiRef();
+  const rowNodeSelector = useCallback((rowId: GridRowId) => gridRowNodeSelector(apiRef, rowId), [apiRef]);
 
   const onRowClick = useCallback((params: GridRowParams<RowType>) => {
     // if there are children categories and this row's children are not expanded, then expand the children, 
     // otherwise if there are products in this category, toggle the detail panel, else collapse the children categories
-    const rowNode = apiRef.current.getRowNode(params.id);
-    const isGroupNode = (rowNode && rowNode.type === 'group');
-    if (isGroupNode) {
+    const rowNode = rowNodeSelector(params.id);
+    if (!apiRef.current) return;
+    if (rowNode.type === 'group') {
       apiRef.current.setRowChildrenExpansion(params.id, !rowNode.childrenExpanded);
     } else {
       apiRef.current.toggleDetailPanel(params.id);
     }
-  }, [apiRef]);
+  }, [apiRef, rowNodeSelector]);
 
   return <TableWrapperComponent
     sx={{ minWidth: '750px' }}
@@ -143,12 +145,12 @@ const CategoryTableContainer = (props: CategoryTableContainerProps) => {
           icon={<Tooltip title="Edit Category"><Edit /></Tooltip>}
           label="Edit Category"
           onClick={() => dispatch(openCategoryEdit(params.row.id))}
-          key={`EDIT${params.id}`} />,
+          key={`EDIT${params.id.toString()}`} />,
         <GridActionsCellItem
           icon={<Tooltip title="Delete Category"><DeleteOutline /></Tooltip>}
           label="Delete Category"
           onClick={() => dispatch(openCategoryDelete(params.row.id))}
-          key={`DELETE${params.id}`} />
+          key={`DELETE${params.id.toString()}`} />
       ]
     },
     {

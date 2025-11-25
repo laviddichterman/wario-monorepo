@@ -37,15 +37,15 @@ export type ModifierTypeContainerProps =
   ValSetValNamed<boolean, 'omitSectionIfNoAvailableOptions'> &
   ValSetValNamed<boolean, 'useToggleIfOnlyTwoOptions'> &
   ValSetValNamed<boolean, 'isHiddenDuringCustomization'> &
-  ValSetValNamed<keyof typeof DISPLAY_AS, 'emptyDisplayAs'> &
-  ValSetValNamed<keyof typeof MODIFIER_CLASS, 'modifierClass'> & {
+  ValSetValNamed<DISPLAY_AS, 'emptyDisplayAs'> &
+  ValSetValNamed<MODIFIER_CLASS, 'modifierClass'> & {
     confirmText: string;
     onConfirmClick: VoidFunction;
     isProcessing: boolean;
   };
 
 export const IsValidModifierType = (props: Pick<ModifierTypeContainerProps, 'name' | 'maxSelected' | 'minSelected' | 'useToggleIfOnlyTwoOptions'>) => !(props.name.length === 0 ||
-  (Number.isFinite(props.maxSelected) && (props.maxSelected!) < props.minSelected) ||
+  (Number.isFinite(props.maxSelected) && (props.maxSelected as number) < props.minSelected) ||
   (props.useToggleIfOnlyTwoOptions && (props.maxSelected !== 1 || props.minSelected !== 1)));
 
 export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
@@ -150,7 +150,7 @@ export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
           label="Modifier Class"
           value={props.modifierClass}
           setValue={props.setModifierClass}
-          options={Object.keys(MODIFIER_CLASS)}
+          options={Object.values(MODIFIER_CLASS)}
         />
       </Grid>
       <Grid container size={9}>
@@ -161,9 +161,9 @@ export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
             name="empty-display-as"
             row
             value={props.emptyDisplayAs}
-            onChange={(e) => { props.setEmptyDisplayAs(e.target.value as keyof typeof DISPLAY_AS); }}
+            onChange={(e) => { props.setEmptyDisplayAs(e.target.value as DISPLAY_AS); }}
           >
-            {Object.keys(DISPLAY_AS).map((opt, i) =>
+            {Object.values(DISPLAY_AS).map((opt, i) =>
               <FormControlLabel
                 key={i}
                 value={opt}

@@ -51,7 +51,7 @@ const CategoryDeleteContainer = ({ categoryId, onCloseCallback }: CategoryEditPr
   return (
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={deleteCategory}
+      onConfirmClick={() => void deleteCategory()}
       name={categoryName}
       isProcessing={isProcessing}
       additionalBody={

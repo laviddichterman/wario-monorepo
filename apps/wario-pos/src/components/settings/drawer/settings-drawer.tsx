@@ -4,7 +4,7 @@ import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import { useColorScheme } from '@mui/material/styles';
+import { type SupportedColorScheme, useColorScheme } from '@mui/material/styles';
 import SvgIcon from '@mui/material/SvgIcon';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -51,7 +51,7 @@ export function SettingsDrawer({ sx, defaultSettings }: SettingsDrawerProps) {
 
   useEffect(() => {
     if (mode !== undefined && mode !== settings.state.mode) {
-      settings.setState({ mode });
+      settings.setState({ mode: mode as SupportedColorScheme });
     }
   }, [mode, settings]);
 

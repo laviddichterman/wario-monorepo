@@ -29,14 +29,14 @@ import { useCallback, useState } from 'react';
 export type UseSetStateReturn<T> = {
   state: T;
   resetState: (defaultState?: T) => void;
-  setState: (updateState: T | Partial<T>) => void;
+  setState: (updateState: Partial<T>) => void;
   setField: (name: keyof T, updateValue: T[keyof T]) => void;
 };
 
 export function useSetState<T>(initialState?: T): UseSetStateReturn<T> {
   const [state, setState] = useState<T | undefined>(initialState);
 
-  const updateState = useCallback((newState: T | Partial<T>) => {
+  const updateState = useCallback((newState: Partial<T>) => {
     setState((prevValue) => ({ ...prevValue, ...newState }) as T);
   }, []);
 
