@@ -62,7 +62,8 @@ const CategoryComponent = (props: CategoryComponentProps) => {
             <Autocomplete
               options={props.categoryIds}
               value={props.parent}
-              onChange={(_, v) => { props.setParent(v !== null ? String(v) : null); }}
+              onChange={(_, v) => { props.setParent(v !== null ? v : null); }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               getOptionLabel={(o) => selectCategoryById(o)?.category.name ?? "Undefined"}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => (
@@ -133,7 +134,7 @@ const CategoryComponent = (props: CategoryComponentProps) => {
               fullWidth
               filterSelectedOptions
               options={fulfillments.map(x => x.id)}
-              value={props.serviceDisable.map((x) => String(x))}
+              value={props.serviceDisable}
               onChange={(_, v) => {
                 props.setServiceDisable(v);
               }}
@@ -148,7 +149,7 @@ const CategoryComponent = (props: CategoryComponentProps) => {
               label="Call Line Display"
               value={props.callLineDisplay}
               setValue={props.setCallLineDisplay}
-              options={Object.keys(CALL_LINE_DISPLAY)}
+              options={Object.values(CALL_LINE_DISPLAY)}
             />
           </Grid>
           <Grid container size={6}>
@@ -157,7 +158,7 @@ const CategoryComponent = (props: CategoryComponentProps) => {
               label="Nested Display"
               value={props.nestedDisplay}
               setValue={props.setNestedDisplay}
-              options={Object.keys(CategoryDisplay)}
+              options={Object.values(CategoryDisplay)}
             />
           </Grid>
         </>

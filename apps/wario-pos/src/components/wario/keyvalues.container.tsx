@@ -104,19 +104,15 @@ const GridCellExpand = React.memo(({ width, value }: GridCellExpandProps) => {
   );
 });
 
-type renderCellExpandProps = {
-  colDef: { computedWidth: number; };
-  value: string;
-} & GridRenderCellParams<any, any, any>
-
-function renderCellExpand(params: renderCellExpandProps) {
+function renderCellExpand<T>(params: GridRenderCellParams<KeyValuesRowType<T>, T>) {
+  const value = params.value !== undefined && params.value !== null ? String(params.value) : '';
   return (
-    <GridCellExpand value={params.value || ''} width={params.colDef.computedWidth} />
+    <GridCellExpand value={value} width={params.colDef.computedWidth} />
   );
 }
 
-export interface KeyValuesRowType<T> { key: string; value: T; };
-interface RowTypeNullable<T> { key: string; value: T | null; };
+export interface KeyValuesRowType<T> { key: string; value: T }
+interface RowTypeNullable<T> { key: string; value: T | null }
 
 export type KeyValuesContainerProps<T> = {
   values: KeyValuesRowType<T>[];
@@ -132,20 +128,21 @@ export type KeyValuesContainerProps<T> = {
 
 export const KeyValuesContainer = function <T>(props: KeyValuesContainerProps<T>) {
   // localValues keeps track of new and dirty values, everything else we should get from props.values
-  const [localValues, setLocalValues] = useState<Record<string, RowTypeNullable<T> | KeyValuesRowType<T>>>({});
+  // value: null means the row is marked for deletion
+  const [localValues, setLocalValues] = useState<Record<string, RowTypeNullable<T>>>({});
   const valuesAsRecord = useMemo(() => props.values.reduce((acc: Record<string, KeyValuesRowType<T>>, x) => ({ ...acc, [x.key]: x }), {}), [props.values]);
   const mergedRecord = useMemo(() => ({ ...valuesAsRecord, ...localValues }), [valuesAsRecord, localValues]);
-  const mergedValues = useMemo(() => Object.values(mergedRecord).filter(x => x.value !== null) as KeyValuesRowType<T>[], [mergedRecord]);
+  const mergedValues = useMemo(() => Object.values(mergedRecord).filter((x): x is KeyValuesRowType<T> => x.value !== null), [mergedRecord]);
   const [newkey, setNewkey] = useState("");
   const [newvalue, setNewvalue] = useState<string | number | boolean>("");
 
 
   const onAddNewKeyValuePair = () => {
-    const newLocalValues = { ...localValues, [newkey]: { key: newkey, value: newvalue } as KeyValuesRowType<T> };
+    const newLocalValues = { ...localValues, [newkey]: { key: newkey, value: newvalue as T } };
     setLocalValues(newLocalValues);
     if (props.setValues) {
-      // @ts-ignore
-      props.setValues(Object.values({ ...valuesAsRecord, ...newLocalValues }).filter(x => x.value !== null));
+      const merged = { ...valuesAsRecord, ...newLocalValues };
+      props.setValues(Object.values(merged).filter((x): x is KeyValuesRowType<T> => x.value !== null));
     }
     setNewkey("");
     setNewvalue("");
@@ -178,47 +175,42 @@ export const KeyValuesContainer = function <T>(props: KeyValuesContainerProps<T>
                 />
               </Grid>
               <Grid size={2}>
-                <Button disabled={props.isProcessing || newkey === "" || newvalue === null} onClick={onAddNewKeyValuePair}>Add</Button>
+                <Button disabled={props.isProcessing || newkey === "" || newvalue === ""} onClick={onAddNewKeyValuePair}>Add</Button>
               </Grid>
             </Grid>
           }
           <div style={{ height: "100%", overflow: "auto" }}>
             <TableWrapperComponent
-
-              /* TODO: FIX!! editing a row doesn't work right now. At the moment we need to add a row with the same key and an updated value */
               processRowUpdate={(newRow: KeyValuesRowType<T>) => {
-                setLocalValues({ ...localValues, [newRow.key]: newRow });
+                setLocalValues(prev => ({ ...prev, [newRow.key]: newRow }));
                 return newRow;
               }}
               disableToolbar
               columns={[
-                { headerName: "Key", field: "key", valueGetter: (_v, row) => row.key, flex: 1 },
-                { headerName: "Value", editable: props.canEdit, field: "value", valueGetter: (_v, row) => row.value, flex: 4, renderCell: renderCellExpand },
+                { headerName: "Key", field: "key", valueGetter: (_v: unknown, row: KeyValuesRowType<T>) => row.key, flex: 1 },
+                { headerName: "Value", editable: props.canEdit, field: "value", valueGetter: (_v: unknown, row: KeyValuesRowType<T>) => row.value, flex: 4, renderCell: renderCellExpand<T> },
                 ...(props.canRemove ? [{
                   field: 'actions',
                   type: 'actions',
-                  getActions: (params: GridRowParams) => {
+                  getActions: (params: GridRowParams<KeyValuesRowType<T>>) => {
                     return [
-                      // FIX ME! this doesn't work right now
                       <GridActionsCellItem
                         key={"delete"}
                         icon={<HighlightOffIcon />}
                         label={"Delete"}
                         onClick={() => {
-                          const valueCopy = { ...localValues };
-                          delete valueCopy[params.id.toString()];
-                          setLocalValues(valueCopy);
+                          setLocalValues(prev => ({ ...prev, [params.row.key]: { key: params.row.key, value: null } }));
                         }} />
                     ];
                   }
-                }] satisfies GridColDef[] : [])
+                }] satisfies GridColDef<KeyValuesRowType<T>>[] : [])
               ]}
-              getRowId={(row) => row.key}
+              getRowId={(row: KeyValuesRowType<T>) => row.key}
               rows={mergedValues} toolbarActions={[]} />
           </div>
         </CardContent>
         {props.onSubmit && <CardActions>
-          <Button disabled={props.isProcessing} onClick={() => { props.onSubmit!(mergedValues); }}>PUSH CHANGES</Button>
+          <Button disabled={props.isProcessing} onClick={() => { props.onSubmit?.(mergedValues); }}>PUSH CHANGES</Button>
         </CardActions>}
       </Card>
     </div>

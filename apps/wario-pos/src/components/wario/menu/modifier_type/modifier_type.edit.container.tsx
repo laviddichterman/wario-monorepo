@@ -3,7 +3,6 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import type { IOptionType } from "@wcp/wario-shared";
-import { DISPLAY_AS, MODIFIER_CLASS } from "@wcp/wario-shared";
 import { getModifierTypeEntryById } from "@wcp/wario-ux-shared";
 
 import { useAppSelector } from "@/hooks/useRedux";
@@ -18,20 +17,20 @@ const ModifierTypeEditContainer = ({ modifier_type_id, onCloseCallback }: Modifi
   const modifier_type = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, modifier_type_id).modifierType);
   const [ordinal, setOrdinal] = useState(modifier_type.ordinal);
   const [name, setName] = useState(modifier_type.name);
-  const [displayName, setDisplayName] = useState(modifier_type.displayName ?? "");
+  const [displayName, setDisplayName] = useState(modifier_type.displayName);
   const [externalIds, setExternalIds] = useState(modifier_type.externalIDs);
   const [minSelected, setMinSelected] = useState(modifier_type.min_selected || 0);
   const [maxSelected, setMaxSelected] = useState(modifier_type.max_selected || null);
-  const [omitOptionIfNotAvailable, setOmitOptionIfNotAvailable] = useState(modifier_type.displayFlags.omit_options_if_not_available ?? false);
-  const [omitSectionIfNoAvailableOptions, setOmitSectionIfNoAvailableOptions] = useState(modifier_type.displayFlags.omit_section_if_no_available_options ?? false);
-  const [useToggleIfOnlyTwoOptions, setUseToggleIfOnlyTwoOptions] = useState(modifier_type.displayFlags.use_toggle_if_only_two_options ?? false);
-  const [isHiddenDuringCustomization, setIsHiddenDuringCustomization] = useState(modifier_type.displayFlags.hidden ?? false);
-  const [modifierClass, setModifierClass] = useState(modifier_type.displayFlags.modifier_class ?? MODIFIER_CLASS.ADD);
-  const [emptyDisplayAs, setEmptyDisplayAs] = useState(modifier_type.displayFlags.empty_display_as ?? DISPLAY_AS.OMIT);
-  const [templateString, setTemplateString] = useState(modifier_type.displayFlags.template_string ?? "");
-  const [multipleItemSeparator, setMultipleItemSeparator] = useState(modifier_type.displayFlags.multiple_item_separator ?? "");
-  const [nonEmptyGroupPrefix, setNonEmptyGroupPrefix] = useState(modifier_type.displayFlags.non_empty_group_prefix ?? "");
-  const [nonEmptyGroupSuffix, setNonEmptyGroupSuffix] = useState(modifier_type.displayFlags.non_empty_group_suffix ?? "");
+  const [omitOptionIfNotAvailable, setOmitOptionIfNotAvailable] = useState(modifier_type.displayFlags.omit_options_if_not_available);
+  const [omitSectionIfNoAvailableOptions, setOmitSectionIfNoAvailableOptions] = useState(modifier_type.displayFlags.omit_section_if_no_available_options);
+  const [useToggleIfOnlyTwoOptions, setUseToggleIfOnlyTwoOptions] = useState(modifier_type.displayFlags.use_toggle_if_only_two_options);
+  const [isHiddenDuringCustomization, setIsHiddenDuringCustomization] = useState(modifier_type.displayFlags.hidden);
+  const [modifierClass, setModifierClass] = useState(modifier_type.displayFlags.modifier_class);
+  const [emptyDisplayAs, setEmptyDisplayAs] = useState(modifier_type.displayFlags.empty_display_as);
+  const [templateString, setTemplateString] = useState(modifier_type.displayFlags.template_string);
+  const [multipleItemSeparator, setMultipleItemSeparator] = useState(modifier_type.displayFlags.multiple_item_separator);
+  const [nonEmptyGroupPrefix, setNonEmptyGroupPrefix] = useState(modifier_type.displayFlags.non_empty_group_prefix);
+  const [nonEmptyGroupSuffix, setNonEmptyGroupSuffix] = useState(modifier_type.displayFlags.non_empty_group_suffix);
   const [is3p, setIs3p] = useState(modifier_type.displayFlags.is3p);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
@@ -87,7 +86,7 @@ const ModifierTypeEditContainer = ({ modifier_type_id, onCloseCallback }: Modifi
     <ModifierTypeComponent
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editModifierType}
+      onConfirmClick={() => void editModifierType()}
       disableConfirm={false}
       isProcessing={isProcessing}
       ordinal={ordinal}

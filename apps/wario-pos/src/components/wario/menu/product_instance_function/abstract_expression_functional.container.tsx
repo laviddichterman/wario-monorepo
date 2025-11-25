@@ -526,7 +526,7 @@ const ConstModifierPlacementLiteralComponent = function ({ value, setValue }: Va
         name="Placement Value"
         row
         value={value}
-        onChange={(e) => { setValue(parseInt(e.target.value as OptionPlacement)); }}
+        onChange={(e) => { setValue(parseInt(e.target.value)); }}
       >
         {[OptionPlacement.NONE, OptionPlacement.LEFT, OptionPlacement.RIGHT, OptionPlacement.WHOLE].map((val, idx) => (
           <FormControlLabel
@@ -549,7 +549,7 @@ const ConstModifierQualifierLiteralComponent = function ({ value, setValue }: Va
         name="Qualifier Value"
         row
         value={value}
-        onChange={(e) => { setValue(parseInt(e.target.value as OptionQualifier)); }}
+        onChange={(e) => { setValue(parseInt(e.target.value)); }}
       >
         {[OptionQualifier.REGULAR, OptionQualifier.HEAVY, OptionQualifier.LITE, OptionQualifier.OTS].map((val, idx) => (
           <FormControlLabel

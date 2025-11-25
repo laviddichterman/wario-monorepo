@@ -95,7 +95,7 @@ const PrinterGroupDeleteContainer = ({ printerGroup, onCloseCallback }: PrinterG
               disabled={isProcessing || !reassign}
               options={Object.keys(printerGroups).filter(p => p !== printerGroup.id)}
               value={destinationPrinterGroup}
-              onChange={(e, v) => { setDestinationPrinterGroup(v); }}
+              onChange={(_, v) => { setDestinationPrinterGroup(v); }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               getOptionLabel={(pgId) => printerGroups[pgId].name ?? "Undefined"}
               isOptionEqualToValue={(option, value) => option === value}

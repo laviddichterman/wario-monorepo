@@ -28,7 +28,7 @@ const PrepTimingPropertyComponent = (props: PrepTimingPropertyComponentProps) =>
   }
   return (
     <Grid container spacing={2}>
-      <Grid item xs={specifyTiming ? 6 : 12}>
+      <Grid size={specifyTiming ? 6 : 12}>
         <ToggleBooleanPropertyComponent
           disabled={props.disabled}
           label="Specify Prep Timing"
@@ -38,7 +38,7 @@ const PrepTimingPropertyComponent = (props: PrepTimingPropertyComponentProps) =>
       </Grid>
       {specifyTiming && props.value && (
         <>
-          <Grid item xs={6}>
+          <Grid size={6}>
             <IntNumericPropertyComponent
               min={0}
               disabled={props.disabled}
@@ -47,7 +47,7 @@ const PrepTimingPropertyComponent = (props: PrepTimingPropertyComponentProps) =>
               setValue={(x: number) => { props.setValue(props.value ? { ...props.value, prepStationId: x } : null) }}
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid size={6}>
             <FloatNumericPropertyComponent
               min={0.0}
               disabled={props.disabled}

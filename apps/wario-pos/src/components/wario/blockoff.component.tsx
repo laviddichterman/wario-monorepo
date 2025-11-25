@@ -35,7 +35,7 @@ const TrimOptionsBeforeDisabled = function <T extends { disabled: boolean; }>(op
 
 interface ServiceSelectionCheckboxProps {
   selected: boolean;
-  onChange: React.MouseEventHandler<HTMLDivElement>;
+  onChange: React.MouseEventHandler;
   service_name: React.ReactNode;
 }
 
@@ -51,7 +51,7 @@ const ServiceSelectionCheckbox = (props: ServiceSelectionCheckboxProps) => {
     <Chip
       label={service_name}
       clickable
-      onDelete={(e) => { onChange(e); }}
+      onDelete={(e: React.MouseEvent) => { onChange(e); }}
       onClick={(e) => { onChange(e); }}
       color={selected ? "primary" : "default"}
       deleteIcon={selected ? <Done /> : <HighlightOff />}
@@ -66,7 +66,7 @@ const selectFulfillmentIdAndNamesWithOperatingHours = weakMapCreateSelector(
 
 const selectSelectedFulfillments = weakMapCreateSelector(
   (s: RootState, _selectedServices: string[]) => s.ws.fulfillments,
-  (s: RootState, selectedServices: string[]) => selectedServices,
+  (_: RootState, selectedServices: string[]) => selectedServices,
   (fulfillments, selectedFulfillments) => selectedFulfillments.map(x => getFulfillmentById(fulfillments, x))
 )
 
@@ -173,6 +173,7 @@ const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
   </Grid> : <></>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const selectNextAvailableServiceDate = weakMapCreateSelector(
   (s: RootState, _selectedServices: string[]) => s.ws.currentTime,
   (s: RootState, _selectedServices: string[]) => s.ws.fulfillments,
@@ -294,7 +295,7 @@ export const BlockOffComp = () => {
         if (response.status === 201) {
           enqueueSnackbar(`Blocked off ${IntervalToString(interval)} on
               ${format(parseISO(selectedDate), WDateUtils.ServiceDateDisplayFormat)} 
-              for services: ${selectedServices.map(fId => fulfillmentIdsAndNames.find((x) => x.id === fId)!.name).join(', ')}`)
+              for services: ${selectedServices.map(fId => fulfillmentIdsAndNames.find((x) => x.id === fId)?.name).join(', ')}`)
           setStartTime(null);
           setEndTime(null);
         }
@@ -362,6 +363,7 @@ export const BlockOffComp = () => {
                   className="col"
                   options={timeOptions.filter(x => !x.disabled).map(x => x.value)}
                   isOptionEqualToValue={(o, v) => o === v}
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                   getOptionLabel={x => x !== null ? WDateUtils.MinutesToPrintTime(x) : ""}
                   value={startTime ? startTime : undefined}
                   onChange={(_, v) => { setStartTime(v); }}
@@ -382,6 +384,7 @@ export const BlockOffComp = () => {
                   className="col"
                   options={endTimeOptions.filter(x => !x.disabled).map(x => x.value)}
                   isOptionEqualToValue={(o, v) => o === v}
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
                   getOptionLabel={x => x !== null ? WDateUtils.MinutesToPrintTime(x) : ""}
                   value={endTime ? endTime : undefined}
                   onChange={(_, v) => { setEndTime(v); }}

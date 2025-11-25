@@ -20,9 +20,9 @@ const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) =>
   const { enqueueSnackbar } = useSnackbar();
 
   const categoryIds = useAppSelector(s => getCategoryEntryIds(s.ws.categories));
-  const [description, setDescription] = useState("");
-  const [subheading, setSubheading] = useState("");
-  const [footnotes, setFootnotes] = useState("");
+  const [description, setDescription] = useState<string | null>("");
+  const [subheading, setSubheading] = useState<string | null>("");
+  const [footnotes, setFootnotes] = useState<string | null>("");
   const [name, setName] = useState("");
   const [ordinal, setOrdinal] = useState(0);
   const [parent, setParent] = useState<string | null>(null);
@@ -78,7 +78,7 @@ const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) =>
       categoryIds={categoryIds}
       confirmText="Add"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={addCategory}
+      onConfirmClick={() => void addCategory()}
       isProcessing={isProcessing}
       description={description}
       setDescription={setDescription}

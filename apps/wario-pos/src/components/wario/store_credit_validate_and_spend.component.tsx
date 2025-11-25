@@ -1,14 +1,14 @@
 import { uniqueId } from 'es-toolkit/compat';
 import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
-import type { QrcodeErrorCallback, QrcodeSuccessCallback } from 'html5-qrcode/core';
+import type { Html5QrcodeResult, QrcodeErrorCallback, QrcodeSuccessCallback } from 'html5-qrcode/core';
 import { useSnackbar } from 'notistack';
 import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { ErrorOutline, PhotoCamera } from "@mui/icons-material";
 import { Button, Card, CardHeader, Divider, Grid, IconButton, List, ListItem, Typography } from '@mui/material';
 
-import type { SpendCreditResponse, ValidateAndLockCreditResponse, ValidateLockAndSpendRequest } from '@wcp/wario-shared';
-import { CURRENCY, MoneyToDisplayString } from '@wcp/wario-shared';
+import type { IMoney, SpendCreditResponse, ValidateAndLockCreditResponse, ValidateLockAndSpendRequest } from '@wcp/wario-shared';
+import { CURRENCY, MoneyToDisplayString, StoreCreditType } from '@wcp/wario-shared';
 import { DialogContainer } from "@wcp/wario-ux-shared";
 
 import { HOST_API } from "@/config";
@@ -32,7 +32,7 @@ const QrCodeScanner = ({ show, onSuccess, onFailure }: QrCodeScannerProps) => {
     }
     return () => {
       if (qrScanner) {
-        qrScanner.clear().catch(error => {
+        qrScanner.clear().catch((error: unknown) => {
           console.error("Failed to clear html5QrcodeScanner.", error);
         });
       }
@@ -57,7 +57,7 @@ const StoreCreditValidateAndSpendComponent = () => {
   const [scanCode, setScanCode] = useState(false);
   const [hasCamera, setHasCamera] = useState(false);
   const [validationResponse, setValidationResponse] = useState<ValidateAndLockCreditResponse | null>(null);
-  const [amount, setAmount] = useState({ currency: CURRENCY.USD, amount: 0 });
+  const [amount, setAmount] = useState<IMoney>({ currency: CURRENCY.USD, amount: 0 });
   const [processedBy, setProcessedBy] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [debitResponse, setDebitResponse] = useState<SpendCreditResponse | null>(null);
@@ -67,7 +67,7 @@ const StoreCreditValidateAndSpendComponent = () => {
       const cam = await Html5Qrcode.getCameras();
       setHasCamera(cam.length > 0);
     };
-    CheckForCamera();
+    void CheckForCamera();
   }, []);
 
   const onScanned = async (qrCode: string) => {
@@ -103,8 +103,7 @@ const StoreCreditValidateAndSpendComponent = () => {
           )}`,
           { method: "GET" }
         );
-        const response_data = await response.json();
-        console.log(JSON.stringify(response_data));
+        const response_data = await response.json() as ValidateAndLockCreditResponse;
         setValidationResponse(response_data);
         setIsProcessing(false);
       } catch (error) {
@@ -134,8 +133,8 @@ const StoreCreditValidateAndSpendComponent = () => {
             },
             body: JSON.stringify(body),
           }
-        );
-        const response_data = await response.json();
+        )
+        const response_data = await response.json() as SpendCreditResponse;
         setDebitResponse(response_data);
         setIsProcessing(false);
       } catch (error) {
@@ -153,7 +152,7 @@ const StoreCreditValidateAndSpendComponent = () => {
       }}
       open={scanCode}
       innerComponent={
-        <QrCodeScanner show={scanCode} onSuccess={onScanned} onFailure={onScannedFail} />
+        <QrCodeScanner show={scanCode} onSuccess={(decodedText: string, _result: Html5QrcodeResult) => void onScanned(decodedText)} onFailure={onScannedFail} />
       }
     />
     <Grid
@@ -199,7 +198,7 @@ const StoreCreditValidateAndSpendComponent = () => {
               Clear
             </Button>
           ) : (
-            <Button fullWidth onClick={() => validateCode(creditCode)} disabled={isProcessing || creditCode.length !== 19}>
+            <Button fullWidth onClick={() => void validateCode(creditCode)} disabled={isProcessing || creditCode.length !== 19}>
               Validate
             </Button>
           )}
@@ -221,7 +220,7 @@ const StoreCreditValidateAndSpendComponent = () => {
                     with balance{" "}
                     {MoneyToDisplayString(validationResponse.amount, true)}
                   </Typography>
-                  {validationResponse.credit_type === "MONEY" ? (
+                  {validationResponse.credit_type === StoreCreditType.MONEY ? (
                     <List>
                       <ListItem>
                         Redeem this credit against the AFTER-TAX total of the
@@ -291,10 +290,9 @@ const StoreCreditValidateAndSpendComponent = () => {
                 </Grid>
                 <Grid size={12}>
                   <Button
-                    onClick={processDebit}
+                    onClick={() => void processDebit()}
                     disabled={
                       isProcessing ||
-                      validationResponse.lock === null ||
                       debitResponse !== null ||
                       processedBy.length === 0 ||
                       amount.amount <= 0

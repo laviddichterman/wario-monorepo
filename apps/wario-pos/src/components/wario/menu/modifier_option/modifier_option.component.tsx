@@ -179,7 +179,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           fullWidth
           options={Object.keys(productInstanceFunctions)}
           value={props.enableFunction}
-          onChange={(e, v) => { props.setEnableFunction(v); }}
+          onChange={(_e, v) => { props.setEnableFunction(v); }}
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           getOptionLabel={(option) => productInstanceFunctions[option].name ?? "CORRUPT DATA"}
           isOptionEqualToValue={(o, v) => o === v}
