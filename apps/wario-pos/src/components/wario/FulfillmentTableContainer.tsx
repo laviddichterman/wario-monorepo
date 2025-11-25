@@ -1,5 +1,3 @@
-import { type Dispatch, type SetStateAction } from "react";
-
 // import { GridActionsCellItem } from "@mui/x-data-grid";
 import { AddBox, DeleteOutline, Edit } from "@mui/icons-material";
 import { IconButton, Tooltip } from '@mui/material';
@@ -13,10 +11,10 @@ import { useAppSelector } from "../../hooks/useRedux";
 import { TableWrapperComponent } from "./table_wrapper.component";
 
 export interface FulfillmentTableContainerProps {
-  setIsFulfillmentEditOpen: Dispatch<SetStateAction<boolean>>;
-  setIsFulfillmentDeleteOpen: Dispatch<SetStateAction<boolean>>;
-  setIsFulfillmentAddOpen: Dispatch<SetStateAction<boolean>>;
-  setFulfillmentToEdit: Dispatch<SetStateAction<FulfillmentConfig>>;
+  setIsFulfillmentEditOpen: (v: boolean) => void;
+  setIsFulfillmentDeleteOpen: (v: boolean) => void;
+  setIsFulfillmentAddOpen: (v: boolean) => void;
+  setFulfillmentToEdit: (v: FulfillmentConfig) => void;
 }
 const FulfillmentTableContainer = ({
   setIsFulfillmentEditOpen,

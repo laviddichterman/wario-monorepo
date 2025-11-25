@@ -10,17 +10,19 @@ const WOrderForceSendComponent = (props: WOrderForceSendComponentProps) => {
   const dispatch = useAppDispatch();
   const orderSliceState = useAppSelector(s => s.orders.requestStatus);
 
-  const submitToWario: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
+  const submitToWario = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (orderSliceState !== 'PENDING') {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
       await dispatch(forceSendOrder({ orderId: props.orderId, token: token }));
-      props.onCloseCallback && props.onCloseCallback(e);
+      if (props.onCloseCallback) {
+        props.onCloseCallback(e); return;
+      }
     }
   }
 
   return (<ElementActionComponent
     onCloseCallback={props.onCloseCallback}
-    onConfirmClick={submitToWario}
+    onConfirmClick={(e) => void submitToWario(e)}
     isProcessing={orderSliceState === 'PENDING'}
     disableConfirmOn={orderSliceState === 'PENDING'}
     confirmText={'Force Send Order (BE CAREFUL WITH THIS)'}

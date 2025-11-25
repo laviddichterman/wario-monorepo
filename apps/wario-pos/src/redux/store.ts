@@ -1,7 +1,7 @@
 import { configureStore, createSelector } from '@reduxjs/toolkit';
 
-import type { CoreCartEntry, WCPProductV2Dto, WOrderInstance } from '@wcp/wario-shared';
-import { CreateProductWithMetadataFromV2Dto, DateTimeIntervalBuilder, EventTitleStringBuilder, RebuildAndSortCart, WDateUtils, WOrderStatus } from '@wcp/wario-shared';
+import type { CoreCartEntry, WOrderInstance } from '@wcp/wario-shared';
+import { CreateProductWithMetadataFromV2, DateTimeIntervalBuilder, EventTitleStringBuilder, RebuildAndSortCart, WDateUtils, WOrderStatus } from '@wcp/wario-shared';
 import { getCategoryEntryById, getFulfillmentById, getProductEntries, getProductInstanceById, lruMemoizeOptionsWithSize, SelectBaseProductNameByProductId, SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectParentProductEntryFromProductInstanceId, weakMapCreateSelector } from '@wcp/wario-ux-shared';
 
 import type { ICalendarEvent } from '@/components/calendar/types';
@@ -20,17 +20,17 @@ export const store = configureStore({
 });
 
 export const selectCoreCartWProduct = weakMapCreateSelector(
-  (s: RootState, _: CoreCartEntry<WCPProductV2Dto>[], __: Date | number, ___: string) => SelectCatalogSelectors(s.ws),
-  (_: RootState, cart: CoreCartEntry<WCPProductV2Dto>[], __: Date | number, ___: string) => cart,
-  (_: RootState, ___: CoreCartEntry<WCPProductV2Dto>[], serviceTime: Date | number, __: string) => serviceTime,
-  (_: RootState, __: CoreCartEntry<WCPProductV2Dto>[], ___: Date | number, fulfillmentId: string) => fulfillmentId,
+  (s: RootState, _: CoreCartEntry[], __: Date | number, ___: string) => SelectCatalogSelectors(s.ws),
+  (_: RootState, cart: CoreCartEntry[], __: Date | number, ___: string) => cart,
+  (_: RootState, ___: CoreCartEntry[], serviceTime: Date | number, __: string) => serviceTime,
+  (_: RootState, __: CoreCartEntry[], ___: Date | number, fulfillmentId: string) => fulfillmentId,
   (catalogSelectors, cart, serviceTime, fulfillmentId) =>
-    cart.map(x => ({ ...x, product: CreateProductWithMetadataFromV2Dto(x.product, catalogSelectors, serviceTime, fulfillmentId) }))
+    cart.map(x => ({ ...x, product: CreateProductWithMetadataFromV2(x.product, catalogSelectors, serviceTime, fulfillmentId) }))
 )
 
 export const selectFullGroupedCartInfo = createSelector(
   (s: RootState) => s,
-  (s: RootState, cart: CoreCartEntry<WCPProductV2Dto>[], serviceTime: Date | number, fulfillmentId: string) => selectCoreCartWProduct(s, cart, serviceTime, fulfillmentId),
+  (s: RootState, cart: CoreCartEntry[], serviceTime: Date | number, fulfillmentId: string) => selectCoreCartWProduct(s, cart, serviceTime, fulfillmentId),
   (s, cart) => selectGroupedAndOrderedCart(s, cart)
 )
 

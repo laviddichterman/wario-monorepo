@@ -15,18 +15,20 @@ const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
   const [destination, setDestination] = useState("");
   const [additionalMessage, setAdditionalMessage] = useState("");
 
-  const submitToWario: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
+  const submitToWario = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (orderSliceState !== 'PENDING') {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
       await dispatch(moveOrder({ orderId: props.orderId, destination, additionalMessage, token: token }));
-      props.onCloseCallback && props.onCloseCallback(e);
+      if (props.onCloseCallback) {
+        props.onCloseCallback(e); return;
+      }
     }
   }
 
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
-      onConfirmClick={submitToWario}
+      onConfirmClick={(e) => void submitToWario(e)}
       isProcessing={orderSliceState === 'PENDING'}
       disableConfirmOn={orderSliceState === 'PENDING' || destination.length < 2}
       confirmText={'Send Move Ticket'}

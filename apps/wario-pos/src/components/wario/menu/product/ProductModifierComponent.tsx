@@ -11,7 +11,7 @@ import { type IProductModifier } from '@wcp/wario-shared';
 import { getFulfillments } from '@wcp/wario-ux-shared';
 import type { ValSetValNamed } from "@wcp/wario-ux-shared";
 
-import { useAppSelector } from '../../../../hooks/useRedux';
+import { useAppSelector } from '@/hooks/useRedux';
 
 
 type ProductModifierComponentProps = {

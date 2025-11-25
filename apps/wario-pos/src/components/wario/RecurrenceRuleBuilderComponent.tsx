@@ -58,7 +58,7 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
         });
         return rrule;
       }
-      catch (err: any) {
+      catch (err: unknown) {
         console.log({ err })
       }
     }

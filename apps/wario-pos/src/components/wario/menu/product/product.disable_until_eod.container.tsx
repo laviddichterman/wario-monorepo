@@ -29,10 +29,9 @@ const ProductDisableUntilEodContainer = ({ product_id, onCloseCallback }: Produc
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: IProduct = {
-          ...product,
+        const body: IProduct = Object.assign({}, product, {
           disabled: { start: CURRENT_TIME, end: getTime(endOfDay(CURRENT_TIME)) }
-        };
+        });
         const response = await fetch(`${HOST_API}/api/v1/menu/product/${product_id}`, {
           method: "PATCH",
           headers: {

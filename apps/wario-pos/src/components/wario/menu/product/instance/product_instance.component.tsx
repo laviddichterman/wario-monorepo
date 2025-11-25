@@ -28,7 +28,7 @@ export type ProductInstanceComponentProps =
   // menu
   ValSetValNamed<number, 'menuOrdinal'> &
   ValSetValNamed<boolean, 'menuHide'> &
-  ValSetValNamed<keyof typeof PriceDisplay, 'menuPriceDisplay'> &
+  ValSetValNamed<PriceDisplay, 'menuPriceDisplay'> &
   ValSetValNamed<string, 'menuAdornment'> &
   ValSetValNamed<boolean, 'menuSuppressExhaustiveModifierList'> &
   ValSetValNamed<boolean, 'menuShowModifierOptions'> &
@@ -36,7 +36,7 @@ export type ProductInstanceComponentProps =
   ValSetValNamed<number, 'orderOrdinal'> &
   ValSetValNamed<boolean, 'orderMenuHide'> &
   ValSetValNamed<boolean, 'orderSkipCustomization'> &
-  ValSetValNamed<keyof typeof PriceDisplay, 'orderPriceDisplay'> &
+  ValSetValNamed<PriceDisplay, 'orderPriceDisplay'> &
   ValSetValNamed<string, 'orderAdornment'> &
   ValSetValNamed<boolean, 'orderSuppressExhaustiveModifierList'> &
 
@@ -64,6 +64,7 @@ const ProductInstanceComponent = (props: ProductInstanceComponentProps) => {
       {
         modifierTypeId: mtid, options: [
           ...props.modifiers[foundModifierEntryIndex].options.slice(0, oidx),
+          // eslint-disable-next-line @typescript-eslint/no-misused-spread
           { ...props.modifiers[foundModifierEntryIndex].options[oidx], placement: props.modifiers[foundModifierEntryIndex].options[oidx].placement === OptionPlacement.WHOLE ? OptionPlacement.NONE : OptionPlacement.WHOLE },
           ...props.modifiers[foundModifierEntryIndex].options.slice(oidx + 1)]
       },
@@ -117,7 +118,7 @@ const ProductInstanceComponent = (props: ProductInstanceComponentProps) => {
           disabled={props.isProcessing}
           label="POS Name Override"
           value={props.posName === "" ? props.displayName : props.posName}
-          setValue={(e: string) => { handlePosNameChange(e); }}
+          setValue={handlePosNameChange}
         />
       </Grid>
       {/* universal break */}
@@ -217,7 +218,7 @@ const ProductInstanceComponent = (props: ProductInstanceComponentProps) => {
           label="Menu Price Display"
           value={props.menuPriceDisplay}
           setValue={props.setMenuPriceDisplay}
-          options={Object.keys(PriceDisplay) as (keyof typeof PriceDisplay)[]}
+          options={Object.values(PriceDisplay)}
         />
       </Grid>
       {/* universal break */}
@@ -297,7 +298,7 @@ const ProductInstanceComponent = (props: ProductInstanceComponentProps) => {
           label="Order Menu Price Display"
           value={props.orderPriceDisplay}
           setValue={props.setOrderPriceDisplay}
-          options={Object.keys(PriceDisplay) as (keyof typeof PriceDisplay)[]}
+          options={Object.values(PriceDisplay)}
         />
       </Grid>
       <Grid

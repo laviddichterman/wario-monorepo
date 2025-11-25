@@ -27,10 +27,9 @@ const ProductDisableContainer = ({ product_id, onCloseCallback }: ProductQuickAc
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: IProduct = {
-          ...product,
+        const body: IProduct = Object.assign({}, product, {
           disabled: { start: 1, end: 0 }
-        };
+        });
         const response = await fetch(`${HOST_API}/api/v1/menu/product/${product_id}`, {
           method: "PATCH",
           headers: {
@@ -55,7 +54,7 @@ const ProductDisableContainer = ({ product_id, onCloseCallback }: ProductQuickAc
   return (
     <ElementActionComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editProduct}
+      onConfirmClick={() => void editProduct()}
       isProcessing={isProcessing}
       disableConfirmOn={isProcessing}
       confirmText="Confirm"

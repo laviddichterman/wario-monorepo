@@ -1,10 +1,10 @@
-import type { Dispatch, SetStateAction } from "react";
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import React, { useEffect, useMemo, useState } from "react";
 
 import { Autocomplete, Card, CardContent, CardHeader, FormControl, FormControlLabel, FormLabel, Grid, List, ListItem, Radio, RadioGroup, Switch, TextField } from "@mui/material";
 
 import type { IAbstractExpression, IConstLiteralExpression, IHasAnyOfModifierExpression, IIfElseExpression, ILogicalExpression, IModifierPlacementExpression, IOption, ProductMetadataExpression } from "@wcp/wario-shared";
-import { ConstLiteralDiscriminator, LogicalFunctionOperator, MetadataField, OptionPlacement, OptionQualifier, PRODUCT_LOCATION, ProductInstanceFunctionType, WFunctional } from "@wcp/wario-shared";
+import { ConstLiteralDiscriminator, formatDecimal, LogicalFunctionOperator, MetadataField, OptionPlacement, OptionQualifier, parseDecimal, PRODUCT_LOCATION, ProductInstanceFunctionType, WFunctional } from "@wcp/wario-shared";
 import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared";
 import { CheckedNumericInput, type ValSetVal } from "@wcp/wario-ux-shared";
 
@@ -14,7 +14,7 @@ import { useAppSelector } from "@/hooks/useRedux";
 export interface DiscriminatedFunctionalComponentProps<T> {
   expression_types: Record<string, React.ReactNode>;
   discriminator: T | null;
-  setDiscriminator: Dispatch<SetStateAction<T | null>>;
+  setDiscriminator: (value: T | null) => void;
 }
 
 
@@ -22,7 +22,7 @@ export interface AbstractExpressionFunctionalComponentProps {
   title: string | null;
   expression_types: Record<keyof typeof ProductInstanceFunctionType, React.ReactNode>;
   discriminator: ProductInstanceFunctionType | null;
-  setDiscriminator: Dispatch<SetStateAction<ProductInstanceFunctionType | null>>;
+  setDiscriminator: (value: ProductInstanceFunctionType | null) => void;
 }
 
 const AbstractExpressionFunctionalComponent = ({
@@ -44,7 +44,7 @@ const AbstractExpressionFunctionalComponent = ({
                 name="Expression Type"
                 row
                 value={discriminator}
-                onChange={(e) => { setDiscriminator(ProductInstanceFunctionType[e.target.value as keyof typeof ProductInstanceFunctionType]); }}
+                onChange={(e) => { setDiscriminator(ProductInstanceFunctionType[e.target.value as ProductInstanceFunctionType]); }}
               >
                 {Object.keys(ProductInstanceFunctionType).map((val, idx) => (
                   <FormControlLabel
@@ -70,12 +70,14 @@ const AbstractExpressionFunctionalComponent = ({
   </div>
 );
 
+/* eslint-disable prefer-const */
 let ConstLiteralFunctionalComponent: ({ value, setValue }: ValSetVal<IConstLiteralExpression | null>) => React.JSX.Element;
 let LogicalFunctionalComponent: ({ value, setValue }: ValSetVal<ILogicalExpression<IAbstractExpression> | null>) => React.JSX.Element;
 let IfElseFunctionalComponent: ({ value, setValue }: ValSetVal<IIfElseExpression<IAbstractExpression> | null>) => React.JSX.Element;
 let ModifierPlacementFunctionalComponent: ({ value, setValue }: ValSetVal<IModifierPlacementExpression | null>) => React.JSX.Element;
 let HasAnyOfModifierTypeFunctionalComponent: ({ value, setValue }: ValSetVal<IHasAnyOfModifierExpression | null>) => React.JSX.Element;
 let ProductMetadataFunctionalComponent: ({ value, setValue }: ValSetVal<ProductMetadataExpression | null>) => React.JSX.Element;
+/* eslint-enable prefer-const */
 
 const AbstractExpressionFunctionalContainer = ({
   value,
@@ -90,7 +92,7 @@ const AbstractExpressionFunctionalContainer = ({
       setValue({ discriminator, expr } as IAbstractExpression);
     }
   }, [discriminator, expr, setValue]);
-  const updateDiscriminator = (val: ProductInstanceFunctionType) => {
+  const updateDiscriminator = (val: ProductInstanceFunctionType | null) => {
     setDiscriminator(val);
     setExpr(null);
   }
@@ -316,6 +318,7 @@ ModifierPlacementFunctionalComponent = ({
   value,
   setValue,
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const catalog = useAppSelector(s => s.ws.catalog!);
   const [modifier, setModifier] = useState(value?.mtid ?? null);
   const modifierOptionsForType = useMemo(() => modifier !== null ?
@@ -421,7 +424,7 @@ ProductMetadataFunctionalComponent = ({
 export interface ConstLiteralFunctionalComponentInnerProps {
   expression_types: Record<keyof typeof ConstLiteralDiscriminator, React.ReactNode>;
   discriminator: ConstLiteralDiscriminator | null;
-  setDiscriminator: Dispatch<SetStateAction<ConstLiteralDiscriminator | null>>;
+  setDiscriminator: (value: ConstLiteralDiscriminator | null) => void;
 }
 
 const ConstLiteralFunctionalComponentInner = ({
@@ -466,11 +469,11 @@ const ConstLiteralFunctionalComponentInner = ({
 );
 
 const LITERAL_TYPES = {
-  [ConstLiteralDiscriminator.STRING]: (x: any) => String(x),
+  [ConstLiteralDiscriminator.STRING]: (x: unknown) => String(x),
   [ConstLiteralDiscriminator.NUMBER]: parseFloat,
-  [ConstLiteralDiscriminator.MODIFIER_PLACEMENT]: (x: any) => OptionPlacement[x],
-  [ConstLiteralDiscriminator.MODIFIER_QUALIFIER]: (x: any) => OptionQualifier[x],
-  [ConstLiteralDiscriminator.BOOLEAN]: (x: any) => x ? true : false
+  [ConstLiteralDiscriminator.MODIFIER_PLACEMENT]: (x: unknown) => OptionPlacement[x as keyof typeof OptionPlacement],
+  [ConstLiteralDiscriminator.MODIFIER_QUALIFIER]: (x: unknown) => OptionQualifier[x as keyof typeof OptionQualifier],
+  [ConstLiteralDiscriminator.BOOLEAN]: (x: unknown) => x ? true : false
 }
 
 const ConstStringLiteralComponent = ({ value, setValue }: ValSetVal<string | null>) => {
@@ -495,17 +498,24 @@ const ConstStringLiteralComponent = ({ value, setValue }: ValSetVal<string | nul
   />
 };
 
-const ConstNumberLiteralComponent = ({ value, setValue }: ValSetVal<number | null>) => <CheckedNumericInput
-  type="number"
-  size="small"
-  fullWidth
-  label="Literal Value"
-  inputProps={{ inputMode: 'decimal', pattern: '[0-9]+([.,][0-9]+)?' }}
-  // @ts-ignore
-  value={value || ""}
-  onChange={(e: number | null) => { setValue(e); }}
-  parseFunction={(e) => parseFloat(e === null ? "0" : e)}
-  allowEmpty />;
+const ConstNumberLiteralComponent = ({ value, setValue }: ValSetVal<number | null>) =>
+  <CheckedNumericInput
+    type="number"
+    size="small"
+    fullWidth
+    label={"Literal Value"}
+    numberProps={{
+      allowEmpty: false,
+      defaultValue: 0,
+      formatFunction: (i) => formatDecimal(i),
+      parseFunction: parseDecimal,
+    }}
+    inputMode="decimal"
+    pattern="[0-9]+([.,][0-9]+)?"
+    value={value ?? 0}
+    onChange={setValue}
+  />
+
 
 const ConstModifierPlacementLiteralComponent = function ({ value, setValue }: ValSetVal<number | null>) {
   return (
@@ -578,13 +588,12 @@ ConstLiteralFunctionalComponent = ({
       setValue({ discriminator, value: innerValue } as IConstLiteralExpression);
     }
   }, [discriminator, innerValue, setValue]);
-  const updateDiscriminator = (val: ConstLiteralDiscriminator) => {
+  const updateDiscriminator = (val: ConstLiteralDiscriminator | null) => {
     setDiscriminator(val);
     // try to convert to new descrim'd value
     try {
-      if (innerValue !== null) {
-        // @ts-ignore
-        const attemptedConversion = LITERAL_TYPES[val](innerValue);
+      if (val !== null && innerValue !== null) {
+        const attemptedConversion = LITERAL_TYPES[val](String(innerValue));
         setInnerValue(attemptedConversion);
         return;
       }

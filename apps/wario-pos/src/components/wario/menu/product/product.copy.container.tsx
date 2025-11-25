@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useCallback, useState } from "react";
@@ -5,7 +6,7 @@ import { useCallback, useState } from "react";
 import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Grid, Switch, Typography } from "@mui/material";
 
-import type { CreateProductBatch } from "@wcp/wario-shared";
+import { type CreateProductBatch, PriceDisplay } from "@wcp/wario-shared";
 import { getProductEntryById } from "@wcp/wario-ux-shared";
 import { useIndexedState } from '@wcp/wario-ux-shared';
 
@@ -44,9 +45,9 @@ const ProductCopyContainer = ({ product_id, onCloseCallback }: ProductCopyContai
   const [modifiers, setModifiers] = useState(productEntry.product.modifiers);
 
   // product instance indexed state
-  const [expandedPanels, setExpandedPanel] = useIndexedState(useState(Array(productEntry.instances.length).fill(false)));
+  const [expandedPanels, setExpandedPanel] = useIndexedState(useState(Array<boolean>(productEntry.instances.length).fill(false)));
   const [indexOfBase, setIndexOfBase] = useState(productEntry.instances.indexOf(productEntry.product.baseProductId))
-  const [copyPIFlags, setCopyPIFlag] = useIndexedState(useState(Array(productEntry.instances.length).fill(true)));
+  const [copyPIFlags, setCopyPIFlag] = useIndexedState(useState(Array<boolean>(productEntry.instances.length).fill(true)));
   const [piDisplayNames, setPiDisplayName] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayName)));
   const [piDescriptions, setPiDescription] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].description)));
   const [piShortcodes, setPiShortcode] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].shortcode)));
@@ -58,14 +59,14 @@ const ProductCopyContainer = ({ product_id, onCloseCallback }: ProductCopyContai
   const [piPosSkipCustomizations, setPiPosSkipCustomization] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayFlags.pos.skip_customization)));
   const [piMenuOrdinals, setPiMenuOrdinal] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu.ordinal))));
   const [piMenuHides, setPiMenuHide] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu.hide))));
-  const [piMenuPriceDisplays, setPiMenuPriceDisplay] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu?.price_display ?? "IF_COMPLETE"))));
+  const [piMenuPriceDisplays, setPiMenuPriceDisplay] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu?.price_display ?? PriceDisplay.ALWAYS))));
   const [piMenuAdornments, setPiMenuAdornment] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu?.adornment ?? ""))));
   const [piMenuSuppressExhaustiveModifierLists, setPiMenuSuppressExhaustiveModifierList] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu.suppress_exhaustive_modifier_list ?? false))));
   const [piMenuShowModifierOptionss, setPiMenuShowModifierOptions] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.menu.show_modifier_options ?? false))));
   const [piOrderOrdinals, setPiOrderOrdinal] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.order.ordinal || 0))));
   const [piOrderMenuHides, setPiOrderMenuHide] = useIndexedState(useState(productEntry.instances.map(pi => (allProductInstances[pi].displayFlags.order.hide ?? false))));
   const [piOrderSkipCustomizations, setPiOrderSkipCustomization] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayFlags.order.skip_customization ?? false)));
-  const [piOrderPriceDisplays, setPiOrderPriceDisplay] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayFlags.order.price_display ?? "IF_COMPLETE")));
+  const [piOrderPriceDisplays, setPiOrderPriceDisplay] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayFlags.order.price_display ?? PriceDisplay.ALWAYS)));
   const [piOrderAdornments, setPiOrderAdornment] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayFlags.order.adornment ?? "")));
   const [piOrderSuppressExhaustiveModifierLists, setPiOrderSuppressExhaustiveModifierList] = useIndexedState(useState(productEntry.instances.map(pi => allProductInstances[pi].displayFlags.order.suppress_exhaustive_modifier_list ?? false)));
 
@@ -74,7 +75,7 @@ const ProductCopyContainer = ({ product_id, onCloseCallback }: ProductCopyContai
   const { getAccessTokenSilently } = useAuth0();
 
   const getProductInstanceEditor = useCallback((i: number) => (
-    <Accordion sx={{ p: 2 }} key={i} expanded={expandedPanels[i] && copyPIFlags[i]} onChange={(e, ex) => { setExpandedPanel(i)(ex); }}  >
+    <Accordion sx={{ p: 2 }} key={i} expanded={expandedPanels[i] && copyPIFlags[i]} onChange={(_e, ex) => { setExpandedPanel(i)(ex); }}  >
       <AccordionSummary expandIcon={<ExpandMore />}>
         <Grid container>
           <Grid size="grow">
@@ -97,7 +98,7 @@ const ProductCopyContainer = ({ product_id, onCloseCallback }: ProductCopyContai
               <Switch
                 disabled={!copyPIFlags[i] || indexOfBase === i}
                 checked={indexOfBase === i}
-                onChange={(e) => { setIndexOfBase(i); }}
+                onChange={(_e) => { setIndexOfBase(i); }}
                 name="Base Product"
               />
             }
@@ -245,7 +246,7 @@ const ProductCopyContainer = ({ product_id, onCloseCallback }: ProductCopyContai
           },
           instances: [
             getUncommittedProductInstanceForIndex(indexOfBase),
-            ...productEntry.instances.flatMap((x, i) => copyPIFlags[i] && indexOfBase !== i ?
+            ...productEntry.instances.flatMap((_x, i) => copyPIFlags[i] && indexOfBase !== i ?
               [getUncommittedProductInstanceForIndex(i)] : [])],
         };
         const response = await fetch(`${HOST_API}/api/v1/menu/product/`, {

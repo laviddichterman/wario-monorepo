@@ -17,18 +17,20 @@ const WOrderCancelComponent = (props: WOrderCancelComponentProps) => {
 
   const [cancelationReason, setCancelationReason] = useState("");
 
-  const submitToWario: React.MouseEventHandler<HTMLButtonElement> = async (e) => {
+  const submitToWario = async (e: React.MouseEvent<HTMLButtonElement>) => {
     if (orderSliceState !== 'PENDING') {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: "cancel:order" } });
       await dispatch(cancelOrder({ orderId: props.orderId, emailCustomer: true, reason: cancelationReason, token: token }));
-      props.onCloseCallback && props.onCloseCallback(e);
+      if (props.onCloseCallback) {
+        props.onCloseCallback(e); return;
+      }
     }
   }
 
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
-      onConfirmClick={submitToWario}
+      onConfirmClick={(e) => void submitToWario(e)}
       isProcessing={orderSliceState === 'PENDING'}
       disableConfirmOn={orderSliceState === 'PENDING' || !confirmCheckbox}
       confirmText={'Process Order Cancelation'}

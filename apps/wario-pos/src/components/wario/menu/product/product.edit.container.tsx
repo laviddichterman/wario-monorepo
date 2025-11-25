@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
@@ -99,7 +100,7 @@ const ProductEditContainer = ({ product_id, onCloseCallback }: ProductEditContai
       confirmText="Save"
       isEdit
       onCloseCallback={onCloseCallback}
-      onConfirmClick={editProduct}
+      onConfirmClick={() => void editProduct()}
       isProcessing={isProcessing}
       disableConfirmOn={price.amount < 0 || isProcessing}
       baseProductId={baseProductId}

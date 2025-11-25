@@ -32,7 +32,7 @@ export const scrollToIdOffsetAfterDelay = (elementId: string, delay: number, off
 }
 
 export type ValField<T, field extends string> = { [K in field]: T; };
-export type ValSetField<T, field extends string> = { [K in `set${Capitalize<field>}`]: Dispatch<SetStateAction<T>>; };
+export type ValSetField<T, field extends string> = { [K in `set${Capitalize<field>}`]: (value: T) => void; };
 export type ValSetValNamed<T, field extends string> = ValField<T, field> & ValSetField<T, field>;
 export type ValSetVal<T> = ValSetValNamed<T, 'value'>;
 
