@@ -26,7 +26,7 @@ type PredefinedAspectRatio =
   | '9/21'
   | '1/1';
 
-type AspectRatioType = PredefinedAspectRatio | `${number}/${number}`;
+type AspectRatioType = PredefinedAspectRatio;
 
 export type ImageProps = React.ComponentProps<typeof ImageRoot> &
   Pick<React.ComponentProps<typeof ImageImg>, 'src' | 'alt'> & {

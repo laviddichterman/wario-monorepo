@@ -337,7 +337,7 @@ ModifierPlacementFunctionalComponent = ({
           style={{ width: 200 }}
           options={Object.keys(catalog.modifiers)}
           value={modifier}
-          onChange={(e, v) => { setModifier(v); }}
+          onChange={(_, v) => { setModifier(v); }}
           getOptionLabel={(o) => catalog.modifiers[o].modifierType.name ?? "CORRUPTED DATA"}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Modifier" />}
@@ -526,7 +526,7 @@ const ConstModifierPlacementLiteralComponent = function ({ value, setValue }: Va
         name="Placement Value"
         row
         value={value}
-        onChange={(e) => { setValue(parseInt(e.target.value as keyof typeof OptionPlacement)); }}
+        onChange={(e) => { setValue(parseInt(e.target.value as OptionPlacement)); }}
       >
         {[OptionPlacement.NONE, OptionPlacement.LEFT, OptionPlacement.RIGHT, OptionPlacement.WHOLE].map((val, idx) => (
           <FormControlLabel
@@ -549,7 +549,7 @@ const ConstModifierQualifierLiteralComponent = function ({ value, setValue }: Va
         name="Qualifier Value"
         row
         value={value}
-        onChange={(e) => { setValue(parseInt(e.target.value as keyof typeof OptionQualifier)); }}
+        onChange={(e) => { setValue(parseInt(e.target.value as OptionQualifier)); }}
       >
         {[OptionQualifier.REGULAR, OptionQualifier.HEAVY, OptionQualifier.LITE, OptionQualifier.OTS].map((val, idx) => (
           <FormControlLabel
@@ -598,7 +598,7 @@ ConstLiteralFunctionalComponent = ({
         return;
       }
     }
-    catch (e) {
+    catch {
       // eat it
     }
     setInnerValue(null);

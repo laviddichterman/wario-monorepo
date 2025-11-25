@@ -196,13 +196,14 @@ export type FulfillmentComponentProps =
   };
 
 const FulfillmentComponent = (props: FulfillmentComponentProps) => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const catalog = useAppSelector(s => s.ws.catalog!);
   const [isServiceAreaDirty, setIsServiceAreaDirty] = useState(false);
   const [isServiceAreaParsingError, setIsServiceAreaParsingError] = useState(false);
   const [localServiceAreaString, setLocalServiceAreaString] = useState(props.serviceArea ? JSON.stringify(props.serviceArea) : null)
   function onSetServiceArea(json: string | null) {
     try {
-      props.setServiceArea(json ? JSON.parse(json) : null);
+      props.setServiceArea(json ? JSON.parse(json) as Polygon : null);
       setIsServiceAreaParsingError(false);
     }
     catch (e) {
@@ -228,7 +229,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               label="Fulfillment Type"
               value={props.service}
               setValue={props.setService}
-              options={Object.keys(FulfillmentType)}
+              options={Object.values(FulfillmentType)}
             />
           </Grid>
           { /* universal break */}
