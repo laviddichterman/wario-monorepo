@@ -15,7 +15,7 @@ import {
   Typography
 } from '@mui/material';
 
-import { type DateIntervalsEntries, type DayOfTheWeek, FulfillmentType, type IWInterval, type OperatingHourSpecification, WDateUtils } from '@wcp/wario-shared';
+import { type DateIntervalsEntries, type DayOfTheWeek, formatDecimal, FulfillmentType, type IWInterval, type OperatingHourSpecification, parseInteger, WDateUtils } from '@wcp/wario-shared';
 import { CheckedNumericInput, type ValSetValNamed } from '@wcp/wario-ux-shared';
 
 import { useAppSelector } from '@/hooks/useRedux';
@@ -179,6 +179,7 @@ export type FulfillmentComponentProps =
   ValSetValNamed<{ function: string, percentage: number } | null, 'autograt'> &
   ValSetValNamed<string | null, 'serviceChargeFunctionId'> &
   ValSetValNamed<number, 'leadTime'> &
+  ValSetValNamed<number, 'leadTimeOffset'> &
   ValSetValNamed<OperatingHourSpecification, 'operatingHours'> &
   ValSetValNamed<DateIntervalsEntries, 'specialHours'> &
   ValSetValNamed<DateIntervalsEntries, 'blockedOff'> &
@@ -206,7 +207,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
       props.setServiceArea(json ? JSON.parse(json) as Polygon : null);
       setIsServiceAreaParsingError(false);
     }
-    catch (e) {
+    catch {
       setIsServiceAreaParsingError(true);
     }
   }
@@ -407,7 +408,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               fullWidth
               options={Object.keys(catalog.orderInstanceFunctions)}
               value={props.serviceChargeFunctionId}
-              onChange={(e, v) => { props.setServiceChargeFunctionId(v); }}
+              onChange={(_e, v) => { props.setServiceChargeFunctionId(v); }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               getOptionLabel={(option) => catalog.orderInstanceFunctions[option].name ?? "CORRUPT DATA"}
               isOptionEqualToValue={(o, v) => o === v}
@@ -433,6 +434,26 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
           <Grid size={4}>
             <IntNumericPropertyComponent
               disabled={props.isProcessing}
+              min={-30}
+              max={120}
+              label="Lead Time Offset"
+              value={props.leadTimeOffset}
+              setValue={props.setLeadTimeOffset}
+            />
+          </Grid>
+          <Grid size={4}>
+            <IntNumericPropertyComponent
+              disabled={props.isProcessing}
+              min={1}
+              max={1440}
+              label="Time Step"
+              value={props.timeStep}
+              setValue={props.setTimeStep}
+            />
+          </Grid>
+          <Grid size={4}>
+            <IntNumericPropertyComponent
+              disabled={props.isProcessing}
               label="Min Duration"
               max={props.maxDuration}
               value={props.minDuration}
@@ -448,27 +469,24 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               setValue={props.setMaxDuration}
             />
           </Grid>
-          <Grid size={6}>
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              min={1}
-              max={1440}
-              label="Time Step"
-              value={props.timeStep}
-              setValue={props.setTimeStep}
-            />
-          </Grid>
-          <Grid size={6}>
+          <Grid size={4}>
             <CheckedNumericInput
               label="Max Guests"
               fullWidth
               type="number"
-              inputProps={{ inputMode: 'numeric', min: 0, pattern: '[0-9]*', step: 1 }}
-              disabled={props.isProcessing}
+              inputMode="numeric"
+              step={1}
+              numberProps={{
+                allowEmpty: true,
+                formatFunction: (i) => formatDecimal(i, 2),
+                parseFunction: parseInteger,
+                min: 1
+              }}
+              pattern="[0-9]*"
               value={props.maxGuests}
-              onChange={(e) => { props.setMaxGuests(e); }}
-              parseFunction={(v) => v !== null && v ? parseInt(v) : null}
-              allowEmpty={true} />
+              disabled={props.isProcessing}
+              onChange={(e: number | "") => { props.setMaxGuests(e ? e : null); }}
+            />
           </Grid>
           <Grid size={12}>
             <TextField

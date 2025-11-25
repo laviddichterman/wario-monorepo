@@ -30,8 +30,8 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
   const minDay = useAppSelector(s => startOfDay(s.ws.currentTime));
   const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
 
-  const [selectedDate, setSelectedDate] = useState(order.fulfillment.selectedDate ?? "");
-  const [selectedTime, setSelectedTime] = useState(order.fulfillment.selectedTime ?? 1440);
+  const [selectedDate, setSelectedDate] = useState(order.fulfillment.selectedDate);
+  const [selectedTime, setSelectedTime] = useState(order.fulfillment.selectedTime);
 
   const submitToWario = async () => {
     if (orderSliceState !== 'PENDING') {
@@ -60,7 +60,7 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
                 minDate={minDay}
                 maxDate={addDays(minDay, 60)}
                 value={parseISO(selectedDate)}
-                onChange={(date) => { setSelectedDate(WDateUtils.formatISODate(date)); }}
+                onChange={(date: Date | null) => { if (date !== null) setSelectedDate(WDateUtils.formatISODate(date)); }}
                 slotProps={{
                   toolbar: {
                     hidden: true,
@@ -79,9 +79,10 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
               className="col"
               options={range(fulfillmentTimeStep, 1440, fulfillmentTimeStep)}
               isOptionEqualToValue={(o, v) => o === v}
-              getOptionLabel={x => x !== null ? WDateUtils.MinutesToPrintTime(x) : ""}
+              getOptionLabel={x => WDateUtils.MinutesToPrintTime(x)}
               value={selectedTime}
               onChange={(_, v) => { setSelectedTime(v); }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               disabled={selectedDate === null}
               renderInput={(params) => <TextField {...params} label={"Time"}
               />}

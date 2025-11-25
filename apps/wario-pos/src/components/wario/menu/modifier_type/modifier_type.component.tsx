@@ -3,7 +3,7 @@ import { snakeCase, startCase } from 'es-toolkit/compat';
 import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup } from "@mui/material";
 
 import type { KeyValue } from "@wcp/wario-shared";
-import { DISPLAY_AS, MODIFIER_CLASS } from "@wcp/wario-shared";
+import { DISPLAY_AS, formatDecimal, MODIFIER_CLASS, parseInteger } from "@wcp/wario-shared";
 import { CheckedNumericInput, type ValSetValNamed } from "@wcp/wario-ux-shared";
 
 import { ExternalIdsExpansionPanelComponent } from "../../ExternalIdsExpansionPanelComponent";
@@ -106,12 +106,19 @@ export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
         <CheckedNumericInput
           label="Max Selected"
           type="number"
-          inputProps={{ inputMode: 'numeric', min: props.minSelected, pattern: '[0-9]*', step: 1 }}
+          inputMode="numeric"
+          step={1}
+          numberProps={{
+            allowEmpty: true,
+            formatFunction: (i) => formatDecimal(i, 2),
+            parseFunction: parseInteger,
+            min: props.minSelected
+          }}
+          pattern="[0-9]*"
           value={props.maxSelected}
           disabled={props.isProcessing}
-          onChange={(e) => { handleSetMaxSelected(e); }}
-          parseFunction={(v) => v !== null && v ? parseInt(v) : null}
-          allowEmpty />
+          onChange={(e: number | "") => { handleSetMaxSelected(e ? e : null); }}
+        />
       </Grid>
       <Grid size={6}>
         <ToggleBooleanPropertyComponent

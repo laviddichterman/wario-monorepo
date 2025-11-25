@@ -6,7 +6,7 @@ import { ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, FormControlLabel, Grid, IconButton, TextField, Typography } from "@mui/material";
 import { DateTimePicker, LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 
-import { type IRecurringInterval, type IWInterval, WDateUtils } from "@wcp/wario-shared";
+import { formatDecimal, type IRecurringInterval, type IWInterval, parseInteger, WDateUtils } from "@wcp/wario-shared";
 import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared';
 import { CheckedNumericInput, type ValSetVal, type ValSetValNamed } from "@wcp/wario-ux-shared";
 
@@ -39,8 +39,8 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
   const [localInterval, setLocalInterval] = useState<IWInterval>(props.value?.interval ?? { start: -1, end: -1 });
   const [frequency, setFreqency] = useState<Frequency>(props.value?.rrule ? RRule.fromString(props.value.rrule).options.freq : Frequency.WEEKLY);
   const [rInterval, setRInterval] = useState<number>(props.value?.rrule ? RRule.fromString(props.value.rrule).options.interval : 1);
-  const [byWeekDay, setByWeekDay] = useState<Weekday[]>(props.value?.rrule ? RRule.fromString(props.value.rrule).options.byweekday?.map(x => new Weekday(x)) ?? [] : []);
-  const [byMonth, setByMonth] = useState<number[]>(props.value?.rrule ? RRule.fromString(props.value.rrule).options.bymonth ?? [] : []);
+  const [byWeekDay, setByWeekDay] = useState<Weekday[]>(props.value?.rrule ? RRule.fromString(props.value.rrule).options.byweekday.map(x => new Weekday(x)) : []);
+  const [byMonth, setByMonth] = useState<number[]>(props.value?.rrule ? RRule.fromString(props.value.rrule).options.bymonth : []);
   const [count, setCount] = useState<number | null>(null);
   // const [until, setUntil] = useState<Date | null>(null);
   // const [from, setFrom] = useState<Date | null>(null);
@@ -142,12 +142,19 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
                   <CheckedNumericInput
                     label="Count"
                     type="number"
-                    inputProps={{ inputMode: 'numeric', min: 1, pattern: '[0-9]*', step: 1 }}
+                    inputMode="numeric"
+                    step={1}
+                    numberProps={{
+                      allowEmpty: true,
+                      formatFunction: (i) => formatDecimal(i, 2),
+                      parseFunction: parseInteger,
+                      min: 1
+                    }}
+                    pattern="[0-9]*"
                     value={count}
                     disabled={props.disabled}
-                    onChange={(e) => { setCount(e); }}
-                    parseFunction={(v) => v !== null && v ? parseInt(v) : null}
-                    allowEmpty={true} />
+                    onChange={(e: number | "") => { setCount(e ? e : null); }}
+                  />
                 </Grid>
                 <Grid
                   size={{
@@ -191,7 +198,7 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
                     label="From Time"
                     //maxTime={setMinutes(startOfDay(Date.now()), localInterval.end)}
                     value={setMinutes(startOfDay(Date.now()), localInterval.start)}
-                    onChange={(e) => e !== null && isValid(e) ? setLocalInterval({ ...localInterval, start: differenceInMinutes(e, startOfDay(Date.now())) }) : 0}
+                    onChange={(e: Date | number | null) => { if (e !== null && isValid(e)) { setLocalInterval({ ...localInterval, start: differenceInMinutes(e, startOfDay(Date.now())) }) } }}
                   // localeText={ { toolbarTitle: "From Time"}}
                   />
                 </Grid>
@@ -201,9 +208,13 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
                     label="Until Time"
                     //minTime={setMinutes(startOfDay(Date.now()), localInterval.start)}
                     value={setMinutes(startOfDay(Date.now()), localInterval.end)}
-                    onChange={(e) => {
+                    onChange={(e: Date | number | null) => {
                       console.log({ e })
-                      return e !== null && isValid(e) ? setLocalInterval({ ...localInterval, end: differenceInMinutes(e, startOfDay(Date.now())) }) : 1439
+                      if (e !== null && isValid(e)) {
+                        setLocalInterval({ ...localInterval, end: differenceInMinutes(e, startOfDay(Date.now())) })
+                      } else {
+                        setLocalInterval({ ...localInterval, end: 1439 })
+                      }
                     }}
                   // renderInput={(params) => <TextField {...params} fullWidth label="Until Time" />}
                   />
@@ -219,7 +230,7 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
                     disabled={props.disabled}
                     label={"Start"}
                     value={localInterval.start > 0 ? toDate(localInterval.start) : null}
-                    onChange={(date: Date) => { setLocalInterval({ start: date && date.valueOf() > 0 ? setMilliseconds(setSeconds(date, 0), 0).valueOf() : -1, end: localInterval.end }); }}
+                    onChange={(date: Date | null) => { setLocalInterval({ start: date && date.valueOf() > 0 ? setMilliseconds(setSeconds(date, 0), 0).valueOf() : -1, end: localInterval.end }); }}
                     format="MMM dd, y hh:mm a"
                   />
                 </Grid>
@@ -230,7 +241,7 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
                     label={"End"}
                     minDateTime={localInterval.start > 0 ? toDate(localInterval.start) : null}
                     value={localInterval.end > 0 ? toDate(localInterval.end) : null}
-                    onChange={(date: Date) => { setLocalInterval({ start: localInterval.start, end: date && date.valueOf() > 0 ? setMilliseconds(setSeconds(date, 0), 0).valueOf() : -1 }); }}
+                    onChange={(date: Date | null) => { setLocalInterval({ start: localInterval.start, end: date && date.valueOf() > 0 ? setMilliseconds(setSeconds(date, 0), 0).valueOf() : -1 }); }}
                     format="MMM dd, y hh:mm a"
                   />
                 </Grid>

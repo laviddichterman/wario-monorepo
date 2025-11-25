@@ -18,7 +18,7 @@ const AvailabilityListBuilderComponent = (props: AvailabilityListBuilderComponen
   const [availabilitiesAreValid, setAvailabilitiesAreValid] = useIndexedState(useState<boolean[]>(Array<boolean>(props.value.length).fill(true)));
   useEffect(() => {
     setAvailabilityIsValid(availabilitiesAreValid.every((v) => v));
-  }, [availabilitiesAreValid]);
+  }, [availabilitiesAreValid, setAvailabilityIsValid]);
   return (
     <>
       {props.value.map((availability, i) => {
