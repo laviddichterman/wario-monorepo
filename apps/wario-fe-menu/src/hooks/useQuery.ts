@@ -9,8 +9,8 @@ import {
   WDateUtils,
   type WProductMetadata,
 } from "@wcp/wario-shared";
+import { type ProductCategoryFilter } from "@wcp/wario-ux-shared/common";
 import {
-  type ProductCategoryFilter,
   type ServerTimeData,
   useCatalogSelectors,
   useCategoryById,
@@ -26,7 +26,7 @@ import {
   useProductMetadata,
   useServerTime,
   useServerTimeQuery,
-} from '@wcp/wario-ux-shared';
+} from '@wcp/wario-ux-shared/query';
 
 
 export function useMenuCategoryId() {

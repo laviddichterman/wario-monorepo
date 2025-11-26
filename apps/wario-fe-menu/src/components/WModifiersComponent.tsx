@@ -2,7 +2,8 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
 import { type CatalogModifierEntry, DISABLE_REASON, type IOption, type IProductInstance, type IProductModifier, MoneyToDisplayString } from "@wcp/wario-shared";
-import { ProductDescription, ProductPrice, ProductTitle, useModifierEntryById, useOptionById, useProductInstanceById } from "@wcp/wario-ux-shared";
+import { useModifierEntryById, useOptionById, useProductInstanceById } from "@wcp/wario-ux-shared/query";
+import { ProductDescription, ProductPrice, ProductTitle } from "@wcp/wario-ux-shared/styled";
 
 import { useMenuOrderedModifiersVisibleForProductInstanceId, useMenuSelectMetadataModifierOptionMapEntryFromProductInstanceIdAndModifierOptionId, useMenuSelectVisibleModifierOptions } from "@/hooks/useQuery";
 

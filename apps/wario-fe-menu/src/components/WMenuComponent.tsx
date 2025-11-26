@@ -12,7 +12,10 @@ import Tab from '@mui/material/Tab';
 import Typography, { type TypographyProps } from '@mui/material/Typography';
 
 import { CategoryDisplay, type IProductInstanceDto } from '@wcp/wario-shared';
-import { LoadingScreen, scrollToElementOffsetAfterDelay, Separator, useProductEntryById, useProductInstanceById } from '@wcp/wario-ux-shared';
+import { scrollToElementOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
+import { useProductEntryById, useProductInstanceById } from '@wcp/wario-ux-shared/query';
+import { Separator } from '@wcp/wario-ux-shared/styled';
 
 import { useMenuCategoryId, useMenuFooterFromCategoryById, useMenuNameFromCategoryById, useMenuNestingFromCategoryById, useMenuSubtitleFromCategoryById, usePopulatedSubcategoryIdsInCategoryForNextAvailableTime, useProductInstanceIdsInCategoryForNextAvailableTime, useProductMetadataForMenu } from '@/hooks/useQuery';
 

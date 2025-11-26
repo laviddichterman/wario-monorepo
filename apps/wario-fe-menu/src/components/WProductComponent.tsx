@@ -1,7 +1,8 @@
 import { type BoxProps } from '@mui/material/Box';
 
 import { type ICatalogSelectors, type WProductMetadata } from '@wcp/wario-shared';
-import { ClickableProductDisplay as ClickableProductDisplayShared, ProductDisplay as ProductDisplayShared, useCatalogSelectors } from '@wcp/wario-ux-shared';
+import { ClickableProductDisplay as ClickableProductDisplayShared, ProductDisplay as ProductDisplayShared } from '@wcp/wario-ux-shared/components';
+import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 
 interface WProductComponentProps {
   productMetadata: WProductMetadata;

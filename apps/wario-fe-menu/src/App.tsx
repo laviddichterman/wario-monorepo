@@ -4,7 +4,10 @@ import ScopedCssBaseline from '@mui/material/ScopedCssBaseline';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 import { themeOptions } from "@wcp/wario-fe-ux-shared";
-import { LoadingScreen, MotionLazy, scrollToIdOffsetAfterDelay, useIsSocketDataLoaded } from '@wcp/wario-ux-shared';
+import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
+import { MotionLazy } from '@wcp/wario-ux-shared/containers';
+import { useIsSocketDataLoaded } from '@wcp/wario-ux-shared/query';
 
 import WMenuComponent from './components/WMenuComponent';
 

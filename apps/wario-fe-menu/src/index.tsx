@@ -3,7 +3,7 @@ import './index.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import { WarioQueryProvider } from '@wcp/wario-ux-shared';
+import { WarioQueryProvider } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API, SOCKETIO } from '@/config';
 

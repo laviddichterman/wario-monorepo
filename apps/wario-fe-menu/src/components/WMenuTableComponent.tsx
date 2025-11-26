@@ -8,7 +8,8 @@ import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium';
 import { useKeepGroupedColumnsHidden } from '@mui/x-data-grid-premium/hooks';
 
 import { type ICatalogSelectors, type IProductInstance, WCPProductGenerateMetadata, type WProduct } from '@wcp/wario-shared';
-import { Separator, useCatalogSelectors, useDefaultFulfillmentId, WarioToggleButton } from '@wcp/wario-ux-shared';
+import { useCatalogSelectors, useDefaultFulfillmentId } from '@wcp/wario-ux-shared/query';
+import { Separator, WarioToggleButton } from '@wcp/wario-ux-shared/styled';
 
 import { useCurrentTimeForDefaultFulfillment, useProductInstanceIdsInCategoryForNextAvailableTime } from '@/hooks/useQuery';
 
