@@ -1,6 +1,4 @@
-import { isEqual } from 'es-toolkit';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createStructuredSelector } from 'reselect';
 
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
@@ -9,12 +7,11 @@ import type { GridEventListener, GridFilterModel, GridRowId } from '@mui/x-data-
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium';
 import { useKeepGroupedColumnsHidden } from '@mui/x-data-grid-premium/hooks';
 
-import { getProductInstanceById, Separator, WarioToggleButton, weakMapCreateSelector } from '@wcp/wario-ux-shared';
+import { type ICatalogSelectors, type IProductInstance, WCPProductGenerateMetadata, type WProduct } from '@wcp/wario-shared';
+import { Separator, useCatalogSelectors, useDefaultFulfillmentId, WarioToggleButton } from '@wcp/wario-ux-shared';
 
-import { type RootState, store } from '@/app/store';
-import { useAppSelector } from "@/app/useHooks";
+import { useCurrentTimeForDefaultFulfillment, useProductInstanceIdsInCategoryForNextAvailableTime } from '@/hooks/useQuery';
 
-import { SelectProductInstanceIdsInCategoryForNextAvailableTime, SelectProductMetadataForMenu } from './WMenuComponent';
 
 export interface ToolbarAction {
   size: number; elt: React.ReactNode;
@@ -90,42 +87,44 @@ interface WMenuDisplayProps { categoryId: string; }
 //   }
 //   return { ...acc, products: [...acc.products, curr] } as HierarchicalProductStructure;
 // }
-const SelectProductInstanceForMenu = createStructuredSelector(
-  {
-    categories: (s: RootState, productInstanceId: string) => {
-      const pi = getProductInstanceById(s.ws.productInstances, productInstanceId);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      return pi ? (pi.externalIDs.find(ext => ext.key === "Categories")?.value ?? "").split(',') : []
-    },
-    name: (s: RootState, productInstanceId: string) => SelectProductMetadataForMenu(s, productInstanceId).name,
-    price: (s: RootState, productInstanceId: string) => SelectProductMetadataForMenu(s, productInstanceId).price,
-    metadata: (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId).externalIDs.reduce((acc, kv) => kv.value.length ? { ...acc, [kv.key]: kv.value } : acc, {})
-  },
-  weakMapCreateSelector
-);
+
+
+function useProductDataForTableRows(categoryId: string): RowType[] {
+  const productInstanceIds = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
+  const service_time = useCurrentTimeForDefaultFulfillment();
+  const fulfillmentId = useDefaultFulfillmentId().data as string;
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
+  return productInstanceIds.map(productInstanceId => {
+    const productInstance = catalogSelectors.productInstance(productInstanceId) as IProductInstance;
+    return { p: productInstance, m: WCPProductGenerateMetadata(productInstance.productId, productInstance.modifiers, catalogSelectors, service_time, fulfillmentId) } satisfies WProduct;
+  }).map((x) => {
+    return {
+      id: x.p.id,
+      categories: (x.p.externalIDs.find(ext => ext.key === "Categories")?.value ?? "").split(','),
+      name: x.m.name,
+      price: x.m.price,
+      metadata: x.p.externalIDs.reduce((acc, kv) => kv.value.length ? { ...acc, [kv.key]: kv.value } : acc, {})
+    }
+  }).map(x => {
+    return {
+      id: x.id,
+      category: x.categories.join(" > "),
+      subcategory0: x.categories[0],
+      subcategory1: x.categories.length > 1 ? x.categories[1] : "",
+      subcategory2: x.categories.length > 2 ? x.categories[2] : "",
+      subcategory3: x.categories.length > 3 ? x.categories[3] : "",
+      name: x.name,
+      price: x.price.amount,
+      metadata: x.metadata
+    }
+  }) satisfies RowType[];
+}
 
 
 const BreadcrumbArrow = () =>
   <Box sx={{ alignSelf: 'center' }}>
     &rarr;
   </Box>
-
-const ComputeRows = (productRows: string[]): RowType[] => {
-  return productRows.map(x => {
-    const data = SelectProductInstanceForMenu(store.getState(), x);
-    return ({
-      id: x,
-      category: data.categories.join(" > "),
-      subcategory0: data.categories[0],
-      subcategory1: data.categories.length > 1 ? data.categories[1] : "",
-      subcategory2: data.categories.length > 2 ? data.categories[2] : "",
-      subcategory3: data.categories.length > 3 ? data.categories[3] : "",
-      name: data.name,
-      price: data.price.amount,
-      metadata: data.metadata
-    }) satisfies RowType;
-  });
-}
 
 
 function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
@@ -482,7 +481,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
           // autoHeight
           columns={[
             { headerName: "Category", field: "category", flex: 4 },
-            { headerName: "subcategory0", field: "subcategory0", filterOperators: getGridStringOperators(), },
+            { headerName: "subcategory0", field: "subcategory0", filterOperators: getGridStringOperators() },
             { headerName: "subcategory1", field: "subcategory1", filterOperators: getGridStringOperators() },
             { headerName: "subcategory2", field: "subcategory2", filterOperators: getGridStringOperators() },
             { headerName: "subcategory3", field: "subcategory3", filterOperators: getGridStringOperators() },
@@ -499,17 +498,7 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
 }
 
 export function WMenuDataGrid({ categoryId }: WMenuDisplayProps) {
-  const productRows = useAppSelector(s => SelectProductInstanceIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
-  const [versionedProductRows, setVersionedProductRows] = useState<string[]>([]);
-  useEffect(() => {
-    if (!isEqual(productRows, versionedProductRows)) {
-      setVersionedProductRows(productRows);
-    }
-  }, [productRows, versionedProductRows]);
-
-  const memoizedComputedRows = useMemo(() => {
-    return ComputeRows(versionedProductRows);
-  }, [versionedProductRows]); // Depend on the "versioned" state
+  const memoizedComputedRows = useProductDataForTableRows(categoryId);
 
   // const dynamicColumns: GridColDef<{ id: string; }>[] = useMemo(() => {
   //   const acc: Record<string, DGEmbeddedMetadata> = {};

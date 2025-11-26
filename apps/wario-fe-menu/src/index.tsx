@@ -2,17 +2,19 @@ import './index.css';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Provider as ReduxProvider } from 'react-redux';
+
+import { WarioQueryProvider } from '@wcp/wario-ux-shared';
+
+import { HOST_API, SOCKETIO } from '@/config';
 
 import App from './App';
-import { store } from './app/store';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
   <React.StrictMode>
-    <ReduxProvider store={store}>
+    <WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns} attachDebugClient={import.meta.env.DEV}>
       <App />
-    </ReduxProvider>
+    </WarioQueryProvider>
   </React.StrictMode>
 );

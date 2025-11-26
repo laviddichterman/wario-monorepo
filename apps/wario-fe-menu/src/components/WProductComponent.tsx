@@ -1,9 +1,7 @@
 import { type BoxProps } from '@mui/material/Box';
 
-import { type WProductMetadata } from '@wcp/wario-shared';
-import { ClickableProductDisplay as ClickableProductDisplayShared, ProductDisplay as ProductDisplayShared, SelectCatalogSelectors } from '@wcp/wario-ux-shared';
-
-import { useAppSelector } from '@/app/useHooks';
+import { type ICatalogSelectors, type WProductMetadata } from '@wcp/wario-shared';
+import { ClickableProductDisplay as ClickableProductDisplayShared, ProductDisplay as ProductDisplayShared, useCatalogSelectors } from '@wcp/wario-ux-shared';
 
 interface WProductComponentProps {
   productMetadata: WProductMetadata;
@@ -15,7 +13,7 @@ interface WProductComponentProps {
 }
 
 export const ProductDisplay = (props: WProductComponentProps & BoxProps) => {
-  const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   return <ProductDisplayShared
     catalogSelectors={catalogSelectors}
     {...props}
@@ -23,7 +21,7 @@ export const ProductDisplay = (props: WProductComponentProps & BoxProps) => {
 };
 
 export const ClickableProductDisplay = (props: WProductComponentProps & BoxProps) => {
-  const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   return <ClickableProductDisplayShared
     catalogSelectors={catalogSelectors}
     {...props}
