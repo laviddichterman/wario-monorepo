@@ -165,9 +165,6 @@ importers:
       '@mui/system':
         specifier: ^7.3.5
         version: 7.3.5(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0)
-      '@reduxjs/toolkit':
-        specifier: ^2.11.0
-        version: 2.11.0(react-redux@9.2.0(@types/react@19.2.7)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
       '@square/web-sdk':
         specifier: ^2.1.0
         version: 2.1.0
@@ -210,15 +207,9 @@ importers:
       react-phone-number-input:
         specifier: ^3.4.14
         version: 3.4.14(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react-redux:
-        specifier: ^9.2.0
-        version: 9.2.0(@types/react@19.2.7)(react@19.2.0)(redux@5.0.1)
       react-square-web-payments-sdk:
         specifier: 3.2.4-beta.1
         version: 3.2.4-beta.1(react@19.2.0)
-      reselect:
-        specifier: ^5.1.1
-        version: 5.1.1
       socket.io-client:
         specifier: ^4.8.1
         version: 4.8.1
@@ -289,12 +280,6 @@ importers:
       '@wcp/wario-fe-ux-shared':
         specifier: workspace:*
         version: link:../../packages/wario-fe-ux-shared
-      '@wcp/wario-shared':
-        specifier: workspace:*
-        version: link:../../packages/wario-shared
-      '@wcp/wario-ux-shared':
-        specifier: workspace:*
-        version: link:../../packages/wario-ux-shared
       react:
         specifier: ^19.2.0
         version: 19.2.0

@@ -21,8 +21,6 @@
     "@mui/lab": "7.0.1-beta.19",
     "@mui/material": "^7.3.5",
     "@wcp/wario-fe-ux-shared": "workspace:*",
-    "@wcp/wario-shared": "workspace:*",
-    "@wcp/wario-ux-shared": "workspace:*",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

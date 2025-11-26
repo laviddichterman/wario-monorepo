@@ -13,15 +13,16 @@ import {
   MoneyToDisplayString, type PurchaseStoreCreditRequest,
   type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces
 } from '@wcp/wario-shared';
+import { handleAxiosError, ZodEmailSchema } from "@wcp/wario-ux-shared/common";
 import {
-  ErrorResponseOutput, FormProvider, handleAxiosError, MoneyInput, RHFCheckbox,
-  RHFMailTextField, RHFTextField, SelectSquareAppId, SelectSquareLocationId,
-  SquareButtonCSS, ZodEmailSchema
-} from '@wcp/wario-ux-shared';
+  FormProvider, MoneyInput, RHFCheckbox,
+  RHFMailTextField, RHFTextField,
+} from '@wcp/wario-ux-shared/components';
+import { useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
+import { ErrorResponseOutput, SquareButtonCSS } from '@wcp/wario-ux-shared/styled';
 
 import axiosInstance from '@/utils/axios';
 
-import { useAppSelector } from '@/app/useHooks';
 import { IS_PRODUCTION } from "@/config";
 
 const Title = styled(Typography)({
@@ -78,10 +79,9 @@ function useCPForm() {
 type PurchaseStatus = 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILED_UNKNOWN' | 'INVALID_DATA';
 
 export default function WStoreCreditPurchase() {
+  const { data: squareApplicationId } = useSquareAppId();
+  const { data: squareLocationId } = useSquareLocationId();
 
-  const squareApplicationId = useAppSelector(SelectSquareAppId);
-
-  const squareLocationId = useAppSelector(SelectSquareLocationId);
   const cPForm = useCPForm();
   const { getValues, watch, formState: { isValid, errors } } = cPForm;
   const sendEmailToRecipientState = watch('sendEmailToRecipient');
@@ -144,8 +144,8 @@ export default function WStoreCreditPurchase() {
         overrides={
           !IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined
         }
-        applicationId={squareApplicationId}
-        locationId={squareLocationId}
+        applicationId={squareApplicationId as string}
+        locationId={squareLocationId as string}
         cardTokenizeResponseReceived={cardTokenizeResponseReceived}
         createPaymentRequest={createPaymentRequest}
       >
