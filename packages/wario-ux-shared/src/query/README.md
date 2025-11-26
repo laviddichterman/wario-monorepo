@@ -15,7 +15,7 @@ This module provides a **hybrid push-pull model** for real-time data:
 ### 1. Wrap your app with `WarioQueryProvider`
 
 ```tsx
-import { WarioQueryProvider } from '@wcp/wario-ux-shared';
+import { WarioQueryProvider } from '@wcp/wario-ux-shared/query';
 
 function App() {
   return (
@@ -32,7 +32,7 @@ function App() {
 ### 2. Use query hooks in components
 
 ```tsx
-import { useCatalogQuery, useSettingsQuery, useSocket } from '@wcp/wario-ux-shared';
+import { useCatalogQuery, useSettingsQuery, useSocket } from '@wcp/wario-ux-shared/query';
 
 function MyComponent() {
   const { data: catalog, isLoading } = useCatalogQuery();
@@ -50,7 +50,7 @@ function MyComponent() {
 ### 3. Access server time synchronization
 
 ```tsx
-import { useServerTimeQuery, useServerTime } from '@wcp/wario-ux-shared';
+import { useServerTimeQuery, useServerTime } from '@wcp/wario-ux-shared/query';
 
 function TimeDisplay() {
   const { data: serverTimeData } = useServerTimeQuery();
@@ -94,7 +94,7 @@ QUERY_KEYS.serverTime     // ['serverTime']
 Use these for manual cache updates:
 
 ```typescript
-import { QUERY_KEYS } from '@wcp/wario-ux-shared';
+import { QUERY_KEYS } from '@wcp/wario-ux-shared/query';
 import { useQueryClient } from '@tanstack/react-query';
 
 const queryClient = useQueryClient();
@@ -110,59 +110,13 @@ The provider listens to these socket events and updates query cache:
 - `WCP_SERVER_TIME` → Updates `serverTime` query
 - `WCP_SETTINGS` → Updates `settings` query
 
-## Migration from Redux
-
-### Before (Redux)
-
-```tsx
-// main.tsx
-import { Provider as ReduxProvider } from 'react-redux';
-import { store } from './redux/store';
-
-<ReduxProvider store={store}>
-  <App />
-</ReduxProvider>
-
-// Component
-import { useAppSelector, useAppDispatch } from './hooks/useRedux';
-import { startConnection } from '@wcp/wario-ux-shared';
-
-const dispatch = useAppDispatch();
-const catalog = useAppSelector(s => s.ws.catalog);
-const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
-
-useEffect(() => {
-  if (socketIoState === 'NONE') {
-    dispatch(startConnection());
-  }
-}, [socketIoState, dispatch]);
-```
-
-### After (TanStack Query)
-
-```tsx
-// main.tsx
-import { WarioQueryProvider } from '@wcp/wario-ux-shared';
-
-<WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns}>
-  <App />
-</WarioQueryProvider>
-
-// Component
-import { useCatalogQuery, useCatalogSelectors, useSocket } from '@wcp/wario-ux-shared';
-
-const { data: catalog } = useCatalogQuery();
-const catalogSelectors = useCatalogSelectors();
-const { status } = useSocket(); // Auto-connected by provider
-```
-
 ## Advanced Usage
 
 ### Custom QueryClient
 
 ```tsx
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { SocketProvider } from '@wcp/wario-ux-shared';
+import { SocketProvider } from '@wcp/wario-ux-shared/query';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -180,7 +134,7 @@ const queryClient = new QueryClient({
 ### Manual Connection Control
 
 ```tsx
-import { WarioQueryProvider } from '@wcp/wario-ux-shared';
+import { WarioQueryProvider } from '@wcp/wario-ux-shared/query';
 
 // Disable auto-connect
 <WarioQueryProvider autoConnect={false} {...}>
@@ -242,22 +196,3 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
   <ReactQueryDevtools initialIsOpen={false} />
 </WarioQueryProvider>
 ```
-
-## Backward Compatibility
-
-This module **coexists with Redux**. Both systems can be used simultaneously during migration:
-
-```tsx
-// Use both providers during transition
-<ReduxProvider store={store}>
-  <WarioQueryProvider {...}>
-    <App />
-  </WarioQueryProvider>
-</ReduxProvider>
-
-// Components can use either:
-const catalogFromRedux = useAppSelector(s => s.ws.catalog);
-const { data: catalogFromQuery } = useCatalogQuery();
-```
-
-The existing Redux exports (`SocketIoSlice`, `SocketIoMiddleware`, etc.) remain unchanged.
