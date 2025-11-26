@@ -28,6 +28,15 @@ export function useFulfillmentsQuery(
   });
 }
 
+/** 
+ * Gets all fulfillments as a non-null array
+ * 
+ */
+export function useFulfillments() {
+  const { data: fulfillments } = useFulfillmentsQuery();
+  return fulfillments || [];
+}
+
 /**
  * Hook to get a specific fulfillment by ID
  * Uses a derived query that selects from the fulfillments data
@@ -42,3 +51,37 @@ export function useFulfillmentById(fulfillmentId: string | null) {
 
   return { data: fulfillment };
 }
+
+
+export function useValueFromFulfillmentById<K extends keyof FulfillmentConfig>(fulfillmentId: string | null, key: K) {
+  const { data: fulfillment } = useFulfillmentById(fulfillmentId);
+
+  // Simple derived value - returns the specific key from the fulfillment or null
+  const value = fulfillment ? fulfillment[key] : null;
+
+  return { data: value };
+}
+
+// export const SelectFulfillmentDisplayName = SelectSomethingFromFulfillment('displayName');
+// export const SelectMainCategoryId = SelectSomethingFromFulfillment('orderBaseCategoryId');
+// export const SelectSupplementalCategoryId = SelectSomethingFromFulfillment('orderSupplementaryCategoryId');
+// export const SelectMenuCategoryId = SelectSomethingFromFulfillment('menuBaseCategoryId');
+// export const SelectMaxPartySize = SelectSomethingFromFulfillment('maxGuests');
+// export const SelectServiceFeeSetting = SelectSomethingFromFulfillment('serviceCharge');
+// export const SelectAllowTipping = SelectSomethingFromFulfillment('allowTipping');
+// export const SelectFulfillmentMinDuration = SelectSomethingFromFulfillment('minDuration');
+// export const SelectFulfillmentServiceTerms = SelectSomethingFromFulfillment('terms');
+// export const SelectFulfillmentService = SelectSomethingFromFulfillment('service');
+// export const SelectFulfillmentMaxGuests = SelectSomethingFromFulfillment('maxGuests');
+
+export const useFulfillmentDisplayName = (fId: string | null) => useValueFromFulfillmentById(fId, 'displayName');
+export const useFulfillmentMainCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'orderBaseCategoryId');
+export const useFulfillmentSupplementalCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'orderSupplementaryCategoryId');
+export const useFulfillmentMenuCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'menuBaseCategoryId');
+export const useFulfillmentMaxPartySize = (fId: string | null) => useValueFromFulfillmentById(fId, 'maxGuests');
+export const useFulfillmentServiceFeeSetting = (fId: string | null) => useValueFromFulfillmentById(fId, 'serviceCharge');
+export const useFulfillmentAllowTipping = (fId: string | null) => useValueFromFulfillmentById(fId, 'allowTipping');
+export const useFulfillmentMinDuration = (fId: string | null) => useValueFromFulfillmentById(fId, 'minDuration');
+export const useFulfillmentServiceTerms = (fId: string | null) => useValueFromFulfillmentById(fId, 'terms');
+export const useFulfillmentService = (fId: string | null) => useValueFromFulfillmentById(fId, 'service');
+export const useFulfillmentMaxGuests = (fId: string | null) => useValueFromFulfillmentById(fId, 'maxGuests');

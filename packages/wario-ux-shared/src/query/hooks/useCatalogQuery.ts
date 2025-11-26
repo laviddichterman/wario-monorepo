@@ -7,7 +7,7 @@ import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import type { ICatalog } from '@wcp/wario-shared';
+import { type CatalogCategoryEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, IgnoreHideDisplayFlags, type IProductInstance, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
 
 import { QUERY_KEYS } from '../types';
 
@@ -86,6 +86,14 @@ export function useOptionById(id: string) {
 export function useProductEntryIds() {
   const { data: catalog } = useCatalogQuery();
   return catalog ? Object.keys(catalog.products) : [];
+}
+
+/**
+ * Hook to get all product entries from catalog
+ */
+export function useProductEntries() {
+  const { data: catalog } = useCatalogQuery();
+  return catalog ? Object.values(catalog.products) : [];
 }
 
 /**
@@ -171,3 +179,115 @@ export function useCatalogSelectors() {
     };
   }, [catalog]);
 }
+// Added for wario-fe-menu
+
+export function useParentProductEntryFromProductInstanceId(productInstanceId: string) {
+  const product = useProductInstanceById(productInstanceId) as IProductInstance;
+  const productEntry = useProductEntryById(product.productId);
+  return productEntry;
+}
+
+export function useBaseProductByProductId(productClassId: string) {
+  const productEntry = useProductEntryById(productClassId) as CatalogProductEntry;
+  const productInstance = useProductInstanceById(productEntry.product.baseProductId);
+  return productInstance;
+}
+
+export function useBaseProductNameByProductId(productClassId: string) {
+  const baseProduct = useBaseProductByProductId(productClassId);
+  return baseProduct?.displayName || "UNDEFINED";
+}
+
+export function useProductMetadata(productId: string, modifiers: ProductModifierEntry[], service_time: Date | number, fulfillmentId: string) {
+  const catalogSelectors = useCatalogSelectors();
+  const metadata = useMemo(() => {
+    if (!catalogSelectors) return null;
+    return WCPProductGenerateMetadata(productId, modifiers, catalogSelectors, service_time, fulfillmentId);
+  }, [productId, modifiers, catalogSelectors, service_time, fulfillmentId]);
+  return metadata;
+}
+
+export function useProductsNotPermanentlyDisabled() {
+  const products = useProductEntries();
+  return products.filter((x) => (!x.product.disabled || x.product.disabled.start <= x.product.disabled.end));
+}
+
+export function useProductIdsNotPermanentlyDisabled() {
+  const products = useProductsNotPermanentlyDisabled();
+  return products.map(x => x.product.id);
+}
+
+export type ProductCategoryFilter = "Menu" | "Order" | null;
+
+function filteredProducts(category: CatalogCategoryEntry, filter: ProductCategoryFilter, catalogSelectors: ICatalogSelectors, order_time: Date | number, fulfillmentId: string) {
+  const categoryProductInstances = category.products.reduce<IProductInstance[]>((acc: IProductInstance[], productId) => {
+    const product = catalogSelectors.productEntry(productId) as CatalogProductEntry;
+    if (!product.product.disabled || product.product.disabled.start <= product.product.disabled.end) {
+      return [...acc, ...product.instances.reduce<IProductInstance[]>((accB, pIId) => {
+        const pi = catalogSelectors.productInstance(pIId) as IProductInstance;
+        const passesFilter = FilterProductUsingCatalog(productId, pi.modifiers, pi.displayFlags, catalogSelectors, filter === 'Menu' ? GetMenuHideDisplayFlag : (filter === "Order" ? GetOrderHideDisplayFlag : IgnoreHideDisplayFlags), order_time, fulfillmentId);
+        return passesFilter ? [...accB, pi] : accB;
+      }, [])];
+    }
+    return acc;
+  }, []);
+  return categoryProductInstances;
+}
+
+/**
+ * Selects product instance IDs that pass relevant filters and are immediate children of the given categoryID
+ * Returns values in context order (Menu | Order)
+ */
+export function useProductInstancesInCategory(categoryId: string, filter: ProductCategoryFilter, order_time: Date | number, fulfillmentId: string,) {
+  const category = useCategoryById(categoryId);
+  const catalogSelectors = useCatalogSelectors();
+  const { data: catalog } = useCatalogQuery();
+
+  if (!catalog || !catalogSelectors || !category || category.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
+    return [];
+  }
+  const categoryProductInstances = filteredProducts(category, filter, catalogSelectors, order_time, fulfillmentId);
+  switch (filter) {
+    case 'Menu':
+      categoryProductInstances.sort((a, b) => (a.displayFlags.menu.ordinal - b.displayFlags.menu.ordinal)); break;
+    case 'Order':
+      categoryProductInstances.sort((a, b) => (a.displayFlags.order.ordinal - b.displayFlags.order.ordinal)); break;
+    default:
+      break;
+  }
+  return categoryProductInstances.map(x => x.id);
+}
+
+function selectPopulatedSubcategoryIdsInCategory(catalogSelectors: ICatalogSelectors, categoryId: string, filter: ProductCategoryFilter, order_time: Date | number, fulfillmentId: string) {
+  const categoryEntry = catalogSelectors.category(categoryId);
+  if (!categoryEntry || categoryEntry.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
+    return [];
+  }
+  const subcats = categoryEntry.children.reduce((acc: CatalogCategoryEntry[], subcatId) => {
+    const subcategory = catalogSelectors.category(subcatId);
+    const instances = subcategory ? filteredProducts(subcategory, filter, catalogSelectors, order_time, fulfillmentId) : [];
+    if (instances.length > 0 || selectPopulatedSubcategoryIdsInCategory(catalogSelectors, subcatId, filter, order_time, fulfillmentId).length > 0) {
+      return [...acc, subcategory as CatalogCategoryEntry];
+    }
+    else {
+      return acc;
+    }
+  }, []);
+  subcats.sort((a, b) => a.category.ordinal - b.category.ordinal);
+  return subcats.map(x => x.category.id);
+}
+
+/**
+ * For a given categoryId, selects the sub category IDs that, somewhere down their tree, contain a product that is meant to be displayed
+ * with the passed context (product availability, time of order, fulfillment, display (menu/order))
+ * Returns values in context order (Menu | Order)
+ */
+export function usePopulatedSubcategoryIdsInCategory(categoryId: string, filter: ProductCategoryFilter, order_time: Date | number, fulfillmentId: string) {
+  const catalogSelectors = useCatalogSelectors();
+  if (!catalogSelectors) {
+    return [];
+  }
+  return selectPopulatedSubcategoryIdsInCategory(catalogSelectors, categoryId, filter, order_time, fulfillmentId);
+}
+
+// end added for wario-fe-menu

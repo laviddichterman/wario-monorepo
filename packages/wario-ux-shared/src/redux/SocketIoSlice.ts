@@ -292,26 +292,3 @@ export const SelectPopulatedSubcategoryIdsInCategory = weakMapCreateSelector(
     return subcats.map(x => x.category.id);
   }
 );
-
-
-// export const selectProductsAfterDisableFilter = (catalogCategory: CatalogCategoryEntry, productSelector: ICatalogSelectors['productEntry']) {
-//   return catalogCategory.products.reduce((acc, productId) => {
-//     const product = productSelector(productId);
-//     if (product) {
-//       return [...acc, ...product.instances];
-//     }
-//     return acc;
-//   }, [] as string[])
-// }
-// // type ProductFilter = "Order" | "Menu" | null;
-
-// // export const SelectProductInstancesInCategory = weakMapCreateSelector(
-// //   (s: SocketIoState, categoryId: string, filter: ProductFilter) => 
-// // )
-
-// export const selectProductIdsInCategoryAfterDisableFilter = weakMapCreateSelector(
-//   (s: RootState, _: string) => selectProductsAfterDisableFilter(s),
-//   (_: RootState, categoryId: string) => categoryId,
-//   (productsAfterDisableFilter, categoryId) => Object.values(productsAfterDisableFilter).filter((x) =>
-//     x.product.category_ids.includes(categoryId)).map(x => x.product.id)
-// );

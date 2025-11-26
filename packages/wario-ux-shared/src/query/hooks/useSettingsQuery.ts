@@ -27,3 +27,46 @@ export function useSettingsQuery(
     ...options,
   });
 }
+
+/**
+ * Hook to get a specific setting by key
+ * Replaces 
+ * export const SelectSquareAppId = (s: { ws: SocketIoState }) => s.ws.settings?.config.SQUARE_APPLICATION_ID as string || "";
+ export const SelectSquareLocationId = (s: { ws: SocketIoState }) => s.ws.settings?.config.SQUARE_LOCATION as string || "";
+ export const SelectDefaultFulfillmentId = (s: { ws: SocketIoState }) => s.ws.settings?.config.DEFAULT_FULFILLMENTID as string || null;
+ export const SelectAllowAdvanced = (s: { ws: SocketIoState }) => s.ws.settings?.config.ALLOW_ADVANCED as boolean || false;
+ export const SelectGratuityServiceCharge = (s: { ws: SocketIoState }) => s.ws.settings?.config.SERVICE_CHARGE as number || 0;
+ export const SelectDeliveryAreaLink = (s: { ws: SocketIoState }) => s.ws.settings?.config.DELIVERY_LINK as string || "";
+ export const SelectTipPreamble = (s: { ws: SocketIoState }) => s.ws.settings?.config.TIP_PREAMBLE as string || "";
+ // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+ export const SelectTaxRate = (s: { ws: SocketIoState }) => s.ws.settings!.config.TAX_RATE as number;
+ export const SelectAutoGratutityThreshold = (s: { ws: SocketIoState }) => s.ws.settings?.config.AUTOGRAT_THRESHOLD as number || 5;
+ export const SelectMessageRequestVegan = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_VEGAN as string || "";
+ export const SelectMessageRequestHalf = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_HALF as string || "";
+ export const SelectMessageRequestWellDone = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_WELLDONE as string || "";
+ export const SelectMessageRequestSlicing = (s: { ws: SocketIoState }) => s.ws.settings?.config.MESSAGE_REQUEST_SLICING as string || "";
+ * @param key 
+ * @returns 
+ */
+export function useSetting(key: keyof IWSettings['config']) {
+  const { data: settings } = useSettingsQuery();
+
+  // Simple derived value - returns the setting or null
+  const setting = settings ? (settings.config[key]) : null;
+
+  return { data: setting };
+}
+
+export const useSquareAppId = () => useSetting('SQUARE_APPLICATION_ID') as { data: string | null };
+export const useSquareLocationId = () => useSetting('SQUARE_LOCATION') as { data: string | null };
+export const useDefaultFulfillmentId = () => useSetting('DEFAULT_FULFILLMENTID') as { data: string | null };
+export const useAllowAdvanced = () => useSetting('ALLOW_ADVANCED') as { data: boolean | null };
+export const useGratuityServiceCharge = () => useSetting('SERVICE_CHARGE') as { data: number | null };
+export const useDeliveryAreaLink = () => useSetting('DELIVERY_LINK') as { data: string | null };
+export const useTipPreamble = () => useSetting('TIP_PREAMBLE') as { data: string | null };
+export const useTaxRate = () => useSetting('TAX_RATE') as { data: number | null };
+export const useAutoGratutityThreshold = () => useSetting('AUTOGRAT_THRESHOLD') as { data: number | null };
+export const useMessageRequestVegan = () => useSetting('MESSAGE_REQUEST_VEGAN') as { data: string | null };
+export const useMessageRequestHalf = () => useSetting('MESSAGE_REQUEST_HALF') as { data: string | null };
+export const useMessageRequestWellDone = () => useSetting('MESSAGE_REQUEST_WELLDONE') as { data: string | null };
+export const useMessageRequestSlicing = () => useSetting('MESSAGE_REQUEST_SLICING') as { data: string | null };
