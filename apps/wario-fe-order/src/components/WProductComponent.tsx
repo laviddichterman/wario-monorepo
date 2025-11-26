@@ -3,9 +3,9 @@ import { type BoxProps } from '@mui/material/Box';
 import { type WProductMetadata } from '@wcp/wario-shared';
 import {
   ClickableProductDisplay as ClickableProductDisplayShared,
-  ProductDisplay as ProductDisplayShared,
-  SelectCatalogSelectors
-} from '@wcp/wario-ux-shared';
+  ProductDisplay as ProductDisplayShared
+} from '@wcp/wario-ux-shared/components';
+import { SelectCatalogSelectors } from '@wcp/wario-ux-shared/redux';
 
 import { useAppSelector } from '../app/useHooks';
 

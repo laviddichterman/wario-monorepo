@@ -10,10 +10,11 @@ import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
 import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
+import { scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import {
-  getProductInstanceById, scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay, SelectCatalogSelectors,
+  getProductInstanceById, SelectCatalogSelectors,
   SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory
-} from '@wcp/wario-ux-shared';
+} from '@wcp/wario-ux-shared/redux';
 
 import {
   SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById,

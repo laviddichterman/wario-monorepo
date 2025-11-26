@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { type CartEntry } from '@wcp/wario-shared';
-import { scrollToIdOffsetAfterDelay, Separator, StageTitle } from '@wcp/wario-ux-shared';
+import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { SelectMainCategoryId, SelectMainProductCategoryCount, SelectSupplementalCategoryId } from '@/app/selectors';
 import { backStage, nextStage } from '@/app/slices/StepperSlice';

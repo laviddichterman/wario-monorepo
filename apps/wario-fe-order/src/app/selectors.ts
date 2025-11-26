@@ -1,7 +1,7 @@
 import { createSelector, type EntityState } from "@reduxjs/toolkit";
 
 import { type CatalogCategoryEntry, type CatalogModifierEntry, ComputeBalance, ComputeCartSubTotal, ComputeCategoryTreeIdList, ComputeDiscountsApplied, ComputeGratuityServiceCharge, ComputePaymentsApplied, ComputeProductCategoryMatchCount, ComputeSubtotalAfterDiscountAndGratuity, ComputeSubtotalPreDiscount, ComputeTaxAmount, ComputeTipBasis, ComputeTipValue, ComputeTotal, type CreateOrderRequestV2, CURRENCY, DiscountMethod, type FulfillmentConfig, type IMoney, type MetadataModifierMap, type Metrics, PaymentMethod, type ProductModifierEntry, StoreCreditType, TenderBaseStatus, WDateUtils, WFulfillmentStatus, type WProduct } from "@wcp/wario-shared";
-import { getCategoryEntryById, getFulfillmentById, getModifierTypeEntryById, getProductEntryById, getProductInstanceById, IProductInstancesAdapter, ProductInstanceFunctionsAdapter, SelectAllowAdvanced, SelectAutoGratutityThreshold, SelectDefaultFulfillmentId, SelectGratuityServiceCharge, SelectProductMetadata, SelectTaxRate, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { getCategoryEntryById, getFulfillmentById, getModifierTypeEntryById, getProductEntryById, getProductInstanceById, IProductInstancesAdapter, ProductInstanceFunctionsAdapter, SelectAllowAdvanced, SelectAutoGratutityThreshold, SelectDefaultFulfillmentId, SelectGratuityServiceCharge, SelectProductMetadata, SelectTaxRate, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { getCart, getCartEntry, selectCartAsDto, type WCartState } from "@/app/slices/WCartSlice";
 import { selectSelectedWProduct } from "@/app/slices/WCustomizerSlice";

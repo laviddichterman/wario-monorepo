@@ -2,7 +2,8 @@ import { createSelector } from '@reduxjs/toolkit';
 import { type ReactNode } from 'react';
 
 import { type ICatalogModifierSelectors, type MetadataModifierMap, type ProductModifierEntry, WFunctional } from '@wcp/wario-shared';
-import { ErrorResponseOutput, getModifierOptionById, getModifierTypeEntryById, getProductEntryById, getProductInstanceFunctionById, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared';
+import { getModifierOptionById, getModifierTypeEntryById, getProductEntryById, getProductInstanceFunctionById } from '@wcp/wario-ux-shared/redux';
+import { ErrorResponseOutput, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import { SelectModifierTypeNameFromModifierTypeId } from '@/app/selectors';
 import { type RootState } from '@/app/store';

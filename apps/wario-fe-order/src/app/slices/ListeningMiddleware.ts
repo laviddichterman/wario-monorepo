@@ -4,7 +4,8 @@ import { formatISO } from "date-fns";
 import { enqueueSnackbar } from 'notistack'
 
 import { CanThisBeOrderedAtThisTimeAndFulfillmentCatalog, type CartEntry, type CatalogCategoryEntry, DetermineCartBasedLeadTime, GetNextAvailableServiceDate, WCPProductGenerateMetadata, WDateUtils } from '@wcp/wario-shared';
-import { getCategoryEntryById, getFulfillmentById, getProductEntryById, receiveCatalog, receiveFulfillments, receiveSettings, scrollToIdOffsetAfterDelay, SelectCatalogSelectors, SelectDefaultFulfillmentId, setCurrentTime } from '@wcp/wario-ux-shared';
+import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { getCategoryEntryById, getFulfillmentById, getProductEntryById, receiveCatalog, receiveFulfillments, receiveSettings, SelectCatalogSelectors, SelectDefaultFulfillmentId, setCurrentTime } from '@wcp/wario-ux-shared/redux';
 
 import { type AppDispatch, type RootState } from '@/app/store'
 

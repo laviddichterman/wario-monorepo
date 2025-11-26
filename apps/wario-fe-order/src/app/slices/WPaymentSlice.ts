@@ -8,10 +8,10 @@ import {
   type TipSelection,
   type ValidateAndLockCreditResponseValid,
 } from "@wcp/wario-shared";
+import { handleAxiosError, scrollToIdOffsetAfterDelay } from "@wcp/wario-ux-shared/common";
 import {
-  CreateValidateStoreCreditThunk, handleAxiosError,
-  scrollToIdOffsetAfterDelay, setCurrentTime
-} from "@wcp/wario-ux-shared";
+  CreateValidateStoreCreditThunk, setCurrentTime
+} from "@wcp/wario-ux-shared/redux";
 
 import axiosInstance from "@/utils/axios";
 

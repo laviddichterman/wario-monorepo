@@ -11,7 +11,8 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 // TODO: need to add an interceptor for forward/back when the user has gotten to 2nd stage or at least reasonably far
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
-import { SelectSquareAppId, SelectSquareLocationId, StepperTitle } from '@wcp/wario-ux-shared';
+import { SelectSquareAppId, SelectSquareLocationId } from '@wcp/wario-ux-shared/redux';
+import { StepperTitle } from '@wcp/wario-ux-shared/styled';
 
 import { SelectBalanceAfterPayments } from '@/app/selectors';
 import { setSquareTokenizationErrors, submitToWario } from '@/app/slices/WPaymentSlice';

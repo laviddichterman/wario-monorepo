@@ -8,7 +8,9 @@ import Input from '@mui/material/Input';
 import Typography from '@mui/material/Typography';
 
 import { ComputeTipValue, CURRENCY, MoneyToDisplayString, type OrderPaymentAllocated, PaymentMethod, type TipSelection } from '@wcp/wario-shared';
-import { ErrorResponseOutput, LoadingScreen, SelectTipPreamble, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton } from '@wcp/wario-ux-shared';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
+import { SelectTipPreamble, } from '@wcp/wario-ux-shared/redux';
+import { ErrorResponseOutput, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton } from '@wcp/wario-ux-shared/styled';
 
 import { SelectAutoGratutityEnabled } from '@/app/selectors';
 import { SelectAllowTipping, SelectBalanceAfterPayments, SelectTipBasis, SelectTipValue } from '@/app/selectors';

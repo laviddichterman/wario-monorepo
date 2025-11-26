@@ -2,7 +2,7 @@ import { createSelector, createSlice, type PayloadAction } from "@reduxjs/toolki
 import { z } from "zod";
 
 import { type DeliveryInfoDto, type DineInInfoDto, type FulfillmentData, type NullablePartial, WDateUtils } from "@wcp/wario-shared";
-import { CreateValidateDeliveryAddressThunk } from "@wcp/wario-ux-shared";
+import { CreateValidateDeliveryAddressThunk } from "@wcp/wario-ux-shared/redux";
 
 import axiosInstance from "@/utils/axios";
 

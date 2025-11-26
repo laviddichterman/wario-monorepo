@@ -1,4 +1,4 @@
-import { SocketIoMiddleware as MiddlewareGenerator } from '@wcp/wario-ux-shared';
+import { SocketIoMiddleware as MiddlewareGenerator } from '@wcp/wario-ux-shared/redux';
 
 import type { RootState } from '@/app/store';
 import { HOST_API, SOCKETIO } from '@/config';

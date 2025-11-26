@@ -1,4 +1,5 @@
-import { SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectTaxRate, WCheckoutCartComponent } from '@wcp/wario-ux-shared';
+import { WCheckoutCartComponent } from '@wcp/wario-ux-shared/components';
+import { SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectTaxRate } from '@wcp/wario-ux-shared/redux';
 
 import { SelectDiscountsApplied, SelectPaymentsApplied, SelectTaxAmount, SelectTipValue, SelectTotal } from '@/app/selectors';
 import { getCart } from '@/app/slices/WCartSlice';

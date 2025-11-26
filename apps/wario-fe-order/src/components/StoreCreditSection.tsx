@@ -7,7 +7,8 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 
 import { CREDIT_REGEX } from '@wcp/wario-shared';
-import { ErrorResponseOutput, StoreCreditInputComponent } from '@wcp/wario-ux-shared';
+import { StoreCreditInputComponent } from '@wcp/wario-ux-shared/components';
+import { ErrorResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import { clearCreditCode, validateStoreCredit } from '@/app/slices/WPaymentSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';

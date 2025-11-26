@@ -21,10 +21,10 @@ import {
   OptionQualifier, type ProductModifierEntry, type Selector, SortAndFilterModifierOptions, SortProductModifierEntries, SortProductModifierOptions,
   type WCPProduct, WCPProductGenerateMetadata, type WProduct
 } from '@wcp/wario-shared';
-import {
-  CustomizerFormControlLabel, DialogContainer, getModifierOptionById, getModifierTypeEntryById, getProductEntryById, scrollToIdOffsetAfterDelay,
-  SelectBaseProductByProductId, SelectCatalogSelectors, Separator, StageTitle, WarioButton
-} from '@wcp/wario-ux-shared';
+import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { DialogContainer } from '@wcp/wario-ux-shared/containers';
+import { getModifierOptionById, getModifierTypeEntryById, getProductEntryById, SelectBaseProductByProductId, SelectCatalogSelectors, } from '@wcp/wario-ux-shared/redux';
+import { CustomizerFormControlLabel, Separator, StageTitle, WarioButton } from '@wcp/wario-ux-shared/styled';
 
 import {
   selectAllowAdvancedPrompt,

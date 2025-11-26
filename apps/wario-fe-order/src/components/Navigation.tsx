@@ -7,7 +7,7 @@ import { type ButtonProps } from '@mui/material/Button';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { WarioButton } from '@wcp/wario-ux-shared';
+import { WarioButton } from '@wcp/wario-ux-shared/styled';
 
 import { NUM_STAGES } from '@/app/slices/StepperSlice';
 import { useAppSelector } from '@/app/useHooks';

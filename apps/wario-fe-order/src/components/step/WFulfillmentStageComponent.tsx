@@ -13,7 +13,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker';
 
 import { FulfillmentType, WDateUtils } from '@wcp/wario-shared';
-import { ErrorResponseOutput, getFulfillments, SelectDateFnsAdapter, Separator, StageTitle } from '@wcp/wario-ux-shared';
+import { getFulfillments, SelectDateFnsAdapter } from '@wcp/wario-ux-shared/redux';
+import { ErrorResponseOutput, Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { SelectHasOperatingHoursForService } from '@/app/selectors';
 import { SelectFulfillmentMaxGuests, SelectFulfillmentService, SelectFulfillmentServiceTerms } from '@/app/selectors';

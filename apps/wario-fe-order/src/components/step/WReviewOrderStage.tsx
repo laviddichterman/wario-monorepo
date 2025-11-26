@@ -12,7 +12,8 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 
 import { WDateUtils } from '@wcp/wario-shared';
-import { SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan, Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared';
+import { SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan } from '@wcp/wario-ux-shared/redux';
+import { Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import { SelectFulfillmentDisplayName, SelectServiceTimeDisplayString } from '@/app/selectors';
 import { backStage, nextStage } from '@/app/slices/StepperSlice';

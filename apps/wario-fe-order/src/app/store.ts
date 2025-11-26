@@ -2,7 +2,7 @@ import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import {
   SocketIoReducer,
-} from '@wcp/wario-ux-shared';
+} from '@wcp/wario-ux-shared/redux';
 
 import ListeningMiddleware from "./slices/ListeningMiddleware";
 import { SocketIoMiddleware } from "./slices/SocketIoMiddleware";

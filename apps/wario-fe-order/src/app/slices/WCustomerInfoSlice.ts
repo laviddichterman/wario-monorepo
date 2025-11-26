@@ -6,7 +6,8 @@ import { type MetadataJson } from 'libphonenumber-js/core';
 import { z } from "zod";
 
 import { type CustomerInfoData } from "@wcp/wario-shared";
-import { PHONE_METADATA, ZodEmailSchema } from "@wcp/wario-ux-shared";
+import { ZodEmailSchema } from "@wcp/wario-ux-shared/common";
+import PHONE_METADATA from "@wcp/wario-ux-shared/phone-metadata.custom.json";
 
 const LIBPHONE_METADATA = PHONE_METADATA as unknown as MetadataJson;
 

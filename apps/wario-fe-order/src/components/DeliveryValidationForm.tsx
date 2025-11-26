@@ -6,7 +6,9 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 
-import { ErrorResponseOutput, FormProvider, OkResponseOutput, RHFTextField, SelectDeliveryAreaLink } from '@wcp/wario-ux-shared';
+import { FormProvider, RHFTextField, } from '@wcp/wario-ux-shared/components';
+import { SelectDeliveryAreaLink } from "@wcp/wario-ux-shared/redux";
+import { ErrorResponseOutput, OkResponseOutput } from "@wcp/wario-ux-shared/styled";
 
 import { deliveryAddressSchema, type DeliveryInfoFormData, setDeliveryInfo, validateDeliveryAddress } from '@/app/slices/WFulfillmentSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';

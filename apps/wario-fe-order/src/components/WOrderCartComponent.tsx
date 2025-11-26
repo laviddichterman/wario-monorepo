@@ -13,7 +13,8 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
 import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared';
-import { CheckedNumericInput, selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared';
+import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
+import { selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared/redux';
 
 import { SelectSelectableModifiers } from '@/app/selectors';
 import { getCart, removeFromCart, updateCartQuantity } from '@/app/slices/WCartSlice';
