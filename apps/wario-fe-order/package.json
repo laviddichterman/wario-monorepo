@@ -23,7 +23,7 @@
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "@mui/system": "^7.3.5",
-    "@mui/x-data-grid-premium": "^8.19.0",
+    "@mui/x-data-grid-premium": "^8.20.0",
     "@mui/x-date-pickers": "^8.19.0",
     "@reduxjs/toolkit": "^2.11.0",
     "@square/web-sdk": "^2.1.0",
