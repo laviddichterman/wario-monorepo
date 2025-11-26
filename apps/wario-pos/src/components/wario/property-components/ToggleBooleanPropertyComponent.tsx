@@ -1,6 +1,6 @@
 import { Box, FormControlLabel, type FormControlLabelProps, Switch, type SwitchProps } from "@mui/material";
 
-import { type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
 
 export type ToggleBooleanPropertyComponentProps = {
   sx?: SwitchProps['sx'];

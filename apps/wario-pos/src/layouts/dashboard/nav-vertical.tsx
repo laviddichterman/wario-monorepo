@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import type { Breakpoint } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 
-import { Logo } from '@wcp/wario-ux-shared';
+import { Logo } from '@wcp/wario-ux-shared/components';
 
 import type { NavSectionProps } from '@/components/nav-section';
 import { NavSectionMini, NavSectionVertical } from '@/components/nav-section';

@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import type { RouteObject } from 'react-router';
 import { Outlet } from 'react-router';
 
-import { LoadingScreen } from '@wcp/wario-ux-shared';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 
 import { AuthGuard } from '@/auth/guard';
 

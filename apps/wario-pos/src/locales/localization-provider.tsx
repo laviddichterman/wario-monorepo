@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { LocalizationProvider as Provider } from '@mui/x-date-pickers/LocalizationProvider';
 
-import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared';
+import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared/redux';
 
 import { useAppSelector } from '@/hooks/useRedux';
 

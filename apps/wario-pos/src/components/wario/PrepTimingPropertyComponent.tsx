@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Grid } from "@mui/material";
 
 import { type PrepTiming } from "@wcp/wario-shared";
-import { type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
 
 import { FloatNumericPropertyComponent } from './property-components/FloatNumericPropertyComponent';
 import { IntNumericPropertyComponent } from './property-components/IntNumericPropertyComponent';

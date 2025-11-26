@@ -3,7 +3,7 @@ import { cloneElement } from 'react';
 import type { FabProps } from '@mui/material/Fab';
 import Fab from '@mui/material/Fab';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { useBackToTop } from '@/hooks/useBackToTop';
 

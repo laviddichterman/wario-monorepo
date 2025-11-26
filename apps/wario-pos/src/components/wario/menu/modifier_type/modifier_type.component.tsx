@@ -4,7 +4,8 @@ import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup } fro
 
 import type { KeyValue } from "@wcp/wario-shared";
 import { DISPLAY_AS, formatDecimal, MODIFIER_CLASS, parseInteger } from "@wcp/wario-shared";
-import { CheckedNumericInput, type ValSetValNamed } from "@wcp/wario-ux-shared";
+import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { CheckedNumericInput } from "@wcp/wario-ux-shared/components";;
 
 import { ExternalIdsExpansionPanelComponent } from "../../ExternalIdsExpansionPanelComponent";
 import { IntNumericPropertyComponent } from "../../property-components/IntNumericPropertyComponent";

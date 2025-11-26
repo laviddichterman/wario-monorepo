@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Autocomplete, Grid, TextField } from "@mui/material";
 
 import { type IMoney, type IOptionType, type IRecurringInterval, type IWInterval, type KeyValue, type RecordProductInstanceFunctions } from "@wcp/wario-shared";
-import { type ValSetValNamed } from "@wcp/wario-ux-shared";
+import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
 
 import { useAppSelector } from '@/hooks/useRedux';
 

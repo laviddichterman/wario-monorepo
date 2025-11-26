@@ -4,7 +4,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import { GridActionsCellItem, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import { type FulfillmentConfig } from "@wcp/wario-shared";
-import { getFulfillments } from "@wcp/wario-ux-shared";
+import { getFulfillments } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "../../hooks/useRedux";
 

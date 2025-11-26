@@ -4,7 +4,7 @@ import { useId } from 'react';
 
 import { styled } from '@mui/material/styles';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { mergeClasses } from '@/utils/classes';
 

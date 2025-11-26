@@ -6,7 +6,7 @@ import { Avatar, Box, Card, CardHeader, type CardProps, type SxProps, Tab, Typog
 import { red } from "@mui/material/colors";
 
 import { ComputeServiceTimeDisplayString, DateTimeIntervalBuilder, WDateUtils, WOrderStatus } from "@wcp/wario-shared";
-import { getFulfillmentById, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { getFulfillmentById, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "../../../hooks/useRedux";
 import { getWOrderInstanceById } from "../../../redux/slices/OrdersSlice";

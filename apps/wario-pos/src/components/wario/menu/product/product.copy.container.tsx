@@ -7,8 +7,8 @@ import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Grid, Switch, Typography } from "@mui/material";
 
 import { type CreateProductBatch, PriceDisplay } from "@wcp/wario-shared";
-import { getProductEntryById } from "@wcp/wario-ux-shared";
-import { useIndexedState } from '@wcp/wario-ux-shared';
+import { useIndexedState } from '@wcp/wario-ux-shared/common';
+import { getProductEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

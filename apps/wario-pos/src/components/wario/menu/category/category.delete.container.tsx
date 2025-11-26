@@ -4,13 +4,14 @@ import { useState } from "react";
 
 import { Grid } from "@mui/material";
 
-import { getCategoryEntryById } from "@wcp/wario-ux-shared";
+import { getCategoryEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 
+import { ToggleBooleanPropertyComponent } from "@/components/wario/property-components/ToggleBooleanPropertyComponent";
+
 import { HOST_API } from "@/config";
 
-import { ToggleBooleanPropertyComponent } from "../../property-components/ToggleBooleanPropertyComponent";
 import ElementDeleteComponent from "../element.delete.component";
 
 import { type CategoryEditProps } from "./category.component";

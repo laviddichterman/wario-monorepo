@@ -7,7 +7,7 @@ import { Autocomplete, Grid, TextField } from "@mui/material";
 import { LocalizationProvider, StaticDatePicker } from "@mui/x-date-pickers";
 
 import { WDateUtils } from "@wcp/wario-shared";
-import { getFulfillmentById, SelectDateFnsAdapter, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { getFulfillmentById, SelectDateFnsAdapter, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux";
 import { getWOrderInstanceById, rescheduleOrder } from "../../../redux/slices/OrdersSlice";

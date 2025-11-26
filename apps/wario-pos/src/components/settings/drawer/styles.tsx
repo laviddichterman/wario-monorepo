@@ -3,7 +3,7 @@ import ButtonBase from '@mui/material/ButtonBase';
 import { styled } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { Iconify } from '@/components/iconify';
 

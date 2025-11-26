@@ -1,5 +1,6 @@
 import { type IMoney } from "@wcp/wario-shared";
-import { MoneyInput, type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
+import { MoneyInput } from "@wcp/wario-ux-shared/components";
 
 export type IMoneyPropertyComponentProps = {
   min?: number;

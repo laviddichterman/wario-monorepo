@@ -8,8 +8,8 @@ import {
 
 import type { IMoney, IProductModifier, IRecurringInterval, IWInterval, KeyValue, PrepTiming } from '@wcp/wario-shared';
 import { ReduceArrayToMapByKey } from '@wcp/wario-shared';
-import { getFulfillments } from '@wcp/wario-ux-shared';
-import type { ValSetValNamed } from "@wcp/wario-ux-shared";
+import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { getFulfillments } from '@wcp/wario-ux-shared/redux';
 
 import { useAppSelector } from '@/hooks/useRedux';
 

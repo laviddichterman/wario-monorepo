@@ -5,7 +5,7 @@ import type { IconButtonProps } from '@mui/material/IconButton';
 import IconButton from '@mui/material/IconButton';
 import SvgIcon from '@mui/material/SvgIcon';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { transitionTap, varHover, varTap } from '@/components/animate';
 import { useSettingsContext } from '@/components/settings';

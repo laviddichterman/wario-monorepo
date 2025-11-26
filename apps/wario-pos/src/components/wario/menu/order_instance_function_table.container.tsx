@@ -5,7 +5,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import { GridActionsCellItem } from "@mui/x-data-grid-premium";
 
 import { OrderFunctional, type OrderInstanceFunction } from "@wcp/wario-shared";
-import { getModifierOptionById, getModifierTypeEntryById, getOrderInstanceFunctions } from "@wcp/wario-ux-shared";
+import { getModifierOptionById, getModifierTypeEntryById, getOrderInstanceFunctions } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "../../../hooks/useRedux";
 import { TableWrapperComponent } from "../table_wrapper.component";

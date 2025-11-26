@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { IProductInstance, KeyValue, ProductModifierEntry } from "@wcp/wario-shared";
 import { PriceDisplay } from "@wcp/wario-shared";
-import { getProductEntryById } from "@wcp/wario-ux-shared";
+import { getProductEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

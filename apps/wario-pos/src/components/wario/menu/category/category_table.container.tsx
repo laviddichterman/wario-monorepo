@@ -5,7 +5,7 @@ import { DeleteOutline, Edit } from "@mui/icons-material";
 import { Tooltip } from '@mui/material';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF, GRID_TREE_DATA_GROUPING_FIELD, GridActionsCellItem, GridDetailPanelToggleCell, type GridRenderCellParams, type GridRowId, gridRowNodeSelector, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
-import { getCategoryEntryById, getCategoryEntryIds, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { getCategoryEntryById, getCategoryEntryIds, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 

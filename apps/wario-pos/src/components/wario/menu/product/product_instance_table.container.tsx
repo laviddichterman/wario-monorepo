@@ -4,7 +4,7 @@ import { DeleteOutline, Edit } from "@mui/icons-material";
 import Tooltip from '@mui/material/Tooltip';
 import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams } from "@mui/x-data-grid-premium";
 
-import { getProductInstanceById, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { getProductInstanceById, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 

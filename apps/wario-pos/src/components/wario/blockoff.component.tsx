@@ -21,7 +21,8 @@ import {
 import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
 
 import { type FulfillmentConfig, GetNextAvailableServiceDate, type IWInterval, type PostBlockedOffToFulfillmentsRequest, WDateUtils } from "@wcp/wario-shared";
-import { getFulfillmentById, getFulfillments, SelectDateFnsAdapter, type ValSetValNamed, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { getFulfillmentById, getFulfillments, SelectDateFnsAdapter, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

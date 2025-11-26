@@ -6,7 +6,7 @@ import type { GridRowParams } from "@mui/x-data-grid-premium";
 import { GridActionsCellItem, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import type { PrinterGroup } from "@wcp/wario-shared";
-import { DialogContainer } from "@wcp/wario-ux-shared";
+import { DialogContainer } from "@wcp/wario-ux-shared/containers";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

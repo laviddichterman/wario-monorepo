@@ -7,7 +7,7 @@ import type { GridRenderCellParams, GridRowId, GridRowParams } from "@mui/x-data
 import { GridActionsCellItem, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared';
-import { getModifierTypeEntryById, getProductEntryById, getProductInstanceById, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { getModifierTypeEntryById, getProductEntryById, getProductInstanceById, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
 
 import { useAuthContext } from '@/hooks/useAuthContext';
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";

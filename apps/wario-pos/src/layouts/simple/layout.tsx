@@ -4,7 +4,7 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import type { Breakpoint } from '@mui/material/styles';
 
-import { Logo } from '@wcp/wario-ux-shared';
+import { Logo } from '@wcp/wario-ux-shared/components';
 
 import { SettingsButton } from '../components/settings-button';
 import type { HeaderSectionProps, LayoutSectionProps, MainSectionProps } from '../core';

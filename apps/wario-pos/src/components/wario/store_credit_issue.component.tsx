@@ -8,7 +8,7 @@ import { Button, Card, CardHeader, Divider, Grid, IconButton } from "@mui/materi
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 
 import { CURRENCY, type IMoney, type IssueStoreCreditRequest, MoneyToDisplayString, StoreCreditType, WDateUtils } from "@wcp/wario-shared";
-import { SelectDateFnsAdapter } from "@wcp/wario-ux-shared";
+import { SelectDateFnsAdapter } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

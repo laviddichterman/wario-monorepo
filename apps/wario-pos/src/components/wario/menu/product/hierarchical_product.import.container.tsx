@@ -9,7 +9,7 @@ import { Autocomplete, Grid, TextField } from '@mui/material';
 
 import type { CreateIProduct, CreateIProductInstance, IProduct, IProductInstance, IProductModifier, KeyValue, UpdateIProduct, UpdateIProductUpdateIProductInstance, UpsertProductBatch } from "@wcp/wario-shared";
 import { PriceDisplay, ReduceArrayToMapByKey } from "@wcp/wario-shared";
-import type { ValSetValNamed } from "@wcp/wario-ux-shared";
+import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

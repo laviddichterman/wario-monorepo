@@ -2,10 +2,12 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { getProductInstanceById } from "@wcp/wario-ux-shared";
+import { getProductInstanceById } from "@wcp/wario-ux-shared/redux";
 
-import { HOST_API } from "../../../../../config";
-import { useAppSelector } from "../../../../../hooks/useRedux";
+import { useAppSelector } from "@/hooks/useRedux";
+
+import { HOST_API } from "@/config";
+
 import ElementDeleteComponent from "../../element.delete.component";
 
 export interface ProductInstanceQuickActionProps {

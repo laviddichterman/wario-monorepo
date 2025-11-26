@@ -4,7 +4,7 @@ import { Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, 
 
 import type { CreateIProduct, ICatalogModifiers, KeyValue, ProductModifierEntry } from "@wcp/wario-shared";
 import { OptionPlacement, OptionQualifier, PriceDisplay } from "@wcp/wario-shared";
-import type { ValSetValNamed } from "@wcp/wario-ux-shared";
+import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

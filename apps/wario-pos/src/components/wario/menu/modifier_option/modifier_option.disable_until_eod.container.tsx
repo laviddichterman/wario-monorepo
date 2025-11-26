@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Grid } from "@mui/material";
 
 import type { IOption } from "@wcp/wario-shared";
-import { getModifierOptionById } from "@wcp/wario-ux-shared";
+import { getModifierOptionById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

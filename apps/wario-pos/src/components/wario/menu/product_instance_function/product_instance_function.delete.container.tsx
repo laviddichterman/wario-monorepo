@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared";
+import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

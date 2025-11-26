@@ -4,7 +4,7 @@ import Container from '@mui/material/Container';
 import type { SxProps, Theme } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { useAuthContext } from '@/hooks/useAuthContext';
 

@@ -3,7 +3,7 @@ import Container from '@mui/material/Container';
 import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { VersionInfo } from '@/components/wario/version';
 

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import type { ICategory } from "@wcp/wario-shared";
 import { CALL_LINE_DISPLAY, CategoryDisplay } from "@wcp/wario-shared";
-import { getCategoryEntryIds } from "@wcp/wario-ux-shared";
+import { getCategoryEntryIds } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

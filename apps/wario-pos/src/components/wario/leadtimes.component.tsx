@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, CardHeader, Grid } from '@mui/material';
 
-import { getFulfillments } from '@wcp/wario-ux-shared';
+import { getFulfillments } from '@wcp/wario-ux-shared/redux';
 
 import { useAppSelector } from '@/hooks/useRedux';
 

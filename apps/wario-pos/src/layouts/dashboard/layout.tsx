@@ -6,7 +6,8 @@ import { iconButtonClasses } from '@mui/material/IconButton';
 import type { Breakpoint } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
 
-import { Logo, spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
+import { Logo } from '@wcp/wario-ux-shared/components';
 
 import { useAuthContext } from '@/hooks/useAuthContext';
 import { useBoolean } from '@/hooks/useBoolean';

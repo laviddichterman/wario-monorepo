@@ -1,4 +1,5 @@
-import { DialogContainer, getModifierTypeEntryById } from "@wcp/wario-ux-shared";
+import { DialogContainer } from "@wcp/wario-ux-shared/containers";
+import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux";
 import { closeDialogue } from '../../../redux/slices/CatalogSlice';
@@ -19,7 +20,7 @@ const ModifierDialoguesContainer = () => {
   const dialogueState = useAppSelector(s => s.catalog.dialogueState);
   const modifierOptionId = useAppSelector(s => s.catalog.selectedModifierOptionId);
   const modifierTypeId = useAppSelector(s => s.catalog.selectedModifierTypeId);
-  const modifierTypeName = useAppSelector(s=> s.catalog.selectedModifierTypeId !== null ? getModifierTypeEntryById(s.ws.modifierEntries, s.catalog.selectedModifierTypeId).modifierType.name : "");
+  const modifierTypeName = useAppSelector(s => s.catalog.selectedModifierTypeId !== null ? getModifierTypeEntryById(s.ws.modifierEntries, s.catalog.selectedModifierTypeId).modifierType.name : "");
   return (
     <>
       <DialogContainer

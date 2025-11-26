@@ -6,7 +6,7 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
 import { type CreateProductBatch, type IProductModifier, type KeyValue, PriceDisplay, ReduceArrayToMapByKey } from "@wcp/wario-shared";
-import { type ValSetValNamed } from "@wcp/wario-ux-shared";
+import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

@@ -5,8 +5,9 @@ import { Autocomplete, Card, CardContent, CardHeader, FormControl, FormControlLa
 
 import type { IAbstractExpression, IConstLiteralExpression, IHasAnyOfModifierExpression, IIfElseExpression, ILogicalExpression, IModifierPlacementExpression, IOption, ProductMetadataExpression } from "@wcp/wario-shared";
 import { ConstLiteralDiscriminator, formatDecimal, LogicalFunctionOperator, MetadataField, OptionPlacement, OptionQualifier, parseDecimal, PRODUCT_LOCATION, ProductInstanceFunctionType, WFunctional } from "@wcp/wario-shared";
-import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared";
-import { CheckedNumericInput, type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
+import { CheckedNumericInput } from "@wcp/wario-ux-shared/components";
+import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

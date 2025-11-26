@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import type { IOption } from "@wcp/wario-shared";
-import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared";
+import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

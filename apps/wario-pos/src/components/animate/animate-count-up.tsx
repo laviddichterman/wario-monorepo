@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react';
 import type { TypographyProps } from '@mui/material/Typography';
 import Typography from '@mui/material/Typography';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 // ----------------------------------------------------------------------
 

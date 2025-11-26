@@ -1,7 +1,7 @@
 import { Grid } from "@mui/material";
 
 import type { KeyValue, PrinterGroup } from "@wcp/wario-shared";
-import type { ValSetValNamed } from "@wcp/wario-ux-shared";
+import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
 
 import ExternalIdsExpansionPanelComponent from "../../ExternalIdsExpansionPanelComponent";
 import { StringPropertyComponent } from "../../property-components/StringPropertyComponent";

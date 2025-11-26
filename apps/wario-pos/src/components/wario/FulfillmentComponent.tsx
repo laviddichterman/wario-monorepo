@@ -16,7 +16,8 @@ import {
 } from '@mui/material';
 
 import { type DateIntervalsEntries, type DayOfTheWeek, formatDecimal, FulfillmentType, type IWInterval, type OperatingHourSpecification, parseInteger, WDateUtils } from '@wcp/wario-shared';
-import { CheckedNumericInput, type ValSetValNamed } from '@wcp/wario-ux-shared';
+import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
+import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 
 import { useAppSelector } from '@/hooks/useRedux';
 

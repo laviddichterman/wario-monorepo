@@ -6,7 +6,7 @@ import { Box, Button, Card, Tooltip, Typography } from "@mui/material";
 import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import { WDateUtils, type WOrderInstance } from "@wcp/wario-shared";
-import { FullScreenPulsingContainer } from "@wcp/wario-ux-shared";
+import { FullScreenPulsingContainer } from "@wcp/wario-ux-shared/containers";
 
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 

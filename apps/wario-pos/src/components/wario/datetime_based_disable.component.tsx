@@ -4,9 +4,10 @@ import { Grid } from "@mui/material";
 import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
 
 import type { IWInterval } from "@wcp/wario-shared";
-import { SelectDateFnsAdapter, type ValSetVal } from '@wcp/wario-ux-shared';
+import { type ValSetVal } from '@wcp/wario-ux-shared/common';
+import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared/redux';
 
-import { useAppSelector } from "../../hooks/useRedux";
+import { useAppSelector } from "@/hooks/useRedux";
 
 import { ToggleBooleanPropertyComponent } from "./property-components/ToggleBooleanPropertyComponent";
 

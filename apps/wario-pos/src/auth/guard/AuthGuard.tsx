@@ -1,7 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useEffect, useState } from 'react';
 
-import { LoadingScreen } from '@wcp/wario-ux-shared';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 
 import { usePathname } from '@/routes/hooks';
 

@@ -6,7 +6,8 @@ import { ExpandMore } from "@mui/icons-material";
 import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Grid, Switch, Typography } from "@mui/material";
 
 import type { IOption, IOptionType } from "@wcp/wario-shared";
-import { getModifierTypeEntryById, useIndexedState } from "@wcp/wario-ux-shared";
+import { useIndexedState } from "@wcp/wario-ux-shared/common";
+import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 
@@ -28,8 +29,8 @@ const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: Modifier
 
   const [ordinal, setOrdinal] = useState(modifierTypeEntry.modifierType.ordinal);
   const [name, setName] = useState(modifierTypeEntry.modifierType.name);
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  const [displayName, setDisplayName] = useState(modifierTypeEntry.modifierType.displayName ?? "");
+
+  const [displayName, setDisplayName] = useState(modifierTypeEntry.modifierType.displayName);
   const [externalIds, setExternalIds] = useState(modifierTypeEntry.modifierType.externalIDs);
   const [minSelected, setMinSelected] = useState(modifierTypeEntry.modifierType.min_selected || 0);
   const [maxSelected, setMaxSelected] = useState(modifierTypeEntry.modifierType.max_selected || null);

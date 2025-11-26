@@ -1,7 +1,8 @@
 import { Autocomplete, Grid, TextField } from "@mui/material";
 
 import { CALL_LINE_DISPLAY, CategoryDisplay } from "@wcp/wario-shared";
-import { getCategoryEntryById, getFulfillments, type ValSetValNamed } from "@wcp/wario-ux-shared";
+import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { getCategoryEntryById, getFulfillments } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

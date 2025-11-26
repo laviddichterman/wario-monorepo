@@ -2,7 +2,8 @@ import '@/global.css';
 
 import { useEffect } from 'react';
 
-import { MotionLazy, startConnection } from '@wcp/wario-ux-shared';
+import { MotionLazy } from '@wcp/wario-ux-shared/containers';
+import { startConnection } from '@wcp/wario-ux-shared/redux';
 
 import { usePathname } from '@/routes/hooks';
 

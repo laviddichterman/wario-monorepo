@@ -5,7 +5,8 @@ import { IconButton, Tooltip } from '@mui/material';
 import { GridActionsCellItem, type GridRowParams } from "@mui/x-data-grid-premium";
 
 import { type IAbstractExpression, type IProductInstanceFunction, WFunctional } from "@wcp/wario-shared";
-import { DialogContainer, getModifierOptionById, getModifierTypeEntryById, getProductInstanceFunctions } from "@wcp/wario-ux-shared";
+import { DialogContainer } from "@wcp/wario-ux-shared/containers";
+import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceFunctions } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

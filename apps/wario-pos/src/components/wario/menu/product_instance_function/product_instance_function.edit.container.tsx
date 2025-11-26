@@ -3,7 +3,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import { type IAbstractExpression, type IProductInstanceFunction } from "@wcp/wario-shared";
-import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared";
+import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

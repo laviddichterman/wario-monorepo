@@ -1,7 +1,7 @@
 import type { LinkProps } from '@mui/material/Link';
 import Link from '@mui/material/Link';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { RouterLink } from 'src/routes/components';
 

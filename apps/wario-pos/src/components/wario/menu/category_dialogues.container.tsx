@@ -1,4 +1,4 @@
-import { DialogContainer } from "@wcp/wario-ux-shared";
+import { DialogContainer } from "@wcp/wario-ux-shared/containers";
 
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 

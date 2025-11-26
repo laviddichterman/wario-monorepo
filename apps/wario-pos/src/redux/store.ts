@@ -2,7 +2,7 @@ import { configureStore, createSelector } from '@reduxjs/toolkit';
 
 import type { CoreCartEntry, WOrderInstance } from '@wcp/wario-shared';
 import { CreateProductWithMetadataFromV2, DateTimeIntervalBuilder, EventTitleStringBuilder, RebuildAndSortCart, WDateUtils, WOrderStatus } from '@wcp/wario-shared';
-import { getCategoryEntryById, getFulfillmentById, getProductEntries, getProductInstanceById, lruMemoizeOptionsWithSize, SelectBaseProductNameByProductId, SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectParentProductEntryFromProductInstanceId, weakMapCreateSelector } from '@wcp/wario-ux-shared';
+import { getCategoryEntryById, getFulfillmentById, getProductEntries, getProductInstanceById, lruMemoizeOptionsWithSize, SelectBaseProductNameByProductId, SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectParentProductEntryFromProductInstanceId, weakMapCreateSelector } from '@wcp/wario-ux-shared/redux';
 
 import type { ICalendarEvent } from '@/components/calendar/types';
 

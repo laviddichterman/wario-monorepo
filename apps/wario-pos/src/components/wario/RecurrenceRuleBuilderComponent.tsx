@@ -7,8 +7,9 @@ import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, FormContro
 import { DateTimePicker, LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 
 import { formatDecimal, type IRecurringInterval, type IWInterval, parseInteger, WDateUtils } from "@wcp/wario-shared";
-import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared';
-import { CheckedNumericInput, type ValSetVal, type ValSetValNamed } from "@wcp/wario-ux-shared";
+import { type ValSetVal, type ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
+import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared/redux';
 
 import { useAppSelector } from '../../hooks/useRedux';
 

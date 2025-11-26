@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Grid } from "@mui/material";
 
 import type { IProduct } from "@wcp/wario-shared";
-import { getProductEntryById } from "@wcp/wario-ux-shared";
+import { getProductEntryById } from "@wcp/wario-ux-shared/redux";
 
 import { useAppSelector } from "@/hooks/useRedux";
 

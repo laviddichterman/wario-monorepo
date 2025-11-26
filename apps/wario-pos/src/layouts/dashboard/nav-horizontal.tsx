@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import type { Breakpoint } from '@mui/material/styles';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { NavSectionHorizontal, type NavSectionProps } from '@/components/nav-section';
 

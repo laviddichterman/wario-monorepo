@@ -1,5 +1,6 @@
 import type { WOrderInstance } from "@wcp/wario-shared";
-import { getFulfillmentById, ServiceInfoTableComponent } from '@wcp/wario-ux-shared';
+import { ServiceInfoTableComponent } from '@wcp/wario-ux-shared/components';
+import { getFulfillmentById } from '@wcp/wario-ux-shared/redux';
 
 import { useAppSelector } from "../../../hooks/useRedux";
 

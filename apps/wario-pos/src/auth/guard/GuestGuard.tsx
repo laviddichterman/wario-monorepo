@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { LoadingScreen } from '@wcp/wario-ux-shared';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 
 import { useSearchParams } from '@/routes/hooks';
 

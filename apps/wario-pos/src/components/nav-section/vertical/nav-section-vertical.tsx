@@ -1,7 +1,7 @@
 import Collapse from '@mui/material/Collapse';
 import { useTheme } from '@mui/material/styles';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { useBoolean } from '@/hooks/useBoolean';
 
