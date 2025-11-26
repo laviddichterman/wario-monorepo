@@ -5,6 +5,8 @@ import { parseISO } from 'date-fns';
 import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, FulfillmentConfig, ICatalog, IOption, IProductInstance, IProductInstanceFunction, IWSettings, OrderInstanceFunction, ProductModifierEntry } from "@wcp/wario-shared";
 import { FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, IgnoreHideDisplayFlags, WCPProductGenerateMetadata } from "@wcp/wario-shared";
 
+import type { ProductCategoryFilter } from "@/common/shared";
+
 import { lruMemoizeOptionsWithSize, weakMapCreateSelector } from "./selectorHelpers";
 
 export const TIMING_POLLING_INTERVAL = 30000;
@@ -216,9 +218,6 @@ export const SelectProductIdsNotPermanentlyDisabled = createSelector(
   (s: SocketIoState) => SelectProductsNotPermanentlyDisabled(s),
   (products) => products.map(x => x.product.id)
 );
-
-
-export type ProductCategoryFilter = "Menu" | "Order" | null;
 
 /**
  * Selects product instance IDs that pass relevant filters and are immediate children of the given categoryID

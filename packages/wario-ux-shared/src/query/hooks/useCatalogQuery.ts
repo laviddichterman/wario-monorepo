@@ -9,6 +9,8 @@ import { useMemo } from 'react';
 
 import { type CatalogCategoryEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, IgnoreHideDisplayFlags, type IProductInstance, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
 
+import type { ProductCategoryFilter } from '@/common/shared';
+
 import { QUERY_KEYS } from '../types';
 
 /**
@@ -216,8 +218,6 @@ export function useProductIdsNotPermanentlyDisabled() {
   const products = useProductsNotPermanentlyDisabled();
   return products.map(x => x.product.id);
 }
-
-export type ProductCategoryFilter = "Menu" | "Order" | null;
 
 function filteredProducts(category: CatalogCategoryEntry, filter: ProductCategoryFilter, catalogSelectors: ICatalogSelectors, order_time: Date | number, fulfillmentId: string) {
   const categoryProductInstances = category.products.reduce<IProductInstance[]>((acc: IProductInstance[], productId) => {

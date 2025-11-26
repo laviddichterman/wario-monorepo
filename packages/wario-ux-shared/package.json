@@ -2,6 +2,7 @@
   "name": "@wcp/wario-ux-shared",
   "version": "7.0.0",
   "description": "Shared UX elements across WARIO",
+  "sideEffects": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/laviddichterman/wario-monorepo.git",
@@ -15,10 +16,35 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./*": {
-      "types": "./dist/types/*.d.ts",
-      "import": "./dist/*.js",
-      "default": "./dist/*.js"
+    "./common": {
+      "types": "./dist/types/common/index.d.ts",
+      "import": "./dist/common.js",
+      "default": "./dist/common.js"
+    },
+    "./components": {
+      "types": "./dist/types/components/index.d.ts",
+      "import": "./dist/components.js",
+      "default": "./dist/components.js"
+    },
+    "./containers": {
+      "types": "./dist/types/containers/index.d.ts",
+      "import": "./dist/containers.js",
+      "default": "./dist/containers.js"
+    },
+    "./query": {
+      "types": "./dist/types/query/index.d.ts",
+      "import": "./dist/query.js",
+      "default": "./dist/query.js"
+    },
+    "./redux": {
+      "types": "./dist/types/redux/index.d.ts",
+      "import": "./dist/redux.js",
+      "default": "./dist/redux.js"
+    },
+    "./styled": {
+      "types": "./dist/types/styled/index.d.ts",
+      "import": "./dist/styled.js",
+      "default": "./dist/styled.js"
     },
     "./phone-metadata.custom.json": {
       "default": "./dist/phone-metadata.custom.json"

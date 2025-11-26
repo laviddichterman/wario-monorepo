@@ -44,10 +44,4 @@ export function useIndexedState<S>(x: [S[], Dispatch<SetStateAction<S[]>>]) {
   }] as const;
 };
 
-// const nonProduction: boolean = import.meta.env.DEV;
-
-// export const isNonProduction = () => nonProduction;
-
-// const nonProduction: boolean = process.env.REACT_APP_ENV ? process.env.REACT_APP_ENV !== 'production' : true;
-
-// export const isNonProduction = () => nonProduction;
+export type ProductCategoryFilter = "Menu" | "Order" | null;

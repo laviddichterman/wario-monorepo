@@ -38,13 +38,43 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
+    sourcemap: true,
     lib: {
-      entry: 'src/index.ts', formats: ['es'], fileName: () => 'index.js'
+      entry: {
+        index: 'src/index.ts',
+        common: 'src/common/index.ts',
+        components: 'src/components/index.ts',
+        containers: 'src/containers/index.ts',
+        query: 'src/query/index.ts',
+        redux: 'src/redux/index.ts',
+        styled: 'src/styled/index.ts',
+      },
+      formats: ['es'],
     },
     rollupOptions: {
       // keep deps external to avoid bundling react/mui
-      external: ['react', 'react-dom', '@mui/material', '@mui/system', '@emotion/react', '@emotion/styled', 'motion', 'date-fns', "numeral", 'axios', 'react-hook-form', 'react-imask', '@tanstack/react-query'],
-      //output: { preserveModules: true, preserveModulesRoot: 'src' }
+      external: [
+        'react',
+        'react-dom',
+        '@mui/material',
+        '@mui/system',
+        '@emotion/react',
+        '@emotion/styled',
+        'motion',
+        'date-fns',
+        'axios',
+        'redux',
+        'react-redux',
+        'zod',
+        '@reduxjs/toolkit',
+        'react-hook-form',
+        'react-imask',
+        'geojson',
+        '@tanstack/react-query',
+        '@mui/x-date-pickers',
+        'socket.io-client',
+        '@wcp/wario-shared'],
+      output: { preserveModules: true, preserveModulesRoot: 'src' }
     }
   }
 });
