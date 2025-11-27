@@ -81,6 +81,19 @@ export const RebuildAndSortCart = (cart: CoreCartEntry[], catalogSelectors: ICat
     }, {});
 }
 
+/**
+ * Groups and orders cart entries by their category using Category's ordinal.
+ * @param cart 
+ * @param getCategoryEntryById 
+ * @returns 
+ */
+export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(cart: T[], getCategoryEntryById: Selector<CatalogCategoryEntry>) => {
+  return Object.entries(cart.reduce((cartMap: Record<string, T[]>, entry: T) =>
+    Object.hasOwn(cartMap, entry.categoryId) ?
+      { ...cartMap, [entry.categoryId]: [...cartMap[entry.categoryId], entry] } :
+      { ...cartMap, [entry.categoryId]: [entry] },
+    {})).sort(([keyA, _], [keyB, __]) => (getCategoryEntryById(keyA)?.category.ordinal ?? 0) - (getCategoryEntryById(keyB)?.category.ordinal ?? 0));
+}
 
 /**
  * CartByPrinterGroup

@@ -7,7 +7,7 @@ import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { type CatalogCategoryEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, IgnoreHideDisplayFlags, type IProductInstance, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
+import { type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory, IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
 
 import type { ProductCategoryFilter } from '@/common/shared';
 
@@ -50,6 +50,19 @@ export function useCategoryById(id: string) {
   return catalog?.categories[id] ?? null;
 }
 
+export function useValueFromCategoryEntryById<K extends keyof CatalogCategoryEntry>(id: string, key: K) {
+  const categoryEntry = useCategoryById(id);
+  // Simple derived value - returns the specific key from the category
+  const value = categoryEntry ? categoryEntry[key] : null;
+  return value;
+}
+export function useValueFromCategoryById<K extends keyof ICategory>(id: string, key: K) {
+  const categoryEntry = useValueFromCategoryEntryById(id, 'category');
+  // Simple derived value - returns the specific key from the category
+  const value = categoryEntry ? categoryEntry[key] : null;
+  return value;
+}
+
 /**
  * Hook to get all modifier entry IDs from catalog
  */
@@ -66,6 +79,23 @@ export function useModifierEntryById(id: string) {
   return catalog?.modifiers[id] ?? null;
 }
 
+export function useValueFromModifierEntryById<K extends keyof CatalogModifierEntry>(id: string, key: K) {
+  const modifierEntry = useModifierEntryById(id);
+  const value = modifierEntry ? modifierEntry[key] : null;
+  return value;
+}
+
+export function useValueFromModifierTypeById<K extends keyof IOptionType>(id: string, key: K) {
+  const modifierEntry = useValueFromModifierEntryById(id, 'modifierType');
+  const value = modifierEntry ? modifierEntry[key] : null;
+  return value;
+}
+
+export function useModifierTypeNameById(id: string) {
+  const modifierEntry = useValueFromModifierEntryById(id, 'modifierType') as IOptionType;
+  return modifierEntry.displayName || modifierEntry.name;
+}
+
 /**
  * Hook to get all option IDs from catalog
  */
@@ -80,6 +110,12 @@ export function useOptionIds() {
 export function useOptionById(id: string) {
   const { data: catalog } = useCatalogQuery();
   return catalog?.options[id] ?? null;
+}
+
+export function useValueFromOptionById<K extends keyof IOption>(id: string, key: K) {
+  const optionEntry = useOptionById(id);
+  const value = optionEntry ? optionEntry[key] : null;
+  return value;
 }
 
 /**
@@ -106,6 +142,18 @@ export function useProductEntryById(id: string) {
   return catalog?.products[id] ?? null;
 }
 
+export function useValueFromProductEntryById<K extends keyof CatalogProductEntry>(id: string, key: K) {
+  const productEntry = useProductEntryById(id);
+  const value = productEntry ? productEntry[key] : null;
+  return value;
+}
+
+export function useValueFromProductTypeById<K extends keyof IProduct>(id: string, key: K) {
+  const productEntry = useValueFromProductEntryById(id, 'product');
+  const value = productEntry ? productEntry[key] : null;
+  return value;
+}
+
 /**
  * Hook to get all product instance IDs from catalog
  */
@@ -114,12 +162,19 @@ export function useProductInstanceIds() {
   return catalog ? Object.keys(catalog.productInstances) : [];
 }
 
+
 /**
  * Hook to get a specific product instance by ID
  */
 export function useProductInstanceById(id: string) {
   const { data: catalog } = useCatalogQuery();
   return catalog?.productInstances[id] ?? null;
+}
+
+export function useValueFromProductInstanceById<K extends keyof IProductInstance>(id: string, key: K) {
+  const product = useProductInstanceById(id);
+  const value = product ? product[key] : null;
+  return value;
 }
 
 /**
@@ -290,4 +345,4 @@ export function usePopulatedSubcategoryIdsInCategory(categoryId: string, filter:
   return selectPopulatedSubcategoryIdsInCategory(catalogSelectors, categoryId, filter, order_time, fulfillmentId);
 }
 
-// end added for wario-fe-menu
+// end added for wario-fe-menu  
