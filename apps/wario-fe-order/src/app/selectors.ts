@@ -11,15 +11,6 @@ import type { RootState } from "@/app/store";
 export const IProductInstancesSelectors = IProductInstancesAdapter.getSelectors((state: RootState) => state.ws.productInstances);
 export const ProductInstanceFunctionsSelectors = ProductInstanceFunctionsAdapter.getSelectors((state: RootState) => state.ws.productInstanceFunctions);
 
-export const SelectDisplayFlagOmitSectionIfNoAvailableOptionsFromModifierByModifierTypeId = createSelector(
-  (s: RootState, mtId: string) => getModifierTypeEntryById(s.ws.modifierEntries, mtId),
-  (mt) => mt.modifierType.displayFlags.omit_section_if_no_available_options
-);
-export const SelectDisplayFlagHiddenFromModifierByModifierTypeId = createSelector(
-  (s: RootState, mtId: string) => getModifierTypeEntryById(s.ws.modifierEntries, mtId),
-  (mt) => mt.modifierType.displayFlags.hidden
-);
-
 export const GetSelectableModifiers = (mMap: MetadataModifierMap, modifierTypeSelector: (id: string) => CatalogModifierEntry) =>
   Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
     const modifierEntry = modifierTypeSelector(k);

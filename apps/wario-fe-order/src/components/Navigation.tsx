@@ -3,14 +3,13 @@ import React from 'react';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import Box from '@mui/material/Box';
-import { type ButtonProps } from '@mui/material/Button';
+import type { ButtonProps } from '@mui/material/Button';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { WarioButton } from '@wcp/wario-ux-shared/styled';
 
-import { NUM_STAGES } from '@/app/slices/StepperSlice';
-import { useAppSelector } from '@/app/useHooks';
+import { NUM_STAGES, useStepperStore } from '@/stores';
 
 export interface NavigationProps {
   hasBack?: boolean;
@@ -27,7 +26,7 @@ export interface NavigationProps {
 }
 
 export function Navigation({ canNext, canBack, nextText = "Next", backText = "Back", handleNext, handleBack, onBackWhenDisabled, onNextWhenDisabled, hasBack = true, hasNext = true, hidden }: NavigationProps) {
-  const currentStage = useAppSelector(s => s.stepper.stage);
+  const currentStage = useStepperStore((s) => s.stage);
   const theme = useTheme();
   const useVerticalStepper = useMediaQuery(theme.breakpoints.up('md'));
 

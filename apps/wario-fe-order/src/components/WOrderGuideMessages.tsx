@@ -2,12 +2,13 @@ import { createSelector } from '@reduxjs/toolkit';
 import { type ReactNode } from 'react';
 
 import { type ICatalogModifierSelectors, type MetadataModifierMap, type ProductModifierEntry, WFunctional } from '@wcp/wario-shared';
-import { getModifierOptionById, getModifierTypeEntryById, getProductEntryById, getProductInstanceFunctionById } from '@wcp/wario-ux-shared/redux';
+import { useProductEntryById } from '@wcp/wario-ux-shared/query';
+import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceFunctionById } from '@wcp/wario-ux-shared/redux';
 import { ErrorResponseOutput, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-import { SelectModifierTypeNameFromModifierTypeId } from '@/app/selectors';
 import { type RootState } from '@/app/store';
 import { useAppSelector } from '@/app/useHooks';
+import { useModifierTypeName } from '@/hooks';
 
 const SelectCatalogModifierSelectors = createSelector(
   (s: RootState) => (oid: string) => getModifierOptionById(s.ws.modifierOptions, oid),
@@ -30,13 +31,15 @@ const SelectProcessProductInstanceFunction = createSelector(
   }
 )
 
+
 const OrderGuideMessage = ({ pifId, productModifierEntries, innerComponent }: { pifId: string, productModifierEntries: ProductModifierEntry[], innerComponent: (message: string) => ReactNode }) => {
   const processedFunctionResult = useAppSelector(s => SelectProcessProductInstanceFunction(s, productModifierEntries, pifId));
   return <>{processedFunctionResult !== null ? innerComponent(processedFunctionResult) : ''}</> satisfies ReactNode;
 }
 
 export const OrderGuideMessagesComponent = ({ productId, productModifierEntries }: { productId: string; productModifierEntries: ProductModifierEntry[]; }) => {
-  const orderGuideWarningFunctions = useAppSelector(s => getProductEntryById(s.ws.products, productId).product.displayFlags.order_guide.suggestions);
+  const productEntry = useProductEntryById(productId);
+  const orderGuideWarningFunctions = productEntry?.product.displayFlags.order_guide.suggestions ?? [];
   return (<>
     {orderGuideWarningFunctions.map((pifId, i) =>
       <OrderGuideMessage
@@ -48,7 +51,8 @@ export const OrderGuideMessagesComponent = ({ productId, productModifierEntries 
   </>);
 }
 export const OrderGuideWarningsComponent = ({ productId, productModifierEntries }: { productId: string; productModifierEntries: ProductModifierEntry[]; }) => {
-  const orderGuideSuggestionFunctions = useAppSelector(s => getProductEntryById(s.ws.products, productId).product.displayFlags.order_guide.warnings);
+  const productEntry = useProductEntryById(productId);
+  const orderGuideSuggestionFunctions = productEntry?.product.displayFlags.order_guide.warnings ?? [];
   return (<>
     {orderGuideSuggestionFunctions.map((pifId, i) =>
       <OrderGuideMessage
@@ -61,7 +65,7 @@ export const OrderGuideWarningsComponent = ({ productId, productModifierEntries 
 }
 
 const OrderGuideError = ({ mtId }: { mtId: string }) => {
-  const modifierTypeName = useAppSelector(s => SelectModifierTypeNameFromModifierTypeId(s.ws.modifierEntries, mtId));
+  const modifierTypeName = useModifierTypeName(mtId);
   return <ErrorResponseOutput>{`Please select your choice of ${modifierTypeName.toLowerCase()}`}</ErrorResponseOutput>
 }
 

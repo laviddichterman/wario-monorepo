@@ -11,12 +11,13 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 // TODO: need to add an interceptor for forward/back when the user has gotten to 2nd stage or at least reasonably far
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
-import { SelectSquareAppId, SelectSquareLocationId } from '@wcp/wario-ux-shared/redux';
+import { useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
 import { StepperTitle } from '@wcp/wario-ux-shared/styled';
 
 import { SelectBalanceAfterPayments } from '@/app/selectors';
 import { setSquareTokenizationErrors, submitToWario } from '@/app/slices/WPaymentSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useStepperStore } from '@/stores';
 
 import { IS_PRODUCTION } from '../config';
 
@@ -55,9 +56,9 @@ const STAGES = [
 
 export default function WOrderingComponent() {
   const dispatch = useAppDispatch();
-  const stage = useAppSelector(s => s.stepper.stage);
-  const squareApplicationId = useAppSelector(SelectSquareAppId);
-  const squareLocationId = useAppSelector(SelectSquareLocationId);
+  const stage = useStepperStore((s) => s.stage);
+  const squareApplicationId = useSquareAppId() as string;
+  const squareLocationId = useSquareLocationId() as string;
   const submitToWarioStatus = useAppSelector(s => s.payment.submitToWarioStatus);
   const balanceAfterPayments = useAppSelector(SelectBalanceAfterPayments);
   const theme = useTheme();

@@ -7,7 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 
 import { FormProvider, RHFTextField, } from '@wcp/wario-ux-shared/components';
-import { SelectDeliveryAreaLink } from "@wcp/wario-ux-shared/redux";
+import { useDeliveryAreaLink } from "@wcp/wario-ux-shared/query";
 import { ErrorResponseOutput, OkResponseOutput } from "@wcp/wario-ux-shared/styled";
 
 import { deliveryAddressSchema, type DeliveryInfoFormData, setDeliveryInfo, validateDeliveryAddress } from '@/app/slices/WFulfillmentSlice';
@@ -32,7 +32,7 @@ function useDeliveryInfoForm() {
 
 export default function DeliveryInfoForm() {
   const dispatch = useAppDispatch();
-  const DELIVERY_LINK = useAppSelector(SelectDeliveryAreaLink);
+  const DELIVERY_LINK = useDeliveryAreaLink();
   const deliveryValidationLoading = useAppSelector(s => s.fulfillment.deliveryValidationStatus);
 
   const deliveryForm = useDeliveryInfoForm();

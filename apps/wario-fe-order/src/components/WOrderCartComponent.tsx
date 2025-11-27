@@ -17,8 +17,8 @@ import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 import { selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared/redux';
 
 import { SelectSelectableModifiers } from '@/app/selectors';
-import { getCart, removeFromCart, updateCartQuantity } from '@/app/slices/WCartSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useAppSelector } from '@/app/useHooks';
+import { useCartStore } from '@/stores';
 
 import { ProductDisplay } from './WProductComponent';
 
@@ -35,14 +35,14 @@ interface IOrderCart {
 }
 
 export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProductToEdit }: { cartEntry: CartEntry } & IOrderCart) {
-  const dispatch = useAppDispatch();
+  const { removeFromCart, updateCartQuantity } = useCartStore();
   const hasSelectableModifiers = useAppSelector(s => Object.values(SelectSelectableModifiers(s, cartEntry.product.m.modifier_map)).length > 0);
   const setRemoveEntry = () => {
-    dispatch(removeFromCart(cartEntry.id));
+    removeFromCart(cartEntry.id);
   };
   const setEntryQuantity = (quantity: number | null) => {
     if (quantity !== null) {
-      dispatch(updateCartQuantity({ id: cartEntry.id, newQuantity: quantity }));
+      updateCartQuantity(cartEntry.id, quantity);
     }
   };
   return (
@@ -92,8 +92,9 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
 }
 
 export function WOrderCart({ isProductEditDialogOpen, setProductToEdit }: IOrderCart) {
-  const cart = useAppSelector(s => selectGroupedAndOrderedCart(s, getCart(s.cart.cart)));
-  return cart.length === 0 ? <></> :
+  const { cart } = useCartStore();
+  const groupedCart = useAppSelector(s => selectGroupedAndOrderedCart(s, cart));
+  return groupedCart.length === 0 ? <></> :
     <div id="orderCart">
       <Typography variant="h4" sx={{ p: 2, textTransform: 'uppercase', fontFamily: 'Source Sans Pro', }}>Current Order</Typography>
       <TableContainer elevation={0} component={Paper}>
@@ -105,7 +106,7 @@ export function WOrderCart({ isProductEditDialogOpen, setProductToEdit }: IOrder
             </TableRow>
           </TableHead>
           <TableBody>
-            {cart.map(x => x[1].map((cartEntry: CartEntry) => (
+            {groupedCart.map(x => x[1].map((cartEntry: CartEntry) => (
               <WOrderCartEntry key={cartEntry.id} cartEntry={cartEntry} isProductEditDialogOpen={isProductEditDialogOpen} setProductToEdit={setProductToEdit} />
             ))).flat()}
           </TableBody>

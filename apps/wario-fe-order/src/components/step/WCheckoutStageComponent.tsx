@@ -14,10 +14,10 @@ import { ErrorResponseOutput, Separator, SquareButtonCSS, StageTitle, WarioButto
 
 import { SelectAutoGratutityEnabled } from '@/app/selectors';
 import { SelectAllowTipping, SelectBalanceAfterPayments, SelectTipBasis, SelectTipValue } from '@/app/selectors';
-import { backStage } from '@/app/slices/StepperSlice';
 import { incrementTipAdjusts, incrementTipFixes } from '@/app/slices/WMetricsSlice';
 import { setTip, submitToWario } from '@/app/slices/WPaymentSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useStepperStore } from '@/stores';
 
 import { Navigation } from '../Navigation';
 import { StoreCreditSection } from '../StoreCreditSection';
@@ -32,6 +32,7 @@ const TIP_SUGGESTIONS = [TIP_SUGGESTION_15, TIP_SUGGESTION_20, TIP_SUGGESTION_25
 
 export function WCheckoutStage() {
   const dispatch = useAppDispatch();
+  const backStage = useStepperStore((s) => s.backStage);
   const tipBasis = useAppSelector(SelectTipBasis);
   const balance = useAppSelector(SelectBalanceAfterPayments);
   const allowTipping = useAppSelector(SelectAllowTipping)
@@ -193,7 +194,7 @@ export function WCheckoutStage() {
             <div>Note: Once orders are submitted, they are non-refundable. We will attempt to make any changes requested, but please do your due diligence to check the order for correctness!</div>
           </Grid>
         </Grid>
-        <Navigation canBack={submitToWarioStatus !== 'PENDING'} hasNext={false} canNext={false} handleBack={() => dispatch(backStage())} handleNext={() => ""} />
+        <Navigation canBack={submitToWarioStatus !== 'PENDING'} hasNext={false} canNext={false} handleBack={backStage} handleNext={() => ""} />
       </Box>
     </Box> :
     <Box>

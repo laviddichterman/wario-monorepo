@@ -8,12 +8,12 @@ import { themeOptions } from "@wcp/wario-fe-ux-shared";
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import { MotionLazy } from '@wcp/wario-ux-shared/containers';
-import { IsSocketDataLoaded, startConnection } from '@wcp/wario-ux-shared/redux';
+import { useIsSocketDataLoaded } from '@wcp/wario-ux-shared/query';
 
 import WOrderingComponent from '@/components/WOrderingComponent';
 
 import { setUserAgent } from '@/app/slices/WMetricsSlice';
-import { useAppDispatch, useAppSelector } from "@/app/useHooks";
+import { useAppDispatch } from "@/app/useHooks";
 
 const theme = createTheme(themeOptions);
 
@@ -26,14 +26,11 @@ const theme = createTheme(themeOptions);
 
 const App = () => {
   const dispatch = useAppDispatch();
-  const socketIoState = useAppSelector((s) => s.ws.status);
-  const isSocketDataLoaded = useAppSelector(s => IsSocketDataLoaded(s.ws));
+  const isSocketDataLoaded = useIsSocketDataLoaded();
+
   useEffect(() => {
-    if (socketIoState === 'NONE') {
-      dispatch(startConnection());
-    }
     dispatch(setUserAgent(window.navigator.userAgent));
-  }, [socketIoState, dispatch]);
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     if (isSocketDataLoaded) {

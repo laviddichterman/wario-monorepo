@@ -1,16 +1,24 @@
+import { GroupAndOrderCart, type ICatalogSelectors } from '@wcp/wario-shared';
 import { WCheckoutCartComponent } from '@wcp/wario-ux-shared/components';
-import { SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectTaxRate } from '@wcp/wario-ux-shared/redux';
+import { useCatalogSelectors, useTaxRate } from '@wcp/wario-ux-shared/query';
 
 import { SelectDiscountsApplied, SelectPaymentsApplied, SelectTaxAmount, SelectTipValue, SelectTotal } from '@/app/selectors';
-import { getCart } from '@/app/slices/WCartSlice';
 import { useAppSelector } from '@/app/useHooks';
+import { useCartStore } from '@/stores';
+
+
+function useGroupedAndOrderedCart() {
+  const cart = useCartStore(s => s.cart);
+  const { category } = useCatalogSelectors() as ICatalogSelectors;
+  return GroupAndOrderCart(cart, category);
+}
 
 export function WCheckoutCart() {
   //const ungroupedCart = useAppSelector(s=>getCart(s.cart.cart));
-  const cart = useAppSelector(s => selectGroupedAndOrderedCart(s, getCart(s.cart.cart)));
+  const cart = useGroupedAndOrderedCart();
   const submitToWarioResponse = useAppSelector(s => s.payment.warioResponse);
-  const TAX_RATE = useAppSelector(SelectTaxRate);
-  const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
+  const TAX_RATE = useTaxRate() as number;
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   const tipValue = useAppSelector(SelectTipValue);
   const taxValue = useAppSelector(SelectTaxAmount);
   const paymentsApplied = useAppSelector(SelectPaymentsApplied);
