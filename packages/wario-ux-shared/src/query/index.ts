@@ -6,8 +6,12 @@
 // Context (export types and context, but not the hook - hook is in ./hooks)
 export { SocketContext } from './context/socket-context-definition';
 export { SocketProvider } from './context/SocketContext';
-// Hooks
+
+// Hooks (queries)
 export * from './hooks';
+
+// Mutations
+export * from './mutations';
 
 // Provider
 export * from './provider/WarioQueryProvider';

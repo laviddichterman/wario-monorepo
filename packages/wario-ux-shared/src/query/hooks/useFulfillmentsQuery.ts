@@ -5,7 +5,7 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 
-import type { FulfillmentConfig } from '@wcp/wario-shared';
+import { type FulfillmentConfig, WDateUtils } from '@wcp/wario-shared';
 
 import { QUERY_KEYS } from '../types';
 
@@ -41,7 +41,7 @@ export function useFulfillments() {
  * Hook to get a specific fulfillment by ID
  * Uses a derived query that selects from the fulfillments data
  */
-export function useFulfillmentById(fulfillmentId: string) {
+export function useFulfillmentById(fulfillmentId: string | null) {
   const { data: fulfillments } = useFulfillmentsQuery();
 
   // Simple derived value - returns the fulfillment or null
@@ -53,23 +53,28 @@ export function useFulfillmentById(fulfillmentId: string) {
 }
 
 
-export function useValueFromFulfillmentById<K extends keyof FulfillmentConfig>(fulfillmentId: string, key: K) {
+export function useValueFromFulfillmentById<K extends keyof FulfillmentConfig>(fulfillmentId: string | null, key: K) {
   const fulfillment = useFulfillmentById(fulfillmentId);
   // Simple derived value - returns the specific key from the fulfillment or null
   const value = fulfillment ? fulfillment[key] : null;
   return value;
 }
 
-export const useFulfillmentDisplayName = (fId: string) => useValueFromFulfillmentById(fId, 'displayName');
-export const useFulfillmentMainCategoryId = (fId: string) => useValueFromFulfillmentById(fId, 'orderBaseCategoryId');
-export const useFulfillmentSupplementalCategoryId = (fId: string) => useValueFromFulfillmentById(fId, 'orderSupplementaryCategoryId');
-export const useFulfillmentMenuCategoryId = (fId: string) => useValueFromFulfillmentById(fId, 'menuBaseCategoryId');
-export const useFulfillmentMaxPartySize = (fId: string) => useValueFromFulfillmentById(fId, 'maxGuests');
-export const useFulfillmentServiceFeeSetting = (fId: string) => useValueFromFulfillmentById(fId, 'serviceCharge');
-export const useFulfillmentAllowTipping = (fId: string) => useValueFromFulfillmentById(fId, 'allowTipping');
-export const useFulfillmentMinDuration = (fId: string) => useValueFromFulfillmentById(fId, 'minDuration');
-export const useFulfillmentServiceTerms = (fId: string) => useValueFromFulfillmentById(fId, 'terms');
-export const useFulfillmentService = (fId: string) => useValueFromFulfillmentById(fId, 'service');
-export const useFulfillmentMaxGuests = (fId: string) => useValueFromFulfillmentById(fId, 'maxGuests');
-export const useFulfillmentServiceArea = (fId: string) => useValueFromFulfillmentById(fId, 'serviceArea');
-export const useFulfillmentOperatingHours = (fId: string) => useValueFromFulfillmentById(fId, 'operatingHours');
+export const useFulfillmentDisplayName = (fId: string | null) => useValueFromFulfillmentById(fId, 'displayName');
+export const useFulfillmentMainCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'orderBaseCategoryId');
+export const useFulfillmentSupplementalCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'orderSupplementaryCategoryId');
+export const useFulfillmentMenuCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'menuBaseCategoryId');
+export const useFulfillmentServiceFeeSetting = (fId: string | null) => useValueFromFulfillmentById(fId, 'serviceCharge');
+export const useFulfillmentAllowTipping = (fId: string | null) => useValueFromFulfillmentById(fId, 'allowTipping');
+export const useFulfillmentMinDuration = (fId: string | null) => useValueFromFulfillmentById(fId, 'minDuration');
+export const useFulfillmentServiceTerms = (fId: string | null) => useValueFromFulfillmentById(fId, 'terms');
+export const useFulfillmentService = (fId: string | null) => useValueFromFulfillmentById(fId, 'service');
+export const useFulfillmentMaxGuests = (fId: string | null) => useValueFromFulfillmentById(fId, 'maxGuests');
+export const useFulfillmentServiceArea = (fId: string | null) => useValueFromFulfillmentById(fId, 'serviceArea');
+export const useFulfillmentOperatingHours = (fId: string | null) => useValueFromFulfillmentById(fId, 'operatingHours');
+
+export function useFulfillmentHasOperatingHours(fulfillmentId: string) {
+  const operatingHours = useFulfillmentOperatingHours(fulfillmentId);
+  if (!operatingHours) return false;
+  return WDateUtils.HasOperatingHours(operatingHours);
+}

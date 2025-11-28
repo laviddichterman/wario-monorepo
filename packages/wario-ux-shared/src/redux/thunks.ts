@@ -22,7 +22,7 @@ export const CreateValidateStoreCreditThunk =
     );
 
 
-export type DeliveryInfoFormData = Omit<DeliveryInfoDto, "validation"> & { fulfillmentId: string; };
+type DeliveryInfoFormData = Omit<DeliveryInfoDto, "validation"> & { fulfillmentId: string; };
 
 export const CreateValidateDeliveryAddressThunk =
   (axiosInstance: AxiosInstance) => createAsyncThunk<DeliveryAddressValidateResponse, DeliveryInfoFormData>(
