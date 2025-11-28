@@ -33,9 +33,9 @@ export default function WReviewOrderStage() {
   const dispatch = useAppDispatch();
   const { nextStage, backStage } = useStepperStore();
   const { givenName, familyName, mobileNum, email } = useCustomerInfoStore(selectCustomerInfo);
-  const { data: REQUEST_HALF } = useMessageRequestHalf();
-  const { data: REQUEST_SLICING } = useMessageRequestSlicing();
-  const { data: REQUEST_VEGAN } = useMessageRequestVegan();
+  const REQUEST_HALF = useMessageRequestHalf();
+  const REQUEST_SLICING = useMessageRequestSlicing();
+  const REQUEST_VEGAN = useMessageRequestVegan();
   const selectedServiceDisplayName = useAppSelector(SelectFulfillmentDisplayName)
   const serviceTimeDisplayString = useAppSelector(SelectServiceTimeDisplayString);
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));

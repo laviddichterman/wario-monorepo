@@ -9,23 +9,16 @@ import { type BoxProps } from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
+import { CreateWCPProduct, type ICatalogSelectors, type WProduct } from '@wcp/wario-shared';
 import { scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
-import { useProductInstanceById, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
-import {
-  SelectCatalogSelectors,
-  SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory
-} from '@wcp/wario-ux-shared/redux';
+import { useCatalogSelectors, usePopulatedSubcategoryIdsInCategory, useProductInstanceById, useProductInstancesInCategory, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 
-import {
-  SelectProductInstanceHasSelectableModifiersByProductInstanceId,
-  SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData
-} from '@/app/selectors';
-import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
+import { useProductHasSelectableModifiersByProductInstanceId, useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '@/hooks/useDerivedState';
+
 import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useAppDispatch } from '@/app/useHooks';
 import { useMenuNameFromCategory } from '@/hooks';
-import { findDuplicateInCart, selectCart, useCartStore, useCustomizerStore } from '@/stores';
+import { findDuplicateInCart, selectCart, selectSelectedService, selectServiceDateTime, useCartStore, useCustomizerStore, useFulfillmentStore } from '@/stores';
 
 import { ClickableProductDisplay } from '../WProductComponent';
 
@@ -41,17 +34,16 @@ export interface ShopClickableProductDisplayProps {
 
 function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCategoryId, setScrollToOnReturn, ...props }: ShopClickableProductDisplayProps & BoxProps) {
   const dispatch = useAppDispatch();
-  const productEntrySelector = useAppSelector(s => SelectCatalogSelectors(s.ws).productEntry);
-  const modiferEntrySelector = useAppSelector(s => SelectCatalogSelectors(s.ws).modifierEntry);
+  const { productEntry: productEntrySelector, modifierEntry: modiferEntrySelector } = useCatalogSelectors() as ICatalogSelectors;
   const cart = useCartStore(selectCart);
   const { addToCart, updateCartQuantity } = useCartStore();
   const customizeProduct = useCustomizerStore((s) => s.customizeProduct);
   const productInstance = useProductInstanceById(productInstanceId);
-  const productMetadata = useAppSelector(s => SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(s, productInstanceId));
-  const productHasSelectableModifiers = useAppSelector(s => SelectProductInstanceHasSelectableModifiersByProductInstanceId(s, productInstanceId));
+  const productMetadata = useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(productInstanceId);
+  const productHasSelectableModifiers = useProductHasSelectableModifiersByProductInstanceId(productInstanceId);
   const onProductSelection = useCallback(() => {
     // either dispatch to the customizer or to the cart
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
     if (productInstance && productMetadata) {
       const productCopy: WProduct = { p: CreateWCPProduct(productInstance.productId, productInstance.modifiers), m: structuredClone(productMetadata) };
       if ((!productCopy.m.incomplete && productInstance.displayFlags.order.skip_customization) || !productHasSelectableModifiers) {
@@ -76,7 +68,7 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
     }
   }, [cart, dispatch, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn, addToCart, updateCartQuantity, customizeProduct]);
 
-  return <ClickableProductDisplay
+  return productMetadata && <ClickableProductDisplay
     {...props}
     onClick={onProductSelection}
     productMetadata={productMetadata}
@@ -96,11 +88,10 @@ interface AccordionSubCategoryProps {
 }
 
 function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccordion, index, setScrollToOnReturn }: WShopForProductsStageProps & AccordionSubCategoryProps) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const selectedService = useAppSelector(s => s.fulfillment.selectedService!);
-  const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
+
+  const selectedService = useFulfillmentStore(selectSelectedService) as string;
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
+  const productInstancesIdsInCategory = useProductInstancesInCategory(categoryId, 'Order', serviceDateTime, selectedService);
   const menuName = useMenuNameFromCategory(categoryId);
   const subtitle = useValueFromCategoryById(categoryId, 'subheading');
   return (
@@ -130,14 +121,10 @@ function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccor
 }
 
 export function WShopForProductsStage({ categoryId, setScrollToOnReturn }: WShopForProductsStageProps) {
-  // TODO: we need to handle if this is null by choice. how to we bypass this stage?
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const selectedService = useAppSelector(s => s.fulfillment.selectedService!);
-  const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const populatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
+  const selectedService = useFulfillmentStore(selectSelectedService) as string;
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
+  const populatedSubcategories = usePopulatedSubcategoryIdsInCategory(categoryId, 'Order', serviceDateTime, selectedService);
+  const productInstancesIdsInCategory = useProductInstancesInCategory(categoryId, 'Order', serviceDateTime, selectedService);
   const [activePanel, setActivePanel] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
 

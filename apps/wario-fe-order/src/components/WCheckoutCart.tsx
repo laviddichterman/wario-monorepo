@@ -1,17 +1,11 @@
-import { GroupAndOrderCart, type ICatalogSelectors } from '@wcp/wario-shared';
+import { type ICatalogSelectors } from '@wcp/wario-shared';
 import { WCheckoutCartComponent } from '@wcp/wario-ux-shared/components';
 import { useCatalogSelectors, useTaxRate } from '@wcp/wario-ux-shared/query';
 
+import { useGroupedAndOrderedCart } from '@/hooks/useDerivedState';
+
 import { SelectDiscountsApplied, SelectPaymentsApplied, SelectTaxAmount, SelectTipValue, SelectTotal } from '@/app/selectors';
 import { useAppSelector } from '@/app/useHooks';
-import { useCartStore } from '@/stores';
-
-
-function useGroupedAndOrderedCart() {
-  const cart = useCartStore(s => s.cart);
-  const { category } = useCatalogSelectors() as ICatalogSelectors;
-  return GroupAndOrderCart(cart, category);
-}
 
 export function WCheckoutCart() {
   //const ungroupedCart = useAppSelector(s=>getCart(s.cart.cart));

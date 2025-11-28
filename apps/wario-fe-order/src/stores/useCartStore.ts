@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import type { CartEntry, CatalogModifierEntry, CatalogProductEntry, CoreCartEntry, Selector, WCPProduct, WCPProductV2Dto, WProduct } from '@wcp/wario-shared';
-import { WProductCompare, WProductEquals } from '@wcp/wario-shared';
+import { ComputeCartSubTotal, WProductCompare, WProductEquals } from '@wcp/wario-shared';
 
 export interface CartState {
   indexCounter: number;
@@ -163,6 +163,7 @@ export const useCartStore = create<CartStore>()(
 // Selectors
 export const selectCart = (state: CartStore) => state.cart;
 export const selectDeadCart = (state: CartStore) => state.deadCart;
+export const selectCartSubtotal = (state: CartStore) => ComputeCartSubTotal(state.cart);
 export const selectCartEntry = (state: CartStore, id: string) =>
   state.cart.find((entry) => entry.id === id);
 

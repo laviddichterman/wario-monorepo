@@ -2,11 +2,12 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { type CartEntry } from '@wcp/wario-shared';
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { useFulfillmentMainCategoryId, useFulfillmentSupplementalCategoryId } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
-import { SelectMainCategoryId, SelectMainProductCategoryCount, SelectSupplementalCategoryId } from '@/app/selectors';
-import { useAppSelector } from '@/app/useHooks';
-import { selectCart, selectSelectedWProduct, useCartStore, useCustomizerStore, useStepperStore } from '@/stores';
+import { useMainProductCategoryCount } from '@/hooks/useDerivedState';
+
+import { selectCart, selectSelectedService, selectSelectedWProduct, useCartStore, useCustomizerStore, useFulfillmentStore, useStepperStore } from '@/stores';
 
 import { Navigation } from '../Navigation';
 import { WOrderCart } from '../WOrderCartComponent';
@@ -21,11 +22,10 @@ export interface WShopForProductsStageProps {
 
 export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY' | 'SECONDARY' }) {
   const [scrollToOnReturn, setScrollToOnReturn] = useState('WARIO_order');
-  const numMainCategoryProducts = useAppSelector(SelectMainProductCategoryCount);
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const mainCategoryId = useAppSelector(SelectMainCategoryId)!;
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const supplementalCategoryId = useAppSelector(SelectSupplementalCategoryId)!;
+  const selectedFulfillmentId = useFulfillmentStore(selectSelectedService) as string;
+  const numMainCategoryProducts = useMainProductCategoryCount(selectedFulfillmentId);
+  const mainCategoryId = useFulfillmentMainCategoryId(selectedFulfillmentId);
+  const supplementalCategoryId = useFulfillmentSupplementalCategoryId(selectedFulfillmentId);
   const cart = useCartStore(selectCart);
   const selectedProduct = useCustomizerStore(selectSelectedWProduct);
   const lockCartEntry = useCartStore((s) => s.lockCartEntry);
@@ -48,12 +48,12 @@ export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY
       <div hidden={selectedProduct !== null}>
         <StageTitle>{titleString}</StageTitle>
         <Separator sx={{ pb: 3 }} />
-        {productSet === 'PRIMARY' &&
+        {productSet === 'PRIMARY' && mainCategoryId &&
           <WShopForProductsStage
             setScrollToOnReturn={setScrollToOnReturn}
             categoryId={mainCategoryId}
           />}
-        {productSet === 'SECONDARY' &&
+        {productSet === 'SECONDARY' && supplementalCategoryId &&
           <WShopForProductsStage
             setScrollToOnReturn={setScrollToOnReturn}
             categoryId={supplementalCategoryId}

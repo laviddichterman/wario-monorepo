@@ -1,39 +1,24 @@
-import { createSelector } from '@reduxjs/toolkit';
-import { type ReactNode } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import { type ICatalogModifierSelectors, type MetadataModifierMap, type ProductModifierEntry, WFunctional } from '@wcp/wario-shared';
-import { useProductEntryById } from '@wcp/wario-ux-shared/query';
-import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceFunctionById } from '@wcp/wario-ux-shared/redux';
+import { useCatalogSelectors, useProductEntryById, useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-import { type RootState } from '@/app/store';
-import { useAppSelector } from '@/app/useHooks';
 import { useModifierTypeName } from '@/hooks';
 
-const SelectCatalogModifierSelectors = createSelector(
-  (s: RootState) => (oid: string) => getModifierOptionById(s.ws.modifierOptions, oid),
-  (s: RootState) => (mtid: string) => getModifierTypeEntryById(s.ws.modifierEntries, mtid),
-  (moselector, mtselector) => { return { modifierEntry: mtselector, option: moselector } satisfies ICatalogModifierSelectors; }
-)
-const SelectProcessProductInstanceFunction = createSelector(
-  (s: RootState, _productModifierEntries: ProductModifierEntry[], _pifId: string) => SelectCatalogModifierSelectors(s),
-  (_s: RootState, productModifierEntries: ProductModifierEntry[], _pifId: string) => productModifierEntries,
-  (s: RootState, _productModifierEntries: ProductModifierEntry[], pifId: string) => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId),
-  (catModSelectors, productModifierEntries, productInstanceFunction) => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (productInstanceFunction) {
-      const result = WFunctional.ProcessProductInstanceFunction(productModifierEntries, productInstanceFunction, catModSelectors);
-      if (result) {
-        return result as string
-      }
-    }
-    return null;
-  }
-)
 
+const useProcessProductInstanceFunction = (productModifierEntries: ProductModifierEntry[], pifId: string) => {
+  const productInstanceFunction = useProductInstanceFunctionById(pifId);
+  const { modifierEntry, option } = useCatalogSelectors() as ICatalogModifierSelectors;
+  return useMemo(() =>
+    productInstanceFunction ?
+      WFunctional.ProcessProductInstanceFunction(productModifierEntries, productInstanceFunction, { modifierEntry, option }) as string
+      : null,
+    [productInstanceFunction, productModifierEntries, modifierEntry, option]);
+}
 
 const OrderGuideMessage = ({ pifId, productModifierEntries, innerComponent }: { pifId: string, productModifierEntries: ProductModifierEntry[], innerComponent: (message: string) => ReactNode }) => {
-  const processedFunctionResult = useAppSelector(s => SelectProcessProductInstanceFunction(s, productModifierEntries, pifId));
+  const processedFunctionResult = useProcessProductInstanceFunction(productModifierEntries, pifId);
   return <>{processedFunctionResult !== null ? innerComponent(processedFunctionResult) : ''}</> satisfies ReactNode;
 }
 
