@@ -93,7 +93,7 @@ interface WMenuDisplayProps { categoryId: string; }
 function useProductDataForTableRows(categoryId: string): RowType[] {
   const productInstanceIds = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   const service_time = useCurrentTimeForDefaultFulfillment();
-  const fulfillmentId = useDefaultFulfillmentId().data as string;
+  const fulfillmentId = useDefaultFulfillmentId() as string;
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   return productInstanceIds.map(productInstanceId => {
     const productInstance = catalogSelectors.productInstance(productInstanceId) as IProductInstance;

@@ -3,6 +3,7 @@ import { formatISO } from "date-fns";
 import {
   type CatalogModifierEntry,
   GetNextAvailableServiceDate,
+  type ICatalogSelectors,
   type IOption,
   type IProductInstance,
   SortAndFilterModifierOptions,
@@ -11,9 +12,7 @@ import {
 } from "@wcp/wario-shared";
 import { type ProductCategoryFilter } from "@wcp/wario-ux-shared/common";
 import {
-  type ServerTimeData,
   useCatalogSelectors,
-  useCategoryById,
   useDefaultFulfillmentId,
   useFulfillmentById,
   useFulfillmentMenuCategoryId,
@@ -25,35 +24,28 @@ import {
   useProductInstancesInCategory,
   useProductMetadata,
   useServerTime,
-  useServerTimeQuery,
 } from '@wcp/wario-ux-shared/query';
 
 
 export function useMenuCategoryId() {
   const defaultFilfillmentId = useDefaultFulfillmentId();
-  const fulfillment = useFulfillmentMenuCategoryId(defaultFilfillmentId.data as string);
-  return { data: fulfillment.data };
-}
-
-export function useCurrentTime() {
-  const { data: serverTimeData } = useServerTimeQuery();
-  const { currentTime } = useServerTime(serverTimeData as ServerTimeData);
-  return currentTime;
+  const fulfillment = useFulfillmentMenuCategoryId(defaultFilfillmentId as string);
+  return fulfillment;
 }
 
 export function useDefaultFulfillmentInfo() {
   const defaultFilfillmentId = useDefaultFulfillmentId();
-  const fulfillmentInfo = useFulfillmentById(defaultFilfillmentId.data as string);
-  return { data: fulfillmentInfo.data };
+  const fulfillmentInfo = useFulfillmentById(defaultFilfillmentId as string);
+  return fulfillmentInfo;
 }
 
 export function useNextAvailableServiceDateTime() {
   const fulfillmentInfo = useDefaultFulfillmentInfo();
-  const currentTime = useCurrentTime();
-  if (!fulfillmentInfo.data || WDateUtils.AreWeOpenNow([fulfillmentInfo.data], currentTime)) {
+  const { currentTime } = useServerTime();
+  if (!fulfillmentInfo || WDateUtils.AreWeOpenNow([fulfillmentInfo], currentTime)) {
     return WDateUtils.ComputeFulfillmentTime(currentTime);
   }
-  const nextAvailableServiceDate = GetNextAvailableServiceDate([fulfillmentInfo.data], formatISO(currentTime), 0);
+  const nextAvailableServiceDate = GetNextAvailableServiceDate([fulfillmentInfo], formatISO(currentTime), 0);
   if (nextAvailableServiceDate) {
     return nextAvailableServiceDate;
   }
@@ -71,35 +63,15 @@ export function useCurrentTimeForDefaultFulfillment() {
  */
 export function useNextAvailableServiceDateTimeForDefaultFulfillment() {
   const defaultFulfillmentInfo = useDefaultFulfillmentInfo();
-  const currentTime = useCurrentTime();
-  return defaultFulfillmentInfo.data
-    ? GetNextAvailableServiceDate([defaultFulfillmentInfo.data], formatISO(currentTime), 0)
+  const { currentTime } = useServerTime();
+  return defaultFulfillmentInfo
+    ? GetNextAvailableServiceDate([defaultFulfillmentInfo], formatISO(currentTime), 0)
     : null;
 }
 
 export function useModifierTypeOrdinalFromModifierTypeId(modifierTypeId: string) {
   const modifierTypeEntry = useModifierEntryById(modifierTypeId);
   return modifierTypeEntry?.modifierType.ordinal;
-}
-
-export function useMenuNameFromCategoryById(categoryId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-  return categoryEntry?.category.description || categoryEntry?.category.name || "";
-}
-
-export function useMenuSubtitleFromCategoryById(categoryId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-  return categoryEntry?.category.subheading || null;
-}
-
-export function useMenuFooterFromCategoryById(categoryId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-  return categoryEntry?.category.footnotes || null;
-}
-
-export function useMenuNestingFromCategoryById(categoryId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-  return categoryEntry?.category.display_flags.nesting || "none";
 }
 
 export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSelectable: boolean) {
@@ -115,35 +87,35 @@ export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSe
 export function useProductMetadataForMenu(productInstanceId: string) {
   const productInstance = useProductInstanceById(productInstanceId) as IProductInstance;
   const service_time = useCurrentTimeForDefaultFulfillment();
-  const fulfillmentId = useDefaultFulfillmentId().data as string;
+  const fulfillmentId = useDefaultFulfillmentId() as string;
   const metadata = useProductMetadata(productInstance.productId, productInstance.modifiers, service_time, fulfillmentId);
   return metadata;
 }
 
 export function usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId: string, filter: ProductCategoryFilter) {
-  const { data: defaultFulfillmentId } = useDefaultFulfillmentId();
+  const defaultFulfillmentId = useDefaultFulfillmentId();
   const nextAvailableTime = useCurrentTimeForDefaultFulfillment();
 
   return usePopulatedSubcategoryIdsInCategory(categoryId, filter, nextAvailableTime, defaultFulfillmentId as string);
 }
 
 export function useProductInstanceIdsInCategoryForNextAvailableTime(categoryId: string, filter: ProductCategoryFilter) {
-  const { data: defaultFulfillmentId } = useDefaultFulfillmentId();
+  const defaultFulfillmentId = useDefaultFulfillmentId();
   const nextAvailableTime = useCurrentTimeForDefaultFulfillment();
   return useProductInstancesInCategory(categoryId, filter, nextAvailableTime, defaultFulfillmentId as string);
 }
 
 export function useMenuOrderedModifiersVisibleForProductInstanceId(productInstanceId: string) {
   const metadata = useProductMetadataForMenu(productInstanceId);
-  const { data: fulfillmentId } = useDefaultFulfillmentId();
+  const fulfillmentId = useDefaultFulfillmentId();
   const productEntry = useParentProductEntryFromProductInstanceId(productInstanceId);
-  const modifierTypeSelector = useCatalogSelectors()?.modifierEntry as (id: string) => CatalogModifierEntry;
+  const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
   return productEntry && metadata ? productEntry.product.modifiers
-
     .filter(x => x.serviceDisable.indexOf(fulfillmentId as string) === -1)
-    .map(x => { return { md: x, mt: modifierTypeSelector(x.mtid).modifierType } })
-    .filter(x => !x.mt.displayFlags.hidden && (!x.mt.displayFlags.omit_section_if_no_available_options || metadata.modifier_map[x.mt.id].has_selectable))
-    .sort((a, b) => a.mt.ordinal - b.mt.ordinal)
+    .map(x => { return { md: x, mt: modifierTypeSelector(x.mtid)?.modifierType } })
+    .filter(x => x.mt && !x.mt.displayFlags.hidden && (!x.mt.displayFlags.omit_section_if_no_available_options || metadata.modifier_map[x.mt.id].has_selectable))
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    .sort((a, b) => a.mt!.ordinal - b.mt!.ordinal)
     .map(x => x.md) : [];
 }
 export function useMenuSelectVisibleModifierOptions(productInstanceId: string, mtId: string) {

@@ -14,10 +14,10 @@ import Typography, { type TypographyProps } from '@mui/material/Typography';
 import { CategoryDisplay, type IProductInstanceDto } from '@wcp/wario-shared';
 import { scrollToElementOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
-import { useProductEntryById, useProductInstanceById } from '@wcp/wario-ux-shared/query';
+import { useCategoryNameFromCategoryById, useProductEntryById, useProductInstanceById, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 import { Separator } from '@wcp/wario-ux-shared/styled';
 
-import { useMenuCategoryId, useMenuFooterFromCategoryById, useMenuNameFromCategoryById, useMenuNestingFromCategoryById, useMenuSubtitleFromCategoryById, usePopulatedSubcategoryIdsInCategoryForNextAvailableTime, useProductInstanceIdsInCategoryForNextAvailableTime, useProductMetadataForMenu } from '@/hooks/useQuery';
+import { useMenuCategoryId, usePopulatedSubcategoryIdsInCategoryForNextAvailableTime, useProductInstanceIdsInCategoryForNextAvailableTime, useProductMetadataForMenu } from '@/hooks/useQuery';
 
 import { WMenuDataGrid } from './WMenuTableComponent';
 import { WModifiersComponent } from './WModifiersComponent';
@@ -28,7 +28,7 @@ interface WMenuDisplayProps { categoryId: string; }
 
 
 function MenuNameTypography({ categoryId, ...props }: WMenuDisplayProps & TypographyProps) {
-  const menuName = useMenuNameFromCategoryById(categoryId);
+  const menuName = useCategoryNameFromCategoryById(categoryId);
   return <Typography {...props} dangerouslySetInnerHTML={{ __html: menuName }} />
 }
 
@@ -53,8 +53,8 @@ function WMenuProductInstanceDisplay({ productInstanceId }: { productInstanceId:
 }
 
 function WMenuSection({ categoryId }: WMenuDisplayProps) {
-  const subtitle = useMenuSubtitleFromCategoryById(categoryId);
-  const footnotes = useMenuFooterFromCategoryById(categoryId);
+  const subtitle = useValueFromCategoryById(categoryId, 'subheading');
+  const footnotes = useValueFromCategoryById(categoryId, 'footnotes');
   const productsInstanceIds = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   return (
     // TODO: need to fix the location of the menu subtitle
@@ -123,7 +123,7 @@ function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
   const productsToDisplay = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   const hasProductsToDisplay = productsToDisplay.length > 0;
 
-  const menuName = useMenuNameFromCategoryById(categoryId);
+  const menuName = useCategoryNameFromCategoryById(categoryId);
   const [active, setActive] = useState<string>(populatedSubcategories[0]);
   return (
     <Box>
@@ -200,7 +200,7 @@ function WMenuFlat({ categoryId }: WMenuDisplayProps) {
 }
 
 WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
-  const nesting = useMenuNestingFromCategoryById(categoryId);
+  const nesting = useValueFromCategoryById(categoryId, 'display_flags')?.nesting || CategoryDisplay.FLAT;
   const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
 
   const hasPopulatedSubcategories = populatedSubcategories.length > 0;
@@ -227,9 +227,9 @@ WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
 export default function WMenuComponent() {
   const MENU_DATA = useMenuCategoryId();
 
-  if (!MENU_DATA.data) {
+  if (!MENU_DATA) {
     return <LoadingScreen />;
   }
   // console.log(`${WDateUtils.formatISODate(currentTime)} ${WDateUtils.MinutesToPrintTime(WDateUtils.ComputeFulfillmentTime(currentTime).selectedTime)}`);
-  return (<WMenuRecursive categoryId={MENU_DATA.data} />);
+  return (<WMenuRecursive categoryId={MENU_DATA} />);
 }

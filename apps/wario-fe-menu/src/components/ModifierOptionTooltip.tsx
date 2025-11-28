@@ -1,6 +1,6 @@
 import { ModifierOptionTooltip as ModifierOptionTooltipBase } from '@wcp/wario-fe-ux-shared';
 import { type ICatalogSelectors, type IOption, type OptionEnableState, type WCPProduct } from '@wcp/wario-shared';
-import { useCatalogSelectors, useFulfillmentsQuery } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useFulfillments } from '@wcp/wario-ux-shared/query';
 
 interface ModifierOptionTooltipProps {
   enableState: OptionEnableState;
@@ -11,7 +11,7 @@ interface ModifierOptionTooltipProps {
 }
 
 export function ModifierOptionTooltip(props: ModifierOptionTooltipProps) {
-  const { data: fulfillments } = useFulfillmentsQuery();
+  const fulfillments = useFulfillments();
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
-  return <ModifierOptionTooltipBase {...props} fulfillments={fulfillments || []} catalogSelectors={catalogSelectors} />;
+  return <ModifierOptionTooltipBase {...props} fulfillments={fulfillments} catalogSelectors={catalogSelectors} />;
 }
