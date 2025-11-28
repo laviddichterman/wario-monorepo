@@ -11,10 +11,10 @@ import { TIME_POLLING_INTERVAL } from '../types';
 
 /**
  * Hook for managing server time synchronization
- * @param serverTimeData - Server time data from socket.io (null until received)
+ * @param serverTimeData - Server time data from socket.io (null or undefined until received)
  * @returns Current time sync state
  */
-export function useServerTime(serverTimeData: ServerTimeData | null): TimeSyncState {
+export function useServerTime(serverTimeData: ServerTimeData | null | undefined): TimeSyncState {
   const [timeSyncState, setTimeSyncState] = useState<TimeSyncState>({
     pageLoadTime: 0,
     pageLoadTimeLocal: 0,
