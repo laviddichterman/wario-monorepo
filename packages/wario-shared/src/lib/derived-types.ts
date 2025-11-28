@@ -90,8 +90,9 @@ import type {
   WOrderInstancePartialDto,
 } from './dto/order.dto';
 import type {
-  IProductDisplayFlagsFullDto,
+  IProductDisplayFlagsDto,
   IProductDto,
+  IProductInstanceDisplayFlagsDto,
   IProductInstanceDto,
   IProductModifierDto,
   PrepTimingDto,
@@ -171,9 +172,10 @@ export type ICategory = Omit<ICategoryDto, never>;
 export type PrepTiming = Omit<PrepTimingDto, never>;
 export type IProductModifier = Omit<IProductModifierDto, never>;
 export type IProduct = Omit<IProductDto, never>;
-export type IProductDisplayFlags = Omit<IProductDisplayFlagsFullDto, never>;
+export type IProductDisplayFlags = Omit<IProductDisplayFlagsDto, never>;
 export type ProductModifierEntry = Omit<ProductModifierEntryDto, never>;
 export type IProductInstance = Omit<IProductInstanceDto, never>;
+export type IProductInstanceDisplayFlags = Omit<IProductInstanceDisplayFlagsDto, never>;
 
 // =============================================================================
 // Catalog Types (from catalog.dto.ts)

@@ -191,7 +191,7 @@ export class IProductInstanceDisplayFlagsOrderDto {
   suppress_exhaustive_modifier_list!: boolean;
 }
 
-export class IProductDisplayFlagsFullDto {
+export class IProductInstanceDisplayFlagsDto {
   @ValidateNested()
   @Type(() => IProductInstanceDisplayFlagsPosDto)
   pos!: IProductInstanceDisplayFlagsPosDto;
@@ -236,8 +236,8 @@ export class IProductInstanceDto {
   modifiers!: ProductModifierEntryDto[];
 
   @ValidateNested()
-  @Type(() => IProductDisplayFlagsFullDto)
-  displayFlags!: IProductDisplayFlagsFullDto;
+  @Type(() => IProductInstanceDisplayFlagsDto)
+  displayFlags!: IProductInstanceDisplayFlagsDto;
 
   @ValidateNested({ each: true })
   @Type(() => KeyValueDto)
