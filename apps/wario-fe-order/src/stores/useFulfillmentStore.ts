@@ -1,19 +1,14 @@
-import type { AxiosResponse } from 'axios';
 import { z } from 'zod';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 import type {
-  DeliveryAddressValidateRequest,
-  DeliveryAddressValidateResponse,
   DeliveryInfoDto,
   DineInInfoDto,
   FulfillmentData,
   NullablePartial,
 } from '@wcp/wario-shared';
 import { WDateUtils } from '@wcp/wario-shared';
-
-import axiosInstance from '@/utils/axios';
 
 // Schemas
 export const deliveryAddressSchema = z.object({
@@ -56,7 +51,7 @@ interface FulfillmentActions {
   setDeliveryInfo: (info: DeliveryInfoDto | null) => void;
   setSelectedDateExpired: () => void;
   setSelectedTimeExpired: () => void;
-  validateDeliveryAddress: (formData: DeliveryInfoFormData) => Promise<void>;
+  setDeliveryAddressValidation: (status: DeliveryValidationStatus) => void;
   reset: () => void;
 }
 
@@ -141,52 +136,8 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
         set({ hasSelectedTimeExpired: true }, false, 'setSelectedTimeExpired');
       },
 
-      validateDeliveryAddress: async (formData) => {
-        // Set pending state with partial delivery info
-        set(
-          {
-            deliveryInfo: {
-              address: formData.address,
-              address2: formData.address2,
-              zipcode: formData.zipcode,
-              deliveryInstructions: formData.deliveryInstructions,
-              validation: null,
-            },
-            deliveryValidationStatus: 'PENDING',
-          },
-          false,
-          'validateDeliveryAddress/pending'
-        );
-
-        try {
-          const request: DeliveryAddressValidateRequest = {
-            fulfillmentId: formData.fulfillmentId,
-            address: formData.address,
-            city: 'Seattle',
-            state: 'WA',
-            zipcode: formData.zipcode,
-          };
-
-          const response: AxiosResponse<DeliveryAddressValidateResponse> = await axiosInstance.get(
-            '/api/v1/addresses',
-            { params: request }
-          );
-
-          const validation = response.data;
-
-          set(
-            (state) => ({
-              deliveryInfo: state.deliveryInfo
-                ? Object.assign({}, state.deliveryInfo, { validation })
-                : null,
-              deliveryValidationStatus: validation.in_area ? 'VALID' : 'OUTSIDE_RANGE',
-            }),
-            false,
-            'validateDeliveryAddress/fulfilled'
-          );
-        } catch {
-          set({ deliveryValidationStatus: 'INVALID' }, false, 'validateDeliveryAddress/rejected');
-        }
+      setDeliveryAddressValidation: (status) => {
+        set({ deliveryValidationStatus: status }, false, 'setDeliveryAddressValidation');
       },
 
       reset: () => {
