@@ -5,10 +5,8 @@ import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { SelectMainCategoryId, SelectMainProductCategoryCount, SelectSupplementalCategoryId } from '@/app/selectors';
-import { backStage, nextStage } from '@/app/slices/StepperSlice';
-import { getCart, lockCartEntry } from '@/app/slices/WCartSlice';
-import { editCartEntry, selectSelectedWProduct } from '@/app/slices/WCustomizerSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useAppSelector } from '@/app/useHooks';
+import { selectCart, selectSelectedWProduct, useCartStore, useCustomizerStore, useStepperStore } from '@/stores';
 
 import { Navigation } from '../Navigation';
 import { WOrderCart } from '../WOrderCartComponent';
@@ -28,20 +26,22 @@ export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY
   const mainCategoryId = useAppSelector(SelectMainCategoryId)!;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const supplementalCategoryId = useAppSelector(SelectSupplementalCategoryId)!;
-  const cart = useAppSelector(s => getCart(s.cart.cart));
-  const selectedProduct = useAppSelector((s) => selectSelectedWProduct(s.customizer));
-  const dispatch = useAppDispatch();
+  const cart = useCartStore(selectCart);
+  const selectedProduct = useCustomizerStore(selectSelectedWProduct);
+  const lockCartEntry = useCartStore((s) => s.lockCartEntry);
+  const editCartEntry = useCustomizerStore((s) => s.editCartEntry);
+  const { nextStage, backStage } = useStepperStore();
   const titleString = useMemo(() => productSet === 'PRIMARY' ?
     (numMainCategoryProducts > 0 ? "Click a pizza below or next to continue." : "Click a pizza below to get started.") :
     'Add small plates and other stuff to your order.',
     [productSet, numMainCategoryProducts]);
 
   const setProductToEdit = useCallback((entry: CartEntry) => {
-    dispatch(lockCartEntry(entry.id));
-    dispatch(editCartEntry(entry));
+    lockCartEntry(entry.id);
+    editCartEntry(entry);
     scrollToIdOffsetAfterDelay('WARIO_order', 100);
     setScrollToOnReturn('orderCart');
-  }, [dispatch, setScrollToOnReturn]);
+  }, [lockCartEntry, editCartEntry, setScrollToOnReturn]);
 
   return (
     <div>
@@ -62,7 +62,7 @@ export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY
       {selectedProduct !== null && (<WProductCustomizerComponent scrollToWhenDone={scrollToOnReturn} />)}
       {cart.length > 0 && <Separator />}
       <WOrderCart isProductEditDialogOpen={selectedProduct !== null} setProductToEdit={setProductToEdit} />
-      {selectedProduct === null && <Navigation canBack canNext={numMainCategoryProducts > 0} handleBack={() => dispatch(backStage())} handleNext={() => dispatch(nextStage())} />}
+      {selectedProduct === null && <Navigation canBack canNext={numMainCategoryProducts > 0} handleBack={backStage} handleNext={nextStage} />}
     </div>
   );
 }

@@ -34,20 +34,19 @@ import {
   SelectProductMetadataFromCustomProductWithCurrentFulfillmentData,
   SelectShouldFilterModifierTypeDisplay
 } from '@/app/selectors';
-import { addToCart, FindDuplicateInCart, getCart, removeFromCart, unlockCartEntry, updateCartProduct, updateCartQuantity } from '@/app/slices/WCartSlice';
-import {
-  clearCustomizer,
-  selectOptionState,
-  selectSelectedWProduct,
-  selectShowAdvanced,
-  setAdvancedModifierOption,
-  setShowAdvanced,
-  updateCustomizerProduct
-} from '@/app/slices/WCustomizerSlice';
 import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
 import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
 import { type RootState } from '@/app/store';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import {
+  findDuplicateInCart,
+  selectCart,
+  selectOptionState,
+  selectSelectedWProduct,
+  selectShowAdvanced,
+  useCartStore,
+  useCustomizerStore
+} from '@/stores';
 
 import { ModifierOptionTooltip } from './ModifierOptionTooltip';
 import { OrderGuideErrorsComponent, OrderGuideMessagesComponent, OrderGuideWarningsComponent } from './WOrderGuideMessages';
@@ -108,26 +107,26 @@ const UpdateModifierOptionStateCheckbox = (mt: CatalogModifierEntry, mo: IOption
 }
 
 function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUnchecked }: IModifierOptionToggle) {
-  const dispatch = useAppDispatch();
-  const selectedProduct = useAppSelector(s => s.customizer.selectedProduct);
+  const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
+  const selectedProduct = useCustomizerStore((s) => s.selectedProduct);
   const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
   const fulfillmentId = useAppSelector(s => s.fulfillment.selectedService);
-  const optionUncheckedState = useAppSelector(s => selectOptionState(s.customizer, toggleOptionUnchecked.modifierTypeId, toggleOptionUnchecked.id));
-  const optionCheckedState = useAppSelector(s => selectOptionState(s.customizer, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id));
+  const optionUncheckedState = useCustomizerStore((s) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, toggleOptionUnchecked.modifierTypeId, toggleOptionUnchecked.id) : undefined);
+  const optionCheckedState = useCustomizerStore((s) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id) : undefined);
   const optionValue = useMemo(() => optionCheckedState?.placement === OptionPlacement.WHOLE, [optionCheckedState?.placement]);
   if (!optionUncheckedState || !optionCheckedState || !serviceDateTime || !selectedProduct || !fulfillmentId) {
     return null;
   }
   const toggleOption = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    dispatch(updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
+    updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
       toggleOptionChecked.modifierTypeId,
       e.target.checked ? toggleOptionChecked.id : toggleOptionUnchecked.id,
       selectedProduct,
       catalogSelectors,
       serviceDateTime,
-      fulfillmentId)));
+      fulfillmentId));
   }
   return (
     <ModifierOptionTooltip
@@ -155,21 +154,21 @@ interface IModifierRadioCustomizerComponent {
 }
 
 export function WModifierRadioComponent({ options }: IModifierRadioCustomizerComponent) {
-  const dispatch = useAppDispatch();
-  const selectedProduct = useAppSelector(s => s.customizer.selectedProduct);
+  const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
+  const selectedProduct = useCustomizerStore((s) => s.selectedProduct);
   const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const fulfillmentId = useAppSelector(s => s.fulfillment.selectedService);
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  const getOptionState = useAppSelector(s => (moId: string) => selectOptionState(s.customizer, options[0].modifierTypeId, moId));
-  const modifierOptionState = useAppSelector(s => s.customizer.selectedProduct?.p.modifiers.find(x => x.modifierTypeId === options[0].modifierTypeId)?.options ?? [])
+  const getOptionState = useCustomizerStore((s) => (moId: string) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, options[0].modifierTypeId, moId) : undefined);
+  const modifierOptionState = useCustomizerStore((s) => s.selectedProduct?.p.modifiers.find(x => x.modifierTypeId === options[0].modifierTypeId)?.options ?? [])
   if (!serviceDateTime || !selectedProduct || !fulfillmentId) {
     return null;
   }
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    dispatch(updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
-      options[0].modifierTypeId, e.target.value, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId)));
+    updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
+      options[0].modifierTypeId, e.target.value, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId));
   }
   return (
     <RadioGroup
@@ -212,8 +211,8 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
 }
 
 function useModifierOptionCheckbox(option: IOption) {
-  const dispatch = useAppDispatch();
-  const optionState = useAppSelector(s => selectOptionState(s.customizer, option.modifierTypeId, option.id));
+  const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
+  const optionState = useCustomizerStore((s) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, option.modifierTypeId, option.id) : undefined);
   const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, option.modifierTypeId))
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const isWhole = useMemo(() => optionState!.placement === OptionPlacement.WHOLE, [optionState]);
@@ -221,14 +220,14 @@ function useModifierOptionCheckbox(option: IOption) {
   const isLeft = useMemo(() => optionState!.placement === OptionPlacement.LEFT, [optionState]);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const isRight = useMemo(() => optionState!.placement === OptionPlacement.RIGHT, [optionState]);
-  const selectedProduct = useAppSelector(s => s.customizer.selectedProduct);
+  const selectedProduct = useCustomizerStore((s) => s.selectedProduct);
   const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
   const fulfillmentId = useAppSelector(s => s.fulfillment.selectedService);
 
   const onUpdateOption = (newState: IOptionState) => {
     if (selectedProduct && serviceDateTime && fulfillmentId) {
-      dispatch(updateCustomizerProduct(UpdateModifierOptionStateCheckbox(modifierTypeEntry, option, newState, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId)));
+      updateCustomizerProduct(UpdateModifierOptionStateCheckbox(modifierTypeEntry, option, newState, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId));
     }
   };
   const onClickWhole = () => {
@@ -261,19 +260,19 @@ interface IModifierOptionCheckboxCustomizerComponent {
 
 function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCustomizerComponent) {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const selectedProduct = useAppSelector(s => s.customizer.selectedProduct!);
-  const dispatch = useAppDispatch();
+  const selectedProduct = useCustomizerStore((s) => s.selectedProduct!);
+  const setAdvancedModifierOption = useCustomizerStore((s) => s.setAdvancedModifierOption);
   const { onClickWhole, onClickLeft, onClickRight,
     isWhole, isLeft, isRight,
     optionState } = useModifierOptionCheckbox(option);
-  const canShowAdvanced = useAppSelector(s => selectShowAdvanced(s.customizer));
+  const canShowAdvanced = useCustomizerStore(selectShowAdvanced);
   const showAdvanced = useMemo(() => optionState !== undefined && canShowAdvanced && (optionState.enable_left.enable === DISABLE_REASON.ENABLED || optionState.enable_right.enable === DISABLE_REASON.ENABLED), [canShowAdvanced, optionState]);
   const advancedOptionSelected = useMemo(() => optionState !== undefined && (optionState.placement === OptionPlacement.LEFT || optionState.placement === OptionPlacement.RIGHT || optionState.qualifier !== OptionQualifier.REGULAR), [optionState]);
   if (optionState === undefined) {
     return null;
   }
   const onClickAdvanced = () => {
-    dispatch(setAdvancedModifierOption([option.modifierTypeId, option.id]));
+    setAdvancedModifierOption([option.modifierTypeId, option.id]);
   }
 
   return (
@@ -394,15 +393,15 @@ interface IOptionDetailModal {
   mtid_moid: MTID_MOID;
 }
 function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
-  const dispatch = useAppDispatch();
+  const setAdvancedModifierOption = useCustomizerStore((s) => s.setAdvancedModifierOption);
   const option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, mtid_moid[1]));
   const { onClickWhole, onClickLeft, onClickRight, onUpdateOption,
     isWhole, isLeft, isRight,
     optionState } = useModifierOptionCheckbox(option);
-  const intitialOptionState = useAppSelector(s => s.customizer.advancedModifierInitialState);
+  const intitialOptionState = useCustomizerStore((s) => s.advancedModifierInitialState);
 
   const onConfirmCallback = () => {
-    dispatch(setAdvancedModifierOption(null));
+    setAdvancedModifierOption(null);
   }
   const onCancelCallback = () => {
     // set the modifier option state to what it was before we opened this modal
@@ -496,8 +495,11 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useAppDispatch();
   const catalog = useAppSelector(s => SelectCatalogSelectors(s.ws));
-  const categoryId = useAppSelector(s => s.customizer.categoryId);
-  const selectedProduct = useAppSelector(s => selectSelectedWProduct(s.customizer));
+  const categoryId = useCustomizerStore((s) => s.categoryId);
+  const selectedProduct = useCustomizerStore(selectSelectedWProduct);
+  const { setShowAdvanced, clearCustomizer } = useCustomizerStore();
+  const { addToCart, updateCartQuantity, updateCartProduct, removeFromCart, unlockCartEntry } = useCartStore();
+  const cart = useCartStore(selectCart);
   const selectedProductMetadata = useAppSelector(SelectProductMetadataFromCustomSelectedProductWithCurrentFulfillmentData)
   const customizerTitle = useAppSelector(s => {
     const selectedIProduct = selectIProductOfSelectedProduct(s);
@@ -506,31 +508,30 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
   const filteredModifiers = useAppSelector(CustomizerSelectOrderedModifiersVisibleForCustomProduct);
   const cartEntry = useAppSelector(selectCartEntryBeingCustomized);
   const allowAdvancedOptionPrompt = useAppSelector(s => selectAllowAdvancedPrompt(s));
-  const cart = useAppSelector(s => getCart(s.cart.cart));
-  const showAdvanced = useAppSelector(s => selectShowAdvanced(s.customizer));
-  const mtid_moid = useAppSelector(s => s.customizer.advancedModifierOption);
+  const showAdvanced = useCustomizerStore(selectShowAdvanced);
+  const mtid_moid = useCustomizerStore((s) => s.advancedModifierOption);
   const hasAdvancedOptionSelected = useMemo(() => selectedProductMetadata?.advanced_option_selected ?? false, [selectedProductMetadata?.advanced_option_selected]);
   if (categoryId === null || selectedProduct === null || selectedProductMetadata === null) {
     return null;
   }
   const toggleAllowAdvancedOption = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setShowAdvanced(e.target.checked));
+    setShowAdvanced(e.target.checked);
   }
   const unselectProduct = () => {
     scrollToIdOffsetAfterDelay(scrollToWhenDone, 200);
     if (cartEntry) {
-      dispatch(unlockCartEntry(cartEntry.id));
+      unlockCartEntry(cartEntry.id);
     }
-    dispatch(clearCustomizer());
+    clearCustomizer();
   }
   const confirmCustomization = () => {
-    const matchingCartEntry = FindDuplicateInCart(cart, catalog.modifierEntry, catalog.productEntry, categoryId, selectedProduct.p, cartEntry?.id);
+    const matchingCartEntry = findDuplicateInCart(cart, catalog.modifierEntry, catalog.productEntry, categoryId, selectedProduct.p, cartEntry?.id);
     if (matchingCartEntry) {
       const amountToAdd = cartEntry?.quantity ?? 1;
       const newQuantity = matchingCartEntry.quantity + amountToAdd;
-      dispatch(updateCartQuantity({ id: matchingCartEntry.id, newQuantity }));
+      updateCartQuantity(matchingCartEntry.id, newQuantity);
       if (cartEntry) {
-        dispatch(removeFromCart(cartEntry.id));
+        removeFromCart(cartEntry.id);
         enqueueSnackbar(`Merged duplicate ${selectedProductMetadata.name} in your order.`, { variant: 'success', autoHideDuration: 3000 });
       }
       else {
@@ -541,12 +542,12 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
       // cartEntry being undefined means it's an addition 
       if (cartEntry === undefined) {
         dispatch(setTimeToFirstProductIfUnset(Date.now()));
-        dispatch(addToCart({ categoryId, product: selectedProduct }))
+        addToCart(categoryId, selectedProduct);
         enqueueSnackbar(`Added ${selectedProductMetadata.name} to your order.`, { variant: 'success', autoHideDuration: 3000, disableWindowBlurListener: true });
       }
       else {
-        dispatch(updateCartProduct({ id: cartEntry.id, product: selectedProduct }))
-        dispatch(unlockCartEntry(cartEntry.id));
+        updateCartProduct(cartEntry.id, selectedProduct);
+        unlockCartEntry(cartEntry.id);
         enqueueSnackbar(`Updated ${selectedProductMetadata.name} in your order.`, { variant: 'success', autoHideDuration: 3000, disableWindowBlurListener: true });
       }
     }

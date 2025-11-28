@@ -12,14 +12,14 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 
 import { WDateUtils } from '@wcp/wario-shared';
-import { SelectMessageRequestHalf, SelectMessageRequestSlicing, SelectMessageRequestVegan } from '@wcp/wario-ux-shared/redux';
+import { useMessageRequestHalf, useMessageRequestSlicing, useMessageRequestVegan } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import { SelectFulfillmentDisplayName, SelectServiceTimeDisplayString } from '@/app/selectors';
-import { backStage, nextStage } from '@/app/slices/StepperSlice';
 import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
 import { setAcknowledgeInstructionsDialogue, setSpecialInstructions } from '@/app/slices/WPaymentSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { selectCustomerInfo, useCustomerInfoStore, useStepperStore } from '@/stores';
 
 import { Navigation } from '../Navigation';
 import { WCheckoutCart } from '../WCheckoutCart';
@@ -31,11 +31,12 @@ const REQUEST_RANCH = "Please look at our menu before requesting ranch.";
 
 export default function WReviewOrderStage() {
   const dispatch = useAppDispatch();
-  const REQUEST_HALF = useAppSelector(SelectMessageRequestHalf);
-  const REQUEST_SLICING = useAppSelector(SelectMessageRequestSlicing);
-  const REQUEST_VEGAN = useAppSelector(SelectMessageRequestVegan);
+  const { nextStage, backStage } = useStepperStore();
+  const { givenName, familyName, mobileNum, email } = useCustomerInfoStore(selectCustomerInfo);
+  const { data: REQUEST_HALF } = useMessageRequestHalf();
+  const { data: REQUEST_SLICING } = useMessageRequestSlicing();
+  const { data: REQUEST_VEGAN } = useMessageRequestVegan();
   const selectedServiceDisplayName = useAppSelector(SelectFulfillmentDisplayName)
-  const { givenName, familyName, mobileNum, email } = useAppSelector(s => s.ci);
   const serviceTimeDisplayString = useAppSelector(SelectServiceTimeDisplayString);
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
   const dineInInfo = useAppSelector(s => s.fulfillment.dineInInfo);
@@ -123,7 +124,7 @@ export default function WReviewOrderStage() {
         {acknowledgeInstructionsDialogue ? <TextField fullWidth multiline value={specialInstructions || ""} onChange={(e) => dispatch(setSpecialInstructions(e.target.value))} /> : ""}
       </div>
       {specialInstructionsResponses.map((res, i) => <WarningResponseOutput key={i}>{res.text}</WarningResponseOutput>)}
-      <Navigation canBack canNext={!disableSubmit} handleBack={() => dispatch(backStage())} handleNext={() => dispatch(nextStage())} />
+      <Navigation canBack canNext={!disableSubmit} handleBack={backStage} handleNext={nextStage} />
     </div >
   )
 }

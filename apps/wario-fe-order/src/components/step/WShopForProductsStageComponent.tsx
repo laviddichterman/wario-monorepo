@@ -11,21 +11,21 @@ import Typography from '@mui/material/Typography';
 
 import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
 import { scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { useProductInstanceById, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 import {
-  getProductInstanceById, SelectCatalogSelectors,
+  SelectCatalogSelectors,
   SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory
 } from '@wcp/wario-ux-shared/redux';
 
 import {
-  SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById,
   SelectProductInstanceHasSelectableModifiersByProductInstanceId,
   SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData
 } from '@/app/selectors';
-import { addToCart, FindDuplicateInCart, getCart, updateCartQuantity } from '@/app/slices/WCartSlice';
-import { customizeProduct } from '@/app/slices/WCustomizerSlice';
 import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
 import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useMenuNameFromCategory } from '@/hooks';
+import { findDuplicateInCart, selectCart, useCartStore, useCustomizerStore } from '@/stores';
 
 import { ClickableProductDisplay } from '../WProductComponent';
 
@@ -43,8 +43,10 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
   const dispatch = useAppDispatch();
   const productEntrySelector = useAppSelector(s => SelectCatalogSelectors(s.ws).productEntry);
   const modiferEntrySelector = useAppSelector(s => SelectCatalogSelectors(s.ws).modifierEntry);
-  const cart = useAppSelector(s => getCart(s.cart.cart));
-  const productInstance = useAppSelector(s => getProductInstanceById(s.ws.productInstances, productInstanceId));
+  const cart = useCartStore(selectCart);
+  const { addToCart, updateCartQuantity } = useCartStore();
+  const customizeProduct = useCustomizerStore((s) => s.customizeProduct);
+  const productInstance = useProductInstanceById(productInstanceId);
   const productMetadata = useAppSelector(s => SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(s, productInstanceId));
   const productHasSelectableModifiers = useAppSelector(s => SelectProductInstanceHasSelectableModifiersByProductInstanceId(s, productInstanceId));
   const onProductSelection = useCallback(() => {
@@ -53,26 +55,26 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
     if (productInstance && productMetadata) {
       const productCopy: WProduct = { p: CreateWCPProduct(productInstance.productId, productInstance.modifiers), m: structuredClone(productMetadata) };
       if ((!productCopy.m.incomplete && productInstance.displayFlags.order.skip_customization) || !productHasSelectableModifiers) {
-        const matchInCart = FindDuplicateInCart(cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, productCopy.p);
+        const matchInCart = findDuplicateInCart(cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, productCopy.p);
         if (matchInCart !== null) {
           enqueueSnackbar(`Changed ${productCopy.m.name} quantity to ${(matchInCart.quantity + 1).toString()}.`, { variant: 'success' });
-          dispatch(updateCartQuantity({ id: matchInCart.id, newQuantity: matchInCart.quantity + 1 }));
+          updateCartQuantity(matchInCart.id, matchInCart.quantity + 1);
         }
         else {
           // it's a new entry!
           enqueueSnackbar(`Added ${productCopy.m.name} to order.`, { variant: 'success', autoHideDuration: 3000, disableWindowBlurListener: true });
           dispatch(setTimeToFirstProductIfUnset(Date.now()));
-          dispatch(addToCart({ categoryId: sourceCategoryId, product: productCopy }));
+          addToCart(sourceCategoryId, productCopy);
         }
       }
       else {
         // add to the customizer
-        dispatch(customizeProduct({ product: productCopy, categoryId: sourceCategoryId }));
+        customizeProduct(productCopy, sourceCategoryId);
         scrollToIdOffsetAfterDelay('WARIO_order', 0);
       }
       setScrollToOnReturn(returnToId);
     }
-  }, [cart, dispatch, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn]);
+  }, [cart, dispatch, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn, addToCart, updateCartQuantity, customizeProduct]);
 
   return <ClickableProductDisplay
     {...props}
@@ -99,8 +101,8 @@ function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccor
   const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
-  const menuName = useAppSelector(s => SelectMenuNameFromCategoryById(s.ws.categories, categoryId));
-  const subtitle = useAppSelector(s => SelectMenuSubtitleFromCategoryById(s.ws.categories, categoryId));
+  const menuName = useMenuNameFromCategory(categoryId);
+  const subtitle = useValueFromCategoryById(categoryId, 'subheading');
   return (
     <Accordion id={`accordion-${categoryId}`} key={index} expanded={activePanel === index && isExpanded} onChange={(e) => { toggleAccordion(e, index); }} >
       <AccordionSummary expandIcon={activePanel === index && isExpanded ? <ExpandMore /> : <ExpandMore />}>

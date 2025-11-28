@@ -10,21 +10,20 @@ import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { Navigation } from '@/components/Navigation';
 
-import { backStage, nextStage } from '@/app/slices/StepperSlice';
-import { type CustomerInfoRHF, customerInfoSchema, setCustomerInfo } from '@/app/slices/WCustomerInfoSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { type CustomerInfoRHF, customerInfoSchema, selectCustomerInfo, useCustomerInfoStore, useStepperStore } from '@/stores';
 
 // TODO: use funny names as the placeholder info for the names here and randomize it. So sometimes it would be the empire carpet guy, other times eagle man
 
 function useCIForm() {
+  const customerInfo = useCustomerInfoStore(selectCustomerInfo);
   const useFormApi = useForm<CustomerInfoRHF>({
     defaultValues: {
-      givenName: useAppSelector(s => s.ci.givenName),
-      familyName: useAppSelector(s => s.ci.familyName),
-      mobileNum: useAppSelector(s => s.ci.mobileNum),
-      mobileNumRaw: useAppSelector(s => s.ci.mobileNumRaw),
-      email: useAppSelector(s => s.ci.email),
-      referral: useAppSelector(s => s.ci.referral) || "",
+      givenName: customerInfo.givenName,
+      familyName: customerInfo.familyName,
+      mobileNum: customerInfo.mobileNum,
+      mobileNumRaw: customerInfo.mobileNumRaw,
+      email: customerInfo.email,
+      referral: customerInfo.referral || "",
     },
     resolver: zodResolver(customerInfoSchema),
     mode: "onBlur",
@@ -36,17 +35,18 @@ function useCIForm() {
 
 export function WCustomerInformationStage() {
   const cIForm = useCIForm();
-  const dispatch = useAppDispatch();
+  const setCustomerInfo = useCustomerInfoStore((s) => s.setCustomerInfo);
+  const { nextStage, backStage } = useStepperStore();
   const { getValues, watch, formState: { isValid, errors, isDirty }, handleSubmit } = cIForm;
   const handleNext = () => {
-    dispatch(setCustomerInfo(getValues()));
-    dispatch(nextStage());
+    setCustomerInfo(getValues());
+    nextStage();
   }
   useEffect(() => {
     if (isValid) {
-      dispatch(setCustomerInfo(watch()));
+      setCustomerInfo(watch());
     }
-  }, [isValid, isDirty, watch, dispatch])
+  }, [isValid, isDirty, watch, setCustomerInfo])
   return (
     <>
       <StageTitle>Tell us a little about you.</StageTitle>
@@ -104,7 +104,7 @@ export function WCustomerInformationStage() {
         </Grid>
       </FormProvider>
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <Navigation canBack canNext={isValid} handleBack={() => dispatch(backStage())} handleNext={handleSubmit(handleNext)} />
+      <Navigation canBack canNext={isValid} handleBack={backStage} handleNext={handleSubmit(handleNext)} />
     </>
   );
 }

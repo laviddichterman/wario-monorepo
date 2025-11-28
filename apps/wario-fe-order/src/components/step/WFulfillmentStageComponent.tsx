@@ -19,10 +19,10 @@ import { ErrorResponseOutput, Separator, StageTitle } from '@wcp/wario-ux-shared
 import { SelectHasOperatingHoursForService } from '@/app/selectors';
 import { SelectFulfillmentMaxGuests, SelectFulfillmentService, SelectFulfillmentServiceTerms } from '@/app/selectors';
 import { GetNextAvailableServiceDateTime, SelectOptionsForServicesAndDate } from '@/app/slices/ListeningMiddleware';
-import { nextStage } from '@/app/slices/StepperSlice';
 import { setDate, setDineInInfo, setHasAgreedToTerms, setService, setTime } from '@/app/slices/WFulfillmentSlice';
 import { setTimeToServiceDate, setTimeToServiceTime } from '@/app/slices/WMetricsSlice';
 import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useStepperStore } from '@/stores';
 
 import DeliveryInfoForm from '../DeliveryValidationForm';
 import { Navigation } from '../Navigation';
@@ -30,6 +30,7 @@ import { Navigation } from '../Navigation';
 
 export default function WFulfillmentStageComponent() {
   const dispatch = useAppDispatch();
+  const nextStage = useStepperStore((s) => s.nextStage);
   const fulfillments = useAppSelector(s => getFulfillments(s.ws.fulfillments));
   const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
   // const HasSpaceForPartyOf = useCallback((partySize: number, orderDate: string, orderTime: number) => true, []);
@@ -257,7 +258,7 @@ export default function WFulfillmentStageComponent() {
       <Navigation hidden={serviceTime === null} hasBack={false}
         onNextWhenDisabled={{
           onMouseOver: () => enqueueSnackbar(missingInformationText, { variant: 'warning' })
-        }} canBack={false} canNext={valid} handleBack={() => { return; }} handleNext={() => dispatch(nextStage())} />
+        }} canBack={false} canNext={valid} handleBack={() => { return; }} handleNext={() => { nextStage(); }} />
     </>
   );
 }

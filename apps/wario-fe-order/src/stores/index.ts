@@ -38,3 +38,24 @@ export {
   type StepperStore,
   useStepperStore,
 } from './useStepperStore';
+
+export {
+  type DeliveryInfoFormData,
+  type DeliveryValidationStatus,
+  deliveryAddressSchema,
+  dineInSchema,
+  type FulfillmentState,
+  type FulfillmentStore,
+  selectDeliveryInfo,
+  selectDeliveryValidationStatus,
+  selectDineInInfo,
+  selectFulfillmentState,
+  selectHasAgreedToTerms,
+  selectHasSelectedDateExpired,
+  selectHasSelectedTimeExpired,
+  selectSelectedDate,
+  selectSelectedService,
+  selectSelectedTime,
+  selectServiceDateTime,
+  useFulfillmentStore,
+} from './useFulfillmentStore';
