@@ -63,6 +63,11 @@ export function useValueFromCategoryById<K extends keyof ICategory>(id: string, 
   return value;
 }
 
+export function useCategoryNameFromCategoryById(categoryId: string) {
+  const category = useValueFromCategoryEntryById(categoryId, 'category');
+  return category?.description || category?.name || "";
+}
+
 /**
  * Hook to get all modifier entry IDs from catalog
  */
