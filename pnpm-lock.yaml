@@ -113,7 +113,7 @@ importers:
         version: 0.85.0(@types/estree@1.0.8)(eslint@9.39.1)(jsonc-eslint-parser@2.4.1)
       eslint-plugin-prettier:
         specifier: ^5.5.4
-        version: 5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.1)
+        version: 5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.3)
       globals:
         specifier: ^16.5.0
         version: 16.5.0
@@ -121,8 +121,8 @@ importers:
         specifier: ^30.2.0
         version: 30.2.0(@types/node@24.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.15.3)(@types/node@24.10.1)(typescript@5.9.3))
       prettier:
-        specifier: ^3.7.1
-        version: 3.7.1
+        specifier: ^3.7.3
+        version: 3.7.3
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -158,7 +158,7 @@ importers:
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0)
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.66.1(react@19.2.0))
+        version: 5.2.2(react-hook-form@7.67.0(react@19.2.0))
       '@mui/material':
         specifier: ^7.3.5
         version: 7.3.5(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -202,8 +202,8 @@ importers:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
       react-hook-form:
-        specifier: ^7.66.1
-        version: 7.66.1(react@19.2.0)
+        specifier: ^7.67.0
+        version: 7.67.0(react@19.2.0)
       react-phone-number-input:
         specifier: ^3.4.14
         version: 3.4.14(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -449,10 +449,10 @@ importers:
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0)
       '@hookform/error-message':
         specifier: 2.0.1
-        version: 2.0.1(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.66.1(react@19.2.0))(react@19.2.0)
+        version: 2.0.1(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.67.0(react@19.2.0))(react@19.2.0)
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.66.1(react@19.2.0))
+        version: 5.2.2(react-hook-form@7.67.0(react@19.2.0))
       '@mui/icons-material':
         specifier: ^7.3.5
         version: 7.3.5(@mui/material@7.3.5(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@types/react@19.2.7)(react@19.2.0)
@@ -514,8 +514,8 @@ importers:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
       react-hook-form:
-        specifier: ^7.66.1
-        version: 7.66.1(react@19.2.0)
+        specifier: ^7.67.0
+        version: 7.67.0(react@19.2.0)
       react-phone-number-input:
         specifier: ^3.4.14
         version: 3.4.14(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -636,7 +636,7 @@ importers:
         version: 6.1.19(@fullcalendar/core@6.1.19)
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.66.1(react@19.2.0))
+        version: 5.2.2(react-hook-form@7.67.0(react@19.2.0))
       '@iconify/react':
         specifier: ^6.0.2
         version: 6.0.2(react@19.2.0)
@@ -728,8 +728,8 @@ importers:
         specifier: ^19.2.0
         version: 19.2.0(react@19.2.0)
       react-hook-form:
-        specifier: ^7.66.1
-        version: 7.66.1(react@19.2.0)
+        specifier: ^7.67.0
+        version: 7.67.0(react@19.2.0)
       react-i18next:
         specifier: ^16.3.5
         version: 16.3.5(i18next@25.6.3(typescript@5.9.3))(react-dom@19.2.0(react@19.2.0))(react@19.2.0)(typescript@5.9.3)
@@ -960,10 +960,10 @@ importers:
         version: 11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0)
       '@hookform/error-message':
         specifier: 2.0.1
-        version: 2.0.1(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.66.1(react@19.2.0))(react@19.2.0)
+        version: 2.0.1(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.67.0(react@19.2.0))(react@19.2.0)
       '@hookform/resolvers':
         specifier: ^5.2.2
-        version: 5.2.2(react-hook-form@7.66.1(react@19.2.0))
+        version: 5.2.2(react-hook-form@7.67.0(react@19.2.0))
       '@mui/material':
         specifier: ^7.3.4
         version: 7.3.5(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -1011,7 +1011,7 @@ importers:
         version: 19.2.0(react@19.2.0)
       react-hook-form:
         specifier: ^7.65.0
-        version: 7.66.1(react@19.2.0)
+        version: 7.67.0(react@19.2.0)
       react-imask:
         specifier: ^7.6.1
         version: 7.6.1(react@19.2.0)
@@ -5640,8 +5640,8 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  prettier@3.7.1:
-    resolution: {integrity: sha512-RWKXE4qB3u5Z6yz7omJkjWwmTfLdcbv44jUVHC5NpfXwFGzvpQM798FGv/6WNK879tc+Cn0AAyherCl1KjbyZQ==}
+  prettier@3.7.3:
+    resolution: {integrity: sha512-QgODejq9K3OzoBbuyobZlUhznP5SKwPqp+6Q6xw6o8gnhr4O85L2U915iM2IDcfF2NPXVaM9zlo9tdwipnYwzg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -5702,8 +5702,8 @@ packages:
     peerDependencies:
       react: ^19.2.0
 
-  react-hook-form@7.66.1:
-    resolution: {integrity: sha512-2KnjpgG2Rhbi+CIiIBQQ9Df6sMGH5ExNyFl4Hw9qO7pIqMBR8Bvu9RQyjl3JM4vehzCh9soiNUM/xYMswb2EiA==}
+  react-hook-form@7.67.0:
+    resolution: {integrity: sha512-E55EOwKJHHIT/I6J9DmQbCWToAYSw9nN5R57MZw9rMtjh+YQreMDxRLfdjfxQbiJ3/qbg3Z02wGzBX4M+5fMtQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -7633,16 +7633,16 @@ snapshots:
       '@fullcalendar/premium-common': 6.1.19(@fullcalendar/core@6.1.19)
       '@fullcalendar/scrollgrid': 6.1.19(@fullcalendar/core@6.1.19)
 
-  '@hookform/error-message@2.0.1(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.66.1(react@19.2.0))(react@19.2.0)':
+  '@hookform/error-message@2.0.1(react-dom@19.2.0(react@19.2.0))(react-hook-form@7.67.0(react@19.2.0))(react@19.2.0)':
     dependencies:
       react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
-      react-hook-form: 7.66.1(react@19.2.0)
+      react-hook-form: 7.67.0(react@19.2.0)
 
-  '@hookform/resolvers@5.2.2(react-hook-form@7.66.1(react@19.2.0))':
+  '@hookform/resolvers@5.2.2(react-hook-form@7.67.0(react@19.2.0))':
     dependencies:
       '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.66.1(react@19.2.0)
+      react-hook-form: 7.67.0(react@19.2.0)
 
   '@humanfs/core@0.19.1': {}
 
@@ -10199,10 +10199,10 @@ snapshots:
       - supports-color
       - typescript
 
-  eslint-plugin-prettier@5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.1):
+  eslint-plugin-prettier@5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.3):
     dependencies:
       eslint: 9.39.1
-      prettier: 3.7.1
+      prettier: 3.7.3
       prettier-linter-helpers: 1.0.0
       synckit: 0.11.11
     optionalDependencies:
@@ -11912,7 +11912,7 @@ snapshots:
 
   prettier@2.8.8: {}
 
-  prettier@3.7.1: {}
+  prettier@3.7.3: {}
 
   pretty-format@30.2.0:
     dependencies:
@@ -11971,7 +11971,7 @@ snapshots:
       react: 19.2.0
       scheduler: 0.27.0
 
-  react-hook-form@7.66.1(react@19.2.0):
+  react-hook-form@7.67.0(react@19.2.0):
     dependencies:
       react: 19.2.0
 
