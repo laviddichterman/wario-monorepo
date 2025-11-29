@@ -79,8 +79,8 @@ function useCPForm() {
 type PurchaseStatus = 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILED_UNKNOWN' | 'INVALID_DATA';
 
 export default function WStoreCreditPurchase() {
-  const { data: squareApplicationId } = useSquareAppId();
-  const { data: squareLocationId } = useSquareLocationId();
+  const squareApplicationId = useSquareAppId() as string;
+  const squareLocationId = useSquareLocationId() as string;
 
   const cPForm = useCPForm();
   const { getValues, watch, formState: { isValid, errors } } = cPForm;
@@ -144,8 +144,8 @@ export default function WStoreCreditPurchase() {
         overrides={
           !IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined
         }
-        applicationId={squareApplicationId as string}
-        locationId={squareLocationId as string}
+        applicationId={squareApplicationId}
+        locationId={squareLocationId}
         cardTokenizeResponseReceived={cardTokenizeResponseReceived}
         createPaymentRequest={createPaymentRequest}
       >
