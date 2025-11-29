@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 import { GetPlacementFromMIDOID } from "../common";
-import type { CatalogModifierEntry, IOption } from '../derived-types';
+import type { CatalogModifierEntry, IOption, IOptionType } from '../derived-types';
 import {
   DISABLE_REASON,
   DISPLAY_AS,
@@ -92,4 +92,12 @@ export function IsOptionEnabled(option: IOption, product: WCPProduct, bake_count
     return { enable: DISABLE_REASON.DISABLED_FUNCTION, functionId: option.enable! };
   }
   return { enable: DISABLE_REASON.ENABLED };
+}
+
+export function IsModifierTypeVisible(modifierType: IOptionType | null | undefined, hasSelectable: boolean): boolean {
+  // cases to not show:
+  // modifier.display_flags.omit_section_if_no_available_options && (has selected item, all other options cannot be selected, currently selected items cannot be deselected)
+  // modifier.display_flags.hidden is true
+  return !modifierType || !modifierType.displayFlags.hidden &&
+    (!modifierType.displayFlags.omit_section_if_no_available_options || hasSelectable);
 }

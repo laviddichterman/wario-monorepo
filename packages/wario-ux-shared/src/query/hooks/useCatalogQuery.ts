@@ -7,7 +7,7 @@ import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory, IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
+import { type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory, IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, IsModifierTypeVisible, type MetadataModifierMap, type MetadataModifierMapEntry, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
 
 import type { ProductCategoryFilter } from '@/common/shared';
 
@@ -69,6 +69,15 @@ export function useCategoryNameFromCategoryById(categoryId: string) {
 }
 
 /**
+ * Hook to check if category exists and is allowed for fulfillment
+ * Replaces SelectCategoryExistsAndIsAllowedForFulfillment
+ */
+export function useDoesCategoryDisableFulfillment(categoryId: string, fulfillmentId: string) {
+  const serviceDisable = useValueFromCategoryById(categoryId, "serviceDisable");
+  return serviceDisable && serviceDisable.indexOf(fulfillmentId) === -1;
+}
+
+/**
  * Hook to get all modifier entry IDs from catalog
  */
 export function useModifierEntryIds() {
@@ -99,6 +108,11 @@ export function useValueFromModifierTypeById<K extends keyof IOptionType>(id: st
 export function useModifierTypeNameById(id: string) {
   const modifierEntry = useValueFromModifierEntryById(id, 'modifierType') as IOptionType;
   return modifierEntry.displayName || modifierEntry.name;
+}
+
+export function useIsModifierTypeVisibleById(modifierTypeId: string, hasSelectable: boolean) {
+  const modifierType = useValueFromModifierEntryById(modifierTypeId, 'modifierType');
+  return IsModifierTypeVisible(modifierType, hasSelectable);
 }
 
 /**
@@ -351,3 +365,33 @@ export function usePopulatedSubcategoryIdsInCategory(categoryId: string, filter:
 }
 
 // end added for wario-fe-menu  
+
+
+/**
+ * Filters a MetadataModifierMap to only include selectable modifiers that are visible
+ * @param mMap Modifier map from WCPProductGenerateMetadata
+ * @returns 
+ */
+export function useFilterSelectableModifiers(mMap: MetadataModifierMap) {
+  const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
+  const mods = useMemo(() => Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
+    const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
+    return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: v } : acc;
+  }, {}), [mMap, modifierTypeSelector]);
+  return mods;
+}
+
+// /** 
+//  * Same as @useFilterSelectableModifiers but also sorts the modifiers by ordinal
+//  */
+// export function useFilterAndSortSelectableModifiers(mMap: MetadataModifierMap) {
+//   const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
+//   const mods = useMemo(() => Object.entries(mMap)
+//   .reduce<Record<string, { md: MetadataModifierMapEntry, entry: CatalogModifierEntry }>>((acc, [k, v]) => {
+//     const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
+//     return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: { md: v, entry: modifierEntry } } : acc;
+//   }, {}), [mMap, modifierTypeSelector])
+// .sort((a, b) => a.entry.modifierType.ordinal - b.entry.modifierType.ordinal)
+//   .reduce<MetadataModifierMap>((acc, x) => ({ ...acc, [x.entry.modifierType.id]: x.md }), {});
+//   return mods;
+// }
