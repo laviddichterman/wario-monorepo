@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import type { AxiosResponse } from 'axios';
 
-import type { CreateOrderRequestV2, CrudOrderResponse, ResponseFailure } from '@wcp/wario-shared';
+import type { CreateOrderRequestV2, CrudOrderResponse, ResponseFailure, ResponseSuccess, WOrderInstance } from '@wcp/wario-shared';
 import { handleAxiosError, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 
 import axiosInstance from '@/utils/axios';
@@ -16,7 +16,7 @@ export interface SubmitOrderError {
 }
 
 /**
- * Mutation hook for submitting orders to Wario
+ * Mutation hook for submitting orders to WARIO
  * 
  * @example
  * ```tsx
@@ -40,7 +40,7 @@ export interface SubmitOrderError {
  * ```
  */
 export function useSubmitOrderMutation() {
-  return useMutation<CrudOrderResponse, SubmitOrderError, CreateOrderRequestV2, SubmitOrderMutationContext>(
+  return useMutation<ResponseSuccess<WOrderInstance>, SubmitOrderError, CreateOrderRequestV2, SubmitOrderMutationContext>(
     {
       mutationKey: ['order', 'submit'],
       mutationFn: async (request: CreateOrderRequestV2) => {
@@ -49,10 +49,26 @@ export function useSubmitOrderMutation() {
             '/api/v1/order',
             request
           );
+
+          if (!result.data.success) {
+            const errorMessages = result.data.error.map(e => e.detail);
+            const submitError: SubmitOrderError = {
+              errors: errorMessages,
+              originalError: new Error('Server returned failure response'),
+            };
+            // eslint-disable-next-line @typescript-eslint/only-throw-error
+            throw submitError;
+          }
+
           return result.data;
         } catch (err: unknown) {
           console.log(err);
           const errorMessages: string[] = [];
+
+          // If we already threw a SubmitOrderError (from the success check above), rethrow it
+          if (err && typeof err === 'object' && 'errors' in err && 'originalError' in err) {
+            throw err;
+          }
 
           handleAxiosError<ResponseFailure, undefined>(
             err,
