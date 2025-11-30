@@ -22,7 +22,7 @@ import {
 import { useTaxRate } from '@wcp/wario-ux-shared/query';
 
 import { selectCartSubtotal, useCartStore } from '@/stores/useCartStore';
-import { usePaymentStore } from '@/stores/usePaymentStore';
+import { selectSelectedTip, selectStoreCreditValidations, usePaymentStore } from '@/stores/usePaymentStore';
 
 /**
  * Hook to compute service fee (currently always 0)
@@ -49,7 +49,7 @@ export function useSubtotalPreDiscount(): IMoney {
  */
 export function useDiscountsApplied(): OrderLineDiscount[] {
   const subtotalPreDiscount = useSubtotalPreDiscount();
-  const { storeCreditValidations } = usePaymentStore();
+  const storeCreditValidations = usePaymentStore(selectStoreCreditValidations);
 
   return useMemo(() => {
     const discountCredits = storeCreditValidations.filter(
@@ -138,7 +138,7 @@ export function useTipBasis(): IMoney {
  * Hook to compute the tip value based on selection and basis
  */
 export function useTipValue(): IMoney {
-  const { selectedTip } = usePaymentStore();
+  const selectedTip = usePaymentStore(selectSelectedTip);
   const tipBasis = useTipBasis();
 
   return useMemo(() => {
@@ -165,7 +165,7 @@ export function useOrderTotal(): IMoney {
 export function usePaymentsApplied(): OrderPayment[] {
   const total = useOrderTotal();
   const tipAmount = useTipValue();
-  const { storeCreditValidations } = usePaymentStore();
+  const storeCreditValidations = usePaymentStore(selectStoreCreditValidations);
 
   return useMemo(() => {
     const moneyCredits = storeCreditValidations.filter(

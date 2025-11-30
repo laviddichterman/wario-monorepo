@@ -41,7 +41,7 @@ function useIsAutogratuityEnabled() {
 export function WCheckoutStage() {
   const { backStage } = useStepperStore();
   const {
-    selectedTip: currentTipSelection,
+    selectedTip,
     squareTokenErrors,
     pendingSquareToken,
     setTip,
@@ -89,8 +89,8 @@ export function WCheckoutStage() {
   const selectedTipValue = useTipValue();
   const TwentyPercentTipValue = useMemo(() => ComputeTipValue(TIP_SUGGESTION_20, tipBasis), [tipBasis]);
   const tipSuggestionsArray = useMemo(() => TIP_SUGGESTIONS.slice(autogratEnabled ? 1 : 0, autogratEnabled ? TIP_SUGGESTIONS.length : TIP_SUGGESTIONS.length - 1), [autogratEnabled]);
-  const isCustomTipSelected = useMemo(() => currentTipSelection?.isSuggestion === false, [currentTipSelection]);
-  const [customTipAmount, setCustomTipAmount] = useState<string>(MoneyToDisplayString(ComputeTipValue(currentTipSelection || TIP_SUGGESTION_20, tipBasis), false));
+  const isCustomTipSelected = useMemo(() => selectedTip?.isSuggestion === false, [selectedTip]);
+  const [customTipAmount, setCustomTipAmount] = useState<string>(MoneyToDisplayString(ComputeTipValue(selectedTip || TIP_SUGGESTION_20, tipBasis), false));
   const customTipAsIMoney = useMemo(() => {
     const parsedCustomTipAmount = parseFloat(customTipAmount);
     return (!isFinite(parsedCustomTipAmount) || isNaN(parsedCustomTipAmount) || parsedCustomTipAmount < 0) ?
@@ -100,13 +100,13 @@ export function WCheckoutStage() {
 
   useEffect(() => {
     if (allowTipping) {
-      if (currentTipSelection === null || (autogratEnabled && TwentyPercentTipValue.amount > selectedTipValue.amount)) {
+      if (selectedTip === null || (autogratEnabled && TwentyPercentTipValue.amount > selectedTipValue.amount)) {
         setTip(TIP_SUGGESTION_20);
       }
-    } else if (currentTipSelection === null) {
+    } else if (selectedTip === null) {
       setTip({ value: { amount: 0, currency: CURRENCY.USD }, isPercentage: false, isSuggestion: false });
     }
-  }, [allowTipping, currentTipSelection, autogratEnabled, TwentyPercentTipValue, selectedTipValue, setTip]);
+  }, [allowTipping, selectedTip, autogratEnabled, TwentyPercentTipValue, selectedTipValue, setTip]);
 
   const generatePaymentHtml = useCallback((payment: OrderPaymentAllocated) => {
     switch (payment.t) {
@@ -190,7 +190,7 @@ export function WCheckoutStage() {
         <Grid container sx={{ py: 2 }}>
           {tipSuggestionsArray.map((tip: TipSelection, i: number) =>
             <Grid key={i} sx={{ px: 0.5 }} size={4}>
-              <WarioToggleButton selected={currentTipSelection === tip} sx={{ display: 'table-cell' }} value={tip} fullWidth onClick={() => { onSelectSuggestedTip(tip); }} >
+              <WarioToggleButton selected={selectedTip === tip} sx={{ display: 'table-cell' }} value={tip} fullWidth onClick={() => { onSelectSuggestedTip(tip); }} >
                 <Grid container sx={{ py: 2 }}>
                   <Grid size={12}><Typography sx={{ color: 'white' }} variant='h4'>{((tip.value as number) * 100)}%</Typography></Grid>
                   <Grid size={12}><Typography sx={{ color: 'white' }} variant='subtitle2'>{MoneyToDisplayString(ComputeTipValue(tip, tipBasis), false)}</Typography></Grid>

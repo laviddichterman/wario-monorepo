@@ -61,10 +61,8 @@ export default function WOrderingComponent() {
   const DateAdapter = useDateFnsAdapter();
   const squareApplicationId = useSquareAppId() as string;
   const squareLocationId = useSquareLocationId() as string;
-  const {
-    setSquareTokenizationErrors,
-    setPendingSquareToken,
-  } = usePaymentStore();
+  const setSquareTokenizationErrors = usePaymentStore(state => state.setSquareTokenizationErrors);
+  const setPendingSquareToken = usePaymentStore(state => state.setPendingSquareToken);
   const { isSuccess: isSubmitOrderSuccess } = useSubmitOrderMutation();
   const balanceAfterPayments = useBalanceAfterPayments();
   const theme = useTheme();

@@ -26,8 +26,8 @@ export function WCheckoutCart() {
   return <WCheckoutCartComponent
     cart={cart}
     catalogSelectors={catalogSelectors}
-    discounts={submitToWarioMutation.data && submitToWarioMutation.data.success ? submitToWarioMutation.data.result.discounts : discountsApplied}
-    payments={submitToWarioMutation.data && submitToWarioMutation.data.success ? submitToWarioMutation.data.result.payments : paymentsApplied}
+    discounts={submitToWarioMutation.isSuccess ? submitToWarioMutation.data.result.discounts : discountsApplied}
+    payments={submitToWarioMutation.isSuccess ? submitToWarioMutation.data.result.payments : paymentsApplied}
     selectedService={selectedService}
     taxRate={TAX_RATE}
     taxValue={taxValue}
