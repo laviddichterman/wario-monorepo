@@ -5,7 +5,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 
 import type { FulfillmentConfig, ICatalog, IWSettings } from '@wcp/wario-shared';
@@ -44,9 +44,9 @@ export function SocketProvider({
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
 
-  const connect = () => {
-    if (socketRef.current || status === 'CONNECTING' || status === 'CONNECTED') {
-      return; // Already connected or connecting
+  const connect = useCallback(() => {
+    if (socketRef.current) {
+      return; // Already connected
     }
 
     setStatus('CONNECTING');
@@ -89,28 +89,33 @@ export function SocketProvider({
     socket.on(SOCKET_EVENTS.SETTINGS, (data: IWSettings) => {
       queryClient.setQueryData(QUERY_KEYS.settings, data);
     });
-  };
+  }, [hostAPI, namespace, queryClient]);
 
-  const disconnect = () => {
+  const disconnect = useCallback(() => {
     if (socketRef.current) {
       socketRef.current.disconnect();
       socketRef.current = null;
       setStatus('DISCONNECTED');
     }
-  };
+  }, []);
 
   // Auto-connect on mount if enabled
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     if (autoConnect) {
-      connect();
+      // Debounce connection to handle React Strict Mode double-mount
+      timeoutId = setTimeout(() => {
+        connect();
+      }, 0);
     }
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(timeoutId);
       disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount/unmount
+  }, [autoConnect, connect, disconnect]);
 
   const value: SocketContextValue = {
     status,
