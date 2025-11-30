@@ -1,10 +1,10 @@
 import { type ReactNode, useMemo } from 'react';
 
 import { type ICatalogModifierSelectors, type MetadataModifierMap, type ProductModifierEntry, WFunctional } from '@wcp/wario-shared';
-import { useCatalogSelectors, useProductEntryById, useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useModifierTypeNameById, useProductEntryById, useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-import { useModifierTypeName } from '@/hooks';
+;
 
 
 const useProcessProductInstanceFunction = (productModifierEntries: ProductModifierEntry[], pifId: string) => {
@@ -50,7 +50,7 @@ export const OrderGuideWarningsComponent = ({ productId, productModifierEntries 
 }
 
 const OrderGuideError = ({ mtId }: { mtId: string }) => {
-  const modifierTypeName = useModifierTypeName(mtId);
+  const modifierTypeName = useModifierTypeNameById(mtId);
   return <ErrorResponseOutput>{`Please select your choice of ${modifierTypeName.toLowerCase()}`}</ErrorResponseOutput>
 }
 

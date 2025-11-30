@@ -11,14 +11,14 @@ import Typography from '@mui/material/Typography';
 
 import { CreateWCPProduct, type ICatalogSelectors, type WProduct } from '@wcp/wario-shared';
 import { scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
-import { useCatalogSelectors, usePopulatedSubcategoryIdsInCategory, useProductInstanceById, useProductInstancesInCategory, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useCategoryNameFromCategoryById, usePopulatedSubcategoryIdsInCategory, useProductInstanceById, useProductInstancesInCategory, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useProductHasSelectableModifiersByProductInstanceId, useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '@/hooks/useDerivedState';
 
 import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
-import { useAppDispatch } from '@/app/useHooks';
-import { useMenuNameFromCategory } from '@/hooks';
-import { findDuplicateInCart, selectCart, selectSelectedService, selectServiceDateTime, useCartStore, useCustomizerStore, useFulfillmentStore } from '@/stores';
+import { findDuplicateInCart, selectCart, useCartStore } from '@/stores/useCartStore';
+import { useCustomizerStore } from '@/stores/useCustomizerStore';
+import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 
 import { ClickableProductDisplay } from '../WProductComponent';
 
@@ -33,7 +33,6 @@ export interface ShopClickableProductDisplayProps {
 
 
 function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCategoryId, setScrollToOnReturn, ...props }: ShopClickableProductDisplayProps & BoxProps) {
-  const dispatch = useAppDispatch();
   const { productEntry: productEntrySelector, modifierEntry: modiferEntrySelector } = useCatalogSelectors() as ICatalogSelectors;
   const cart = useCartStore(selectCart);
   const { addToCart, updateCartQuantity } = useCartStore();
@@ -55,7 +54,7 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
         else {
           // it's a new entry!
           enqueueSnackbar(`Added ${productCopy.m.name} to order.`, { variant: 'success', autoHideDuration: 3000, disableWindowBlurListener: true });
-          dispatch(setTimeToFirstProductIfUnset(Date.now()));
+          setTimeToFirstProductIfUnset(Date.now());
           addToCart(sourceCategoryId, productCopy);
         }
       }
@@ -66,7 +65,7 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
       }
       setScrollToOnReturn(returnToId);
     }
-  }, [cart, dispatch, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn, addToCart, updateCartQuantity, customizeProduct]);
+  }, [cart, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn, addToCart, updateCartQuantity, customizeProduct]);
 
   return productMetadata && <ClickableProductDisplay
     {...props}
@@ -92,7 +91,7 @@ function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccor
   const selectedService = useFulfillmentStore(selectSelectedService) as string;
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
   const productInstancesIdsInCategory = useProductInstancesInCategory(categoryId, 'Order', serviceDateTime, selectedService);
-  const menuName = useMenuNameFromCategory(categoryId);
+  const menuName = useCategoryNameFromCategoryById(categoryId);
   const subtitle = useValueFromCategoryById(categoryId, 'subheading');
   return (
     <Accordion id={`accordion-${categoryId}`} key={index} expanded={activePanel === index && isExpanded} onChange={(e) => { toggleAccordion(e, index); }} >

@@ -8,16 +8,18 @@ import StepLabel from '@mui/material/StepLabel';
 import Stepper from '@mui/material/Stepper';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
 // TODO: need to add an interceptor for forward/back when the user has gotten to 2nd stage or at least reasonably far
 import { CURRENCY, RoundToTwoDecimalPlaces } from '@wcp/wario-shared';
-import { useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
+import { useDateFnsAdapter, useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
 import { StepperTitle } from '@wcp/wario-ux-shared/styled';
 
-import { SelectBalanceAfterPayments } from '@/app/selectors';
-import { setSquareTokenizationErrors, submitToWario } from '@/app/slices/WPaymentSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
-import { useStepperStore } from '@/stores';
+import { useBalanceAfterPayments } from '@/hooks/useOrderTotals';
+import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
+
+import { usePaymentStore } from '@/stores/usePaymentStore';
+import { useStepperStore } from '@/stores/useStepperStore';
 
 import { IS_PRODUCTION } from '../config';
 
@@ -55,20 +57,25 @@ const STAGES = [
 ];
 
 export default function WOrderingComponent() {
-  const dispatch = useAppDispatch();
   const stage = useStepperStore((s) => s.stage);
+  const DateAdapter = useDateFnsAdapter();
   const squareApplicationId = useSquareAppId() as string;
   const squareLocationId = useSquareLocationId() as string;
-  const submitToWarioStatus = useAppSelector(s => s.payment.submitToWarioStatus);
-  const balanceAfterPayments = useAppSelector(SelectBalanceAfterPayments);
+  const {
+    setSquareTokenizationErrors,
+    setPendingSquareToken,
+  } = usePaymentStore();
+  const { isSuccess: isSubmitOrderSuccess } = useSubmitOrderMutation();
+  const balanceAfterPayments = useBalanceAfterPayments();
   const theme = useTheme();
   const useStepper = useMediaQuery(theme.breakpoints.up('md'));
   const cardTokenizeResponseReceived = (props: Square.TokenResult, _verifiedBuyer?: Square.VerifyBuyerResponseDetails | null) => {
     if (props.status === 'OK') {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      dispatch(submitToWario(props.token));
+      // Set the pending token - WCheckoutStageComponent will react to this and submit the order
+      setPendingSquareToken(props.token);
+      // submitOrder()
     } else if (props.status === "Error") {
-      dispatch(setSquareTokenizationErrors(props.errors));
+      setSquareTokenizationErrors(props.errors);
     }
   }
 
@@ -81,28 +88,30 @@ export default function WOrderingComponent() {
   }
 
   return (
-    <PaymentForm
-      overrides={
-        !IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined
-      }
-      applicationId={squareApplicationId}
-      locationId={squareLocationId}
-      createPaymentRequest={createPaymentRequest}
-      cardTokenizeResponseReceived={cardTokenizeResponseReceived}
-    >
-      {useStepper ?
-        <Stepper sx={{ px: 1, pt: 2, mx: 'auto' }} activeStep={stage} >
-          {STAGES.map((stg, i) => (
-            <Step key={i} id={`WARIO_step_${i.toString()}`} completed={stage.valueOf() > i || submitToWarioStatus === 'SUCCEEDED'}>
-              <StepLabel><StepperTitle>{stg.stepperTitle}</StepperTitle></StepLabel>
-            </Step>))}
-        </Stepper> : <></>
-      }
-      <Box sx={{ mx: 'auto', pt: 1 }}>
-        {!IS_PRODUCTION ? "NON PRODUCTION" : ''}
-        {STAGES[stage].content}
-      </Box>
-    </PaymentForm>
+    <LocalizationProvider dateAdapter={DateAdapter}>
+      <PaymentForm
+        overrides={
+          !IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined
+        }
+        applicationId={squareApplicationId}
+        locationId={squareLocationId}
+        createPaymentRequest={createPaymentRequest}
+        cardTokenizeResponseReceived={cardTokenizeResponseReceived}
+      >
+        {useStepper ?
+          <Stepper sx={{ px: 1, pt: 2, mx: 'auto' }} activeStep={stage} >
+            {STAGES.map((stg, i) => (
+              <Step key={i} id={`WARIO_step_${i.toString()}`} completed={stage.valueOf() > i || isSubmitOrderSuccess}>
+                <StepLabel><StepperTitle>{stg.stepperTitle}</StepperTitle></StepLabel>
+              </Step>))}
+          </Stepper> : <></>
+        }
+        <Box sx={{ mx: 'auto', pt: 1 }}>
+          {!IS_PRODUCTION ? "NON PRODUCTION" : ''}
+          {STAGES[stage].content}
+        </Box>
+      </PaymentForm>
+    </LocalizationProvider>
 
   );
 }

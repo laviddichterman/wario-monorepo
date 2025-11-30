@@ -7,7 +7,12 @@ import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog, GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory, IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, IsModifierTypeVisible, type MetadataModifierMap, type MetadataModifierMapEntry, type ProductModifierEntry, WCPProductGenerateMetadata } from '@wcp/wario-shared';
+import {
+  type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog,
+  GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory,
+  IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, IsModifierTypeVisible,
+  type MetadataModifierMap, type ProductModifierEntry, WCPProductGenerateMetadata
+} from '@wcp/wario-shared';
 
 import type { ProductCategoryFilter } from '@/common/shared';
 

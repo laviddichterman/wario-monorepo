@@ -14,11 +14,10 @@ import Typography from '@mui/material/Typography';
 
 import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
-import { selectGroupedAndOrderedCart } from '@wcp/wario-ux-shared/redux';
 
-import { SelectSelectableModifiers } from '@/app/selectors';
-import { useAppSelector } from '@/app/useHooks';
-import { useCartStore } from '@/stores';
+import { useGroupedAndOrderedCart, useHasSelectableModifiers } from '@/hooks/useDerivedState';
+
+import { useCartStore } from '@/stores/useCartStore';
 
 import { ProductDisplay } from './WProductComponent';
 
@@ -36,7 +35,7 @@ interface IOrderCart {
 
 export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProductToEdit }: { cartEntry: CartEntry } & IOrderCart) {
   const { removeFromCart, updateCartQuantity } = useCartStore();
-  const hasSelectableModifiers = useAppSelector(s => Object.values(SelectSelectableModifiers(s, cartEntry.product.m.modifier_map)).length > 0);
+  const hasSelectableModifiers = useHasSelectableModifiers(cartEntry.product.m.modifier_map);
   const setRemoveEntry = () => {
     removeFromCart(cartEntry.id);
   };
@@ -92,8 +91,7 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
 }
 
 export function WOrderCart({ isProductEditDialogOpen, setProductToEdit }: IOrderCart) {
-  const { cart } = useCartStore();
-  const groupedCart = useAppSelector(s => selectGroupedAndOrderedCart(s, cart));
+  const groupedCart = useGroupedAndOrderedCart();
   return groupedCart.length === 0 ? <></> :
     <div id="orderCart">
       <Typography variant="h4" sx={{ p: 2, textTransform: 'uppercase', fontFamily: 'Source Sans Pro', }}>Current Order</Typography>

@@ -15,11 +15,12 @@ import { WDateUtils } from '@wcp/wario-shared';
 import { useMessageRequestHalf, useMessageRequestSlicing, useMessageRequestVegan } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-import { SelectFulfillmentDisplayName, SelectServiceTimeDisplayString } from '@/app/selectors';
-import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
-import { setAcknowledgeInstructionsDialogue, setSpecialInstructions } from '@/app/slices/WPaymentSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
-import { selectCustomerInfo, useCustomerInfoStore, useStepperStore } from '@/stores';
+import { usePropertyFromSelectedFulfillment, useSelectedServiceTimeDisplayString } from '@/hooks/useDerivedState';
+
+import { selectCustomerInfo, useCustomerInfoStore } from '@/stores/useCustomerInfoStore';
+import { selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
+import { usePaymentStore } from '@/stores/usePaymentStore';
+import { useStepperStore } from '@/stores/useStepperStore';
 
 import { Navigation } from '../Navigation';
 import { WCheckoutCart } from '../WCheckoutCart';
@@ -30,19 +31,21 @@ const REQUEST_SOONER = "It looks like you're trying to ask us to make your pizza
 const REQUEST_RANCH = "Please look at our menu before requesting ranch.";
 
 export default function WReviewOrderStage() {
-  const dispatch = useAppDispatch();
   const { nextStage, backStage } = useStepperStore();
   const { givenName, familyName, mobileNum, email } = useCustomerInfoStore(selectCustomerInfo);
+  const { dineInInfo, deliveryInfo } = useFulfillmentStore();
   const REQUEST_HALF = useMessageRequestHalf();
   const REQUEST_SLICING = useMessageRequestSlicing();
   const REQUEST_VEGAN = useMessageRequestVegan();
-  const selectedServiceDisplayName = useAppSelector(SelectFulfillmentDisplayName)
-  const serviceTimeDisplayString = useAppSelector(SelectServiceTimeDisplayString);
-  const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  const dineInInfo = useAppSelector(s => s.fulfillment.dineInInfo);
-  const deliveryInfo = useAppSelector(s => s.fulfillment.deliveryInfo);
-  const specialInstructions = useAppSelector(s => s.payment.specialInstructions);
-  const acknowledgeInstructionsDialogue = useAppSelector(s => s.payment.acknowledgeInstructionsDialogue);
+  const selectedServiceDisplayName = usePropertyFromSelectedFulfillment('displayName');
+  const serviceTimeDisplayString = useSelectedServiceTimeDisplayString();
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime);
+  const {
+    specialInstructions,
+    acknowledgeInstructionsDialogue,
+    setSpecialInstructions,
+    setAcknowledgeInstructionsDialogue
+  } = usePaymentStore();
   const [disableSubmit, setDisableSubmit] = useState(false); // switch to useMemo
   const [specialInstructionsResponses, setSpecialInstructionsResponses] = useState<{ level: number, text: string }[]>([]);
   useEffect(() => {
@@ -118,10 +121,10 @@ export default function WReviewOrderStage() {
       <WCheckoutCart />
       <div>
         <FormControlLabel
-          control={<Checkbox checked={acknowledgeInstructionsDialogue} onChange={(_, checked) => dispatch(setAcknowledgeInstructionsDialogue(checked))} />}
+          control={<Checkbox checked={acknowledgeInstructionsDialogue} onChange={(_, checked) => { setAcknowledgeInstructionsDialogue(checked); }} />}
           label="I need to specify some special instructions (which may delay my order or change its cost) and I've already texted or emailed to ensure the request can be handled."
         />
-        {acknowledgeInstructionsDialogue ? <TextField fullWidth multiline value={specialInstructions || ""} onChange={(e) => dispatch(setSpecialInstructions(e.target.value))} /> : ""}
+        {acknowledgeInstructionsDialogue ? <TextField fullWidth multiline value={specialInstructions || ''} onChange={(e) => { setSpecialInstructions(e.target.value); }} /> : ''}
       </div>
       {specialInstructionsResponses.map((res, i) => <WarningResponseOutput key={i}>{res.text}</WarningResponseOutput>)}
       <Navigation canBack canNext={!disableSubmit} handleBack={backStage} handleNext={nextStage} />

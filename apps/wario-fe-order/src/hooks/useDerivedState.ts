@@ -1,9 +1,13 @@
+import { formatISO } from "date-fns/formatISO";
 import { useMemo } from "react";
 
-import { type CatalogModifierEntry, ComputeCategoryTreeIdList, ComputeProductCategoryMatchCount, CURRENCY, type FulfillmentConfig, GroupAndOrderCart, type ICatalogSelectors, type IProductInstance, type MetadataModifierMap, type ProductModifierEntry, WDateUtils } from "@wcp/wario-shared";
-import { useAutoGratutityThreshold, useCatalogSelectors, useFulfillmentById, useFulfillmentMainCategoryId, useProductInstanceById, useProductMetadata, useValueFromFulfillmentById } from "@wcp/wario-ux-shared/query";
+import { type CatalogModifierEntry, ComputeCategoryTreeIdList, ComputeProductCategoryMatchCount, CURRENCY, DetermineCartBasedLeadTime, type FulfillmentConfig, GetNextAvailableServiceDate, GroupAndOrderCart, type ICatalogSelectors, type IProduct, type IProductInstance, IsModifierTypeVisible, type MetadataModifierMap, type ProductModifierEntry, SortAndFilterModifierOptions, WDateUtils, type WProductMetadata } from "@wcp/wario-shared";
+import { useAutoGratutityThreshold, useCatalogSelectors, useDefaultFulfillmentId, useFulfillmentById, useFulfillmentMainCategoryId, useProductInstanceById, useProductMetadata, useServerTime, useValueFromFulfillmentById, useValueFromProductEntryById } from "@wcp/wario-ux-shared/query";
 
-import { selectCart, selectSelectedService, selectServiceDateTime, useCartStore, useFulfillmentStore } from "@/stores";
+import { selectCart, selectCartEntry, useCartStore } from "@/stores/useCartStore";
+import { selectCartId, useCustomizerStore } from "@/stores/useCustomizerStore";
+import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from "@/stores/useFulfillmentStore";
+
 
 
 export function useSelectedFulfillment() {
@@ -27,11 +31,14 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
   const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
   const mods = useMemo(() => Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
     const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
-    const omit_section_if_no_available_options = modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
-    const hidden = modifierEntry.modifierType.displayFlags.hidden;
-    return (!hidden && (!omit_section_if_no_available_options || v.has_selectable)) ? { ...acc, k: v } : acc;
+    return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: v } : acc;
   }, {}), [mMap, modifierTypeSelector]);
   return mods;
+}
+
+export function useHasSelectableModifiers(mMap: MetadataModifierMap) {
+  const selectableModifiers = useSelectableModifiers(mMap);
+  return Object.values(selectableModifiers).length > 0;
 }
 
 export function useMainCategoryTreeIdList(categoryId: string) {
@@ -51,7 +58,7 @@ export function useMainProductCategoryCount(fulfillmentId: string) {
   return productCategoryCount;
 }
 
-export function useIsAutogratuityEnabled(fulfillmentId: string) {
+export function useIsAutogratuityEnabledByFulfillmentId(fulfillmentId: string) {
   const autoGratutityThreshold = useAutoGratutityThreshold() as number;
   const mainProductCategoryCount = useMainProductCategoryCount(fulfillmentId);
   const { deliveryInfo, dineInInfo } = useFulfillmentStore();
@@ -59,6 +66,7 @@ export function useIsAutogratuityEnabled(fulfillmentId: string) {
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return deliveryInfo !== null || dineInInfo !== null || mainProductCategoryCount >= autoGratutityThreshold || (specialInstructions && specialInstructions.length > 20);
 }
+
 
 /**
 * Selects/Computes the product metadata for a potentially custom product (product class ID and selected modifiers) using the currently populated fulfillment info
@@ -70,6 +78,33 @@ export function useProductMetadataWithCurrentFulfillmentData(productId: string, 
   return metadata;
 }
 
+export function useVisibleModifierOptions(productId: string, modifiers: ProductModifierEntry[], mtId: string) {
+  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers) as WProductMetadata;
+  const { modifierEntry: modifierTypeSelector, option: modifierOptionSelector } = useCatalogSelectors() as ICatalogSelectors;
+  const modifierTypeEntry = modifierTypeSelector(mtId) as CatalogModifierEntry;
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
+
+  return useMemo(() => {
+    return SortAndFilterModifierOptions(metadata, modifierTypeEntry, modifierOptionSelector, serviceDateTime);
+  }, [metadata, modifierTypeEntry, modifierOptionSelector, serviceDateTime]);
+}
+
+
+export function useSortedVisibleModifiers(productId: string, modifiers: ProductModifierEntry[]) {
+  const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
+  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers) as WProductMetadata;
+  const productType = useValueFromProductEntryById(productId, "product") as IProduct;
+  const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
+
+  return useMemo(() => {
+    return productType.modifiers
+      .filter(x => x.serviceDisable.indexOf(fulfillmentId) === -1)
+      .map(x => { return { entry: modifierTypeSelector(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] } })
+      .filter(x => IsModifierTypeVisible(x.entry?.modifierType, x.md.has_selectable))
+      .sort((a, b) => (a.entry as CatalogModifierEntry).modifierType.ordinal - (b.entry as CatalogModifierEntry).modifierType.ordinal)
+      .map(x => x.pm)
+  }, [productType, fulfillmentId, metadata, modifierTypeSelector]);
+}
 
 /**
  * Selects/Computes the product metadata for a catalog product instance using the currently populated fulfillment info
@@ -81,8 +116,7 @@ export function useProductMetadataFromProductInstanceIdWithCurrentFulfillmentDat
 
 export function useProductHasSelectableModifiersByProductInstanceId(productInstanceId: string) {
   const metadata = useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(productInstanceId);
-  const selectableModifiers = useSelectableModifiers(metadata?.modifier_map || {});
-  return Object.values(selectableModifiers).length > 0;
+  return useHasSelectableModifiers(metadata?.modifier_map || {});
 }
 
 export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSelectable: boolean) {
@@ -106,104 +140,51 @@ export function useComputeServiceFee() {
   return ({ amount: 0, currency: CURRENCY.USD });
 }
 
-// export const SelectSubtotalPreDiscount = createSelector(
-//   (s: RootState) => SelectCartSubTotal(s.cart),
-//   (s: RootState) => SelectServiceFee(s),
-//   ComputeSubtotalPreDiscount
-// );
+export function useSelectedCartEntry() {
+  const selectedCartEntryId = useCustomizerStore(selectCartId);
+  const selectedCartEntry = useCartStore(s => selectCartEntry(s, selectedCartEntryId));
+  return selectedCartEntry;
+}
 
-// export const SelectDiscountsApplied = createSelector(
-//   (s: RootState) => SelectSubtotalPreDiscount(s),
-//   (s: RootState) => s.payment.storeCreditValidations.filter(x => x.validation.credit_type === StoreCreditType.DISCOUNT),
-//   (subtotalPreDiscount: IMoney, discounts) => ComputeDiscountsApplied(subtotalPreDiscount, discounts.map(x => ({ createdAt: x.createdAt, t: DiscountMethod.CreditCodeAmount, status: TenderBaseStatus.AUTHORIZED, discount: { balance: x.validation.amount, code: x.code, lock: x.validation.lock } }))));
+export function useCartBasedLeadTime() {
+  const cart = useCartStore(selectCart);
+  const { productEntry: productsSelector } = useCatalogSelectors() as ICatalogSelectors;
+  return useMemo(() => {
+    return DetermineCartBasedLeadTime(cart.map(x => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })), productsSelector);
+  }, [cart, productsSelector]);
+}
 
-// export const SelectDiscountsAmountApplied = createSelector(
-//   SelectDiscountsApplied,
-//   (discountsApplied) => ({ amount: discountsApplied.reduce((acc, x) => acc + x.discount.amount.amount, 0), currency: CURRENCY.USD }));
+export function useComputeAvailabilityForFulfillmentDateAndCart(selectedDate: string, fulfillmentId: string) {
+  const cartBasedLeadTime = useCartBasedLeadTime();
+  const fulfillment = useFulfillmentById(fulfillmentId);
+  return useMemo(() => {
+    return WDateUtils.GetInfoMapForAvailabilityComputation(fulfillment ? [fulfillment] : [], selectedDate, cartBasedLeadTime);
+  }, [fulfillment, selectedDate, cartBasedLeadTime]);
+}
 
+export function useOptionsForFulfillmentAndDate(selectedDate: string, fulfillmentId: string) {
+  const { currentTime } = useServerTime();
+  const availability = useComputeAvailabilityForFulfillmentDateAndCart(selectedDate, fulfillmentId);
+  return useMemo(() => {
+    return WDateUtils.GetOptionsForDate(availability, selectedDate, formatISO(currentTime));
+  }, [availability, selectedDate, currentTime]);
+}
 
-// export const SelectGratutityServiceChargeAmount = createSelector(
-//   SelectGratuityServiceCharge,
-//   SelectSubtotalPreDiscount,
-//   ComputeGratuityServiceCharge);
+export function useNextAvailableServiceDateTimeForFulfillment(fulfillmentId: string) {
+  const { currentTime } = useServerTime();
+  const cartBasedLeadTime = useCartBasedLeadTime();
+  const fulfillment = useFulfillmentById(fulfillmentId);
+  return useMemo(() => {
+    return GetNextAvailableServiceDate(fulfillment ? [fulfillment] : [], formatISO(currentTime), cartBasedLeadTime);
+  }, [fulfillment, currentTime, cartBasedLeadTime]);
+}
 
-// export const SelectSubtotalAfterDiscount = createSelector(
-//   SelectSubtotalPreDiscount,
-//   SelectDiscountsAmountApplied,
-//   SelectGratutityServiceChargeAmount,
-//   ComputeSubtotalAfterDiscountAndGratuity
-// );
-
-// export const SelectTaxAmount = createSelector(
-//   SelectSubtotalAfterDiscount,
-//   SelectTaxRate,
-//   ComputeTaxAmount
-// );
-
-// export const SelectTipBasis = createSelector(
-//   SelectSubtotalPreDiscount,
-//   SelectTaxAmount,
-//   ComputeTipBasis
-// );
-
-// export const SelectTipValue = createSelector(
-//   (s: RootState) => s.payment.selectedTip,
-//   SelectTipBasis,
-//   ComputeTipValue
-// );
-
-// export const SelectTotal = createSelector(
-//   SelectSubtotalAfterDiscount,
-//   SelectTaxAmount,
-//   SelectTipValue,
-//   ComputeTotal
-// );
-
-// export const SelectPaymentsApplied = createSelector(
-//   SelectTotal,
-//   SelectTipValue,
-//   (s: RootState) => s.payment.storeCreditValidations.filter(x => x.validation.credit_type === StoreCreditType.MONEY),
-//   (totalWithTip, tipAmount, moneyCredits) => ComputePaymentsApplied(totalWithTip, tipAmount, moneyCredits.map(x => ({ createdAt: x.createdAt, t: PaymentMethod.StoreCredit, status: TenderBaseStatus.PROPOSED, payment: { balance: x.validation.amount, code: x.code, lock: x.validation.lock } }))));
-
-// export const SelectPaymentAmountsApplied = createSelector(
-//   SelectPaymentsApplied,
-//   (paymentsApplied) => ({ amount: paymentsApplied.reduce((acc, x) => acc + x.amount.amount, 0), currency: CURRENCY.USD }));
-
-// export const SelectBalanceAfterPayments = createSelector(
-//   SelectTotal,
-//   SelectPaymentAmountsApplied,
-//   ComputeBalance
-// );
-
-
-// const SelectPaymentsProposedForSubmission = createSelector(
-//   (_: RootState, nonce: string | null) => nonce,
-//   SelectPaymentsApplied,
-//   SelectTotal,
-//   SelectTipValue,
-//   SelectBalanceAfterPayments,
-//   (nonce, payments, totalWithTip, tipAmount, balance) => balance.amount > 0 && nonce ? ComputePaymentsApplied(totalWithTip, tipAmount, [...payments, { createdAt: Date.now(), t: PaymentMethod.CreditCard, status: TenderBaseStatus.PROPOSED, payment: { sourceId: nonce } }]) : payments
-// );
-
-// export const SelectWarioSubmissionArguments = createSelector(
-//   (s: RootState) => s.fulfillment,
-//   (s: RootState) => s.ci,
-//   (s: RootState) => selectCartAsDto(s.cart),
-//   (s: RootState) => s.payment.specialInstructions,
-//   SelectMetricsForSubmission,
-//   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-//   (s: RootState) => s.payment.selectedTip!,
-//   SelectDiscountsApplied,
-//   (s: RootState, nonce: string | null) => SelectPaymentsProposedForSubmission(s, nonce),
-//   (fulfillmentInfo, customerInfo, cart, specialInstructions, metrics, tipSelection, discountsApplied, paymentsApplied) => {
-//     return {
-//       customerInfo,
-//       fulfillment: { status: WFulfillmentStatus.PROPOSED, ...fulfillmentInfo },
-//       specialInstructions: specialInstructions ?? "",
-//       cart,
-//       metrics,
-//       proposedDiscounts: discountsApplied,
-//       proposedPayments: paymentsApplied,
-//       tip: tipSelection,
-//     } as CreateOrderRequestV2;
-//   });
+// Note: this falls back to now if there's really nothing for the selected service or for dine-in
+export function useNextAvailableServiceDateTimeForSelectedOrDefaultFulfillment() {
+  const fulfillmentId = useFulfillmentStore(selectSelectedService);
+  const { currentTime } = useServerTime();
+  const defaultFulfillmentId = useDefaultFulfillmentId() as string;
+  const effectiveFulfillmentId = fulfillmentId || defaultFulfillmentId;
+  const nextAvailableComputed = useNextAvailableServiceDateTimeForFulfillment(effectiveFulfillmentId);
+  return nextAvailableComputed ? nextAvailableComputed : WDateUtils.ComputeFulfillmentTime(currentTime);
+}

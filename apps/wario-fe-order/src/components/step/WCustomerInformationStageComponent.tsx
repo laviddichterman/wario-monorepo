@@ -10,7 +10,8 @@ import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { Navigation } from '@/components/Navigation';
 
-import { type CustomerInfoRHF, customerInfoSchema, selectCustomerInfo, useCustomerInfoStore, useStepperStore } from '@/stores';
+import { type CustomerInfoRHF, customerInfoSchema, selectCustomerInfo, useCustomerInfoStore } from "@/stores/useCustomerInfoStore";
+import { useStepperStore } from "@/stores/useStepperStore";
 
 // TODO: use funny names as the placeholder info for the names here and randomize it. So sometimes it would be the empire carpet guy, other times eagle man
 

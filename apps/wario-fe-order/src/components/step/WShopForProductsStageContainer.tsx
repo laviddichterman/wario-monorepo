@@ -7,7 +7,10 @@ import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { useMainProductCategoryCount } from '@/hooks/useDerivedState';
 
-import { selectCart, selectSelectedService, selectSelectedWProduct, useCartStore, useCustomizerStore, useFulfillmentStore, useStepperStore } from '@/stores';
+import { selectCart, useCartStore } from '@/stores/useCartStore';
+import { selectSelectedWProduct, useCustomizerStore } from '@/stores/useCustomizerStore';
+import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillmentStore';
+import { useStepperStore } from '@/stores/useStepperStore';
 
 import { Navigation } from '../Navigation';
 import { WOrderCart } from '../WOrderCartComponent';

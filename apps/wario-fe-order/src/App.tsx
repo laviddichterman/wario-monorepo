@@ -12,8 +12,7 @@ import { useIsSocketDataLoaded } from '@wcp/wario-ux-shared/query';
 
 import WOrderingComponent from '@/components/WOrderingComponent';
 
-import { setUserAgent } from '@/app/slices/WMetricsSlice';
-import { useAppDispatch } from "@/app/useHooks";
+import { useMetricsStore } from '@/stores/useMetricsStore';
 
 const theme = createTheme(themeOptions);
 
@@ -25,12 +24,12 @@ const theme = createTheme(themeOptions);
  */
 
 const App = () => {
-  const dispatch = useAppDispatch();
+  const { setUserAgent } = useMetricsStore();
   const isSocketDataLoaded = useIsSocketDataLoaded();
 
   useEffect(() => {
-    dispatch(setUserAgent(window.navigator.userAgent));
-  }, [dispatch]);
+    setUserAgent(window.navigator.userAgent);
+  }, [setUserAgent]);
 
   useLayoutEffect(() => {
     if (isSocketDataLoaded) {

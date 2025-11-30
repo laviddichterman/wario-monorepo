@@ -164,8 +164,8 @@ export const useCartStore = create<CartStore>()(
 export const selectCart = (state: CartStore) => state.cart;
 export const selectDeadCart = (state: CartStore) => state.deadCart;
 export const selectCartSubtotal = (state: CartStore) => ComputeCartSubTotal(state.cart);
-export const selectCartEntry = (state: CartStore, id: string) =>
-  state.cart.find((entry) => entry.id === id);
+export const selectCartEntry = (state: CartStore, id: string | null) =>
+  id ? state.cart.find((entry) => entry.id === id) ?? null : null;
 
 /**
  * Looks through the cart for a duplicate product

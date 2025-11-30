@@ -9,10 +9,9 @@
 import { useMemo } from 'react';
 
 import type { MetadataModifierMap } from '@wcp/wario-shared';
-import { WDateUtils } from '@wcp/wario-shared';
+import { IsModifierTypeVisible, WDateUtils } from '@wcp/wario-shared';
 import {
   useCatalogSelectors,
-  useCategoryById,
   useFulfillmentOperatingHours
 } from '@wcp/wario-ux-shared/query';
 
@@ -38,7 +37,6 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
     }
     return Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
       const modifierEntry = catalogSelectors.modifierEntry(k);
-      // modifierEntry type comes from Record access, TypeScript infers it as always defined
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierEntry can be undefined at runtime
       if (!modifierEntry) return acc;
       const omit_section_if_no_available_options = modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
@@ -60,60 +58,6 @@ export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSe
     const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierTypeEntry can be undefined at runtime
     if (!modifierTypeEntry) return false;
-    return !modifierTypeEntry.modifierType.displayFlags.hidden &&
-      (!modifierTypeEntry.modifierType.displayFlags.omit_section_if_no_available_options || hasSelectable);
+    return IsModifierTypeVisible(modifierTypeEntry.modifierType, hasSelectable);
   }, [catalogSelectors, modifierTypeId, hasSelectable]);
-}
-
-/**
- * Hook to get modifier type name
- * Replaces SelectModifierTypeNameFromModifierTypeId
- */
-export function useModifierTypeName(modifierTypeId: string) {
-  const catalogSelectors = useCatalogSelectors();
-
-  return useMemo(() => {
-    if (!catalogSelectors) return '';
-    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierTypeEntry can be undefined at runtime
-    if (!modifierTypeEntry) return '';
-    return modifierTypeEntry.modifierType.displayName || modifierTypeEntry.modifierType.name;
-  }, [catalogSelectors, modifierTypeId]);
-}
-
-/**
- * Hook to get category menu name
- * Replaces SelectMenuNameFromCategoryById
- */
-export function useMenuNameFromCategory(categoryId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-  return useMemo(() => {
-    if (!categoryEntry) return '';
-    return categoryEntry.category.description || categoryEntry.category.name;
-  }, [categoryEntry]);
-}
-
-/**
- * Hook to get category nesting display type
- * Replaces SelectMenuNestingFromCategoryById
- */
-export function useMenuNestingFromCategory(categoryId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-  return useMemo(() => {
-    if (!categoryEntry) return null;
-    return categoryEntry.category.display_flags.nesting;
-  }, [categoryEntry]);
-}
-
-/**
- * Hook to check if category exists and is allowed for fulfillment
- * Replaces SelectCategoryExistsAndIsAllowedForFulfillment
- */
-export function useCategoryAllowedForFulfillment(categoryId: string, fulfillmentId: string) {
-  const categoryEntry = useCategoryById(categoryId);
-
-  return useMemo(() => {
-    if (!categoryEntry) return false;
-    return categoryEntry.category.serviceDisable.indexOf(fulfillmentId) === -1;
-  }, [categoryEntry, fulfillmentId]);
 }
