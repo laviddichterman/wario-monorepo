@@ -84,8 +84,6 @@ export interface AvailabilityInfoMap {
   leadTime: number;
   // the minimum time step for the service
   minTimeStep: number;
-  // special hours union for the services specified in computation
-  specialHoursUnion: IWInterval[] | null;
 }
 
 // =============================================================================

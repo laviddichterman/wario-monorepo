@@ -10,7 +10,6 @@ import {
   getMinutes,
   isBefore,
   isSameDay,
-  isValid,
   parseISO,
   startOfDay,
   subDays,
@@ -296,23 +295,17 @@ export class WDateUtils {
    *          - operatingIntervals: Operating hour intervals for all services on the date
    *          - minTimeStep: The minimum time step across all configurations (capped at 1440 minutes)
    *          - leadTime: The effective lead time (max of minimum service lead time and cart-based lead time)
-   *          - specialHoursUnion: Special hours union (currently returns empty array)
-   * @remarks If the provided date is invalid, returns default values with empty intervals and max time step
    */
   static GetInfoMapForAvailabilityComputation(configs: Pick<FulfillmentConfig, 'blockedOff' | 'timeStep' | 'leadTime' | 'leadTimeOffset' | 'operatingHours' | 'specialHours'>[], date: string, cartBasedLeadTime: number) {
-    const isDateValid = isValid(date);
-    if (!isDateValid) {
-      return { blockedOffUnion: [], operatingIntervals: [], minTimeStep: 1440, leadTime: 0, specialHoursUnion: [] } as AvailabilityInfoMap;
-    }
     const jsDate = parseISO(date);
     const isoDate = WDateUtils.formatISODate(jsDate);
     const blockedOffUnion = BlockedOffIntervalsForServicesAndDate(configs.map(x => x.blockedOff), isoDate);
     const operatingIntervals = WDateUtils.GetOperatingHoursForServicesAndDate(configs, isoDate, getDay(jsDate));
-    const minTimeStep = Math.min(1440, ...configs.map(config => config.timeStep));
-    const minLeadTime = Math.min(1440, ...configs.map(config => config.leadTime));
+    const minTimeStep = Math.min(...configs.map(config => config.timeStep));
+    const minLeadTime = Math.min(...configs.map(config => config.leadTime));
     // cartBasedLeadTime and service lead time don't stack
     const leadTime = Math.max(minLeadTime, cartBasedLeadTime);
-    return { blockedOffUnion, operatingIntervals, minTimeStep, leadTime, specialHoursUnion: [] } as AvailabilityInfoMap;
+    return { blockedOffUnion, operatingIntervals, minTimeStep, leadTime } as AvailabilityInfoMap;
   }
 
   /**
