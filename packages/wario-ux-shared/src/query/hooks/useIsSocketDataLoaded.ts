@@ -18,10 +18,5 @@ export function useIsSocketDataLoaded(): boolean {
   const { data: settings } = useSettingsQuery();
   const { data: serverTime } = useServerTimeQuery();
 
-  return (
-    catalog !== null &&
-    fulfillments !== null &&
-    settings !== null &&
-    serverTime !== null
-  );
+  return Boolean(catalog && fulfillments && settings && serverTime && serverTime.time);
 }
