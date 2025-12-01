@@ -1,15 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
-import { useEffect } from 'react';
-import { CreditCard /*, GooglePay, ApplePay */ } from 'react-square-web-payments-sdk';
+import type * as Square from '@square/web-sdk';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { CreditCard, PaymentForm /*, GooglePay, ApplePay */ } from 'react-square-web-payments-sdk';
 
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Input from '@mui/material/Input';
 import Typography from '@mui/material/Typography';
 
-import { ComputeTipValue, CURRENCY, MoneyToDisplayString, type OrderPaymentAllocated, PaymentMethod, type TipSelection } from '@wcp/wario-shared';
+import { ComputeTipValue, CURRENCY, MoneyToDisplayString, type OrderPaymentAllocated, PaymentMethod, RoundToTwoDecimalPlaces, type TipSelection } from '@wcp/wario-shared';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
-import { useTipPreamble } from '@wcp/wario-ux-shared/query';
+import { useSquareAppId, useSquareLocationId, useTipPreamble } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, Separator, SquareButtonCSS, StageTitle, WarioButton, WarioToggleButton } from '@wcp/wario-ux-shared/styled';
 
 import { useOrderRequestBuilder } from '@/hooks/useBuildOrderRequest';
@@ -17,6 +17,7 @@ import { useIsAutogratuityEnabledByFulfillmentId, usePropertyFromSelectedFulfill
 import { useBalanceAfterPayments, useTipBasis, useTipValue } from '@/hooks/useOrderTotals';
 import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
 
+import { IS_PRODUCTION } from '@/config';
 import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { selectSelectedTip, selectSquareTokenErrors, usePaymentStore } from '@/stores/usePaymentStore';
@@ -42,45 +43,43 @@ export function WCheckoutStage() {
   const { backStage } = useStepperStore();
   const selectedTip = usePaymentStore(selectSelectedTip);
   const squareTokenErrors = usePaymentStore(selectSquareTokenErrors);
-  const pendingSquareToken = usePaymentStore(state => state.pendingSquareToken);
   const setTip = usePaymentStore(state => state.setTip);
-  const setPendingSquareToken = usePaymentStore(state => state.setPendingSquareToken);
+  const setSquareTokenizationErrors = usePaymentStore(state => state.setSquareTokenizationErrors);
   const { incrementTipAdjusts, incrementTipFixes, setSubmitTime } = useMetricsStore();
+
+  // Square configuration
+  const squareApplicationId = useSquareAppId() as string;
+  const squareLocationId = useSquareLocationId() as string;
 
   // Order submission
   const buildOrderRequest = useOrderRequestBuilder();
   const submitOrderMutation = useSubmitOrderMutation();
 
-  // Submit order when a pending Square token is received
-  useEffect(() => {
-    if (pendingSquareToken && submitOrderMutation.isIdle) {
+  // Handle Square tokenization response - submit order directly
+  const cardTokenizeResponseReceived = useCallback((props: Square.TokenResult, _verifiedBuyer?: Square.VerifyBuyerResponseDetails | null) => {
+    if (props.status === 'OK') {
+      // Submit order immediately with the token
       setSubmitTime(Date.now());
-      const orderRequest = buildOrderRequest(pendingSquareToken);
+      const orderRequest = buildOrderRequest(props.token);
       if (orderRequest) {
-        submitOrderMutation.mutate(orderRequest, {
-          onSuccess: (_response) => {
-            // complete, need to set flags as such and prevent resubmission
-            setPendingSquareToken(null);
-          },
-          onError: (_error) => {
-            setPendingSquareToken(null);
-          },
-        });
-      } else {
-        // Clear the token if we couldn't build the request
-        setPendingSquareToken(null);
+        submitOrderMutation.mutate(orderRequest);
       }
+    } else if (props.status === "Error") {
+      setSquareTokenizationErrors(props.errors);
     }
-  }, [
-    pendingSquareToken,
-    buildOrderRequest,
-    submitOrderMutation,
-    setSubmitTime,
-    setPendingSquareToken,
-  ]);
+  }, [buildOrderRequest, submitOrderMutation, setSubmitTime, setSquareTokenizationErrors]);
 
   const tipBasis = useTipBasis();
   const balance = useBalanceAfterPayments();
+
+  // Create payment request for Square
+  const createPaymentRequest = useCallback((): Square.PaymentRequestOptions => {
+    return {
+      countryCode: "US",
+      currencyCode: CURRENCY.USD,
+      total: { label: "Total", amount: RoundToTwoDecimalPlaces(balance.amount / 100).toFixed(2) }
+    }
+  }, [balance.amount]);
   const allowTipping = usePropertyFromSelectedFulfillment('allowTipping');
   const autogratEnabled = useIsAutogratuityEnabled();
   const TIP_PREAMBLE = useTipPreamble();
@@ -176,7 +175,13 @@ export function WCheckoutStage() {
       setTip({ value: newTipMoney, isPercentage: false, isSuggestion: false });
     }
   }
-  return !submitOrderMutation.isSuccess ?
+  return <PaymentForm
+    overrides={!IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined}
+    applicationId={squareApplicationId}
+    locationId={squareLocationId}
+    createPaymentRequest={createPaymentRequest}
+    cardTokenizeResponseReceived={cardTokenizeResponseReceived}
+  > {!submitOrderMutation.isSuccess ?
     <Box>
       {submitOrderMutation.isPending && <LoadingScreen />}
       <StageTitle>{allowTipping ? "Add gratuity to your order and settle up!" : "Let's settle up!"}</StageTitle>
@@ -264,5 +269,6 @@ export function WCheckoutStage() {
           <WCheckoutCart />
         </Grid>
       </Grid>
-    </Box >;
+    </Box >}
+  </PaymentForm>;
 }

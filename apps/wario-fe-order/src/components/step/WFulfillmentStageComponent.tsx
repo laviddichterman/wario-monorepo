@@ -2,14 +2,7 @@ import { add, formatISO, parseISO, startOfDay } from 'date-fns';
 import { enqueueSnackbar } from 'notistack';
 import { useCallback, useEffect, useMemo } from 'react';
 
-import Autocomplete from '@mui/material/Autocomplete';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import TextField from '@mui/material/TextField';
-import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker';
 
 import { FulfillmentType, WDateUtils } from '@wcp/wario-shared';
 import { useFulfillmentById, useFulfillmentMaxGuests, useFulfillments, useFulfillmentService, useServerTime } from '@wcp/wario-ux-shared/query';
@@ -23,6 +16,11 @@ import { useStepperStore } from '@/stores/useStepperStore';
 
 import DeliveryInfoForm from '../DeliveryValidationForm';
 import { Navigation } from '../Navigation';
+
+import FulfillmentDateTimeSelector from './fulfillment/FulfillmentDateTimeSelector';
+import FulfillmentPartySizeSelector from './fulfillment/FulfillmentPartySizeSelector';
+import FulfillmentServiceSelector from './fulfillment/FulfillmentServiceSelector';
+import FulfillmentTerms from './fulfillment/FulfillmentTerms';
 
 function useSortedVisibleFulfillments() {
   const fulfillments = useFulfillments();
@@ -65,7 +63,7 @@ function FulfillmentTimeAndDetailsSection() {
     setDineInInfo
   } = useFulfillmentStore();
   const { setTimeToServiceDate, setTimeToServiceTime } = useMetricsStore();
-
+  console.log({ currentTime, serviceDate, serviceTime });
   const serviceTerms = useServiceTerms();
   const hasServiceTerms = useMemo(() => serviceTerms.length > 0, [serviceTerms]);
   const serviceServiceEnum = useFulfillmentService(selectedService);
@@ -109,16 +107,25 @@ function FulfillmentTimeAndDetailsSection() {
       // Check if the selected service time is valid in the new service date
       // Note: optionsForSelectedDate will update on next render with new date
       if (serviceTime !== null) {
-        const newDateOptions = optionsForSelectedDate;
-        const foundServiceTimeOption = newDateOptions.findIndex(x => x.value === serviceTime);
-        if (foundServiceTimeOption === -1) {
+        if (!selectedService || !fulfillment) {
           setTime(null);
+        } else {
+          const infoMap = WDateUtils.GetInfoMapForAvailabilityComputation(
+            [fulfillment],
+            serviceDateString,
+            cartBasedLeadTime
+          );
+          const newDateOptions = WDateUtils.GetOptionsForDate(infoMap, serviceDateString, formatISO(currentTime));
+          const foundServiceTimeOption = newDateOptions.findIndex(x => x.value === serviceTime);
+          if (foundServiceTimeOption === -1) {
+            setTime(null);
+          }
         }
       }
       setDate(serviceDateString);
       setTimeToServiceDate(Date.now());
     }
-  }, [serviceTime, optionsForSelectedDate, setDate, setTime, setTimeToServiceDate]);
+  }, [serviceTime, setDate, setTime, setTimeToServiceDate, selectedService, fulfillment, cartBasedLeadTime, currentTime]);
 
   const onSetServiceTime = useCallback((v: number | null) => {
     setTime(v);
@@ -135,86 +142,35 @@ function FulfillmentTimeAndDetailsSection() {
   }, [serviceDate, hasOptionsForSameDay, currentTime, onSetServiceDate]);
 
   return (<>
-    <Grid
-      sx={!hasServiceTerms ? { display: 'none' } : {}}
-      size={{
-        xs: 12,
-        xl: 8
-      }}>
-      <FormControlLabel control={
-        <><Checkbox checked={hasAgreedToTerms} onChange={(_, checked) => { setHasAgreedToTerms(checked); }} />
-        </>} label={<>
-          REQUIRED: Please read the following! By selecting the checkbox, you and all members of your party understand and agree to:
-          <ul>
-            {serviceTerms.map((term, i) => <li key={i}>{term}</li>)}
-          </ul>
-        </>
-        } />
-    </Grid>
-    <Grid
-      sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex', pb: 3, ...(selectedService === null ? { display: 'none' } : {}) }}
-      size={{
-        xs: 12,
-        xl: hasServiceTerms ? 6 : 4,
-        lg: 6
-      }}>
-      <StaticDatePicker
-        displayStaticWrapperAs="desktop"
-        openTo="day"
-        disableHighlightToday={!hasOptionsForSameDay}
-        disablePast
-        minDate={startOfDay(parseISO(nextAvailableDateTime.selectedDate))}
-        maxDate={add(currentTime, { days: 6 })}
-        shouldDisableDate={(date: Date) => !hasOptionsForDate(date)}
-        value={serviceDate ? parseISO(serviceDate) : null}
-        onChange={(v: Date | null) => { onSetServiceDate(v); }}
-      />
-    </Grid>
-    <Grid
-      container
-      sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex', ...(selectedService === null ? { display: 'none' } : {}) }}
-      size={{
-        xs: 12,
-        xl: hasServiceTerms ? 6 : 4,
-        lg: 6
-      }}>
-      <Grid sx={{ pb: 5 }} size={12}>
-        <Autocomplete
-          sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex', width: 300, margin: 'auto' }}
-          openOnFocus
-          disableClearable
-          noOptionsText={"Select an available service date first"}
-          id="service-time"
-          options={Object.values(TimeOptions).map(x => x.value)}
-          getOptionDisabled={o => TimeOptions[o].disabled}
-          isOptionEqualToValue={(o, v) => o === v}
-          getOptionLabel={o => o ? WDateUtils.MinutesToPrintTime(o) : ""}
-          // @ts-expect-error remove once verified this isn't needed
-          value={serviceTime || null}
-          //sx={{ width: 300 }}
-          onChange={(_, v) => { onSetServiceTime(v); }}
-          renderInput={(params) => <TextField {...params} label="Time" error={hasSelectedTimeExpired} helperText={hasSelectedTimeExpired ? "The previously selected service time has expired." : "Please note this time can change depending on what you order. Times are confirmed after orders are sent."} />}
+    <FulfillmentTerms
+      terms={serviceTerms}
+      hasAgreed={hasAgreedToTerms}
+      onAgreeChange={setHasAgreedToTerms}
+    />
+    <FulfillmentDateTimeSelector
+      selectedDate={serviceDate}
+      selectedTime={serviceTime}
+      minDate={startOfDay(parseISO(nextAvailableDateTime.selectedDate))}
+      maxDate={add(currentTime, { days: 6 })}
+      hasOptionsForSameDay={hasOptionsForSameDay}
+      shouldDisableDate={(date: Date) => !hasOptionsForDate(date)}
+      timeOptions={Object.values(TimeOptions)}
+      onDateChange={onSetServiceDate}
+      onTimeChange={onSetServiceTime}
+      hasTimeExpired={hasSelectedTimeExpired}
+      hasServiceTerms={hasServiceTerms}
+      visible={selectedService !== null}
+    >
+      {(serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null) && (
+        <FulfillmentPartySizeSelector
+          partySize={dineInInfo?.partySize ?? null}
+          maxGuests={(serviceServiceMaxGuests ?? 50)}
+          disabled={serviceTime === null}
+          onChange={(v) => { if (v) setDineInInfo({ partySize: v }) }}
         />
-      </Grid>
-      {(serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null) &&
-        (<Grid sx={{ pb: 5 }} size={12}>
-          <Autocomplete
-            sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex', width: 300, margin: 'auto' }}
-            disablePortal
-            openOnFocus
-            disableClearable
-            disabled={serviceTime === null}
-            className="guest-count"
-            options={[...Array<number>((serviceServiceMaxGuests ?? 50) - 1)].map((_, i) => i + 1)}
-            getOptionDisabled={_o => serviceTime === null /*|| !HasSpaceForPartyOf(o, serviceDate, serviceTime)*/}
-            getOptionLabel={o => String(o)}
-            // @ts-expect-error remove once verified this isn't needed
-            value={dineInInfo?.partySize ?? null}
-            onChange={(_, v) => { setDineInInfo({ partySize: v }) }}
-            renderInput={(params) => <TextField {...params} label="Party Size" />}
-          />
-        </Grid>)}
-    </Grid>
+      )}
+    </FulfillmentDateTimeSelector>
+
     {(serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null) &&
       <Grid size={12}>
         <DeliveryInfoForm />
@@ -270,27 +226,11 @@ export default function WFulfillmentStageComponent() {
       <StageTitle>How and when would you like your order?</StageTitle>
       <Separator sx={{ pb: 3 }} />
       <Grid container alignItems="center">
-        <Grid
-          sx={{ pl: 3, pb: 5 }}
-          size={{
-            xs: 12,
-            xl: 4
-          }}>
-          <span>Requested Service:</span>
-          <RadioGroup
-            row
-            onChange={(_e, value: string) => { setService(value); }}
-            value={selectedService}>
-            {fulfillments.map((option) => (
-              <FormControlLabel
-                key={option.value}
-                value={option.value}
-                control={<Radio />}
-                label={option.label}
-              />
-            ))}
-          </RadioGroup>
-        </Grid>
+        <FulfillmentServiceSelector
+          options={fulfillments}
+          selectedService={selectedService}
+          onServiceChange={setService}
+        />
         <FulfillmentTimeAndDetailsSection />
       </Grid>
       {/* maybe move this to the calendar? */}

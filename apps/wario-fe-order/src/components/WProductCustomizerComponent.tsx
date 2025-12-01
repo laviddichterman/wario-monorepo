@@ -28,10 +28,10 @@ import { CustomizerFormControlLabel, Separator, StageTitle, WarioButton } from '
 
 import { useProductMetadataWithCurrentFulfillmentData, useSelectedCartEntry, useSortedVisibleModifiers, useVisibleModifierOptions } from '@/hooks/useDerivedState';
 
-import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
 import { findDuplicateInCart, selectCart, useCartStore } from '@/stores/useCartStore';
 import { selectCategoryId, selectOptionState, selectSelectedWProduct, selectShowAdvanced, useCustomizerStore } from '@/stores/useCustomizerStore';
 import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
+import { useMetricsStore } from '@/stores/useMetricsStore';
 
 import { ModifierOptionTooltip } from './ModifierOptionTooltip';
 import { OrderGuideErrorsComponent, OrderGuideMessagesComponent, OrderGuideWarningsComponent } from './WOrderGuideMessages';
@@ -458,6 +458,7 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
 
 export const WProductCustomizerComponentInner = forwardRef<HTMLDivElement, IProductCustomizerComponentProps & { product: WProduct, categoryId: string }>(({ product, categoryId, suppressGuide, scrollToWhenDone }, ref) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { setTimeToFirstProductIfUnset } = useMetricsStore();
   const catalog = useCatalogSelectors() as ICatalogSelectors;
   const { setShowAdvanced, clearCustomizer } = useCustomizerStore();
   const { addToCart, updateCartQuantity, updateCartProduct, removeFromCart, unlockCartEntry } = useCartStore();

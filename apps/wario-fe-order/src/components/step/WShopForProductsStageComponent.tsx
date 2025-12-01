@@ -15,10 +15,10 @@ import { useCatalogSelectors, useCategoryNameFromCategoryById, usePopulatedSubca
 
 import { useProductHasSelectableModifiersByProductInstanceId, useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '@/hooks/useDerivedState';
 
-import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
 import { findDuplicateInCart, selectCart, useCartStore } from '@/stores/useCartStore';
 import { useCustomizerStore } from '@/stores/useCustomizerStore';
 import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
+import { useMetricsStore } from '@/stores/useMetricsStore';
 
 import { ClickableProductDisplay } from '../WProductComponent';
 
@@ -35,6 +35,8 @@ export interface ShopClickableProductDisplayProps {
 function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCategoryId, setScrollToOnReturn, ...props }: ShopClickableProductDisplayProps & BoxProps) {
   const { productEntry: productEntrySelector, modifierEntry: modiferEntrySelector } = useCatalogSelectors() as ICatalogSelectors;
   const cart = useCartStore(selectCart);
+  const { setTimeToFirstProductIfUnset } = useMetricsStore();
+
   const { addToCart, updateCartQuantity } = useCartStore();
   const customizeProduct = useCustomizerStore((s) => s.customizeProduct);
   const productInstance = useProductInstanceById(productInstanceId);
@@ -65,7 +67,7 @@ function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCate
       }
       setScrollToOnReturn(returnToId);
     }
-  }, [cart, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn, addToCart, updateCartQuantity, customizeProduct]);
+  }, [productInstance, productMetadata, productHasSelectableModifiers, setScrollToOnReturn, returnToId, cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, updateCartQuantity, setTimeToFirstProductIfUnset, addToCart, customizeProduct]);
 
   return productMetadata && <ClickableProductDisplay
     {...props}
