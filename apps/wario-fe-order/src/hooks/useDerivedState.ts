@@ -22,6 +22,11 @@ export function usePropertyFromSelectedFulfillment<K extends keyof FulfillmentCo
   return fulfillment ? fulfillment[key] : null;
 }
 
+export function useSelectedFulfillmentHasServiceTerms() {
+  const terms = usePropertyFromSelectedFulfillment('terms');
+  return useMemo(() => (terms?.length ?? 0) > 0, [terms]);
+}
+
 export function useGroupedAndOrderedCart() {
   const cart = useCartStore(selectCart);
   const catalogSelectors = useCatalogSelectors();

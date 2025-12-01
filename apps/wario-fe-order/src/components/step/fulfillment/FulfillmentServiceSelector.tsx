@@ -28,7 +28,8 @@ export default function FulfillmentServiceSelector({ options, selectedService, o
             value={option.value}
             control={<Radio />}
             label={option.label}
-            disabled={option.disabled}
+          // passing the disabled prop gives react fragment warning
+          // disabled={option.disabled}
           />
         ))}
       </RadioGroup>

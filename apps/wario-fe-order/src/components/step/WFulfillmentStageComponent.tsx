@@ -1,24 +1,23 @@
-import { add, formatISO, parseISO, startOfDay } from 'date-fns';
 import { enqueueSnackbar } from 'notistack';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import Grid from '@mui/material/Grid';
 
 import { FulfillmentType, WDateUtils } from '@wcp/wario-shared';
-import { useFulfillmentById, useFulfillmentMaxGuests, useFulfillments, useFulfillmentService, useServerTime } from '@wcp/wario-ux-shared/query';
+import { useFulfillments, useFulfillmentService } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
-import { useCartBasedLeadTime, useNextAvailableServiceDateTimeForSelectedOrDefaultFulfillment, useOptionsForFulfillmentAndDate, usePropertyFromSelectedFulfillment } from '@/hooks/useDerivedState';
+import { useSelectedFulfillmentHasServiceTerms } from '@/hooks/useDerivedState';
 
-import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillmentStore';
-import { useMetricsStore } from '@/stores/useMetricsStore';
+import DeliveryInfoForm from '@/components/DeliveryValidationForm';
+import FulfillmentPartySizeSelector from '@/components/step/fulfillment/FulfillmentPartySizeSelector';
+
+import { useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { useStepperStore } from '@/stores/useStepperStore';
 
-import DeliveryInfoForm from '../DeliveryValidationForm';
 import { Navigation } from '../Navigation';
 
 import FulfillmentDateTimeSelector from './fulfillment/FulfillmentDateTimeSelector';
-import FulfillmentPartySizeSelector from './fulfillment/FulfillmentPartySizeSelector';
 import FulfillmentServiceSelector from './fulfillment/FulfillmentServiceSelector';
 import FulfillmentTerms from './fulfillment/FulfillmentTerms';
 
@@ -35,149 +34,6 @@ function useSortedVisibleFulfillments() {
   return ServiceOptions;
 }
 
-function useServiceTerms() {
-  const serviceTerms = usePropertyFromSelectedFulfillment('terms');
-  return serviceTerms || [];
-}
-
-function useHasOptionsForSameDay() {
-  const selectedFulfillmentId = useFulfillmentStore(selectSelectedService);
-  const { currentTime } = useServerTime();
-  const options = useOptionsForFulfillmentAndDate(formatISO(currentTime, { representation: 'date' }), selectedFulfillmentId || "");
-  return options.length > 0;
-}
-
-function FulfillmentTimeAndDetailsSection() {
-  const nextAvailableDateTime = useNextAvailableServiceDateTimeForSelectedOrDefaultFulfillment();
-  const { currentTime } = useServerTime();
-  // Use individual selectors to avoid creating new objects on every render
-  const serviceDate = useFulfillmentStore((s) => s.selectedDate);
-  const selectedService = useFulfillmentStore((s) => s.selectedService);
-  const serviceTime = useFulfillmentStore((s) => s.selectedTime);
-  const hasAgreedToTerms = useFulfillmentStore((s) => s.hasAgreedToTerms);
-  const hasSelectedTimeExpired = useFulfillmentStore((s) => s.hasSelectedTimeExpired);
-  const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
-  const setHasAgreedToTerms = useFulfillmentStore((s) => s.setHasAgreedToTerms);
-  const setDate = useFulfillmentStore((s) => s.setDate);
-  const setTime = useFulfillmentStore((s) => s.setTime);
-  const setDineInInfo = useFulfillmentStore((s) => s.setDineInInfo);
-  const setTimeToServiceDate = useMetricsStore((s) => s.setTimeToServiceDate);
-  const setTimeToServiceTime = useMetricsStore((s) => s.setTimeToServiceTime);
-  console.log({ currentTime, serviceDate, serviceTime });
-  const serviceTerms = useServiceTerms();
-  const hasServiceTerms = useMemo(() => serviceTerms.length > 0, [serviceTerms]);
-  const serviceServiceEnum = useFulfillmentService(selectedService);
-  const serviceServiceMaxGuests = useFulfillmentMaxGuests(selectedService);
-
-  // Get the fulfillment config and cart-based lead time for date availability checks
-  const fulfillment = useFulfillmentById(selectedService ?? '');
-  const cartBasedLeadTime = useCartBasedLeadTime();
-
-  // Get options for the currently selected date
-  const optionsForSelectedDate = useOptionsForFulfillmentAndDate(
-    serviceDate || formatISO(currentTime, { representation: 'date' }),
-    selectedService || ""
-  );
-
-  const hasOptionsForSameDay = useHasOptionsForSameDay();
-
-  // Callback to check if a date has available options - uses stable references for inline computation
-  const hasOptionsForDate = useCallback((date: Date): boolean => {
-    if (!selectedService || !fulfillment) return false;
-    const dateStr = formatISO(date, { representation: 'date' });
-    const infoMap = WDateUtils.GetInfoMapForAvailabilityComputation(
-      [fulfillment],
-      dateStr,
-      cartBasedLeadTime
-    );
-    const options = WDateUtils.GetOptionsForDate(infoMap, dateStr, formatISO(currentTime));
-    return options.length > 0;
-  }, [selectedService, fulfillment, cartBasedLeadTime, currentTime]);
-
-  const TimeOptions = useMemo(() => {
-    return optionsForSelectedDate.reduce<{ [index: number]: { value: number; disabled: boolean } }>(
-      (acc, v) => ({ ...acc, [v.value]: v }),
-      {}
-    );
-  }, [optionsForSelectedDate]);
-
-  const onSetServiceDate = useCallback((v: Date | number | null) => {
-    if (v !== null) {
-      const serviceDateString = formatISO(v, { representation: 'date' });
-      // Check if the selected service time is valid in the new service date
-      // Note: optionsForSelectedDate will update on next render with new date
-      if (serviceTime !== null) {
-        if (!selectedService || !fulfillment) {
-          setTime(null);
-        } else {
-          const infoMap = WDateUtils.GetInfoMapForAvailabilityComputation(
-            [fulfillment],
-            serviceDateString,
-            cartBasedLeadTime
-          );
-          const newDateOptions = WDateUtils.GetOptionsForDate(infoMap, serviceDateString, formatISO(currentTime));
-          const foundServiceTimeOption = newDateOptions.findIndex(x => x.value === serviceTime);
-          if (foundServiceTimeOption === -1) {
-            setTime(null);
-          }
-        }
-      }
-      setDate(serviceDateString);
-      setTimeToServiceDate(Date.now());
-    }
-  }, [serviceTime, setDate, setTime, setTimeToServiceDate, selectedService, fulfillment, cartBasedLeadTime, currentTime]);
-
-  const onSetServiceTime = useCallback((v: number | null) => {
-    setTime(v);
-    if (v !== null) {
-      setTimeToServiceTime(Date.now());
-    }
-  }, [setTime, setTimeToServiceTime]);
-
-  // If the service date is null and there are options for the same day, set the service date to the current time
-  useEffect(() => {
-    if (serviceDate === null && hasOptionsForSameDay) {
-      onSetServiceDate(currentTime);
-    }
-  }, [serviceDate, hasOptionsForSameDay, currentTime, onSetServiceDate]);
-
-  return (<>
-    <FulfillmentTerms
-      terms={serviceTerms}
-      hasAgreed={hasAgreedToTerms}
-      onAgreeChange={setHasAgreedToTerms}
-    />
-    <FulfillmentDateTimeSelector
-      selectedDate={serviceDate}
-      selectedTime={serviceTime}
-      minDate={startOfDay(parseISO(nextAvailableDateTime.selectedDate))}
-      maxDate={add(currentTime, { days: 6 })}
-      hasOptionsForSameDay={hasOptionsForSameDay}
-      shouldDisableDate={(date: Date) => !hasOptionsForDate(date)}
-      timeOptions={Object.values(TimeOptions)}
-      onDateChange={onSetServiceDate}
-      onTimeChange={onSetServiceTime}
-      hasTimeExpired={hasSelectedTimeExpired}
-      hasServiceTerms={hasServiceTerms}
-      visible={selectedService !== null}
-    >
-      {(serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null) && (
-        <FulfillmentPartySizeSelector
-          partySize={dineInInfo?.partySize ?? null}
-          maxGuests={(serviceServiceMaxGuests ?? 50)}
-          disabled={serviceTime === null}
-          onChange={(v) => { if (v) setDineInInfo({ partySize: v }) }}
-        />
-      )}
-    </FulfillmentDateTimeSelector>
-
-    {(serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null) &&
-      <Grid size={12}>
-        <DeliveryInfoForm />
-      </Grid>}
-  </>);
-}
-
 export default function WFulfillmentStageComponent() {
   const nextStage = useStepperStore((s) => s.nextStage);
   const fulfillments = useSortedVisibleFulfillments();
@@ -190,8 +46,7 @@ export default function WFulfillmentStageComponent() {
   const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
   const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
   const setService = useFulfillmentStore((s) => s.setService);
-  const serviceTerms = useServiceTerms();
-  const hasServiceTerms = useMemo(() => serviceTerms.length > 0, [serviceTerms]);
+  const hasServiceTerms = useSelectedFulfillmentHasServiceTerms();
   const serviceServiceEnum = useFulfillmentService(selectedService);
 
   const hasAgreedToTermsIfAny = useMemo(() => (!hasServiceTerms || hasAgreedToTerms), [hasServiceTerms, hasAgreedToTerms]);
@@ -230,7 +85,17 @@ export default function WFulfillmentStageComponent() {
           selectedService={selectedService}
           onServiceChange={setService}
         />
-        <FulfillmentTimeAndDetailsSection />
+        <FulfillmentTerms />
+        <FulfillmentDateTimeSelector />
+        {(serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null) && (
+          <FulfillmentPartySizeSelector
+          />
+        )}
+
+        {(serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null) &&
+          <Grid size={12}>
+            <DeliveryInfoForm />
+          </Grid>}
       </Grid>
       {/* maybe move this to the calendar? */}
       {hasSelectedDateExpired && <ErrorResponseOutput>The previously selected service date has expired.</ErrorResponseOutput>}

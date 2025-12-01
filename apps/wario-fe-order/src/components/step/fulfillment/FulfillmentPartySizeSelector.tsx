@@ -2,14 +2,24 @@ import Autocomplete from '@mui/material/Autocomplete';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 
-interface FulfillmentPartySizeSelectorProps {
-  partySize: number | null;
-  maxGuests: number;
-  disabled: boolean;
-  onChange: (size: number | null) => void;
-}
+import { FulfillmentType } from '@wcp/wario-shared';
+import { useFulfillmentMaxGuests, useFulfillmentService } from '@wcp/wario-ux-shared/query';
 
-export default function FulfillmentPartySizeSelector({ partySize, maxGuests, disabled, onChange }: FulfillmentPartySizeSelectorProps) {
+import { useFulfillmentStore } from '@/stores/useFulfillmentStore';
+
+export default function FulfillmentPartySizeSelector() {
+  const selectedService = useFulfillmentStore((s) => s.selectedService);
+  const serviceTime = useFulfillmentStore((s) => s.selectedTime);
+  const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
+  const setDineInInfo = useFulfillmentStore((s) => s.setDineInInfo);
+  const serviceType = useFulfillmentService(selectedService);
+  const maxGuests = useFulfillmentMaxGuests(selectedService) ?? 50;
+
+  // Only render for dine-in service
+  if (serviceType !== FulfillmentType.DineIn) {
+    return null;
+  }
+
   return (
     <Grid sx={{ pb: 5 }} size={12}>
       <Autocomplete
@@ -17,13 +27,13 @@ export default function FulfillmentPartySizeSelector({ partySize, maxGuests, dis
         disablePortal
         openOnFocus
         disableClearable
-        disabled={disabled}
+        disabled={serviceTime === null}
         className="guest-count"
         options={[...Array<number>(maxGuests - 1)].map((_, i) => i + 1)}
         getOptionLabel={o => String(o)}
         // @ts-expect-error needed to keep the component controlled. We get "MUI: A component is changing the uncontrolled value state of Autocomplete to be controlled." if switching to || undefined
-        value={partySize || null}
-        onChange={(_, v) => { onChange(v); }}
+        value={dineInInfo?.partySize ?? null}
+        onChange={(_, v) => { if (v) setDineInInfo({ partySize: v }); }}
         renderInput={(params) => <TextField {...params} label="Party Size" />}
       />
     </Grid>
