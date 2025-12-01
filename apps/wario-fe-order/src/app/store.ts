@@ -1,9 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import { ListeningMiddleware } from "./slices/ListeningMiddleware";
-import WFulfillmentReducer from './slices/WFulfillmentSlice';
-import WMetricsReducer from './slices/WMetricsSlice';
-import WPaymentReducer from "./slices/WPaymentSlice";
 
 /**
  * Redux store configuration.
@@ -19,9 +16,6 @@ import WPaymentReducer from "./slices/WPaymentSlice";
  */
 
 export const RootReducer = combineReducers({
-  fulfillment: WFulfillmentReducer,
-  metrics: WMetricsReducer,
-  payment: WPaymentReducer,
 });
 
 export const store = configureStore({
