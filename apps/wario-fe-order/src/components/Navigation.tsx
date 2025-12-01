@@ -9,7 +9,8 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { WarioButton } from '@wcp/wario-ux-shared/styled';
 
-import { NUM_STAGES, useStepperStore } from '@/stores/useStepperStore';
+import { NUM_STAGES } from '@/config';
+import { useStepperStore } from '@/stores/useStepperStore';
 
 export interface NavigationProps {
   hasBack?: boolean;

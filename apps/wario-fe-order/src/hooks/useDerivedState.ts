@@ -148,10 +148,10 @@ export function useSelectedCartEntry() {
 
 export function useCartBasedLeadTime() {
   const cart = useCartStore(selectCart);
-  const { productEntry: productsSelector } = useCatalogSelectors() as ICatalogSelectors;
+  const catalogSelectors = useCatalogSelectors();
   return useMemo(() => {
-    return DetermineCartBasedLeadTime(cart.map(x => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })), productsSelector);
-  }, [cart, productsSelector]);
+    return catalogSelectors ? DetermineCartBasedLeadTime(cart.map(x => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })), catalogSelectors.productEntry) : 0;
+  }, [cart, catalogSelectors]);
 }
 
 export function useComputeAvailabilityForFulfillmentDateAndCart(selectedDate: string, fulfillmentId: string) {

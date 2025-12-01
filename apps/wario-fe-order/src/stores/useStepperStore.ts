@@ -1,16 +1,13 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-export enum STEPPER_STAGE_ENUM {
-  TIMING,
-  ADD_MAIN_PRODUCT,
-  ADD_SUPP_PRODUCT,
-  CUSTOMER_INFO,
-  REVIEW_ORDER,
-  CHECK_OUT
-}
+import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 
-export const NUM_STAGES = Object.keys(STEPPER_STAGE_ENUM).length / 2;
+import { STEPPER_STAGE_ENUM } from '@/config';
+
+import { useMetricsStore } from './useMetricsStore';
+
+
 
 interface StepperState {
   stage: STEPPER_STAGE_ENUM;
@@ -26,14 +23,29 @@ export type StepperStore = StepperState & StepperActions;
 
 export const useStepperStore = create<StepperStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       // State
       stage: STEPPER_STAGE_ENUM.TIMING,
 
       // Actions
-      setStage: (stage) => { set({ stage }, false, 'setStage'); },
-      nextStage: () => { set((state) => ({ stage: state.stage + 1 }), false, 'nextStage'); },
-      backStage: () => { set((state) => ({ stage: state.stage - 1 }), false, 'backStage'); },
+      setStage: (stage) => {
+        set({ stage }, false, 'setStage');
+        // Scroll to order element on stage change
+        scrollToIdOffsetAfterDelay('WARIO_order', 500);
+      },
+      nextStage: () => {
+        const previousStage = get().stage;
+        set((state) => ({ stage: state.stage + 1 }), false, 'nextStage');
+        // Record stage progression metrics
+        useMetricsStore.getState().setTimeToStage(previousStage, Date.now());
+        // Scroll to order element on stage change
+        scrollToIdOffsetAfterDelay('WARIO_order', 500);
+      },
+      backStage: () => {
+        set((state) => ({ stage: state.stage - 1 }), false, 'backStage');
+        // Scroll to order element on stage change
+        scrollToIdOffsetAfterDelay('WARIO_order', 500);
+      },
     }),
     { name: 'stepper-store' }
   )

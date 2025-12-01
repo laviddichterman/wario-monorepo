@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 
 import { type Metrics } from '@wcp/wario-shared';
 
-import { NUM_STAGES, type STEPPER_STAGE_ENUM } from './useStepperStore';
+import { NUM_STAGES, type STEPPER_STAGE_ENUM } from '@/config';
 
 type MetricsState = Omit<Metrics, 'pageLoadTime'>;
 
@@ -64,7 +64,7 @@ export const useMetricsStore = create<MetricsStore>()(
         set(
           (state) => {
             const newTimeToStage = [...state.timeToStage];
-            newTimeToStage[stage] = ticks;
+            newTimeToStage[stage] = newTimeToStage[stage] || ticks;
             return { timeToStage: newTimeToStage };
           },
           false,
