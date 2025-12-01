@@ -22,33 +22,30 @@ import { useServerTimeQuery } from './useServerTimeQuery';
  */
 export function useServerTime(): TimeSyncState {
   const { data: serverTimeData } = useServerTimeQuery();
-  const [timeSyncState, setTimeSyncState] = useState<TimeSyncState>({
-    pageLoadTime: 0,
-    pageLoadTimeLocal: 0,
-    roughTicksSinceLoad: 0,
-    currentTime: 0,
-    currentLocalTime: 0,
-    serverTime: null,
-  });
-
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Initialize time sync when server time is first received
-  useEffect(() => {
-    if (serverTimeData && !timeSyncState.serverTime) {
+  const [timeSyncState, setTimeSyncState] = useState<TimeSyncState>(() => {
+    if (serverTimeData) {
       const pageLoadTime = parseISO(serverTimeData.time).valueOf();
       const pageLoadTimeLocal = Date.now();
-
-      setTimeSyncState({
+      return {
         pageLoadTime,
         pageLoadTimeLocal,
         roughTicksSinceLoad: 0,
         currentTime: pageLoadTime,
         currentLocalTime: pageLoadTimeLocal,
         serverTime: serverTimeData,
-      });
+      };
     }
-  }, [serverTimeData, timeSyncState.serverTime]);
+    return {
+      pageLoadTime: 0,
+      pageLoadTimeLocal: 0,
+      roughTicksSinceLoad: 0,
+      currentTime: Date.now(),
+      currentLocalTime: Date.now(),
+      serverTime: null,
+    };
+  });
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update current time estimate
   const updateCurrentTime = useCallback(() => {

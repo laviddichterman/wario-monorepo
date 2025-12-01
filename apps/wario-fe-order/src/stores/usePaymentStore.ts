@@ -23,8 +23,6 @@ export interface PaymentState {
   specialInstructions: string | null;
   storeCreditInput: string;
   squareTokenErrors: Square.TokenError[];
-  /** Pending Square payment token to be processed */
-  pendingSquareToken: string | null;
 }
 
 interface PaymentActions {
@@ -38,8 +36,6 @@ interface PaymentActions {
 
   // Square
   setSquareTokenizationErrors: (errors: Square.TokenError[]) => void;
-  /** Set a pending Square token to trigger order submission */
-  setPendingSquareToken: (token: string | null) => void;
 
   // Special Instructions
   setSpecialInstructions: (instructions: string) => void;
@@ -59,7 +55,6 @@ const initialState: PaymentState = {
   acknowledgeInstructionsDialogue: false,
   specialInstructions: null,
   storeCreditInput: '',
-  pendingSquareToken: null,
 };
 
 export const usePaymentStore = create<PaymentStore>()(
@@ -104,10 +99,6 @@ export const usePaymentStore = create<PaymentStore>()(
         set({ squareTokenErrors: errors }, false, 'setSquareTokenizationErrors');
       },
 
-      setPendingSquareToken: (token) => {
-        set({ pendingSquareToken: token }, false, 'setPendingSquareToken');
-      },
-
       setSpecialInstructions: (instructions) => {
         set({ specialInstructions: instructions }, false, 'setSpecialInstructions');
       },
@@ -127,7 +118,6 @@ export const usePaymentStore = create<PaymentStore>()(
         set(
           {
             squareTokenErrors: [],
-            pendingSquareToken: null,
           },
           false,
           'resetSubmitState'
