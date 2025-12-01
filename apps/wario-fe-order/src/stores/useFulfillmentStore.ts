@@ -40,6 +40,8 @@ export interface FulfillmentState
   hasSelectedDateExpired: boolean;
   hasAgreedToTerms: boolean;
   deliveryValidationStatus: DeliveryValidationStatus;
+  /** Cached computed service date/time to avoid creating new Date objects */
+  serviceDateTime: Date | null;
 }
 
 interface FulfillmentActions {
@@ -67,6 +69,7 @@ const initialState: FulfillmentState = {
   deliveryInfo: null,
   hasAgreedToTerms: false,
   deliveryValidationStatus: 'IDLE',
+  serviceDateTime: null,
 };
 
 export const useFulfillmentStore = create<FulfillmentStore>()(
@@ -87,6 +90,7 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
               deliveryInfo: null,
               dineInInfo: null,
               selectedService: service,
+              serviceDateTime: null,
             },
             false,
             'setService'
@@ -96,10 +100,17 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
 
       setDate: (date) => {
         set(
-          (state) => ({
-            selectedDate: date,
-            hasSelectedDateExpired: state.hasSelectedDateExpired && date === null,
-          }),
+          (state) => {
+            const serviceDateTime =
+              date !== null && state.selectedTime !== null
+                ? WDateUtils.ComputeServiceDateTime({ selectedDate: date, selectedTime: state.selectedTime })
+                : null;
+            return {
+              selectedDate: date,
+              hasSelectedDateExpired: state.hasSelectedDateExpired && date === null,
+              serviceDateTime,
+            };
+          },
           false,
           'setDate'
         );
@@ -107,10 +118,17 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
 
       setTime: (time) => {
         set(
-          (state) => ({
-            selectedTime: time,
-            hasSelectedTimeExpired: state.hasSelectedTimeExpired && time === null,
-          }),
+          (state) => {
+            const serviceDateTime =
+              state.selectedDate !== null && time !== null
+                ? WDateUtils.ComputeServiceDateTime({ selectedDate: state.selectedDate, selectedTime: time })
+                : null;
+            return {
+              selectedTime: time,
+              hasSelectedTimeExpired: state.hasSelectedTimeExpired && time === null,
+              serviceDateTime,
+            };
+          },
           false,
           'setTime'
         );
@@ -149,17 +167,7 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
 );
 
 // Selectors
-export const selectFulfillmentState = (state: FulfillmentStore): FulfillmentState => ({
-  hasSelectedTimeExpired: state.hasSelectedTimeExpired,
-  hasSelectedDateExpired: state.hasSelectedDateExpired,
-  selectedService: state.selectedService,
-  selectedDate: state.selectedDate,
-  selectedTime: state.selectedTime,
-  dineInInfo: state.dineInInfo,
-  deliveryInfo: state.deliveryInfo,
-  hasAgreedToTerms: state.hasAgreedToTerms,
-  deliveryValidationStatus: state.deliveryValidationStatus,
-});
+
 
 export const selectSelectedService = (state: FulfillmentStore) => state.selectedService;
 export const selectSelectedDate = (state: FulfillmentStore) => state.selectedDate;
@@ -175,11 +183,7 @@ export const selectHasSelectedDateExpired = (state: FulfillmentStore) =>
   state.hasSelectedDateExpired;
 
 /**
- * Computes the service date/time from selected date and time
+ * Returns the cached service date/time.
+ * The Date object is computed and cached in state when selectedDate or selectedTime changes.
  */
-export const selectServiceDateTime = (state: FulfillmentStore) => {
-  const { selectedDate, selectedTime } = state;
-  return selectedDate !== null && selectedTime !== null
-    ? WDateUtils.ComputeServiceDateTime({ selectedDate, selectedTime })
-    : null;
-};
+export const selectServiceDateTime = (state: FulfillmentStore) => state.serviceDateTime;

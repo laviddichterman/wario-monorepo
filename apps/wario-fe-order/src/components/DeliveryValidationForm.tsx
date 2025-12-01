@@ -12,12 +12,12 @@ import { ErrorResponseOutput, OkResponseOutput } from "@wcp/wario-ux-shared/styl
 
 import axios from "@/utils/axios";
 
-import { deliveryAddressSchema, useFulfillmentStore } from "@/stores/useFulfillmentStore";
+import { deliveryAddressSchema, selectDeliveryInfo, useFulfillmentStore } from "@/stores/useFulfillmentStore";
 
 
 
 function useDeliveryInfoForm() {
-  const { deliveryInfo } = useFulfillmentStore();
+  const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
   const useFormApi = useForm<DeliveryInfoFormData>({
     defaultValues: {
       address: deliveryInfo?.address ?? "",
@@ -34,7 +34,8 @@ function useDeliveryInfoForm() {
 
 export default function DeliveryInfoForm() {
   const validateDeliveryAddressMutation = useValidateDeliveryAddressMutation({ axiosInstance: axios });
-  const { setDeliveryInfo, deliveryInfo } = useFulfillmentStore();
+  const setDeliveryInfo = useFulfillmentStore((s) => s.setDeliveryInfo);
+  const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
   const DELIVERY_LINK = useDeliveryAreaLink() as string;
   const deliveryForm = useDeliveryInfoForm();
   const { handleSubmit, reset, formState: { isValid } } = deliveryForm;

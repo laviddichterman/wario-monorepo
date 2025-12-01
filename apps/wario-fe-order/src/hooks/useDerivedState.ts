@@ -1,12 +1,13 @@
 import { formatISO } from "date-fns/formatISO";
 import { useMemo } from "react";
 
-import { type CatalogModifierEntry, ComputeCategoryTreeIdList, ComputeProductCategoryMatchCount, CURRENCY, DetermineCartBasedLeadTime, type FulfillmentConfig, GetNextAvailableServiceDate, GroupAndOrderCart, type ICatalogSelectors, type IProduct, type IProductInstance, IsModifierTypeVisible, type MetadataModifierMap, type ProductModifierEntry, SortAndFilterModifierOptions, WDateUtils, type WProductMetadata } from "@wcp/wario-shared";
+import { type CatalogModifierEntry, ComputeCategoryTreeIdList, ComputeProductCategoryMatchCount, CURRENCY, DetermineCartBasedLeadTime, type FulfillmentConfig, GetNextAvailableServiceDate, GroupAndOrderCart, type IProductInstance, IsModifierTypeVisible, type MetadataModifierMap, type ProductModifierEntry, SortAndFilterModifierOptions, WDateUtils } from "@wcp/wario-shared";
 import { useAutoGratutityThreshold, useCatalogSelectors, useDefaultFulfillmentId, useFulfillmentById, useFulfillmentMainCategoryId, useProductInstanceById, useProductMetadata, useServerTime, useValueFromFulfillmentById, useValueFromProductEntryById } from "@wcp/wario-ux-shared/query";
 
 import { selectCart, selectCartEntry, useCartStore } from "@/stores/useCartStore";
 import { selectCartId, useCustomizerStore } from "@/stores/useCustomizerStore";
 import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from "@/stores/useFulfillmentStore";
+import { usePaymentStore } from "@/stores/usePaymentStore";
 
 
 
@@ -23,28 +24,35 @@ export function usePropertyFromSelectedFulfillment<K extends keyof FulfillmentCo
 
 export function useGroupedAndOrderedCart() {
   const cart = useCartStore(selectCart);
-  const { category } = useCatalogSelectors() as ICatalogSelectors;
-  return GroupAndOrderCart(cart, category);
+  const catalogSelectors = useCatalogSelectors();
+  return useMemo(() => {
+    if (!catalogSelectors) return [];
+    return GroupAndOrderCart(cart, catalogSelectors.category);
+  }, [cart, catalogSelectors]);
 }
 
 export function useSelectableModifiers(mMap: MetadataModifierMap) {
-  const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
-  const mods = useMemo(() => Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-    const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
-    return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: v } : acc;
-  }, {}), [mMap, modifierTypeSelector]);
-  return mods;
+  const catalogSelectors = useCatalogSelectors();
+  return useMemo(() => {
+    if (!catalogSelectors) return {};
+    return Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
+      const modifierEntry = catalogSelectors.modifierEntry(k) as CatalogModifierEntry;
+      return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, [k]: v } : acc;
+    }, {});
+  }, [mMap, catalogSelectors]);
 }
 
 export function useHasSelectableModifiers(mMap: MetadataModifierMap) {
   const selectableModifiers = useSelectableModifiers(mMap);
-  return Object.values(selectableModifiers).length > 0;
+  return useMemo(() => Object.keys(selectableModifiers).length > 0, [selectableModifiers]);
 }
 
 export function useMainCategoryTreeIdList(categoryId: string) {
-  const { category: categorySelector } = useCatalogSelectors() as ICatalogSelectors;
-  const categoryTreeIdList = useMemo(() => ComputeCategoryTreeIdList(categoryId, (id: string) => categorySelector(id)), [categoryId, categorySelector]);
-  return categoryTreeIdList;
+  const catalogSelectors = useCatalogSelectors();
+  return useMemo(() => {
+    if (!catalogSelectors || !categoryId) return [];
+    return ComputeCategoryTreeIdList(categoryId, (id: string) => catalogSelectors.category(id));
+  }, [categoryId, catalogSelectors]);
 }
 
 /** Computes the number of products in the cart that are in the main category tree */
@@ -61,10 +69,12 @@ export function useMainProductCategoryCount(fulfillmentId: string) {
 export function useIsAutogratuityEnabledByFulfillmentId(fulfillmentId: string) {
   const autoGratutityThreshold = useAutoGratutityThreshold() as number;
   const mainProductCategoryCount = useMainProductCategoryCount(fulfillmentId);
-  const { deliveryInfo, dineInInfo } = useFulfillmentStore();
-  const specialInstructions = "0";// useFulfillmentStore(s => s.specialInstructions);
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  return deliveryInfo !== null || dineInInfo !== null || mainProductCategoryCount >= autoGratutityThreshold || (specialInstructions && specialInstructions.length > 20);
+  const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
+  const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
+  const specialInstructions = usePaymentStore(s => s.specialInstructions);
+  return useMemo(() => {
+    return deliveryInfo !== null || dineInInfo !== null || mainProductCategoryCount >= autoGratutityThreshold || (specialInstructions && specialInstructions.length > 20);
+  }, [deliveryInfo, dineInInfo, mainProductCategoryCount, autoGratutityThreshold, specialInstructions]);
 }
 
 
@@ -79,31 +89,34 @@ export function useProductMetadataWithCurrentFulfillmentData(productId: string, 
 }
 
 export function useVisibleModifierOptions(productId: string, modifiers: ProductModifierEntry[], mtId: string) {
-  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers) as WProductMetadata;
-  const { modifierEntry: modifierTypeSelector, option: modifierOptionSelector } = useCatalogSelectors() as ICatalogSelectors;
-  const modifierTypeEntry = modifierTypeSelector(mtId) as CatalogModifierEntry;
+  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers);
+  const catalogSelectors = useCatalogSelectors();
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
 
   return useMemo(() => {
-    return SortAndFilterModifierOptions(metadata, modifierTypeEntry, modifierOptionSelector, serviceDateTime);
-  }, [metadata, modifierTypeEntry, modifierOptionSelector, serviceDateTime]);
+    if (!catalogSelectors || !metadata) return [];
+    const modifierTypeEntry = catalogSelectors.modifierEntry(mtId) as CatalogModifierEntry;
+    return SortAndFilterModifierOptions(metadata, modifierTypeEntry, catalogSelectors.option, serviceDateTime);
+  }, [metadata, mtId, catalogSelectors, serviceDateTime]);
 }
 
 
 export function useSortedVisibleModifiers(productId: string, modifiers: ProductModifierEntry[]) {
   const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
-  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers) as WProductMetadata;
-  const productType = useValueFromProductEntryById(productId, "product") as IProduct;
-  const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
+  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers);
+  const productType = useValueFromProductEntryById(productId, "product");
+  const catalogSelectors = useCatalogSelectors();
 
   return useMemo(() => {
+    if (!productType || !metadata || !catalogSelectors) return [];
     return productType.modifiers
       .filter(x => x.serviceDisable.indexOf(fulfillmentId) === -1)
-      .map(x => { return { entry: modifierTypeSelector(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] } })
-      .filter(x => IsModifierTypeVisible(x.entry?.modifierType, x.md.has_selectable))
+      .map(x => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- entry can be undefined at runtime
+      .filter(x => x.entry && IsModifierTypeVisible(x.entry.modifierType, x.md.has_selectable))
       .sort((a, b) => (a.entry as CatalogModifierEntry).modifierType.ordinal - (b.entry as CatalogModifierEntry).modifierType.ordinal)
       .map(x => x.pm)
-  }, [productType, fulfillmentId, metadata, modifierTypeSelector]);
+  }, [productType, fulfillmentId, metadata, catalogSelectors]);
 }
 
 /**
@@ -120,24 +133,32 @@ export function useProductHasSelectableModifiersByProductInstanceId(productInsta
 }
 
 export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSelectable: boolean) {
-  const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
+  const catalogSelectors = useCatalogSelectors();
   return useMemo(() => {
-    const modifierTypeEntry = modifierTypeSelector(modifierTypeId);
-    return !modifierTypeEntry || !modifierTypeEntry.modifierType.displayFlags.hidden &&
+    if (!catalogSelectors) return false;
+    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierTypeEntry can be undefined at runtime
+    if (!modifierTypeEntry) return false;
+    return !modifierTypeEntry.modifierType.displayFlags.hidden &&
       (!modifierTypeEntry.modifierType.displayFlags.omit_section_if_no_available_options || hasSelectable);
-  }, [modifierTypeId, hasSelectable, modifierTypeSelector]);
+  }, [modifierTypeId, hasSelectable, catalogSelectors]);
 }
 
 export function useSelectedServiceTimeDisplayString() {
-  const { selectedTime, selectedService } = useFulfillmentStore();
+  const selectedTime = useFulfillmentStore((s) => s.selectedTime);
+  const selectedService = useFulfillmentStore((s) => s.selectedService);
   const minDuration = useValueFromFulfillmentById(selectedService as string, 'minDuration');
-  return minDuration !== null && selectedService !== null && selectedTime !== null ?
-    (minDuration === 0 ? WDateUtils.MinutesToPrintTime(selectedTime) : `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}`) : "";
+  return useMemo(() => {
+    if (minDuration === null || selectedService === null || selectedTime === null) return "";
+    return minDuration === 0
+      ? WDateUtils.MinutesToPrintTime(selectedTime)
+      : `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}`;
+  }, [minDuration, selectedService, selectedTime]);
 }
 
 export function useComputeServiceFee() {
   //partialOrder === null || serviceFeeFunctionId === null ? 0 : OrderFunctional.ProcessOrderInstanceFunction(partialOrder, catalog.orderInstanceFunctions[serviceFeeFunctionId], catalog)
-  return ({ amount: 0, currency: CURRENCY.USD });
+  return useMemo(() => ({ amount: 0, currency: CURRENCY.USD }), []);
 }
 
 export function useSelectedCartEntry() {

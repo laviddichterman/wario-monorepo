@@ -50,19 +50,19 @@ function useHasOptionsForSameDay() {
 function FulfillmentTimeAndDetailsSection() {
   const nextAvailableDateTime = useNextAvailableServiceDateTimeForSelectedOrDefaultFulfillment();
   const { currentTime } = useServerTime();
-  const {
-    selectedDate: serviceDate,
-    selectedService,
-    selectedTime: serviceTime,
-    hasAgreedToTerms,
-    hasSelectedTimeExpired,
-    dineInInfo,
-    setHasAgreedToTerms,
-    setDate,
-    setTime,
-    setDineInInfo
-  } = useFulfillmentStore();
-  const { setTimeToServiceDate, setTimeToServiceTime } = useMetricsStore();
+  // Use individual selectors to avoid creating new objects on every render
+  const serviceDate = useFulfillmentStore((s) => s.selectedDate);
+  const selectedService = useFulfillmentStore((s) => s.selectedService);
+  const serviceTime = useFulfillmentStore((s) => s.selectedTime);
+  const hasAgreedToTerms = useFulfillmentStore((s) => s.hasAgreedToTerms);
+  const hasSelectedTimeExpired = useFulfillmentStore((s) => s.hasSelectedTimeExpired);
+  const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
+  const setHasAgreedToTerms = useFulfillmentStore((s) => s.setHasAgreedToTerms);
+  const setDate = useFulfillmentStore((s) => s.setDate);
+  const setTime = useFulfillmentStore((s) => s.setTime);
+  const setDineInInfo = useFulfillmentStore((s) => s.setDineInInfo);
+  const setTimeToServiceDate = useMetricsStore((s) => s.setTimeToServiceDate);
+  const setTimeToServiceTime = useMetricsStore((s) => s.setTimeToServiceTime);
   console.log({ currentTime, serviceDate, serviceTime });
   const serviceTerms = useServiceTerms();
   const hasServiceTerms = useMemo(() => serviceTerms.length > 0, [serviceTerms]);
@@ -181,16 +181,15 @@ function FulfillmentTimeAndDetailsSection() {
 export default function WFulfillmentStageComponent() {
   const nextStage = useStepperStore((s) => s.nextStage);
   const fulfillments = useSortedVisibleFulfillments();
-  const {
-    selectedDate: serviceDate,
-    selectedService,
-    selectedTime: serviceTime,
-    hasAgreedToTerms,
-    hasSelectedDateExpired,
-    dineInInfo,
-    deliveryInfo,
-    setService
-  } = useFulfillmentStore();
+  // Use individual selectors to avoid creating new objects on every render
+  const serviceDate = useFulfillmentStore((s) => s.selectedDate);
+  const selectedService = useFulfillmentStore((s) => s.selectedService);
+  const serviceTime = useFulfillmentStore((s) => s.selectedTime);
+  const hasAgreedToTerms = useFulfillmentStore((s) => s.hasAgreedToTerms);
+  const hasSelectedDateExpired = useFulfillmentStore((s) => s.hasSelectedDateExpired);
+  const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
+  const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
+  const setService = useFulfillmentStore((s) => s.setService);
   const serviceTerms = useServiceTerms();
   const hasServiceTerms = useMemo(() => serviceTerms.length > 0, [serviceTerms]);
   const serviceServiceEnum = useFulfillmentService(selectedService);

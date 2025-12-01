@@ -9,7 +9,7 @@ import { themeOptions } from "@wcp/wario-fe-ux-shared";
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import { MotionLazy } from '@wcp/wario-ux-shared/containers';
-import { useIsSocketDataLoaded, useServerTime } from '@wcp/wario-ux-shared/query';
+import { useIsSocketDataLoaded } from '@wcp/wario-ux-shared/query';
 
 import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
 

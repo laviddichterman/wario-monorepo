@@ -103,15 +103,3 @@ export const selectNumTimeBumps = (state: MetricsStore) => state.numTimeBumps;
 export const selectNumTipAdjusts = (state: MetricsStore) => state.numTipAdjusts;
 export const selectNumTipFixed = (state: MetricsStore) => state.numTipFixed;
 
-// Composite selector for submission (requires pageLoadTime from TanStack Query)
-export const selectMetricsState = (state: MetricsStore): MetricsState => ({
-  submitTime: state.submitTime,
-  useragent: state.useragent,
-  timeToServiceDate: state.timeToServiceDate,
-  timeToServiceTime: state.timeToServiceTime,
-  timeToFirstProduct: state.timeToFirstProduct,
-  timeToStage: state.timeToStage,
-  numTimeBumps: state.numTimeBumps,
-  numTipAdjusts: state.numTipAdjusts,
-  numTipFixed: state.numTipFixed,
-});

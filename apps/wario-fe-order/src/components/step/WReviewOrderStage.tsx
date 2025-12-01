@@ -31,21 +31,23 @@ const REQUEST_SOONER = "It looks like you're trying to ask us to make your pizza
 const REQUEST_RANCH = "Please look at our menu before requesting ranch.";
 
 export default function WReviewOrderStage() {
-  const { nextStage, backStage } = useStepperStore();
+  const nextStage = useStepperStore((s) => s.nextStage);
+  const backStage = useStepperStore((s) => s.backStage);
   const { givenName, familyName, mobileNum, email } = useCustomerInfoStore(selectCustomerInfo);
-  const { dineInInfo, deliveryInfo } = useFulfillmentStore();
+  // Use individual selectors to avoid creating new objects on every render
+  const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
+  const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
   const REQUEST_HALF = useMessageRequestHalf();
   const REQUEST_SLICING = useMessageRequestSlicing();
   const REQUEST_VEGAN = useMessageRequestVegan();
   const selectedServiceDisplayName = usePropertyFromSelectedFulfillment('displayName');
   const serviceTimeDisplayString = useSelectedServiceTimeDisplayString();
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime);
-  const {
-    specialInstructions,
-    acknowledgeInstructionsDialogue,
-    setSpecialInstructions,
-    setAcknowledgeInstructionsDialogue
-  } = usePaymentStore();
+  // Use individual selectors for payment store
+  const specialInstructions = usePaymentStore((s) => s.specialInstructions);
+  const acknowledgeInstructionsDialogue = usePaymentStore((s) => s.acknowledgeInstructionsDialogue);
+  const setSpecialInstructions = usePaymentStore((s) => s.setSpecialInstructions);
+  const setAcknowledgeInstructionsDialogue = usePaymentStore((s) => s.setAcknowledgeInstructionsDialogue);
   const [disableSubmit, setDisableSubmit] = useState(false); // switch to useMemo
   const [specialInstructionsResponses, setSpecialInstructionsResponses] = useState<{ level: number, text: string }[]>([]);
   useEffect(() => {

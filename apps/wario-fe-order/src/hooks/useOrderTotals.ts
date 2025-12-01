@@ -232,7 +232,7 @@ export function useOrderTotals() {
   const paymentAmounts = usePaymentAmountsApplied();
   const balance = useBalanceAfterPayments();
 
-  return {
+  return useMemo(() => ({
     cartSubtotal,
     serviceFee,
     subtotalPreDiscount,
@@ -246,5 +246,19 @@ export function useOrderTotals() {
     paymentsApplied,
     paymentAmounts,
     balance,
-  };
+  }), [
+    cartSubtotal,
+    serviceFee,
+    subtotalPreDiscount,
+    discountsApplied,
+    discountsAmount,
+    subtotalAfterDiscount,
+    taxAmount,
+    tipBasis,
+    tipValue,
+    total,
+    paymentsApplied,
+    paymentAmounts,
+    balance,
+  ]);
 }

@@ -144,8 +144,18 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   const fulfillmentId = useFulfillmentStore(selectSelectedService);
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime);
-  const getOptionState = useCustomizerStore((s) => (moId: string) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, options[0].modifierTypeId, moId) : undefined);
-  const modifierOptionState = useCustomizerStore((s) => s.selectedProduct?.p.modifiers.find(x => x.modifierTypeId === options[0].modifierTypeId)?.options ?? [])
+  const modifierMap = useCustomizerStore((s) => s.selectedProduct?.m.modifier_map);
+  const modifierTypeId = options[0].modifierTypeId;
+  const selectedOptionId = useCustomizerStore((s) => {
+    const modEntry = s.selectedProduct?.p.modifiers.find(x => x.modifierTypeId === modifierTypeId);
+    return modEntry?.options.length === 1 ? modEntry.options[0].optionId : null;
+  });
+
+  const getOptionState = useMemo(() =>
+    (moId: string) => modifierMap ? selectOptionState(modifierMap, modifierTypeId, moId) : undefined,
+    [modifierMap, modifierTypeId]
+  );
+
   if (!serviceDateTime || !selectedProduct || !fulfillmentId) {
     return null;
   }
@@ -153,14 +163,14 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
-      options[0].modifierTypeId, e.target.value, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId));
+      modifierTypeId, e.target.value, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId));
   }
   return (
     <RadioGroup
       sx={{ width: '100%' }}
       onChange={onChange}
-      value={modifierOptionState.length === 1 ? modifierOptionState[0].optionId : null}
-      aria-labelledby={`modifier_control_${options[0].modifierTypeId}`}>
+      value={selectedOptionId}
+      aria-labelledby={`modifier_control_${modifierTypeId}`}>
       <Grid container>
         {options.map((opt, i) => {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -458,10 +468,15 @@ export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCu
 
 export const WProductCustomizerComponentInner = forwardRef<HTMLDivElement, IProductCustomizerComponentProps & { product: WProduct, categoryId: string }>(({ product, categoryId, suppressGuide, scrollToWhenDone }, ref) => {
   const { enqueueSnackbar } = useSnackbar();
-  const { setTimeToFirstProductIfUnset } = useMetricsStore();
+  const setTimeToFirstProductIfUnset = useMetricsStore((s) => s.setTimeToFirstProductIfUnset);
   const catalog = useCatalogSelectors() as ICatalogSelectors;
-  const { setShowAdvanced, clearCustomizer } = useCustomizerStore();
-  const { addToCart, updateCartQuantity, updateCartProduct, removeFromCart, unlockCartEntry } = useCartStore();
+  const setShowAdvanced = useCustomizerStore((s) => s.setShowAdvanced);
+  const clearCustomizer = useCustomizerStore((s) => s.clearCustomizer);
+  const addToCart = useCartStore((s) => s.addToCart);
+  const updateCartQuantity = useCartStore((s) => s.updateCartQuantity);
+  const updateCartProduct = useCartStore((s) => s.updateCartProduct);
+  const removeFromCart = useCartStore((s) => s.removeFromCart);
+  const unlockCartEntry = useCartStore((s) => s.unlockCartEntry);
   const cart = useCartStore(selectCart);
   const selectedProductMetadata = useProductMetadataWithCurrentFulfillmentData(product.p.productId, product.p.modifiers) as WProductMetadata;
   const { singular_noun: selectedProductNoun } = useValueFromProductTypeById(product.p.productId, 'displayFlags') as IProductDisplayFlags;

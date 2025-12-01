@@ -20,8 +20,10 @@ import {
  */
 export function useHasOperatingHoursForService(fulfillmentId: string) {
   const operatingHours = useFulfillmentOperatingHours(fulfillmentId);
-  if (!operatingHours) return false;
-  return WDateUtils.HasOperatingHours(operatingHours);
+  return useMemo(() => {
+    if (!operatingHours) return false;
+    return WDateUtils.HasOperatingHours(operatingHours);
+  }, [operatingHours]);
 }
 
 /**
