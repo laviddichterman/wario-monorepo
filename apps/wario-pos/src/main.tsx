@@ -31,7 +31,7 @@ const root = createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
   <StrictMode>
-    <WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns} attachDebugClient={import.meta.env.DEV}>
+    <WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns} showDevtools={import.meta.env.DEV}>
       <ReduxProvider store={store}>
         <RouterProvider router={router} />
       </ReduxProvider>

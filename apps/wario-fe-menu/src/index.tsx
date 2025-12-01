@@ -13,7 +13,7 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 
 root.render(
   <React.StrictMode>
-    <WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns} attachDebugClient={import.meta.env.DEV}>
+    <WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns} showDevtools={import.meta.env.DEV}>
       <App />
     </WarioQueryProvider>
   </React.StrictMode>

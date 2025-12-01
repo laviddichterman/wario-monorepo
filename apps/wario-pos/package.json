@@ -78,6 +78,7 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@mui/x-license": "^8.19.0",
+    "@tanstack/react-query-devtools": "^5.91.1",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^24.10.1",
     "@types/nprogress": "^0.2.3",

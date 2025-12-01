@@ -4,6 +4,10 @@
  */
 
 import { QueryClientProvider } from '@tanstack/react-query';
+/**
+ * Wario Query Provider props
+ */
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
@@ -22,8 +26,8 @@ interface WarioQueryProviderProps {
   children: ReactNode;
   /** Auto-connect socket on mount (default: true) */
   autoConnect?: boolean;
-  /** attach for debugging TanStack Query client */
-  attachDebugClient?: boolean;
+  /** show embedded devtools */
+  showDevtools?: boolean;
 }
 
 /**
@@ -42,19 +46,17 @@ export function WarioQueryProvider({
   namespace,
   children,
   autoConnect = true,
-  attachDebugClient = false
+  showDevtools = false
 }: WarioQueryProviderProps) {
   // Create query client once and memoize it
   const queryClient = useMemo(() => createWarioQueryClient(), []);
-  if (attachDebugClient) {
-    // @ts-expect-error for debugging only
-    window.__TANSTACK_QUERY_CLIENT__ = queryClient;
-  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <SocketProvider hostAPI={hostAPI} namespace={namespace} autoConnect={autoConnect}>
         {children}
       </SocketProvider>
+      {showDevtools && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }
