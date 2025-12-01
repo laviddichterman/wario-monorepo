@@ -18,6 +18,11 @@ export interface ValidateDeliveryAddressMutationOptions {
 /**
  * Creates a mutation hook for validating delivery addresses
  * 
+ * @param options - The options for the mutation hook
+ * @param options.axiosInstance - The axios instance to use for the mutation
+ * 
+ * @returns A mutation hook for validating delivery addresses
+ * 
  * @example
  * ```tsx
  * const validateAddress = useValidateDeliveryAddressMutation({ axiosInstance });

@@ -1,5 +1,5 @@
-
 import type * as Square from '@square/web-sdk';
+import { useCallback } from 'react';
 import { PaymentForm } from 'react-square-web-payments-sdk';
 
 import Box from '@mui/material/Box';
@@ -77,13 +77,13 @@ export default function WOrderingComponent() {
     }
   }
 
-  const createPaymentRequest: () => Square.PaymentRequestOptions = () => {
+  const createPaymentRequest = useCallback((): Square.PaymentRequestOptions => {
     return {
       countryCode: "US",
       currencyCode: CURRENCY.USD,
       total: { label: "Total", amount: RoundToTwoDecimalPlaces(balanceAfterPayments.amount / 100).toFixed(2) }
     }
-  }
+  }, [balanceAfterPayments.amount]);
 
   return (
     <LocalizationProvider dateAdapter={DateAdapter}>

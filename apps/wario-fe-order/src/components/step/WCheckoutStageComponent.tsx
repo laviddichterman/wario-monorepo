@@ -19,19 +19,19 @@ import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
 
 import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
-import { usePaymentStore } from '@/stores/usePaymentStore';
+import { selectSelectedTip, selectSquareTokenErrors, usePaymentStore } from '@/stores/usePaymentStore';
 import { useStepperStore } from '@/stores/useStepperStore';
 
 import { Navigation } from '../Navigation';
 import { StoreCreditSection } from '../StoreCreditSection';
 import { WCheckoutCart } from '../WCheckoutCart';
 
-const TIP_SUGGESTION_15: TipSelection = { value: .15, isSuggestion: true, isPercentage: true };
-const TIP_SUGGESTION_20: TipSelection = { value: .2, isSuggestion: true, isPercentage: true };
-const TIP_SUGGESTION_25: TipSelection = { value: .25, isSuggestion: true, isPercentage: true };
-const TIP_SUGGESTION_30: TipSelection = { value: .3, isSuggestion: true, isPercentage: true };
+const TIP_SUGGESTION_15: TipSelection = { value: .15, isSuggestion: true, isPercentage: true } as const;
+const TIP_SUGGESTION_20: TipSelection = { value: .2, isSuggestion: true, isPercentage: true } as const;
+const TIP_SUGGESTION_25: TipSelection = { value: .25, isSuggestion: true, isPercentage: true } as const;
+const TIP_SUGGESTION_30: TipSelection = { value: .3, isSuggestion: true, isPercentage: true } as const;
 
-const TIP_SUGGESTIONS = [TIP_SUGGESTION_15, TIP_SUGGESTION_20, TIP_SUGGESTION_25, TIP_SUGGESTION_30];
+const TIP_SUGGESTIONS = [TIP_SUGGESTION_15, TIP_SUGGESTION_20, TIP_SUGGESTION_25, TIP_SUGGESTION_30] as const;
 
 function useIsAutogratuityEnabled() {
   const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
@@ -40,13 +40,11 @@ function useIsAutogratuityEnabled() {
 
 export function WCheckoutStage() {
   const { backStage } = useStepperStore();
-  const {
-    selectedTip,
-    squareTokenErrors,
-    pendingSquareToken,
-    setTip,
-    setPendingSquareToken,
-  } = usePaymentStore();
+  const selectedTip = usePaymentStore(selectSelectedTip);
+  const squareTokenErrors = usePaymentStore(selectSquareTokenErrors);
+  const pendingSquareToken = usePaymentStore(state => state.pendingSquareToken);
+  const setTip = usePaymentStore(state => state.setTip);
+  const setPendingSquareToken = usePaymentStore(state => state.setPendingSquareToken);
   const { incrementTipAdjusts, incrementTipFixes, setSubmitTime } = useMetricsStore();
 
   // Order submission
@@ -55,7 +53,7 @@ export function WCheckoutStage() {
 
   // Submit order when a pending Square token is received
   useEffect(() => {
-    if (pendingSquareToken && !submitOrderMutation.isPending) {
+    if (pendingSquareToken && submitOrderMutation.isIdle) {
       setSubmitTime(Date.now());
       const orderRequest = buildOrderRequest(pendingSquareToken);
       if (orderRequest) {
@@ -99,8 +97,10 @@ export function WCheckoutStage() {
   }, [customTipAmount]);
 
   useEffect(() => {
+    // console.log('WCheckoutStageComponent effect', { allowTipping, selectedTip, autogratEnabled, TwentyPercentTipValue, selectedTipValue });
     if (allowTipping) {
-      if (selectedTip === null || (autogratEnabled && TwentyPercentTipValue.amount > selectedTipValue.amount)) {
+      if (selectedTip === null || (autogratEnabled && selectedTip !== TIP_SUGGESTION_20 && TwentyPercentTipValue.amount > selectedTipValue.amount)) {
+        // console.log('Setting tip to 20%', { selectedTip, TwentyPercentTipValue, selectedTipValue });
         setTip(TIP_SUGGESTION_20);
       }
     } else if (selectedTip === null) {
@@ -131,10 +131,6 @@ export function WCheckoutStage() {
           </>);
     }
   }, [])
-  const onChangeSelectedTip = (tip: TipSelection) => {
-    setTip(tip);
-  }
-
   // Submit order when balance is zero (no credit card payment needed)
   const submitNoBalanceDue = useCallback(() => {
     setSubmitTime(Date.now());
@@ -160,7 +156,7 @@ export function WCheckoutStage() {
 
   const onSelectSuggestedTip = (tip: TipSelection) => {
     incrementTipAdjusts();
-    onChangeSelectedTip(tip);
+    setTip(tip);
     const newTipCashValue = ComputeTipValue(tip, tipBasis);
     if (customTipAsIMoney.amount < newTipCashValue.amount) {
       setCustomTipAmount(MoneyToDisplayString(newTipCashValue, false));
@@ -240,10 +236,8 @@ export function WCheckoutStage() {
                   }}>
                   Submit Order
                 </CreditCard>
-
-
               </> :
-              <WarioButton disabled={submitOrderMutation.isPending} fullWidth onClick={() => { submitNoBalanceDue(); }} >Submit Order</WarioButton>}
+              <WarioButton disabled={submitOrderMutation.isPending} fullWidth onClick={submitNoBalanceDue} >Submit Order</WarioButton>}
             {squareTokenErrors.length > 0 &&
               squareTokenErrors.map((e, i) => <Grid key={i} size={12}><ErrorResponseOutput key={`${i.toString()}TokenErrors`}>{e.message}</ErrorResponseOutput></Grid>)}
             {submitOrderMutation.isError &&

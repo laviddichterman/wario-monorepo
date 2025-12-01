@@ -3,9 +3,7 @@ import { useEffect } from 'react';
 
 import { LocalizationProvider as Provider } from '@mui/x-date-pickers/LocalizationProvider';
 
-import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared/redux';
-
-import { useAppSelector } from '@/hooks/useRedux';
+import { useDateFnsAdapter } from '@wcp/wario-ux-shared/query';
 
 import { useTranslate } from './use-locales';
 
@@ -17,7 +15,7 @@ type Props = {
 
 export function LocalizationProvider({ children }: Props) {
   const { currentLang } = useTranslate();
-  const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
+  const DateAdapter = useDateFnsAdapter();
 
   useEffect(() => {
     setDefaultOptions({ locale: currentLang.adapterLocale });
