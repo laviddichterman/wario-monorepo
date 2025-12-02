@@ -25,7 +25,6 @@
     "@mui/system": "^7.3.5",
     "@mui/x-data-grid-premium": "^8.20.0",
     "@mui/x-date-pickers": "^8.19.0",
-    "@reduxjs/toolkit": "^2.11.0",
     "@square/web-sdk": "^2.1.0",
     "@tanstack/react-query": "^5.90.11",
     "@wcp/wario-fe-ux-shared": "workspace:*",
@@ -42,9 +41,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.67.0",
     "react-phone-number-input": "^3.4.14",
-    "react-redux": "^9.2.0",
     "react-square-web-payments-sdk": "3.2.4-beta.1",
-    "reselect": "^5.1.1",
     "socket.io-client": "^4.8.1",
     "zod": "^4.1.13",
     "zustand": "^5.0.9"

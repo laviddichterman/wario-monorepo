@@ -17,7 +17,7 @@ import { Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shar
 
 import { usePropertyFromSelectedFulfillment, useSelectedServiceTimeDisplayString } from '@/hooks/useDerivedState';
 
-import { selectCustomerInfo, useCustomerInfoStore } from '@/stores/useCustomerInfoStore';
+import { useCustomerInfoStore } from '@/stores/useCustomerInfoStore';
 import { selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { usePaymentStore } from '@/stores/usePaymentStore';
 import { useStepperStore } from '@/stores/useStepperStore';
@@ -33,7 +33,11 @@ const REQUEST_RANCH = "Please look at our menu before requesting ranch.";
 export default function WReviewOrderStage() {
   const nextStage = useStepperStore((s) => s.nextStage);
   const backStage = useStepperStore((s) => s.backStage);
-  const { givenName, familyName, mobileNum, email } = useCustomerInfoStore(selectCustomerInfo);
+  // Use individual selectors to avoid creating new objects on every render
+  const givenName = useCustomerInfoStore((s) => s.givenName);
+  const familyName = useCustomerInfoStore((s) => s.familyName);
+  const mobileNum = useCustomerInfoStore((s) => s.mobileNum);
+  const email = useCustomerInfoStore((s) => s.email);
   // Use individual selectors to avoid creating new objects on every render
   const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
   const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);

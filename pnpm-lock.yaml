@@ -471,9 +471,6 @@ importers:
       '@mui/x-date-pickers':
         specifier: ^8.19.0
         version: 8.19.0(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@mui/material@7.3.5(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(@mui/system@7.3.5(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(react@19.2.0))(@types/react@19.2.7)(date-fns@4.1.0)(dayjs@1.11.19)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      '@reduxjs/toolkit':
-        specifier: ^2.11.0
-        version: 2.11.0(react-redux@9.2.0(@types/react@19.2.7)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
       '@square/web-sdk':
         specifier: ^2.1.0
         version: 2.1.0
@@ -522,15 +519,9 @@ importers:
       react-phone-number-input:
         specifier: ^3.4.14
         version: 3.4.14(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
-      react-redux:
-        specifier: ^9.2.0
-        version: 9.2.0(@types/react@19.2.7)(react@19.2.0)(redux@5.0.1)
       react-square-web-payments-sdk:
         specifier: 3.2.4-beta.1
         version: 3.2.4-beta.1(react@19.2.0)
-      reselect:
-        specifier: ^5.1.1
-        version: 5.1.1
       socket.io-client:
         specifier: ^4.8.1
         version: 4.8.1

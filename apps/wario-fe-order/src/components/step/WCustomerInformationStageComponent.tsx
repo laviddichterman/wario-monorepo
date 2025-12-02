@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from 'react';
 import { useForm } from "react-hook-form";
 
 import Grid from '@mui/material/Grid';
@@ -10,45 +9,41 @@ import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { Navigation } from '@/components/Navigation';
 
-import { type CustomerInfoRHF, customerInfoSchema, selectCustomerInfo, useCustomerInfoStore } from "@/stores/useCustomerInfoStore";
+import { type CustomerInfoRHF, customerInfoSchema, useCustomerInfoStore } from "@/stores/useCustomerInfoStore";
 import { useStepperStore } from "@/stores/useStepperStore";
 
 // TODO: use funny names as the placeholder info for the names here and randomize it. So sometimes it would be the empire carpet guy, other times eagle man
 
-function useCIForm() {
-  const customerInfo = useCustomerInfoStore(selectCustomerInfo);
-  const useFormApi = useForm<CustomerInfoRHF>({
-    defaultValues: {
-      givenName: customerInfo.givenName,
-      familyName: customerInfo.familyName,
-      mobileNum: customerInfo.mobileNum,
-      mobileNumRaw: customerInfo.mobileNumRaw,
-      email: customerInfo.email,
-      referral: customerInfo.referral || "",
-    },
-    resolver: zodResolver(customerInfoSchema),
-    mode: "onBlur",
-
-  });
-
-  return useFormApi;
-}
+// Get initial values outside component to avoid re-subscription
+const getInitialCustomerInfo = (): CustomerInfoRHF => {
+  const state = useCustomerInfoStore.getState();
+  return {
+    givenName: state.givenName,
+    familyName: state.familyName,
+    mobileNum: state.mobileNum,
+    mobileNumRaw: state.mobileNumRaw,
+    email: state.email,
+    referral: state.referral || "",
+  };
+};
 
 export default function WCustomerInformationStage() {
-  const cIForm = useCIForm();
+  // Initialize form with store values - defaultValues is only used on first render
+  const cIForm = useForm<CustomerInfoRHF>({
+    defaultValues: getInitialCustomerInfo(),
+    resolver: zodResolver(customerInfoSchema),
+    mode: "onBlur",
+  });
+
   const setCustomerInfo = useCustomerInfoStore((s) => s.setCustomerInfo);
   const nextStage = useStepperStore((s) => s.nextStage);
   const backStage = useStepperStore((s) => s.backStage);
-  const { getValues, watch, formState: { isValid, errors, isDirty }, handleSubmit } = cIForm;
+  const { getValues, formState: { isValid, errors }, handleSubmit } = cIForm;
+
   const handleNext = () => {
     setCustomerInfo(getValues());
     nextStage();
   }
-  useEffect(() => {
-    if (isValid) {
-      setCustomerInfo(watch());
-    }
-  }, [isValid, isDirty, watch, setCustomerInfo])
   return (
     <>
       <StageTitle>Tell us a little about you.</StageTitle>

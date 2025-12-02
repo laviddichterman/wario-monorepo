@@ -21,7 +21,7 @@ import {
 } from '@wcp/wario-shared';
 import { useTaxRate } from '@wcp/wario-ux-shared/query';
 
-import { selectCartSubtotal, useCartStore } from '@/stores/useCartStore';
+import { selectCart, useCartStore } from '@/stores/useCartStore';
 import { selectSelectedTip, selectStoreCreditValidations, usePaymentStore } from '@/stores/usePaymentStore';
 
 /**
@@ -33,10 +33,25 @@ export function useServiceFee(): IMoney {
 }
 
 /**
+ * Hook to compute cart subtotal with memoization
+ * Avoids creating new IMoney objects on every render
+ */
+export function useCartSubtotal(): IMoney {
+  const cart = useCartStore(selectCart);
+  return useMemo(
+    () => ({
+      amount: cart.reduce((acc, entry) => acc + entry.product.m.price.amount * entry.quantity, 0),
+      currency: CURRENCY.USD,
+    }),
+    [cart]
+  );
+}
+
+/**
  * Hook to compute subtotal before discounts
  */
 export function useSubtotalPreDiscount(): IMoney {
-  const cartSubtotal = useCartStore(selectCartSubtotal);
+  const cartSubtotal = useCartSubtotal();
   const serviceFee = useServiceFee();
 
   return useMemo(() => {
@@ -218,7 +233,7 @@ export function useBalanceAfterPayments(): IMoney {
  * Convenience hook that returns all order totals at once
  */
 export function useOrderTotals() {
-  const cartSubtotal = useCartStore(selectCartSubtotal);
+  const cartSubtotal = useCartSubtotal();
   const serviceFee = useServiceFee();
   const subtotalPreDiscount = useSubtotalPreDiscount();
   const discountsApplied = useDiscountsApplied();
