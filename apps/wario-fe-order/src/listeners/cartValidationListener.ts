@@ -292,22 +292,41 @@ function validateCartItems(ctx: ValidationContext): void {
     cartStore.killAllCartEntries(toKill);
   }
 
+  // Only update cart products if their metadata actually changed
+  // This prevents an infinite loop where:
+  // 1. Cart update triggers subscription
+  // 2. Subscription schedules validation
+  // 3. Validation regenerates metadata and updates cart
+  // 4. Go to step 1...
   if (toRefreshMetadata.length > 0) {
-    cartStore.updateManyCartProducts(
-      toRefreshMetadata.map((x) => ({
-        id: x.id,
-        product: {
-          ...x.product,
-          m: WCPProductGenerateMetadata(
-            x.product.p.productId,
-            x.product.p.modifiers,
-            catalogSelectors,
-            menuTime,
-            service
-          ),
-        },
-      }))
-    );
+    const updatesWithChanges = toRefreshMetadata
+      .map((x) => {
+        const newMetadata = WCPProductGenerateMetadata(
+          x.product.p.productId,
+          x.product.p.modifiers,
+          catalogSelectors,
+          menuTime,
+          service
+        );
+        return {
+          entry: x,
+          newMetadata,
+          hasChanged: JSON.stringify(x.product.m) !== JSON.stringify(newMetadata),
+        };
+      })
+      .filter((x) => x.hasChanged);
+
+    if (updatesWithChanges.length > 0) {
+      cartStore.updateManyCartProducts(
+        updatesWithChanges.map((x) => ({
+          id: x.entry.id,
+          product: {
+            ...x.entry.product,
+            m: x.newMetadata,
+          },
+        }))
+      );
+    }
   }
 
   if (toRevive.length > 0) {
