@@ -5,13 +5,13 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
-import { type CreateProductBatch, type IProductModifier, type KeyValue, PriceDisplay, ReduceArrayToMapByKey } from "@wcp/wario-shared";
+import { type CreateProductBatch, type ICatalogSelectors, type IProductModifier, type KeyValue, PriceDisplay } from "@wcp/wario-shared";
 import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
-import { HOST_API } from "@/config";
-import { getPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
+import { HOST_API } from '@/config';
 
 import GenericCsvImportComponent from "../../generic_csv_import.component";
 
@@ -40,8 +40,9 @@ type ProductImportComponentProps = {
   ValSetValNamed<IProductModifier[], 'modifiers'>;
 
 const ProductImportComponent = (props: ProductImportComponentProps) => {
-  const categories = useAppSelector(s => s.ws.catalog?.categories ?? {});
-  const printerGroups = useAppSelector(s => ReduceArrayToMapByKey(getPrinterGroups(s.printerGroup.printerGroups), 'id'));
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
+  const categories = useCategoryIds();
+  const { data: printerGroups } = usePrinterGroupsMap();
   return (
     <ElementActionComponent
       {...props}
@@ -54,7 +55,7 @@ const ProductImportComponent = (props: ProductImportComponentProps) => {
               options={Object.keys(categories)}
               value={props.parentCategories.filter((x) => x)}
               onChange={(_e, v) => { props.setParentCategories(v); }}
-              getOptionLabel={(option) => categories[option].category.name}
+              getOptionLabel={(option) => catalogSelectors.category(option)?.category.name ?? option}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => (
                 <TextField {...params} label="Categories" />

@@ -1,50 +1,48 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { addDays, parseISO, startOfDay } from "date-fns";
 import { range } from 'es-toolkit/compat';
 import { useState } from "react";
 
 import { Autocomplete, Grid, TextField } from "@mui/material";
-import { LocalizationProvider, StaticDatePicker } from "@mui/x-date-pickers";
+import { StaticDatePicker } from "@mui/x-date-pickers";
 
 import { WDateUtils } from "@wcp/wario-shared";
-import { getFulfillmentById, SelectDateFnsAdapter, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
+import { useCurrentTime, useValueFromFulfillmentById } from "@wcp/wario-ux-shared/query";
 
-import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux";
-import { getWOrderInstanceById, rescheduleOrder } from "../../../redux/slices/OrdersSlice";
-import { type RootState } from "../../../redux/store";
+import { useOrderById, useRescheduleOrderMutation } from "@/hooks/useOrdersQuery";
+
 import { ElementActionComponent, type ElementActionComponentProps } from "../menu/element.action.component";
 
-const selectFulfillmentForOrderId = weakMapCreateSelector(
-  (s: RootState, _oId: string) => s.ws.fulfillments,
-  (s: RootState, oId: string) => getWOrderInstanceById(s.orders.orders, oId),
-  (fulfillments, order) => getFulfillmentById(fulfillments, order.fulfillment.selectedService)
-)
 
 type WOrderRescheduleComponentProps = { orderId: string; onCloseCallback: ElementActionComponentProps['onCloseCallback'] };
 const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
-  const { getAccessTokenSilently } = useAuth0();
-  const dispatch = useAppDispatch();
-  const order = useAppSelector(s => getWOrderInstanceById(s.orders.orders, props.orderId));
-  const fulfillmentTimeStep = useAppSelector(s => selectFulfillmentForOrderId(s, props.orderId).timeStep);
-  const orderSliceState = useAppSelector(s => s.orders.requestStatus)
-  const minDay = useAppSelector(s => startOfDay(s.ws.currentTime));
-  const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
+  const rescheduleMutation = useRescheduleOrderMutation();
+  const currentTime = useCurrentTime();
+  const order = useOrderById(props.orderId);
+  const fulfillmentTimeStep = useValueFromFulfillmentById(order?.fulfillment.selectedService ?? "", "timeStep");
 
-  const [selectedDate, setSelectedDate] = useState(order.fulfillment.selectedDate);
-  const [selectedTime, setSelectedTime] = useState(order.fulfillment.selectedTime);
+  const [selectedDate, setSelectedDate] = useState(order?.fulfillment.selectedDate ?? "");
+  const [selectedTime, setSelectedTime] = useState(order?.fulfillment.selectedTime ?? 0);
 
-  const submitToWario = async () => {
-    if (orderSliceState !== 'PENDING') {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
-      await dispatch(rescheduleOrder({ token, orderId: order.id, selectedDate, selectedTime, emailCustomer: true }));
+  const submitToWario = () => {
+    if (order) {
+      rescheduleMutation.mutate(
+        { orderId: order.id, newDate: selectedDate, newTime: selectedTime },
+        {
+          onSuccess: () => {
+
+          }
+        }
+      );
     }
   }
+
+  if (!order) return null;
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
-      onConfirmClick={() => void submitToWario()}
-      isProcessing={orderSliceState === 'PENDING'}
-      disableConfirmOn={orderSliceState === 'PENDING'}
+      onConfirmClick={submitToWario}
+      isProcessing={rescheduleMutation.isPending}
+      disableConfirmOn={rescheduleMutation.isPending}
       confirmText={'Update'}
       body={
         <>
@@ -53,20 +51,18 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
               xs: 12,
               sm: 6
             }}>
-            <LocalizationProvider dateAdapter={DateAdapter}>
-              <StaticDatePicker
-                displayStaticWrapperAs="desktop"
-                openTo="day"
-                minDate={minDay}
-                maxDate={addDays(minDay, 60)}
-                value={parseISO(selectedDate)}
-                onChange={(date: Date | null) => { if (date !== null) setSelectedDate(WDateUtils.formatISODate(date)); }}
-                slotProps={{
-                  toolbar: {
-                    hidden: true,
-                  },
-                }} />
-            </LocalizationProvider>
+            <StaticDatePicker
+              displayStaticWrapperAs="desktop"
+              openTo="day"
+              minDate={startOfDay(currentTime)}
+              maxDate={addDays(startOfDay(currentTime), 60)}
+              value={parseISO(selectedDate)}
+              onChange={(date: Date | null) => { if (date !== null) setSelectedDate(WDateUtils.formatISODate(date)); }}
+              slotProps={{
+                toolbar: {
+                  hidden: true,
+                },
+              }} />
           </Grid>
           <Grid
             size={{
@@ -77,7 +73,7 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
               sx={{ m: 'auto', maxWidth: 200 }}
               disableClearable
               className="col"
-              options={range(fulfillmentTimeStep, 1440, fulfillmentTimeStep)}
+              options={range(fulfillmentTimeStep ?? 15, 1440, fulfillmentTimeStep ?? 15)}
               isOptionEqualToValue={(o, v) => o === v}
               getOptionLabel={x => WDateUtils.MinutesToPrintTime(x)}
               value={selectedTime}

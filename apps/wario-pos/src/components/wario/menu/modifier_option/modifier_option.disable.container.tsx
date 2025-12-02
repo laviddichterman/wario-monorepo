@@ -5,9 +5,7 @@ import { useState } from "react";
 import { Grid } from "@mui/material";
 
 import type { IOption } from "@wcp/wario-shared";
-import { getModifierOptionById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useOptionById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -17,11 +15,11 @@ import type { ModifierOptionQuickActionProps } from "./modifier_option.delete.co
 
 const ModifierOptionDisableContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, modifier_option_id));
+  const modifier_option = useOptionById(modifier_option_id) as IOption | null;
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
   const editModifierOption = async () => {
-    if (!isProcessing) {
+    if (!isProcessing && modifier_option) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
@@ -51,7 +49,7 @@ const ModifierOptionDisableContainer = ({ modifier_option_id, onCloseCallback }:
   };
 
   return (
-    <ElementActionComponent
+    modifier_option && <ElementActionComponent
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void editModifierOption()}
       isProcessing={isProcessing}

@@ -4,12 +4,9 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import type { IProduct } from "@wcp/wario-shared";
-import { getProductEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useBaseProductNameByProductId, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
-import { selectBaseProductName } from "@/redux/store";
 
 import { ProductComponent } from "./product.component";
 
@@ -19,10 +16,24 @@ export interface ProductEditContainerProps {
 };
 
 const ProductEditContainer = ({ product_id, onCloseCallback }: ProductEditContainerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
+  const productName = useBaseProductNameByProductId(product_id);
+  const product = useValueFromProductEntryById(product_id, "product");
 
-  const productName = useAppSelector(s => selectBaseProductName(s, product_id));
-  const product = useAppSelector(s => getProductEntryById(s.ws.products, product_id).product);
+  if (!product || !productName) {
+    return null;
+  }
+
+  return <ProductEditContainerInner product={product} productName={productName} onCloseCallback={onCloseCallback} />;
+};
+
+interface InnerProps {
+  product: IProduct;
+  productName: string;
+  onCloseCallback: VoidFunction;
+}
+
+const ProductEditContainerInner = ({ product, productName, onCloseCallback }: InnerProps) => {
+  const { enqueueSnackbar } = useSnackbar();
 
   const [price, setPrice] = useState(product.price);
   const [baseProductId, setBaseProductId] = useState(product.baseProductId);

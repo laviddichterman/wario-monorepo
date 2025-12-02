@@ -2,9 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -14,12 +12,12 @@ import { type ModifierTypeModifyUiProps } from "./modifier_type.component";
 
 const ModifierTypeDeleteContainer = ({ modifier_type_id, onCloseCallback }: ModifierTypeModifyUiProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_type = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, modifier_type_id).modifierType);
+  const modifier_type = useValueFromModifierEntryById(modifier_type_id, "modifierType");
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
   const deleteModifierType = async () => {
-    if (!isProcessing) {
+    if (!isProcessing && modifier_type) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
@@ -44,7 +42,7 @@ const ModifierTypeDeleteContainer = ({ modifier_type_id, onCloseCallback }: Modi
   };
 
   return (
-    <ElementDeleteComponent
+    modifier_type && <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void deleteModifierType()}
       name={modifier_type.name}

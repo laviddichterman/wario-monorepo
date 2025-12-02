@@ -4,9 +4,7 @@ import { useState } from "react";
 
 import type { IMoney, IOption, IRecurringInterval, KeyValue } from "@wcp/wario-shared";
 import { CURRENCY, type IWInterval } from "@wcp/wario-shared";
-import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -19,7 +17,7 @@ export interface ModifierOptionUiContainerProps {
 
 const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: ModifierOptionUiContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifierType = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, modifierTypeId).modifierType);
+  const modifierEntry = useModifierEntryById(modifierTypeId);
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const [shortcode, setShortcode] = useState("");
@@ -90,12 +88,12 @@ const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: Modifie
   };
 
   return (
-    <ModifierOptionComponent
+    modifierEntry && <ModifierOptionComponent
       confirmText="Add"
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void addModifierOption()}
       isProcessing={isProcessing}
-      modifierType={modifierType}
+      modifierType={modifierEntry.modifierType}
       displayName={displayName}
       setDisplayName={setDisplayName}
       description={description}

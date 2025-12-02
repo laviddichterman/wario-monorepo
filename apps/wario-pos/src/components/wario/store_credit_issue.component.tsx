@@ -5,12 +5,10 @@ import { useState } from "react";
 
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
 import { Button, Card, CardHeader, Divider, Grid, IconButton } from "@mui/material";
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DatePicker } from '@mui/x-date-pickers';
 
 import { CURRENCY, type IMoney, type IssueStoreCreditRequest, MoneyToDisplayString, StoreCreditType, WDateUtils } from "@wcp/wario-shared";
-import { SelectDateFnsAdapter } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCurrentTime } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -23,9 +21,7 @@ const DEFAULT_MONEY = { amount: 500, currency: CURRENCY.USD };
 export const StoreCreditIssueComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { getAccessTokenSilently } = useAuth0();
-
-  const CURRENT_TIME = useAppSelector(s => s.ws.currentTime);
-  const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
+  const current_time = useCurrentTime();
   const [amount, setAmount] = useState<IMoney>(DEFAULT_MONEY);
   const [creditType, setCreditType] = useState(StoreCreditType.DISCOUNT);
   const [addedBy, setAddedBy] = useState("");
@@ -34,7 +30,7 @@ export const StoreCreditIssueComponent = () => {
   const [lastName, setLastName] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
   const [recipientEmailError, setRecipientEmailError] = useState(false);
-  const [expiration, setExpiration] = useState<string | null>(WDateUtils.formatISODate(addDays(CURRENT_TIME, 60)));
+  const [expiration, setExpiration] = useState<string | null>(WDateUtils.formatISODate(addDays(current_time, 60)));
   const [isProcessing, setIsProcessing] = useState(false);
 
   // const _validateRecipientEmail = () => {
@@ -74,7 +70,7 @@ export const StoreCreditIssueComponent = () => {
         setLastName("");
         setRecipientEmail("");
         setRecipientEmailError(false);
-        setExpiration(WDateUtils.formatISODate(addDays(CURRENT_TIME, 60)))
+        setExpiration(WDateUtils.formatISODate(addDays(current_time, 60)))
         setIsProcessing(false);
       } catch (error) {
         enqueueSnackbar(`Unable to issue store credit. Got error: ${JSON.stringify(error)}.`, { variant: "error" });
@@ -159,21 +155,19 @@ export const StoreCreditIssueComponent = () => {
             xs: 10,
             md: 5
           }}>
-          <LocalizationProvider dateAdapter={DateAdapter}>
-            <DatePicker
-              sx={{ height: '10%' }}
-              minDate={addDays(CURRENT_TIME, 30)}
-              label="Expiration"
-              value={expiration ? parseISO(expiration) : null}
-              onChange={(date: Date | number | null | undefined) => { setExpiration(date ? WDateUtils.formatISODate(date) : null) }}
-              format={WDateUtils.ServiceDateDisplayFormat}
-              slotProps={{
-                textField: { fullWidth: true },
-                toolbar: {
-                  hidden: true,
-                },
-              }} />
-          </LocalizationProvider>
+          <DatePicker
+            sx={{ height: '10%' }}
+            minDate={addDays(current_time, 30)}
+            label="Expiration"
+            value={expiration ? parseISO(expiration) : null}
+            onChange={(date: Date | number | null | undefined) => { setExpiration(date ? WDateUtils.formatISODate(date) : null) }}
+            format={WDateUtils.ServiceDateDisplayFormat}
+            slotProps={{
+              textField: { fullWidth: true },
+              toolbar: {
+                hidden: true,
+              },
+            }} />
         </Grid>
         <Grid
           sx={{ my: 'auto' }}

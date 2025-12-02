@@ -1,3 +1,4 @@
+import { useSetAtom } from "jotai";
 import { useCallback } from "react";
 
 import { AddBox, DeleteOutline, Edit, LibraryAdd } from "@mui/icons-material";
@@ -6,17 +7,29 @@ import type { GridRowParams } from "@mui/x-data-grid-premium";
 import { GridActionsCellItem, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import type { CatalogModifierEntry } from "@wcp/wario-shared";
+import { useCatalogQuery } from "@wcp/wario-ux-shared/query";
 
-import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
-
-import { openModifierOptionAdd, openModifierTypeAdd, openModifierTypeCopy, openModifierTypeDelete, openModifierTypeEdit } from "@/redux/slices/CatalogSlice";
+import {
+  openModifierOptionAddAtom,
+  openModifierTypeAddAtom,
+  openModifierTypeCopyAtom,
+  openModifierTypeDeleteAtom,
+  openModifierTypeEditAtom
+} from "@/atoms/catalog";
 
 import { TableWrapperComponent } from "../../table_wrapper.component";
 import ModifierOptionTableContainer from "../modifier_option/modifier_option_table.container";
 
 const ModifierTypeTableContainer = () => {
-  const dispatch = useAppDispatch();
-  const modifiers = useAppSelector(s => s.ws.catalog?.modifiers ?? {});
+  const { data: catalog } = useCatalogQuery();
+  const modifiers = catalog?.modifiers ?? {};
+
+  const openModifierTypeAdd = useSetAtom(openModifierTypeAddAtom);
+  const openModifierTypeEdit = useSetAtom(openModifierTypeEditAtom);
+  const openModifierTypeCopy = useSetAtom(openModifierTypeCopyAtom);
+  const openModifierTypeDelete = useSetAtom(openModifierTypeDeleteAtom);
+  const openModifierOptionAdd = useSetAtom(openModifierOptionAddAtom);
+
   const apiRef = useGridApiRef();
 
   const getDetailPanelHeight = useCallback((p: GridRowParams<CatalogModifierEntry>) => p.row.options.length ? (41 + (p.row.options.length * 36)) : 0, []);
@@ -41,24 +54,24 @@ const ModifierTypeTableContainer = () => {
           <GridActionsCellItem
             icon={<Tooltip title="Edit Modifier Type"><Edit /></Tooltip>}
             label="Edit Modifier Type"
-            onClick={() => dispatch(openModifierTypeEdit(params.row.modifierType.id))}
+            onClick={() => { openModifierTypeEdit(params.row.modifierType.id); }}
             key="EDITMT" />,
           <GridActionsCellItem
             icon={<Tooltip title="Add Modifier Option"><AddBox /></Tooltip>}
             label="Add Modifier Option"
-            onClick={() => dispatch(openModifierOptionAdd(params.row.modifierType.id))}
+            onClick={() => { openModifierOptionAdd(params.row.modifierType.id); }}
             showInMenu
             key="ADDMO" />,
           <GridActionsCellItem
             icon={<Tooltip title="Copy Modifier Type"><LibraryAdd /></Tooltip>}
             label="Copy Modifier Type"
-            onClick={() => dispatch(openModifierTypeCopy(params.row.modifierType.id))}
+            onClick={() => { openModifierTypeCopy(params.row.modifierType.id); }}
             showInMenu
             key="COPYMT" />,
           <GridActionsCellItem
             icon={<Tooltip title="Delete Modifier Type"><DeleteOutline /></Tooltip>}
             label="Delete Modifier Type"
-            onClick={() => dispatch(openModifierTypeDelete(params.row.modifierType.id))}
+            onClick={() => { openModifierTypeDelete(params.row.modifierType.id); }}
             showInMenu
             key="DELMT" />
         ]
@@ -70,7 +83,7 @@ const ModifierTypeTableContainer = () => {
     ]}
     toolbarActions={[{
       size: 1,
-      elt: <Tooltip key="ADDNEW" title="Add Modifier Type"><IconButton onClick={() => dispatch(openModifierTypeAdd())}><AddBox /></IconButton></Tooltip>
+      elt: <Tooltip key="ADDNEW" title="Add Modifier Type"><IconButton onClick={() => { openModifierTypeAdd(); }}><AddBox /></IconButton></Tooltip>
     }]}
     rows={Object.values(modifiers)}
     onRowClick={(params) => { apiRef.current?.toggleDetailPanel(params.id); }}

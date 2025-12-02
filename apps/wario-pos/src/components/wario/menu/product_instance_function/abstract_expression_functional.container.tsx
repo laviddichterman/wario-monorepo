@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import React, { useEffect, useMemo, useState } from "react";
 
 import { Autocomplete, Card, CardContent, CardHeader, FormControl, FormControlLabel, FormLabel, Grid, List, ListItem, Radio, RadioGroup, Switch, TextField } from "@mui/material";
 
-import type { IAbstractExpression, IConstLiteralExpression, IHasAnyOfModifierExpression, IIfElseExpression, ILogicalExpression, IModifierPlacementExpression, IOption, ProductMetadataExpression } from "@wcp/wario-shared";
+import type { IAbstractExpression, ICatalogSelectors, IConstLiteralExpression, IHasAnyOfModifierExpression, IIfElseExpression, ILogicalExpression, IModifierPlacementExpression, IOption, ProductMetadataExpression } from "@wcp/wario-shared";
 import { ConstLiteralDiscriminator, formatDecimal, LogicalFunctionOperator, MetadataField, OptionPlacement, OptionQualifier, parseDecimal, PRODUCT_LOCATION, ProductInstanceFunctionType, WFunctional } from "@wcp/wario-shared";
 import { type ValSetVal } from "@wcp/wario-ux-shared/common";
 import { CheckedNumericInput } from "@wcp/wario-ux-shared/components";
-import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCatalogSelectors, useModifierEntryIds } from "@wcp/wario-ux-shared/query";
 
 
 export interface DiscriminatedFunctionalComponentProps<T> {
@@ -84,8 +82,7 @@ const AbstractExpressionFunctionalContainer = ({
   value,
   setValue
 }: ValSetVal<IAbstractExpression | null>) => {
-  const modifierTypeSelector = useAppSelector(s => (id: string) => getModifierTypeEntryById(s.ws.modifierEntries, id));
-  const modifierOptionSelector = useAppSelector(s => (id: string) => getModifierOptionById(s.ws.modifierOptions, id));
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   const [discriminator, setDiscriminator] = useState<ProductInstanceFunctionType | null>(value?.discriminator ?? null);
   const [expr, setExpr] = useState<IAbstractExpression['expr'] | null>(value?.expr ?? null);
   useEffect(() => {
@@ -137,7 +134,7 @@ const AbstractExpressionFunctionalContainer = ({
   };
   return (
     <AbstractExpressionFunctionalComponent
-      title={value !== null ? WFunctional.AbstractExpressionStatementToString(value, { modifierEntry: modifierTypeSelector, option: modifierOptionSelector }) : null}
+      title={value !== null ? WFunctional.AbstractExpressionStatementToString(value, catalogSelectors) : null}
       expression_types={expression_types}
       discriminator={discriminator}
       setDiscriminator={updateDiscriminator}
@@ -290,7 +287,8 @@ HasAnyOfModifierTypeFunctionalComponent = ({
   value,
   setValue,
 }) => {
-  const modifier_types = useAppSelector(s => s.ws.catalog?.modifiers ?? {});
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
+  const modifierTypes = useModifierEntryIds();
   const [modifier, setModifier] = useState(value?.mtid ?? null);
   useEffect(() => {
     if (modifier !== null) {
@@ -302,10 +300,10 @@ HasAnyOfModifierTypeFunctionalComponent = ({
       <Grid>
         <Autocomplete
           style={{ width: 200 }}
-          options={Object.keys(modifier_types)}
+          options={modifierTypes}
           value={modifier}
           onChange={(_, v) => { setModifier(v); }}
-          getOptionLabel={(o) => modifier_types[o].modifierType.name ?? "CORRUPTED DATA"}
+          getOptionLabel={(o) => catalogSelectors.modifierEntry(o)?.modifierType.name ?? o}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Modifier" />}
         />
@@ -319,12 +317,13 @@ ModifierPlacementFunctionalComponent = ({
   value,
   setValue,
 }) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const catalog = useAppSelector(s => s.ws.catalog!);
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
+  const modifierTypeIds = useModifierEntryIds();
   const [modifier, setModifier] = useState(value?.mtid ?? null);
-  const modifierOptionsForType = useMemo(() => modifier !== null ?
-    catalog.modifiers[modifier].options.reduce((acc: Record<string, IOption>, o) => ({ ...acc, [o]: catalog.options[o] }), {}) :
-    {}, [modifier, catalog.options, catalog.modifiers])
+  const modifierOptionsForType = useMemo(() => {
+    const options = modifier ? catalogSelectors.modifierEntry(modifier)?.options ?? [] : [];
+    return options.reduce((acc: Record<string, IOption>, o) => ({ ...acc, [o]: catalogSelectors.option(o) as IOption }), {});
+  }, [modifier, catalogSelectors])
   const [modifierOption, setModifierOption] = useState(value?.moid ?? null);
   useEffect(() => {
     if (modifier !== null && modifierOption !== null) {
@@ -336,22 +335,22 @@ ModifierPlacementFunctionalComponent = ({
       <Grid>
         <Autocomplete
           style={{ width: 200 }}
-          options={Object.keys(catalog.modifiers)}
+          options={modifierTypeIds}
           value={modifier}
           onChange={(_, v) => { setModifier(v); }}
-          getOptionLabel={(o) => catalog.modifiers[o].modifierType.name ?? "CORRUPTED DATA"}
+          getOptionLabel={(o) => catalogSelectors.modifierEntry(o)?.modifierType.name ?? "CORRUPTED DATA"}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Modifier" />}
         />
       </Grid>
-      {modifier !== null && catalog.modifiers[modifier].options.length && (
+      {modifier !== null && catalogSelectors.modifierEntry(modifier)?.options.length && (
         <Grid size={6}>
           <Autocomplete
             style={{ width: 200 }}
             options={Object.keys(modifierOptionsForType)}
             value={modifierOption}
             onChange={(_, v) => { setModifierOption(v); }}
-            getOptionLabel={(o) => modifierOptionsForType[o].displayName ?? "CORRUPT DATA"}
+            getOptionLabel={(o) => modifierOptionsForType[o].displayName}
             isOptionEqualToValue={(o, v) => o === v}
             renderInput={(params) => <TextField {...params} label="Option" />}
           />

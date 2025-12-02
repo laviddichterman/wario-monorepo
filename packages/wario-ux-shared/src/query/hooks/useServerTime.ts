@@ -135,3 +135,6 @@ export const useDateFnsAdapter = () => {
     };
   }, []); // Empty deps - adapter is stable, reads from ref
 };
+
+export const useCurrentTime = () => useServerTime().currentTime;
+

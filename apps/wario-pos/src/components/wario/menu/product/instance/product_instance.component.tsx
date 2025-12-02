@@ -5,8 +5,7 @@ import { Card, CardContent, Checkbox, FormControl, FormControlLabel, FormGroup, 
 import type { CreateIProduct, ICatalogModifiers, KeyValue, ProductModifierEntry } from "@wcp/wario-shared";
 import { OptionPlacement, OptionQualifier, PriceDisplay } from "@wcp/wario-shared";
 import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
 import { ExternalIdsExpansionPanelComponent } from "@/components/wario/ExternalIdsExpansionPanelComponent";
 import { ElementActionComponent } from "@/components/wario/menu/element.action.component";
@@ -50,8 +49,14 @@ export type ProductInstanceComponentProps =
 const ProductInstanceComponent = (props: ProductInstanceComponentProps) => {
   const theme = useTheme();
   const useToggleEndLabel = !useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  const modifierOptionsMap = useAppSelector(s => s.ws.catalog?.options ?? {});
-  const modifier_types_map = useAppSelector(s => s.ws.catalog?.modifiers ?? {});
+  const { data: catalog } = useCatalogQuery();
+
+  if (!catalog) {
+    return null;
+  }
+
+  const modifierOptionsMap = catalog.options;
+  const modifier_types_map = catalog.modifiers;
 
   const handlePosNameChange = (posName: string) => {
     props.setPosName(posName === props.displayName ? "" : posName)
@@ -438,9 +443,8 @@ const minimizeModifiers = (normalized_modifiers: ProductModifierEntry[]): Produc
 
 
 export const ProductInstanceContainer = ({ parent_product, modifiers, setModifiers, ...otherProps }: ProductInstanceComponentProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const modifier_types_map = useAppSelector(s => s.ws.catalog!.modifiers);
-  const normalizedModifers = useMemo(() => normalizeModifiersAndOptions(parent_product, modifier_types_map, modifiers), [parent_product, modifier_types_map, modifiers]);
+  const { data: catalog } = useCatalogQuery();
+  const normalizedModifers = useMemo(() => catalog ? normalizeModifiersAndOptions(parent_product, catalog.modifiers, modifiers) : [], [parent_product, modifiers, catalog]);
 
   const setNormalizedModifiersIntermediate = (mods: ProductModifierEntry[]) => {
     setModifiers(minimizeModifiers(mods));

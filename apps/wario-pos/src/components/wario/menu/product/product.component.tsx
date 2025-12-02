@@ -7,11 +7,10 @@ import {
 } from '@mui/material';
 
 import type { IMoney, IProductModifier, IRecurringInterval, IWInterval, KeyValue, PrepTiming } from '@wcp/wario-shared';
-import { ReduceArrayToMapByKey } from '@wcp/wario-shared';
 import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
-import { getFulfillments } from '@wcp/wario-ux-shared/redux';
+import { useCatalogSelectors, useCategoryIds, useFulfillments, useProductInstanceFunctionIds } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from '@/hooks/useRedux';
+import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
 import AvailabilityListBuilderComponent from '@/components/wario/AvailabilityListBuilderComponent';
 import DatetimeBasedDisableComponent, { IsDisableValueValid } from '@/components/wario/datetime_based_disable.component';
@@ -21,8 +20,6 @@ import { FloatNumericPropertyComponent } from '@/components/wario/property-compo
 import { IMoneyPropertyComponent } from '@/components/wario/property-components/IMoneyPropertyComponent';
 import { StringPropertyComponent } from '@/components/wario/property-components/StringPropertyComponent';
 import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
-
-import { getPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
 
 import { ElementActionComponent } from '../element.action.component';
 
@@ -59,10 +56,12 @@ interface ProductComponentProps {
 };
 
 export const ProductComponent = (props: ProductComponentPropsModeSpecific & ProductComponentFieldsNoBaseId & ProductComponentProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const catalog = useAppSelector(s => s.ws.catalog!);
-  const printerGroups = useAppSelector(s => ReduceArrayToMapByKey(getPrinterGroups(s.printerGroup.printerGroups), 'id'));
-  const fulfillments = useAppSelector(s => getFulfillments(s.ws.fulfillments));
+
+  const catalog = useCatalogSelectors();
+  const categoryIds = useCategoryIds();
+  const productInstanceFunctionIds = useProductInstanceFunctionIds();
+  const { data: printerGroups } = usePrinterGroupsMap();
+  const fulfillments = useFulfillments()
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
 
   const handleSetModifiers = (mods: IProductModifier[]) => {
@@ -73,7 +72,7 @@ export const ProductComponent = (props: ProductComponentPropsModeSpecific & Prod
   };
 
   return (
-    <ElementActionComponent
+    catalog && <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
       onConfirmClick={props.onConfirmClick}
       isProcessing={props.isProcessing}
@@ -85,10 +84,11 @@ export const ProductComponent = (props: ProductComponentPropsModeSpecific & Prod
             <Autocomplete
               multiple
               filterSelectedOptions
-              options={Object.keys(catalog.categories)}
+              options={categoryIds}
               value={props.parentCategories}
               onChange={(_e, v) => { props.setParentCategories(v); }}
-              getOptionLabel={(option) => catalog.categories[option].category.name}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              getOptionLabel={(option) => catalog.category(option)?.category.name ?? option}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Categories" />}
             />
@@ -165,11 +165,11 @@ export const ProductComponent = (props: ProductComponentPropsModeSpecific & Prod
               multiple
               filterSelectedOptions
               fullWidth
-              options={Object.keys(catalog.productInstanceFunctions)}
+              options={productInstanceFunctionIds}
               value={props.orderGuideSuggestionFunctions}
               onChange={(_, v) => { props.setOrderGuideSuggestionFunctions(v); }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(option) => catalog.productInstanceFunctions[option].name ?? 'CORRUPT DATA'}
+              getOptionLabel={(option) => catalog.productInstanceFunction(option)?.name ?? option}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Order Guide Suggestion Functions" />}
             />
@@ -187,7 +187,7 @@ export const ProductComponent = (props: ProductComponentPropsModeSpecific & Prod
               value={props.orderGuideWarningFunctions}
               onChange={(_, v) => { props.setOrderGuideWarningFunctions(v); }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(option) => catalog.productInstanceFunctions[option].name ?? 'CORRUPT DATA'}
+              getOptionLabel={(option) => catalog.productInstanceFunction(option)?.name ?? option}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Order Guide Warning Functions" />}
             />

@@ -2,9 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -17,12 +15,12 @@ export interface ProductInstanceFunctionQuickActionProps {
 
 const ProductInstanceFunctionDeleteContainer = ({ pifId, onCloseCallback }: ProductInstanceFunctionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const productInstanceFunction = useAppSelector(s => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId))
+  const productInstanceFunction = useProductInstanceFunctionById(pifId);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
-  const deletePIF = async () => {
-    if (!isProcessing) {
+  const deleteProductInstanceFunction = async () => {
+    if (!isProcessing && productInstanceFunction) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
@@ -50,7 +48,7 @@ const ProductInstanceFunctionDeleteContainer = ({ pifId, onCloseCallback }: Prod
   return productInstanceFunction ?
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void deletePIF()}
+      onConfirmClick={() => void deleteProductInstanceFunction()}
       name={productInstanceFunction.name}
       isProcessing={isProcessing}
     />

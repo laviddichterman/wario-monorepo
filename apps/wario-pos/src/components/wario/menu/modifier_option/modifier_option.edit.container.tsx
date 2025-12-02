@@ -2,10 +2,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import type { IOption } from "@wcp/wario-shared";
-import { getModifierOptionById, getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import type { IOption, IOptionType } from "@wcp/wario-shared";
+import { useOptionById, useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -16,9 +14,18 @@ interface ModifierOptionEditContainerProps {
   onCloseCallback: VoidFunction;
 }
 const ModifierOptionEditContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionEditContainerProps) => {
+  const modifier_option = useOptionById(modifier_option_id) as IOption | null;
+  const modifierType = useValueFromModifierEntryById(modifier_option?.modifierTypeId ?? "", "modifierType");
+  if (!modifier_option || !modifierType) {
+    return null;
+  }
+  return <ModifierOptionEditContainerInner onCloseCallback={onCloseCallback} modifier_option={modifier_option} modifierType={modifierType} />;
+};
+
+interface InnerProps { onCloseCallback: VoidFunction, modifier_option: IOption, modifierType: IOptionType }
+const ModifierOptionEditContainerInner = ({ onCloseCallback, modifier_option, modifierType }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, modifier_option_id));
-  const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, getModifierOptionById(s.ws.modifierOptions, modifier_option_id).modifierTypeId));
+
   const [displayName, setDisplayName] = useState(modifier_option.displayName);
   const [description, setDescription] = useState(modifier_option.description);
   const [shortcode, setShortcode] = useState(modifier_option.shortcode);
@@ -94,7 +101,7 @@ const ModifierOptionEditContainer = ({ modifier_option_id, onCloseCallback }: Mo
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void editModifierOption()}
       isProcessing={isProcessing}
-      modifierType={modifierTypeEntry.modifierType}
+      modifierType={modifierType}
       displayName={displayName}
       setDisplayName={setDisplayName}
       description={description}
@@ -132,5 +139,6 @@ const ModifierOptionEditContainer = ({ modifier_option_id, onCloseCallback }: Mo
     />
   );
 };
+
 
 export default ModifierOptionEditContainer;

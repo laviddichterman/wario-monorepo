@@ -7,9 +7,7 @@ import { Accordion, AccordionDetails, AccordionSummary, FormControlLabel, Grid, 
 
 import type { IOption, IOptionType } from "@wcp/wario-shared";
 import { useIndexedState } from "@wcp/wario-ux-shared/common";
-import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCatalogQuery, useModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -22,10 +20,24 @@ export interface ModifierTypeCopyContainerProps {
   onCloseCallback: VoidFunction;
 };
 const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: ModifierTypeCopyContainerProps) => {
+  const modifierTypeEntry = useModifierEntryById(modifierTypeId);
+  const { data: catalog } = useCatalogQuery();
+
+  if (!modifierTypeEntry || !catalog?.options) {
+    return null;
+  }
+
+  return <ModifierTypeCopyContainerInner modifierTypeEntry={modifierTypeEntry} allOptions={catalog.options} onCloseCallback={onCloseCallback} />;
+};
+
+interface InnerProps {
+  modifierTypeEntry: NonNullable<ReturnType<typeof useModifierEntryById>>;
+  allOptions: Record<string, IOption>;
+  onCloseCallback: VoidFunction;
+}
+
+const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifierTypeEntry = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, modifierTypeId));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const allOptions = useAppSelector(s => s.ws.catalog!.options);
 
   const [ordinal, setOrdinal] = useState(modifierTypeEntry.modifierType.ordinal);
   const [name, setName] = useState(modifierTypeEntry.modifierType.name);

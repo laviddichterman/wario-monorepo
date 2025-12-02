@@ -9,9 +9,7 @@ import {
 
 import { type IProductModifier } from '@wcp/wario-shared';
 import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
-import { getFulfillments } from '@wcp/wario-ux-shared/redux';
-
-import { useAppSelector } from '@/hooks/useRedux';
+import { useCatalogQuery, useFulfillmentsQuery } from '@wcp/wario-ux-shared/query';
 
 
 type ProductModifierComponentProps = {
@@ -19,9 +17,12 @@ type ProductModifierComponentProps = {
 } & ValSetValNamed<IProductModifier[], 'modifiers'>;
 
 const ProductModifierComponent = (props: ProductModifierComponentProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const catalog = useAppSelector(s => s.ws.catalog!);
-  const fulfillments = useAppSelector(s => getFulfillments(s.ws.fulfillments));
+  const { data: catalog } = useCatalogQuery();
+  const { data: fulfillments } = useFulfillmentsQuery();
+
+  if (!catalog || !fulfillments) {
+    return null;
+  }
 
   const handleSetModifiers = (mods: string[]) => {
     const oldModsAsRecord = props.modifiers.reduce<Record<string, IProductModifier>>((acc, m) => ({ ...acc, [m.mtid]: m }), {})

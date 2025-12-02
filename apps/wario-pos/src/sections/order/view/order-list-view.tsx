@@ -1,11 +1,10 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useCallback, useState } from 'react';
 
 import { Button, Drawer, Grid } from '@mui/material';
 
 import { paths } from '@/routes/paths';
 
-import { useAppDispatch } from '@/hooks/useRedux';
+import { useConfirmOrderMutation } from '@/hooks/useOrdersQuery';
 
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
 import { BlockOffComp } from '@/components/wario/blockoff.component';
@@ -14,13 +13,11 @@ import { OrderCalendar } from '@/components/wario/orders/OrderCalendar';
 import { OrderManagerComponent } from '@/components/wario/orders/OrderManager';
 
 import { DashboardContent } from '@/layouts/dashboard';
-import { confirmOrder } from '@/redux/slices/OrdersSlice';
 
 
 export function OrderListView() {
   const [isTimingDrawerOpen, setIsTimingDrawerOpen] = useState<boolean>(false);
-  const dispatch = useAppDispatch();
-  const { getAccessTokenSilently } = useAuth0();
+  const confirmMutation = useConfirmOrderMutation();
   const toggleDrawer = useCallback(
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
       if (
@@ -33,10 +30,18 @@ export function OrderListView() {
     },
     []
   );
-  const handleConfirmOrder = useCallback(async (id: string) => {
-    const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
-    void dispatch(confirmOrder({ orderId: id, additionalMessage: "", token: token }));
-  }, [dispatch, getAccessTokenSilently]);
+
+
+  const handleConfirmOrder = (orderId: string) => {
+    confirmMutation.mutate(
+      { orderId: orderId, additionalMessage: "" },
+      {
+        onSuccess: () => {
+
+        }
+      }
+    );
+  };
   return (
     <>
       <DashboardContent>
@@ -78,10 +83,10 @@ export function OrderListView() {
                 </Grid>
               </Grid>
             </Drawer>
-            <OrderManagerComponent handleConfirmOrder={(id) => void handleConfirmOrder(id)} />
+            <OrderManagerComponent handleConfirmOrder={handleConfirmOrder} />
           </Grid>
           <Grid size={12}>
-            <OrderCalendar initialView='listWeek' handleConfirmOrder={(id) => void handleConfirmOrder(id)} />
+            <OrderCalendar initialView='listWeek' handleConfirmOrder={handleConfirmOrder} />
           </Grid>
         </Grid>
 

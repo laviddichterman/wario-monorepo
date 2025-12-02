@@ -6,12 +6,11 @@ import { Avatar, Box, Card, CardHeader, type CardProps, type SxProps, Tab, Typog
 import { red } from "@mui/material/colors";
 
 import { ComputeServiceTimeDisplayString, DateTimeIntervalBuilder, WDateUtils, WOrderStatus } from "@wcp/wario-shared";
-import { getFulfillmentById, weakMapCreateSelector } from "@wcp/wario-ux-shared/redux";
+import { useFulfillmentById } from "@wcp/wario-ux-shared/query";
 
-import { useAppSelector } from "../../../hooks/useRedux";
-import { getWOrderInstanceById } from "../../../redux/slices/OrdersSlice";
-import { getPrinterGroups } from "../../../redux/slices/PrinterGroupSlice";
-import { type RootState } from "../../../redux/store";
+import { useOrderById } from "@/hooks/useOrdersQuery";
+
+import { usePrinterGroupsQuery } from "../../../hooks/usePrinterGroupsQuery";
 import { type ElementActionComponentProps } from "../menu/element.action.component";
 
 import WOrderCancelComponent from "./WOrderCancelComponent";
@@ -44,24 +43,19 @@ export type WOrderComponentCardProps = {
 
 type ComponentCardMode = 'info' | 'reschedule' | 'cancel' | 'rawData' | 'forceSend';
 
-const selectOrderSubheader = weakMapCreateSelector(
-  (s: RootState, oId: string) => getWOrderInstanceById(s.orders.orders, oId).fulfillment,
-  (s: RootState, _oId: string) => s.ws.fulfillments,
-  (orderFulfillment, fulfillments) => {
-    const fulfillmentConfig = getFulfillmentById(fulfillments, orderFulfillment.selectedService);
-    const serviceTimeInterval = DateTimeIntervalBuilder(orderFulfillment, fulfillmentConfig.maxDuration);
-    return `${fulfillmentConfig.displayName} on ${format(serviceTimeInterval.start, WDateUtils.ServiceDateDisplayFormat)} at ${ComputeServiceTimeDisplayString(fulfillmentConfig.minDuration, orderFulfillment.selectedTime)}`;
-  }
-)
-
 export const WOrderComponentCard = ({ orderId, onCloseCallback, handleConfirmOrder, ...other }: WOrderComponentCardProps) => {
-  const hasExpoPrinter = useAppSelector(s => getPrinterGroups(s.printerGroup.printerGroups).filter(x => x.isExpo).length > 0);
-  const orderStatus = useAppSelector(s => getWOrderInstanceById(s.orders.orders, orderId).status);
-  const orderTitle = useAppSelector(s => {
-    const constumerInfo = getWOrderInstanceById(s.orders.orders, orderId).customerInfo;
-    return `${constumerInfo.givenName} ${constumerInfo.familyName}`;
-  });
-  const orderSubheader = useAppSelector(s => selectOrderSubheader(s, orderId));
+  const { data: printerGroups = [] } = usePrinterGroupsQuery();
+  const order = useOrderById(orderId);
+  const fulfillmentConfig = useFulfillmentById(order?.fulfillment.selectedService ?? "");
+  const orderStatus = order?.status ?? WOrderStatus.OPEN;
+  const orderTitle = order ? `${order.customerInfo.givenName} ${order.customerInfo.familyName}` : "Loading...";
+
+  const hasExpoPrinter = printerGroups.filter(x => x.isExpo).length > 0;
+  const orderSubheader = (() => {
+    if (!order || !fulfillmentConfig) return "";
+    const serviceTimeInterval = DateTimeIntervalBuilder(order.fulfillment, fulfillmentConfig.maxDuration);
+    return `${fulfillmentConfig.displayName} on ${format(serviceTimeInterval.start, WDateUtils.ServiceDateDisplayFormat)} at ${ComputeServiceTimeDisplayString(fulfillmentConfig.minDuration, order.fulfillment.selectedTime)}`;
+  })();
   const [mode, setMode] = useState<ComponentCardMode>('info');
   return <Card sx={GetStyleForOrderStatus(orderStatus)} {...other}>
     <CardHeader

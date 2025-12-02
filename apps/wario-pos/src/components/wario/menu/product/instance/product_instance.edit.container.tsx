@@ -2,14 +2,11 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import type { IProductInstance } from "@wcp/wario-shared";
+import type { IProduct, IProductInstance } from "@wcp/wario-shared";
 import { type PriceDisplay } from "@wcp/wario-shared";
-import { getProductInstanceById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useProductInstanceById, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
-import { selectParentProductEntryFromProductInstanceId } from "@/redux/store";
 
 import { ProductInstanceActionContainer } from "./product_instance.component";
 
@@ -19,9 +16,24 @@ interface ProductInstanceEditContainerProps {
 }
 
 const ProductInstanceEditContainer = ({ product_instance_id, onCloseCallback }: ProductInstanceEditContainerProps) => {
-  const product_instance = useAppSelector(s => getProductInstanceById(s.ws.productInstances, product_instance_id));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const parent_product = useAppSelector(s => selectParentProductEntryFromProductInstanceId(s, product_instance_id)!.product);
+  const product_instance = useProductInstanceById(product_instance_id);
+  const parentProductId = product_instance?.productId ?? "";
+  const parent_product = useValueFromProductEntryById(parentProductId, "product");
+
+  if (!product_instance || !parent_product) {
+    return null;
+  }
+
+  return <ProductInstanceEditContainerInner product_instance={product_instance} parent_product={parent_product} onCloseCallback={onCloseCallback} />;
+};
+
+interface InnerProps {
+  product_instance: IProductInstance;
+  parent_product: IProduct;
+  onCloseCallback: VoidFunction;
+}
+
+const ProductInstanceEditContainerInner = ({ product_instance, parent_product, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const [displayName, setDisplayName] = useState(product_instance.displayName);
   const [description, setDescription] = useState(product_instance.description);

@@ -2,8 +2,8 @@ import { Grid } from "@mui/material";
 
 import { WOrderStatus } from "@wcp/wario-shared";
 
-import { useAppSelector } from "../../../hooks/useRedux";
-import { getWOrderInstanceById } from "../../../redux/slices/OrdersSlice";
+import { useConfirmOrderMutation, useOrderById } from "@/hooks/useOrdersQuery";
+
 import { ElementActionComponent, type ElementActionComponentProps } from "../menu/element.action.component";
 
 import { WOrderCheckoutCartContainer } from "./WOrderCheckoutCartContainer";
@@ -11,20 +11,32 @@ import { WOrderServiceInfoTableContainer } from "./WOrderServiceInfoTableContain
 
 export type WOrderDisplayComponentProps = {
   orderId: string;
-  callConfirm: (id: string) => void;
   onCloseCallback: ElementActionComponentProps['onCloseCallback'];
+  callConfirm?: (id: string) => void; // Optional now, kept for backward compatibility if needed
 };
 
 
-export const WOrderDisplayComponent = ({ orderId, callConfirm, onCloseCallback }: WOrderDisplayComponentProps) => {
-  const orderSliceState = useAppSelector(s => s.orders.requestStatus)
-  const order = useAppSelector(s => getWOrderInstanceById(s.orders.orders, orderId));
+export const WOrderDisplayComponent = ({ orderId, onCloseCallback }: WOrderDisplayComponentProps) => {
+  const confirmMutation = useConfirmOrderMutation();
+  const order = useOrderById(orderId);
+
+  if (!order) return null;
+
+  const handleConfirm = () => {
+    confirmMutation.mutate(
+      { orderId: order.id, additionalMessage: "" },
+      {
+        onSuccess: () => {
+        }
+      }
+    );
+  };
 
   return (
     <ElementActionComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => { callConfirm(order.id); }}
-      isProcessing={orderSliceState === 'PENDING'}
+      onConfirmClick={handleConfirm}
+      isProcessing={confirmMutation.isPending}
       disableConfirmOn={order.status !== WOrderStatus.OPEN}
       confirmText={"Confirm!"}
       body={<Grid size={12}>

@@ -10,7 +10,7 @@ import { useMemo } from 'react';
 import {
   type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog,
   GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory,
-  IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, IsModifierTypeVisible,
+  IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, type IProductInstanceFunction, IsModifierTypeVisible,
   type MetadataModifierMap, type ProductModifierEntry, WCPProductGenerateMetadata
 } from '@wcp/wario-shared';
 
@@ -232,6 +232,13 @@ export function useProductInstanceFunctionById(id: string) {
   const { data: catalog } = useCatalogQuery();
   return catalog?.productInstanceFunctions[id] ?? null;
 }
+
+export function useValueFromProductInstanceFunctionById<K extends keyof IProductInstanceFunction>(id: string, key: K) {
+  const productInstanceFunction = useProductInstanceFunctionById(id);
+  const value = productInstanceFunction ? productInstanceFunction[key] : null;
+  return value;
+}
+
 
 /**
  * Hook to access catalog selectors

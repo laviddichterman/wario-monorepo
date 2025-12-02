@@ -2,12 +2,11 @@ import '@/global.css';
 
 import { useEffect } from 'react';
 
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import { MotionLazy } from '@wcp/wario-ux-shared/containers';
-import { startConnection } from '@wcp/wario-ux-shared/redux';
+import { useIsSocketDataLoaded } from '@wcp/wario-ux-shared/query';
 
 import { usePathname } from '@/routes/hooks';
-
-import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 
 import { ProgressBar } from '@/components/progress-bar';
 import { defaultSettings, SettingsDrawer, SettingsProvider } from '@/components/settings';
@@ -19,20 +18,14 @@ import { I18nProvider } from '@/locales/i18n-provider';
 import { LocalizationProvider } from '@/locales/localization-provider';
 import { themeConfig, ThemeProvider } from '@/theme';
 
-
 type AppProps = {
   children: React.ReactNode;
 };
 
 export default function App({ children }: AppProps) {
-  const dispatch = useAppDispatch();
-  const socketIoState = useAppSelector((s) => s.ws.status);
-  useEffect(() => {
-    if (socketIoState === 'NONE') {
-      dispatch(startConnection());
-    }
-  }, [socketIoState, dispatch]);
   useScrollToTop();
+  const isSocketDataLoaded = useIsSocketDataLoaded();
+
   return (
     <I18nProvider>
       <Auth0AuthProvider>
@@ -46,7 +39,7 @@ export default function App({ children }: AppProps) {
                 <Snackbar />
                 <ProgressBar />
                 <SettingsDrawer defaultSettings={defaultSettings} />
-                {children}
+                {!isSocketDataLoaded ? <LoadingScreen /> : children}
               </MotionLazy>
             </ThemeProvider>
           </LocalizationProvider>

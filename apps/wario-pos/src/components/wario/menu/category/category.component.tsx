@@ -1,10 +1,8 @@
 import { Autocomplete, Grid, TextField } from "@mui/material";
 
-import { CALL_LINE_DISPLAY, CategoryDisplay } from "@wcp/wario-shared";
+import { CALL_LINE_DISPLAY, CategoryDisplay, type ICatalogSelectors } from "@wcp/wario-shared";
 import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
-import { getCategoryEntryById, getFulfillments } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCatalogSelectors, useFulfillments } from "@wcp/wario-ux-shared/query";
 
 import { IntNumericPropertyComponent } from "../../property-components/IntNumericPropertyComponent";
 import { StringEnumPropertyComponent } from "../../property-components/StringEnumPropertyComponent";
@@ -32,8 +30,8 @@ export type CategoryComponentProps = {
   ValSetValNamed<string[], 'serviceDisable'>;
 
 const CategoryComponent = (props: CategoryComponentProps) => {
-  const selectCategoryById = useAppSelector(s => (id: string) => getCategoryEntryById(s.ws.categories, id));
-  const fulfillments = useAppSelector(s => getFulfillments(s.ws.fulfillments));
+  const { category } = useCatalogSelectors() as ICatalogSelectors;
+  const fulfillments = useFulfillments();
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
@@ -64,8 +62,8 @@ const CategoryComponent = (props: CategoryComponentProps) => {
               options={props.categoryIds}
               value={props.parent}
               onChange={(_, v) => { props.setParent(v !== null ? v : null); }}
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(o) => selectCategoryById(o)?.category.name ?? "Undefined"}
+
+              getOptionLabel={(o) => category(o)?.category.name ?? "Undefined"}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => (
                 <TextField {...params} label="Parent Category (Optional)" />

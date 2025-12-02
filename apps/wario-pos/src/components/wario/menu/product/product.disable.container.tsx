@@ -5,21 +5,31 @@ import { useState } from "react";
 import { Grid } from "@mui/material";
 
 import type { IProduct } from "@wcp/wario-shared";
-import { getProductEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useBaseProductNameByProductId, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
-import { selectBaseProductName } from "@/redux/store";
 
 import { ElementActionComponent } from "../element.action.component";
 
 import type { ProductQuickActionProps } from './product.delete.container';
 
 const ProductDisableContainer = ({ product_id, onCloseCallback }: ProductQuickActionProps) => {
+  const productName = useBaseProductNameByProductId(product_id);
+  const product = useValueFromProductEntryById(product_id, "product");
+  if (!product || !productName) {
+    return null;
+  }
+  return <ProductDisableContainerInner product={product} productName={productName} onCloseCallback={onCloseCallback} />;
+};
+
+interface InnerProps {
+  product: IProduct;
+  productName: string;
+  onCloseCallback: VoidFunction;
+}
+
+const ProductDisableContainerInner = ({ product, productName, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const productName = useAppSelector(s => selectBaseProductName(s, product_id));
-  const product = useAppSelector(s => getProductEntryById(s.ws.products, product_id).product);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
   const editProduct = async () => {
@@ -30,7 +40,7 @@ const ProductDisableContainer = ({ product_id, onCloseCallback }: ProductQuickAc
         const body: IProduct = Object.assign({}, product, {
           disabled: { start: 1, end: 0 }
         });
-        const response = await fetch(`${HOST_API}/api/v1/menu/product/${product_id}`, {
+        const response = await fetch(`${HOST_API}/api/v1/menu/product/${product.id}`, {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,

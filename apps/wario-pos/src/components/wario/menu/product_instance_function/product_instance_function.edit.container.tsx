@@ -3,21 +3,27 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import { type IAbstractExpression, type IProductInstanceFunction } from "@wcp/wario-shared";
-import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
 import ProductInstanceFunctionComponent from "./product_instance_function.component";
-import { type ProductInstanceFunctionQuickActionProps } from './product_instance_function.delete.container';
 
-const ProductInstanceFunctionEditContainer = ({ pifId, onCloseCallback }: ProductInstanceFunctionQuickActionProps) => {
+interface ProductInstanceFunctionEditContainerProps {
+  pifId: string;
+  onCloseCallback: VoidFunction;
+}
+const ProductInstanceFunctionEditContainer = ({ pifId, onCloseCallback }: ProductInstanceFunctionEditContainerProps) => {
+  const productInstanceFunction = useProductInstanceFunctionById(pifId);
+  if (!productInstanceFunction) {
+    return null;
+  }
+
+  return <ProductInstanceFunctionEditContainerInner productInstanceFunction={productInstanceFunction} onCloseCallback={onCloseCallback} />;
+}
+
+const ProductInstanceFunctionEditContainerInner = ({ productInstanceFunction, onCloseCallback }: { productInstanceFunction: IProductInstanceFunction; onCloseCallback: VoidFunction }) => {
   const { enqueueSnackbar } = useSnackbar();
-
-  // todo: look into the assertion of truthy, maybe the caller of this container should process the selection and confirm non-falsy?
-  const productInstanceFunction = useAppSelector(s => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId))
-
   const [functionName, setFunctionName] = useState(productInstanceFunction.name);
   const [expression, setExpression] = useState<IAbstractExpression | null>(productInstanceFunction.expression);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -32,7 +38,7 @@ const ProductInstanceFunctionEditContainer = ({ pifId, onCloseCallback }: Produc
           name: functionName,
           expression
         };
-        const response = await fetch(`${HOST_API}/api/v1/query/language/productinstancefunction/${pifId}`, {
+        const response = await fetch(`${HOST_API}/api/v1/query/language/productinstancefunction/${productInstanceFunction.id}`, {
           method: "PATCH",
           headers: {
             Authorization: `Bearer ${token}`,

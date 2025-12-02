@@ -21,7 +21,7 @@ const ElementDeleteComponent = ({
     body={
       <>
         <Grid size={12}>
-          <Warning /> Are you sure you'd like to delete {name}? Note this cannot be undone.
+          <Warning />Are you sure you'd like to delete {name}? Note this cannot be undone.
         </Grid>
         {additionalBody}
       </>

@@ -2,11 +2,9 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import type { IProductInstance, KeyValue, ProductModifierEntry } from "@wcp/wario-shared";
+import type { IProduct, IProductInstance, KeyValue, ProductModifierEntry } from "@wcp/wario-shared";
 import { PriceDisplay } from "@wcp/wario-shared";
-import { getProductEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -18,8 +16,22 @@ interface ProductInstanceAddContainerProps {
 }
 
 const ProductInstanceAddContainer = ({ parent_product_id, onCloseCallback }: ProductInstanceAddContainerProps) => {
+  const parent_product = useValueFromProductEntryById(parent_product_id, "product");
+
+  if (!parent_product) {
+    return null;
+  }
+
+  return <ProductInstanceAddContainerInner parent_product={parent_product} onCloseCallback={onCloseCallback} />;
+};
+
+interface InnerProps {
+  parent_product: IProduct;
+  onCloseCallback: VoidFunction;
+}
+
+const ProductInstanceAddContainerInner = ({ parent_product, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const parent_product = useAppSelector(s => getProductEntryById(s.ws.products, parent_product_id).product);
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const [shortcode, setShortcode] = useState("");

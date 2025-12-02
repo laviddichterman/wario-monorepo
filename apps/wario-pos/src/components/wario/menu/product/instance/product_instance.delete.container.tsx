@@ -2,9 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { getProductInstanceById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useProductInstanceById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -17,12 +15,12 @@ export interface ProductInstanceQuickActionProps {
 
 const ProductInstanceDeleteContainer = ({ product_instance_id, onCloseCallback }: ProductInstanceQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const product_instance = useAppSelector(s => getProductInstanceById(s.ws.productInstances, product_instance_id));
+  const product_instance = useProductInstanceById(product_instance_id);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
   const deleteProductInstance = async () => {
-    if (!isProcessing) {
+    if (!isProcessing && product_instance) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
@@ -47,7 +45,7 @@ const ProductInstanceDeleteContainer = ({ product_instance_id, onCloseCallback }
   };
 
   return (
-    <ElementDeleteComponent
+    product_instance && <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void deleteProductInstance()}
       name={product_instance.displayName}

@@ -1,13 +1,11 @@
 import { endOfDay, getTime } from 'date-fns';
 
 import { Grid } from "@mui/material";
-import { DateTimePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 
 import type { IWInterval } from "@wcp/wario-shared";
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
-import { SelectDateFnsAdapter } from '@wcp/wario-ux-shared/redux';
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCurrentTime } from '@wcp/wario-ux-shared/query';
 
 import { ToggleBooleanPropertyComponent } from "./property-components/ToggleBooleanPropertyComponent";
 
@@ -19,8 +17,7 @@ export const IsDisableValueValid = (value: IWInterval | null) =>
   value === null || (value.start === 1 && value.end === 0) || (value.start <= value.end);
 
 const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps) => {
-  const CURRENT_TIME = useAppSelector(s => s.ws.currentTime);
-  const DateAdapter = useAppSelector(s => SelectDateFnsAdapter(s));
+  const currentTime = useCurrentTime();
 
   const updateDisabledStart = (start: Date | number) => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -52,14 +49,14 @@ const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps
             setValue={(isBlanket) => {
               props.setValue(isBlanket ?
                 { start: 1, end: 0 } :
-                { start: CURRENT_TIME, end: getTime(endOfDay(CURRENT_TIME)) });
+                { start: currentTime, end: getTime(endOfDay(currentTime)) });
             }}
             labelPlacement='end'
           />
         </Grid>
       }
       {(props.value !== null && (props.value.start <= props.value.end)) &&
-        <LocalizationProvider dateAdapter={DateAdapter}>
+        <>
           <Grid size={6}>
             <DateTimePicker
               label="Disabled Start"
@@ -81,7 +78,8 @@ const DatetimeBasedDisableComponent = (props: DatetimeBasedDisableComponentProps
               slotProps={{ textField: { fullWidth: true } }}
             />
           </Grid>
-        </LocalizationProvider>}
+        </>
+      }
     </Grid>
   );
 };

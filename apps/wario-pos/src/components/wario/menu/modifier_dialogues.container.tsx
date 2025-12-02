@@ -1,8 +1,14 @@
-import { DialogContainer } from "@wcp/wario-ux-shared/containers";
-import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
+import { useAtomValue, useSetAtom } from "jotai";
 
-import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux";
-import { closeDialogue } from '../../../redux/slices/CatalogSlice';
+import { DialogContainer } from "@wcp/wario-ux-shared/containers";
+import { useModifierTypeNameById } from "@wcp/wario-ux-shared/query";
+
+import {
+  closeDialogueAtom,
+  dialogueStateAtom,
+  selectedModifierOptionIdAtom,
+  selectedModifierTypeIdAtom
+} from "@/atoms/catalog";
 
 import ModifierOptionAddContainer from "./modifier_option/modifier_option.add.container";
 import ModifierOptionDeleteContainer from "./modifier_option/modifier_option.delete.container";
@@ -16,70 +22,72 @@ import ModifierTypeDeleteContainer from "./modifier_type/modifier_type.delete.co
 import ModifierTypeEditContainer from "./modifier_type/modifier_type.edit.container";
 
 const ModifierDialoguesContainer = () => {
-  const dispatch = useAppDispatch();
-  const dialogueState = useAppSelector(s => s.catalog.dialogueState);
-  const modifierOptionId = useAppSelector(s => s.catalog.selectedModifierOptionId);
-  const modifierTypeId = useAppSelector(s => s.catalog.selectedModifierTypeId);
-  const modifierTypeName = useAppSelector(s => s.catalog.selectedModifierTypeId !== null ? getModifierTypeEntryById(s.ws.modifierEntries, s.catalog.selectedModifierTypeId).modifierType.name : "");
+  const dialogueState = useAtomValue(dialogueStateAtom);
+  const modifierOptionId = useAtomValue(selectedModifierOptionIdAtom);
+  const modifierTypeId = useAtomValue(selectedModifierTypeIdAtom);
+
+  const modifierTypeName = useModifierTypeNameById(modifierTypeId || "");
+  const closeDialogue = useSetAtom(closeDialogueAtom);
+
   return (
     <>
       <DialogContainer
         maxWidth={"xl"}
         title={"Edit Modifier Option"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierOptionEdit'}
         innerComponent={
           modifierOptionId !== null &&
           <ModifierOptionEditContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_option_id={modifierOptionId}
           />
         }
       />
       <DialogContainer
         title={"Disable Modifier Option Until End-of-Day"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierOptionDisableUntilEod'}
         innerComponent={
           modifierOptionId !== null &&
           <ModifierOptionDisableUntilEodContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_option_id={modifierOptionId}
           />
         }
       />
       <DialogContainer
         title={"Disable Modifier Option"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierOptionDisable'}
         innerComponent={
           modifierOptionId !== null &&
           <ModifierOptionDisableContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_option_id={modifierOptionId}
           />
         }
       />
       <DialogContainer
         title={"Enable Modifier Option"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierOptionEnable'}
         innerComponent={
           modifierOptionId !== null &&
           <ModifierOptionEnableContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_option_id={modifierOptionId}
           />
         }
       />
       <DialogContainer
         title={"Delete Modifier Option"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierOptionDelete'}
         innerComponent={
           modifierOptionId !== null &&
           <ModifierOptionDeleteContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_option_id={modifierOptionId}
           />
         }
@@ -88,34 +96,34 @@ const ModifierDialoguesContainer = () => {
       <DialogContainer
         maxWidth={"xl"}
         title={`Add Modifier Option for Type: ${modifierTypeName}`}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierOptionAdd'}
         innerComponent={
           modifierTypeId !== null &&
           <ModifierOptionAddContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifierTypeId={modifierTypeId}
           />
         }
       />
       <DialogContainer
         title={"Add Modifier Type"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierTypeAdd'}
         innerComponent={
           <ModifierTypeAddContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
           />
         }
       />
       <DialogContainer
         title={"Edit Modifier Type"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierTypeEdit'}
         innerComponent={
           modifierTypeId !== null &&
           <ModifierTypeEditContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_type_id={modifierTypeId}
           />
         }
@@ -123,24 +131,24 @@ const ModifierDialoguesContainer = () => {
       <DialogContainer
         title={"Copy Modifier Type"}
         maxWidth={"xl"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierTypeCopy'}
         innerComponent={
           modifierTypeId !== null &&
           <ModifierTypeCopyContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifierTypeId={modifierTypeId}
           />
         }
       />
       <DialogContainer
         title={"Delete Modifier Type"}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => { closeDialogue(); }}
         open={dialogueState === 'ModifierTypeDelete'}
         innerComponent={
           modifierTypeId !== null &&
           <ModifierTypeDeleteContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
+            onCloseCallback={() => { closeDialogue() }}
             modifier_type_id={modifierTypeId}
           />
         }

@@ -8,13 +8,13 @@ import { useState } from "react";
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
 import type { CreateIProduct, CreateIProductInstance, IProduct, IProductInstance, IProductModifier, KeyValue, UpdateIProduct, UpdateIProductUpdateIProductInstance, UpsertProductBatch } from "@wcp/wario-shared";
-import { PriceDisplay, ReduceArrayToMapByKey } from "@wcp/wario-shared";
+import { PriceDisplay } from "@wcp/wario-shared";
 import type { ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
 import { HOST_API } from "@/config";
-import { getPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
 
 import GenericCsvImportComponent from "../../generic_csv_import.component";
 import { ToggleBooleanPropertyComponent } from "../../property-components/ToggleBooleanPropertyComponent";
@@ -54,9 +54,9 @@ type HierarchicalProductImportComponentProps = {
   ValSetValNamed<IProductModifier[], 'modifiers'>;
 
 const HierarchicalProductImportComponent = (props: HierarchicalProductImportComponentProps) => {
-  const categories = useAppSelector(s => s.ws.catalog?.categories ?? {});
-  // const catalog = useAppSelector(s => s.ws.catalog!);
-  const printerGroups = useAppSelector(s => ReduceArrayToMapByKey(getPrinterGroups(s.printerGroup.printerGroups), 'id'));
+  const catalogSelectors = useCatalogSelectors();
+  const categories = useCategoryIds();
+  const { data: printerGroups } = usePrinterGroupsMap();
   return (
     <ElementActionComponent
       {...props}
@@ -66,10 +66,11 @@ const HierarchicalProductImportComponent = (props: HierarchicalProductImportComp
             <Autocomplete
               multiple
               filterSelectedOptions
-              options={Object.keys(categories)}
+              options={categories}
               value={props.parentCategories.filter((x) => x)}
               onChange={(_e, v) => { props.setParentCategories(v); }}
-              getOptionLabel={(option) => categories[option].category.name}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              getOptionLabel={(option) => catalogSelectors?.category(option)?.category.name ?? option}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => (
                 <TextField {...params} label="Categories" />

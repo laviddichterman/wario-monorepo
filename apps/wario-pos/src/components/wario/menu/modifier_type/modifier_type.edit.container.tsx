@@ -3,9 +3,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import type { IOptionType } from "@wcp/wario-shared";
-import { getModifierTypeEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -13,8 +11,16 @@ import ModifierTypeComponent from "./modifier_type.component";
 import type { ModifierTypeModifyUiProps } from "./modifier_type.component";
 
 const ModifierTypeEditContainer = ({ modifier_type_id, onCloseCallback }: ModifierTypeModifyUiProps) => {
+  const modifier_type = useValueFromModifierEntryById(modifier_type_id, "modifierType");
+  if (!modifier_type) {
+    return null;
+  }
+  return <ModifierTypeEditContainerInner onCloseCallback={onCloseCallback} modifier_type={modifier_type} />;
+};
+
+interface InnerProps { onCloseCallback: VoidFunction, modifier_type: IOptionType }
+const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_type = useAppSelector(s => getModifierTypeEntryById(s.ws.modifierEntries, modifier_type_id).modifierType);
   const [ordinal, setOrdinal] = useState(modifier_type.ordinal);
   const [name, setName] = useState(modifier_type.name);
   const [displayName, setDisplayName] = useState(modifier_type.displayName);

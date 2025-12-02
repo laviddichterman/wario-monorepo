@@ -2,9 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 
-import { getModifierOptionById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useOptionById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -16,13 +14,12 @@ export interface ModifierOptionQuickActionProps {
 }
 const ModifierOptionDeleteContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, modifier_option_id));
-
+  const modifier_option = useOptionById(modifier_option_id);
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
   const deleteModifierOption = async () => {
-    if (!isProcessing) {
+    if (!isProcessing && modifier_option) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
@@ -47,7 +44,7 @@ const ModifierOptionDeleteContainer = ({ modifier_option_id, onCloseCallback }: 
   };
 
   return (
-    <ElementDeleteComponent
+    modifier_option && <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void deleteModifierOption()}
       name={modifier_option.displayName}

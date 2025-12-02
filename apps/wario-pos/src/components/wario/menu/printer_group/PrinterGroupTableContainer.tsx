@@ -8,14 +8,12 @@ import { GridActionsCellItem, useGridApiRef } from "@mui/x-data-grid-premium";
 import type { PrinterGroup } from "@wcp/wario-shared";
 import { DialogContainer } from "@wcp/wario-ux-shared/containers";
 
-import { useAppSelector } from "@/hooks/useRedux";
-
-import { getPrinterGroups } from "@/redux/slices/PrinterGroupSlice";
+import { usePrinterGroupsQuery } from "@/hooks/usePrinterGroupsQuery";
 
 import { TableWrapperComponent } from "../../table_wrapper.component";
 
 const PrinterGroupTableContainer = () => {
-  const printerGroups = useAppSelector(s => getPrinterGroups(s.printerGroup.printerGroups));
+  const { data: printerGroups = [] } = usePrinterGroupsQuery();
   const [isPrinterGroupAddOpen, setIsPrinterGroupAddOpen] = useState(false);
   const [isPrinterGroupDeleteOpen, setIsPrinterGroupDeleteOpen] = useState(false);
   const [isPrinterGroupEditOpen, setIsPrinterGroupEditOpen] = useState(false);
@@ -65,7 +63,7 @@ const PrinterGroupTableContainer = () => {
           size: 1,
           elt: <Tooltip key="ADDNEW" title="Add Printer Group"><IconButton onClick={() => { setIsPrinterGroupAddOpen(true); }}><AddBox /></IconButton></Tooltip>
         }]}
-        rows={Object.values(printerGroups)}
+        rows={printerGroups}
         getRowId={(row: PrinterGroup) => row.id}
         disableToolbar={false}
       />

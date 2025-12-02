@@ -4,9 +4,7 @@ import { useState } from "react";
 
 import type { ICategory } from "@wcp/wario-shared";
 import { CALL_LINE_DISPLAY, CategoryDisplay } from "@wcp/wario-shared";
-import { getCategoryEntryIds } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCategoryIds } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from "@/config";
 
@@ -18,8 +16,7 @@ export interface CategoryAddContainerProps {
 
 const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-
-  const categoryIds = useAppSelector(s => getCategoryEntryIds(s.ws.categories));
+  const categoryIds = useCategoryIds();
   const [description, setDescription] = useState<string | null>("");
   const [subheading, setSubheading] = useState<string | null>("");
   const [footnotes, setFootnotes] = useState<string | null>("");

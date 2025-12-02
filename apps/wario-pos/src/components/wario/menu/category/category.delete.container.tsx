@@ -4,9 +4,7 @@ import { useState } from "react";
 
 import { Grid } from "@mui/material";
 
-import { getCategoryEntryById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { ToggleBooleanPropertyComponent } from "@/components/wario/property-components/ToggleBooleanPropertyComponent";
 
@@ -18,7 +16,7 @@ import { type CategoryEditProps } from "./category.component";
 
 const CategoryDeleteContainer = ({ categoryId, onCloseCallback }: CategoryEditProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const categoryName = useAppSelector(s => getCategoryEntryById(s.ws.categories, categoryId).category.name);
+  const categoryName = useValueFromCategoryById(categoryId, 'name') ?? "";
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
   const [deleteContainedProducts, setDeleteContainedProducts] = useState(false);

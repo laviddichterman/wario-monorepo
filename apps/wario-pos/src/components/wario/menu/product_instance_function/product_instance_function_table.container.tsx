@@ -1,34 +1,50 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import { AddBox, DeleteOutline, Edit } from "@mui/icons-material";
 import { IconButton, Tooltip } from '@mui/material';
-import { GridActionsCellItem, type GridRowParams } from "@mui/x-data-grid-premium";
+import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams } from "@mui/x-data-grid-premium";
 
-import { type IAbstractExpression, type IProductInstanceFunction, WFunctional } from "@wcp/wario-shared";
+import { WFunctional } from "@wcp/wario-shared";
+import { type ICatalogSelectors } from "@wcp/wario-shared";
 import { DialogContainer } from "@wcp/wario-ux-shared/containers";
-import { getModifierOptionById, getModifierTypeEntryById, getProductInstanceFunctions } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCatalogSelectors, useProductInstanceFunctionById, useProductInstanceFunctionIds, useValueFromProductInstanceFunctionById } from "@wcp/wario-ux-shared/query";
 
 import { TableWrapperComponent } from "../../table_wrapper.component";
 
+interface RowType { id: string };
+
+const FunctionName = (params: GridRenderCellParams<RowType>) => {
+  const pifName = useValueFromProductInstanceFunctionById(params.row.id, 'name');
+  return <>{pifName ?? ""}</>;
+}
+
+const FunctionAsString = (params: GridRenderCellParams<RowType>) => {
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
+  const pif = useProductInstanceFunctionById(params.row.id);
+  if (!pif) {
+    return <>CORRUPT DATA</>;
+  }
+  return <>{WFunctional.AbstractExpressionStatementToString(pif.expression, catalogSelectors)}</>;
+}
+
+
+
 const ProductInstanceFunctionTableContainer = () => {
-  const modifierTypeSelector = useAppSelector(s => (id: string) => getModifierTypeEntryById(s.ws.modifierEntries, id));
-  const modifierOptionSelector = useAppSelector(s => (id: string) => getModifierOptionById(s.ws.modifierOptions, id));
-  const productInstanceFunctions = useAppSelector(s => getProductInstanceFunctions(s.ws.productInstanceFunctions));
+  const productInstanceFunctions = useProductInstanceFunctionIds();
+  const pifRows = useMemo(() => productInstanceFunctions.map(id => ({ id })), [productInstanceFunctions]);
   const [isProductInstanceFunctionAddOpen, setIsProductInstanceFunctionAddOpen] = useState(false);
   const [isProductInstanceFunctionDeleteOpen, setIsProductInstanceFunctionDeleteOpen] = useState(false);
   const [isProductInstanceFunctionEditOpen, setIsProductInstanceFunctionEditOpen] = useState(false);
   const [pifIdToEdit, setPifIdToEdit] = useState<string | null>(null);
 
-  const editProductFunction = (row: IProductInstanceFunction) => () => {
+  const editProductFunction = (row: string) => () => {
     setIsProductInstanceFunctionEditOpen(true);
-    setPifIdToEdit(row.id);
+    setPifIdToEdit(row);
   };
 
-  const deleteProductFunction = (row: IProductInstanceFunction) => () => {
+  const deleteProductFunction = (row: string) => () => {
     setIsProductInstanceFunctionDeleteOpen(true);
-    setPifIdToEdit(row.id);
+    setPifIdToEdit(row);
   };
   return (
     <>
@@ -42,30 +58,32 @@ const ProductInstanceFunctionTableContainer = () => {
           elt:
             <Tooltip key="AddNew" title="Add Product Function"><IconButton onClick={() => { setIsProductInstanceFunctionAddOpen(true); }}><AddBox /></IconButton></Tooltip>
         }]}
-        rows={productInstanceFunctions}
-        getRowId={(row: IProductInstanceFunction) => row.id}
+        rows={pifRows}
+        getRowId={(row: RowType) => row.id}
         columns={[
           {
             headerName: "Actions",
             field: 'actions',
             type: 'actions',
-            getActions: (params: GridRowParams<IProductInstanceFunction>) => [
-              <GridActionsCellItem
-                icon={<Tooltip title="Edit Product Function"><Edit /></Tooltip>}
-                label="Edit Product Function"
-                onClick={editProductFunction(params.row)}
-                key="EditPF"
-              />,
-              <GridActionsCellItem
-                icon={<Tooltip title="Delete Product Function"><DeleteOutline /></Tooltip>}
-                label="Delete Product Function"
-                onClick={deleteProductFunction(params.row)}
-                key="DelPF"
-              />
-            ]
+            getActions: (params: GridRowParams<RowType>) => {
+              return [
+                <GridActionsCellItem
+                  icon={<Tooltip title="Edit Product Function"><Edit /></Tooltip>}
+                  label="Edit Product Function"
+                  onClick={editProductFunction(params.row.id)}
+                  key="EditPF"
+                />,
+                <GridActionsCellItem
+                  icon={<Tooltip title="Delete Product Function"><DeleteOutline /></Tooltip>}
+                  label="Delete Product Function"
+                  onClick={deleteProductFunction(params.row.id)}
+                  key="DelPF"
+                />
+              ]
+            }
           },
-          { headerName: "Name", field: "name", flex: 1 },
-          { headerName: "Function", field: "expression", valueGetter: (v: IAbstractExpression) => WFunctional.AbstractExpressionStatementToString(v, { modifierEntry: modifierTypeSelector, option: modifierOptionSelector }), flex: 3 },
+          { headerName: "Name", field: "name", flex: 1, renderCell: (params) => <FunctionName {...params} /> },
+          { headerName: "Function", field: "expression", renderCell: (params) => <FunctionAsString {...params} />, flex: 3 },
         ]}
       />
       <DialogContainer

@@ -18,8 +18,7 @@ import {
 import { type DateIntervalsEntries, type DayOfTheWeek, formatDecimal, FulfillmentType, type IWInterval, type OperatingHourSpecification, parseInteger, WDateUtils } from '@wcp/wario-shared';
 import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
-
-import { useAppSelector } from '@/hooks/useRedux';
+import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
 import { ElementActionComponent } from './menu/element.action.component';
 import { IntNumericPropertyComponent } from './property-components/IntNumericPropertyComponent';
@@ -198,11 +197,14 @@ export type FulfillmentComponentProps =
   };
 
 const FulfillmentComponent = (props: FulfillmentComponentProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const catalog = useAppSelector(s => s.ws.catalog!);
+  const { data: catalog } = useCatalogQuery();
   const [isServiceAreaDirty, setIsServiceAreaDirty] = useState(false);
   const [isServiceAreaParsingError, setIsServiceAreaParsingError] = useState(false);
   const [localServiceAreaString, setLocalServiceAreaString] = useState(props.serviceArea ? JSON.stringify(props.serviceArea) : null)
+
+  if (!catalog) {
+    return null;
+  }
   function onSetServiceArea(json: string | null) {
     try {
       props.setServiceArea(json ? JSON.parse(json) as Polygon : null);

@@ -6,9 +6,7 @@ import { useState } from "react";
 import { Grid } from "@mui/material";
 
 import type { IOption } from "@wcp/wario-shared";
-import { getModifierOptionById } from "@wcp/wario-ux-shared/redux";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useCurrentTime, useOptionById } from "@wcp/wario-ux-shared/query";
 
 import { HOST_API } from "@/config";
 
@@ -18,18 +16,18 @@ import type { ModifierOptionQuickActionProps } from "./modifier_option.delete.co
 
 const ModifierOptionDisableUntilEodContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, modifier_option_id));
+  const modifier_option = useOptionById(modifier_option_id) as IOption | null;
+  const currentTime = useCurrentTime();
   const [isProcessing, setIsProcessing] = useState(false);
-  const CURRENT_TIME = useAppSelector(s => s.ws.currentTime);
   const { getAccessTokenSilently } = useAuth0();
   const editModifierOption = async () => {
-    if (!isProcessing) {
+    if (!isProcessing && modifier_option) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
         const body: IOption = {
           ...modifier_option,
-          disabled: { start: CURRENT_TIME, end: getTime(endOfDay(CURRENT_TIME)) }
+          disabled: { start: currentTime, end: getTime(endOfDay(currentTime)) }
         };
         const response = await fetch(`${HOST_API}/api/v1/menu/option/${modifier_option.modifierTypeId}/${modifier_option.id}`, {
           method: "PATCH",
@@ -53,7 +51,7 @@ const ModifierOptionDisableUntilEodContainer = ({ modifier_option_id, onCloseCal
   };
 
   return (
-    <ElementActionComponent
+    modifier_option && <ElementActionComponent
       onCloseCallback={onCloseCallback}
       onConfirmClick={() => void editModifierOption()}
       isProcessing={isProcessing}

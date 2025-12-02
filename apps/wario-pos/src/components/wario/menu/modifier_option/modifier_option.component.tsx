@@ -2,10 +2,9 @@ import { useState } from "react";
 
 import { Autocomplete, Grid, TextField } from "@mui/material";
 
-import { type IMoney, type IOptionType, type IRecurringInterval, type IWInterval, type KeyValue, type RecordProductInstanceFunctions } from "@wcp/wario-shared";
+import { type IMoney, type IOptionType, type IRecurringInterval, type IWInterval, type KeyValue } from "@wcp/wario-shared";
 import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
-
-import { useAppSelector } from '@/hooks/useRedux';
+import { useCatalogSelectors, useProductInstanceFunctionIds } from "@wcp/wario-ux-shared/query";
 
 import AvailabilityListBuilderComponent from "@/components/wario/AvailabilityListBuilderComponent";
 import DatetimeBasedDisableComponent, { IsDisableValueValid } from "@/components/wario/datetime_based_disable.component";
@@ -49,7 +48,8 @@ type ModifierOptionComponentProps = ModifierOptionContainerProps &
 }
 
 export const ModifierOptionContainer = (props: ModifierOptionContainerProps & ValSetValNamed<boolean, 'availabilityIsValid'>) => {
-  const productInstanceFunctions = useAppSelector(s => s.ws.catalog?.productInstanceFunctions) as RecordProductInstanceFunctions;
+  const catalogSelectors = useCatalogSelectors();
+  const productInstanceFunctions = useProductInstanceFunctionIds();
   const handleSetAllowOTS = (value: boolean) => {
     if (props.modifierType.max_selected !== 1) {
       props.setAllowOTS(value);
@@ -177,11 +177,10 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
       <Grid size={12}>
         <Autocomplete
           fullWidth
-          options={Object.keys(productInstanceFunctions)}
+          options={productInstanceFunctions}
           value={props.enableFunction}
           onChange={(_e, v) => { props.setEnableFunction(v); }}
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(option) => productInstanceFunctions[option].name ?? "CORRUPT DATA"}
+          getOptionLabel={(option) => catalogSelectors?.productInstanceFunction(option).name || option}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Enable Function Name" />}
         />

@@ -1,40 +1,41 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useState } from "react";
+import { useState } from 'react';
 
-import { Grid, TextField } from "@mui/material";
+import Grid from '@mui/material/Grid';
+import TextField from '@mui/material/TextField';
 
-import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux";
-import { cancelOrder } from "../../../redux/slices/OrdersSlice";
+import { useCancelOrderMutation } from "@/hooks/useOrdersQuery";
+
 import { ElementActionComponent, type ElementActionComponentProps } from "../menu/element.action.component";
 import { ToggleBooleanPropertyComponent } from "../property-components/ToggleBooleanPropertyComponent";
 
 type WOrderCancelComponentProps = { orderId: string; onCloseCallback: ElementActionComponentProps['onCloseCallback'] };
 const WOrderCancelComponent = (props: WOrderCancelComponentProps) => {
-  const { getAccessTokenSilently } = useAuth0();
-  const dispatch = useAppDispatch();
+  const cancelMutation = useCancelOrderMutation();
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
-  const orderSliceState = useAppSelector(s => s.orders.requestStatus)
 
   const [cancelationReason, setCancelationReason] = useState("");
 
-  const submitToWario = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (orderSliceState !== 'PENDING') {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: "cancel:order" } });
-      await dispatch(cancelOrder({ orderId: props.orderId, emailCustomer: true, reason: cancelationReason, token: token }));
-      if (props.onCloseCallback) {
-        props.onCloseCallback(e); return;
+  const submitToWario = (e: React.MouseEvent<HTMLButtonElement>) => {
+    cancelMutation.mutate(
+      { orderId: props.orderId, emailCustomer: true, reason: cancelationReason },
+      {
+        onSuccess: () => {
+          if (props.onCloseCallback) {
+            props.onCloseCallback(e);
+          }
+        }
       }
-    }
+    );
   }
 
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
-      onConfirmClick={(e) => void submitToWario(e)}
-      isProcessing={orderSliceState === 'PENDING'}
-      disableConfirmOn={orderSliceState === 'PENDING' || !confirmCheckbox}
+      onConfirmClick={submitToWario}
+      isProcessing={cancelMutation.isPending}
+      disableConfirmOn={cancelMutation.isPending || !confirmCheckbox}
       confirmText={'Process Order Cancelation'}
-      body={<>
+      body={<Grid container spacing={2}>
         <Grid size={12}>
           <TextField
             multiline
@@ -48,7 +49,7 @@ const WOrderCancelComponent = (props: WOrderCancelComponentProps) => {
         </Grid>
         <Grid size={12}>
           <ToggleBooleanPropertyComponent
-            disabled={orderSliceState === 'PENDING'}
+            disabled={cancelMutation.isPending}
             label="Cancellation is permanent, confirm this is understood before proceeding"
             setValue={setConfirmCheckbox}
             value={confirmCheckbox}
@@ -56,7 +57,7 @@ const WOrderCancelComponent = (props: WOrderCancelComponentProps) => {
           />
 
         </Grid>
-      </>
+      </Grid>
       }
     />
   );
