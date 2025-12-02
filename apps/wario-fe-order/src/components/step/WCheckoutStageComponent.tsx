@@ -39,7 +39,7 @@ function useIsAutogratuityEnabled() {
   return useIsAutogratuityEnabledByFulfillmentId(fulfillmentId);
 }
 
-export function WCheckoutStage() {
+export default function WCheckoutStage() {
   const { backStage } = useStepperStore();
   const selectedTip = usePaymentStore(selectSelectedTip);
   const squareTokenErrors = usePaymentStore(selectSquareTokenErrors);

@@ -23,7 +23,7 @@ export interface WShopForProductsStageProps {
   setScrollToOnReturn: (value: React.SetStateAction<string>) => void
 }
 
-export function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY' | 'SECONDARY' }) {
+export default function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY' | 'SECONDARY' }) {
   const [scrollToOnReturn, setScrollToOnReturn] = useState('WARIO_order');
   const selectedFulfillmentId = useFulfillmentStore(selectSelectedService) as string;
   const numMainCategoryProducts = useMainProductCategoryCount(selectedFulfillmentId);

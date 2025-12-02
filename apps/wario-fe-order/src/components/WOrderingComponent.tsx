@@ -1,4 +1,5 @@
 
+import { lazy } from 'react';
 
 import Box from '@mui/material/Box';
 import Step from '@mui/material/Step';
@@ -15,12 +16,11 @@ import { StepperTitle } from '@wcp/wario-ux-shared/styled';
 import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
 
 import { useStepperStore } from '@/stores/useStepperStore';
-
-import { WCheckoutStage } from './step/WCheckoutStageComponent';
-import { WCustomerInformationStage } from './step/WCustomerInformationStageComponent';
-import WFulfillmentStageComponent from './step/WFulfillmentStageComponent';
-import WReviewOrderStage from './step/WReviewOrderStage';
-import { WShopForProductsContainer } from './step/WShopForProductsStageContainer';
+const WCheckoutStage = lazy(() => import('@/components/step/WCheckoutStageComponent'));
+const WCustomerInformationStage = lazy(() => import('@/components/step/WCustomerInformationStageComponent'));
+const WFulfillmentStageComponent = lazy(() => import('@/components/step/WFulfillmentStageComponent'));
+const WReviewOrderStage = lazy(() => import('@/components/step/WReviewOrderStage'));
+const WShopForProductsContainer = lazy(() => import('@/components/step/WShopForProductsStageContainer'));
 
 const STAGES = [
   {

@@ -34,10 +34,11 @@ function useCIForm() {
   return useFormApi;
 }
 
-export function WCustomerInformationStage() {
+export default function WCustomerInformationStage() {
   const cIForm = useCIForm();
   const setCustomerInfo = useCustomerInfoStore((s) => s.setCustomerInfo);
-  const { nextStage, backStage } = useStepperStore();
+  const nextStage = useStepperStore((s) => s.nextStage);
+  const backStage = useStepperStore((s) => s.backStage);
   const { getValues, watch, formState: { isValid, errors, isDirty }, handleSubmit } = cIForm;
   const handleNext = () => {
     setCustomerInfo(getValues());
