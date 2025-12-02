@@ -13,8 +13,8 @@ import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillm
 import { useStepperStore } from '@/stores/useStepperStore';
 
 import { Navigation } from '../Navigation';
+import { WProductCustomizerComponent } from '../product-customizer/WProductCustomizerComponent';
 import { WOrderCart } from '../WOrderCartComponent';
-import { WProductCustomizerComponent } from '../WProductCustomizerComponent';
 
 import { WShopForProductsStage } from './WShopForProductsStageComponent';
 
