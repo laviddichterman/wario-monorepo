@@ -44,7 +44,6 @@ const ProductInstanceFunctionDeleteContainer = ({ pifId, onCloseCallback }: Prod
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return productInstanceFunction ?
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
