@@ -6,9 +6,6 @@
  * IMPORTANT: This file should ONLY contain types derived directly from DTOs.
  * Complex types, utility types, and types not based on DTOs belong in types.ts.
  */
-
-import type { Polygon } from 'geojson';
-
 import type {
   CatalogCategoryEntryDto,
   CatalogModifierEntryDto,
@@ -35,9 +32,13 @@ import type {
 import type {
   AbstractExpressionConstLiteralDto,
   AbstractExpressionHasAnyOfModifierExpressionDto,
+  AbstractExpressionIfElseExpressionDto,
+  AbstractExpressionLogicalExpressionDto,
   AbstractExpressionModifierPlacementExpressionDto,
   AbstractExpressionProductMetadataDto,
   AbstractOrderExpressionConstLiteralDto,
+  AbstractOrderExpressionIfElseExpressionDto,
+  AbstractOrderExpressionLogicalExpressionDto,
   ConstBooleanLiteralExpressionDto,
   ConstModifierPlacementLiteralExpressionDto,
   ConstModifierQualifierLiteralExpressionDto,
@@ -47,8 +48,8 @@ import type {
   IIfElseExpressionDto,
   ILogicalExpressionDto,
   IModifierPlacementExpressionDto,
+  IOrderInstanceFunctionDto,
   IProductInstanceFunctionDto,
-  OrderInstanceFunctionDto,
   ProductMetadataExpressionDto,
 } from './dto/expression.dto';
 import type { FulfillmentConfigDto } from './dto/fulfillment.dto';
@@ -102,7 +103,6 @@ import type {
   SeatingResourceDto,
   WSeatingInfoDto,
 } from './dto/seating.dto';
-import type { OrderInstanceFunctionType, ProductInstanceFunctionType } from './enums';
 import type { DistributiveOmit } from './utility-types';
 
 // =============================================================================
@@ -145,9 +145,7 @@ export type SetLeadTimesRequest = Record<string, number>;
 // Fulfillment Types (from fulfillment.dto.ts)
 // =============================================================================
 
-export type FulfillmentConfig = Omit<FulfillmentConfigDto, 'serviceArea'> & {
-  serviceArea?: Polygon;
-};
+export type FulfillmentConfig = Omit<FulfillmentConfigDto, never>;
 export type FulfillmentConfigMap = Record<string, FulfillmentConfig>;
 
 // =============================================================================
@@ -207,6 +205,10 @@ export type ConstBooleanLiteralExpression = Omit<ConstBooleanLiteralExpressionDt
 export type ConstModifierPlacementLiteralExpression = Omit<ConstModifierPlacementLiteralExpressionDto, never>;
 export type ConstModifierQualifierLiteralExpression = Omit<ConstModifierQualifierLiteralExpressionDto, never>;
 
+/**
+ * Discriminated union type for constant literal expressions.
+ * Each member is derived from its respective DTO class, mirroring IConstLiteralExpressionDto.
+ */
 export type IConstLiteralExpression =
   | ConstStringLiteralExpression
   | ConstNumberLiteralExpression
@@ -222,17 +224,15 @@ export type ProductMetadataExpression = Omit<ProductMetadataExpressionDto, never
 
 export type AbstractExpressionConstLiteral = Omit<AbstractExpressionConstLiteralDto, never>;
 export type AbstractExpressionProductMetadata = Omit<AbstractExpressionProductMetadataDto, never>;
-export type AbstractExpressionIfElseExpression = Omit<AbstractExpressionConstLiteralDto, 'expr' | 'discriminator'> & {
-  expr: IIfElseExpression<IAbstractExpression>;
-  discriminator: ProductInstanceFunctionType.IfElse;
-};
-export type AbstractExpressionLogicalExpression = Omit<AbstractExpressionConstLiteralDto, 'expr' | 'discriminator'> & {
-  expr: ILogicalExpression<IAbstractExpression>;
-  discriminator: ProductInstanceFunctionType.Logical;
-};
+export type AbstractExpressionIfElseExpression = Omit<AbstractExpressionIfElseExpressionDto, never>
+export type AbstractExpressionLogicalExpression = Omit<AbstractExpressionLogicalExpressionDto, never>;
 export type AbstractExpressionModifierPlacementExpression = Omit<AbstractExpressionModifierPlacementExpressionDto, never>;
 export type AbstractExpressionHasAnyOfModifierExpression = Omit<AbstractExpressionHasAnyOfModifierExpressionDto, never>;
 
+/**
+ * Discriminated union type for product instance abstract expressions.
+ * Derived from IAbstractExpressionDto with recursive type resolution for nested expressions.
+ */
 export type IAbstractExpression =
   | AbstractExpressionConstLiteral
   | AbstractExpressionProductMetadata
@@ -246,23 +246,19 @@ export type IProductInstanceFunction = Omit<IProductInstanceFunctionDto, 'expres
 };
 
 export type AbstractOrderExpressionConstLiteral = Omit<AbstractOrderExpressionConstLiteralDto, never>;
-export type AbstractOrderExpressionIfElseExpression = Omit<AbstractOrderExpressionConstLiteralDto, 'expr' | 'discriminator'> & {
-  expr: IIfElseExpression<AbstractOrderExpression>;
-  discriminator: OrderInstanceFunctionType.IfElse;
-};
-export type AbstractOrderExpressionLogicalExpression = Omit<AbstractOrderExpressionConstLiteralDto, 'expr' | 'discriminator'> & {
-  expr: ILogicalExpression<AbstractOrderExpression>;
-  discriminator: OrderInstanceFunctionType.Logical;
-};
+export type AbstractOrderExpressionIfElseExpression = Omit<AbstractOrderExpressionIfElseExpressionDto, never>;
+export type AbstractOrderExpressionLogicalExpression = Omit<AbstractOrderExpressionLogicalExpressionDto, never>;
 
+/**
+ * Discriminated union type for order instance abstract expressions.
+ * Derived from IAbstractOrderExpressionDto with recursive type resolution for nested expressions.
+ */
 export type AbstractOrderExpression =
   | AbstractOrderExpressionConstLiteral
   | AbstractOrderExpressionIfElseExpression
   | AbstractOrderExpressionLogicalExpression;
 
-export type OrderInstanceFunction = Omit<OrderInstanceFunctionDto, 'expression'> & {
-  expression: AbstractOrderExpression;
-};
+export type OrderInstanceFunction = Omit<IOrderInstanceFunctionDto, never>;
 
 // =============================================================================
 // Order Types (from order.dto.ts)
