@@ -1,13 +1,16 @@
 import { Schema } from 'mongoose';
+
 import {
-  OrderPayment,
+  type CashPaymentAllocated,
+  type CreditPaymentAllocated,
+  type OrderPayment,
   PaymentMethod,
+  type StoreCreditPaymentAllocated,
   TenderBaseStatus,
-  CreditPaymentAllocated,
-  StoreCreditPaymentAllocated,
-  CashPaymentAllocated,
 } from '@wcp/wario-shared';
+
 import { WMoney } from 'src/models/WMoney';
+
 import { WEncryptStringLockSchema } from './WEncryptStringLock';
 
 export const WOrderPaymentSchema = new Schema<OrderPayment>(

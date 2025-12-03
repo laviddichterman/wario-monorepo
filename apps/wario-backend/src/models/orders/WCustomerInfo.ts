@@ -1,7 +1,8 @@
 import { Schema } from 'mongoose';
-import { CustomerInfoDto } from '@wcp/wario-shared';
 
-export const CustomerInfoSchema = new Schema<CustomerInfoDto>(
+import { type CustomerInfoData } from '@wcp/wario-shared';
+
+export const CustomerInfoSchema = new Schema<CustomerInfoData>(
   {
     givenName: {
       type: String,

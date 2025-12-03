@@ -1,17 +1,19 @@
-import {
-  AbstractExpressionConstLiteral,
-  AbstractExpressionHasAnyOfModifierExpression,
-  AbstractExpressionIfElseExpression,
-  AbstractExpressionLogicalExpression,
-  AbstractExpressionModifierPlacementExpression,
-  AbstractExpressionProductMetadata,
-  IAbstractExpression,
-  MetadataField,
-  LogicalFunctionOperator,
-  ProductInstanceFunctionType,
-  PRODUCT_LOCATION,
-} from '@wcp/wario-shared';
 import { Schema } from 'mongoose';
+
+import {
+  type AbstractExpressionConstLiteral,
+  type AbstractExpressionHasAnyOfModifierExpression,
+  type AbstractExpressionIfElseExpression,
+  type AbstractExpressionLogicalExpression,
+  type AbstractExpressionModifierPlacementExpression,
+  type AbstractExpressionProductMetadata,
+  type IAbstractExpression,
+  LogicalFunctionOperator,
+  MetadataField,
+  PRODUCT_LOCATION,
+  ProductInstanceFunctionType,
+} from '@wcp/wario-shared';
+
 import { WConstLiteralSchema } from '../WConstLiteral';
 
 export const WAbstractExpressionSchema = new Schema<IAbstractExpression>(

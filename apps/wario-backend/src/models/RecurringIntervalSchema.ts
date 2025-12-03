@@ -1,5 +1,7 @@
-import { IRecurringInterval } from '@wcp/wario-shared';
 import { Schema } from 'mongoose';
+
+import { type IRecurringInterval } from '@wcp/wario-shared';
+
 import { IntervalSchema } from './IntervalSchema';
 
 export const RecurringIntervalSchema = new Schema<IRecurringInterval>(

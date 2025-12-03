@@ -1,6 +1,13 @@
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
-import { IOptionType, DISPLAY_AS, MODIFIER_CLASS } from '@wcp/wario-shared';
+
+import mongoose, { Schema } from 'mongoose';
+
+import {
+  DISPLAY_AS,
+  type IOptionType,
+  MODIFIER_CLASS,
+} from '@wcp/wario-shared';
+
 import { KeyValueEntrySchema } from '../../settings/KeyValueSchema';
 
 type MT = Omit<IOptionType, 'id'>;

@@ -1,14 +1,15 @@
 import { Schema } from 'mongoose';
+
 import {
-  AddressComponent,
-  DeliveryAddressValidateResponse,
-  DeliveryInfoDto,
-  DineInInfoDto,
-  FulfillmentDto,
-  ThirdPartyInfo,
+  type AddressComponent,
+  type DeliveryAddressValidateResponse,
+  type DeliveryInfoDto,
+  type DineInInfoDto,
+  type FulfillmentData,
+  type ThirdPartyInfo,
   WFulfillmentStatus,
+  type WSeatingInfo,
   WSeatingStatus,
-  WSeatingInfo,
 } from '@wcp/wario-shared';
 
 export const WSeatingInfoSchema = new Schema<WSeatingInfo>(
@@ -98,7 +99,7 @@ export const ThirdPartyInfoSchema = new Schema<ThirdPartyInfo>(
   { _id: false },
 );
 
-export const FulfillmentInfo = new Schema<FulfillmentDto>(
+export const FulfillmentInfo = new Schema<FulfillmentData>(
   {
     status: {
       type: String,

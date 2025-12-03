@@ -1,5 +1,6 @@
-import { IMoney, CURRENCY } from '@wcp/wario-shared';
 import { Schema } from 'mongoose';
+
+import { CURRENCY, type IMoney } from '@wcp/wario-shared';
 
 // NOTE: this is a mix-in and probably won't be instantiated directly
 export const WMoney = new Schema<IMoney>(

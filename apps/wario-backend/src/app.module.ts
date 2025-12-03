@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from './config/config.module';
+import { CatalogModule } from './models/catalog/catalog.module';
+import { OrdersModule } from './models/orders/orders.module';
+import { QueryModule } from './models/query/query.module';
+import { SettingsModule } from './models/settings/settings.module';
 
 @Module({
   imports: [
@@ -19,8 +25,13 @@ import { MongooseModule } from '@nestjs/mongoose';
         };
       },
     }),
+    OrdersModule,
+    CatalogModule,
+    SettingsModule,
+    QueryModule,
+    ConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}

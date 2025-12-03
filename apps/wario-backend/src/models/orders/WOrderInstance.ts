@@ -1,19 +1,23 @@
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
 import {
-  OrderTax,
-  TipSelection,
-  WOrderInstance,
+  type OrderTax,
+  type TipSelection,
+  type WOrderInstance,
   WOrderStatus,
 } from '@wcp/wario-shared';
-import { CustomerInfoSchema } from './WCustomerInfo';
-import { OrderCartEntrySchema } from './WOrderCartEntry';
-import { FulfillmentInfo } from './WFulfillmentInfo';
-import { WMetricsSchema } from './WMetrics';
+
+import { WMoney } from '../../models/WMoney';
 import { WOrderLineDiscountSchema } from '../payment/WOrderLineDiscount';
 import { WOrderPaymentSchema } from '../payment/WOrderPayment';
 import { KeyValueEntrySchema } from '../settings/KeyValueSchema';
-import { WMoney } from '../../models/WMoney';
+
+import { CustomerInfoSchema } from './WCustomerInfo';
+import { FulfillmentInfo } from './WFulfillmentInfo';
+import { WMetricsSchema } from './WMetrics';
+import { OrderCartEntrySchema } from './WOrderCartEntry';
 
 export const OrderTaxSchema = new Schema<OrderTax>(
   {

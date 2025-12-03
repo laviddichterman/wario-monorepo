@@ -1,7 +1,10 @@
-import { IProductInstance, PriceDisplay } from '@wcp/wario-shared';
-import { KeyValueEntrySchema } from '../../settings/KeyValueSchema';
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type IProductInstance, PriceDisplay } from '@wcp/wario-shared';
+
+import { KeyValueEntrySchema } from '../../settings/KeyValueSchema';
 import { ProductModifierSchema } from '../options/WOptionInstanceSchema';
 
 type MT = Omit<IProductInstance, 'id'>;

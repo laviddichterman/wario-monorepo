@@ -1,12 +1,14 @@
+import { Schema } from 'mongoose';
+
 import {
-  AbstractOrderExpressionConstLiteral,
-  AbstractOrderExpressionIfElseExpression,
-  AbstractOrderExpressionLogicalExpression,
+  type AbstractOrderExpression,
+  type AbstractOrderExpressionConstLiteral,
+  type AbstractOrderExpressionIfElseExpression,
+  type AbstractOrderExpressionLogicalExpression,
   LogicalFunctionOperator,
   OrderInstanceFunctionType,
-  AbstractOrderExpression,
 } from '@wcp/wario-shared';
-import { Schema } from 'mongoose';
+
 import { WConstLiteralSchema } from '../WConstLiteral';
 
 export const WAbstractOrderExpressionSchema =

@@ -1,15 +1,16 @@
+import { Schema } from 'mongoose';
+
 import {
+  type ConstBooleanLiteralExpression,
   ConstLiteralDiscriminator,
-  ConstBooleanLiteralExpression,
-  ConstModifierPlacementLiteralExpression,
-  ConstModifierQualifierLiteralExpression,
-  ConstNumberLiteralExpression,
-  ConstStringLiteralExpression,
-  IConstLiteralExpression,
+  type ConstModifierPlacementLiteralExpression,
+  type ConstModifierQualifierLiteralExpression,
+  type ConstNumberLiteralExpression,
+  type ConstStringLiteralExpression,
+  type IConstLiteralExpression,
   OptionPlacement,
   OptionQualifier,
 } from '@wcp/wario-shared';
-import { Schema } from 'mongoose';
 
 export const WConstLiteralSchema = new Schema<IConstLiteralExpression>(
   {

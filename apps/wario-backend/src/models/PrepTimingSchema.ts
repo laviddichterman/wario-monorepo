@@ -1,5 +1,6 @@
-import { PrepTiming } from '@wcp/wario-shared';
 import { Schema } from 'mongoose';
+
+import { type PrepTiming } from '@wcp/wario-shared';
 
 export const PrepTimingSchema = new Schema<PrepTiming>(
   {

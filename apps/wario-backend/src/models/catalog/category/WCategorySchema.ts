@@ -1,10 +1,12 @@
+import path from 'path';
+
 import mongoose, { Schema } from 'mongoose';
+
 import {
-  ICategory,
   CALL_LINE_DISPLAY,
   CategoryDisplay,
+  type ICategory,
 } from '@wcp/wario-shared';
-import path from 'path';
 
 type MT = Omit<ICategory, 'id'>;
 export const WCategorySchema = new Schema<MT>(

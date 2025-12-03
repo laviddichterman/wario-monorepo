@@ -1,6 +1,8 @@
-import { IWSettings } from '@wcp/wario-shared';
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type IWSettings } from '@wcp/wario-shared';
 
 export const SettingsSchema = new Schema<IWSettings>({
   additional_pizza_lead_time: {

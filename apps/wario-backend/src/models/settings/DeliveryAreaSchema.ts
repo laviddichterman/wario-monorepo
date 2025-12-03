@@ -1,6 +1,7 @@
-import mongoose, { Schema } from 'mongoose';
-import { GeoJSON } from 'geojson';
 import path from 'path';
+
+import { type GeoJSON } from 'geojson';
+import mongoose, { Schema } from 'mongoose';
 
 export const DeliveryAreaSchema = new Schema<GeoJSON.Polygon>(
   {

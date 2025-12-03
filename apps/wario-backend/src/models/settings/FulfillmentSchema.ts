@@ -1,12 +1,16 @@
-import {
-  FulfillmentType,
-  FulfillmentConfig,
-  DayOfTheWeek,
-  DateIntervalEntry,
-} from '@wcp/wario-shared';
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
+import {
+  type DateIntervalEntry,
+  DayOfTheWeek,
+  type FulfillmentConfig,
+  FulfillmentType,
+} from '@wcp/wario-shared';
+
 import { IntervalSchema } from '../IntervalSchema';
+
 import { DeliveryAreaSchema } from './DeliveryAreaSchema';
 
 type MT = Omit<FulfillmentConfig, 'id'>;

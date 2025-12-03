@@ -1,10 +1,13 @@
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
-import { IOption } from '@wcp/wario-shared';
-import { WMoney } from '../../WMoney';
-import { IntervalSchema } from '../../IntervalSchema';
-import { KeyValueEntrySchema } from '../../settings/KeyValueSchema';
-import { RecurringIntervalSchema } from '../../RecurringIntervalSchema';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type IOption } from '@wcp/wario-shared';
+
+import { IntervalSchema } from 'src/models/IntervalSchema';
+import { RecurringIntervalSchema } from 'src/models/RecurringIntervalSchema';
+import { KeyValueEntrySchema } from 'src/models/settings/KeyValueSchema';
+import { WMoney } from 'src/models/WMoney';
 
 type MT = Omit<IOption, 'id'>;
 

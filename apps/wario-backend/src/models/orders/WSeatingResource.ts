@@ -1,6 +1,8 @@
 import path from 'path';
+
 import mongoose, { Schema } from 'mongoose';
-import { SeatingResource, SeatingShape } from '@wcp/wario-shared';
+
+import { type SeatingResource, SeatingShape } from '@wcp/wario-shared';
 
 type MT = Omit<SeatingResource, 'id'>;
 export const SeatingResourceSchema = new Schema<MT>(

@@ -1,7 +1,10 @@
-import { WAbstractExpressionSchema } from './WAbstractExpression';
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
-import { IProductInstanceFunction } from '@wcp/wario-shared';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type IProductInstanceFunction } from '@wcp/wario-shared';
+
+import { WAbstractExpressionSchema } from './WAbstractExpression';
 type MT = Omit<IProductInstanceFunction, 'id'>;
 export const WProductInstanceFunction = new Schema<MT>(
   {

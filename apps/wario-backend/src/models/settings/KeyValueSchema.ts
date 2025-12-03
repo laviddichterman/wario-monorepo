@@ -1,6 +1,8 @@
-import { KeyValue } from '@wcp/wario-shared';
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type KeyValue } from '@wcp/wario-shared';
 
 export const KeyValueEntrySchema = new Schema<KeyValue>(
   {

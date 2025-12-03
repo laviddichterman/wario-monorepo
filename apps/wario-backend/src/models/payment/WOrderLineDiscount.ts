@@ -1,13 +1,16 @@
+import { Schema } from 'mongoose';
+
 import {
   DiscountMethod,
-  OrderLineDiscount,
-  OrderLineDiscountCodeAmount,
-  OrderManualAmountDiscount,
-  OrderManualPercentDiscount,
+  type OrderLineDiscount,
+  type OrderLineDiscountCodeAmount,
+  type OrderManualAmountDiscount,
+  type OrderManualPercentDiscount,
   TenderBaseStatus,
 } from '@wcp/wario-shared';
+
 import { WMoney } from 'src/models/WMoney';
-import { Schema } from 'mongoose';
+
 import { WEncryptStringLockSchema } from './WEncryptStringLock';
 
 export const WOrderLineDiscountSchema = new Schema<OrderLineDiscount>(

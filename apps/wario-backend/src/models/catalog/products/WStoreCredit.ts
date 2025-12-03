@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+
 import { WMoney } from 'src/models/WMoney';
 
 // represents a class of products that can be made and inserted into the catalog

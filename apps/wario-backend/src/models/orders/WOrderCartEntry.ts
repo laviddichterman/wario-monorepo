@@ -1,5 +1,7 @@
 import { Schema } from 'mongoose';
-import { CoreCartEntry, WCPProductV2Dto } from '@wcp/wario-shared';
+
+import { type CoreCartEntry, type WCPProductV2Dto } from '@wcp/wario-shared';
+
 import { ProductModifierSchema } from '../catalog/options/WOptionInstanceSchema';
 
 export const WOrderProductInstanceSchema = new Schema<WCPProductV2Dto>(

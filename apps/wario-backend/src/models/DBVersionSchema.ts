@@ -1,6 +1,8 @@
-import { SEMVER } from '@wcp/wario-shared';
-import mongoose, { Schema } from 'mongoose';
 import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type SEMVER } from '@wcp/wario-shared';
 
 export const DBVersionSchema = new Schema<SEMVER>({
   major: Number,

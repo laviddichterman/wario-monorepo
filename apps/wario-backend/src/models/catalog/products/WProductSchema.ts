@@ -1,10 +1,13 @@
-import { IProduct } from '@wcp/wario-shared';
-import mongoose, { Schema } from 'mongoose';
-import { WMoney } from 'src/models/WMoney';
 import path from 'path';
-import { KeyValueEntrySchema } from 'src/models/settings/KeyValueSchema';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type IProduct } from '@wcp/wario-shared';
+
 import { PrepTimingSchema } from 'src/models/PrepTimingSchema';
 import { RecurringIntervalSchema } from 'src/models/RecurringIntervalSchema';
+import { KeyValueEntrySchema } from 'src/models/settings/KeyValueSchema';
+import { WMoney } from 'src/models/WMoney';
 
 type MT = Omit<IProduct, 'id'>;
 export const ProductModifierSchema = new Schema(
