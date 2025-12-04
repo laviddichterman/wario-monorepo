@@ -280,8 +280,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       '@tanstack/react-query':
-        specifier: ^5.90.11
-        version: 5.90.11(react@19.2.1)
+        specifier: ^5.90.12
+        version: 5.90.12(react@19.2.1)
       '@wcp/wario-fe-ux-shared':
         specifier: workspace:*
         version: link:../../packages/wario-fe-ux-shared
@@ -336,7 +336,7 @@ importers:
         version: 9.39.1
       '@tanstack/react-query-devtools':
         specifier: ^5.91.1
-        version: 5.91.1(@tanstack/react-query@5.90.11(react@19.2.1))(react@19.2.1)
+        version: 5.91.1(@tanstack/react-query@5.90.12(react@19.2.1))(react@19.2.1)
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.1
@@ -468,8 +468,8 @@ importers:
         specifier: ^8.21.0
         version: 8.21.0(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@mui/material@7.3.6(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(@mui/system@7.3.6(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@tanstack/react-query':
-        specifier: ^5.90.11
-        version: 5.90.11(react@19.2.1)
+        specifier: ^5.90.12
+        version: 5.90.12(react@19.2.1)
       '@wcp/wario-fe-ux-shared':
         specifier: workspace:*
         version: link:../../packages/wario-fe-ux-shared
@@ -512,7 +512,7 @@ importers:
         version: 8.21.0(@types/react@19.2.7)(react@19.2.1)
       '@tanstack/react-query-devtools':
         specifier: ^5.91.1
-        version: 5.91.1(@tanstack/react-query@5.90.11(react@19.2.1))(react@19.2.1)
+        version: 5.91.1(@tanstack/react-query@5.90.12(react@19.2.1))(react@19.2.1)
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.1
@@ -586,8 +586,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       '@tanstack/react-query':
-        specifier: ^5.90.11
-        version: 5.90.11(react@19.2.1)
+        specifier: ^5.90.12
+        version: 5.90.12(react@19.2.1)
       '@wcp/wario-fe-ux-shared':
         specifier: workspace:*
         version: link:../../packages/wario-fe-ux-shared
@@ -770,8 +770,8 @@ importers:
         specifier: ^8.21.0
         version: 8.21.0(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@mui/material@7.3.6(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react-dom@19.2.1(react@19.2.1))(react@19.2.1))(@mui/system@7.3.6(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(react@19.2.1))(@types/react@19.2.7)(date-fns@4.1.0)(dayjs@1.11.19)(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       '@tanstack/react-query':
-        specifier: ^5.90.11
-        version: 5.90.11(react@19.2.1)
+        specifier: ^5.90.12
+        version: 5.90.12(react@19.2.1)
       '@wcp/wario-fe-ux-shared':
         specifier: workspace:*
         version: link:../../packages/wario-fe-ux-shared
@@ -842,8 +842,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       react-router:
-        specifier: ^7.10.0
-        version: 7.10.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
+        specifier: ^7.10.1
+        version: 7.10.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1)
       rrule:
         specifier: ^2.8.1
         version: 2.8.1
@@ -874,7 +874,7 @@ importers:
         version: 8.21.0(@types/react@19.2.7)(react@19.2.1)
       '@tanstack/react-query-devtools':
         specifier: ^5.91.1
-        version: 5.91.1(@tanstack/react-query@5.90.11(react@19.2.1))(react@19.2.1)
+        version: 5.91.1(@tanstack/react-query@5.90.12(react@19.2.1))(react@19.2.1)
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -996,8 +996,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       jsonwebtoken:
-        specifier: ^9.0.2
-        version: 9.0.2
+        specifier: ^9.0.3
+        version: 9.0.3
       jwks-rsa:
         specifier: ^3.2.0
         version: 3.2.0
@@ -1228,7 +1228,7 @@ importers:
         version: 8.21.0(@types/react@19.2.7)(react@19.2.1)
       '@tanstack/react-query':
         specifier: ^5.90.11
-        version: 5.90.11(react@19.2.1)
+        version: 5.90.12(react@19.2.1)
       '@wcp/wario-shared':
         specifier: workspace:*
         version: link:../wario-shared
@@ -1280,7 +1280,7 @@ importers:
         version: 9.39.1
       '@tanstack/react-query-devtools':
         specifier: ^5.91.1
-        version: 5.91.1(@tanstack/react-query@5.90.11(react@19.2.1))(react@19.2.1)
+        version: 5.91.1(@tanstack/react-query@5.90.12(react@19.2.1))(react@19.2.1)
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -3468,8 +3468,8 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0
 
-  '@tanstack/query-core@5.90.11':
-    resolution: {integrity: sha512-f9z/nXhCgWDF4lHqgIE30jxLe4sYv15QodfdPDKYAk7nAEjNcndy4dHz3ezhdUaR23BpWa4I2EH4/DZ0//Uf8A==}
+  '@tanstack/query-core@5.90.12':
+    resolution: {integrity: sha512-T1/8t5DhV/SisWjDnaiU2drl6ySvsHj1bHBCWNXd+/T+Hh1cf6JodyEYMd5sgwm+b/mETT4EV3H+zCVczCU5hg==}
 
   '@tanstack/query-devtools@5.91.1':
     resolution: {integrity: sha512-l8bxjk6BMsCaVQH6NzQEE/bEgFy1hAs5qbgXl0xhzezlaQbPk6Mgz9BqEg2vTLPOHD8N4k+w/gdgCbEzecGyNg==}
@@ -3480,8 +3480,8 @@ packages:
       '@tanstack/react-query': ^5.90.10
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.90.11':
-    resolution: {integrity: sha512-3uyzz01D1fkTLXuxF3JfoJoHQMU2fxsfJwE+6N5hHy0dVNoZOvwKP8Z2k7k1KDeD54N20apcJnG75TBAStIrBA==}
+  '@tanstack/react-query@5.90.12':
+    resolution: {integrity: sha512-graRZspg7EoEaw0a8faiUASCyJrqjKPdqJ9EwuDRUF9mEYJ1YPczI9H+/agJ0mOJkPCJDk0lsz5QTrLZ/jQ2rg==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -4600,8 +4600,8 @@ packages:
     resolution: {integrity: sha512-lGe34o6EHj9y3Kts9R4ZYs/Gr+6N7MCaMlIFA3F1R2O5/m7K06AxfSeO5530PEERE6/WyEg3lsuyw4GHlPZHog==}
     engines: {node: ^4.5.0 || >= 5.9}
 
-  baseline-browser-mapping@2.9.0:
-    resolution: {integrity: sha512-Mh++g+2LPfzZToywfE1BUzvZbfOY52Nil0rn9H1CPC5DJ7fX+Vir7nToBeoiSbB1zTNeGYbELEvJESujgGrzXw==}
+  baseline-browser-mapping@2.9.2:
+    resolution: {integrity: sha512-PxSsosKQjI38iXkmb3d0Y32efqyA0uW4s41u4IVBsLlWLhCiYNpH/AfNOVWRqCQBlD8TFJTz6OUWNd4DFJCnmw==}
     hasBin: true
 
   better-path-resolve@1.0.0:
@@ -6475,6 +6475,10 @@ packages:
     resolution: {integrity: sha512-PRp66vJ865SSqOlgqS8hujT5U4AOgMfhrwYIuIhfKaoSCZcirrmASQr8CX7cUg+RMih+hgznrjp99o+W4pJLHQ==}
     engines: {node: '>=12', npm: '>=6'}
 
+  jsonwebtoken@9.0.3:
+    resolution: {integrity: sha512-MT/xP0CrubFRNLNKvxJ2BYfy53Zkm++5bX9dtuPbqAeQpTVe0MQTFhao8+Cp//EmJp244xt6Drw/GVEGCUj40g==}
+    engines: {node: '>=12', npm: '>=6'}
+
   jsts@2.7.1:
     resolution: {integrity: sha512-x2wSZHEBK20CY+Wy+BPE7MrFQHW6sIsdaGUMEqmGAio+3gFzQaBYPwLRonUfQf9Ak8pBieqj9tUofX1+WtAEIg==}
     engines: {node: '>= 12'}
@@ -7400,8 +7404,8 @@ packages:
       react: '>=16.8'
       react-dom: '>=16.8'
 
-  react-router@7.10.0:
-    resolution: {integrity: sha512-FVyCOH4IZ0eDDRycODfUqoN8ZSR2LbTvtx6RPsBgzvJ8xAXlMZNCrOFpu+jb8QbtZnpAd/cEki2pwE848pNGxw==}
+  react-router@7.10.1:
+    resolution: {integrity: sha512-gHL89dRa3kwlUYtRQ+m8NmxGI6CgqN+k4XyGjwcFoQwwCWF6xXpOCUlDovkXClS0d0XJN/5q7kc5W3kiFEd0Yw==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       react: '>=18'
@@ -8288,8 +8292,8 @@ packages:
   unzipper@0.12.1:
     resolution: {integrity: sha512-wjYe5XddA387WIAZbEMWOT0U8kw9yf1MdfLHccJer1y7a80t3DqVv0SHOAWV5NDBD2TUPj/pFYmK9tCeY6l9UQ==}
 
-  update-browserslist-db@1.2.1:
-    resolution: {integrity: sha512-R9NcHbbZ45RoWfTdhn1J9SS7zxNvlddv4YRrHTUaFdtjbmfncfedB45EC9IaqJQ97iAR1GZgOfyRQO+ExIF6EQ==}
+  update-browserslist-db@1.2.2:
+    resolution: {integrity: sha512-E85pfNzMQ9jpKkA7+TJAi4TJN+tBCuWh5rUcS/sv6cFi+1q9LYDwDI5dpUL0u/73EElyQ8d3TEaeW4sPedBqYA==}
     hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
@@ -11480,19 +11484,19 @@ snapshots:
       - supports-color
       - typescript
 
-  '@tanstack/query-core@5.90.11': {}
+  '@tanstack/query-core@5.90.12': {}
 
   '@tanstack/query-devtools@5.91.1': {}
 
-  '@tanstack/react-query-devtools@5.91.1(@tanstack/react-query@5.90.11(react@19.2.1))(react@19.2.1)':
+  '@tanstack/react-query-devtools@5.91.1(@tanstack/react-query@5.90.12(react@19.2.1))(react@19.2.1)':
     dependencies:
       '@tanstack/query-devtools': 5.91.1
-      '@tanstack/react-query': 5.90.11(react@19.2.1)
+      '@tanstack/react-query': 5.90.12(react@19.2.1)
       react: 19.2.1
 
-  '@tanstack/react-query@5.90.11(react@19.2.1)':
+  '@tanstack/react-query@5.90.12(react@19.2.1)':
     dependencies:
-      '@tanstack/query-core': 5.90.11
+      '@tanstack/query-core': 5.90.12
       react: 19.2.1
 
   '@thream/socketio-jwt@3.1.4(socket.io@4.8.1)':
@@ -13506,7 +13510,7 @@ snapshots:
 
   base64id@2.0.0: {}
 
-  baseline-browser-mapping@2.9.0: {}
+  baseline-browser-mapping@2.9.2: {}
 
   better-path-resolve@1.0.0:
     dependencies:
@@ -13578,11 +13582,11 @@ snapshots:
 
   browserslist@4.28.1:
     dependencies:
-      baseline-browser-mapping: 2.9.0
+      baseline-browser-mapping: 2.9.2
       caniuse-lite: 1.0.30001759
       electron-to-chromium: 1.5.264
       node-releases: 2.0.27
-      update-browserslist-db: 1.2.1(browserslist@4.28.1)
+      update-browserslist-db: 1.2.2(browserslist@4.28.1)
 
   bs-logger@0.2.6:
     dependencies:
@@ -15845,6 +15849,19 @@ snapshots:
       ms: 2.1.3
       semver: 7.7.3
 
+  jsonwebtoken@9.0.3:
+    dependencies:
+      jws: 4.0.1
+      lodash.includes: 4.3.0
+      lodash.isboolean: 3.0.3
+      lodash.isinteger: 4.0.4
+      lodash.isnumber: 3.0.3
+      lodash.isplainobject: 4.0.6
+      lodash.isstring: 4.0.1
+      lodash.once: 4.1.1
+      ms: 2.1.3
+      semver: 7.7.3
+
   jsts@2.7.1: {}
 
   jsx-ast-utils@3.3.5:
@@ -16441,7 +16458,7 @@ snapshots:
 
   passport-jwt@4.0.1:
     dependencies:
-      jsonwebtoken: 9.0.2
+      jsonwebtoken: 9.0.3
       passport-strategy: 1.0.0
 
   passport-strategy@1.0.0: {}
@@ -16680,7 +16697,7 @@ snapshots:
       react: 19.2.1
       react-dom: 19.2.1(react@19.2.1)
 
-  react-router@7.10.0(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
+  react-router@7.10.1(react-dom@19.2.1(react@19.2.1))(react@19.2.1):
     dependencies:
       cookie: 1.1.1
       react: 19.2.1
@@ -17804,7 +17821,7 @@ snapshots:
       graceful-fs: 4.2.11
       node-int64: 0.4.0
 
-  update-browserslist-db@1.2.1(browserslist@4.28.1):
+  update-browserslist-db@1.2.2(browserslist@4.28.1):
     dependencies:
       browserslist: 4.28.1
       escalade: 3.2.0
