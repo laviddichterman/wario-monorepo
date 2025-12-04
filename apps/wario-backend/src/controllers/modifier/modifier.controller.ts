@@ -1,6 +1,7 @@
-import { Body, Controller, Delete, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import type { Request, Response } from 'express';
+
+import { IOption } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { ScopesGuard } from '../../auth/guards/scopes.guard';
@@ -20,7 +21,8 @@ export class ModifierController {
 
   @Post()
   @Scopes('write:catalog')
-  async postModifierType(@Body() body: CreateModifierTypeDto, @Req() req: Request, @Res() res: Response) {
+  @HttpCode(201)
+  async postModifierType(@Body() body: CreateModifierTypeDto) {
     try {
       const modifierType = {
         name: body.name,
@@ -33,17 +35,15 @@ export class ModifierController {
       };
       const options: UncommitedOption[] = body.options; // Cast to avoid strict type mismatch if DTO differs slightly
       const doc = await this.catalogProvider.CreateModifierType(modifierType, options);
-      const location = `${req.protocol}://${req.get('host')}${req.originalUrl}/${doc.id}`;
-      res.setHeader('Location', location);
-      return res.status(201).send(doc);
+      return doc;
     } catch (error) {
-      return res.status(500).send(error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Patch(':mtid')
   @Scopes('write:catalog')
-  async patchModifierType(@Param('mtid') mtid: string, @Body() body: UpdateModifierTypeDto, @Res() res: Response) {
+  async patchModifierType(@Param('mtid') mtid: string, @Body() body: UpdateModifierTypeDto) {
     try {
       const doc = await this.catalogProvider.UpdateModifierType({
         id: mtid,
@@ -58,59 +58,46 @@ export class ModifierController {
         },
       });
       if (!doc) {
-        return res.status(404).send(`Unable to update ModifierType: ${mtid}`);
+        throw new NotFoundException(`Unable to update ModifierType: ${mtid}`);
       }
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      return res.status(500).send(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Delete(':mtid')
   @Scopes('delete:catalog')
-  async deleteModifierType(@Param('mtid') mtid: string, @Res() res: Response) {
+  async deleteModifierType(@Param('mtid') mtid: string) {
     try {
       const doc = await this.catalogProvider.DeleteModifierType(mtid);
       if (!doc) {
-        return res.status(404).send(`Unable to delete Modifier Type: ${mtid}`);
+        throw new NotFoundException(`Unable to delete Modifier Type: ${mtid}`);
       }
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      return res.status(500).send(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Post(':mtid')
   @Scopes('write:catalog')
+  @HttpCode(201)
   async postModifierOption(
     @Param('mtid') mtid: string,
     @Body() body: CreateOptionDto,
-    @Req() req: Request,
-    @Res() res: Response,
   ) {
     try {
-      const new_option = await this.catalogProvider.CreateOption({
-        price: body.price,
-        description: body.description,
-        displayName: body.displayName,
-        shortcode: body.shortcode,
-        disabled: body.disabled ? body.disabled : null,
-        externalIDs: body.externalIDs ?? [],
-        modifierTypeId: mtid,
-        ordinal: body.ordinal,
-        metadata: body.metadata,
-        enable: body.enable,
-        displayFlags: body.displayFlags,
-        availability: body.availability,
-      });
+      const new_option = await this.catalogProvider.CreateOption({ ...(body as Omit<IOption, 'id' | 'modifierTypeId'>), modifierTypeId: mtid });
       if (!new_option) {
-        return res.status(404).send(`Unable to find ModifierType ${mtid} to create Modifier Option`);
+        throw new NotFoundException(`Unable to find ModifierType ${mtid} to create Modifier Option`);
       }
-      const location = `${req.protocol}://${req.get('host')}${req.originalUrl}/${new_option.id}`;
-      res.setHeader('Location', location);
-      return res.status(201).send(new_option);
+      return new_option;
     } catch (error) {
-      return res.status(500).send(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -120,7 +107,6 @@ export class ModifierController {
     @Param('mtid') mtid: string,
     @Param('moid') moid: string,
     @Body() body: UpdateOptionDto,
-    @Res() res: Response,
   ) {
     try {
       const modifierTypeEntry = this.catalogProvider.Catalog.modifiers[mtid];
@@ -144,26 +130,28 @@ export class ModifierController {
           },
         });
         if (doc) {
-          return res.status(200).send(doc);
+          return doc;
         }
       }
-      return res.status(404).send(`Unable to update ModifierOption: ${moid}`);
+      throw new NotFoundException(`Unable to update ModifierOption: ${moid}`);
     } catch (error) {
-      return res.status(500).send(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Delete(':mtid/:moid')
   @Scopes('delete:catalog')
-  async deleteModifierOption(@Param('moid') moid: string, @Res() res: Response) {
+  async deleteModifierOption(@Param('moid') moid: string) {
     try {
       const doc = await this.catalogProvider.DeleteModifierOption(moid);
       if (!doc) {
-        return res.status(404).send(`Unable to delete Modifier Option: ${moid}`);
+        throw new NotFoundException(`Unable to delete Modifier Option: ${moid}`);
       }
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      return res.status(500).send(error);
+      if (error instanceof NotFoundException) throw error;
+      throw new InternalServerErrorException(error);
     }
   }
 }

@@ -1,6 +1,5 @@
-import { Body, Controller, Delete, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request, Response } from 'express';
 
 import type { FulfillmentConfig } from '@wcp/wario-shared';
 
@@ -22,16 +21,15 @@ export class FulfillmentController {
 
   @Post()
   @Scopes('write:config')
-  async postFulfillment(@Body() body: CreateFulfillmentDto, @Req() req: Request, @Res() res: Response) {
+  @HttpCode(201)
+  async postFulfillment(@Body() body: CreateFulfillmentDto) {
     try {
       const newFulfillment = await this.dataProvider.setFulfillment(body);
       await this.dataProvider.syncFulfillments();
       this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
-      const location = `${req.protocol}://${req.get('host')}${req.originalUrl}/${newFulfillment._id.toString()}`;
-      res.setHeader('Location', location);
-      return res.status(201).send(newFulfillment);
+      return newFulfillment;
     } catch (error) {
-      return res.status(400).send(error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -40,7 +38,6 @@ export class FulfillmentController {
   async patchFulfillment(
     @Param('fid') fulfillmentId: string,
     @Body() body: UpdateFulfillmentDto,
-    @Res() res: Response,
   ) {
     try {
       // TODO: FIX!
@@ -82,23 +79,23 @@ export class FulfillmentController {
       const updatedFulfillment = await this.dataProvider.updateFulfillment(fulfillmentId, fulfillment);
       await this.dataProvider.syncFulfillments();
       this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
-      return res.status(200).send(updatedFulfillment);
+      return updatedFulfillment;
     } catch (error) {
-      return res.status(404).send(error);
+      throw new NotFoundException(error);
     }
   }
 
   @Delete(':fid')
   @Scopes('delete:config')
-  async deleteFulfillment(@Param('fid') fulfillmentId: string, @Res() res: Response) {
+  async deleteFulfillment(@Param('fid') fulfillmentId: string) {
     try {
       await this.catalogProvider.BackfillRemoveFulfillment(fulfillmentId);
       const doc = await this.dataProvider.deleteFulfillment(fulfillmentId);
       await this.dataProvider.syncFulfillments();
       this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      return res.status(400).send(error);
+      throw new BadRequestException(error);
     }
   }
 }

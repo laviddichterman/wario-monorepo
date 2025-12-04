@@ -1,5 +1,4 @@
-import { Body, Controller, Delete, Get, Next, Param, Patch, Post, Req, Res } from '@nestjs/common';
-import type { NextFunction, Request, Response } from 'express';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 
 import { type DeletePrinterGroupRequest, type DeletePrinterGroupRequestDto, type PrinterGroupDto } from '@wcp/wario-shared';
 
@@ -10,23 +9,21 @@ export class PrinterGroupController {
   constructor(private readonly catalogProvider: CatalogProviderService) { }
 
   @Get()
-  async getPrinterGroups(@Res() res: Response) {
-    return res.status(200).json(Object.values(this.catalogProvider.PrinterGroups));
+  getPrinterGroups() {
+    return Object.values(this.catalogProvider.PrinterGroups);
   }
 
   @Post()
-  async postPrinterGroup(@Body() body: PrinterGroupDto, @Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  @HttpCode(201)
+  async postPrinterGroup(@Body() body: PrinterGroupDto) {
     try {
       const doc = await this.catalogProvider.CreatePrinterGroup(body);
       if (!doc) {
-        return res.status(500).send(`Unable to create printer group`);
+        throw new InternalServerErrorException('Unable to create printer group');
       }
-      const location = `${req.protocol}://${req.get('host')}${req.originalUrl}/${doc.id}`;
-      res.setHeader('Location', location);
-      return res.status(201).send(doc);
+      return doc;
     } catch (error) {
-      next(error);
-      return;
+      throw new BadRequestException(error);
     }
   }
 
@@ -34,8 +31,6 @@ export class PrinterGroupController {
   async patchPrinterGroup(
     @Param('pgId') pgId: string,
     @Body() body: PrinterGroupDto,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
       const doc = await this.catalogProvider.UpdatePrinterGroup({
@@ -48,12 +43,11 @@ export class PrinterGroupController {
         },
       });
       if (!doc) {
-        return res.status(404).send(`Unable to update PrinterGroup: ${pgId}`);
+        throw new NotFoundException(`Unable to update PrinterGroup: ${pgId}`);
       }
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      next(error);
-      return;
+      throw new BadRequestException(error);
     }
   }
 
@@ -61,19 +55,15 @@ export class PrinterGroupController {
   async deletePrinterGroup(
     @Param('pgId') pgId: string,
     @Body() body: DeletePrinterGroupRequestDto,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
-
       const doc = await this.catalogProvider.DeletePrinterGroup({ id: pgId, ...(body as DeletePrinterGroupRequest) });
       if (!doc) {
-        return res.status(404).send(`Unable to delete PrinterGroup: ${pgId}`);
+        throw new NotFoundException(`Unable to delete PrinterGroup: ${pgId}`);
       }
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      next(error);
-      return;
+      throw new BadRequestException(error);
     }
   }
 }

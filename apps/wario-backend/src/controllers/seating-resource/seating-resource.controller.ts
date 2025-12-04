@@ -1,7 +1,5 @@
-import { Body, Controller, Delete, Param, Patch, Post, Req, Res } from '@nestjs/common';
-import type { Request, Response } from 'express';
 
-import type { SeatingResource } from '@wcp/wario-shared';
+import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 
 import { CreateSeatingResourceDto, UpdateSeatingResourceDto } from 'src/dtos/seating-resource.dto';
 
@@ -16,40 +14,35 @@ export class SeatingResourceController {
   ) { }
 
   @Post()
-  async postSeatingResource(@Body() body: CreateSeatingResourceDto, @Req() req: Request, @Res() res: Response) {
-    try {
-      const newSeatingResource = await this.dataProvider.setSeatingResource(body);
-      await this.dataProvider.syncSeatingResources();
-      this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
-      const location = `${req.protocol}://${req.get('host')}${req.originalUrl}/${newSeatingResource._id.toString()}`;
-      res.setHeader('Location', location);
-      return res.status(201).send(newSeatingResource);
-    } catch (error) {
-      return res.status(400).send(error);
-    }
+  @HttpCode(201)
+  async postSeatingResource(@Body() body: CreateSeatingResourceDto) {
+    const newSeatingResource = await this.dataProvider.setSeatingResource(body);
+    await this.dataProvider.syncSeatingResources();
+    this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
+    return newSeatingResource;
   }
 
   @Patch(':srid')
-  async patchSeatingResource(@Param('srid') seatingResourceId: string, @Body() body: UpdateSeatingResourceDto, @Res() res: Response) {
+  async patchSeatingResource(@Param('srid') seatingResourceId: string, @Body() body: UpdateSeatingResourceDto) {
     try {
       const updatedSeatingResource = await this.dataProvider.updateSeatingResource(seatingResourceId, body);
       await this.dataProvider.syncSeatingResources();
       this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
-      return res.status(200).send(updatedSeatingResource);
+      return updatedSeatingResource;
     } catch (error) {
-      return res.status(404).send(error);
+      throw new NotFoundException(error);
     }
   }
 
   @Delete(':srid')
-  async deleteSeatingResource(@Param('srid') seatingResourceId: string, @Res() res: Response) {
+  async deleteSeatingResource(@Param('srid') seatingResourceId: string) {
     try {
       const doc = await this.dataProvider.deleteSeatingResource(seatingResourceId);
       await this.dataProvider.syncSeatingResources();
       this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
-      return res.status(200).send(doc);
+      return doc;
     } catch (error) {
-      return res.status(400).send(error);
+      throw new BadRequestException(error);
     }
   }
 }

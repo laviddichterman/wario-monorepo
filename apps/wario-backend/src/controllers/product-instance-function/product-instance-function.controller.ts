@@ -1,7 +1,6 @@
-import { Body, Controller, Delete, Next, Param, Patch, Post, Req, Res } from '@nestjs/common';
-import type { NextFunction, Request, Response } from 'express';
+import { BadRequestException, Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 
-import { IAbstractExpression, IProductInstanceFunctionDto } from '@wcp/wario-shared';
+import { IAbstractExpression } from '@wcp/wario-shared';
 import { WFunctional } from '@wcp/wario-shared';
 
 import { CreateProductInstanceFunctionDto, UpdateProductInstanceFunctionDto } from 'src/dtos/expression.dto';
@@ -13,62 +12,46 @@ export class ProductInstanceFunctionController {
   constructor(private readonly catalogProvider: CatalogProviderService) { }
 
   @Post()
-  async postPIF(@Body() body: CreateProductInstanceFunctionDto, @Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  @HttpCode(201)
+  async postPIF(@Body() body: CreateProductInstanceFunctionDto) {
     try {
-      try {
-        WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.CatalogSelectors);
-      } catch {
-        return res.status(400).send('Expression invalid');
-      }
-      const doc = await this.catalogProvider.CreateProductInstanceFunction({
-        name: body.name,
-        expression: body.expression as IAbstractExpression,
-      });
-      if (!doc) {
-        return res.status(500).send('Unable to create ProductInstanceFunction as requested.');
-      }
-      const location = `${req.protocol}://${req.get('host')}${req.originalUrl}/${doc.id}`;
-      res.setHeader('Location', location);
-      return res.status(201).send(doc);
-    } catch (error) {
-      next(error);
-      return;
+      WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.CatalogSelectors);
+    } catch {
+      throw new BadRequestException('Expression invalid');
     }
+    const doc = await this.catalogProvider.CreateProductInstanceFunction({
+      name: body.name,
+      expression: body.expression as IAbstractExpression,
+    });
+    if (!doc) {
+      throw new InternalServerErrorException('Unable to create ProductInstanceFunction as requested.');
+    }
+    return doc;
   }
 
   @Patch(':fxnid')
-  async patchPIF(@Param('fxnid') fxnid: string, @Body() body: UpdateProductInstanceFunctionDto, @Res() res: Response, @Next() next: NextFunction) {
-    try {
-      if (body.expression) {
-        try {
-          WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.CatalogSelectors);
-        } catch {
-          return res.status(400).send('Expression invalid');
-        }
+  async patchPIF(@Param('fxnid') fxnid: string, @Body() body: UpdateProductInstanceFunctionDto) {
+    if (body.expression) {
+      try {
+        WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.CatalogSelectors);
+      } catch {
+        throw new BadRequestException('Expression invalid');
       }
-
-      const doc = await this.catalogProvider.UpdateProductInstanceFunction(fxnid, body);
-      if (!doc) {
-        return res.status(404).send(`Unable to update ProductInstanceFunction: ${fxnid}`);
-      }
-      return res.status(200).send(doc);
-    } catch (error) {
-      next(error);
-      return;
     }
+
+    const doc = await this.catalogProvider.UpdateProductInstanceFunction(fxnid, body);
+    if (!doc) {
+      throw new NotFoundException(`Unable to update ProductInstanceFunction: ${fxnid}`);
+    }
+    return doc;
   }
 
   @Delete(':fxnid')
-  async deletePIF(@Param('fxnid') fxnid: string, @Res() res: Response, @Next() next: NextFunction) {
-    try {
-      const doc = await this.catalogProvider.DeleteProductInstanceFunction(fxnid);
-      if (!doc) {
-        return res.status(404).send(`Unable to delete ProductInstanceFunction: ${fxnid}`);
-      }
-      return res.status(200).send(doc);
-    } catch (error) {
-      next(error);
-      return;
+  async deletePIF(@Param('fxnid') fxnid: string) {
+    const doc = await this.catalogProvider.DeleteProductInstanceFunction(fxnid);
+    if (!doc) {
+      throw new NotFoundException(`Unable to delete ProductInstanceFunction: ${fxnid}`);
     }
+    return doc;
   }
 }

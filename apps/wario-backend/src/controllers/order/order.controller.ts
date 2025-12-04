@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Headers, Next, Param, Post, Put, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, HttpCode, HttpException, InternalServerErrorException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import type { NextFunction, Request, Response } from 'express';
+import type { Request } from 'express';
 
 import { CreateOrderRequestV2Dto, WOrderStatus } from '@wcp/wario-shared';
 
@@ -9,12 +9,14 @@ import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import { DataProviderService } from '../../config/data-provider/data-provider.service';
 import { GoogleService } from '../../config/google/google.service';
 import { OrderManagerService } from '../../config/order-manager/order-manager.service';
+import { LockOrder } from '../../decorators/lock-order.decorator';
 import {
   CancelOrderRequestDto,
   ConfirmOrderRequestDto,
   MoveOrderRequestDto,
   RescheduleOrderRequestDto,
 } from '../../dtos/order.dto';
+import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor';
 
 @Controller('api/v1/order')
 @UseGuards(AuthGuard('jwt'), ScopesGuard)
@@ -25,24 +27,23 @@ export class OrderController {
     private readonly dataProvider: DataProviderService,
   ) { }
 
-  private SendFailureNoticeOnErrorCatch(req: Request, error: unknown) {
+  private SendFailureNoticeOnErrorCatch(requestData: any, error: unknown) {
     const EMAIL_ADDRESS = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
     void this.googleService.SendEmail(
       EMAIL_ADDRESS,
       { name: EMAIL_ADDRESS, address: 'dave@windycitypie.com' },
       'ERROR IN ORDER PROCESSING. CONTACT DAVE IMMEDIATELY',
       'dave@windycitypie.com',
-      `<p>Request: ${JSON.stringify(req.body)}</p><p>Error info:${JSON.stringify(error)}</p>`,
+      `<p>Request: ${JSON.stringify(requestData)}</p><p>Error info:${JSON.stringify(error)}</p>`,
     );
   }
 
   @Post()
   @Scopes('write:order')
+  @HttpCode(201)
   async postOrder(
     @Body() body: CreateOrderRequestV2Dto,
     @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
       const ipAddress = (req.headers['x-real-ip'] ??
@@ -50,25 +51,27 @@ export class OrderController {
         req.socket.remoteAddress ??
         '') as string;
       const response = await this.orderManager.CreateOrder(body, ipAddress);
-      res.status(response.status).json(response);
+      if (response.status !== 201) {
+        throw new HttpException(response, response.status);
+      }
+      return response;
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof HttpException) throw error;
+      this.SendFailureNoticeOnErrorCatch(body, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Put(':oId/cancel')
   @Scopes('cancel:order')
+  @UseInterceptors(OrderLockInterceptor)
+  @LockOrder()
   async putCancelOrder(
     @Param('oId') orderId: string,
     @Headers('idempotency-key') idempotencyKey: string,
     @Body() body: CancelOrderRequestDto,
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
-      // TODO: implement idempotency key guard
       const response = await this.orderManager.CancelOrder(
         // idempotencyKey,
         orderId,
@@ -76,67 +79,74 @@ export class OrderController {
         body.emailCustomer ?? false,
         body.refundToOriginalPayment ?? false,
       );
-      res.status(response.status).json(response);
+      if (response.status !== 200) {
+        throw new HttpException(response, response.status);
+      }
+      return response;
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof HttpException) throw error;
+      this.SendFailureNoticeOnErrorCatch(body, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Put(':oId/confirm')
   @Scopes('write:order')
+  @UseInterceptors(OrderLockInterceptor)
+  @LockOrder()
   async putConfirmOrder(
     @Param('oId') orderId: string,
     @Headers('idempotency-key') idempotencyKey: string,
-    @Body() _body: ConfirmOrderRequestDto,
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
+    @Body() body: ConfirmOrderRequestDto,
   ) {
     try {
-      // TODO: implement idempotency key guard
       const response = await this.orderManager.ConfirmOrder(orderId);
-      res.status(response.status).json(response);
+      if (response.status !== 200) {
+        throw new HttpException(response, response.status);
+      }
+      return response;
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof HttpException) throw error;
+      this.SendFailureNoticeOnErrorCatch(body, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Put(':oId/move')
   @Scopes('write:order')
+  @UseInterceptors(OrderLockInterceptor)
+  @LockOrder()
   async putMoveOrder(
     @Param('oId') orderId: string,
     @Headers('idempotency-key') idempotencyKey: string,
     @Body() body: MoveOrderRequestDto,
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
-      // TODO: implement idempotency key guard
       const response = await this.orderManager.SendMoveOrderTicket(
         // idempotencyKey,
         orderId,
         body.destination,
         body.additionalMessage || '',
       );
-      res.status(response.status).json(response);
+      if (response.status !== 200) {
+        throw new HttpException(response, response.status);
+      }
+      return response;
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof HttpException) throw error;
+      this.SendFailureNoticeOnErrorCatch(body, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Put(':oId/reschedule')
   @Scopes('write:order')
-  async putRescheduleOrder(
+  @UseInterceptors(OrderLockInterceptor)
+  @LockOrder()
+  async putAdjustOrderTime(
     @Param('oId') orderId: string,
     @Headers('idempotency-key') idempotencyKey: string,
     @Body() body: RescheduleOrderRequestDto,
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
       // TODO: implement idempotency key guard
@@ -146,61 +156,66 @@ export class OrderController {
         body,
         body.emailCustomer ?? false,
       );
-      res.status(response.status).json(response);
+      if (response.status !== 200) {
+        throw new HttpException(response, response.status);
+      }
+      return response;
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof HttpException) throw error;
+      this.SendFailureNoticeOnErrorCatch(body, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Put('unlock')
   @Scopes('write:order')
-  async putUnlock(@Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  async putUnlock() {
     try {
       const _response = await this.orderManager.ObliterateLocks();
-      res.status(200).json({ ok: 'yay!' });
+      return { ok: 'yay!' };
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      this.SendFailureNoticeOnErrorCatch({}, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Put(':oId/send')
-  @Scopes('write:order')
+  @Scopes('send:order')
+  @UseInterceptors(OrderLockInterceptor)
+  @LockOrder()
   async putSendOrder(
     @Param('oId') orderId: string,
     @Headers('idempotency-key') idempotencyKey: string,
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
       // TODO: implement idempotency key guard
       const response = await this.orderManager.SendOrder(orderId);
       if (response) {
-        res.status(200).json(response);
+        return response;
       } else {
-        res.status(404).json(null);
+        throw new NotFoundException();
       }
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof NotFoundException) throw error;
+      this.SendFailureNoticeOnErrorCatch({ orderId }, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
   @Get(':oId')
   @Scopes('read:order')
-  async getOrder(@Param('oId') orderId: string, @Req() req: Request, @Res() res: Response, @Next() next: NextFunction) {
+  async getOrder(@Param('oId') orderId: string) {
     try {
       const response = await this.orderManager.GetOrder(orderId);
       if (response) {
-        res.status(200).json(response);
+        return response;
       } else {
-        res.status(404).json(null);
+        throw new NotFoundException();
       }
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      if (error instanceof NotFoundException) throw error;
+      this.SendFailureNoticeOnErrorCatch({ orderId }, error);
+      throw new InternalServerErrorException(error);
     }
   }
 
@@ -209,9 +224,6 @@ export class OrderController {
   async getOrders(
     @Query('date') date: string,
     @Query('status') status: string,
-    @Req() req: Request,
-    @Res() res: Response,
-    @Next() next: NextFunction,
   ) {
     try {
       const queryDate = date ? date : null;
@@ -220,10 +232,10 @@ export class OrderController {
         ...(queryDate ? { $gte: queryDate } : null),
         ...(queryStatus ? { status: queryStatus } : null),
       });
-      res.status(200).json(response);
+      return response;
     } catch (error) {
-      this.SendFailureNoticeOnErrorCatch(req, error);
-      next(error);
+      this.SendFailureNoticeOnErrorCatch({ date, status }, error);
+      throw new InternalServerErrorException(error);
     }
   }
 }
