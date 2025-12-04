@@ -53,13 +53,20 @@ export class AccountingController {
 
   @Get('report')
   async getReport(@Query('date') report_date: string) {
-    const ordersResponse = await this.orderManager.GetOrders({ $eq: report_date }, WOrderStatus.CONFIRMED);
+    const ordersResponse = await this.orderManager.GetOrders({
+      'fulfillment.selectedDate': { $eq: report_date },
+      status: WOrderStatus.CONFIRMED,
+    });
+    if (!ordersResponse.success) {
+      throw new Error('Failed to fetch orders');
+    }
     const orders = ordersResponse.result;
     const CategorySalesMapMerger = (
       sales_map: CategorySalesMap,
       cart: CoreCartEntry<WProduct>[],
     ): CategorySalesMap => {
       return cart.reduce((acc, e) => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const product = this.catalogProvider.CatalogSelectors.productEntry(e.product.p.productId)!;
         const printerGroupId = product.product.printerGroup;
         const printerGroupName = printerGroupId

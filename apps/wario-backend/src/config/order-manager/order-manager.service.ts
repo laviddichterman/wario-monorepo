@@ -1736,7 +1736,7 @@ export class OrderManagerService implements OnModuleInit {
         },
         { new: true },
       )
-      .then((updatedOrder): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance>>> => {
+      .then((updatedOrder): ResponseWithStatusCode<ResponseSuccess<WOrderInstance>> => {
         const updatedOrderObject = updatedOrder!.toObject();
         // send notice to subscribers
         // this.socketIoService.EmitOrder(updatedOrderObject); // TODO: Implement EmitOrder in SocketIoService

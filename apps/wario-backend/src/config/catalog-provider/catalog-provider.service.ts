@@ -30,6 +30,7 @@ import {
   SEMVER,
   UncommittedIProduct,
   UncommittedIProductInstance,
+  UpdateIProductRequest,
   UpdateIProductUpdateIProductInstance,
   UpdateProductBatchRequest,
   UpsertProductBatchRequest
@@ -721,7 +722,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   // TODO: support Partial update
-  UpdateCategory = async (category_id: string, category: Omit<ICategory, 'id'>) => {
+  UpdateCategory = async (category_id: string, category: Partial<Omit<ICategory, 'id'>>) => {
     if (!Object.hasOwn(this.categories, category_id)) {
       // not found
       return null;
@@ -1707,7 +1708,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   UpdateProduct = async (pid: string, product: Partial<Omit<IProduct, 'id'>>) => {
-    const result = await this.BatchUpsertProduct([{ product: { id: pid, ...product }, instances: [] }]);
+    const result = await this.BatchUpsertProduct([{ product: { id: pid, ...product } as UpdateIProductRequest, instances: [] }]);
     return result ? result[0].product : null;
   };
 

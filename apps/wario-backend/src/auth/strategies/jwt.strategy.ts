@@ -4,6 +4,12 @@ import { PassportStrategy } from '@nestjs/passport';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+interface JwtPayload {
+  sub?: string;
+  email?: string;
+  permissions?: string[];
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
@@ -21,7 +27,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: unknown) {
+  validate(payload: JwtPayload) {
     if (!payload.sub) {
       throw new UnauthorizedException('Invalid token payload');
     }

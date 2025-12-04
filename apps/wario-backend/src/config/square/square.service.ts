@@ -464,7 +464,7 @@ export class SquareService implements OnModuleInit {
               t: PaymentMethod.CreditCard,
               createdAt,
               processorId,
-              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney),
+              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
               tipAmount: tipMoney,
               status: paymentStatus,
               payment: {
@@ -475,7 +475,7 @@ export class SquareService implements OnModuleInit {
                 last4: response.result.payment.cardDetails?.card?.last4 ?? '',
                 receiptUrl:
                   response.result.payment.receiptUrl ??
-                  `https://squareup.com/receipt/preview/${response.result.payment.id}`,
+                  `https://squareup.com/receipt/preview/${response.result.payment.id as string}`,
                 cardholderName: response.result.payment.cardDetails?.card?.cardholderName ?? undefined,
               },
             },
