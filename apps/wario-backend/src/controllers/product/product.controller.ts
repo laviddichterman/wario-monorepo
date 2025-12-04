@@ -1,17 +1,14 @@
-import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, ParseArrayPipe, Patch, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, ParseArrayPipe, Patch, Post } from '@nestjs/common';
 
 import { CreateProductBatchRequestDto, PartialUncommittedProductInstanceDto, UncommittedIProductInstance, UncommittedIProductInstanceDto, UpdateIProductRequestDto, UpdateProductBatchRequestDto } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import {
   BatchDeleteProductClassDto,
 } from '../../dtos/product.dto';
 
 @Controller('api/v1/menu/product')
-@UseGuards(AuthGuard('jwt'), ScopesGuard)
 export class ProductController {
   constructor(private readonly catalogProvider: CatalogProviderService) { }
 

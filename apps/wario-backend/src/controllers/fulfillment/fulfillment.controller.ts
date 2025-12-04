@@ -1,15 +1,12 @@
-import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../../config/data-provider/data-provider.service';
 import { SocketIoService } from '../../config/socket-io/socket-io.service';
 import { CreateFulfillmentDto, UpdateFulfillmentDto } from '../../dtos/fulfillment.dto';
 
 @Controller('api/v1/config/fulfillment')
-@UseGuards(AuthGuard('jwt'), ScopesGuard)
 export class FulfillmentController {
   constructor(
     private readonly dataProvider: DataProviderService,

@@ -1,11 +1,9 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpException, InternalServerErrorException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, UseInterceptors } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Get, Headers, HttpCode, HttpException, InternalServerErrorException, NotFoundException, Param, Post, Put, Query, Req, UseInterceptors } from '@nestjs/common';
 import type { Request } from 'express';
 
 import { CreateOrderRequestV2Dto, WOrderStatus } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import { DataProviderService } from '../../config/data-provider/data-provider.service';
 import { GoogleService } from '../../config/google/google.service';
 import { OrderManagerService } from '../../config/order-manager/order-manager.service';
@@ -19,7 +17,6 @@ import {
 import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor';
 
 @Controller('api/v1/order')
-@UseGuards(AuthGuard('jwt'), ScopesGuard)
 export class OrderController {
   constructor(
     private readonly orderManager: OrderManagerService,
@@ -27,7 +24,7 @@ export class OrderController {
     private readonly dataProvider: DataProviderService,
   ) { }
 
-  private SendFailureNoticeOnErrorCatch(requestData: any, error: unknown) {
+  private SendFailureNoticeOnErrorCatch(requestData: unknown, error: unknown) {
     const EMAIL_ADDRESS = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
     void this.googleService.SendEmail(
       EMAIL_ADDRESS,
@@ -68,7 +65,7 @@ export class OrderController {
   @LockOrder()
   async putCancelOrder(
     @Param('oId') orderId: string,
-    @Headers('idempotency-key') idempotencyKey: string,
+    @Headers('idempotency-key') _idempotencyKey: string,
     @Body() body: CancelOrderRequestDto,
   ) {
     try {
@@ -96,7 +93,7 @@ export class OrderController {
   @LockOrder()
   async putConfirmOrder(
     @Param('oId') orderId: string,
-    @Headers('idempotency-key') idempotencyKey: string,
+    @Headers('idempotency-key') _idempotencyKey: string,
     @Body() body: ConfirmOrderRequestDto,
   ) {
     try {
@@ -118,12 +115,11 @@ export class OrderController {
   @LockOrder()
   async putMoveOrder(
     @Param('oId') orderId: string,
-    @Headers('idempotency-key') idempotencyKey: string,
+    @Headers('idempotency-key') _idempotencyKey: string,
     @Body() body: MoveOrderRequestDto,
   ) {
     try {
       const response = await this.orderManager.SendMoveOrderTicket(
-        // idempotencyKey,
         orderId,
         body.destination,
         body.additionalMessage || '',
@@ -145,13 +141,11 @@ export class OrderController {
   @LockOrder()
   async putAdjustOrderTime(
     @Param('oId') orderId: string,
-    @Headers('idempotency-key') idempotencyKey: string,
+    @Headers('idempotency-key') _idempotencyKey: string,
     @Body() body: RescheduleOrderRequestDto,
   ) {
     try {
-      // TODO: implement idempotency key guard
       const response = await this.orderManager.AdjustOrderTime(
-        // idempotencyKey,
         orderId,
         body,
         body.emailCustomer ?? false,
@@ -185,15 +179,14 @@ export class OrderController {
   @LockOrder()
   async putSendOrder(
     @Param('oId') orderId: string,
-    @Headers('idempotency-key') idempotencyKey: string,
+    @Headers('idempotency-key') _idempotencyKey: string,
   ) {
     try {
-      // TODO: implement idempotency key guard
       const response = await this.orderManager.SendOrder(orderId);
-      if (response) {
+      if (response.success) {
         return response;
       } else {
-        throw new NotFoundException();
+        throw new NotFoundException(response);
       }
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -207,10 +200,10 @@ export class OrderController {
   async getOrder(@Param('oId') orderId: string) {
     try {
       const response = await this.orderManager.GetOrder(orderId);
-      if (response) {
+      if (response.success) {
         return response;
       } else {
-        throw new NotFoundException();
+        throw new NotFoundException(response);
       }
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

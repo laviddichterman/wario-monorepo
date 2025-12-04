@@ -1,5 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, InternalServerErrorException, NotFoundException, Post, Query, UnprocessableEntityException, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Get, HttpCode, HttpException, InternalServerErrorException, NotFoundException, Post, Query, UnprocessableEntityException } from '@nestjs/common';
 
 import {
   CURRENCY,
@@ -12,14 +11,14 @@ import {
 
 import { BigIntStringify } from 'src/utils/utils';
 
+import { Public } from 'src/auth/decorators/public.decorator';
+
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import { DataProviderService } from '../../config/data-provider/data-provider.service';
 import { GoogleService } from '../../config/google/google.service';
 import { StoreCreditProviderService } from '../../config/store-credit-provider/store-credit-provider.service';
 
 @Controller('api/v1/payments/storecredit')
-@UseGuards(AuthGuard('jwt'), ScopesGuard)
 export class StoreCreditController {
   constructor(
     private readonly dataProvider: DataProviderService,
@@ -28,7 +27,7 @@ export class StoreCreditController {
   ) { }
 
   @Get('validate')
-  @Scopes('read:order')
+  @Public()
   async getValidateCredit(@Query('code') code: string) {
     try {
       const validate_response = await this.storeCreditProvider.ValidateAndLockCode(code);
@@ -64,7 +63,7 @@ export class StoreCreditController {
         success: true,
         balance: {
           currency: CURRENCY.USD,
-          amount: spending_result.entry[3] * 100 - body.amount.amount,
+          amount: (spending_result.entry[3] as number) * 100 - body.amount.amount,
         },
       };
     } catch (error) {
@@ -82,7 +81,7 @@ export class StoreCreditController {
   }
 
   @Post('purchase')
-  @Scopes('write:order')
+  @Public()
   @HttpCode(200)
   async postPurchaseCredit(@Body() body: PurchaseStoreCreditRequestDto) {
     try {

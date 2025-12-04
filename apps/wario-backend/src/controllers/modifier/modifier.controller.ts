@@ -1,10 +1,8 @@
-import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 
 import { IOption } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import type { UncommitedOption } from '../../config/catalog-provider/catalog-provider.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import {
@@ -15,7 +13,6 @@ import {
 } from '../../dtos/modifier.dto';
 
 @Controller('api/v1/menu/option')
-@UseGuards(AuthGuard('jwt'), ScopesGuard)
 export class ModifierController {
   constructor(private readonly catalogProvider: CatalogProviderService) { }
 
@@ -24,17 +21,8 @@ export class ModifierController {
   @HttpCode(201)
   async postModifierType(@Body() body: CreateModifierTypeDto) {
     try {
-      const modifierType = {
-        name: body.name,
-        displayName: body.displayName,
-        ordinal: body.ordinal,
-        min_selected: body.min_selected,
-        max_selected: body.max_selected,
-        externalIDs: body.externalIDs,
-        displayFlags: body.displayFlags,
-      };
       const options: UncommitedOption[] = body.options; // Cast to avoid strict type mismatch if DTO differs slightly
-      const doc = await this.catalogProvider.CreateModifierType(modifierType, options);
+      const doc = await this.catalogProvider.CreateModifierType(body, options);
       return doc;
     } catch (error) {
       throw new InternalServerErrorException(error);
@@ -47,15 +35,7 @@ export class ModifierController {
     try {
       const doc = await this.catalogProvider.UpdateModifierType({
         id: mtid,
-        modifierType: {
-          name: body.name,
-          displayName: body.displayName,
-          ordinal: body.ordinal,
-          min_selected: body.min_selected,
-          max_selected: body.max_selected,
-          externalIDs: body.externalIDs,
-          displayFlags: body.displayFlags,
-        },
+        modifierType: body
       });
       if (!doc) {
         throw new NotFoundException(`Unable to update ModifierType: ${mtid}`);

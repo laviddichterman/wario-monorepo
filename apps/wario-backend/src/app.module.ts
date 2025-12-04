@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { ScopesGuard } from './auth/guards/scopes.guard';
 import { ConfigModule } from './config/config.module';
 import { ControllersModule } from './controllers/controllers.module';
 import { CatalogModule } from './models/catalog/catalog.module';
@@ -38,6 +41,16 @@ import { SettingsModule } from './models/settings/settings.module';
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ScopesGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule { }
