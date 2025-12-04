@@ -6,7 +6,11 @@
   "license": "GPL-3.0-only",
   "author": "Dave Lichterman / Lavid Industries LLC <dave@windycitypie.com>",
   "scripts": {
+    "backend:build": "pnpm --filter ./apps/wario-backend build",
+    "backend:lint": "pnpm --filter ./apps/wario-backend lint",
     "backend:start": "pnpm --filter ./apps/wario-backend start",
+    "backend:test": "pnpm --filter ./apps/wario-backend test",
+    "backend:typecheck": "pnpm --filter ./apps/wario-backend typecheck",
     "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
     "changeset": "changeset",
     "checkall": "pnpm build && pnpm lint && pnpm typecheck",
@@ -76,6 +80,7 @@
     "@tanstack/eslint-plugin-query": "^5.91.2",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-package-json": "^0.85.0",
     "eslint-plugin-perfectionist": "^4.15.1",
@@ -85,6 +90,7 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^16.5.0",
     "jsonc-eslint-parser": "^2.4.1",
+    "prettier": "^3.7.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.48.1"

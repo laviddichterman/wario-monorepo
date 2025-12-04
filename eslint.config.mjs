@@ -8,6 +8,7 @@ import perfectionist from "eslint-plugin-perfectionist";
 import pluginQuery from '@tanstack/eslint-plugin-query'
 import globals from 'globals';
 import { defineConfig } from "eslint/config";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 const basicRules = () => {
   return {
@@ -165,5 +166,6 @@ export default defineConfig([
     ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**", "**/node_modules/**", "**/eslint.config.*"],
   },
   tsConfig,
-  packageJsonConfig
+  packageJsonConfig,
+  eslintConfigPrettier,
 ]);
