@@ -31,7 +31,7 @@ const Title = styled(Typography)({
   textTransform: 'uppercase'
 })
 
-type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount'>
+type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount' | 'nonce'>
 
 const creditPurchaseInfoSchemaBase = {
   // amount: z.number().min(2, "Minimum purchase amount is $2.00").max(200000, "Maximum purchase amount is $2000.00"),
