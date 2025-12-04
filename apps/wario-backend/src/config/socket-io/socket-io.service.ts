@@ -1,25 +1,71 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Namespace, Server, Socket } from 'socket.io';
+import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { format } from 'date-fns';
+import type { Namespace, Server, Socket } from 'socket.io';
 
-import { FulfillmentConfig, ICatalog, IWSettings, SeatingResource } from '@wcp/wario-shared';
+import { type FulfillmentConfig, type ICatalog, type IWSettings, type SeatingResource, WDateUtils } from '@wcp/wario-shared';
+
+import type { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
+import type { DataProviderService } from '../data-provider/data-provider.service';
 
 @WebSocketGateway({ namespace: 'nsRO', cors: { origin: '*' } })
 @Injectable()
-export class SocketIoService {
+export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(SocketIoService.name);
+  private clientCount = 0;
+
+  // Lazy injection to avoid circular dependencies
+  private dataProvider!: DataProviderService;
+  private catalogProvider!: CatalogProviderService;
 
   @WebSocketServer()
-  server: Server; // This will be the namespace 'nsRO'
+  server: Namespace; // This is the namespace 'nsRO'
+
+  // Setter for lazy injection from DataProviderService
+  setDataProvider(dataProvider: DataProviderService) {
+    this.dataProvider = dataProvider;
+  }
+
+  // Setter for lazy injection from CatalogProviderService
+  setCatalogProvider(catalogProvider: CatalogProviderService) {
+    this.catalogProvider = catalogProvider;
+  }
+
+  handleConnection(client: Socket) {
+    ++this.clientCount;
+    const connectTime = Date.now();
+
+    this.logger.log(`WebSocket client connected. Total connections: ${String(this.clientCount)}`);
+
+    // Emit initial state to newly connected client
+    client.emit('WCP_SERVER_TIME', {
+      time: format(connectTime, WDateUtils.ISODateTimeNoOffset),
+      tz: process.env.TZ || 'UTC',
+    });
+
+    // Emit current application state
+    if (this.dataProvider) {
+      this.EmitFulfillmentsTo(client, this.dataProvider.Fulfillments);
+      this.EmitSettingsTo(client, this.dataProvider.Settings);
+      this.EmitSeatingResourcesTo(client, this.dataProvider.SeatingResources);
+    }
+
+    if (this.catalogProvider) {
+      this.EmitCatalogTo(client, this.catalogProvider.Catalog);
+    }
+  }
+
+  handleDisconnect(_client: Socket) {
+    --this.clientCount;
+    this.logger.log(`WebSocket client disconnected. Total connections: ${String(this.clientCount)}`);
+  }
 
   EmitFulfillmentsTo(dest: Socket | Namespace | Server, fulfillments: Record<string, FulfillmentConfig>) {
     return dest.emit('WCP_FULFILLMENTS', fulfillments);
   }
 
   EmitFulfillments(fulfillments: Record<string, FulfillmentConfig>) {
-    if (this.server) {
-      return this.EmitFulfillmentsTo(this.server, fulfillments);
-    }
+    return this.EmitFulfillmentsTo(this.server, fulfillments);
   }
 
   EmitSeatingResourcesTo(dest: Socket | Namespace | Server, seatingResources: Record<string, SeatingResource>) {
@@ -27,9 +73,7 @@ export class SocketIoService {
   }
 
   EmitSeatingResources(seatingResources: Record<string, SeatingResource>) {
-    if (this.server) {
-      return this.EmitSeatingResourcesTo(this.server, seatingResources);
-    }
+    return this.EmitSeatingResourcesTo(this.server, seatingResources);
   }
 
   EmitSettingsTo(dest: Socket | Namespace | Server, settings: IWSettings) {
@@ -37,9 +81,7 @@ export class SocketIoService {
   }
 
   EmitSettings(settings: IWSettings) {
-    if (this.server) {
-      return this.EmitSettingsTo(this.server, settings);
-    }
+    return this.EmitSettingsTo(this.server, settings);
   }
 
   EmitCatalogTo(dest: Socket | Namespace | Server, catalog: ICatalog) {
@@ -47,8 +89,6 @@ export class SocketIoService {
   }
 
   EmitCatalog(catalog: ICatalog) {
-    if (this.server) {
-      return this.EmitCatalogTo(this.server, catalog);
-    }
+    return this.EmitCatalogTo(this.server, catalog);
   }
 }

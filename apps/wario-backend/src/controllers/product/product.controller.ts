@@ -1,12 +1,11 @@
 import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, ParseArrayPipe, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 
-import { CreateProductBatchRequestDto, IProductInstance, UpdateIProductRequestDto, UpdateProductBatchRequestDto } from '@wcp/wario-shared';
+import { CreateProductBatchRequestDto, PartialUncommittedProductInstanceDto, UncommittedIProductInstance, UncommittedIProductInstanceDto, UpdateIProductRequestDto, UpdateProductBatchRequestDto } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { ScopesGuard } from '../../auth/guards/scopes.guard';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { CreateProductInstanceRequestDto, UpdateProductInstanceDto } from '../../dtos/product-instance.dto';
 import {
   BatchDeleteProductClassDto,
 } from '../../dtos/product.dto';
@@ -105,12 +104,12 @@ export class ProductController {
   @HttpCode(201)
   async postProductInstance(
     @Param('pid') productId: string,
-    @Body() body: CreateProductInstanceRequestDto,
+    @Body() body: UncommittedIProductInstanceDto,
   ) {
     try {
       const doc = await this.catalogProvider.CreateProductInstance({
         productId: productId,
-        ...(body as Omit<IProductInstance, 'id' | 'productId'>),
+        ...(body as UncommittedIProductInstance),
       });
       if (!doc) {
         throw new NotFoundException(`Unable to find parent product id: ${productId} to create new product instance`);
@@ -127,7 +126,7 @@ export class ProductController {
   async patchProductInstance(
     @Param('pid') productId: string,
     @Param('piid') productInstanceId: string,
-    @Body() body: UpdateProductInstanceDto,
+    @Body() body: PartialUncommittedProductInstanceDto,
   ) {
     try {
       const product = this.catalogProvider.CatalogSelectors.productEntry(productId)?.product;
@@ -136,13 +135,7 @@ export class ProductController {
       }
       const doc = await this.catalogProvider.UpdateProductInstance({
         piid: productInstanceId,
-        product: {
-          modifiers: product.modifiers,
-          price: product.price,
-          printerGroup: product.printerGroup,
-          disabled: product.disabled,
-          displayFlags: product.displayFlags,
-        },
+        product,
         productInstance: body,
       });
       if (!doc) {

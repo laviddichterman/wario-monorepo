@@ -15,6 +15,7 @@ import { SeatingResourceModel } from '../../models/orders/WSeatingResource';
 import { FulfillmentModel } from '../../models/settings/FulfillmentSchema';
 import { KeyValueModel } from '../../models/settings/KeyValueSchema';
 import { SettingsModel } from '../../models/settings/SettingsSchema';
+import { SocketIoService } from '../socket-io/socket-io.service';
 
 @Injectable()
 export class DataProviderService implements OnModuleInit {
@@ -32,6 +33,7 @@ export class DataProviderService implements OnModuleInit {
     private fulfillmentModel: typeof FulfillmentModel,
     @InjectModel('SeatingResource')
     private seatingResourceModel: typeof SeatingResourceModel,
+    private socketIoService: SocketIoService,
   ) {
     this.fulfillments = {};
     this.seatingResources = {};
@@ -40,6 +42,8 @@ export class DataProviderService implements OnModuleInit {
   }
 
   async onModuleInit() {
+    // Register with SocketIoService for initial state emission
+    this.socketIoService.setDataProvider(this);
     await this.Bootstrap();
   }
 
@@ -191,6 +195,7 @@ export class DataProviderService implements OnModuleInit {
     return savePromise;
   };
 
+  // TODO: does this properly handle partial updates?
   updateFulfillment = async (id: string, fulfillment: Partial<Omit<FulfillmentConfig, 'id'>>) => {
     return this.fulfillmentModel
       .findByIdAndUpdate(id, fulfillment, { new: true })

@@ -106,7 +106,7 @@ export class OrderManagerService implements OnModuleInit {
   private readonly logger = new Logger(OrderManagerService.name);
 
   constructor(
-    @InjectModel(WOrderInstance.name)
+    @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
     @Inject(forwardRef(() => GoogleService))
     private googleService: GoogleService,
@@ -2019,7 +2019,7 @@ export class OrderManagerService implements OnModuleInit {
     }
 
     // 5. Everything checks out, start making service calls (payment and order related)
-    let errors: WError[] = [];
+    const errors: WError[] = [];
     let squareOrder: SquareOrder | null = null;
     let squareOrderVersion = 0;
     const discounts: OrderLineDiscount[] = []
@@ -2064,7 +2064,7 @@ export class OrderManagerService implements OnModuleInit {
       }
 
       squareOrder = squareOrderResponse.result.order!;
-      squareOrderVersion = squareOrder!.version!;
+      squareOrderVersion = squareOrder.version!;
       this.logger.log(`For internal id ${referenceId} created Square Order ID: ${squareOrder.id!}`);
 
       // Payment Part C: process payments with payment processor IN ORDER
@@ -2079,17 +2079,17 @@ export class OrderManagerService implements OnModuleInit {
               amount: payment.amount,
               tipAmount: payment.tipAmount,
               referenceId: referenceId,
-              squareOrderId: squareOrder!.id!,
+              squareOrderId: squareOrder.id!,
               autocomplete: false
             });
             squareOrderVersion += 1;
-            if (squarePaymentResponse.success !== true) {
+            if (!squarePaymentResponse.success) {
               const errorDetail = `Failed to process payment: ${JSON.stringify(squarePaymentResponse)}`;
               this.logger.error(errorDetail);
               squarePaymentResponse.error.forEach(e => (errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" })));
               throw errors;
             }
-            this.logger.log(`For internal id ${referenceId} and Square Order ID: ${squareOrder!.id!} payment for ${MoneyToDisplayString(squarePaymentResponse.result.amount, true)} successful.`)
+            this.logger.log(`For internal id ${referenceId} and Square Order ID: ${squareOrder.id!} payment for ${MoneyToDisplayString(squarePaymentResponse.result.amount, true)} successful.`)
             sentPayments.push(squarePaymentResponse.result);
             break;
           }
@@ -2107,17 +2107,17 @@ export class OrderManagerService implements OnModuleInit {
               amount: payment.amount,
               tipAmount: payment.tipAmount,
               referenceId: payment.payment.code,
-              squareOrderId: squareOrder!.id!,
+              squareOrderId: squareOrder.id!,
               autocomplete: false
             });
             squareOrderVersion += 1;
-            if (squareMoneyCreditPaymentResponse.success !== true) {
+            if (!squareMoneyCreditPaymentResponse.success) {
               const errorDetail = `Failed to process payment: ${JSON.stringify(squareMoneyCreditPaymentResponse)}`;
               this.logger.error(errorDetail);
               squareMoneyCreditPaymentResponse.error.forEach(e => (errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" })));
               throw errors;
             }
-            this.logger.log(`For internal id ${referenceId} and Square Order ID: ${squareOrder!.id!} payment for ${MoneyToDisplayString(squareMoneyCreditPaymentResponse.result.amount, true)} successful.`)
+            this.logger.log(`For internal id ${referenceId} and Square Order ID: ${squareOrder.id!} payment for ${MoneyToDisplayString(squareMoneyCreditPaymentResponse.result.amount, true)} successful.`)
             sentPayments.push(squareMoneyCreditPaymentResponse.result);
             break;
           }
@@ -2146,13 +2146,14 @@ export class OrderManagerService implements OnModuleInit {
         const savedOrder = (await new this.orderModel({
           ...completedOrderInstance,
           metadata: [
-            { key: 'SQORDER', value: squareOrder!.id! },
-            { key: 'GCALEVENT', value: calendarEvent.data.id }]
+            { key: 'SQORDER', value: squareOrder.id! },
+            ...(calendarEvent ? [{ key: 'GCALEVENT', value: calendarEvent.id }] : [])
+          ]
         }).save()).toObject();
         this.logger.log(`Successfully saved OrderInstance to database: ${JSON.stringify(savedOrder)}`)
 
         // send email to customer
-        const createExternalEmailInfo = this.CreateExternalEmail(
+        const _createExternalEmailInfo = this.CreateExternalEmail(
           savedOrder,
           service_title,
           rebuiltCart);
@@ -2185,10 +2186,11 @@ export class OrderManagerService implements OnModuleInit {
       await this.CancelSquarePayments(sentPayments);
       await this.RefundStoreCreditDebits(storeCreditResponses);
     }
-    catch (err: any) {
+    catch (err: unknown) {
       this.logger.error(`Got error when unwinding the order after failure: ${JSON.stringify(err)}`);
       return { status: 500, success: false, error: errors };
     }
     this.logger.error(`Got error when unwinding the order after failure: ${JSON.stringify(errors)}`);
     return { status: 400, success: false, error: errors };
   }
+}
