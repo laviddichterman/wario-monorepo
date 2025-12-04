@@ -1,10 +1,11 @@
 import { Type } from "class-transformer";
 import { IsArray, IsBoolean, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 
-import { CreateIProductDto, CreateIProductInstanceDto, IProductDisplayFlagsDto, IProductInstanceDisplayFlagsDto, IProductModifierDto, PrepTimingDto, ProductModifierEntryDto } from "../..";
+import { IProductDisplayFlagsDto, IProductInstanceDisplayFlagsDto, IProductModifierDto, PrepTimingDto, ProductModifierEntryDto, UncommittedIProductInstanceDto } from "../..";
 import { PaymentMethod, StoreCreditType } from "../enums";
 
 import { EncryptStringLockDto, IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from "./common.dto";
+import { UncommittedIProductDto } from "./product.dto";
 
 // =============================================================================
 // Store Credit Request DTOs
@@ -144,22 +145,22 @@ export class PaymentBasePartialDto {
   @Type(() => IMoneyDto)
   readonly tipAmount!: IMoneyDto;
 }
-export class CreateProductBatchDto {
+export class CreateProductBatchRequestDto {
   @ValidateNested()
-  @Type(() => CreateIProductDto)
-  product!: CreateIProductDto;
+  @Type(() => UncommittedIProductDto)
+  product!: UncommittedIProductDto;
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CreateIProductInstanceDto)
-  instances!: CreateIProductInstanceDto[];
+  @Type(() => UncommittedIProductInstanceDto)
+  instances!: UncommittedIProductInstanceDto[];
 }
 
 /**
  * Pick<IProduct, 'id'> & Partial<Omit<IProduct, 'id'>>; // PartialProductWithIDs
  * aka PartialType(IProductDto)
  */
-export class UpdateIProductDto {
+export class UpdateIProductRequestDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
@@ -212,23 +213,15 @@ export class UpdateIProductDto {
   @IsOptional()
   printerGroup!: string | null;
 }
-
 /**
- * aka Pick<IProductInstance, 'id'> & Partial<CreateIProductInstance>;
- * UpdateIProductUpdateIProductInstanceDto extends PartialType(CreateProductInstanceRequestDto) {}
+ * Partial<Omit<IProductInstance, "id" | "productId">>
  */
-export class UpdateIProductUpdateIProductInstanceDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
-  // ordinal for product matching
+export class PartialUncommittedProductInstanceDto {
   @IsInt()
   @Min(0)
   @IsOptional()
   ordinal!: number;
 
-  // applied modifiers for this instance of the product
   @ValidateNested({ each: true })
   @Type(() => ProductModifierEntryDto)
   @IsOptional()
@@ -259,13 +252,27 @@ export class UpdateIProductUpdateIProductInstanceDto {
   @IsOptional()
   shortcode!: string;
 }
-export class UpdateProductBatchDto {
+
+/**
+ * aka Pick<IProductInstance, 'id'> & Partial<CreateIProductInstance>;
+ * UpdateIProductUpdateIProductInstanceDto extends PartialType(UncommittedIProductInstanceDto) {}
+ */
+export class UpdateIProductUpdateIProductInstanceDto extends PartialUncommittedProductInstanceDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+}
+
+
+export class UpdateProductBatchRequestDto {
   @ValidateNested()
-  @Type(() => UpdateIProductDto)
-  product!: UpdateIProductDto;
+  @Type(() => UpdateIProductRequestDto)
+  product!: UpdateIProductRequestDto;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => UpdateIProductUpdateIProductInstanceDto)
-  instances!: (CreateIProductInstanceDto | UpdateIProductUpdateIProductInstanceDto)[];
+  instances!: (UncommittedIProductInstanceDto | UpdateIProductUpdateIProductInstanceDto)[];
 }
+
+export type UpsertProductBatchRequestDto = CreateProductBatchRequestDto | UpdateProductBatchRequestDto;

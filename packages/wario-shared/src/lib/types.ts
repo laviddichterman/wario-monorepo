@@ -25,7 +25,6 @@ import type {
   IProductInstanceFunction,
   IRecurringInterval,
   IWInterval,
-  KeyValue,
   OrderInstanceFunction,
   OrderLineDiscountCodeAmount,
   OrderManualAmountDiscount,
@@ -51,28 +50,6 @@ export interface WNormalizedInterval<DateType extends Date = Date> {
   /** The end of the interval. */
   end: DateType | number;
 }
-
-export interface IWSettings {
-  additional_pizza_lead_time: number;
-  config: Record<string, number | string | boolean>;
-  // {
-  // SQUARE_APPLICATION_ID: String,
-  // SQUARE_LOCATION: String,
-  // DEFAULT_FULFILLMENTID: String,
-  // TIP_PREAMBLE: String,
-  // TAX_RATE: Number,
-  // ALLOW_ADVANCED: Boolean,
-  // MAX_PARTY_SIZE: Number,
-  // DELIVERY_LINK: String,
-  // DELIVERY_FEE: Number,
-  // AUTOGRAT_THRESHOLD: Number,
-  // MESSAGE_REQUEST_VEGAN: String,
-  // MESSAGE_REQUEST_HALF: String,
-  // MESSAGE_REQUEST_WELLDONE: String,
-  // MESSAGE_REQUEST_SLICING: String
-  // };
-}
-
 export interface AvailabilityInfoMap {
   // the union of blocked off times for the services specified in computation
   blockedOffUnion: IWInterval[];
@@ -194,15 +171,6 @@ export interface CategoryEntry {
   // list of disabled fulfillmentIds
   serviceDisable: string[];
 }
-
-export interface PrinterGroup {
-  id: string;
-  name: string;
-  singleItemPerTicket: boolean;
-  isExpo: boolean;
-  externalIDs: KeyValue[];
-}
-
 // =============================================================================
 // Store Credit Helper Types
 // =============================================================================
@@ -213,6 +181,11 @@ export interface ValidateAndLockCreditResponseValid {
   readonly amount: IMoney;
   readonly credit_type: StoreCreditType;
 }
+export interface ValidateLockAndSpendSuccess {
+  success: true;
+  entry: unknown[];
+  index: number;
+};
 
 export type ValidateAndLockCreditResponse =
   | ValidateAndLockCreditResponseValid

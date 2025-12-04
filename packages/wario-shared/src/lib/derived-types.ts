@@ -7,15 +7,16 @@
  * Complex types, utility types, and types not based on DTOs belong in types.ts.
  */
 import type {
-  CreateProductBatchDto,
+  CreateProductBatchRequestDto,
   IssueStoreCreditRequestDto,
+  PartialUncommittedProductInstanceDto,
   PaymentBasePartialDto,
   PurchaseStoreCreditRequestBaseDto,
   PurchaseStoreCreditRequestNoEmailDto,
   PurchaseStoreCreditRequestSendEmailDto,
-  UpdateIProductDto,
+  UpdateIProductRequestDto,
   UpdateIProductUpdateIProductInstanceDto,
-  UpdateProductBatchDto,
+  UpdateProductBatchRequestDto,
   ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
 import type {
@@ -24,7 +25,7 @@ import type {
   CatalogProductEntryDto,
   ICatalogDto,
 } from './dto/catalog.dto';
-import type { ICategoryDto } from './dto/category.dto';
+import type { CategoryDisplayFlagsDto, ICategoryDto, UncommittedCategoryDto } from './dto/category.dto';
 import type {
   AddressComponentDto,
   DeliveryAddressValidateRequestDto,
@@ -34,6 +35,7 @@ import type {
   IMoneyDto,
   IRecurringIntervalDto,
   IWIntervalDto,
+  IWSettingsDto,
   KeyValueDto,
   SeatingSectionDto,
   SemverDto,
@@ -71,10 +73,15 @@ import type {
   PostBlockedOffToFulfillmentsRequestDto,
 } from './dto/interval.dto';
 import type {
+  IOptionDisplayFlagsDto,
   IOptionDto,
   IOptionInstanceDto,
+  IOptionMetadataDto,
   IOptionStateDto,
+  IOptionTypeDisplayFlagsDto,
   IOptionTypeDto,
+  UncommittedOptionDto,
+  UncommittedOptionTypeDto,
 } from './dto/modifier.dto';
 import type {
   CashPaymentAllocatedDto,
@@ -93,6 +100,7 @@ import type {
   OrderManualPercentDiscountDto,
   OrderTaxDto,
   StoreCreditPaymentAllocatedDto,
+  StoreCreditPaymentDataDto,
   StoreCreditPaymentProposedDto,
   TenderBaseAllocatedDto,
   TenderBaseProposedDto,
@@ -101,9 +109,8 @@ import type {
   WOrderInstanceDto,
   WOrderInstancePartialDto,
 } from './dto/order.dto';
+import type { DeletePrinterGroupNoReassignRequestDto, DeletePrinterGroupReassignRequestDto, PrinterGroupDto } from './dto/printer-group.dto';
 import type {
-  CreateIProductDto,
-  CreateIProductInstanceDto,
   IProductDisplayFlagsDto,
   IProductDto,
   IProductInstanceDisplayFlagsDto,
@@ -111,6 +118,8 @@ import type {
   IProductModifierDto,
   PrepTimingDto,
   ProductModifierEntryDto,
+  UncommittedIProductDto,
+  UncommittedIProductInstanceDto,
 } from './dto/product.dto';
 import type {
   SeatingResourceDto,
@@ -143,6 +152,7 @@ export type DeliveryAddressValidateRequest = Omit<DeliveryAddressValidateRequest
 export type DeliveryAddressValidateResponse = Omit<DeliveryAddressValidateResponseDto, never>;
 export type DeliveryInfo = Omit<DeliveryInfoDto, never>;
 export type SeatingSection = Omit<SeatingSectionDto, never>;
+export type IWSettings = Omit<IWSettingsDto, never>;
 
 // =============================================================================
 // Interval Types (from interval.dto.ts)
@@ -166,15 +176,22 @@ export type FulfillmentConfigMap = Record<string, FulfillmentConfig>;
 // =============================================================================
 
 export type IOptionState = Omit<IOptionStateDto, never>;
+export type UncommittedOptionType = Omit<UncommittedOptionTypeDto, never>;
 export type IOptionType = Omit<IOptionTypeDto, never>;
+export type IOptionTypeDisplayFlags = Omit<IOptionTypeDisplayFlagsDto, never>;
+export type UncommitedOption = Omit<UncommittedOptionDto, never>;
 export type IOption = Omit<IOptionDto, never>;
+export type IOptionDisplayFlags = Omit<IOptionDisplayFlagsDto, never>;
+export type IOptionMetadata = Omit<IOptionMetadataDto, never>;
 export type IOptionInstance = Omit<IOptionInstanceDto, never>;
 
 // =============================================================================
 // Category Types (from category.dto.ts)
 // =============================================================================
 
+export type UncommittedCategory = Omit<UncommittedCategoryDto, never>;
 export type ICategory = Omit<ICategoryDto, never>;
+export type CategoryDisplayFlags = Omit<CategoryDisplayFlagsDto, never>;
 
 // =============================================================================
 // Product Types (from product.dto.ts)
@@ -274,6 +291,14 @@ export type AbstractOrderExpression =
 export type OrderInstanceFunction = Omit<IOrderInstanceFunctionDto, never>;
 
 // =============================================================================
+// Printer Group (from printer-group.dto.ts)
+// =============================================================================
+export type PrinterGroup = Omit<PrinterGroupDto, never>;
+export type DeletePrinterGroupNoReassignRequest = Omit<DeletePrinterGroupNoReassignRequestDto, never>;
+export type DeletePrinterGroupReassignRequest = Omit<DeletePrinterGroupReassignRequestDto, never>;
+export type DeletePrinterGroupRequest = DeletePrinterGroupNoReassignRequest | DeletePrinterGroupReassignRequest;
+
+// =============================================================================
 // Order Types (from order.dto.ts)
 // =============================================================================
 
@@ -296,6 +321,7 @@ export type TenderBaseAllocated = Omit<TenderBaseAllocatedDto, never>;
 export type TenderBaseProposed = Omit<TenderBaseProposedDto, never>;
 
 // Payment types
+export type StoreCreditPaymentData = Omit<StoreCreditPaymentDataDto, never>;
 export type StoreCreditPaymentProposed = Omit<StoreCreditPaymentProposedDto, never>;
 export type StoreCreditPaymentAllocated = Omit<StoreCreditPaymentAllocatedDto, never>;
 export type StoreCreditPayment = StoreCreditPaymentProposed | StoreCreditPaymentAllocated;
@@ -347,18 +373,15 @@ export type PurchaseStoreCreditRequest =
  * Derived from ResponseSuccessDto interface.
  */
 
-
 export type PaymentBasePartial = Omit<PaymentBasePartialDto, never>;
-
-// =============================================================================
-// CRUD Batch Types for Product Management (utility types derived from other types)
-// =============================================================================
-
+export type PartialUncommittedProductInstance = Omit<PartialUncommittedProductInstanceDto, never>;
+export type UncommittedIProduct = Omit<UncommittedIProductDto, never>;
+export type UncommittedIProductInstance = Omit<UncommittedIProductInstanceDto, never>;
+export type CreateProductBatchRequest = Omit<CreateProductBatchRequestDto, never>;
 // UpsertProductBatch types
-export type CreateIProduct = Omit<CreateIProductDto, never>;
-export type CreateIProductInstance = Omit<CreateIProductInstanceDto, never>;
-export type CreateProductBatch = Omit<CreateProductBatchDto, never>;
-export type UpdateIProduct = Omit<UpdateIProductDto, never>;
+export type UpdateIProductRequest = Omit<UpdateIProductRequestDto, never>;
 export type UpdateIProductUpdateIProductInstance = Omit<UpdateIProductUpdateIProductInstanceDto, never>;
-export type UpdateProductBatch = Omit<UpdateProductBatchDto, never>;
+export type UpdateProductBatchRequest = Omit<UpdateProductBatchRequestDto, never>;
+export type UpsertProductBatchRequest = (CreateProductBatchRequest | UpdateProductBatchRequest);
+
 // end UpsertProductBatch types

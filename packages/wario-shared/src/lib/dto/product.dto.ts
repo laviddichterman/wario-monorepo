@@ -66,7 +66,7 @@ export class IProductModifierDto {
   serviceDisable!: string[];
 }
 
-export class CreateIProductDto {
+export class UncommittedIProductDto {
   //Omit<IProduct, 'id' | 'baseProductId'>;
   @ValidateNested()
   @Type(() => IMoneyDto)
@@ -110,7 +110,7 @@ export class CreateIProductDto {
   printerGroup!: string | null;
 }
 
-export class IProductDto extends CreateIProductDto {
+export class IProductDto extends UncommittedIProductDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
@@ -219,7 +219,7 @@ export class ProductModifierEntryDto {
   options!: IOptionInstanceDto[];
 }
 
-export class CreateIProductInstanceDto {
+export class UncommittedIProductInstanceDto {
   // = Omit<IProductInstance, 'id' | 'productId'>;
 
   // ordinal for product matching
@@ -253,7 +253,7 @@ export class CreateIProductInstanceDto {
   shortcode!: string;
 }
 
-export class IProductInstanceDto extends CreateIProductInstanceDto {
+export class IProductInstanceDto extends UncommittedIProductInstanceDto {
   @IsString()
   @IsNotEmpty()
   id!: string;

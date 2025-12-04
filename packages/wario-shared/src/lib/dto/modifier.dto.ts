@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
-import { CALL_LINE_DISPLAY, CategoryDisplay, DISPLAY_AS, MODIFIER_CLASS, OptionPlacement, OptionQualifier } from '../enums';
+import { DISPLAY_AS, MODIFIER_CLASS, OptionPlacement, OptionQualifier } from '../enums';
 
 import { IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from './common.dto';
 
@@ -44,11 +44,7 @@ export class IOptionTypeDisplayFlagsDto {
   non_empty_group_suffix!: string;
 }
 
-export class IOptionTypeDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
+export class UncommittedOptionTypeDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
@@ -79,6 +75,12 @@ export class IOptionTypeDto {
   displayFlags!: IOptionTypeDisplayFlagsDto;
 }
 
+export class IOptionTypeDto extends UncommittedOptionTypeDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+}
 export class IOptionMetadataDto {
   @IsNumber()
   flavor_factor!: number;
@@ -107,15 +109,7 @@ export class IOptionDisplayFlagsDto {
   omit_from_name!: boolean;
 }
 
-export class IOptionDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  modifierTypeId!: string;
-
+export class UncommittedOptionDto {
   @IsString()
   @IsNotEmpty()
   displayName!: string;
@@ -162,6 +156,17 @@ export class IOptionDto {
   displayFlags!: IOptionDisplayFlagsDto;
 }
 
+export class IOptionDto extends UncommittedOptionDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  modifierTypeId!: string;
+
+}
+
 export class IOptionStateDto {
   @IsEnum(OptionPlacement)
   placement!: OptionPlacement;
@@ -174,17 +179,4 @@ export class IOptionInstanceDto extends IOptionStateDto {
   @IsString()
   @IsNotEmpty()
   optionId!: string;
-}
-
-export class CategoryDisplayFlagsDto {
-  @IsString()
-  @IsNotEmpty()
-  call_line_name!: string;
-
-  @IsEnum(CALL_LINE_DISPLAY)
-  call_line_display!: CALL_LINE_DISPLAY;
-
-  @IsEnum(CategoryDisplay)
-  @IsNotEmpty()
-  nesting!: CategoryDisplay;
 }

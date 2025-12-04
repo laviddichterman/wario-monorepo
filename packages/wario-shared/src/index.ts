@@ -10,6 +10,7 @@ export * from "./lib/dto/fulfillment.dto";
 export * from "./lib/dto/interval.dto";
 export * from "./lib/dto/modifier.dto";
 export * from "./lib/dto/order.dto";
+export * from "./lib/dto/printer-group.dto";
 export * from "./lib/dto/product.dto";
 export * from "./lib/dto/seating.dto";
 export * from "./lib/enums";
