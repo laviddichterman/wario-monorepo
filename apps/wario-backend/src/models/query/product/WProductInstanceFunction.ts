@@ -14,8 +14,7 @@ export const WProductInstanceFunction = new Schema<MT>(
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
-export const WProductInstanceFunctionModel =
-  mongoose.model<IProductInstanceFunction>(
-    path.basename(__filename).replace(path.extname(__filename), ''),
-    WProductInstanceFunction,
-  );
+export const WProductInstanceFunctionModel = mongoose.model<IProductInstanceFunction>(
+  path.basename(__filename).replace(path.extname(__filename), ''),
+  WProductInstanceFunction,
+);

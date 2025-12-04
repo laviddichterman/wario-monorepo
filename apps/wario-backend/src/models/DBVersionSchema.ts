@@ -10,7 +10,4 @@ export const DBVersionSchema = new Schema<SEMVER>({
   patch: Number,
 });
 
-export default mongoose.model<SEMVER>(
-  path.basename(__filename).replace(path.extname(__filename), ''),
-  DBVersionSchema,
-);
+export default mongoose.model<SEMVER>(path.basename(__filename).replace(path.extname(__filename), ''), DBVersionSchema);

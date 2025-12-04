@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Logger } from '@nestjs/common';
 import { formatRFC3339 } from 'date-fns';
@@ -54,21 +55,15 @@ const logger = new Logger('SquareWarioBridge');
 
 // * add note to payment or whatever so the SQ receipt makes some sense, see https://squareup.com/receipt/preview/jXnAjUa3wdk6al0EofHUg8PUZzFZY
 // this all needs to be stored as part of the square configuration for the merchant. it should be bootstrapped and managed via the catalog sync process
-export const SQUARE_TAX_RATE_CATALOG_ID = IS_PRODUCTION
-  ? 'TMG7E3E5E45OXHJTBOHG2PMS'
-  : 'LOFKVY5UC3SLKPT2WANSBPZQ';
-export const SQUARE_WARIO_EXTERNAL_ID = IS_PRODUCTION
-  ? 'L75RYR2NI3ED7VM7VKXO2DKO'
-  : 'NDV2QHR54XWVXCKOHXK43ZLE';
+export const SQUARE_TAX_RATE_CATALOG_ID = IS_PRODUCTION ? 'TMG7E3E5E45OXHJTBOHG2PMS' : 'LOFKVY5UC3SLKPT2WANSBPZQ';
+export const SQUARE_WARIO_EXTERNAL_ID = IS_PRODUCTION ? 'L75RYR2NI3ED7VM7VKXO2DKO' : 'NDV2QHR54XWVXCKOHXK43ZLE';
 export const SQUARE_BANKERS_ADJUSTED_TAX_RATE_CATALOG_ID = IS_PRODUCTION
   ? 'R77FWA4SNHB4RWNY4KNNQHJD'
   : 'HIUHEOWWVR6MB3PP7ORCUVZW';
 export const VARIABLE_PRICE_STORE_CREDIT_CATALOG_ID = IS_PRODUCTION
   ? 'DNP5YT6QDIWTB53H46F3ECIN'
   : 'RBYUD52HGFHPL4IG55LBHQAG';
-export const DISCOUNT_CATALOG_ID = IS_PRODUCTION
-  ? 'AKIYDPB5WJD2HURCWWZSAIF5'
-  : 'PAMEV3WAZYEBJKFUAVQATS3K';
+export const DISCOUNT_CATALOG_ID = IS_PRODUCTION ? 'AKIYDPB5WJD2HURCWWZSAIF5' : 'PAMEV3WAZYEBJKFUAVQATS3K';
 
 export const WARIO_SQUARE_ID_METADATA_KEY = 'SQID_';
 
@@ -83,25 +78,13 @@ export const IMoneyToBigIntMoney = (money: IMoney): Money => ({
 });
 
 export const GetSquareExternalIds = (externalIds: KeyValue[] | undefined) =>
-  (externalIds ?? []).filter((x) =>
-    x.key.startsWith(WARIO_SQUARE_ID_METADATA_KEY),
-  );
+  (externalIds ?? []).filter((x) => x.key.startsWith(WARIO_SQUARE_ID_METADATA_KEY));
 export const GetNonSquareExternalIds = (externalIds: KeyValue[] | undefined) =>
-  (externalIds ?? []).filter(
-    (x) => !x.key.startsWith(WARIO_SQUARE_ID_METADATA_KEY),
-  );
+  (externalIds ?? []).filter((x) => !x.key.startsWith(WARIO_SQUARE_ID_METADATA_KEY));
 
-export const GetSquareIdIndexFromExternalIds = (
-  externalIds: KeyValue[] | undefined,
-  specifier: string,
-) =>
-  (externalIds ?? []).findIndex(
-    (x) => x.key === `${WARIO_SQUARE_ID_METADATA_KEY}${specifier}`,
-  );
-export const GetSquareIdFromExternalIds = (
-  externalIds: KeyValue[],
-  specifier: string,
-): string | null => {
+export const GetSquareIdIndexFromExternalIds = (externalIds: KeyValue[] | undefined, specifier: string) =>
+  (externalIds ?? []).findIndex((x) => x.key === `${WARIO_SQUARE_ID_METADATA_KEY}${specifier}`);
+export const GetSquareIdFromExternalIds = (externalIds: KeyValue[], specifier: string): string | null => {
   const kvIdx = GetSquareIdIndexFromExternalIds(externalIds, specifier);
   return kvIdx === -1 ? null : externalIds[kvIdx].value;
 };
@@ -119,9 +102,7 @@ export interface SquareOrderFulfillmentInfo {
  * @param catalog
  * @returns mapping from Square Catalog Object ID to WARIO ID
  */
-export const GenerateSquareReverseMapping = (
-  catalog: ICatalog,
-): Record<string, string> => {
+export const GenerateSquareReverseMapping = (catalog: ICatalog): Record<string, string> => {
   const acc: Record<string, string> = {};
   Object.values(catalog.modifiers).forEach((modEntry) => {
     if (modEntry.options.length >= 1) {
@@ -137,11 +118,9 @@ export const GenerateSquareReverseMapping = (
   });
   Object.values(catalog.products).forEach((productEntry) => {
     productEntry.instances.forEach((pIId) => {
-      GetSquareExternalIds(catalog.productInstances[pIId].externalIDs).forEach(
-        (kv) => {
-          acc[kv.value] = pIId;
-        },
-      );
+      GetSquareExternalIds(catalog.productInstances[pIId].externalIDs).forEach((kv) => {
+        acc[kv.value] = pIId;
+      });
     });
   });
   return acc;
@@ -157,55 +136,43 @@ export const LineItemsToOrderInstanceCart = (
       .map((line) => {
         const pIId = catalogContext.ReverseMappings[line.catalogObjectId!];
         if (!pIId) {
-          logger.error(
-            `Unable to find matching product instance ID for square item variation`,
-          );
+          logger.error(`Unable to find matching product instance ID for square item variation`);
         }
-        const warioProductInstance =
-          catalogContext.Catalog.productInstances[pIId];
-        const warioProduct =
-          catalogContext.Catalog.products[warioProductInstance.productId]
-            .product;
+        const warioProductInstance = catalogContext.Catalog.productInstances[pIId];
+        const warioProduct = catalogContext.Catalog.products[warioProductInstance.productId].product;
         const modifiers: ProductModifierEntry[] = Object.values(
-          (line.modifiers ?? []).reduce(
-            (acc: Record<string, ProductModifierEntry>, lineMod) => {
-              const oId =
-                catalogContext.ReverseMappings[lineMod.catalogObjectId!];
-              const warioModifierOption = catalogContext.Catalog.options[oId];
-              const mTId = warioModifierOption.modifierTypeId;
-              return {
-                ...acc,
-                [mTId]: {
-                  modifierTypeId: mTId,
-                  options: [
-                    {
-                      optionId: oId,
-                      placement: OptionPlacement.WHOLE,
-                      qualifier: OptionQualifier.REGULAR,
-                    },
-                    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                    ...(acc[mTId]?.options ?? []),
-                  ],
-                },
-              };
-            },
-            {},
-          ),
+          (line.modifiers ?? []).reduce((acc: Record<string, ProductModifierEntry>, lineMod) => {
+            const oId = catalogContext.ReverseMappings[lineMod.catalogObjectId!];
+            const warioModifierOption = catalogContext.Catalog.options[oId];
+            const mTId = warioModifierOption.modifierTypeId;
+            return {
+              ...acc,
+              [mTId]: {
+                modifierTypeId: mTId,
+                options: [
+                  {
+                    optionId: oId,
+                    placement: OptionPlacement.WHOLE,
+                    qualifier: OptionQualifier.REGULAR,
+                  },
+                  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                  ...(acc[mTId]?.options ?? []),
+                ],
+              },
+            };
+          }, {}),
         )
           // now sort it...
           .sort(
             (a, b) =>
-              catalogContext.Catalog.modifiers[a.modifierTypeId].modifierType
-                .ordinal -
-              catalogContext.Catalog.modifiers[b.modifierTypeId].modifierType
-                .ordinal,
+              catalogContext.Catalog.modifiers[a.modifierTypeId].modifierType.ordinal -
+              catalogContext.Catalog.modifiers[b.modifierTypeId].modifierType.ordinal,
           )
           .map((x) => ({
             ...x,
             options: x.options.sort(
               (a, b) =>
-                catalogContext.Catalog.options[a.optionId].ordinal -
-                catalogContext.Catalog.options[b.optionId].ordinal,
+                catalogContext.Catalog.options[a.optionId].ordinal - catalogContext.Catalog.options[b.optionId].ordinal,
             ),
           }));
         // PRECONDITION: 3p products are unique to the 3p merchant and shouldn't yield a category outside of the 3p menu tree
@@ -219,7 +186,7 @@ export const LineItemsToOrderInstanceCart = (
           quantity: parseInt(line.quantity),
         };
       });
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorDetail = `Got error when attempting to ingest 3p line items (${JSON.stringify(lineItems)}) got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
     logger.error(errorDetail);
     // eslint-disable-next-line @typescript-eslint/only-throw-error
@@ -228,9 +195,7 @@ export const LineItemsToOrderInstanceCart = (
   return [];
 };
 
-export const CreateFulfillment = (
-  info: SquareOrderFulfillmentInfo,
-): OrderFulfillment => {
+export const CreateFulfillment = (info: SquareOrderFulfillmentInfo): OrderFulfillment => {
   return {
     type: 'PICKUP',
     pickupDetails: {
@@ -268,24 +233,24 @@ const OptionInstanceToSquareIdSpecifier = (optionInstance: IOptionInstance) => {
   return 'MODIFIER_WHOLE';
 };
 
-const CreateWarioCustomAttribute = (locationIds: string[]): CatalogObject => {
-  return {
-    id: '#WARIOID',
-    type: 'CUSTOM_ATTRIBUTE_DEFINITION',
-    presentAtAllLocations: false,
-    presentAtLocationIds: locationIds,
-    customAttributeDefinitionData: {
-      allowedObjectTypes: ['ITEM', 'ITEM_VARIATION'],
-      name: 'WARIO External ID',
-      type: 'STRING',
-      appVisibility: 'APP_VISIBILITY_HIDDEN',
-      key: 'WARIO_',
-      stringConfig: {
-        enforceUniqueness: false,
-      },
-    },
-  };
-};
+// const CreateWarioCustomAttribute = (locationIds: string[]): CatalogObject => {
+//   return {
+//     id: '#WARIOID',
+//     type: 'CUSTOM_ATTRIBUTE_DEFINITION',
+//     presentAtAllLocations: false,
+//     presentAtLocationIds: locationIds,
+//     customAttributeDefinitionData: {
+//       allowedObjectTypes: ['ITEM', 'ITEM_VARIATION'],
+//       name: 'WARIO External ID',
+//       type: 'STRING',
+//       appVisibility: 'APP_VISIBILITY_HIDDEN',
+//       key: 'WARIO_',
+//       stringConfig: {
+//         enforceUniqueness: false,
+//       },
+//     },
+//   };
+// };
 
 /**
  *
@@ -293,10 +258,7 @@ const CreateWarioCustomAttribute = (locationIds: string[]): CatalogObject => {
  * @param batch ALL BATCHES MUST BE THE SAME LENGTH IN A CALL
  * @returns
  */
-export const IdMappingsToExternalIds = (
-  mappings: CatalogIdMapping[] | undefined,
-  batch: string,
-): KeyValue[] =>
+export const IdMappingsToExternalIds = (mappings: CatalogIdMapping[] | undefined, batch: string): KeyValue[] =>
   mappings
     ?.filter((x) => x.clientObjectId!.startsWith(`#${batch}_`))
     .map((x) => ({
@@ -373,45 +335,34 @@ export const CreateOrdersForPrintingFromCart = (
 ): Order[] => {
   const carts: CoreCartEntry<WProduct>[][] = [];
   // split out the items we need to get printed
-  const cartEntriesByPrinterGroup = CartByPrinterGroup(
-    cart,
-    catalogContext.CatalogSelectors.productEntry,
-  );
+  const cartEntriesByPrinterGroup = CartByPrinterGroup(cart, catalogContext.CatalogSelectors.productEntry);
   // this checks if there's anything left in the queue
-  while (
-    Object.values(cartEntriesByPrinterGroup).reduce(
-      (acc, x) => acc || x.length > 0,
-      false,
-    )
-  ) {
+  while (Object.values(cartEntriesByPrinterGroup).reduce((acc, x) => acc || x.length > 0, false)) {
     const orderEntries: CoreCartEntry<WProduct>[] = [];
-    Object.entries(cartEntriesByPrinterGroup).forEach(
-      ([pgId, cartEntryList]) => {
-        if (catalogContext.PrinterGroups[pgId].singleItemPerTicket) {
-          const { product, categoryId, quantity } =
-            cartEntryList[cartEntryList.length - 1];
-          if (quantity === 1) {
-            orderEntries.push(cartEntryList.pop()!);
-          } else {
-            // multiple items in the entry
-            orderEntries.push({ categoryId, product, quantity: 1 });
-            cartEntryList[cartEntryList.length - 1] = {
-              product,
-              categoryId,
-              quantity: cartEntryList[cartEntryList.length - 1].quantity - 1,
-            };
-          }
+    Object.entries(cartEntriesByPrinterGroup).forEach(([pgId, cartEntryList]) => {
+      if (catalogContext.PrinterGroups[pgId].singleItemPerTicket) {
+        const { product, categoryId, quantity } = cartEntryList[cartEntryList.length - 1];
+        if (quantity === 1) {
+          orderEntries.push(cartEntryList.pop()!);
         } else {
-          orderEntries.push(...cartEntryList.splice(0));
+          // multiple items in the entry
+          orderEntries.push({ categoryId, product, quantity: 1 });
+          cartEntryList[cartEntryList.length - 1] = {
+            product,
+            categoryId,
+            quantity: cartEntryList[cartEntryList.length - 1].quantity - 1,
+          };
         }
-        if (cartEntryList.length === 0) {
-          delete cartEntriesByPrinterGroup[pgId];
-        }
-      },
-    );
+      } else {
+        orderEntries.push(...cartEntryList.splice(0));
+      }
+      if (cartEntryList.length === 0) {
+        delete cartEntriesByPrinterGroup[pgId];
+      }
+    });
     carts.push(orderEntries);
   }
-  return carts.map((cart, i) => {
+  return carts.map((cart) => {
     return CreateOrderFromCart(
       locationId,
       referenceId,
@@ -423,10 +374,7 @@ export const CreateOrdersForPrintingFromCart = (
             reason: 'PrintOrder',
             amount: {
               currency: CURRENCY.USD,
-              amount: cart.reduce(
-                (acc, x) => acc + x.product.m.price.amount * x.quantity,
-                0,
-              ),
+              amount: cart.reduce((acc, x) => acc + x.product.m.price.amount * x.quantity, 0),
             },
             percentage: 1,
           },
@@ -469,9 +417,7 @@ export const CreateOrderForMessages = (
     taxes: [],
     locationId,
     state: 'OPEN',
-    ...(truncatedTicketName.length > 0
-      ? { ticketName: truncatedTicketName }
-      : {}),
+    ...(truncatedTicketName.length > 0 ? { ticketName: truncatedTicketName } : {}),
     fulfillments: [CreateFulfillment(fulfillmentInfo)],
   };
 };
@@ -482,8 +428,7 @@ const WProductModifiersToSquareModifiers = (
   const acc: OrderLineItemModifier[] = [];
   // NOTE: only supports whole pizzas, needs work to support split pizzas
   product.p.modifiers.forEach((mod) => {
-    const modifierTypeEntry =
-      catalogContext.Catalog.modifiers[mod.modifierTypeId];
+    const modifierTypeEntry = catalogContext.Catalog.modifiers[mod.modifierTypeId];
     const baseProductInstanceSelectedOptionsForModifierType =
       catalogContext.Catalog.productInstances[product.m.pi[0]].modifiers.find(
         (x) => x.modifierTypeId === mod.modifierTypeId,
@@ -497,10 +442,7 @@ const WProductModifiersToSquareModifiers = (
       if (
         modifierTypeEntry.modifierType.max_selected === 1 ||
         baseProductInstanceSelectedOptionsForModifierType.findIndex(
-          (x) =>
-            x.optionId === option.optionId &&
-            x.placement === option.placement &&
-            x.qualifier === option.qualifier,
+          (x) => x.optionId === option.optionId && x.placement === option.placement && x.qualifier === option.qualifier,
         ) === -1
       ) {
         acc.push(
@@ -534,17 +476,9 @@ export const CreateOrderFromCart = (
   return {
     referenceId,
     lineItems: Object.values(cart).map((x) => {
-      const catalogProductInstance =
-        catalogContext.Catalog.productInstances[
-        x.product.m.pi[PRODUCT_LOCATION.LEFT]
-        ];
-      const catalogProduct = catalogContext.CatalogSelectors.productEntry(
-        x.product.p.productId,
-      )!;
-      const squareItemVariationId = GetSquareIdFromExternalIds(
-        catalogProductInstance.externalIDs,
-        'ITEM_VARIATION',
-      );
+      const catalogProductInstance = catalogContext.Catalog.productInstances[x.product.m.pi[PRODUCT_LOCATION.LEFT]];
+      const catalogProduct = catalogContext.CatalogSelectors.productEntry(x.product.p.productId)!;
+      const squareItemVariationId = GetSquareIdFromExternalIds(catalogProductInstance.externalIDs, 'ITEM_VARIATION');
       // // left and right catalog product instance are the same,
       // if (x.product.m.pi[PRODUCT_LOCATION.LEFT] === x.product.m.pi[PRODUCT_LOCATION.RIGHT]) {
 
@@ -569,10 +503,7 @@ export const CreateOrderFromCart = (
             catalogObjectId: squareItemVariationId,
           }),
         itemType: 'ITEM',
-        modifiers: WProductModifiersToSquareModifiers(
-          x.product,
-          catalogContext,
-        ),
+        modifiers: WProductModifiersToSquareModifiers(x.product, catalogContext),
       };
       return retVal;
     }),
@@ -642,21 +573,13 @@ export const PrinterGroupToSquareCatalogObjectPlusDummyProduct = (
   currentObjects: Pick<CatalogObject, 'id' | 'version'>[],
   batch: string,
 ): CatalogObject[] => {
-  const squareCategoryId =
-    GetSquareIdFromExternalIds(printerGroup.externalIDs, 'CATEGORY') ??
-    `#${batch}_CATEGORY`;
-  const versionCategoryId =
-    currentObjects.find((x) => x.id === squareCategoryId)?.version ?? null;
-  const squareItemId =
-    GetSquareIdFromExternalIds(printerGroup.externalIDs, 'ITEM') ??
-    `#${batch}_ITEM`;
-  const versionItem =
-    currentObjects.find((x) => x.id === squareItemId)?.version ?? null;
+  const squareCategoryId = GetSquareIdFromExternalIds(printerGroup.externalIDs, 'CATEGORY') ?? `#${batch}_CATEGORY`;
+  const versionCategoryId = currentObjects.find((x) => x.id === squareCategoryId)?.version ?? null;
+  const squareItemId = GetSquareIdFromExternalIds(printerGroup.externalIDs, 'ITEM') ?? `#${batch}_ITEM`;
+  const versionItem = currentObjects.find((x) => x.id === squareItemId)?.version ?? null;
   const squareItemVariationId =
-    GetSquareIdFromExternalIds(printerGroup.externalIDs, 'ITEM_VARIATION') ??
-    `#${batch}_ITEM_VARIATION`;
-  const versionItemVariation =
-    currentObjects.find((x) => x.id === squareItemVariationId)?.version ?? null;
+    GetSquareIdFromExternalIds(printerGroup.externalIDs, 'ITEM_VARIATION') ?? `#${batch}_ITEM_VARIATION`;
+  const versionItemVariation = currentObjects.find((x) => x.id === squareItemVariationId)?.version ?? null;
 
   return [
     {
@@ -692,9 +615,7 @@ export const PrinterGroupToSquareCatalogObjectPlusDummyProduct = (
             type: 'ITEM_VARIATION',
             presentAtAllLocations: false,
             presentAtLocationIds: locationIds,
-            ...(versionItemVariation !== null
-              ? { version: versionItemVariation }
-              : {}),
+            ...(versionItemVariation !== null ? { version: versionItemVariation } : {}),
             itemVariationData: {
               itemId: squareItemId,
               //name: "MESSAGE",
@@ -729,38 +650,24 @@ export const ProductInstanceToSquareCatalogObject = (
   // maybe we can just set variationName on the line item and call it good?
   // TODO: when we transition off the square POS, if we're still using the finance or employee management or whatever, we'll need to pull pre-selected modifiers off of the ITEM_VARIATIONs for a product instance
   //
-  const squareItemId =
-    GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM') ??
-    `#${batch}_ITEM`;
-  const versionItem =
-    currentObjects.find((x) => x.id === squareItemId)?.version ?? null;
-  const productTypeItem =
-    currentObjects.find((x) => x.id === squareItemId)?.itemData?.productType ??
-    'REGULAR';
+  const squareItemId = GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM') ?? `#${batch}_ITEM`;
+  const versionItem = currentObjects.find((x) => x.id === squareItemId)?.version ?? null;
+  const productTypeItem = currentObjects.find((x) => x.id === squareItemId)?.itemData?.productType ?? 'REGULAR';
   const squareItemVariationId =
-    GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM_VARIATION') ??
-    `#${batch}_ITEM_VARIATION`;
-  const versionItemVariation =
-    currentObjects.find((x) => x.id === squareItemVariationId)?.version ?? null;
-  const isBlanketDisabled =
-    product.disabled && product.disabled.start > product.disabled.end;
+    GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM_VARIATION') ?? `#${batch}_ITEM_VARIATION`;
+  const versionItemVariation = currentObjects.find((x) => x.id === squareItemVariationId)?.version ?? null;
+  const isBlanketDisabled = product.disabled && product.disabled.start > product.disabled.end;
   let instancePriceWithoutSingleSelectModifiers = product.price.amount;
   const modifierListInfo: CatalogItemModifierListInfo[] = [];
   product.modifiers.forEach((mtspec) => {
     const modifierEntry = catalogSelectors.modifierEntry(mtspec.mtid)!;
     const selectedOptionsForModifierType =
-      productInstance.modifiers.find((x) => x.modifierTypeId === mtspec.mtid)
-        ?.options ?? [];
+      productInstance.modifiers.find((x) => x.modifierTypeId === mtspec.mtid)?.options ?? [];
     if (modifierEntry.modifierType.max_selected === 1) {
       // single select modifiers get added to the square product
-      const squareModifierListId = GetSquareIdFromExternalIds(
-        modifierEntry.modifierType.externalIDs,
-        'MODIFIER_LIST',
-      )!;
+      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST')!;
       if (squareModifierListId === null) {
-        logger.error(
-          `Missing MODIFIER_LIST in ${JSON.stringify(modifierEntry.modifierType.externalIDs)}`,
-        );
+        logger.error(`Missing MODIFIER_LIST in ${JSON.stringify(modifierEntry.modifierType.externalIDs)}`);
         return;
       }
       if (selectedOptionsForModifierType.length > 1) {
@@ -775,29 +682,21 @@ export const ProductInstanceToSquareCatalogObject = (
         maxSelectedModifiers: 1,
         ...(selectedOptionsForModifierType.length > 0
           ? {
-            modifierOverrides: selectedOptionsForModifierType.map(
-              (optionInstance) => ({
-                modifierId: GetSquareIdFromExternalIds(
-                  catalogSelectors.option(optionInstance.optionId)!
-                    .externalIDs,
-                  OptionInstanceToSquareIdSpecifier(optionInstance),
-                )!,
-                onByDefault: true,
-              }),
-            ),
+            modifierOverrides: selectedOptionsForModifierType.map((optionInstance) => ({
+              modifierId: GetSquareIdFromExternalIds(
+                catalogSelectors.option(optionInstance.optionId)!.externalIDs,
+                OptionInstanceToSquareIdSpecifier(optionInstance),
+              )!,
+              onByDefault: true,
+            })),
           }
           : {}),
       });
     } else {
       // add the modifier to the list
-      const squareModifierListId = GetSquareIdFromExternalIds(
-        modifierEntry.modifierType.externalIDs,
-        'MODIFIER_LIST',
-      )!;
+      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST')!;
       if (squareModifierListId === null) {
-        logger.error(
-          `Missing MODIFIER_LIST in ${JSON.stringify(modifierEntry.modifierType.externalIDs)}`,
-        );
+        logger.error(`Missing MODIFIER_LIST in ${JSON.stringify(modifierEntry.modifierType.externalIDs)}`);
         return;
       }
       modifierListInfo.push({
@@ -808,18 +707,10 @@ export const ProductInstanceToSquareCatalogObject = (
       // multi select modifiers, if pre-selected get added to the built in price
       modifierEntry.options.forEach((oId) => {
         const option = catalogSelectors.option(oId)!;
-        const optionInstance =
-          selectedOptionsForModifierType.find(
-            (x) => x.optionId === option.id,
-          ) ?? null;
-        if (
-          optionInstance &&
-          optionInstance.placement !== OptionPlacement.NONE
-        ) {
+        const optionInstance = selectedOptionsForModifierType.find((x) => x.optionId === option.id) ?? null;
+        if (optionInstance && optionInstance.placement !== OptionPlacement.NONE) {
           instancePriceWithoutSingleSelectModifiers +=
-            optionInstance.qualifier === OptionQualifier.HEAVY
-              ? option.price.amount * 2
-              : option.price.amount;
+            optionInstance.qualifier === OptionQualifier.HEAVY ? option.price.amount * 2 : option.price.amount;
         }
       });
     }
@@ -827,18 +718,13 @@ export const ProductInstanceToSquareCatalogObject = (
 
   // we need to pass the categories otherwise square will overwrite them with empty categories, so we need to pull out non-reporting categories
   // won't be needed once we address https://app.asana.com/1/961497487611345/project/1189134071799993/task/1210817402795310?focus=true
-  const currentItemCategories =
-    currentObjects.find((x) => x.id === squareItemId)?.itemData?.categories ??
-    [];
+  const currentItemCategories = currentObjects.find((x) => x.id === squareItemId)?.itemData?.categories ?? [];
   const newPrinterGroupCategory = printerGroup
     ? GetSquareIdFromExternalIds(printerGroup.externalIDs, 'CATEGORY')!
     : null;
   const oldPrinterGroupCategory =
-    currentObjects.find((x) => x.id === squareItemId)?.itemData
-      ?.reportingCategory?.id ?? null;
-  const otherCategories = currentItemCategories.filter(
-    (x) => x.id !== oldPrinterGroupCategory,
-  );
+    currentObjects.find((x) => x.id === squareItemId)?.itemData?.reportingCategory?.id ?? null;
+  const otherCategories = currentItemCategories.filter((x) => x.id !== oldPrinterGroupCategory);
 
   return {
     id: squareItemId,
@@ -859,14 +745,10 @@ export const ProductInstanceToSquareCatalogObject = (
       availableOnline: true,
       isArchived: isBlanketDisabled,
       descriptionHtml: productInstance.description,
-      name: productInstance.displayFlags.pos.name
-        ? productInstance.displayFlags.pos.name
-        : productInstance.displayName,
+      name: productInstance.displayFlags.pos.name ? productInstance.displayFlags.pos.name : productInstance.displayName,
       productType: productTypeItem,
       taxIds: [SQUARE_TAX_RATE_CATALOG_ID],
-      skipModifierScreen:
-        product.modifiers.length === 0 ||
-        productInstance.displayFlags.pos.skip_customization,
+      skipModifierScreen: product.modifiers.length === 0 || productInstance.displayFlags.pos.skip_customization,
       modifierListInfo,
       variations: [
         {
@@ -874,9 +756,7 @@ export const ProductInstanceToSquareCatalogObject = (
           type: 'ITEM_VARIATION',
           presentAtAllLocations: false,
           presentAtLocationIds: locationIds,
-          ...(versionItemVariation !== null
-            ? { version: versionItemVariation }
-            : {}),
+          ...(versionItemVariation !== null ? { version: versionItemVariation } : {}),
           itemVariationData: {
             itemId: squareItemId,
             // name: productInstance.displayName, We omit this variation name so the tickets and receipts are shorter
@@ -902,36 +782,18 @@ export const ModifierOptionPlacementsAndQualifiersToSquareCatalogObjects = (
   currentObjects: Pick<CatalogObject, 'id' | 'version'>[],
   batch: string,
 ): CatalogObject[] => {
-  const squareIdLeft =
-    GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_LEFT') ??
-    `#${batch}_MODIFIER_LEFT`;
-  const versionLeft =
-    currentObjects.find((x) => x.id === squareIdLeft)?.version ?? null;
-  const squareIdWhole =
-    GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_WHOLE') ??
-    `#${batch}_MODIFIER_WHOLE`;
-  const versionWhole =
-    currentObjects.find((x) => x.id === squareIdWhole)?.version ?? null;
-  const squareIdRight =
-    GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_RIGHT') ??
-    `#${batch}_MODIFIER_RIGHT`;
-  const versionRight =
-    currentObjects.find((x) => x.id === squareIdRight)?.version ?? null;
-  const squareIdHeavy =
-    GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_HEAVY') ??
-    `#${batch}_MODIFIER_HEAVY`;
-  const versionHeavy =
-    currentObjects.find((x) => x.id === squareIdHeavy)?.version ?? null;
-  const squareIdLite =
-    GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_LITE') ??
-    `#${batch}_MODIFIER_LITE`;
-  const versionLite =
-    currentObjects.find((x) => x.id === squareIdLite)?.version ?? null;
-  const squareIdOts =
-    GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_OTS') ??
-    `#${batch}_MODIFIER_OTS`;
-  const versionOts =
-    currentObjects.find((x) => x.id === squareIdOts)?.version ?? null;
+  const squareIdLeft = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_LEFT') ?? `#${batch}_MODIFIER_LEFT`;
+  const versionLeft = currentObjects.find((x) => x.id === squareIdLeft)?.version ?? null;
+  const squareIdWhole = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_WHOLE') ?? `#${batch}_MODIFIER_WHOLE`;
+  const versionWhole = currentObjects.find((x) => x.id === squareIdWhole)?.version ?? null;
+  const squareIdRight = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_RIGHT') ?? `#${batch}_MODIFIER_RIGHT`;
+  const versionRight = currentObjects.find((x) => x.id === squareIdRight)?.version ?? null;
+  const squareIdHeavy = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_HEAVY') ?? `#${batch}_MODIFIER_HEAVY`;
+  const versionHeavy = currentObjects.find((x) => x.id === squareIdHeavy)?.version ?? null;
+  const squareIdLite = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_LITE') ?? `#${batch}_MODIFIER_LITE`;
+  const versionLite = currentObjects.find((x) => x.id === squareIdLite)?.version ?? null;
+  const squareIdOts = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_OTS') ?? `#${batch}_MODIFIER_OTS`;
+  const versionOts = currentObjects.find((x) => x.id === squareIdOts)?.version ?? null;
   const baseOrdinal = option.ordinal * 6;
   const modifierLite: CatalogObject[] = option.metadata.allowLite
     ? [
@@ -1038,43 +900,28 @@ export const ModifierOptionPlacementsAndQualifiersToSquareCatalogObjects = (
       priceMoney: IMoneyToBigIntMoney(option.price),
     },
   };
-  return [
-    ...modifiersSplit,
-    modifierWhole,
-    ...modifierHeavy,
-    ...modifierLite,
-    ...modifierOts,
-  ].sort((a, b) => a.modifierData!.ordinal! - b.modifierData!.ordinal!);
+  return [...modifiersSplit, modifierWhole, ...modifierHeavy, ...modifierLite, ...modifierOts].sort(
+    (a, b) => a.modifierData!.ordinal! - b.modifierData!.ordinal!,
+  );
 };
 
 export const ModifierTypeToSquareCatalogObject = (
   locationIds: string[],
   modifierType: Pick<
     IOptionType,
-    | 'name'
-    | 'displayName'
-    | 'ordinal'
-    | 'externalIDs'
-    | 'max_selected'
-    | 'min_selected'
-    | 'displayFlags'
+    'name' | 'displayName' | 'ordinal' | 'externalIDs' | 'max_selected' | 'min_selected' | 'displayFlags'
   >,
   options: Omit<IOption, 'id' | 'modifierTypeId'>[],
   currentObjects: Pick<CatalogObject, 'id' | 'version'>[],
   batch: string,
 ): CatalogObject => {
   const modifierListId =
-    GetSquareIdFromExternalIds(modifierType.externalIDs, 'MODIFIER_LIST') ??
-    `#${batch}_MODIFIER_LIST`;
-  const version =
-    currentObjects.find((x) => x.id === modifierListId)?.version ?? null;
-  const displayName =
-    modifierType.displayName?.length > 0
-      ? modifierType.displayName
-      : modifierType.name;
+    GetSquareIdFromExternalIds(modifierType.externalIDs, 'MODIFIER_LIST') ?? `#${batch}_MODIFIER_LIST`;
+  const version = currentObjects.find((x) => x.id === modifierListId)?.version ?? null;
+  const displayName = modifierType.displayName?.length > 0 ? modifierType.displayName : modifierType.name;
   const squareName = modifierType.displayFlags.is3p
     ? displayName
-    : `${('0000' + modifierType.ordinal * 100).slice(-4)}| ${displayName}`;
+    : `${('0000' + (modifierType.ordinal * 100)).slice(-4)}| ${displayName}`;
   return {
     id: modifierListId,
     ...(version !== null ? { version } : {}),
@@ -1128,14 +975,7 @@ export const ValidateModifiersForInstance = function (
   productModifierSpecification: IProductModifier[],
   instanceModifierSpecification: ProductModifierEntry[],
 ) {
-  const mtidsInInstanceSpec = new Set(
-    ...instanceModifierSpecification.map((x) => x.modifierTypeId),
-  );
-  const mtidsInProductSpec = new Set(
-    ...productModifierSpecification.map((x) => x.mtid),
-  );
-  return (
-    new Array(...mtidsInInstanceSpec).filter((x) => !mtidsInProductSpec.has(x))
-      .length === 0
-  );
+  const mtidsInInstanceSpec = new Set(...instanceModifierSpecification.map((x) => x.modifierTypeId));
+  const mtidsInProductSpec = new Set(...productModifierSpecification.map((x) => x.mtid));
+  return new Array(...mtidsInInstanceSpec).filter((x) => !mtidsInProductSpec.has(x)).length === 0;
 };

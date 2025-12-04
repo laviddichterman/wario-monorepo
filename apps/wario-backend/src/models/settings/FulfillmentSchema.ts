@@ -2,12 +2,7 @@ import path from 'path';
 
 import mongoose, { Schema } from 'mongoose';
 
-import {
-  type DateIntervalEntry,
-  DayOfTheWeek,
-  type FulfillmentConfig,
-  FulfillmentType,
-} from '@wcp/wario-shared';
+import { type DateIntervalEntry, DayOfTheWeek, type FulfillmentConfig, FulfillmentType } from '@wcp/wario-shared';
 
 import { IntervalSchema } from '../IntervalSchema';
 

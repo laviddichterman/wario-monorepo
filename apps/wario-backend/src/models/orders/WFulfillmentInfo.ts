@@ -48,25 +48,24 @@ export const AddressComponentSchema = new Schema<AddressComponent>(
   { _id: false },
 );
 
-export const DeliveryAddressValidateResponseSchema =
-  new Schema<DeliveryAddressValidateResponse>(
-    {
-      validated_address: {
-        type: String,
-        required: true,
-      },
-      in_area: {
-        type: Boolean,
-        required: true,
-      },
-      found: {
-        type: Boolean,
-        required: true,
-      },
-      address_components: [AddressComponentSchema],
+export const DeliveryAddressValidateResponseSchema = new Schema<DeliveryAddressValidateResponse>(
+  {
+    validated_address: {
+      type: String,
+      required: true,
     },
-    { _id: false },
-  );
+    in_area: {
+      type: Boolean,
+      required: true,
+    },
+    found: {
+      type: Boolean,
+      required: true,
+    },
+    address_components: [AddressComponentSchema],
+  },
+  { _id: false },
+);
 
 export const DeliveryInfoSchema = new Schema<DeliveryInfoDto>(
   {

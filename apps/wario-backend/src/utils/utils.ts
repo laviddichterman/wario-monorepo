@@ -66,12 +66,9 @@ export const IS_PRODUCTION = process.env.NODE_ENV !== 'development';
 //     }
 // }
 
-export async function ExponentialBackoffWaitFunction(
-  retry: number,
-  max_retry: number,
-) {
+export async function ExponentialBackoffWaitFunction(retry: number, max_retry: number) {
   const waittime = 2 ** (retry + 1) * 10 + 1000 * Math.random();
-  logger.warn(`Waiting ${waittime} on retry ${retry + 1} of ${max_retry}`);
+  logger.warn(`Waiting ${waittime.toFixed(2)} on retry ${String(retry + 1)} of ${String(max_retry)}`);
   return await new Promise((res) => setTimeout(res, waittime));
 }
 
@@ -88,12 +85,7 @@ export async function ExponentialBackoff<T>(
     if (retry_checker(err)) {
       if (retry < max_retry && retry_checker(err)) {
         await ExponentialBackoffWaitFunction(retry, max_retry);
-        return await ExponentialBackoff<T>(
-          request,
-          retry_checker,
-          retry + 1,
-          max_retry,
-        );
+        return await ExponentialBackoff<T>(request, retry_checker, retry + 1, max_retry);
       } else {
         throw err;
       }
@@ -102,11 +94,10 @@ export async function ExponentialBackoff<T>(
   }
 }
 
-export const BigIntStringify = (str: any) =>
+export const BigIntStringify = (str: unknown) =>
   JSON.stringify(
     str,
-    (_, value) => (typeof value === 'bigint' ? BigInt(value) : value), // return everything else unchanged
+    (_, value): unknown => (typeof value === 'bigint' ? value.toString() : value), // return everything else unchanged
   );
 
-export const IsSetOfUniqueStrings = (arr: string[]) =>
-  new Set(arr).size === arr.length;
+export const IsSetOfUniqueStrings = (arr: string[]) => new Set(arr).size === arr.length;

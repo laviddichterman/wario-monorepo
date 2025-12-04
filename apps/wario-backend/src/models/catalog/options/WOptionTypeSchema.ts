@@ -2,11 +2,7 @@ import path from 'path';
 
 import mongoose, { Schema } from 'mongoose';
 
-import {
-  DISPLAY_AS,
-  type IOptionType,
-  MODIFIER_CLASS,
-} from '@wcp/wario-shared';
+import { DISPLAY_AS, type IOptionType, MODIFIER_CLASS } from '@wcp/wario-shared';
 
 import { KeyValueEntrySchema } from '../../settings/KeyValueSchema';
 

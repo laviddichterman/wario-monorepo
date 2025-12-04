@@ -42,105 +42,102 @@ export const WOrderLineDiscountSchema = new Schema<OrderLineDiscount>(
   },
 );
 
-export const WOrderLineDiscountCodeAmountSchema =
-  WOrderLineDiscountSchema.discriminator(
-    DiscountMethod.CreditCodeAmount,
-    new Schema<OrderLineDiscountCodeAmount>(
-      {
-        discount: {
-          type: {
-            amount: {
-              type: WMoney,
-              required: true,
-            },
-            balance: {
-              type: WMoney,
-              required: true,
-            },
-            code: {
-              type: String,
-              required: true,
-            },
-            lock: {
-              type: WEncryptStringLockSchema,
-              required: true,
-            },
+export const WOrderLineDiscountCodeAmountSchema = WOrderLineDiscountSchema.discriminator(
+  DiscountMethod.CreditCodeAmount,
+  new Schema<OrderLineDiscountCodeAmount>(
+    {
+      discount: {
+        type: {
+          amount: {
+            type: WMoney,
+            required: true,
           },
-          _id: false,
-          required: true,
+          balance: {
+            type: WMoney,
+            required: true,
+          },
+          code: {
+            type: String,
+            required: true,
+          },
+          lock: {
+            type: WEncryptStringLockSchema,
+            required: true,
+          },
         },
-      },
-      {
         _id: false,
-        discriminatorKey: 't',
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true },
+        required: true,
       },
-    ),
-  );
+    },
+    {
+      _id: false,
+      discriminatorKey: 't',
+      toJSON: { virtuals: true },
+      toObject: { virtuals: true },
+    },
+  ),
+);
 
-export const WOrderManualPercentDiscountSchema =
-  WOrderLineDiscountSchema.discriminator(
-    DiscountMethod.ManualPercentage,
-    new Schema<OrderManualPercentDiscount>(
-      {
-        discount: {
-          type: {
-            reason: {
-              type: String,
-              required: true,
-            },
-            percentage: {
-              type: Number,
-              required: true,
-            },
-            amount: {
-              type: WMoney,
-              required: true,
-            },
+export const WOrderManualPercentDiscountSchema = WOrderLineDiscountSchema.discriminator(
+  DiscountMethod.ManualPercentage,
+  new Schema<OrderManualPercentDiscount>(
+    {
+      discount: {
+        type: {
+          reason: {
+            type: String,
+            required: true,
           },
-          _id: false,
-          required: true,
+          percentage: {
+            type: Number,
+            required: true,
+          },
+          amount: {
+            type: WMoney,
+            required: true,
+          },
         },
-      },
-      {
         _id: false,
-        discriminatorKey: 't',
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true },
+        required: true,
       },
-    ),
-  );
+    },
+    {
+      _id: false,
+      discriminatorKey: 't',
+      toJSON: { virtuals: true },
+      toObject: { virtuals: true },
+    },
+  ),
+);
 
-export const WOrderManualAmountDiscountSchema =
-  WOrderLineDiscountSchema.discriminator(
-    DiscountMethod.ManualAmount,
-    new Schema<OrderManualAmountDiscount>(
-      {
-        discount: {
-          type: {
-            reason: {
-              type: String,
-              required: true,
-            },
-            balance: {
-              type: WMoney,
-              required: true,
-            },
-            amount: {
-              type: WMoney,
-              required: true,
-            },
+export const WOrderManualAmountDiscountSchema = WOrderLineDiscountSchema.discriminator(
+  DiscountMethod.ManualAmount,
+  new Schema<OrderManualAmountDiscount>(
+    {
+      discount: {
+        type: {
+          reason: {
+            type: String,
+            required: true,
           },
-          _id: false,
-          required: true,
+          balance: {
+            type: WMoney,
+            required: true,
+          },
+          amount: {
+            type: WMoney,
+            required: true,
+          },
         },
-      },
-      {
         _id: false,
-        discriminatorKey: 't',
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true },
+        required: true,
       },
-    ),
-  );
+    },
+    {
+      _id: false,
+      discriminatorKey: 't',
+      toJSON: { virtuals: true },
+      toObject: { virtuals: true },
+    },
+  ),
+);

@@ -2,12 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Namespace, Server, Socket } from 'socket.io';
 
-import {
-  FulfillmentConfig,
-  ICatalog,
-  IWSettings,
-  SeatingResource,
-} from '@wcp/wario-shared';
+import { FulfillmentConfig, ICatalog, IWSettings, SeatingResource } from '@wcp/wario-shared';
 
 @WebSocketGateway({ namespace: 'nsRO', cors: { origin: '*' } })
 @Injectable()
@@ -17,10 +12,7 @@ export class SocketIoService {
   @WebSocketServer()
   server: Server; // This will be the namespace 'nsRO'
 
-  EmitFulfillmentsTo(
-    dest: Socket | Namespace | Server,
-    fulfillments: Record<string, FulfillmentConfig>,
-  ) {
+  EmitFulfillmentsTo(dest: Socket | Namespace | Server, fulfillments: Record<string, FulfillmentConfig>) {
     return dest.emit('WCP_FULFILLMENTS', fulfillments);
   }
 
@@ -30,10 +22,7 @@ export class SocketIoService {
     }
   }
 
-  EmitSeatingResourcesTo(
-    dest: Socket | Namespace | Server,
-    seatingResources: Record<string, SeatingResource>,
-  ) {
+  EmitSeatingResourcesTo(dest: Socket | Namespace | Server, seatingResources: Record<string, SeatingResource>) {
     return dest.emit('WCP_SEATING_RESOURCES', seatingResources);
   }
 

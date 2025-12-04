@@ -1,12 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 
 import {
   FulfillmentConfig,
-  IKeyValueStore,
   IWSettings,
-  IWSettings as IWSettingsInterface,
   PostBlockedOffToFulfillmentsRequest,
   ReduceArrayToMapByKey,
   SeatingResource,
@@ -16,7 +13,7 @@ import {
 
 import { SeatingResourceModel } from '../../models/orders/WSeatingResource';
 import { FulfillmentModel } from '../../models/settings/FulfillmentSchema';
-import { KeyValueModel } from '../../models/settings/KeyValueSchema'; // Import types/interfaces if needed, but we inject models
+import { KeyValueModel } from '../../models/settings/KeyValueSchema';
 import { SettingsModel } from '../../models/settings/SettingsSchema';
 
 @Injectable()
@@ -29,12 +26,12 @@ export class DataProviderService implements OnModuleInit {
 
   constructor(
     @InjectModel('SettingsSchema')
-    private settingsModel: Model<IWSettingsInterface>,
-    @InjectModel('KeyValueSchema') private keyValueModel: Model<IKeyValueStore>,
+    private settingsModel: typeof SettingsModel,
+    @InjectModel('KeyValueSchema') private keyValueModel: typeof KeyValueModel,
     @InjectModel('FulfillmentSchema')
-    private fulfillmentModel: Model<FulfillmentConfig>,
+    private fulfillmentModel: typeof FulfillmentModel,
     @InjectModel('SeatingResource')
-    private seatingResourceModel: Model<SeatingResource>,
+    private seatingResourceModel: typeof SeatingResourceModel,
   ) {
     this.fulfillments = {};
     this.seatingResources = {};
@@ -46,40 +43,32 @@ export class DataProviderService implements OnModuleInit {
     await this.Bootstrap();
   }
 
-  private syncFulfillments = async () => {
+  public syncFulfillments = async () => {
     this.logger.debug(`Syncing Fulfillments.`);
     try {
       this.fulfillments = ReduceArrayToMapByKey(
         (await this.fulfillmentModel.find().exec()).map((x) => x.toObject()),
         'id',
       );
-    } catch (err) {
-      this.logger.error(
-        `Failed fetching fulfillments with error: ${JSON.stringify(err)}`,
-      );
+    } catch (err: unknown) {
+      this.logger.error(`Failed fetching fulfillments with error: ${JSON.stringify(err)}`);
     }
   };
 
-  private syncSeatingResources = async () => {
+  public syncSeatingResources = async () => {
     this.logger.debug(`Syncing Seating Resources.`);
     try {
       this.seatingResources = ReduceArrayToMapByKey(
-        (await this.seatingResourceModel.find().exec()).map((x) =>
-          x.toObject(),
-        ),
+        (await this.seatingResourceModel.find().exec()).map((x) => x.toObject()),
         'id',
       );
-    } catch (err) {
-      this.logger.error(
-        `Failed fetching seating resources with error: ${JSON.stringify(err)}`,
-      );
+    } catch (err: unknown) {
+      this.logger.error(`Failed fetching seating resources with error: ${JSON.stringify(err)}`);
     }
   };
 
   private Bootstrap = async () => {
-    this.logger.log(
-      'DataProvider: Loading from and bootstrapping to database.',
-    );
+    this.logger.log('DataProvider: Loading from and bootstrapping to database.');
 
     await this.syncFulfillments();
     await this.syncSeatingResources();
@@ -92,22 +81,14 @@ export class DataProviderService implements OnModuleInit {
       await keyvalueconfig_document.save();
       this.logger.log('Added default (empty) key value config area');
     } else {
-      this.logger.debug(
-        `Found KeyValueSchema in database: ${JSON.stringify(found_key_value_store)}`,
-      );
+      this.logger.debug(`Found KeyValueSchema in database: ${JSON.stringify(found_key_value_store)}`);
       for (const i in found_key_value_store.settings) {
-        if (
-          Object.hasOwn(
-            this.keyvalueconfig,
-            found_key_value_store.settings[i].key,
-          )
-        ) {
+        if (Object.hasOwn(this.keyvalueconfig, found_key_value_store.settings[i].key)) {
           this.logger.error(
             `Clobbering key: ${found_key_value_store.settings[i].key} containing ${this.keyvalueconfig[found_key_value_store.settings[i].key]}`,
           );
         }
-        this.keyvalueconfig[found_key_value_store.settings[i].key] =
-          found_key_value_store.settings[i].value;
+        this.keyvalueconfig[found_key_value_store.settings[i].key] = found_key_value_store.settings[i].value;
       }
     }
 
@@ -147,15 +128,13 @@ export class DataProviderService implements OnModuleInit {
         await db_settings.save();
         this.logger.debug(`Saved settings ${JSON.stringify(db_settings)}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.error(`Error saving settings ${JSON.stringify(err)}`);
       throw err;
     }
   };
 
-  postBlockedOffToFulfillments = async (
-    request: PostBlockedOffToFulfillmentsRequest,
-  ) => {
+  postBlockedOffToFulfillments = async (request: PostBlockedOffToFulfillmentsRequest) => {
     return await Promise.all(
       request.fulfillmentIds.map(async (fId) => {
         const newBlockedOff = WDateUtils.AddIntervalToDate(
@@ -170,9 +149,7 @@ export class DataProviderService implements OnModuleInit {
     );
   };
 
-  deleteBlockedOffFromFulfillments = async (
-    request: PostBlockedOffToFulfillmentsRequest,
-  ) => {
+  deleteBlockedOffFromFulfillments = async (request: PostBlockedOffToFulfillmentsRequest) => {
     return await Promise.all(
       request.fulfillmentIds.map(async (fId) => {
         const newBlockedOff = WDateUtils.SubtractIntervalFromDate(
@@ -207,19 +184,14 @@ export class DataProviderService implements OnModuleInit {
         this.fulfillments[x.id] = x;
         return x;
       })
-      .catch((err) => {
-        this.logger.error(
-          `Error saving new fulfillment: ${JSON.stringify(err)}`,
-        );
+      .catch((err: unknown) => {
+        this.logger.error(`Error saving new fulfillment: ${JSON.stringify(err)}`);
         throw err;
       });
     return savePromise;
   };
 
-  updateFulfillment = async (
-    id: string,
-    fulfillment: Partial<Omit<FulfillmentConfig, 'id'>>,
-  ) => {
+  updateFulfillment = async (id: string, fulfillment: Partial<Omit<FulfillmentConfig, 'id'>>) => {
     return this.fulfillmentModel
       .findByIdAndUpdate(id, fulfillment, { new: true })
       .then((doc) => {
@@ -227,7 +199,7 @@ export class DataProviderService implements OnModuleInit {
         this.fulfillments[id] = doc!;
         return doc;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         this.logger.error(`Error updating fulfillment: ${JSON.stringify(err)}`);
         throw err;
       });
@@ -242,7 +214,7 @@ export class DataProviderService implements OnModuleInit {
         delete this.fulfillments[id];
         return doc;
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         this.logger.error(`Error deleting fulfillment: ${JSON.stringify(err)}`);
         throw err;
       });
@@ -257,32 +229,23 @@ export class DataProviderService implements OnModuleInit {
         this.seatingResources[x.id] = x;
         return x;
       })
-      .catch((err) => {
-        this.logger.error(
-          `Error saving new seating resource: ${JSON.stringify(err)}`,
-        );
+      .catch((err: unknown) => {
+        this.logger.error(`Error saving new seating resource: ${JSON.stringify(err)}`);
         throw err;
       });
     return savePromise;
   };
 
-  updateSeatingResource = async (
-    id: string,
-    seatingResource: Partial<Omit<SeatingResource, 'id'>>,
-  ) => {
+  updateSeatingResource = async (id: string, seatingResource: Partial<Omit<SeatingResource, 'id'>>) => {
     return this.seatingResourceModel
       .findByIdAndUpdate(id, seatingResource, { new: true })
       .then((doc) => {
-        this.logger.debug(
-          `Updated Seating Resource[${id}]: ${JSON.stringify(doc)}`,
-        );
+        this.logger.debug(`Updated Seating Resource[${id}]: ${JSON.stringify(doc)}`);
         this.seatingResources[id] = doc!;
         return doc;
       })
-      .catch((err) => {
-        this.logger.error(
-          `Error updating Seating Resource: ${JSON.stringify(err)}`,
-        );
+      .catch((err: unknown) => {
+        this.logger.error(`Error updating Seating Resource: ${JSON.stringify(err)}`);
         throw err;
       });
   };
@@ -292,16 +255,12 @@ export class DataProviderService implements OnModuleInit {
     return this.seatingResourceModel
       .findByIdAndDelete(id)
       .then((doc) => {
-        this.logger.debug(
-          `Deleted seating resource[${id}]: ${JSON.stringify(doc)}`,
-        );
+        this.logger.debug(`Deleted seating resource[${id}]: ${JSON.stringify(doc)}`);
         delete this.seatingResources[id];
         return doc;
       })
-      .catch((err) => {
-        this.logger.error(
-          `Error deleting seating resource: ${JSON.stringify(err)}`,
-        );
+      .catch((err: unknown) => {
+        this.logger.error(`Error deleting seating resource: ${JSON.stringify(err)}`);
         throw err;
       });
   };
@@ -317,11 +276,9 @@ export class DataProviderService implements OnModuleInit {
         }
         db_key_values.settings = settings_list;
         await db_key_values.save();
-        this.logger.debug(
-          `Saved key/value config ${JSON.stringify(db_key_values)}`,
-        );
+        this.logger.debug(`Saved key/value config ${JSON.stringify(db_key_values)}`);
       }
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.error(`Error saving key/value config ${JSON.stringify(err)}`);
       throw err;
     }

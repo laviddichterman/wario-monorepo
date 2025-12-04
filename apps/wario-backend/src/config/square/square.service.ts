@@ -18,8 +18,10 @@ import {
   CreateOrderRequest,
   CreateOrderResponse,
   CreatePaymentRequest,
+  CreatePaymentResponse,
   Environment,
   ListCatalogResponse,
+  Money,
   Order,
   Payment,
   PaymentRefund,
@@ -34,7 +36,7 @@ import {
   SearchOrdersQuery,
   SearchOrdersRequest,
   SearchOrdersResponse,
-  Error as SquareError,
+  type Error as SquareError,
   UpdateOrderRequest,
   UpdateOrderResponse,
   UpsertCatalogObjectRequest,
@@ -42,24 +44,13 @@ import {
 } from 'square';
 import { ApiResponse, RetryConfiguration } from 'square/dist/types/core';
 
-import {
-  CURRENCY,
-  IMoney,
-  OrderPaymentAllocated,
-  PaymentMethod,
-  StoreCreditPayment,
-} from '@wcp/wario-shared';
+export { SquareError };
 
-import {
-  ExponentialBackoffWaitFunction,
-  IS_PRODUCTION,
-} from '../../utils/utils';
+import { CURRENCY, IMoney, OrderPaymentAllocated, PaymentMethod, StoreCreditPayment, StoreCreditPaymentData } from '@wcp/wario-shared';
+
+import { ExponentialBackoffWaitFunction, IS_PRODUCTION } from '../../utils/utils';
 import { DataProviderService } from '../data-provider/data-provider.service';
-import {
-  BigIntMoneyToIntMoney,
-  IMoneyToBigIntMoney,
-  MapPaymentStatus,
-} from '../square-wario-bridge';
+import { BigIntMoneyToIntMoney, IMoneyToBigIntMoney, MapPaymentStatus } from '../square-wario-bridge';
 
 export const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
   ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
@@ -110,17 +101,7 @@ const SQUARE_RETRY_CONFIG: RetryConfiguration = {
   maximumRetryWaitTime: 0,
   backoffFactor: 3,
   httpStatusCodesToRetry: [408, 413, 429, 500, 502, 503, 504, 521, 522, 524],
-  httpMethodsToRetry: [
-    'GET',
-    'DELETE',
-    'HEAD',
-    'OPTIONS',
-    'POST',
-    'PUT',
-    'PATCH',
-    'LINK',
-    'UNLINK',
-  ],
+  httpMethodsToRetry: ['GET', 'DELETE', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'LINK', 'UNLINK'],
 };
 
 interface SquareResponseBase {
@@ -134,14 +115,9 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
 ): Promise<SquareProviderApiCallReturnValue<T>> => {
   try {
     const result = await apiRequestMaker();
-    if (
-      SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(result.statusCode)
-    ) {
+    if (SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(result.statusCode)) {
       if (retry < SQUARE_RETRY_CONFIG.maxNumberOfRetries) {
-        await ExponentialBackoffWaitFunction(
-          retry,
-          SQUARE_RETRY_CONFIG.maxNumberOfRetries,
-        );
+        await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries);
         return await SquareCallFxnWrapper(apiRequestMaker, retry + 1, logger);
       }
     }
@@ -158,14 +134,9 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
     return { success: true, result: result.result, error: [] };
   } catch (error) {
     try {
-      if (
-        SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(error.statusCode)
-      ) {
+      if (SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(error.statusCode)) {
         if (retry < SQUARE_RETRY_CONFIG.maxNumberOfRetries) {
-          await ExponentialBackoffWaitFunction(
-            retry,
-            SQUARE_RETRY_CONFIG.maxNumberOfRetries,
-          );
+          await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries);
           return await SquareCallFxnWrapper(apiRequestMaker, retry + 1, logger);
         }
       }
@@ -222,18 +193,14 @@ export class SquareService implements OnModuleInit {
     this.logger.log('Starting Bootstrap of SquareService');
     if (this.dataProvider.KeyValueConfig.SQUARE_TOKEN) {
       this.client = new Client({
-        environment: IS_PRODUCTION
-          ? Environment.Production
-          : Environment.Sandbox,
+        environment: IS_PRODUCTION ? Environment.Production : Environment.Sandbox,
         accessToken: this.dataProvider.KeyValueConfig.SQUARE_TOKEN,
         httpClientOptions: {
           retryConfig: SQUARE_RETRY_CONFIG,
         },
       });
     } else {
-      this.logger.error(
-        "Can't Bootstrap SQUARE Provider, failed creating client",
-      );
+      this.logger.error("Can't Bootstrap SQUARE Provider, failed creating client");
       return;
     }
     const catalogInfoLimitsResponse = await this.GetCatalogInfo();
@@ -243,9 +210,7 @@ export class SquareService implements OnModuleInit {
         ...catalogInfoLimitsResponse.result,
       };
     } else {
-      this.logger.error(
-        "Can't Bootstrap SQUARE Provider, failed querying catalog limits",
-      );
+      this.logger.error("Can't Bootstrap SQUARE Provider, failed querying catalog limits");
       return;
     }
 
@@ -294,18 +259,12 @@ export class SquareService implements OnModuleInit {
       }
       foundItems.push(
         ...(response.result.objects ?? [])
-          .filter((x) =>
-            x.presentAtLocationIds?.includes(
-              this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
-            ),
-          )
+          .filter((x) => x.presentAtLocationIds?.includes(this.dataProvider.KeyValueConfig.SQUARE_LOCATION))
           .map((x) => x.id),
       );
       cursor = response.result.cursor ?? undefined;
     } while (cursor);
-    this.logger.log(
-      `Deleting the following object Modifier List IDs: ${foundItems.join(', ')}`,
-    );
+    this.logger.log(`Deleting the following object Modifier List IDs: ${foundItems.join(', ')}`);
     await this.BatchDeleteCatalogObjects(foundItems);
   }
 
@@ -321,15 +280,11 @@ export class SquareService implements OnModuleInit {
       foundItems.push(...(response.result.objects ?? []).map((x) => x.id));
       cursor = response.result.cursor ?? undefined;
     } while (cursor);
-    this.logger.log(
-      `Deleting the following Category object IDs: ${foundItems.join(', ')}`,
-    );
+    this.logger.log(`Deleting the following Category object IDs: ${foundItems.join(', ')}`);
     await this.BatchDeleteCatalogObjects(foundItems);
   }
 
-  async GetCatalogInfo(): Promise<
-    SquareProviderApiCallReturnValue<CatalogInfoResponseLimits>
-  > {
+  async GetCatalogInfo(): Promise<SquareProviderApiCallReturnValue<CatalogInfoResponseLimits>> {
     const api = this.client.catalogApi;
     const call_fxn = async (): Promise<ApiResponse<CatalogInfoResponse>> => {
       this.logger.log('sending Catalog Info request to Square API');
@@ -346,9 +301,7 @@ export class SquareService implements OnModuleInit {
     };
   }
 
-  async CreateOrder(
-    order: Order,
-  ): Promise<SquareProviderApiCallReturnValue<CreateOrderResponse>> {
+  async CreateOrder(order: Order): Promise<SquareProviderApiCallReturnValue<CreateOrderResponse>> {
     // TODO: use idempotency key from order instead
     const idempotency_key = crypto.randomBytes(22).toString('hex');
     const orders_api = this.client.ordersApi;
@@ -383,27 +336,14 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<UpdateOrderResponse>> => {
-      this.logger.log(
-        `sending order update request for order ${orderId}: ${JSON.stringify(request_body)}`,
-      );
+      this.logger.log(`sending order update request for order ${orderId}: ${JSON.stringify(request_body)}`);
       return await orders_api.updateOrder(orderId, request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
   }
 
-  async OrderStateChange(
-    locationId: string,
-    orderId: string,
-    version: number,
-    new_state: string,
-  ) {
-    return this.OrderUpdate(
-      locationId,
-      orderId,
-      version,
-      { state: new_state },
-      [],
-    );
+  async OrderStateChange(locationId: string, orderId: string, version: number, new_state: string) {
+    return this.OrderUpdate(locationId, orderId, version, { state: new_state }, []);
   }
 
   async RetrieveOrder(squareOrderId: string) {
@@ -417,9 +357,7 @@ export class SquareService implements OnModuleInit {
 
   async BatchRetrieveOrders(locationId: string, orderIds: string[]) {
     const orders_api = this.client.ordersApi;
-    const callFxn = async (): Promise<
-      ApiResponse<BatchRetrieveOrdersResponse>
-    > => {
+    const callFxn = async (): Promise<ApiResponse<BatchRetrieveOrdersResponse>> => {
       this.logger.debug(`Getting Square Orders: ${orderIds.join(', ')}`);
       return await orders_api.batchRetrieveOrders({ orderIds, locationId });
     };
@@ -436,9 +374,7 @@ export class SquareService implements OnModuleInit {
       locationIds,
     };
     const callFxn = async (): Promise<ApiResponse<SearchOrdersResponse>> => {
-      this.logger.debug(
-        `Searching Square Orders with: ${JSON.stringify(request_body)}`,
-      );
+      this.logger.debug(`Searching Square Orders with: ${JSON.stringify(request_body)}`);
       return await orders_api.searchOrders(request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -454,9 +390,7 @@ export class SquareService implements OnModuleInit {
     tipAmount,
     verificationToken,
     autocomplete,
-  }: SquareProviderCreatePaymentRequest): Promise<
-    SquareProviderApiCallReturnValue<OrderPaymentAllocated>
-  > {
+  }: SquareProviderCreatePaymentRequest): Promise<SquareProviderApiCallReturnValue<OrderPaymentAllocated>> {
     const idempotency_key = crypto.randomBytes(22).toString('hex');
     const payments_api = this.client.paymentsApi;
     const tipMoney = tipAmount ?? { currency: CURRENCY.USD, amount: 0 };
@@ -464,27 +398,25 @@ export class SquareService implements OnModuleInit {
       sourceId: storeCreditPayment ? 'EXTERNAL' : sourceId,
       externalDetails: storeCreditPayment
         ? {
-            type: 'STORED_BALANCE',
-            source: 'WARIO',
-            sourceId: storeCreditPayment.payment.code,
-          }
+          type: 'STORED_BALANCE',
+          source: 'WARIO',
+          sourceId: storeCreditPayment.payment.code,
+        }
         : undefined,
       ...(sourceId === 'CASH'
         ? {
-            cashDetails: {
-              buyerSuppliedMoney: IMoneyToBigIntMoney(amount),
-              changeBackMoney: { amount: 0n, currency: amount.currency },
-            },
-          }
+          cashDetails: {
+            buyerSuppliedMoney: IMoneyToBigIntMoney(amount),
+            changeBackMoney: { amount: 0n, currency: amount.currency },
+          },
+        }
         : {}),
       amountMoney: IMoneyToBigIntMoney({
         currency: amount.currency,
         amount: amount.amount - tipMoney.amount,
       }),
       tipMoney: IMoneyToBigIntMoney(tipMoney),
-      referenceId: storeCreditPayment
-        ? storeCreditPayment.payment.code
-        : referenceId,
+      referenceId: storeCreditPayment ? storeCreditPayment.payment.code : referenceId,
       orderId: squareOrderId,
       locationId,
       autocomplete,
@@ -493,81 +425,60 @@ export class SquareService implements OnModuleInit {
       idempotencyKey: idempotency_key,
     };
 
-    const callFxn = async (): Promise<ApiResponse<any>> => {
-      this.logger.log(
-        `sending payment request: ${JSON.stringify(request_body)}`,
-      );
+    const callFxn = async (): Promise<ApiResponse<CreatePaymentResponse>> => {
+      this.logger.log(`sending payment request: ${JSON.stringify(request_body)}`);
       return await payments_api.createPayment(request_body);
     };
     const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
-    if (
-      response.success &&
-      response.result.payment &&
-      response.result.payment.status
-    ) {
+    if (response.success && response.result.payment && response.result.payment.status) {
       const paymentStatus = MapPaymentStatus(response.result.payment.status);
-      const createdAt = parseISO(response.result.payment.createdAt).valueOf();
-      const processorId = response.result.payment.id!;
+      const createdAt = parseISO(response.result.payment.createdAt as string).valueOf();
+      const processorId = response.result.payment.id as string;
       return {
         success: true,
         result: storeCreditPayment
           ? {
-              ...storeCreditPayment,
-              status: paymentStatus,
-              processorId,
-              payment: {
-                ...storeCreditPayment.payment,
-              },
-            }
+            ...storeCreditPayment,
+            status: paymentStatus,
+            processorId,
+            payment: {
+              ...(storeCreditPayment.payment as StoreCreditPaymentData),
+            },
+          }
           : response.result.payment.sourceType === 'CASH'
             ? {
-                t: PaymentMethod.Cash,
-                createdAt,
-                processorId,
-                amount: BigIntMoneyToIntMoney(
-                  response.result.payment.totalMoney,
-                ),
-                tipAmount: tipMoney,
-                status: paymentStatus,
-                payment: {
-                  amountTendered: BigIntMoneyToIntMoney(
-                    response.result.payment.cashDetails!.buyerSuppliedMoney,
-                  ),
-                  change: response.result.payment.cashDetails!.changeBackMoney
-                    ? BigIntMoneyToIntMoney(
-                        response.result.payment.cashDetails!.changeBackMoney,
-                      )
-                    : { currency: amount.currency, amount: 0 },
-                },
-              }
-            : {
-                t: PaymentMethod.CreditCard,
-                createdAt,
-                processorId,
-                amount: BigIntMoneyToIntMoney(
-                  response.result.payment!.totalMoney,
-                ),
-                tipAmount: tipMoney,
-                status: paymentStatus,
-                payment: {
-                  processor: 'SQUARE',
-                  billingZip:
-                    response.result.payment.billingAddress?.postalCode ??
-                    undefined,
-                  cardBrand:
-                    response.result.payment.cardDetails?.card?.cardBrand ??
-                    undefined,
-                  expYear:
-                    response.result.payment.cardDetails?.card?.expYear?.toString(),
-                  last4: response.result.payment.cardDetails?.card?.last4 ?? '',
-                  receiptUrl:
-                    response.result.payment.receiptUrl ??
-                    `https://squareup.com/receipt/preview/${response.result.payment.id}`,
-                  cardholderName:
-                    response.result.payment.cardDetails?.card?.cardholderName ??
-                    undefined,
-                },
+              t: PaymentMethod.Cash,
+              createdAt,
+              processorId,
+              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
+              tipAmount: tipMoney,
+              status: paymentStatus,
+              payment: {
+                amountTendered: BigIntMoneyToIntMoney(response.result.payment.cashDetails!.buyerSuppliedMoney),
+                change: response.result.payment.cashDetails!.changeBackMoney
+                  ? BigIntMoneyToIntMoney(response.result.payment.cashDetails!.changeBackMoney)
+                  : { currency: amount.currency, amount: 0 },
               },
+            }
+            : {
+              t: PaymentMethod.CreditCard,
+              createdAt,
+              processorId,
+              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney),
+              tipAmount: tipMoney,
+              status: paymentStatus,
+              payment: {
+                processor: 'SQUARE',
+                billingZip: response.result.payment.billingAddress?.postalCode ?? undefined,
+                cardBrand: response.result.payment.cardDetails?.card?.cardBrand ?? undefined,
+                expYear: response.result.payment.cardDetails?.card?.expYear?.toString(),
+                last4: response.result.payment.cardDetails?.card?.last4 ?? '',
+                receiptUrl:
+                  response.result.payment.receiptUrl ??
+                  `https://squareup.com/receipt/preview/${response.result.payment.id}`,
+                cardholderName: response.result.payment.cardDetails?.card?.cardholderName ?? undefined,
+              },
+            },
         error: [],
       };
     }
@@ -609,9 +520,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<PayOrderResponse>> => {
-      this.logger.log(
-        `sending order payment request ${square_order_id}: ${JSON.stringify(request_body)}`,
-      );
+      this.logger.log(`sending order payment request ${square_order_id}: ${JSON.stringify(request_body)}`);
       return await orders_api.payOrder(square_order_id, request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -632,9 +541,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<any>> => {
-      this.logger.log(
-        `sending payment REFUND request: ${JSON.stringify(request_body)}`,
-      );
+      this.logger.log(`sending payment REFUND request: ${JSON.stringify(request_body)}`);
       return await refundsApi.refundPayment(request_body);
     };
     const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -657,20 +564,14 @@ export class SquareService implements OnModuleInit {
     };
   }
 
-  async CancelPayment(
-    squarePaymentId: string,
-  ): Promise<SquareProviderApiCallReturnValue<Payment>> {
+  async CancelPayment(squarePaymentId: string): Promise<SquareProviderApiCallReturnValue<Payment>> {
     const paymentsApi = this.client.paymentsApi;
     const callFxn = async (): Promise<ApiResponse<any>> => {
       this.logger.log(`sending payment CANCEL request for: ${squarePaymentId}`);
       return await paymentsApi.cancelPayment(squarePaymentId);
     };
     const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
-    if (
-      response.success &&
-      response.result.payment &&
-      response.result.payment.status === 'CANCELED'
-    ) {
+    if (response.success && response.result.payment && response.result.payment.status === 'CANCELED') {
       return {
         success: true,
         result: response.result.payment,
@@ -692,44 +593,28 @@ export class SquareService implements OnModuleInit {
       object,
     };
 
-    const callFxn = async (): Promise<
-      ApiResponse<UpsertCatalogObjectResponse>
-    > => {
-      this.logger.log(
-        `sending catalog upsert: ${JSON.stringify(request_body)}`,
-      );
+    const callFxn = async (): Promise<ApiResponse<UpsertCatalogObjectResponse>> => {
+      this.logger.log(`sending catalog upsert: ${JSON.stringify(request_body)}`);
       return await catalogApi.upsertCatalogObject(request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
   }
 
-  async SearchCatalogItems(
-    searchRequest: Omit<SearchCatalogItemsRequest, 'limit'>,
-  ) {
+  async SearchCatalogItems(searchRequest: Omit<SearchCatalogItemsRequest, 'limit'>) {
     const catalogApi = this.client.catalogApi;
 
-    const callFxn = async (): Promise<
-      ApiResponse<SearchCatalogItemsResponse>
-    > => {
-      this.logger.log(
-        `sending catalog item search: ${JSON.stringify(searchRequest)}`,
-      );
+    const callFxn = async (): Promise<ApiResponse<SearchCatalogItemsResponse>> => {
+      this.logger.log(`sending catalog item search: ${JSON.stringify(searchRequest)}`);
       return await catalogApi.searchCatalogItems(searchRequest);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
   }
 
-  async SearchCatalogObjects(
-    searchRequest: Omit<SearchCatalogObjectsRequest, 'limit'>,
-  ) {
+  async SearchCatalogObjects(searchRequest: Omit<SearchCatalogObjectsRequest, 'limit'>) {
     const catalogApi = this.client.catalogApi;
 
-    const callFxn = async (): Promise<
-      ApiResponse<SearchCatalogObjectsResponse>
-    > => {
-      this.logger.log(
-        `sending catalog search: ${JSON.stringify(searchRequest)}`,
-      );
+    const callFxn = async (): Promise<ApiResponse<SearchCatalogObjectsResponse>> => {
+      this.logger.log(`sending catalog search: ${JSON.stringify(searchRequest)}`);
       return await catalogApi.searchCatalogObjects(searchRequest);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -739,9 +624,7 @@ export class SquareService implements OnModuleInit {
     const catalogApi = this.client.catalogApi;
 
     const callFxn = async (): Promise<ApiResponse<ListCatalogResponse>> => {
-      this.logger.log(
-        `sending catalog list request for types: ${types.join(', ')} with cursor: ${cursor}`,
-      );
+      this.logger.log(`sending catalog list request for types: ${types.join(', ')} with cursor: ${cursor}`);
       return await catalogApi.listCatalog(cursor, types.join(', '));
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -749,20 +632,14 @@ export class SquareService implements OnModuleInit {
 
   async BatchUpsertCatalogObjects(
     objectBatches: CatalogObjectBatch[],
-  ): Promise<
-    SquareProviderApiCallReturnValue<BatchUpsertCatalogObjectsResponse>
-  > {
+  ): Promise<SquareProviderApiCallReturnValue<BatchUpsertCatalogObjectsResponse>> {
     const catalogApi = this.client.catalogApi;
 
     let remainingObjects = objectBatches.slice();
-    const responses: SquareProviderApiCallReturnSuccess<BatchUpsertCatalogObjectsResponse>[] =
-      [];
+    const responses: SquareProviderApiCallReturnSuccess<BatchUpsertCatalogObjectsResponse>[] = [];
     do {
       const leftovers = remainingObjects.splice(
-        Math.floor(
-          this.catalogLimits.batchUpsertMaxTotalObjects! /
-            SQUARE_BATCH_CHUNK_SIZE,
-        ),
+        Math.floor(this.catalogLimits.batchUpsertMaxTotalObjects! / SQUARE_BATCH_CHUNK_SIZE),
       );
       const idempotency_key = crypto.randomBytes(22).toString('hex');
       const request_body: BatchUpsertCatalogObjectsRequest = {
@@ -770,12 +647,8 @@ export class SquareService implements OnModuleInit {
         batches: remainingObjects,
       };
 
-      const callFxn = async (): Promise<
-        ApiResponse<BatchUpsertCatalogObjectsResponse>
-      > => {
-        this.logger.log(
-          `sending catalog upsert batch: ${JSON.stringify(request_body)}`,
-        );
+      const callFxn = async (): Promise<ApiResponse<BatchUpsertCatalogObjectsResponse>> => {
+        this.logger.log(`sending catalog upsert batch: ${JSON.stringify(request_body)}`);
         return await catalogApi.batchUpsertCatalogObjects(request_body);
       };
       const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -799,27 +672,18 @@ export class SquareService implements OnModuleInit {
 
   async BatchDeleteCatalogObjects(
     objectIds: string[],
-  ): Promise<
-    SquareProviderApiCallReturnValue<BatchDeleteCatalogObjectsResponse>
-  > {
+  ): Promise<SquareProviderApiCallReturnValue<BatchDeleteCatalogObjectsResponse>> {
     const catalogApi = this.client.catalogApi;
     let remainingObjects = objectIds.slice();
-    const responses: SquareProviderApiCallReturnSuccess<BatchDeleteCatalogObjectsResponse>[] =
-      [];
+    const responses: SquareProviderApiCallReturnSuccess<BatchDeleteCatalogObjectsResponse>[] = [];
     do {
-      const leftovers = remainingObjects.splice(
-        this.catalogLimits.batchDeleteMaxObjectIds!,
-      );
+      const leftovers = remainingObjects.splice(this.catalogLimits.batchDeleteMaxObjectIds!);
       const request_body: BatchDeleteCatalogObjectsRequest = {
         objectIds: remainingObjects,
       };
 
-      const callFxn = async (): Promise<
-        ApiResponse<BatchDeleteCatalogObjectsResponse>
-      > => {
-        this.logger.log(
-          `sending catalog delete batch: ${JSON.stringify(request_body)}`,
-        );
+      const callFxn = async (): Promise<ApiResponse<BatchDeleteCatalogObjectsResponse>> => {
+        this.logger.log(`sending catalog delete batch: ${JSON.stringify(request_body)}`);
         return await catalogApi.batchDeleteCatalogObjects(request_body);
       };
       const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -834,9 +698,7 @@ export class SquareService implements OnModuleInit {
       error: responses.flatMap((x) => x.error),
       result: {
         deletedAt: responses[0].result.deletedAt,
-        deletedObjectIds: responses.flatMap(
-          (x) => x.result.deletedObjectIds ?? [],
-        ),
+        deletedObjectIds: responses.flatMap((x) => x.result.deletedObjectIds ?? []),
         errors: responses.flatMap((x) => x.result.errors ?? []),
       },
       success: true,
@@ -846,30 +708,21 @@ export class SquareService implements OnModuleInit {
   async BatchRetrieveCatalogObjects(
     objectIds: string[],
     includeRelated: boolean,
-  ): Promise<
-    SquareProviderApiCallReturnValue<BatchRetrieveCatalogObjectsResponse>
-  > {
+  ): Promise<SquareProviderApiCallReturnValue<BatchRetrieveCatalogObjectsResponse>> {
     const catalogApi = this.client.catalogApi;
 
     let remainingObjects = objectIds.slice();
-    const responses: SquareProviderApiCallReturnSuccess<BatchRetrieveCatalogObjectsResponse>[] =
-      [];
+    const responses: SquareProviderApiCallReturnSuccess<BatchRetrieveCatalogObjectsResponse>[] = [];
 
     do {
-      const leftovers = remainingObjects.splice(
-        this.catalogLimits.batchRetrieveMaxObjectIds!,
-      );
+      const leftovers = remainingObjects.splice(this.catalogLimits.batchRetrieveMaxObjectIds!);
       const request_body: BatchRetrieveCatalogObjectsRequest = {
         objectIds: remainingObjects,
         includeRelatedObjects: includeRelated,
       };
 
-      const callFxn = async (): Promise<
-        ApiResponse<BatchRetrieveCatalogObjectsResponse>
-      > => {
-        this.logger.log(
-          `sending catalog retrieve batch: ${JSON.stringify(request_body)}`,
-        );
+      const callFxn = async (): Promise<ApiResponse<BatchRetrieveCatalogObjectsResponse>> => {
+        this.logger.log(`sending catalog retrieve batch: ${JSON.stringify(request_body)}`);
         return await catalogApi.batchRetrieveCatalogObjects(request_body);
       };
       const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);

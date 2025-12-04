@@ -2,12 +2,10 @@ import path from 'path';
 
 import mongoose, { Schema } from 'mongoose';
 
-import {
-  type OrderTax,
-  type TipSelection,
-  type WOrderInstance,
-  WOrderStatus,
-} from '@wcp/wario-shared';
+import { type OrderTax, type TipSelection, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+
+export { WOrderInstance };
+export type WOrderInstanceDocument = WOrderInstance & mongoose.Document;
 
 import { WMoney } from '../../models/WMoney';
 import { WOrderLineDiscountSchema } from '../payment/WOrderLineDiscount';

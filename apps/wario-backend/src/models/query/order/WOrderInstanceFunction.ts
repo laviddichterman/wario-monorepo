@@ -16,8 +16,7 @@ export const OrderInstanceFunctionSchema = new Schema<MT>(
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );
 
-export const WOrderInstanceFunctionModel =
-  mongoose.model<OrderInstanceFunction>(
-    path.basename(__filename).replace(path.extname(__filename), ''),
-    OrderInstanceFunctionSchema,
-  );
+export const WOrderInstanceFunctionModel = mongoose.model<OrderInstanceFunction>(
+  path.basename(__filename).replace(path.extname(__filename), ''),
+  OrderInstanceFunctionSchema,
+);

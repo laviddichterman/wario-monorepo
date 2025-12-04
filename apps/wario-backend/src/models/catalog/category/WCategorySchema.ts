@@ -2,11 +2,7 @@ import path from 'path';
 
 import mongoose, { Schema } from 'mongoose';
 
-import {
-  CALL_LINE_DISPLAY,
-  CategoryDisplay,
-  type ICategory,
-} from '@wcp/wario-shared';
+import { CALL_LINE_DISPLAY, CategoryDisplay, type ICategory } from '@wcp/wario-shared';
 
 type MT = Omit<ICategory, 'id'>;
 export const WCategorySchema = new Schema<MT>(

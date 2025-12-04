@@ -1,24 +1,20 @@
-import {
-  forwardRef,
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleInit,
-} from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { parseISO } from 'date-fns';
 import { Connection, Model, Schema } from 'mongoose';
 
 import { SEMVER, WDateUtils } from '@wcp/wario-shared';
-import { IOption, IOptionType, IProduct } from '@wcp/wario-shared';
+import { IOptionType } from '@wcp/wario-shared';
 
 // We need to import package.json. In NestJS build, it might not be in the same relative path.
 // For now, let's assume we can require it or use a const.
-import PACKAGE_JSON from '../../../../package.json';
-import { DBVersion } from '../../models/DBVersionSchema';
-import { WOrderInstance } from '../../models/orders/WOrderInstance';
+import PACKAGE_JSON from '../../../package.json';
+import { WOptionModel } from '../../models/catalog/options/WOptionSchema';
+import { WProductModel } from '../../models/catalog/products/WProductSchema';
+import DBVersion from '../../models/DBVersionSchema';
+import { WOrderInstanceModel } from '../../models/orders/WOrderInstance';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
-import { WARIO_SQUARE_ID_METADATA_KEY } from '../square-wario-bridge'; // We'll need to create this or import from where it ends up
+import { WARIO_SQUARE_ID_METADATA_KEY } from '../square-wario-bridge';
 import { SquareService } from '../square/square.service';
 
 interface IMigrationFunctionObject {
@@ -30,10 +26,11 @@ export class DatabaseManagerService implements OnModuleInit {
   private readonly logger = new Logger(DatabaseManagerService.name);
 
   constructor(
-    @InjectModel('DBVersionSchema') private dbVersionModel: Model<DBVersion>,
-    @InjectModel('WOrderInstance') private orderModel: Model<WOrderInstance>,
-    @InjectModel('WProductSchema') private productModel: Model<IProduct>,
-    @InjectModel('WOptionSchema') private optionModel: Model<IOption>,
+    @InjectModel('DBVersionSchema') private dbVersionModel: typeof DBVersion,
+    @InjectModel('WOrderInstance')
+    private orderModel: typeof WOrderInstanceModel,
+    @InjectModel('WProductSchema') private productModel: typeof WProductModel,
+    @InjectModel('WOptionSchema') private optionModel: typeof WOptionModel,
     @InjectModel('WOptionTypeSchema')
     private optionTypeModel: Model<IOptionType>,
     @Inject(forwardRef(() => CatalogProviderService))
@@ -48,7 +45,7 @@ export class DatabaseManagerService implements OnModuleInit {
   }
 
   private SetVersion = async (new_version: SEMVER) => {
-    return await this.dbVersionModel.findOneAndUpdate({}, new_version, {
+    return this.dbVersionModel.findOneAndUpdate({}, new_version, {
       new: true,
       upsert: true,
     });
@@ -63,18 +60,12 @@ export class DatabaseManagerService implements OnModuleInit {
         await Promise.all(
           allOrders.map(async (o) => {
             // @ts-ignore
-            const newTime = WDateUtils.formatISODate(
-              parseISO(o.fulfillment.selectedDate),
-            );
+            const newTime = WDateUtils.formatISODate(parseISO(o.fulfillment.selectedDate));
             // @ts-ignore
-            this.logger.log(
-              `Converting ${o.fulfillment.selectedDate} to ${newTime}`,
-            );
+            this.logger.log(`Converting ${o.fulfillment.selectedDate} to ${newTime}`);
             // @ts-ignore
-            return await this.orderModel.findByIdAndUpdate(o.id, {
-              'fulfillment.selectedDate': WDateUtils.formatISODate(
-                parseISO(o.fulfillment.selectedDate),
-              ),
+            return this.orderModel.findByIdAndUpdate(o.id, {
+              'fulfillment.selectedDate': WDateUtils.formatISODate(parseISO(o.fulfillment.selectedDate)),
             });
           }),
         );
@@ -113,9 +104,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           },
         );
-        this.logger.log(
-          `Updated modifier types: ${JSON.stringify(allModifierTypeUpdate)}`,
-        );
+        this.logger.log(`Updated modifier types: ${JSON.stringify(allModifierTypeUpdate)}`);
         this.squareService.ObliterateModifiersOnLoad = true;
         this.catalogProvider.RequireSquareRebuild = true;
       },
@@ -136,11 +125,7 @@ export class DatabaseManagerService implements OnModuleInit {
               { id: true },
             ),
           );
-          const updatedFulfillments = await WFulfillmentSchema.updateMany(
-            {},
-            { exposeFulfillment: true },
-            {},
-          );
+          const updatedFulfillments = await WFulfillmentSchema.updateMany({}, { exposeFulfillment: true }, {});
           this.logger.log(
             `Updated fulfillments, setting exposeFulfillment to true, got result: ${JSON.stringify(updatedFulfillments)}`,
           );
@@ -162,9 +147,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           ).exec();
           if (updateResponse.modifiedCount > 0) {
-            this.logger.debug(
-              `Updated ${updateResponse.modifiedCount} IOptionType with disabled is3p.`,
-            );
+            this.logger.debug(`Updated ${updateResponse.modifiedCount.toString()} IOptionType with disabled is3p.`);
           } else {
             this.logger.warn('No option types had is3p disabled');
           }
@@ -186,9 +169,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           ).exec();
           if (updateResponse.modifiedCount > 0) {
-            this.logger.debug(
-              `Updated ${updateResponse.modifiedCount} IProduct with disabled is3p.`,
-            );
+            this.logger.debug(`Updated ${updateResponse.modifiedCount.toString()} IProduct with disabled is3p.`);
           } else {
             this.logger.warn('No IProduct had is3p disabled');
           }
@@ -215,7 +196,7 @@ export class DatabaseManagerService implements OnModuleInit {
           ).exec();
           if (updateResponse.modifiedCount > 0) {
             this.logger.debug(
-              `Updated ${updateResponse.modifiedCount} WPrinterGroupSchema with disabled isExpo.`,
+              `Updated ${updateResponse.modifiedCount.toString()} WPrinterGroupSchema with disabled isExpo.`,
             );
           } else {
             this.logger.warn('No WPrinterGroupSchema had isExpo disabled');
@@ -284,15 +265,11 @@ export class DatabaseManagerService implements OnModuleInit {
             return await o
               .save()
               .then((doc) => {
-                this.logger.log(
-                  `Updated WOrderInstance (${doc.id}) with new schema`,
-                );
+                this.logger.log(`Updated WOrderInstance (${doc.id}) with new schema`);
                 return doc;
               })
               .catch((err) => {
-                this.logger.error(
-                  `Failed to update WOrderInstance got error: ${JSON.stringify(err)}`,
-                );
+                this.logger.error(`Failed to update WOrderInstance got error: ${JSON.stringify(err)}`);
                 throw err;
               });
           }),
@@ -319,7 +296,7 @@ export class DatabaseManagerService implements OnModuleInit {
         ).exec();
         if (updateResponse.modifiedCount > 0) {
           this.logger.debug(
-            `Updated ${updateResponse.modifiedCount} WProductInstanceSchema with disabled hideFromPos.`,
+            `Updated ${updateResponse.modifiedCount.toString()} WProductInstanceSchema with disabled hideFromPos.`,
           );
         } else {
           this.logger.warn('No WProductInstanceSchema had hideFromPos set');
@@ -349,12 +326,10 @@ export class DatabaseManagerService implements OnModuleInit {
           ).exec();
           if (updateResponse.modifiedCount > 0) {
             this.logger.debug(
-              `Updated ${updateResponse.modifiedCount} IProduct with null availability, null timimng.`,
+              `Updated ${updateResponse.modifiedCount.toString()} IProduct with null availability, null timimng.`,
             );
           } else {
-            this.logger.warn(
-              'No IProduct had availability and timing set to null',
-            );
+            this.logger.warn('No IProduct had availability and timing set to null');
           }
         }
 
@@ -373,9 +348,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           ).exec();
           if (updateResponse.modifiedCount > 0) {
-            this.logger.debug(
-              `Updated ${updateResponse.modifiedCount} IOption with null availability.`,
-            );
+            this.logger.debug(`Updated ${updateResponse.modifiedCount.toString()} IOption with null availability.`);
           } else {
             this.logger.warn('No options had availability set to null');
           }
@@ -396,9 +369,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           ).exec();
           if (updateResponse.modifiedCount > 0) {
-            this.logger.debug(
-              `Updated ${updateResponse.modifiedCount} IOption with null availability.`,
-            );
+            this.logger.debug(`Updated ${updateResponse.modifiedCount.toString()} IOption with null availability.`);
           } else {
             this.logger.warn('No options had availability set to null');
           }
@@ -418,11 +389,7 @@ export class DatabaseManagerService implements OnModuleInit {
               { id: true },
             ),
           );
-          const updatedFulfillments = await WFulfillmentSchema.updateMany(
-            {},
-            { allowTipping: true },
-            { new: true },
-          );
+          const updatedFulfillments = await WFulfillmentSchema.updateMany({}, { allowTipping: true }, { new: true });
           this.logger.log(
             `Updated fulfillments, setting allowTipping to true, got result: ${JSON.stringify(updatedFulfillments)}`,
           );
@@ -449,12 +416,10 @@ export class DatabaseManagerService implements OnModuleInit {
         ).exec();
         if (updateResponse.modifiedCount > 0) {
           this.logger.debug(
-            `Updated ${updateResponse.modifiedCount} WProductInstanceSchema with empty posName.`,
+            `Updated ${updateResponse.modifiedCount.toString()} WProductInstanceSchema with empty posName.`,
           );
         } else {
-          this.logger.warn(
-            'No WProductInstanceSchema had posName set to empty string',
-          );
+          this.logger.warn('No WProductInstanceSchema had posName set to empty string');
         }
       },
     ],
@@ -497,9 +462,7 @@ export class DatabaseManagerService implements OnModuleInit {
                   return doc;
                 })
                 .catch((err) => {
-                  this.logger.error(
-                    `Failed to update ProductModel ${prod.id} got error: ${JSON.stringify(err)}`,
-                  );
+                  this.logger.error(`Failed to update ProductModel ${prod.id} got error: ${JSON.stringify(err)}`);
                   throw err;
                 });
             }),
@@ -536,9 +499,7 @@ export class DatabaseManagerService implements OnModuleInit {
                   return doc;
                 })
                 .catch((err) => {
-                  this.logger.error(
-                    `Failed to update WOptionModel ${opt.id} got error: ${JSON.stringify(err)}`,
-                  );
+                  this.logger.error(`Failed to update WOptionModel ${opt.id} got error: ${JSON.stringify(err)}`);
                   throw err;
                 });
             }),
@@ -583,8 +544,7 @@ export class DatabaseManagerService implements OnModuleInit {
                 prod.displayFlags.pos = {
                   name: prod.displayFlags.posName,
                   hide: prod.displayFlags.hideFromPos,
-                  skip_customization:
-                    prod.displayFlags.order?.skip_customization || false,
+                  skip_customization: prod.displayFlags.order?.skip_customization || false,
                 };
                 delete prod.displayFlags.posName;
                 delete prod.displayFlags.hideFromPos;
@@ -603,9 +563,7 @@ export class DatabaseManagerService implements OnModuleInit {
                     throw err;
                   });
               }
-              this.logger.warn(
-                `ProductInstanceModel ${prod.id} has no displayFlags, skipping.`,
-              );
+              this.logger.warn(`ProductInstanceModel ${prod.id} has no displayFlags, skipping.`);
               return prod;
             }),
           );
@@ -617,9 +575,7 @@ export class DatabaseManagerService implements OnModuleInit {
   };
 
   Bootstrap = async () => {
-    const [VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH] = PACKAGE_JSON.version
-      .split('.', 3)
-      .map((x) => parseInt(x));
+    const [VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH] = PACKAGE_JSON.version.split('.', 3).map((x) => parseInt(x));
     const VERSION_PACKAGE = {
       major: VERSION_MAJOR,
       minor: VERSION_MINOR,
@@ -633,23 +589,18 @@ export class DatabaseManagerService implements OnModuleInit {
 
     const db_version = await this.dbVersionModel.find({});
     if (db_version.length > 1) {
-      this.logger.error(
-        `Found more than one DB version entry: ${JSON.stringify(db_version)}, deleting all.`,
-      );
+      this.logger.error(`Found more than one DB version entry: ${JSON.stringify(db_version)}, deleting all.`);
       await this.dbVersionModel.deleteMany({});
     } else if (db_version.length === 1) {
-      current_db_version = `${db_version[0].major}.${db_version[0].minor}.${db_version[0].patch}`;
+      current_db_version = `${db_version[0].major.toString()}.${db_version[0].minor.toString()}.${db_version[0].patch.toString()}`;
     }
 
     // run update loop
     while (PACKAGE_JSON.version !== current_db_version) {
       if (Object.hasOwn(this.UPGRADE_MIGRATION_FUNCTIONS, current_db_version)) {
-        const [next_ver, migration_function] =
-          this.UPGRADE_MIGRATION_FUNCTIONS[current_db_version];
-        const next_ver_string = `${next_ver.major}.${next_ver.minor}.${next_ver.patch}`;
-        this.logger.log(
-          `Running migration function from ${current_db_version} to ${next_ver_string}`,
-        );
+        const [next_ver, migration_function] = this.UPGRADE_MIGRATION_FUNCTIONS[current_db_version];
+        const next_ver_string = `${next_ver.major.toString()}.${next_ver.minor.toString()}.${next_ver.patch.toString()}`;
+        this.logger.log(`Running migration function from ${current_db_version} to ${next_ver_string}`);
         await migration_function();
         await this.SetVersion(next_ver);
         current_db_version = next_ver_string;
