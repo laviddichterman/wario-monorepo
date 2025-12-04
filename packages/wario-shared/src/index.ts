@@ -1,6 +1,7 @@
 export * from "./lib/common";
 export * from "./lib/derived-types";
 // DTO exports
+export * from "./lib/dto/api.dto";
 export * from "./lib/dto/catalog.dto";
 export * from "./lib/dto/category.dto";
 export * from "./lib/dto/common.dto";

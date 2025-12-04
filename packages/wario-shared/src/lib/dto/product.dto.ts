@@ -66,11 +66,8 @@ export class IProductModifierDto {
   serviceDisable!: string[];
 }
 
-export class IProductDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
+export class CreateIProductDto {
+  //Omit<IProduct, 'id' | 'baseProductId'>;
   @ValidateNested()
   @Type(() => IMoneyDto)
   price!: IMoneyDto;
@@ -109,12 +106,18 @@ export class IProductDto {
   category_ids!: string[];
 
   @IsString()
-  @IsNotEmpty()
-  baseProductId!: string;
-
-  @IsString()
   @IsOptional()
   printerGroup!: string | null;
+}
+
+export class IProductDto extends CreateIProductDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  baseProductId!: string;
 }
 
 export class IProductInstanceDisplayFlagsPosDto {
@@ -216,14 +219,8 @@ export class ProductModifierEntryDto {
   options!: IOptionInstanceDto[];
 }
 
-export class IProductInstanceDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  productId!: string;
+export class CreateIProductInstanceDto {
+  // = Omit<IProductInstance, 'id' | 'productId'>;
 
   // ordinal for product matching
   @IsInt()
@@ -254,4 +251,15 @@ export class IProductInstanceDto {
   @IsString()
   @IsNotEmpty()
   shortcode!: string;
+}
+
+export class IProductInstanceDto extends CreateIProductInstanceDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  productId!: string;
+
 }

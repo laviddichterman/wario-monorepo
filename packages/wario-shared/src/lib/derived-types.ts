@@ -7,6 +7,18 @@
  * Complex types, utility types, and types not based on DTOs belong in types.ts.
  */
 import type {
+  CreateProductBatchDto,
+  IssueStoreCreditRequestDto,
+  PaymentBasePartialDto,
+  PurchaseStoreCreditRequestBaseDto,
+  PurchaseStoreCreditRequestNoEmailDto,
+  PurchaseStoreCreditRequestSendEmailDto,
+  UpdateIProductDto,
+  UpdateIProductUpdateIProductInstanceDto,
+  UpdateProductBatchDto,
+  ValidateLockAndSpendRequestDto,
+} from './dto/api.dto';
+import type {
   CatalogCategoryEntryDto,
   CatalogModifierEntryDto,
   CatalogProductEntryDto,
@@ -75,7 +87,6 @@ import type {
   DineInInfoDto,
   FulfillmentDataDto,
   FulfillmentTimeDto,
-  IssueStoreCreditRequestDto,
   MetricsDto,
   OrderLineDiscountCodeAmountDto,
   OrderManualAmountDiscountDto,
@@ -91,6 +102,8 @@ import type {
   WOrderInstancePartialDto,
 } from './dto/order.dto';
 import type {
+  CreateIProductDto,
+  CreateIProductInstanceDto,
   IProductDisplayFlagsDto,
   IProductDto,
   IProductInstanceDisplayFlagsDto,
@@ -310,3 +323,42 @@ export type IssueStoreCreditRequest = Omit<IssueStoreCreditRequestDto, never>;
 export type WOrderInstancePartial = Omit<WOrderInstancePartialDto, never>;
 export type CreateOrderRequestV2 = Omit<CreateOrderRequestV2Dto, never>;
 export type WOrderInstance = Omit<WOrderInstanceDto, never>;
+
+// =============================================================================
+// API call types (from api.dto.ts)
+// =============================================================================
+export type ValidateLockAndSpendRequest = Omit<ValidateLockAndSpendRequestDto, never>;
+export type PurchaseStoreCreditRequestBase = Omit<PurchaseStoreCreditRequestBaseDto, never>;
+export type PurchaseStoreCreditRequestSendEmail = Omit<PurchaseStoreCreditRequestSendEmailDto, never>;
+export type PurchaseStoreCreditRequestNoEmail = Omit<PurchaseStoreCreditRequestNoEmailDto, never>;
+/**
+ * Discriminated union type for store credit purchase requests.
+ * Derived from PurchaseStoreCreditRequestDto.
+ */
+export type PurchaseStoreCreditRequest =
+  | PurchaseStoreCreditRequestSendEmail
+  | PurchaseStoreCreditRequestNoEmail;
+
+// =============================================================================
+// API Response Wrapper Types (from api.dto.ts)
+// =============================================================================
+/**
+ * Generic success response wrapper.
+ * Derived from ResponseSuccessDto interface.
+ */
+
+
+export type PaymentBasePartial = Omit<PaymentBasePartialDto, never>;
+
+// =============================================================================
+// CRUD Batch Types for Product Management (utility types derived from other types)
+// =============================================================================
+
+// UpsertProductBatch types
+export type CreateIProduct = Omit<CreateIProductDto, never>;
+export type CreateIProductInstance = Omit<CreateIProductInstanceDto, never>;
+export type CreateProductBatch = Omit<CreateProductBatchDto, never>;
+export type UpdateIProduct = Omit<UpdateIProductDto, never>;
+export type UpdateIProductUpdateIProductInstance = Omit<UpdateIProductUpdateIProductInstanceDto, never>;
+export type UpdateProductBatch = Omit<UpdateProductBatchDto, never>;
+// end UpsertProductBatch types

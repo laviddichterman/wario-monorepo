@@ -21,11 +21,9 @@ import type {
   IOption,
   IOptionState,
   IOptionType,
-  IProduct,
   IProductInstance,
   IProductInstanceFunction,
   IRecurringInterval,
-  IssueStoreCreditRequest,
   IWInterval,
   KeyValue,
   OrderInstanceFunction,
@@ -37,7 +35,7 @@ import type {
   WError,
   WOrderInstance,
 } from './derived-types';
-import type { CategoryDisplay, DISABLE_REASON, PaymentMethod, StoreCreditType } from './enums';
+import type { CategoryDisplay, DISABLE_REASON, StoreCreditType } from './enums';
 import type { SelectIds, Selector } from './utility-types';
 
 // =============================================================================
@@ -220,28 +218,11 @@ export type ValidateAndLockCreditResponse =
   | ValidateAndLockCreditResponseValid
   | { readonly valid: false };
 
-export type PurchaseStoreCreditRequestBase = Omit<
-  IssueStoreCreditRequest,
-  'creditType' | 'reason' | 'expiration' | 'recipientEmail' | 'addedBy'
-> & {
-  sendEmailToRecipient: boolean;
-  senderName: string;
-  senderEmail: string;
+export interface SpendCreditResponseSuccess {
+  readonly success: true;
+  readonly balance: IMoney;
 };
-
-export type PurchaseStoreCreditRequestSendEmail = PurchaseStoreCreditRequestBase & {
-  sendEmailToRecipient: true;
-  recipientEmail: string;
-  recipientMessage: string;
-};
-
-export type PurchaseStoreCreditRequestNoEmail = PurchaseStoreCreditRequestBase & {
-  sendEmailToRecipient: false;
-};
-
-export type PurchaseStoreCreditRequest =
-  | PurchaseStoreCreditRequestSendEmail
-  | PurchaseStoreCreditRequestNoEmail;
+export type SpendCreditResponse = SpendCreditResponseSuccess | { success: false };
 
 export interface PurchaseStoreCreditResponseSuccess {
   referenceId: string;
@@ -250,28 +231,7 @@ export interface PurchaseStoreCreditResponseSuccess {
   amount: IMoney;
   last4: string;
   receiptUrl: string;
-}
-
-export interface ValidateLockAndSpendRequest {
-  readonly code: string;
-  readonly amount: IMoney;
-  readonly lock: EncryptStringLock;
-  readonly updatedBy: string;
-}
-
-export interface ValidateLockAndSpendSuccess {
-  success: true;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  entry: any[];
-  index: number;
-}
-
-export interface SpendCreditResponseSuccess {
-  readonly success: true;
-  readonly balance: IMoney;
-}
-
-export type SpendCreditResponse = SpendCreditResponseSuccess | { success: false };
+};
 
 // =============================================================================
 // Cart & Ordering Helper Types  
@@ -291,6 +251,23 @@ export interface CartEntry extends CoreCartEntry<WProduct> {
 export type CategorizedRebuiltCart = Record<string, CoreCartEntry<WProduct>[]>;
 
 // =============================================================================
+// Payment & Tender Helper Types (utility types derived from other types)
+// =============================================================================
+
+export type UnresolvedPayment =
+  | Omit<StoreCreditPayment, 'amount' | 'tipAmount'>
+  | Omit<CreditPayment, 'amount' | 'tipAmount'>
+  | (Omit<CashPayment, 'amount' | 'tipAmount' | 'payment'> & {
+    payment: Omit<CashPayment['payment'], 'change'>;
+  });
+
+export type UnresolvedDiscount =
+  | (Omit<OrderLineDiscountCodeAmount, "discount"> & { discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'> })
+  | (Omit<OrderManualPercentDiscount, "discount"> & { discount: Omit<OrderManualPercentDiscount['discount'], 'amount'> })
+  | (Omit<OrderManualAmountDiscount, "discount"> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
+
+
+// =============================================================================
 // API Response Wrappers
 // =============================================================================
 
@@ -307,46 +284,3 @@ export interface ResponseFailure {
 export type PurchaseStoreCreditResponse = ResponseSuccess<PurchaseStoreCreditResponseSuccess> | ResponseFailure;
 export type CrudOrderResponse = ResponseSuccess<WOrderInstance> | ResponseFailure;
 export type ResponseWithStatusCode<T> = T & { status: number };
-
-// =============================================================================
-// Payment & Tender Helper Types
-// =============================================================================
-
-export type PaymentBasePartial = {
-  readonly t: PaymentMethod;
-  readonly amount: IMoney;
-  // the tipAmount below is PART OF the amount field above
-  readonly tipAmount: IMoney;
-};
-
-export type UnresolvedPayment =
-  | Omit<StoreCreditPayment, 'amount' | 'tipAmount'>
-  | Omit<CreditPayment, 'amount' | 'tipAmount'>
-  | (Omit<CashPayment, 'amount' | 'tipAmount' | 'payment'> & {
-    payment: Omit<CashPayment['payment'], 'change'>;
-  });
-
-export type UnresolvedDiscount =
-  | (Omit<OrderLineDiscountCodeAmount, "discount"> & { discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'> })
-  | (Omit<OrderManualPercentDiscount, "discount"> & { discount: Omit<OrderManualPercentDiscount['discount'], 'amount'> })
-  | (Omit<OrderManualAmountDiscount, "discount"> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
-
-// =============================================================================
-// CRUD Batch Types for Product Management
-// =============================================================================
-
-// UpsertProductBatch types
-export type CreateIProduct = Omit<IProduct, 'id' | 'baseProductId'>; // CompleteProductWithoutIDs
-export type UpdateIProduct = Pick<IProduct, 'id'> &
-  Partial<Omit<IProduct, 'id'>>; // PartialProductWithIDs
-// aka CompleteProductInstanceWithoutIDsOrPartialProductInstanceWithIDs
-export type CreateIProductInstance = Omit<IProductInstance, 'id' | 'productId'>;
-export type UpdateIProductUpdateIProductInstance = Pick<IProductInstance, 'id'> &
-  Partial<Omit<IProductInstance, 'id' | 'productId'>>;
-export type CreateProductBatch = { product: CreateIProduct; instances: CreateIProductInstance[] };
-export type UpdateProductBatch = {
-  product: UpdateIProduct;
-  instances: (CreateIProductInstance | UpdateIProductUpdateIProductInstance)[];
-};
-export type UpsertProductBatch = CreateProductBatch | UpdateProductBatch;
-// end UpsertProductBatch types
