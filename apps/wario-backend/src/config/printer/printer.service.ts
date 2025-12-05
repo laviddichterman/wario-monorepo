@@ -1,17 +1,26 @@
+import { UTCDate } from '@date-fns/utc';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { formatRFC3339 } from 'date-fns';
+import { InjectModel } from '@nestjs/mongoose';
+import { formatRFC3339, isBefore, subDays } from 'date-fns';
+import { Model } from 'mongoose';
 
 import {
   CartByPrinterGroup,
   type CategorizedRebuiltCart,
+  CrudOrderResponse,
   DateTimeIntervalBuilder,
   EventTitleStringBuilder,
   type FulfillmentConfig,
   type FulfillmentData,
+  RebuildAndSortCart,
+  ResponseSuccess,
+  ResponseWithStatusCode,
   WDateUtils,
+  WFulfillmentStatus,
   type WOrderInstance,
 } from '@wcp/wario-shared';
 
+import { WOrderInstanceDocument } from '../../models/orders/WOrderInstance';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import {
@@ -52,6 +61,8 @@ export class PrinterService {
   private readonly logger = new Logger(PrinterService.name);
 
   constructor(
+    @InjectModel('WOrderInstance')
+    private orderModel: Model<WOrderInstanceDocument>,
     @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
     @Inject(forwardRef(() => DataProviderService))
@@ -537,4 +548,154 @@ export class PrinterService {
       };
     }
   }
+
+  /**
+   * Clears past print orders by completing them on Square.
+   * This is necessary because the printing workaround creates dummy orders
+   * that need to be cleaned up after they've served their purpose.
+   */
+  ClearPastOrders = async () => {
+    try {
+      const timeSpanAgoEnd = subDays(new UTCDate(), 1);
+      const timeSpanAgoStart = subDays(timeSpanAgoEnd, 1);
+      this.logger.log(
+        `Clearing old print orders between ${formatRFC3339(timeSpanAgoStart)} and ${formatRFC3339(timeSpanAgoEnd)}`,
+      );
+      const locationsToSearch = this.CleanupLocations;
+      const oldOrdersResults = await this.squareService.SearchOrders(locationsToSearch, {
+        filter: {
+          dateTimeFilter: {
+            updatedAt: { startAt: formatRFC3339(timeSpanAgoStart) },
+          },
+          stateFilter: { states: ['OPEN'] },
+        },
+        sort: { sortField: 'UPDATED_AT', sortOrder: 'ASC' },
+      });
+      if (oldOrdersResults.success) {
+        this.logger.log(`Found ${String(oldOrdersResults.result.orders?.length ?? 0)} old print orders to complete`);
+        const ordersToComplete = (oldOrdersResults.result.orders ?? []).filter(
+          (x) =>
+            (x.fulfillments ?? []).length === 1 &&
+            x.fulfillments?.[0].pickupDetails?.pickupAt &&
+            isBefore(new UTCDate(x.fulfillments[0].pickupDetails.pickupAt), timeSpanAgoEnd),
+        );
+        for (const squareOrder of ordersToComplete) {
+          try {
+            const orderUpdateResponse = await this.squareService.OrderUpdate(
+              squareOrder.locationId,
+              squareOrder.id as string,
+              squareOrder.version as number,
+              {
+                state: 'COMPLETED',
+                fulfillments: squareOrder.fulfillments?.map((x) => ({
+                  uid: x.uid,
+                  state: 'COMPLETED',
+                })),
+              },
+              [],
+            );
+            if (orderUpdateResponse.success) {
+              this.logger.debug(`Marked print order ${squareOrder.id as string} as completed`);
+            }
+          } catch (err1: unknown) {
+            this.logger.error(
+              `Skipping ${squareOrder.id as string} due to error: ${JSON.stringify(err1, Object.getOwnPropertyNames(err1), 2)}`,
+            );
+          }
+        }
+      }
+    } catch (err: unknown) {
+      const errorDetail = `Error clearing past print orders: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
+      this.logger.error(errorDetail);
+    }
+  };
+  /**
+   * Sends a locked order to the printers and updates its status.
+   */
+  SendLockedOrder = async (
+    lockedOrder: WOrderInstance,
+    releaseLock: boolean,
+  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
+    this.logger.debug(
+      `Sending order ${JSON.stringify({ id: lockedOrder.id, fulfillment: lockedOrder.fulfillment, customerInfo: lockedOrder.customerInfo }, null, 2)}, lock applied.`,
+    );
+    try {
+      const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
+      const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+      const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
+      const rebuiltCart = RebuildAndSortCart(
+        lockedOrder.cart,
+        this.catalogService.CatalogSelectors,
+        promisedTime.start,
+        fulfillmentConfig.id,
+      );
+      const eventTitle = EventTitleStringBuilder(
+        this.catalogService.CatalogSelectors,
+        fulfillmentConfig,
+        customerName,
+        lockedOrder.fulfillment,
+        rebuiltCart,
+        lockedOrder.specialInstructions ?? '',
+      );
+
+      const printResult = await this.SendPrintOrders(
+        lockedOrder,
+        rebuiltCart,
+        eventTitle,
+        fulfillmentConfig,
+      );
+
+      const SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value?.split(',') ?? [];
+      if (printResult.success) {
+        SQORDER_PRINT.push(...printResult.squareOrderIds);
+      }
+
+      const updatedOrder = {
+        ...lockedOrder,
+        ...(releaseLock ? { locked: null } : {}),
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          status: WFulfillmentStatus.SENT,
+        },
+        metadata: [
+          ...lockedOrder.metadata.filter((x) => x.key !== 'SQORDER_PRINT' && x.key !== 'SQPAYMENT_PRINT'),
+          { key: 'SQORDER_PRINT', value: SQORDER_PRINT.join(',') },
+        ],
+      };
+      return await this.orderModel
+        .findOneAndUpdate({ locked: lockedOrder.locked, _id: lockedOrder.id }, updatedOrder, { new: true })
+        .then((updated): ResponseWithStatusCode<ResponseSuccess<WOrderInstance>> => {
+          if (!updated) {
+            throw new Error('Failed to find updated order after sending to Square.');
+          }
+          return { success: true as const, status: 200, result: updated.toObject() };
+        })
+        .catch((err: unknown) => {
+          throw err;
+        });
+    } catch (error: unknown) {
+      const errorDetail = `Caught error when attempting to send order: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
+      this.logger.error(errorDetail);
+      if (releaseLock) {
+        try {
+          await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
+        } catch (err2: unknown) {
+          this.logger.error(
+            `Got even worse error in attempting to release lock on order we failed to finish send processing: ${JSON.stringify(err2, Object.getOwnPropertyNames(err2), 2)}`,
+          );
+        }
+      }
+      return {
+        status: 500,
+        success: false,
+        error: [
+          {
+            category: 'API_ERROR',
+            code: 'INTERNAL_SERVER_ERROR',
+            detail: errorDetail,
+          },
+        ],
+      };
+    }
+  };
 }

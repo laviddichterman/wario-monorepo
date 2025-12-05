@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 import { OrderManagerService } from '../config/order-manager/order-manager.service';
+import { PrinterService } from '../config/printer/printer.service';
 import { ThirdPartyOrderService } from '../config/third-party-order/third-party-order.service';
 
 @Injectable()
@@ -10,6 +11,7 @@ export class TasksService {
 
   constructor(
     private readonly orderManager: OrderManagerService,
+    private readonly printerService: PrinterService,
     private readonly thirdPartyOrderService: ThirdPartyOrderService,
   ) { }
 
@@ -22,7 +24,7 @@ export class TasksService {
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleClearPastOrders() {
     this.logger.debug('Running ClearPastOrders task');
-    await this.orderManager.ClearPastOrders();
+    await this.printerService.ClearPastOrders();
   }
 
 

@@ -1,29 +1,21 @@
 import * as crypto from 'crypto';
 
-import { UTCDate } from '@date-fns/utc';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
-  addHours,
   format,
   formatISO,
   formatRFC3339,
   Interval,
-  isBefore,
   isSameDay,
   isSameMinute,
-  subDays,
-  subMinutes,
 } from 'date-fns';
 import { FilterQuery, Model } from 'mongoose';
 import { Order, Order as SquareOrder } from 'square';
 
 import {
-  CanThisBeOrderedAtThisTimeAndFulfillmentCatalog,
-  CoreCartEntry,
   CreateOrderRequestV2,
   CrudOrderResponse,
-  CURRENCY,
   DateTimeIntervalBuilder,
   DetermineCartBasedLeadTime,
   DiscountMethod,
@@ -43,13 +35,11 @@ import {
   ResponseWithStatusCode,
   TenderBaseStatus,
   ValidateLockAndSpendSuccess,
-  WCPProductV2Dto,
   WDateUtils,
   WError,
   WFulfillmentStatus,
   WOrderInstancePartial,
   WOrderStatus,
-  WProduct,
 } from '@wcp/wario-shared';
 
 import { WOrderInstance, WOrderInstanceDocument } from '../../models/orders/WOrderInstance';
@@ -62,18 +52,16 @@ import { OrderPaymentService } from '../order-payment/order-payment.service';
 import { OrderValidationService } from '../order-validation/order-validation.service';
 import { PrinterService } from '../printer/printer.service';
 import { SocketIoService } from '../socket-io/socket-io.service';
-import {
-  BigIntMoneyToIntMoney,
-  CreateOrderFromCart,
-  LineItemsToOrderInstanceCart,
-} from '../square-wario-bridge';
+import { CreateOrderFromCart } from '../square-wario-bridge';
 import { SquareError, SquareService } from '../square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
+import { ThirdPartyOrderService } from '../third-party-order/third-party-order.service';
+
 
 const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
   return isSameMinute(interval.start, interval.end)
     ? format(interval.start, WDateUtils.DisplayTimeFormat)
-    : `${format(interval.start, WDateUtils.DisplayTimeFormat)} - ${format(interval.end, WDateUtils.DisplayTimeFormat)}`;
+    : `${format(interval.start, WDateUtils.DisplayTimeFormat)} - ${format(interval.end, WDateUtils.DisplayTimeFormat)} `;
 };
 
 @Injectable()
@@ -105,252 +93,16 @@ export class OrderManagerService {
     private orderCalendarService: OrderCalendarService,
     @Inject(forwardRef(() => PrinterService))
     private printerService: PrinterService,
+    @Inject(forwardRef(() => ThirdPartyOrderService))
+    private thirdPartyOrderService: ThirdPartyOrderService,
   ) { }
 
-  // Helper methods (private)
-
-  private RebuildOrderState = (
-    cart: CoreCartEntry<WCPProductV2Dto>[],
-    service_time: Date | number,
-    fulfillmentId: string,
-  ) => {
-    const catalogSelectors = this.catalogService.CatalogSelectors;
-    const rebuiltCart = RebuildAndSortCart(cart, catalogSelectors, service_time, fulfillmentId);
-    // migrate to CanThisBeOrderedAtThisTimeAndFulfillmentCatalog
-    const noLongerAvailable: CoreCartEntry<WProduct>[] = Object.values(rebuiltCart).flatMap((entries) =>
-      entries.filter(
-        (x) =>
-          !CanThisBeOrderedAtThisTimeAndFulfillmentCatalog(
-            x.product.p.productId,
-            x.product.p.modifiers,
-            catalogSelectors,
-            service_time,
-            fulfillmentId,
-            true,
-          ) || !catalogSelectors.category(x.categoryId),
-      ),
-    );
-    return {
-      noLongerAvailable,
-      rebuiltCart,
-    };
-  };
-
-  private GetEndOfSendingRange = (now: Date | number): Date => {
-    return addHours(now, 3);
-  };
-
-  private Map3pSource = (source: string) => {
-    if (source.startsWith('Postmates') || source.startsWith('Uber')) {
-      return 'UE';
-    }
-    return 'DD';
-  };
-
-  ClearPastOrders = async () => {
-    try {
-      const timeSpanAgoEnd = subDays(new UTCDate(), 1);
-      const timeSpanAgoStart = subDays(timeSpanAgoEnd, 1);
-      this.logger.log(
-        `Clearing old orders between ${formatRFC3339(timeSpanAgoStart)} and ${formatRFC3339(timeSpanAgoEnd)}`,
-      );
-      const locationsToSearch = this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P
-        ? [
-          this.dataProvider.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
-          this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P,
-        ]
-        : [this.dataProvider.KeyValueConfig.SQUARE_LOCATION_ALTERNATE];
-      const oldOrdersResults = await this.squareService.SearchOrders(locationsToSearch, {
-        filter: {
-          dateTimeFilter: {
-            updatedAt: { startAt: formatRFC3339(timeSpanAgoStart) },
-          },
-          stateFilter: { states: ['OPEN'] },
-        },
-        sort: { sortField: 'UPDATED_AT', sortOrder: 'ASC' },
-      });
-      if (oldOrdersResults.success) {
-        this.logger.log(`Square old order search results found ${oldOrdersResults.result.orders?.length ?? 0} orders`);
-        const ordersToComplete = (oldOrdersResults.result.orders ?? []).filter(
-          (x) =>
-            (x.fulfillments ?? []).length === 1 &&
-            isBefore(new UTCDate(x.fulfillments![0].pickupDetails!.pickupAt!), timeSpanAgoEnd),
-        );
-        for (let i = 0; i < ordersToComplete.length; ++i) {
-          const squareOrder = ordersToComplete[i];
-          try {
-            const orderUpdateResponse = await this.squareService.OrderUpdate(
-              squareOrder.locationId,
-              squareOrder.id as string,
-              squareOrder.version as number,
-              {
-                state: 'COMPLETED',
-                fulfillments: squareOrder.fulfillments?.map((x) => ({
-                  uid: x.uid,
-                  state: 'COMPLETED',
-                })),
-              },
-              [],
-            );
-            if (orderUpdateResponse.success) {
-              this.logger.debug(`Marked order ${squareOrder.id as string} as completed`);
-            }
-          } catch (err1: unknown) {
-            this.logger.error(
-              `Skipping ${squareOrder.id as string} due to error ingesting: ${JSON.stringify(err1, Object.getOwnPropertyNames(err1), 2)}`,
-            );
-          }
-        }
-      }
-    } catch (err: unknown) {
-      const errorDetail = `Got error when attempting to ingest 3p orders: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
-      this.logger.error(errorDetail);
-    }
-  };
-
-  Query3pOrders = async () => {
-    try {
-      const timeSpanAgo = subMinutes(new UTCDate(), 10);
-      const recentlyUpdatedOrdersResponse = await this.squareService.SearchOrders(
-        [this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P],
-        {
-          filter: {
-            dateTimeFilter: {
-              updatedAt: { startAt: formatRFC3339(timeSpanAgo) },
-            },
-          },
-          sort: { sortField: 'UPDATED_AT', sortOrder: 'ASC' },
-        },
-      );
-      if (recentlyUpdatedOrdersResponse.success) {
-        const fulfillmentConfig =
-          this.dataProvider.Fulfillments[this.dataProvider.KeyValueConfig.THIRD_PARTY_FULFILLMENT];
-        const ordersToInspect = (recentlyUpdatedOrdersResponse.result.orders ?? []).filter(
-          (x) => x.lineItems && x.lineItems.length > 0 && x.fulfillments?.length === 1,
-        );
-        const squareOrderIds = ordersToInspect.map((x) => x.id!);
-        const found3pOrders = await this.orderModel
-          .find({
-            'fulfillment.thirdPartyInfo.squareId': { $in: squareOrderIds },
-          })
-          .exec();
-        const ordersToIngest = ordersToInspect.filter(
-          (x) => found3pOrders.findIndex((order) => order.fulfillment.thirdPartyInfo!.squareId === x.id!) === -1,
-        );
-        const orderInstances: Omit<WOrderInstance, 'id'>[] = [];
-        ordersToIngest.forEach((squareOrder) => {
-          const fulfillmentDetails = squareOrder.fulfillments![0];
-          const requestedFulfillmentTime = WDateUtils.ComputeFulfillmentTime(
-            new Date(fulfillmentDetails.pickupDetails!.pickupAt!),
-          );
-          const fulfillmentTimeClampedRounded =
-            Math.floor(requestedFulfillmentTime.selectedTime / fulfillmentConfig.timeStep) * fulfillmentConfig.timeStep;
-          let adjustedFulfillmentTime = requestedFulfillmentTime.selectedTime;
-          const [givenName, familyFirstLetter] = (
-            fulfillmentDetails.pickupDetails?.recipient?.displayName ?? 'ABBIE NORMAL'
-          ).split(' ');
-          try {
-            // generate the WARIO cart from the square order
-            const cart = LineItemsToOrderInstanceCart(squareOrder.lineItems!, {
-              Catalog: this.catalogService.Catalog,
-              ReverseMappings: this.catalogService.ReverseMappings,
-              PrinterGroups: this.catalogService.PrinterGroups,
-              CatalogSelectors: this.catalogService.CatalogSelectors,
-            });
-
-            // determine what available time we have for this order
-            const cartLeadTime = DetermineCartBasedLeadTime(cart, this.catalogService.CatalogSelectors.productEntry);
-            const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation(
-              [fulfillmentConfig],
-              requestedFulfillmentTime.selectedDate,
-              cartLeadTime,
-            );
-            const optionsForSelectedDate = WDateUtils.GetOptionsForDate(
-              availabilityMap,
-              requestedFulfillmentTime.selectedDate,
-              formatISO(Date.now()),
-            );
-            const foundTimeOptionIndex = optionsForSelectedDate.findIndex(
-              (x) => x.value >= fulfillmentTimeClampedRounded,
-            );
-            if (foundTimeOptionIndex === -1 || optionsForSelectedDate[foundTimeOptionIndex].disabled) {
-              const errorDetail = `Requested fulfillment (${fulfillmentConfig.displayName}) at ${WDateUtils.MinutesToPrintTime(requestedFulfillmentTime.selectedTime)} is no longer valid and could not find suitable time. Ignoring WARIO timing and sending order for originally requested time.`;
-              this.logger.error(errorDetail);
-            } else {
-              adjustedFulfillmentTime = optionsForSelectedDate[foundTimeOptionIndex].value;
-            }
-
-            orderInstances.push({
-              customerInfo: {
-                email: this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
-                givenName,
-                familyName: familyFirstLetter,
-                mobileNum: fulfillmentDetails.pickupDetails?.recipient?.phoneNumber ?? '2064864743',
-                referral: '',
-              },
-              discounts: [],
-              fulfillment: {
-                selectedDate: requestedFulfillmentTime.selectedDate,
-                selectedTime: adjustedFulfillmentTime,
-                selectedService: this.dataProvider.KeyValueConfig.THIRD_PARTY_FULFILLMENT,
-                status: WFulfillmentStatus.PROPOSED,
-                thirdPartyInfo: {
-                  squareId: squareOrder.id!,
-                  source: this.Map3pSource(squareOrder.source?.name ?? ''),
-                },
-              },
-              locked: null,
-              metadata: [{ key: 'SQORDER', value: squareOrder.id! }],
-              payments:
-                squareOrder.tenders?.map(
-                  (x): OrderPaymentAllocated => ({
-                    t: PaymentMethod.Cash,
-                    amount: BigIntMoneyToIntMoney(x.amountMoney!),
-                    createdAt: Date.now(),
-                    status: TenderBaseStatus.COMPLETED,
-                    tipAmount: { amount: 0, currency: CURRENCY.USD },
-                    processorId: x.paymentId!,
-                    payment: {
-                      amountTendered: BigIntMoneyToIntMoney(x.amountMoney!),
-                      change: { amount: 0, currency: CURRENCY.USD },
-                    },
-                  }),
-                ) ?? [],
-              refunds: [],
-              tip: {
-                isPercentage: false,
-                isSuggestion: false,
-                value: { amount: 0, currency: CURRENCY.USD },
-              },
-              taxes:
-                squareOrder.taxes?.map((x) => ({
-                  amount: BigIntMoneyToIntMoney(x.appliedMoney!),
-                })) ?? [],
-              status: WOrderStatus.OPEN,
-              cart,
-              specialInstructions:
-                requestedFulfillmentTime.selectedTime !== adjustedFulfillmentTime
-                  ? `ORT: ${WDateUtils.MinutesToPrintTime(requestedFulfillmentTime.selectedTime)}`
-                  : undefined,
-            });
-          } catch {
-            this.logger.error(`Skipping ${JSON.stringify(ordersToInspect)} due to error ingesting.`);
-          }
-        });
-        if (orderInstances.length > 0) {
-          this.logger.log(`Inserting ${orderInstances.length.toString()} 3p orders... ${JSON.stringify(orderInstances)}`);
-          const saveResponse = await this.orderModel.bulkSave(orderInstances.map((x) => new this.orderModel(x)));
-          this.logger.log(`Save response for 3p order: ${JSON.stringify(saveResponse)}`);
-        }
-      }
-    } catch (err: unknown) {
-      const errorDetail = `Got error when attempting to ingest 3p orders: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
-      this.logger.error(errorDetail);
-    }
-  };
-
+  /**
+   * Sends orders that are ready for fulfillment.
+   * This runs on a scheduled interval from TasksService.
+   * Orchestrates locking orders and delegating to PrinterService for actual printing.
+   */
   SendOrders = async () => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
     const now = Date.now();
     const endOfRange = this.GetEndOfSendingRange(now);
     const isEndRangeSameDay = isSameDay(now, endOfRange);
@@ -364,7 +116,7 @@ export class OrderManagerService {
       : {
         $or: [{ 'fulfillment.selectedDate': WDateUtils.formatISODate(now) }, endOfRangeAsQuery],
       };
-    // logger.debug(`Running SendOrders job for the time constraint: ${JSON.stringify(timeConstraint)}`);
+    const idempotencyKey = crypto.randomBytes(22).toString('hex');
     await this.orderModel
       .updateMany(
         {
@@ -377,15 +129,14 @@ export class OrderManagerService {
       )
       .then(async (updateResult) => {
         if (updateResult.modifiedCount > 0) {
-          this.logger.log(`Locked ${updateResult.modifiedCount.toString()} orders with service before ${formatISO(endOfRange)}`);
+          this.logger.log(`Locked ${String(updateResult.modifiedCount)} orders with service before ${formatISO(endOfRange)}`);
           await this.orderModel
             .find({
               locked: idempotencyKey,
             })
             .then(async (lockedOrders) => {
-              // for loop keeps it sequential / synchronous
               for (let i = 0; i < lockedOrders.length; ++i) {
-                await this.SendLockedOrder(lockedOrders[i].toObject(), true);
+                await this.printerService.SendLockedOrder(lockedOrders[i].toObject(), true);
               }
             });
           return;
@@ -393,13 +144,21 @@ export class OrderManagerService {
       });
   };
 
-  private LockAndActOnOrder = async (
+  private GetEndOfSendingRange = (now: Date | number): Date => {
+    // Orders are sent up to 3 hours before their fulfillment time
+    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+    return new Date(typeof now === 'number' ? now + THREE_HOURS_MS : now.getTime() + THREE_HOURS_MS);
+  };
+
+  // Helper methods (private)
+
+  LockAndActOnOrder = async (
     idempotencyKey: string,
     orderId: string,
     testDbOrder: FilterQuery<WOrderInstance>,
     onSuccess: (order: WOrderInstance) => Promise<ResponseWithStatusCode<CrudOrderResponse>>,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    this.logger.log(`Received request (nonce: ${idempotencyKey}) attempting to lock Order ID: ${orderId}`);
+    this.logger.log(`Received request(nonce: ${idempotencyKey}) attempting to lock Order ID: ${orderId} `);
     return await this.orderModel
       .findOneAndUpdate({ _id: orderId, locked: null, ...testDbOrder }, { locked: idempotencyKey }, { new: true })
       .then(async (order): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
@@ -419,7 +178,7 @@ export class OrderManagerService {
         return await onSuccess(order.toObject());
       })
       .catch((err: unknown) => {
-        const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
+        const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)} `;
         this.logger.error(errorDetail);
         return {
           status: 404,
@@ -495,103 +254,14 @@ export class OrderManagerService {
           throw err;
         });
     } catch (error: unknown) {
-      const errorDetail = `Caught error when attempting to send move ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
+      const errorDetail = `Caught error when attempting to send move ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)} `;
       this.logger.error(errorDetail);
       try {
         await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
       } catch (err2: unknown) {
         this.logger.error(
-          `Got even worse error in attempting to release lock on order we failed to finish send processing: ${JSON.stringify(err2, Object.getOwnPropertyNames(err2), 2)}`,
+          `Got even worse error in attempting to release lock on order we failed to finish send processing: ${JSON.stringify(err2, Object.getOwnPropertyNames(err2), 2)} `,
         );
-      }
-      return {
-        status: 500,
-        success: false,
-        error: [
-          {
-            category: 'API_ERROR',
-            code: 'INTERNAL_SERVER_ERROR',
-            detail: errorDetail,
-          },
-        ],
-      };
-    }
-  };
-
-  private SendLockedOrder = async (
-    lockedOrder: WOrderInstance,
-    releaseLock: boolean,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    this.logger.debug(
-      `Sending order ${JSON.stringify({ id: lockedOrder.id, fulfillment: lockedOrder.fulfillment, customerInfo: lockedOrder.customerInfo }, null, 2)}, lock applied.`,
-    );
-    try {
-      // send order to alternate location
-      const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
-      const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
-      const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
-      const rebuiltCart = RebuildAndSortCart(
-        lockedOrder.cart,
-        this.catalogService.CatalogSelectors,
-        promisedTime.start,
-        fulfillmentConfig.id,
-      );
-      const eventTitle = EventTitleStringBuilder(
-        this.catalogService.CatalogSelectors,
-        fulfillmentConfig,
-        customerName,
-        lockedOrder.fulfillment,
-        rebuiltCart,
-        lockedOrder.specialInstructions ?? '',
-      );
-
-      const printResult = await this.printerService.SendPrintOrders(
-        lockedOrder,
-        rebuiltCart,
-        eventTitle,
-        fulfillmentConfig,
-      );
-
-      const SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value?.split(',') ?? [];
-      if (printResult.success) {
-        SQORDER_PRINT.push(...printResult.squareOrderIds);
-      }
-
-      const updatedOrder = {
-        ...lockedOrder,
-        ...(releaseLock ? { locked: null } : {}),
-        fulfillment: {
-          ...(lockedOrder.fulfillment as FulfillmentData),
-          status: WFulfillmentStatus.SENT,
-        },
-        metadata: [
-          ...lockedOrder.metadata.filter((x) => x.key !== 'SQORDER_PRINT' && x.key !== 'SQPAYMENT_PRINT'),
-          { key: 'SQORDER_PRINT', value: SQORDER_PRINT.join(',') },
-        ],
-      };
-      // update order in DB, release lock (if requested)
-      return await this.orderModel
-        .findOneAndUpdate({ locked: lockedOrder.locked, _id: lockedOrder.id }, updatedOrder, { new: true })
-        .then((updated): ResponseWithStatusCode<ResponseSuccess<WOrderInstance>> => {
-          if (!updated) {
-            throw new Error('Failed to find updated order after sending to Square.');
-          }
-          return { success: true as const, status: 200, result: updated.toObject() };
-        })
-        .catch((err: unknown) => {
-          throw err;
-        });
-    } catch (error: unknown) {
-      const errorDetail = `Caught error when attempting to send order: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
-      if (releaseLock) {
-        try {
-          await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
-        } catch (err2: unknown) {
-          this.logger.error(
-            `Got even worse error in attempting to release lock on order we failed to finish send processing: ${JSON.stringify(err2, Object.getOwnPropertyNames(err2), 2)}`,
-          );
-        }
       }
       return {
         status: 500,
@@ -650,7 +320,7 @@ export class OrderManagerService {
               'WARIO',
             );
             if (!creditRefundResponse.success) {
-              const errorDetail = `Failed to refund store credit for payment ID: ${payment.processorId}. This generally means that the store credit code is invalid (somehow) or Google sheets is having issues.`;
+              const errorDetail = `Failed to refund store credit for payment ID: ${payment.processorId}. This generally means that the store credit code is invalid(somehow) or Google sheets is having issues.`;
               this.logger.error(errorDetail);
               // todo: need to figure out how to proceed here
             }
@@ -686,7 +356,7 @@ export class OrderManagerService {
             undoPaymentResponse = await this.squareService.CancelPayment(payment.processorId);
           }
           if (!undoPaymentResponse.success) {
-            const errorDetail = `Failed to process payment refund for payment ID: ${payment.processorId}`;
+            const errorDetail = `Failed to process payment refund for payment ID: ${payment.processorId} `;
             this.logger.error(errorDetail);
             undoPaymentResponse.error.map((e) =>
               errors.push({
@@ -710,7 +380,7 @@ export class OrderManagerService {
           },
           'ERROR IN REFUND PROCESSING. CONTACT DAVE IMMEDIATELY',
           'dave@windycitypie.com',
-          `<p>Errors: ${JSON.stringify(errors)}</p>`,
+          `< p > Errors: ${JSON.stringify(errors)} </p>`,
         );
       }
 
@@ -1313,7 +983,7 @@ export class OrderManagerService {
         status: WOrderStatus.CONFIRMED,
         'fulfillment.status': WFulfillmentStatus.PROPOSED,
       },
-      (order) => this.SendLockedOrder(order, true),
+      (order) => this.printerService.SendLockedOrder(order, true),
     );
   };
 
@@ -1378,7 +1048,7 @@ export class OrderManagerService {
     const customerName = [createOrderRequest.customerInfo.givenName, createOrderRequest.customerInfo.familyName].join(" ");
     const service_title = this.orderNotificationService.ServiceTitleBuilder(fulfillmentConfig.displayName, createOrderRequest.fulfillment, customerName, dateTimeInterval);
     // 2. Rebuild the order from the menu/catalog
-    const { noLongerAvailable, rebuiltCart } = this.RebuildOrderState(createOrderRequest.cart, dateTimeInterval.start, fulfillmentConfig.id);
+    const { noLongerAvailable, rebuiltCart } = this.orderValidationService.RebuildOrderState(createOrderRequest.cart, dateTimeInterval.start, fulfillmentConfig.id);
     if (noLongerAvailable.length > 0) {
       const errorDetail = `Unable to rebuild order from current catalog data, missing: ${noLongerAvailable.map(x => x.product.m.name).join(', ')}`
       this.logger.warn(errorDetail);

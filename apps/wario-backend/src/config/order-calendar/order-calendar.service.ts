@@ -28,7 +28,7 @@ export class OrderCalendarService {
         return result.id;
       }
       return null;
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to create calendar event: ${error}`);
       return null;
     }
@@ -43,7 +43,7 @@ export class OrderCalendarService {
     try {
       await this.googleService.ModifyCalendarEvent(eventId, eventJson);
       this.logger.log(`Modified calendar event: ${eventId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to modify calendar event ${eventId}: ${error}`);
     }
   }
@@ -56,7 +56,7 @@ export class OrderCalendarService {
     try {
       await this.googleService.DeleteCalendarEvent(eventId);
       this.logger.log(`Deleted calendar event: ${eventId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Failed to delete calendar event ${eventId}: ${error}`);
     }
   }
