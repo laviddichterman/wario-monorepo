@@ -48,13 +48,12 @@ export { SquareError };
 
 import { CURRENCY, IMoney, OrderPaymentAllocated, PaymentMethod, StoreCreditPayment, StoreCreditPaymentData } from '@wcp/wario-shared';
 
-import { ExponentialBackoffWaitFunction, IS_PRODUCTION } from '../../utils/utils';
+import { ExponentialBackoffWaitFunction } from '../../utils/utils';
+import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { BigIntMoneyToIntMoney, IMoneyToBigIntMoney, MapPaymentStatus } from '../square-wario-bridge';
 
-export const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
-  ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
-  : 25;
+
 
 export type SquareProviderApiCallReturnSuccess<T> = {
   success: true;
@@ -171,7 +170,10 @@ export class SquareService implements OnModuleInit {
   private catalogIdsToDelete: string[];
   private obliterateModifiersOnLoad: boolean;
 
-  constructor(private readonly dataProvider: DataProviderService) {
+  constructor(
+    private readonly appConfig: AppConfigService,
+    private readonly dataProvider: DataProviderService,
+  ) {
     this.catalogLimits = DEFAULT_LIMITS;
     this.catalogIdsToDelete = [];
     this.obliterateModifiersOnLoad = false;
@@ -193,7 +195,7 @@ export class SquareService implements OnModuleInit {
     this.logger.log('Starting Bootstrap of SquareService');
     if (this.dataProvider.KeyValueConfig.SQUARE_TOKEN) {
       this.client = new Client({
-        environment: IS_PRODUCTION ? Environment.Production : Environment.Sandbox,
+        environment: this.appConfig.isProduction ? Environment.Production : Environment.Sandbox,
         accessToken: this.dataProvider.KeyValueConfig.SQUARE_TOKEN,
         httpClientOptions: {
           retryConfig: SQUARE_RETRY_CONFIG,
@@ -639,7 +641,7 @@ export class SquareService implements OnModuleInit {
     const responses: SquareProviderApiCallReturnSuccess<BatchUpsertCatalogObjectsResponse>[] = [];
     do {
       const leftovers = remainingObjects.splice(
-        Math.floor(this.catalogLimits.batchUpsertMaxTotalObjects! / SQUARE_BATCH_CHUNK_SIZE),
+        Math.floor(this.catalogLimits.batchUpsertMaxTotalObjects! / this.appConfig.squareBatchChunkSize),
       );
       const idempotency_key = crypto.randomBytes(22).toString('hex');
       const request_body: BatchUpsertCatalogObjectsRequest = {

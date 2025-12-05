@@ -5,6 +5,7 @@ import type { Namespace, Server, Socket } from 'socket.io';
 
 import { type FulfillmentConfig, type ICatalog, type IWSettings, type SeatingResource, WDateUtils } from '@wcp/wario-shared';
 
+import { AppConfigService } from '../app-config.service';
 import type { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import type { DataProviderService } from '../data-provider/data-provider.service';
 
@@ -20,6 +21,8 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
 
   @WebSocketServer()
   server: Namespace; // This is the namespace 'nsRO'
+
+  constructor(private readonly appConfig: AppConfigService) { }
 
   // Setter for lazy injection from DataProviderService
   setDataProvider(dataProvider: DataProviderService) {
@@ -40,7 +43,7 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     // Emit initial state to newly connected client
     client.emit('WCP_SERVER_TIME', {
       time: format(connectTime, WDateUtils.ISODateTimeNoOffset),
-      tz: process.env.TZ || 'UTC',
+      tz: this.appConfig.timezone,
     });
 
     // Emit current application state

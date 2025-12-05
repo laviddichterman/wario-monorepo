@@ -18,6 +18,7 @@ import {
 } from '@wcp/wario-shared';
 
 import { IsSetOfUniqueStrings } from '../../utils/utils';
+import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import {
   GetNonSquareExternalIds,
@@ -35,7 +36,6 @@ import {
   isUpdateProduct,
   isUpdateProductInstance,
   LocationsConsidering3pFlag,
-  SQUARE_BATCH_CHUNK_SIZE,
   UpdateProductInstanceProps,
 } from './catalog.types';
 
@@ -66,6 +66,7 @@ export class CatalogProductService {
   private readonly logger = new Logger(CatalogProductService.name);
 
   constructor(
+    private readonly appConfig: AppConfigService,
     @InjectModel('WProduct') private wProductModel: Model<IProduct>,
     @InjectModel('WProductInstance') private wProductInstanceModel: Model<IProductInstance>,
     @Inject(forwardRef(() => CatalogProviderService))
@@ -392,7 +393,7 @@ export class CatalogProductService {
     let mappings: CatalogIdMapping[] = [];
     if (catalogObjectsForUpsert.length) {
       const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-        chunk(catalogObjectsForUpsert, SQUARE_BATCH_CHUNK_SIZE).map((x) => ({
+        chunk(catalogObjectsForUpsert, this.appConfig.squareBatchChunkSize).map((x) => ({
           objects: x,
         })),
       );
@@ -695,7 +696,7 @@ export class CatalogProductService {
       .flat();
     if (catalogObjects.length > 0) {
       const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-        chunk(catalogObjects, SQUARE_BATCH_CHUNK_SIZE).map((x) => ({
+        chunk(catalogObjects, this.appConfig.squareBatchChunkSize).map((x) => ({
           objects: x,
         })),
       );

@@ -4,6 +4,7 @@ import { CatalogModule } from '../models/catalog/catalog.module';
 import { OrdersModule } from '../models/orders/orders.module';
 import { SettingsModule } from '../models/settings/settings.module';
 
+import { AppConfigService } from './app-config.service';
 import { CatalogCategoryService } from './catalog-provider/catalog-category.service';
 import { CatalogFunctionService } from './catalog-provider/catalog-function.service';
 import { CatalogModifierService } from './catalog-provider/catalog-modifier.service';
@@ -29,6 +30,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
 @Module({
   imports: [OrdersModule, CatalogModule, SettingsModule],
   providers: [
+    AppConfigService,
     DataProviderService,
     CatalogProviderService,
     CatalogFunctionService,
@@ -51,6 +53,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     DatabaseManagerService,
   ],
   exports: [
+    AppConfigService,
     DataProviderService,
     CatalogProviderService,
     CatalogFunctionService,

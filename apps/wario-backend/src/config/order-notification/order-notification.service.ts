@@ -1,4 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+
+import { AppConfigService } from '../app-config.service';
 import { format, formatRFC3339, Interval, isSameMinute } from 'date-fns';
 import { calendar_v3 } from 'googleapis';
 
@@ -51,6 +53,7 @@ const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
 @Injectable()
 export class OrderNotificationService {
   constructor(
+    private readonly appConfig: AppConfigService,
     @Inject(forwardRef(() => GoogleService))
     private googleService: GoogleService,
     @Inject(forwardRef(() => CatalogProviderService))
@@ -237,11 +240,11 @@ export class OrderNotificationService {
       description: calendar_details,
       start: {
         dateTime: formatRFC3339(service_time_interval.start),
-        timeZone: process.env.TZ,
+        timeZone: this.appConfig.timezone,
       },
       end: {
         dateTime: formatRFC3339(service_time_interval.end),
-        timeZone: process.env.TZ,
+        timeZone: this.appConfig.timezone,
       },
     };
   };

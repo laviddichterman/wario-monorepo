@@ -10,11 +10,6 @@ import {
   type UpdateProductBatchRequest,
 } from '@wcp/wario-shared';
 
-// Shared constant for Square API batch operations
-export const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
-  ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
-  : 25;
-
 // Shared helper for determining Square locations based on 3P flag
 export const LocationsConsidering3pFlag = (
   is3p: boolean,

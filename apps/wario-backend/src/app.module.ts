@@ -9,6 +9,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { ScopesGuard } from './auth/guards/scopes.guard';
+import { AppConfigService } from './config/app-config.service';
 import { ConfigModule } from './config/config.module';
 import { ErrorNotificationService } from './config/error-notification/error-notification.service';
 import { ControllersModule } from './controllers/controllers.module';
@@ -25,18 +26,13 @@ import { TasksModule } from './tasks/tasks.module';
     NestConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
-      useFactory: () => {
-        const DBTABLE = process.env.DBTABLE || '';
-        const DBUSER = process.env.DBUSER || undefined;
-        const DBPASS = process.env.DBPASS || undefined;
-        const DBENDPOINT = process.env.DBENDPOINT || '127.0.0.1:27017';
-
-        return {
-          uri: `mongodb://${DBENDPOINT}/${DBTABLE}`,
-          user: DBUSER,
-          pass: DBPASS,
-        };
-      },
+      imports: [ConfigModule],
+      useFactory: (appConfig: AppConfigService) => ({
+        uri: appConfig.mongoUri,
+        user: appConfig.dbUser,
+        pass: appConfig.dbPass,
+      }),
+      inject: [AppConfigService],
     }),
     OrdersModule,
     CatalogModule,
