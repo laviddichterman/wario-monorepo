@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
 import { IOption } from '@wcp/wario-shared';
 
@@ -11,6 +11,7 @@ import {
   UpdateModifierTypeDto,
   UpdateOptionDto,
 } from '../../dtos/modifier.dto';
+import { ModifierOptionNotFoundException, ModifierTypeNotFoundException } from '../../exceptions';
 
 @Controller('api/v1/menu/option')
 export class ModifierController {
@@ -20,46 +21,32 @@ export class ModifierController {
   @Scopes('write:catalog')
   @HttpCode(201)
   async postModifierType(@Body() body: CreateModifierTypeDto) {
-    try {
-      const options: UncommitedOption[] = body.options; // Cast to avoid strict type mismatch if DTO differs slightly
-      const doc = await this.catalogProvider.CreateModifierType(body, options);
-      return doc;
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    const options: UncommitedOption[] = body.options;
+    const doc = await this.catalogProvider.CreateModifierType(body, options);
+    return doc;
   }
 
   @Patch(':mtid')
   @Scopes('write:catalog')
   async patchModifierType(@Param('mtid') mtid: string, @Body() body: UpdateModifierTypeDto) {
-    try {
-      const doc = await this.catalogProvider.UpdateModifierType({
-        id: mtid,
-        modifierType: body
-      });
-      if (!doc) {
-        throw new NotFoundException(`Unable to update ModifierType: ${mtid}`);
-      }
-      return doc;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException(error);
+    const doc = await this.catalogProvider.UpdateModifierType({
+      id: mtid,
+      modifierType: body
+    });
+    if (!doc) {
+      throw new ModifierTypeNotFoundException(mtid);
     }
+    return doc;
   }
 
   @Delete(':mtid')
   @Scopes('delete:catalog')
   async deleteModifierType(@Param('mtid') mtid: string) {
-    try {
-      const doc = await this.catalogProvider.DeleteModifierType(mtid);
-      if (!doc) {
-        throw new NotFoundException(`Unable to delete Modifier Type: ${mtid}`);
-      }
-      return doc;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException(error);
+    const doc = await this.catalogProvider.DeleteModifierType(mtid);
+    if (!doc) {
+      throw new ModifierTypeNotFoundException(mtid);
     }
+    return doc;
   }
 
   @Post(':mtid')
@@ -69,16 +56,11 @@ export class ModifierController {
     @Param('mtid') mtid: string,
     @Body() body: CreateOptionDto,
   ) {
-    try {
-      const new_option = await this.catalogProvider.CreateOption({ ...(body as Omit<IOption, 'id' | 'modifierTypeId'>), modifierTypeId: mtid });
-      if (!new_option) {
-        throw new NotFoundException(`Unable to find ModifierType ${mtid} to create Modifier Option`);
-      }
-      return new_option;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException(error);
+    const new_option = await this.catalogProvider.CreateOption({ ...(body as Omit<IOption, 'id' | 'modifierTypeId'>), modifierTypeId: mtid });
+    if (!new_option) {
+      throw new ModifierTypeNotFoundException(mtid);
     }
+    return new_option;
   }
 
   @Patch(':mtid/:moid')
@@ -88,50 +70,41 @@ export class ModifierController {
     @Param('moid') moid: string,
     @Body() body: UpdateOptionDto,
   ) {
-    try {
-      const modifierTypeEntry = this.catalogProvider.Catalog.modifiers[mtid];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!modifierTypeEntry) {
-        const doc = await this.catalogProvider.UpdateModifierOption({
-          id: moid,
-          modifierTypeId: mtid,
-          modifierOption: {
-            displayName: body.displayName,
-            description: body.description,
-            price: body.price,
-            shortcode: body.shortcode,
-            disabled: body.disabled ? body.disabled : null,
-            externalIDs: body.externalIDs ?? [],
-            ordinal: body.ordinal,
-            metadata: body.metadata,
-            enable: body.enable,
-            displayFlags: body.displayFlags,
-            availability: body.availability,
-          },
-        });
-        if (doc) {
-          return doc;
-        }
+    const modifierTypeEntry = this.catalogProvider.Catalog.modifiers[mtid];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!modifierTypeEntry) {
+      const doc = await this.catalogProvider.UpdateModifierOption({
+        id: moid,
+        modifierTypeId: mtid,
+        modifierOption: {
+          displayName: body.displayName,
+          description: body.description,
+          price: body.price,
+          shortcode: body.shortcode,
+          disabled: body.disabled ? body.disabled : null,
+          externalIDs: body.externalIDs ?? [],
+          ordinal: body.ordinal,
+          metadata: body.metadata,
+          enable: body.enable,
+          displayFlags: body.displayFlags,
+          availability: body.availability,
+        },
+      });
+      if (doc) {
+        return doc;
       }
-      throw new NotFoundException(`Unable to update ModifierOption: ${moid}`);
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException(error);
     }
+    throw new ModifierOptionNotFoundException(moid);
   }
 
   @Delete(':mtid/:moid')
   @Scopes('delete:catalog')
   async deleteModifierOption(@Param('moid') moid: string) {
-    try {
-      const doc = await this.catalogProvider.DeleteModifierOption(moid);
-      if (!doc) {
-        throw new NotFoundException(`Unable to delete Modifier Option: ${moid}`);
-      }
-      return doc;
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      throw new InternalServerErrorException(error);
+    const doc = await this.catalogProvider.DeleteModifierOption(moid);
+    if (!doc) {
+      throw new ModifierOptionNotFoundException(moid);
     }
+    return doc;
   }
 }
+

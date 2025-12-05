@@ -23,6 +23,7 @@ export class ProductInstanceFunctionController {
       name: body.name,
       expression: body.expression as IAbstractExpression,
     });
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!doc) {
       throw new InternalServerErrorException('Unable to create ProductInstanceFunction as requested.');
     }

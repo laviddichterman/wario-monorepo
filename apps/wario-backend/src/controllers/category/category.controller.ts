@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
 import { UncommittedCategoryDto } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { DeleteCategoryDto, UpdateCategoryDto } from '../../dtos/category.dto';
+import { CatalogOperationException, CategoryNotFoundException } from '../../exceptions';
 
 @Controller('api/v1/menu/category')
 export class CategoryController {
@@ -17,7 +18,7 @@ export class CategoryController {
     const doc = await this.catalogProvider.CreateCategory(body);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!doc) {
-      throw new InternalServerErrorException('Unable to create category');
+      throw new CatalogOperationException('create category', 'Operation returned null');
     }
     return doc;
   }
@@ -28,7 +29,7 @@ export class CategoryController {
     // todo: UpdateCategoryDto needs to allow partial updates
     const doc = await this.catalogProvider.UpdateCategory(catid, body);
     if (!doc) {
-      throw new NotFoundException(`Unable to update category: ${catid} `);
+      throw new CategoryNotFoundException(catid);
     }
     return doc;
   }
@@ -39,7 +40,7 @@ export class CategoryController {
     const delete_contained_products = body.delete_contained_products ?? false;
     const doc = await this.catalogProvider.DeleteCategory(catid, delete_contained_products);
     if (!doc) {
-      throw new NotFoundException(`Unable to delete category: ${catid} `);
+      throw new CategoryNotFoundException(catid);
     }
     return doc;
   }

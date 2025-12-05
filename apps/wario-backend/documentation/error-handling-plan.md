@@ -527,15 +527,37 @@ export class NewFeatureController {
 
 ---
 
-### Remaining Work (Phases 3-4)
+### Phase 3: Controller Migration ✅ COMPLETED
 
-#### Phase 3: Gradual Controller Migration
-- [ ] Migrate `CategoryController` to use custom exceptions
-- [ ] Migrate `PrinterGroupController` to use custom exceptions
-- [ ] Migrate `ProductController` to use custom exceptions
-- [ ] Migrate `ModifierController` to use custom exceptions
-- [ ] Migrate `OrderController` - remove manual `SendFailureNoticeOnErrorCatch`
-- [ ] Migrate `StoreCreditController` to use custom exceptions
+All controllers have been migrated to use custom exceptions and the global filter.
+
+#### Changes Made
+
+| Controller | Changes |
+|------------|---------|
+| `CategoryController` | Replaced `NotFoundException`/`InternalServerErrorException` with `CategoryNotFoundException`/`CatalogOperationException` |
+| `PrinterGroupController` | Removed try/catch blocks, added `PrinterGroupNotFoundException`/`PrinterGroupOperationException` |
+| `ProductController` | Removed all try/catch blocks (~50 lines), uses `ProductNotFoundException`/`ProductInstanceNotFoundException`/`CatalogOperationException` |
+| `ModifierController` | Removed try/catch blocks, uses `ModifierTypeNotFoundException`/`ModifierOptionNotFoundException` |
+| `OrderController` | **Removed `SendFailureNoticeOnErrorCatch` method** - global filter now handles email notifications. Removed all try/catch blocks, uses `OrderNotFoundException` |
+| `StoreCreditController` | Removed manual email notifications, removed GoogleService/DataProviderService dependencies, uses `StoreCreditNotFoundException`/`InsufficientCreditException` |
+
+#### New Printer Exceptions
+
+Created `src/exceptions/printer.exceptions.ts`:
+- `PrinterGroupNotFoundException` - Thrown when a printer group cannot be found
+- `PrinterGroupOperationException` - Thrown when printer group operations fail
+
+#### Lines of Code Removed
+
+Approximate boilerplate removed across all controllers:
+- **~200 lines** of try/catch blocks
+- **~40 lines** of manual email notification code
+- **2 controller dependencies** removed (GoogleService, DataProviderService from StoreCreditController)
+
+---
+
+### Remaining Work (Phase 4)
 
 #### Phase 4: Service Layer Refactoring
 - [ ] Refactor `OrderManagerService` to throw exceptions instead of returning error objects
@@ -552,7 +574,9 @@ export class NewFeatureController {
 | `src/exceptions/order.exceptions.ts` | Order domain exceptions |
 | `src/exceptions/catalog.exceptions.ts` | Catalog domain exceptions |
 | `src/exceptions/payment.exceptions.ts` | Payment domain exceptions |
+| `src/exceptions/printer.exceptions.ts` | Printer group exceptions |
 | `src/config/error-notification/error-notification.service.ts` | Email notification service |
 | `src/filters/all-exceptions.filter.ts` | Global exception filter |
 | `src/filters/index.ts` | Filter barrel export |
+
 
