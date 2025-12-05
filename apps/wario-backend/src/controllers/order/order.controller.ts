@@ -1,5 +1,4 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpException, InternalServerErrorException, NotFoundException, Param, Post, Put, Query, Req, UseInterceptors } from '@nestjs/common';
-import type { Request } from 'express';
+import { Body, Controller, Get, Headers, HttpCode, HttpException, InternalServerErrorException, NotFoundException, Param, Post, Put, Query, UseInterceptors } from '@nestjs/common';
 
 import { CreateOrderRequestV2Dto, WOrderStatus } from '@wcp/wario-shared';
 
@@ -8,6 +7,7 @@ import { DataProviderService } from '../../config/data-provider/data-provider.se
 import { GoogleService } from '../../config/google/google.service';
 import { OrderManagerService } from '../../config/order-manager/order-manager.service';
 import { LockOrder } from '../../decorators/lock-order.decorator';
+import { RealIp } from '../../decorators/real-ip.decorator';
 import {
   CancelOrderRequestDto,
   ConfirmOrderRequestDto,
@@ -40,13 +40,9 @@ export class OrderController {
   @HttpCode(201)
   async postOrder(
     @Body() body: CreateOrderRequestV2Dto,
-    @Req() req: Request,
+    @RealIp() ipAddress: string,
   ) {
     try {
-      const ipAddress = (req.headers['x-real-ip'] ??
-        req.headers['x-forwarded-for'] ??
-        req.socket.remoteAddress ??
-        '') as string;
       const response = await this.orderManager.CreateOrder(body, ipAddress);
       if (response.status !== 201) {
         throw new HttpException(response, response.status);
