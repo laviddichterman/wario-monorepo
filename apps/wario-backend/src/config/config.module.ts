@@ -7,6 +7,7 @@ import { SettingsModule } from '../models/settings/settings.module';
 import { CatalogProviderService } from './catalog-provider/catalog-provider.service';
 import { DataProviderService } from './data-provider/data-provider.service';
 import { DatabaseManagerService } from './database-manager/database-manager.service';
+import { ErrorNotificationService } from './error-notification/error-notification.service';
 import { GoogleService } from './google/google.service';
 import { OrderCalendarService } from './order-calendar/order-calendar.service';
 import { OrderManagerService } from './order-manager/order-manager.service';
@@ -24,6 +25,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
   providers: [
     DataProviderService,
     CatalogProviderService,
+    ErrorNotificationService,
     OrderCalendarService,
     OrderManagerService,
     OrderNotificationService,
@@ -39,6 +41,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
   exports: [
     DataProviderService,
     CatalogProviderService,
+    ErrorNotificationService,
     OrderCalendarService,
     OrderManagerService,
     OrderNotificationService,

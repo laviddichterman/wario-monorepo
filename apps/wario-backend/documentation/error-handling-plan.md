@@ -441,3 +441,118 @@ All errors will be logged with:
 - 100% of 5xx errors trigger admin notification
 - All error responses match `WError[]` format
 - Reduced boilerplate in controllers by ~30%
+
+---
+
+## Implementation Notes
+
+> **Last Updated:** 2024-12-04
+
+### Phase 1: Infrastructure ✅ COMPLETED
+
+#### 1. Custom Exception Classes
+Created in `src/exceptions/`:
+
+| File | Exceptions |
+|------|------------|
+| `order.exceptions.ts` | `OrderNotFoundException`, `OrderLockedException`, `InvalidOrderStateException`, `OrderValidationException`, `OrderProcessingException` |
+| `catalog.exceptions.ts` | `ProductNotFoundException`, `ProductInstanceNotFoundException`, `CategoryNotFoundException`, `ModifierTypeNotFoundException`, `ModifierOptionNotFoundException`, `CatalogOperationException` |
+| `payment.exceptions.ts` | `PaymentProcessingException`, `StoreCreditNotFoundException`, `InsufficientCreditException`, `InvalidPaymentAmountException` |
+| `index.ts` | Barrel export for all exceptions |
+
+**Usage Example:**
+```typescript
+import { OrderNotFoundException } from '../exceptions';
+
+// In a service or controller
+if (!order) {
+  throw new OrderNotFoundException(orderId);
+}
+```
+
+#### 2. ErrorNotificationService
+Created at `src/config/error-notification/error-notification.service.ts`
+
+**Features:**
+- `sendCriticalErrorEmail()` - Sends formatted HTML email with error details
+- `shouldNotify()` - Determines if error warrants notification (5xx on `/order`, `/store-credit`, `/payment`)
+- Fire-and-forget pattern - email failures don't affect response
+- Registered in global `ConfigModule`
+
+#### 3. Global Exception Filter
+Created at `src/filters/all-exceptions.filter.ts`
+
+**Features:**
+- Catches ALL exceptions (not just HttpException)
+- Logs errors with structured context
+- Transforms any exception to `WError[]` format
+- Integrates with `ErrorNotificationService`
+- Registered in `app.module.ts` via `APP_FILTER`
+
+**Registration in app.module.ts:**
+```typescript
+{
+  provide: APP_FILTER,
+  useFactory: (errorNotificationService: ErrorNotificationService) => {
+    return new AllExceptionsFilter(errorNotificationService);
+  },
+  inject: [ErrorNotificationService],
+},
+```
+
+### Phase 2: New Controllers ✅ COMPLETED
+
+The infrastructure is now in place and will automatically:
+1. Catch any unhandled exceptions in new controllers
+2. Convert them to the `WError[]` format
+3. Log them with full context
+4. Send email notifications for 5xx errors on critical paths
+
+**New controllers can use the custom exceptions directly:**
+```typescript
+@Controller('api/v1/new-feature')
+export class NewFeatureController {
+  @Get(':id')
+  async getItem(@Param('id') id: string) {
+    const item = await this.service.find(id);
+    if (!item) {
+      // Uses custom exception - will be caught by global filter
+      throw new ProductNotFoundException(id);
+    }
+    return item;
+  }
+  // No try/catch needed - global filter handles all errors
+}
+```
+
+---
+
+### Remaining Work (Phases 3-4)
+
+#### Phase 3: Gradual Controller Migration
+- [ ] Migrate `CategoryController` to use custom exceptions
+- [ ] Migrate `PrinterGroupController` to use custom exceptions
+- [ ] Migrate `ProductController` to use custom exceptions
+- [ ] Migrate `ModifierController` to use custom exceptions
+- [ ] Migrate `OrderController` - remove manual `SendFailureNoticeOnErrorCatch`
+- [ ] Migrate `StoreCreditController` to use custom exceptions
+
+#### Phase 4: Service Layer Refactoring
+- [ ] Refactor `OrderManagerService` to throw exceptions instead of returning error objects
+- [ ] Remove `ResponseWithStatusCode` wrapper pattern
+- [ ] Update all service callers to handle exceptions
+
+---
+
+### File Summary
+
+| Path | Description |
+|------|-------------|
+| `src/exceptions/index.ts` | Barrel export |
+| `src/exceptions/order.exceptions.ts` | Order domain exceptions |
+| `src/exceptions/catalog.exceptions.ts` | Catalog domain exceptions |
+| `src/exceptions/payment.exceptions.ts` | Payment domain exceptions |
+| `src/config/error-notification/error-notification.service.ts` | Email notification service |
+| `src/filters/all-exceptions.filter.ts` | Global exception filter |
+| `src/filters/index.ts` | Filter barrel export |
+
