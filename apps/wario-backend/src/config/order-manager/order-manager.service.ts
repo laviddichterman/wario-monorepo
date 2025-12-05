@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 
 import { UTCDate } from '@date-fns/utc';
-import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   addHours,
@@ -102,7 +102,7 @@ const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
 };
 
 @Injectable()
-export class OrderManagerService implements OnModuleInit {
+export class OrderManagerService {
   private readonly logger = new Logger(OrderManagerService.name);
 
   constructor(
@@ -121,37 +121,6 @@ export class OrderManagerService implements OnModuleInit {
     @Inject(forwardRef(() => SocketIoService))
     private socketIoService: SocketIoService,
   ) { }
-
-  onModuleInit() {
-    this.Bootstrap();
-  }
-
-  Bootstrap = () => {
-    this.logger.log('Order Manager Bootstrap');
-
-    const _SEND_ORDER_INTERVAL = setInterval(() => {
-      void this.SendOrders();
-    }, 60000);
-
-    const _CLEAR_OLD_ORDERS_INTERVAL = setInterval(
-      () => {
-        void this.ClearPastOrders();
-      },
-      1000 * 60 * 60 * 24,
-    ); // every 24 hours
-
-    if (this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P) {
-      const _QUERY_3P_ORDERS = setInterval(() => {
-        void this.Query3pOrders();
-      }, 35000);
-      this.logger.log(
-        `Set job to query for 3rd Party orders at square location: ${this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P}.`,
-      );
-    } else {
-      this.logger.warn('No value set for SQUARE_LOCATION_3P, skipping polling for 3p orders.');
-    }
-    this.logger.log('Order Manager Bootstrap completed.');
-  };
 
   // Helper methods (private)
   private CreateExternalConfirmationEmail = async (order: WOrderInstance) => {
@@ -582,7 +551,7 @@ export class OrderManagerService implements OnModuleInit {
     return 'DD';
   };
 
-  private ClearPastOrders = async () => {
+  ClearPastOrders = async () => {
     try {
       const timeSpanAgoEnd = subDays(new UTCDate(), 1);
       const timeSpanAgoStart = subDays(timeSpanAgoEnd, 1);
@@ -643,7 +612,7 @@ export class OrderManagerService implements OnModuleInit {
     }
   };
 
-  private Query3pOrders = async () => {
+  Query3pOrders = async () => {
     try {
       const timeSpanAgo = subMinutes(new UTCDate(), 10);
       const recentlyUpdatedOrdersResponse = await this.squareService.SearchOrders(
@@ -784,7 +753,7 @@ export class OrderManagerService implements OnModuleInit {
     }
   };
 
-  private SendOrders = async () => {
+  SendOrders = async () => {
     const idempotencyKey = crypto.randomBytes(22).toString('hex');
     const now = Date.now();
     const endOfRange = this.GetEndOfSendingRange(now);

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,10 +15,13 @@ import { CatalogModule } from './models/catalog/catalog.module';
 import { OrdersModule } from './models/orders/orders.module';
 import { QueryModule } from './models/query/query.module';
 import { SettingsModule } from './models/settings/settings.module';
+import { TasksModule } from './tasks/tasks.module';
+
 
 @Module({
   imports: [
     NestConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       useFactory: () => {
         const DBTABLE = process.env.DBTABLE || '';
@@ -39,6 +43,7 @@ import { SettingsModule } from './models/settings/settings.module';
     ConfigModule,
     ControllersModule,
     AuthModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [
