@@ -295,36 +295,38 @@ Each new service should have:
   - [x] Update module imports
   - [x] Verify tests pass
 
-- [ ] Phase 2: Extract CatalogCategoryService
-  - [ ] Create `catalog-category.module.ts` and `catalog-category.service.ts`
-  - [ ] Move 3 functions
-  - [ ] Update `CatalogProviderService` to use `CatalogCategoryService`
-  - [ ] Update module imports
-  - [ ] Verify tests pass
+- [x] Phase 2: Extract CatalogCategoryService
+  - [x] Create `catalog-category.service.ts`
+  - [x] Move 3 functions
+  - [x] Update `CatalogProviderService` to use `CatalogCategoryService`
+  - [x] Update module imports
+  - [x] Verify build passes
 
-- [ ] Phase 3: Extract CatalogPrinterGroupService
-  - [ ] Create `catalog-printer-group.module.ts` and `catalog-printer-group.service.ts`
-  - [ ] Move 4 functions
-  - [ ] Update `CatalogProviderService` to use `CatalogPrinterGroupService`
-  - [ ] Update module imports
-  - [ ] Verify tests pass
+- [x] Phase 3: Extract CatalogPrinterGroupService
+  - [x] Create `catalog-printer-group.service.ts`
+  - [x] Move 4 functions
+  - [x] Update `CatalogProviderService` to use `CatalogPrinterGroupService`
+  - [x] Update module imports
+  - [x] Verify build passes
 
-- [ ] Phase 4: Extract CatalogModifierService
-  - [ ] Create `catalog-modifier.module.ts` and `catalog-modifier.service.ts`
-  - [ ] Move 8 functions
-  - [ ] Update `CatalogProviderService` to use `CatalogModifierService`
-  - [ ] Update module imports
-  - [ ] Verify tests pass
+- [x] Phase 4: Extract CatalogModifierService
+  - [x] Create `catalog-modifier.service.ts`
+  - [x] Move 8 functions
+  - [x] Update `CatalogProviderService` to use `CatalogModifierService`
+  - [x] Update `ModifierController` to use `CatalogModifierService`
+  - [x] Verify build passes
 
-- [ ] Phase 5: Extract CatalogProductService
-  - [ ] Create `catalog-product.module.ts` and `catalog-product.service.ts`
-  - [ ] Move 11 functions
-  - [ ] Update `CatalogProviderService` to use `CatalogProductService`
-  - [ ] Update module imports
-  - [ ] Verify tests pass
+- [x] Phase 5: Extract CatalogProductService
+  - [x] Create `catalog-product.service.ts`
+  - [x] Move 11 functions (CRUD + helpers)
+  - [x] Move `LocationsConsidering3pFlag` and `ValidateProductModifiersFunctionsCategoriesPrinterGroups`
+  - [x] Update `CatalogProviderService` to use `CatalogProductService`
+  - [x] Update `ProductController` to use `CatalogProductService`
+  - [x] Update `CatalogCategoryService` to use `CatalogProductService.BatchDeleteProduct`
+  - [x] Verify build passes
 
 - [ ] Phase 6: Extract CatalogSquareSyncService
-  - [ ] Create `catalog-square-sync.module.ts` and `catalog-square-sync.service.ts`
+  - [ ] Create `catalog-square-sync.service.ts`
   - [ ] Move 6 functions
   - [ ] Update `CatalogProviderService.Bootstrap` to use `CatalogSquareSyncService`
   - [ ] Update module imports
@@ -339,4 +341,5 @@ Each new service should have:
 
 ## Status
 
-**Proposed** - Ready for implementation when prioritized.
+**In Progress** - Phases 1-5 completed. Phase 6 (CatalogSquareSyncService) pending.
+

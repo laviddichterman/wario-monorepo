@@ -4,8 +4,13 @@ import { CatalogModule } from '../models/catalog/catalog.module';
 import { OrdersModule } from '../models/orders/orders.module';
 import { SettingsModule } from '../models/settings/settings.module';
 
+import { CatalogCategoryService } from './catalog-provider/catalog-category.service';
 import { CatalogFunctionService } from './catalog-provider/catalog-function.service';
+import { CatalogModifierService } from './catalog-provider/catalog-modifier.service';
+import { CatalogPrinterGroupService } from './catalog-provider/catalog-printer-group.service';
+import { CatalogProductService } from './catalog-provider/catalog-product.service';
 import { CatalogProviderService } from './catalog-provider/catalog-provider.service';
+import { CatalogSquareSyncService } from './catalog-provider/catalog-square-sync.service';
 import { DataProviderService } from './data-provider/data-provider.service';
 import { DatabaseManagerService } from './database-manager/database-manager.service';
 import { ErrorNotificationService } from './error-notification/error-notification.service';
@@ -27,6 +32,11 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     DataProviderService,
     CatalogProviderService,
     CatalogFunctionService,
+    CatalogCategoryService,
+    CatalogPrinterGroupService,
+    CatalogModifierService,
+    CatalogProductService,
+    CatalogSquareSyncService,
     ErrorNotificationService,
     OrderCalendarService,
     OrderManagerService,
@@ -44,6 +54,11 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     DataProviderService,
     CatalogProviderService,
     CatalogFunctionService,
+    CatalogCategoryService,
+    CatalogPrinterGroupService,
+    CatalogModifierService,
+    CatalogProductService,
+    CatalogSquareSyncService,
     ErrorNotificationService,
     OrderCalendarService,
     OrderManagerService,

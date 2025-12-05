@@ -1,15 +1,12 @@
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
+
 import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { chunk } from 'es-toolkit/compat';
 import { FilterQuery, Model } from 'mongoose';
-import { CatalogIdMapping, CatalogObject } from 'square';
+import { CatalogObject } from 'square';
 
 import {
   AbstractExpressionModifierPlacementExpression,
   CatalogGenerator,
-  CreateProductBatchRequest,
-  DeletePrinterGroupRequest,
   FindHasAnyModifierExpressionsForMTID,
   FindModifierPlacementExpressionsForMTID,
   ICatalog,
@@ -17,7 +14,6 @@ import {
   ICategory,
   IOption,
   IOptionType,
-  IOptionTypeDisplayFlags,
   IProduct,
   IProductInstance,
   IProductInstanceFunction,
@@ -28,15 +24,8 @@ import {
   RecordProductInstanceFunctions,
   ReduceArrayToMapByKey,
   SEMVER,
-  UncommittedIProduct,
-  UncommittedIProductInstance,
-  UpdateIProductRequest,
-  UpdateIProductUpdateIProductInstance,
-  UpdateProductBatchRequest,
-  UpsertProductBatchRequest
 } from '@wcp/wario-shared';
 
-import { IsSetOfUniqueStrings } from '../../utils/utils';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { SocketIoService } from '../socket-io/socket-io.service';
 import {
@@ -45,76 +34,29 @@ import {
   GetSquareExternalIds,
   GetSquareIdIndexFromExternalIds,
   ICatalogContext,
-  IdMappingsToExternalIds,
-  ModifierTypeToSquareCatalogObject,
-  PrinterGroupToSquareCatalogObjectPlusDummyProduct,
-  ProductInstanceToSquareCatalogObject,
-  ProductInstanceUpdateMergeExternalIds,
-  ValidateModifiersForInstance,
 } from '../square-wario-bridge';
 import { SquareService } from '../square/square.service';
 
 import { CatalogFunctionService } from './catalog-function.service';
+import { CatalogModifierService } from './catalog-modifier.service';
+import { CatalogPrinterGroupService } from './catalog-printer-group.service';
+import { CatalogProductService } from './catalog-product.service';
+import {
+  UncommitedOption,
+  UpdateModifierOptionProps,
+  UpdateModifierTypeProps,
+  UpdatePrinterGroupProps,
+} from './catalog.types';
 
-function isUpdateProduct(batch: CreateProductBatchRequest | UpdateProductBatchRequest): batch is UpdateProductBatchRequest {
-  return 'product' in batch && 'id' in batch.product;
-}
-function isUpdateProductInstance(
-  instance: UncommittedIProductInstance | UpdateIProductUpdateIProductInstance): instance is UpdateIProductUpdateIProductInstance {
-  return 'id' in instance;
-}
+
 const SUPPRESS_SQUARE_SYNC =
   process.env.WARIO_SUPPRESS_SQUARE_INIT_SYNC === '1' || process.env.WARIO_SUPPRESS_SQUARE_INIT_SYNC === 'true';
 const FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD =
   process.env.WARIO_FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD === '1' ||
   process.env.WARIO_SUPPRESS_SQUARE_INIT_SYNC === 'true';
-const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
-  ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
-  : 25;
 
-const ValidateProductModifiersFunctionsCategoriesPrinterGroups = function (
-  modifiers: { mtid: string; enable: string | null }[],
-  category_ids: string[],
-  printer_group_ids: string[],
-  catalog: CatalogProviderService,
-) {
-  const found_all_modifiers = modifiers
-    .map(
-      (entry) =>
-        catalog.ModifierTypes.some((x) => x.id === entry.mtid) &&
-        (entry.enable === null || Object.hasOwn(catalog.ProductInstanceFunctions, entry.enable)),
-    )
-    .every((x) => x);
-  const found_all_categories = category_ids.map((cid) => Object.hasOwn(catalog.Categories, cid)).every((x) => x);
-  const found_all_printer_groups = printer_group_ids
-    .map((pgid) => Object.hasOwn(catalog.PrinterGroups, pgid))
-    .every((x) => x);
-  return found_all_categories && found_all_modifiers && found_all_printer_groups;
-};
 
-type UpdateProductInstanceProps = {
-  piid: string;
-  product: Pick<IProduct, 'price' | 'modifiers' | 'printerGroup' | 'disabled' | 'displayFlags'>;
-  productInstance: Partial<Omit<IProductInstance, 'id' | 'productId'>>;
-};
 
-type UpdateModifierTypeProps = {
-  id: string;
-  modifierType: Partial<Omit<IOptionType, 'id'>>;
-};
-
-type UpdatePrinterGroupProps = {
-  id: string;
-  printerGroup: Partial<Omit<PrinterGroup, 'id'>>;
-};
-
-type UpdateModifierOptionProps = {
-  id: string;
-  modifierTypeId: string;
-  modifierOption: Partial<Omit<IOption, 'id' | 'modifierTypeId'>>;
-};
-export type UncommitedOption = Omit<IOption, 'modifierTypeId' | 'id'>;
-export type UpsertOption = (Partial<UncommitedOption> & Pick<IOption, 'id'>) | UncommitedOption;
 
 @Injectable()
 export class CatalogProviderService implements OnModuleInit, ICatalogContext {
@@ -153,6 +95,12 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private socketIoService: SocketIoService,
     @Inject(forwardRef(() => CatalogFunctionService))
     private functionService: CatalogFunctionService,
+    @Inject(forwardRef(() => CatalogPrinterGroupService))
+    private catalogPrinterGroupService: CatalogPrinterGroupService,
+    @Inject(forwardRef(() => CatalogModifierService))
+    private catalogModifierService: CatalogModifierService,
+    @Inject(forwardRef(() => CatalogProductService))
+    private catalogProductService: CatalogProductService,
   ) {
     this.apiver = { major: 0, minor: 0, patch: 0 };
     this.requireSquareRebuild = FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD;
@@ -333,14 +281,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.socketIoService.EmitCatalog(this.catalog);
   };
 
-  private LocationsConsidering3pFlag = (is3p: boolean) => [
-    this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
-    ...(is3p && this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P
-      ? [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P]
-      : [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION]),
-  ];
 
-  private BatchDeleteCatalogObjectsFromExternalIds = async (externalIds: KeyValue[]) => {
+
+  BatchDeleteCatalogObjectsFromExternalIds = async (externalIds: KeyValue[]) => {
     const squareKV = GetSquareExternalIds(externalIds);
     if (squareKV.length > 0) {
       this.logger.debug(`Removing from square... ${squareKV.map((x) => `${x.key}: ${x.value}`).join(', ')}`);
@@ -374,7 +317,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
           }
         });
         if (missingSquareCatalogObjectBatches.length > 0) {
-          await this.BatchUpdatePrinterGroup(missingSquareCatalogObjectBatches);
+          await this.catalogPrinterGroupService.BatchUpdatePrinterGroup(missingSquareCatalogObjectBatches);
         }
       }
     }
@@ -386,11 +329,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
           GetSquareIdIndexFromExternalIds(pg.externalIDs, 'ITEM_VARIATION') === -1,
       )
       .map((pg) => ({ id: pg.id, printerGroup: {} }));
-    return batches.length > 0 ? await this.BatchUpdatePrinterGroup(batches) : null;
+    return batches.length > 0 ? await this.catalogPrinterGroupService.BatchUpdatePrinterGroup(batches) : null;
   };
 
   private CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded = async () => {
-    const updatedModifierTypeIds: string[] = [];
+    // const updatedModifierTypeIds: string[] = [];
     const squareCatalogObjectIds = Object.values(this.Catalog.modifiers)
       .map((modifierTypeEntry) => GetSquareExternalIds(modifierTypeEntry.modifierType.externalIDs).map((x) => x.value))
       .flat();
@@ -423,43 +366,36 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
             );
           });
         if (missingSquareCatalogObjectBatches.length > 0) {
-          const bulkWriteResult = await this.wOptionModel.bulkWrite(
-            optionUpdates.map((o) => ({
-              updateOne: {
-                filter: { id: o.id },
-                update: { externalIDs: o.externalIDs },
-                upsert: true,
-              },
+          await this.catalogModifierService.BatchUpdateModifierType(missingSquareCatalogObjectBatches, false, false);
+        }
+        if (optionUpdates.length > 0) {
+          await this.catalogModifierService.BatchUpdateModifierOption(
+            optionUpdates.map((x) => ({
+              id: x.id,
+              modifierTypeId: this.Catalog.options[x.id].modifierTypeId,
+              modifierOption: { externalIDs: x.externalIDs },
             })),
           );
-          this.logger.log(`Bulk upsert of WOptionModel successful: ${JSON.stringify(bulkWriteResult)}`);
-          await this.SyncOptions();
-          this.RecomputeCatalog();
-          const updated = await this.BatchUpdateModifierType(missingSquareCatalogObjectBatches, true, false);
-          updatedModifierTypeIds.push(...updated.filter((x) => x !== null).map((x) => x.id));
-          this.RecomputeCatalog();
         }
       }
     }
-    const missingSquareIdBatches = Object.values(this.Catalog.modifiers)
+    const batches = Object.values(this.Catalog.modifiers)
       .filter(
         (x) =>
           GetSquareIdIndexFromExternalIds(x.modifierType.externalIDs, 'MODIFIER_LIST') === -1 ||
           x.options.reduce(
             (acc, oId) =>
-              acc || GetSquareIdIndexFromExternalIds(this.Catalog.options[oId].externalIDs, 'MODIFIER_WHOLE') === -1,
+              acc || GetSquareIdIndexFromExternalIds(this.Catalog.options[oId].externalIDs, 'MODIFIER') === -1,
             false,
           ),
       )
       .map((x) => ({ id: x.modifierType.id, modifierType: {} }));
-    if (missingSquareIdBatches.length > 0) {
-      updatedModifierTypeIds.push(
-        ...(await this.BatchUpdateModifierType(missingSquareIdBatches, true, false))
-          .filter((x) => x !== null)
-          .map((x) => x.id),
-      );
+
+    if (batches.length > 0) {
+      const result = await this.catalogModifierService.BatchUpdateModifierType(batches, false, false);
+      return result.filter((x): x is IOptionType => x !== null).map((x) => x.id);
     }
-    return updatedModifierTypeIds;
+    return [];
   };
 
   CheckAllProductsHaveSquareIdsAndFixIfNeeded = async () => {
@@ -499,7 +435,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
           )
           .flat();
         if (missingSquareCatalogObjectBatches.length > 0) {
-          await this.BatchUpdateProductInstance(missingSquareCatalogObjectBatches, true);
+          await this.catalogProductService.BatchUpdateProductInstance(missingSquareCatalogObjectBatches, true);
           await this.SyncProductInstances();
           this.RecomputeCatalog();
         }
@@ -528,7 +464,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       )
       .flat();
     if (batches.length > 0) {
-      await this.BatchUpdateProductInstance(batches, true);
+      await this.catalogProductService.BatchUpdateProductInstance(batches, true);
       await this.SyncProductInstances();
       this.RecomputeCatalog();
     }
@@ -539,12 +475,12 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       id: pg.id,
       printerGroup: {},
     }));
-    await this.BatchUpdatePrinterGroup(printerGroupUpdates);
+    await this.catalogPrinterGroupService.BatchUpdatePrinterGroup(printerGroupUpdates);
     const modifierTypeUpdates = Object.values(this.Catalog.modifiers).map((x) => ({
       id: x.modifierType.id,
       modifierType: {},
     }));
-    await this.BatchUpdateModifierType(modifierTypeUpdates, true, true);
+    await this.catalogModifierService.BatchUpdateModifierType(modifierTypeUpdates, true, true);
     void this.SyncModifierTypes();
     void this.SyncOptions();
     void this.SyncProductInstances();
@@ -601,207 +537,13 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.log(`Finished Bootstrap of CatalogProvider`);
   };
 
-  CreatePrinterGroup = async (printerGroup: Omit<PrinterGroup, 'id'>) => {
-    this.logger.log(`Creating Printer Group: ${JSON.stringify(printerGroup)}`);
-    const upsertResponse = await this.squareService.BatchUpsertCatalogObjects([
-      {
-        objects: PrinterGroupToSquareCatalogObjectPlusDummyProduct(
-          [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE], // this ONLY goes to the alternate location since we can't purchase messages
-          printerGroup,
-          [],
-          '',
-        ),
-      },
-    ]);
-    if (!upsertResponse.success) {
-      this.logger.error(`failed to add square category, got errors: ${JSON.stringify(upsertResponse.error)}`);
-      return null;
-    }
 
-    const doc = new this.printerGroupModel({
-      ...printerGroup,
-      externalIDs: [...printerGroup.externalIDs, ...IdMappingsToExternalIds(upsertResponse.result.idMappings, '')],
-    });
-    await doc.save();
-    await this.SyncPrinterGroups();
-    return doc.toObject();
-  };
 
-  BatchUpdatePrinterGroup = async (batches: UpdatePrinterGroupProps[]): Promise<(PrinterGroup | null)[]> => {
-    this.logger.log(
-      `Updating printer group(s) ${batches.map((x) => `ID: ${x.id}, changes: ${JSON.stringify(x.printerGroup)}`).join(', ')}`,
-    );
 
-    const oldPGs = batches.map((b) => this.printerGroups[b.id]);
-    const newExternalIdses = batches.map((b, i) => b.printerGroup.externalIDs ?? oldPGs[i].externalIDs);
-    const existingSquareExternalIds = newExternalIdses.map((ids) => GetSquareExternalIds(ids)).flat();
-    let existingSquareObjects: CatalogObject[] = [];
-    if (existingSquareExternalIds.length > 0) {
-      const batchRetrieveCatalogObjectsResponse = await this.squareService.BatchRetrieveCatalogObjects(
-        existingSquareExternalIds.map((x) => x.value),
-        false,
-      );
-      if (!batchRetrieveCatalogObjectsResponse.success) {
-        this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
-        );
-        return batches.map((_) => null);
-      }
-      existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
-    }
 
-    const catalogObjects = batches.map((b, i) =>
-      PrinterGroupToSquareCatalogObjectPlusDummyProduct(
-        [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE], // message only needs to go to the alternate location
-        { ...oldPGs[i], ...b.printerGroup },
-        existingSquareObjects,
-        ('000' + i).slice(-3),
-      ),
-    );
-    const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-      catalogObjects.map((x) => ({ objects: x })),
-    );
-    if (!upsertResponse.success) {
-      this.logger.error(`Failed to update square categories, got errors: ${JSON.stringify(upsertResponse.error)}`);
-      return batches.map((_) => null);
-    }
 
-    const mappings = upsertResponse.result.idMappings;
 
-    const updated = await Promise.all(
-      batches.map(async (b, i) => {
-        const doc = await this.printerGroupModel
-          .findByIdAndUpdate(
-            b.id,
-            {
-              ...b.printerGroup,
-              externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
-            },
-            { new: true },
-          )
-          .exec();
-        if (!doc) {
-          return null;
-        }
-        return doc.toObject();
-      }),
-    );
 
-    void this.SyncPrinterGroups();
-    return updated;
-  };
-
-  UpdatePrinterGroup = async (props: UpdatePrinterGroupProps) => {
-    return (await this.BatchUpdatePrinterGroup([props]))[0];
-  };
-
-  DeletePrinterGroup = async (request: DeletePrinterGroupRequest & { id: string }) => {
-    this.logger.debug(`Removing Printer Group ${request.id}`);
-    const doc = await this.printerGroupModel.findByIdAndDelete(request.id).exec();
-    if (!doc) {
-      return null;
-    }
-
-    // NOTE: this removes the category from the Square ITEMs as well
-    await this.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
-
-    await this.SyncPrinterGroups();
-
-    // needs to write batch update product
-    await this.UpdateProductsWithConstraint(
-      { printerGroup: request.id },
-      { printerGroup: request.reassign ? request.printerGroup : null },
-      false,
-    );
-    return doc.toObject();
-  };
-
-  CreateCategory = async (category: Omit<ICategory, 'id'>) => {
-    const doc = new this.wCategoryModel(category);
-    await doc.save();
-    await this.SyncCategories();
-    this.RecomputeCatalog();
-    this.socketIoService.EmitCatalog(this.catalog);
-    return doc.toObject();
-  };
-
-  // TODO: support Partial update
-  UpdateCategory = async (category_id: string, category: Partial<Omit<ICategory, 'id'>>) => {
-    if (!Object.hasOwn(this.categories, category_id)) {
-      // not found
-      return null;
-    }
-    let cycle_update_promise: Promise<unknown> | null = null;
-    if (this.categories[category_id].parent_id !== category.parent_id && category.parent_id) {
-      // need to check for potential cycle
-      let cur: string | null = category.parent_id;
-      while (cur && this.categories[cur].parent_id !== category_id) {
-        cur = this.categories[cur].parent_id;
-      }
-      // if the cursor is not empty/null/blank then we stopped because we found the cycle
-      if (cur) {
-        this.logger.debug(
-          `In changing ${category_id}'s parent_id to ${category.parent_id}, found cycle at ${cur}, blanking out ${cur}'s parent_id to prevent cycle.`,
-        );
-        // this assignment to #categories seems suspect
-        this.categories[cur].parent_id = null;
-        cycle_update_promise = this.wCategoryModel.findByIdAndUpdate(cur, { parent_id: null }, { new: true }).exec();
-      }
-    }
-    const response = await this.wCategoryModel.findByIdAndUpdate(category_id, category, { new: true }).exec();
-    if (cycle_update_promise) {
-      await cycle_update_promise;
-    }
-    if (!response) {
-      return null;
-    }
-    await this.SyncCategories();
-    this.RecomputeCatalogAndEmit();
-    // is this going to still be valid after the Sync above?
-    return response.toObject();
-  };
-
-  DeleteCategory = async (category_id: string, delete_contained_products: boolean) => {
-    this.logger.debug(`Removing ${category_id}`);
-    // first make sure this isn't used in a fulfillment
-    Object.values(this.dataProviderService.Fulfillments).map((x) => {
-      if (x.menuBaseCategoryId === category_id) {
-        throw Error(`CategoryId: ${category_id} found as Menu Base for FulfillmentId: ${x.id} (${x.displayName})`);
-      }
-      if (x.orderBaseCategoryId === category_id) {
-        throw Error(`CategoryId: ${category_id} found as Order Base for FulfillmentId: ${x.id} (${x.displayName})`);
-      }
-      if (x.orderSupplementaryCategoryId === category_id) {
-        throw Error(
-          `CategoryId: ${category_id} found as Order Supplementary for FulfillmentId: ${x.id} (${x.displayName})`,
-        );
-      }
-    });
-
-    const doc = await this.wCategoryModel.findByIdAndDelete(category_id).exec();
-    if (!doc) {
-      return null;
-    }
-    await Promise.all(
-      Object.values(this.categories).map(async (cat) => {
-        if (cat.parent_id && cat.parent_id === category_id) {
-          await this.wCategoryModel.findByIdAndUpdate(cat.id, { parent_id: null }, { new: true }).exec();
-        }
-      }),
-    );
-    if (delete_contained_products) {
-      await this.BatchDeleteProduct(this.catalog.categories[category_id].products, true);
-    } else {
-      const products_update = await this.wProductModel.updateMany({}, { $pull: { category_ids: category_id } }).exec();
-      if (products_update.modifiedCount > 0) {
-        this.logger.debug(`Removed Category ID from ${products_update.modifiedCount.toString()} products.`);
-        await this.SyncProducts();
-      }
-    }
-    await this.SyncCategories();
-    this.RecomputeCatalogAndEmit();
-    return doc.toObject();
-  };
 
   CreateModifierType = async (modifierType: Omit<IOptionType, 'id'>, options: UncommitedOption[]) => {
     options.forEach(opt => {
@@ -825,7 +567,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       })));
       await this.SyncOptions();
       this.RecomputeCatalog();
-      await this.UpdateModifierType({ id: modifierTypeId, modifierType: {} });
+      await this.catalogModifierService.UpdateModifierType({ id: modifierTypeId, modifierType: {} });
     }
     this.RecomputeCatalogAndEmit();
     return doc.toObject();
@@ -836,11 +578,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     const products = Object.values(this.products).filter((p) => p.modifiers.some((m) => mtids.includes(m.mtid)));
     if (products.length > 0) {
       // update them
-      await this.BatchUpsertProduct(products.map((p) => ({ product: p, instances: [] })));
+      await this.catalogProductService.BatchUpsertProduct(products.map((p) => ({ product: p, instances: [] })));
     }
   };
 
-  UpdateProductsWithConstraint = async (
+  public UpdateProductsWithConstraint = async (
     product_query: FilterQuery<IProduct>,
     update: Partial<IProduct>,
     suppress_catalog_recomputation: boolean,
@@ -851,140 +593,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         product: { ...p.toObject(), ...update },
         instances: [],
       }));
-      await this.BatchUpsertProduct(batches);
+      await this.catalogProductService.BatchUpsertProduct(batches);
     }
     if (!suppress_catalog_recomputation) {
       this.RecomputeCatalogAndEmit();
     }
-  };
-
-  BatchUpdateModifierType = async (
-    batches: UpdateModifierTypeProps[],
-    suppressFullRecomputation: boolean,
-    updateModifierOptionsAndProducts: boolean,
-  ): Promise<(IOptionType | null)[]> => {
-    this.logger.log(
-      `Updating modifier type(s) ${batches.map((x) => `ID: ${x.id}, changes: ${JSON.stringify(x.modifierType)}`).join(', ')}`,
-    );
-
-    const batchData = batches.map((b) => {
-      const oldMT = this.modifier_types.find((x) => x.id === b.id) as IOptionType;
-      return {
-        batch: b,
-        oldMT,
-        updatedModifierType: { ...oldMT, ...b.modifierType },
-        updatedOptions: this.options
-          .filter((o) => o.modifierTypeId === b.id)
-          .map((o) => ({ ...o, ...(b.modifierType.displayFlags as IOptionTypeDisplayFlags) })),
-        updateModifierOptionsAndProducts,
-      };
-    });
-
-    const existingSquareExternalIds: string[] = [];
-    batchData.forEach((b) => {
-      existingSquareExternalIds.push(...GetSquareExternalIds(b.oldMT.externalIDs).map((x) => x.value));
-      existingSquareExternalIds.push(
-        ...b.updatedOptions.flatMap((o) => GetSquareExternalIds(o.externalIDs)).map((x) => x.value),
-      );
-    });
-
-    let existingSquareObjects: CatalogObject[] = [];
-    if (existingSquareExternalIds.length > 0) {
-      const batchRetrieveCatalogObjectsResponse = await this.squareService.BatchRetrieveCatalogObjects(
-        existingSquareExternalIds,
-        false,
-      );
-      if (!batchRetrieveCatalogObjectsResponse.success) {
-        this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
-        );
-        return batches.map((_) => null);
-      }
-      existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
-    }
-
-    const catalogObjectsForUpsert: CatalogObject[] = [];
-    batchData.forEach((b, i) => {
-      catalogObjectsForUpsert.push(
-        ModifierTypeToSquareCatalogObject(
-          this.LocationsConsidering3pFlag(b.updatedModifierType.displayFlags.is3p),
-          b.updatedModifierType,
-          b.updatedOptions,
-          existingSquareObjects,
-          ('000' + i).slice(-3),
-        ),
-      );
-    });
-
-    const mappings: CatalogIdMapping[] = [];
-    if (catalogObjectsForUpsert.length > 0) {
-      const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-        chunk(catalogObjectsForUpsert, SQUARE_BATCH_CHUNK_SIZE).map((x) => ({
-          objects: x,
-        })),
-      );
-      if (!upsertResponse.success) {
-        const errorDetail = `Failed to update square modifier options, got errors: ${JSON.stringify(upsertResponse.error)}`;
-        this.logger.error(errorDetail);
-        throw Error(errorDetail);
-      }
-      mappings.push(...(upsertResponse.result.idMappings ?? []));
-    }
-
-    const updatedWarioObjects = batchData.map((batch, batchId) => {
-      return {
-        modifierType: {
-          ...batch.updatedModifierType,
-          externalIDs: [
-            ...batch.updatedModifierType.externalIDs,
-            ...IdMappingsToExternalIds(mappings, ('000' + batchId).slice(-3)),
-          ],
-        },
-        options: batch.updatedOptions.map((opt, i) => ({
-          ...opt,
-          externalIDs: [
-            ...opt.externalIDs,
-            ...IdMappingsToExternalIds(mappings, `${('000' + batchId).slice(-3)}S${('000' + i).slice(-3)}S`),
-          ],
-        })),
-      };
-    });
-
-    const _updatedModifierOptions = await Promise.all(
-      updatedWarioObjects
-        .flatMap((b) => b.options)
-        .map(async (b) => {
-          return (await this.wOptionModel.findByIdAndUpdate(b.id, b, { new: true }))?.toObject() ?? null;
-        }),
-    );
-
-    const updatedModifierTypes = await Promise.all(
-      updatedWarioObjects.map(async (b) => {
-        return (
-          (
-            await this.wOptionTypeModel.findByIdAndUpdate(b.modifierType.id, b.modifierType, { new: true })
-          )?.toObject() ?? null
-        );
-      }),
-    );
-
-    await this.SyncModifierTypes();
-    await this.SyncOptions();
-
-    if (!suppressFullRecomputation) {
-      this.RecomputeCatalog();
-      await this.UpdateProductsReferencingModifierTypeId(
-        batchData.filter((x) => x.updateModifierOptionsAndProducts).map((x) => x.updatedModifierType.id),
-      );
-      await this.SyncProductInstances();
-
-      this.RecomputeCatalogAndEmit();
-    }
-    return updatedModifierTypes;
-  };
-
-  UpdateModifierType = async (props: UpdateModifierTypeProps) => {
-    return (await this.BatchUpdateModifierType([props], false, false))[0];
   };
 
   DeleteModifierType = async (mt_id: string) => {
@@ -1001,17 +614,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
     await Promise.all(this.catalog.modifiers[mt_id].options.map((op) => this.DeleteModifierOption(op, true)));
 
-    const products_update = await this.wProductModel.updateMany({}, { $pull: { modifiers: { mtid: mt_id } } }).exec();
-    if (products_update.modifiedCount > 0) {
-      const product_instance_update = await this.wProductInstanceModel
-        .updateMany({}, { $pull: { modifiers: { modifierTypeId: mt_id } } })
-        .exec();
-      this.logger.debug(
-        `Removed ModifierType ID from ${products_update.modifiedCount.toString()} products, ${product_instance_update.modifiedCount.toString()} product instances.`,
-      );
-      await this.SyncProducts();
-      await this.SyncProductInstances();
-    }
+    await this.RemoveModifierTypeFromProducts(mt_id);
     // need to delete any ProductInstanceFunctions that use this MT
     await Promise.all(
       Object.values(this.product_instance_functions).map(async (pif) => {
@@ -1062,7 +665,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     await doc.save();
     await this.SyncOptions();
     this.RecomputeCatalog();
-    await this.UpdateModifierType({
+    await this.catalogModifierService.UpdateModifierType({
       id: modifierOption.modifierTypeId,
       modifierType: {},
     });
@@ -1072,156 +675,24 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   UpdateModifierOption = async (props: UpdateModifierOptionProps) => {
-    return (await this.BatchUpdateModifierOption([props]))[0];
+    return (await this.catalogModifierService.BatchUpdateModifierOption([props]))[0];
   };
 
-  BatchUpdateModifierOption = async (batches: UpdateModifierOptionProps[]) => {
-    this.logger.log(
-      `Request to update ModifierOption(s) ${batches.map((b) => `ID: ${b.id}, updates: ${JSON.stringify(b.modifierOption)}`).join(', ')}`,
-    );
-    if (!IsSetOfUniqueStrings(batches.map((b) => b.modifierTypeId))) {
-      const errorDetail = `Request for multiple option update batches from the same modifier type.`;
-      this.logger.error(errorDetail);
-      throw Error(errorDetail);
+  RemoveModifierTypeFromProducts = async (mt_id: string) => {
+    const products_update = await this.wProductModel.updateMany({}, { $pull: { modifiers: { mtid: mt_id } } }).exec();
+    if (products_update.modifiedCount > 0) {
+      const product_instance_update = await this.wProductInstanceModel
+        .updateMany({}, { $pull: { modifiers: { modifierTypeId: mt_id } } })
+        .exec();
+      this.logger.debug(
+        `Removed ModifierType ID from ${products_update.modifiedCount.toString()} products, ${product_instance_update.modifiedCount.toString()} product instances.`,
+      );
+      await this.SyncProducts();
+      await this.SyncProductInstances();
     }
-    const batchesInfo = batches.map((b) => {
-      const oldOption = this.catalog.options[b.id];
-      return {
-        batch: b,
-        oldOption,
-        modifierTypeEntry: this.catalog.modifiers[b.modifierTypeId],
-        updatedOption: { ...(oldOption as IOption), ...b.modifierOption },
-      };
-    });
+  };
 
-    const squareCatalogObjectsToDelete: string[] = [];
-    const existingSquareExternalIds: string[] = [];
-    batchesInfo.forEach((b, _i) => {
-      if (!this.ValidateOption(b.modifierTypeEntry.modifierType, b.updatedOption)) {
-        const errorDetail = `Failed validation on modifier option ${JSON.stringify(b.updatedOption)} in a single select modifier type.`;
-        this.logger.error(errorDetail);
-        throw Error(errorDetail);
-      }
-      if (b.batch.modifierOption.metadata) {
-        if (!b.batch.modifierOption.metadata.allowHeavy && b.oldOption.metadata.allowHeavy) {
-          const kv = b.updatedOption.externalIDs.splice(
-            GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_HEAVY'),
-            1,
-          )[0];
-          squareCatalogObjectsToDelete.push(kv.value);
-        }
-        if (!b.batch.modifierOption.metadata.allowLite && b.oldOption.metadata.allowLite) {
-          const kv = b.updatedOption.externalIDs.splice(
-            GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_LITE'),
-            1,
-          )[0];
-          squareCatalogObjectsToDelete.push(kv.value);
-        }
-        if (!b.batch.modifierOption.metadata.allowOTS && b.oldOption.metadata.allowOTS) {
-          const kv = b.updatedOption.externalIDs.splice(
-            GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_OTS'),
-            1,
-          )[0];
-          squareCatalogObjectsToDelete.push(kv.value);
-        }
-        if (!b.batch.modifierOption.metadata.can_split && b.oldOption.metadata.can_split) {
-          const kvL = b.updatedOption.externalIDs.splice(
-            GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_LEFT'),
-            1,
-          )[0];
-          const kvR = b.updatedOption.externalIDs.splice(
-            GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_RIGHT'),
-            1,
-          )[0];
-          squareCatalogObjectsToDelete.push(kvL.value, kvR.value);
-        }
-      }
-      existingSquareExternalIds.push(
-        ...GetSquareExternalIds(b.modifierTypeEntry.modifierType.externalIDs).map((x) => x.value),
-      );
-      existingSquareExternalIds.push(
-        ...b.modifierTypeEntry.options
-          .filter((x) => x !== b.batch.id)
-          .flatMap((oId) => GetSquareExternalIds(this.Catalog.options[oId].externalIDs))
-          .map((x) => x.value),
-      );
-      existingSquareExternalIds.push(...GetSquareExternalIds(b.updatedOption.externalIDs).map((x) => x.value));
-    });
-
-    if (squareCatalogObjectsToDelete.length > 0) {
-      this.logger.log(
-        `Deleting Square Catalog Modifiers due to ModifierOption update: ${squareCatalogObjectsToDelete.join(', ')}`,
-      );
-      await this.squareService.BatchDeleteCatalogObjects(squareCatalogObjectsToDelete);
-    }
-    let existingSquareObjects: CatalogObject[] = [];
-    if (existingSquareExternalIds.length > 0) {
-      const batchRetrieveCatalogObjectsResponse = await this.squareService.BatchRetrieveCatalogObjects(
-        existingSquareExternalIds,
-        false,
-      );
-      if (!batchRetrieveCatalogObjectsResponse.success) {
-        this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
-        );
-        return batches.map((_) => null);
-      }
-      existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
-    }
-    const catalogObjectsForUpsert: CatalogObject[] = [];
-    batchesInfo.forEach((b, i) => {
-      const options = b.modifierTypeEntry.options.map((oId) =>
-        oId === b.batch.id ? b.updatedOption : this.Catalog.options[oId],
-      );
-      catalogObjectsForUpsert.push(
-        ModifierTypeToSquareCatalogObject(
-          this.LocationsConsidering3pFlag(b.modifierTypeEntry.modifierType.displayFlags.is3p),
-          b.modifierTypeEntry.modifierType,
-          options,
-          existingSquareObjects,
-          ('000' + i).slice(-3),
-        ),
-      );
-    });
-
-    let mappings: CatalogIdMapping[] | undefined;
-
-    if (catalogObjectsForUpsert.length > 0) {
-      const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-        chunk(catalogObjectsForUpsert, SQUARE_BATCH_CHUNK_SIZE).map((x) => ({
-          objects: x,
-        })),
-      );
-      if (!upsertResponse.success) {
-        this.logger.error(`Failed to update square modifiers, got errors: ${JSON.stringify(upsertResponse.error)}`);
-        return batches.map((_) => null);
-      }
-      mappings = upsertResponse.result.idMappings;
-    }
-
-    const updated = await Promise.all(
-      batchesInfo.map(async (b, i) => {
-        const doc = await this.wOptionModel
-          .findByIdAndUpdate(
-            b.batch.id,
-            {
-              ...b.batch.modifierOption,
-              externalIDs: [
-                ...b.updatedOption.externalIDs,
-                ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3)),
-              ],
-            },
-            { new: true },
-          )
-          .exec();
-        if (!doc) {
-          return null;
-        }
-        return doc.toObject();
-      }),
-    );
-
-    const updatedOptions = batchesInfo.map((x) => x.batch.id);
+  UpdateProductInstancesForOptionChanges = async (updatedOptions: string[]) => {
     // After we've updated the modifiers, we need to rebuild all products with the said modifier option(s) since the ordinal and price might have changed
     // TODO: verify we don't need to update products that could add that modifier too, like any product class with the modifier type enabled on it
     const product_instances_to_update = await this.wProductInstanceModel
@@ -1240,16 +711,25 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       },
     }));
 
-    await this.SyncOptions();
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();
-      await this.BatchUpdateProductInstance(batchProductInstanceUpdates, true);
+      await this.catalogProductService.BatchUpdateProductInstance(batchProductInstanceUpdates, true);
       await this.SyncProductInstances();
     }
+  };
 
-    this.RecomputeCatalogAndEmit();
-
-    return updated;
+  RemoveModifierOptionFromProductInstances = async (modifierTypeId: string, mo_id: string) => {
+    const product_instance_options_delete = await this.wProductInstanceModel
+      .updateMany(
+        { 'modifiers.modifierTypeId': modifierTypeId },
+        { $pull: { 'modifiers.$.options': { optionId: mo_id } } },
+      )
+      .exec();
+    if (product_instance_options_delete.modifiedCount > 0) {
+      this.logger.debug(`Removed ${product_instance_options_delete.modifiedCount.toString()} Options from Product Instances.`);
+      // TODO: run query for any modifiers.options.length === 0
+      await this.SyncProductInstances();
+    }
   };
 
   DeleteModifierOption = async (mo_id: string, suppress_catalog_recomputation: boolean = false) => {
@@ -1262,17 +742,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     // NOTE: this removes the modifiers from the Square ITEMs and ITEM_VARIATIONs as well
     await this.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
 
-    const product_instance_options_delete = await this.wProductInstanceModel
-      .updateMany(
-        { 'modifiers.modifierTypeId': doc.modifierTypeId },
-        { $pull: { 'modifiers.$.options': { optionId: mo_id } } },
-      )
-      .exec();
-    if (product_instance_options_delete.modifiedCount > 0) {
-      this.logger.debug(`Removed ${product_instance_options_delete.modifiedCount.toString()} Options from Product Instances.`);
-      // TODO: run query for any modifiers.options.length === 0
-      await this.SyncProductInstances();
-    }
+    await this.RemoveModifierOptionFromProductInstances(doc.modifierTypeId, mo_id);
     await this.SyncOptions();
     // need to delete any ProductInstanceFunctions that use this MO
     await Promise.all(
@@ -1297,649 +767,23 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return doc.toObject();
   };
 
-  CreateProduct = async (
-    product: Omit<IProduct, 'id' | 'baseProductId'>,
-    instances: Omit<IProductInstance, 'id' | 'productId'>[],
-  ) => {
-    const result = await this.BatchUpsertProduct([{ product: product, instances }]);
-    return result ? result[0] : null;
-  };
 
-  BatchUpsertProduct = async (
-    batches: UpsertProductBatchRequest[],
-  ): Promise<{ product: IProduct; instances: IProductInstance[] }[] | null> => {
-    if (
-      !ValidateProductModifiersFunctionsCategoriesPrinterGroups(
-        batches.flatMap((x) => x.product.modifiers), // check invalid mods
-        batches.flatMap((x) => x.product.category_ids), // check invalid categories
-        batches.reduce(
-          (pgids, x) => (x.product.printerGroup ? [...pgids, x.product.printerGroup] : pgids),
-          [] satisfies string[],
-        ), // check invalid printer groups
-        this,
-      )
-    ) {
-      return null;
-    }
-    // split out the two classes of operations
-    // keep track by using indexed batches
-    const indexedBatches = batches.map((x, i) => ({ ...x, index: i }));
-    const updateBatches = indexedBatches.filter((b) => isUpdateProduct(b)) as (UpdateProductBatchRequest & {
-      index: number;
-    })[];
-    const insertBatches = indexedBatches.filter((b) => !isUpdateProduct(b)) as (CreateProductBatchRequest & {
-      index: number;
-    })[];
-    if (
-      !IsSetOfUniqueStrings(updateBatches.map((x) => x.product.id)) || //an IProduct to update can only appear once, otherwise an error is returned.
-      updateBatches.reduce((acc, b) => {
-        const updateIProductInstances = b.instances.filter((b) => isUpdateProductInstance(b)) as UpdateIProductUpdateIProductInstance[];
-        const insertInstances = b.instances.filter((b) => !isUpdateProductInstance(b)) as UncommittedIProductInstance[];
-        return (
-          acc ||
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          this.catalog.products[b.product.id] === undefined || // check product being updated exists
-          updateIProductInstances.reduce(
-            (instanceParentAcc, ins) =>
-              instanceParentAcc ||
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              this.catalog.productInstances[ins.id] === undefined || // IProductInstance being updated must exist
-              this.catalog.productInstances[ins.id].productId !== b.product.id,
-            false,
-          ) || // IProductInstance being updated must belong to its parent IProduct
-          !IsSetOfUniqueStrings(updateIProductInstances.map((x) => x.id)) || // IProductInstance being updated must only appear once in the instances array
-          updateIProductInstances.reduce(
-            (instanceAcc, ins) =>
-              !ValidateModifiersForInstance(
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                b.product.modifiers ?? this.catalog.products[b.product.id].product.modifiers ?? [],
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                this.catalog.productInstances[ins.id].modifiers ?? ins.modifiers ?? [],
-              ),
-            false,
-          ) || // for product update check product update instances have valid modifier spec
-          insertInstances.reduce(
-            (instanceAcc, ins) =>
-              instanceAcc ||
-              !ValidateModifiersForInstance(
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                b.product.modifiers ?? this.catalog.products[b.product.id].product.modifiers ?? [], ins.modifiers ?? [],
-              ),
-            false,
-          ) || // for product update check product insert instances have valid modifier spec
-          insertBatches.reduce(
-            (acc, b) =>
-              acc ||
-              b.instances.length === 0 || // check product add has at least one instance
-              b.instances.reduce(
-                (instanceAcc, ins) => instanceAcc || !ValidateModifiersForInstance(b.product.modifiers, ins.modifiers),
-                false,
-              ),
-            false,
-          )
-        ); // for product add check product instances have valid modifier spec
-      }, false)
-    ) {
-      return null;
-    }
-    // validation passed! on to the work
 
-    const catalogObjectsForUpsert: CatalogObject[] = [];
-    const existingSquareObjects: CatalogObject[] = [];
-    const existingSquareExternalIds: KeyValue[] = [];
-    // these need to be deleted from square since they were previously not hidden from POS and now they are
-    const externalIdsToDelete: KeyValue[] = [];
 
-    // gather IProducts needing update in our DB, IProductInstances needing update in our DB, and products needing upsert in the square catalog
-    const adjustedUpdateBatches = updateBatches.map((b, i) => {
-      const oldProductEntry = this.Catalog.products[b.product.id];
-      let removedModifierTypes: string[] = [];
-      let addedModifierTypes = false;
-      const adjustedPrice =
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        b.product.price && b.product.price !== oldProductEntry.product.price ? b.product.price : null;
-      const adjustedPrinterGroup = b.product.printerGroup !== oldProductEntry.product.printerGroup;
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (b.product.modifiers) {
-        const oldModifierTypes = oldProductEntry.product.modifiers.map((x) => x.mtid);
-        const newModifierTypes = b.product.modifiers.map((x) => x.mtid);
-        removedModifierTypes = oldModifierTypes.filter((x) => !newModifierTypes.includes(x));
-        addedModifierTypes = newModifierTypes.filter((x) => !oldModifierTypes.includes(x)).length > 0;
-      }
-      const mergedProduct = { ...(oldProductEntry.product as IProduct), ...(b.product as UpdateIProductRequest) };
 
-      const insertInstances = b.instances.filter((b) => !isUpdateProductInstance(b)) as UncommittedIProductInstance[];
-      const adjustedInsertInstances: Omit<IProductInstance, 'id'>[] = insertInstances.map((x) => {
-        // we need to filter these external IDs because it'll interfere with adding the new product to the catalog
-        return {
-          ...x,
-          productId: b.product.id,
-          externalIDs: GetNonSquareExternalIds(x.externalIDs),
-        };
-      });
-      // add the insert instances
-      catalogObjectsForUpsert.push(
-        ...adjustedInsertInstances
-          .filter((pi) => !pi.displayFlags.pos.hide)
-          .map((pi, k) =>
-            ProductInstanceToSquareCatalogObject(
-              this.LocationsConsidering3pFlag(mergedProduct.displayFlags.is3p),
-              mergedProduct,
-              pi,
-              mergedProduct.printerGroup ? this.printerGroups[mergedProduct.printerGroup] : null,
-              this.CatalogSelectors,
-              [],
-              ('0000000' + (i * 1000 + k)).slice(-7),
-            ),
-          ),
-      );
-      // aggregate explicit and implicit updates of product instances, and what square products might need deletion
-      const explicitUpdateInstances = b.instances.filter((b) => isUpdateProductInstance(b)) as UpdateIProductUpdateIProductInstance[];
-      const updateInstanceIds = explicitUpdateInstances.map((x) => x.id);
-      const implicitUpdateInstances: IProductInstance[] = oldProductEntry.instances
-        .filter((x) => !updateInstanceIds.includes(x))
-        .map((piId) => this.Catalog.productInstances[piId])
-        .filter(
-          (pi) =>
-            adjustedPrice !== null ||
-            adjustedPrinterGroup ||
-            addedModifierTypes ||
-            pi.modifiers.filter((mod) => removedModifierTypes.includes(mod.modifierTypeId)).length > 0,
-        )
-        .map((pi) => ({
-          ...(pi as IProductInstance),
-          modifiers: pi.modifiers.filter((x) => !removedModifierTypes.includes(x.modifierTypeId)),
-        }));
-      externalIdsToDelete.push(
-        ...explicitUpdateInstances
-          .map((pi) =>
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            !this.Catalog.productInstances[pi.id].displayFlags.pos.hide && pi.displayFlags?.pos.hide
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              ? GetSquareExternalIds(pi.externalIDs ?? this.Catalog.productInstances[pi.id].externalIDs)
-              : [],
-          )
-          .flat(),
-      );
-      const adjustedUpdatedInstances: IProductInstance[] = [
-        ...implicitUpdateInstances,
-        ...explicitUpdateInstances.map((pi) => {
-          const oldInstance = this.Catalog.productInstances[pi.id];
-          // these need to be deleted from square since they were previously not hidden from POS and now they are
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          const needToDeleteSquareCatalogItem = !oldInstance.displayFlags.pos.hide && pi.displayFlags?.pos.hide;
-          const mergedExternalIds = ProductInstanceUpdateMergeExternalIds(
-            this.Catalog.productInstances[pi.id].externalIDs,
-            pi.externalIDs,
-          );
-          const newExternalIds = needToDeleteSquareCatalogItem
-            ? GetNonSquareExternalIds(mergedExternalIds)
-            : mergedExternalIds;
-          if (needToDeleteSquareCatalogItem) {
-            externalIdsToDelete.push(...GetSquareExternalIds(mergedExternalIds));
-          }
-          return { ...(oldInstance as IProductInstance), ...pi, externalIDs: newExternalIds };
-        }),
-      ];
-      existingSquareExternalIds.push(
-        ...adjustedUpdatedInstances.map((pi) => GetSquareExternalIds(pi.externalIDs)).flat(),
-      );
-      return {
-        product: mergedProduct,
-        updateInstances: adjustedUpdatedInstances,
-        insertInstances: adjustedInsertInstances,
-        batchIter: i,
-        index: b.index,
-      };
-    });
 
-    const batchIter = adjustedUpdateBatches.length;
-    // first grab all the square catalog objects from the external IDs from products (and instances) being updated
-    // by getting these first, we can avoid modifiying anything if we get an error here
-    if (existingSquareExternalIds.length > 0) {
-      const batchRetrieveCatalogObjectsResponse = await this.squareService.BatchRetrieveCatalogObjects(
-        existingSquareExternalIds.map((x) => x.value),
-        false,
-      );
-      if (!batchRetrieveCatalogObjectsResponse.success) {
-        this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
-        );
-        return null;
-      }
-      existingSquareObjects.push(...(batchRetrieveCatalogObjectsResponse.result.objects ?? []));
-    }
 
-    // now that we have square catalog items we can add on the insert and update objects
-    catalogObjectsForUpsert.push(
-      ...adjustedUpdateBatches.flatMap((b) => {
-        const updateCatalogObjects = b.updateInstances.flatMap((pi, j) => {
-          return pi.displayFlags.pos.hide
-            ? []
-            : [
-              ProductInstanceToSquareCatalogObject(
-                this.LocationsConsidering3pFlag(b.product.displayFlags.is3p),
-                b.product,
-                pi,
-                b.product.printerGroup ? this.printerGroups[b.product.printerGroup] : null,
-                this.CatalogSelectors,
-                existingSquareObjects,
-                ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
-              ),
-            ];
-        });
-        const insertCatalogObjects = b.insertInstances.flatMap((pi, k) => {
-          return pi.displayFlags.pos.hide
-            ? []
-            : [
-              ProductInstanceToSquareCatalogObject(
-                this.LocationsConsidering3pFlag(b.product.displayFlags.is3p),
-                b.product,
-                pi,
-                b.product.printerGroup ? this.printerGroups[b.product.printerGroup] : null,
-                this.CatalogSelectors,
-                [],
-                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
-              ),
-            ];
-        });
-        return [...updateCatalogObjects, ...insertCatalogObjects];
-      }),
-    );
 
-    const adjustedInsertBatches = insertBatches.map((b, i) => {
-      // we're inserting a new product and instances. the first instance is the base product instance
-      // we need to filter these square specific external IDs because it'll interfere with adding the new product to the catalog
-      const adjustedProduct: Omit<IProduct, 'id' | 'baseProductId'> = {
-        ...(b.product as UncommittedIProduct),
-        externalIDs: GetNonSquareExternalIds(b.product.externalIDs),
-      };
-      const adjustedInstances: Omit<IProductInstance, 'id' | 'productId'>[] = b.instances.map((x) => ({
-        ...(x as UncommittedIProductInstance),
-        externalIDs: GetNonSquareExternalIds(x.externalIDs),
-      }));
-      // first add the stuff to square so we can write to the DB in two operations
-      catalogObjectsForUpsert.push(
-        ...adjustedInstances
-          .filter((pi) => !pi.displayFlags.pos.hide)
-          .map((pi, j) =>
-            ProductInstanceToSquareCatalogObject(
-              this.LocationsConsidering3pFlag(adjustedProduct.displayFlags.is3p),
-              adjustedProduct,
-              pi,
-              adjustedProduct.printerGroup ? this.printerGroups[adjustedProduct.printerGroup] : null,
-              this.CatalogSelectors,
-              [],
-              ('0000000' + ((i + batchIter + 2) * 1000 + j)).slice(-7),
-            ),
-          ),
-      );
-      return {
-        product: adjustedProduct,
-        instances: adjustedInstances,
-        batchIter: i + batchIter + 2,
-        index: i,
-      };
-    });
 
-    let mappings: CatalogIdMapping[];
-    if (catalogObjectsForUpsert.length) {
-      const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-        chunk(catalogObjectsForUpsert, SQUARE_BATCH_CHUNK_SIZE).map((x) => ({
-          objects: x,
-        })),
-      );
-      if (!upsertResponse.success) {
-        this.logger.error(`Failed to save square products, got errors: ${JSON.stringify(upsertResponse.error)}`);
-        return null;
-      }
-      mappings = upsertResponse.result.idMappings ?? [];
-    }
 
-    const bulkUpdate = adjustedUpdateBatches.map((b) => {
-      return {
-        index: b.index,
-        product: b.product,
-        instances: b.updateInstances.map((pi, j) => {
-          return {
-            ...pi,
-            productId: b.product.id,
-            externalIDs: [
-              ...pi.externalIDs,
-              ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
-            ],
-          };
-        }),
-      };
-    }) as { product: IProduct; instances: IProductInstance[]; index: number }[];
-    const updateBatchesInserts = adjustedUpdateBatches.map((b) => {
-      return {
-        index: b.index,
-        instances: b.insertInstances.map((pi, j) => {
-          return new this.wProductInstanceModel({
-            ...pi,
-            productId: b.product.id,
-            externalIDs: [
-              ...pi.externalIDs,
-              ...IdMappingsToExternalIds(
-                mappings,
-                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + j)).slice(-7),
-              ),
-            ],
-          });
-        }),
-      };
-    });
-    const insertBatchInserts = adjustedInsertBatches.map((b) => {
-      const productDoc = new this.wProductModel(b.product);
-      const batchInstanceDocs = b.instances.map(
-        (x, j) =>
-          new this.wProductInstanceModel({
-            ...x,
-            productId: productDoc.id as string,
-            externalIDs: [
-              ...x.externalIDs,
-              ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
-            ],
-          }),
-      );
-      productDoc.baseProductId = batchInstanceDocs[0].id as string;
-      return {
-        product: productDoc,
-        instances: batchInstanceDocs,
-        index: b.index,
-      };
-    });
-    if (insertBatchInserts.length) {
-      const bulkProductInsert = await this.wProductModel.insertMany(insertBatchInserts.map((o) => o.product));
-      this.logger.debug(`Saved new WProductModels: ${JSON.stringify(bulkProductInsert.map((x) => x.toObject()))}`);
-    }
-    const productInstanceInserts = [...insertBatchInserts, ...updateBatchesInserts];
-    if (productInstanceInserts.length) {
-      const bulkProductInstanceInsert = await this.wProductInstanceModel.insertMany(
-        [...insertBatchInserts, ...updateBatchesInserts].flatMap((x) => x.instances),
-      );
-      this.logger.debug(
-        `Instances creation result: ${JSON.stringify(bulkProductInstanceInsert.map((x) => x.toObject()))}`,
-      );
-    }
-    if (bulkUpdate.length) {
-      const bulkProductUpdate = await this.wProductModel.bulkWrite(
-        bulkUpdate.map((b) => ({
-          updateOne: {
-            filter: { id: b.product.id },
-            update: b.product,
-          },
-        })),
-      );
-      this.logger.log(`Bulk update of WProductModel successful: ${JSON.stringify(bulkProductUpdate)}`);
-      const bulkProductInstanceUpdate = await this.wProductInstanceModel.bulkWrite(
-        bulkUpdate.flatMap((b) =>
-          b.instances.map((pi) => ({
-            updateOne: {
-              filter: { id: pi.id },
-              update: pi,
-            },
-          })),
-        ),
-      );
-      this.logger.log(`Bulk update of WProductInstanceModel successful: ${JSON.stringify(bulkProductInstanceUpdate)}`);
-    }
-    await Promise.all([this.SyncProducts(), this.SyncProductInstances()]);
-    this.RecomputeCatalogAndEmit();
 
-    const reconstructedBatches: Record<number, { product: IProduct; instances: IProductInstance[]; index: number }> =
-      {};
-    insertBatchInserts.forEach((b) => {
-      const product = b.product.toObject();
-      const instances = b.instances.map((x) => x.toObject());
-      reconstructedBatches[b.index] = { product, instances, index: b.index };
-    });
-    bulkUpdate.forEach((b) => {
-      reconstructedBatches[b.index] = {
-        product: b.product,
-        instances: b.instances,
-        index: b.index,
-      };
-    });
-    updateBatchesInserts.forEach((b) => {
-      reconstructedBatches[b.index].instances = [
-        ...b.instances.map((x) => x.toObject()),
-        ...reconstructedBatches[b.index].instances,
-      ];
-    });
-    return Object.values(reconstructedBatches)
-      .sort((a, b) => a.index - b.index)
-      .map((x) => ({
-        product: x.product,
-        instances: x.instances.sort((a, b) => a.ordinal - b.ordinal),
-      }));
-  };
 
-  UpdateProduct = async (pid: string, product: Partial<Omit<IProduct, 'id'>>) => {
-    const result = await this.BatchUpsertProduct([{ product: { id: pid, ...product } as UpdateIProductRequest, instances: [] }]);
-    return result ? result[0].product : null;
-  };
 
-  BatchDeleteProduct = async (p_ids: string[], suppress_catalog_recomputation: boolean = false) => {
-    this.logger.debug(`Removing Product(s) ${p_ids.join(', ')}`);
-    const productEntries = p_ids.map((x) => this.catalog.products[x]);
 
-    // needs to be ._id, NOT .id
-    const doc = await this.wProductModel.deleteMany({ _id: { $in: p_ids } }).exec();
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!doc) {
-      return null;
-    }
-    // removing ALL product instances from Square
-    await this.BatchDeleteCatalogObjectsFromExternalIds(
-      productEntries
-        .reduce((acc, pe) => [...acc, ...pe.instances], [])
-        .reduce((acc, pi) => [...acc, ...this.catalog.productInstances[pi].externalIDs], []),
-    );
 
-    const product_instance_delete = await this.wProductInstanceModel.deleteMany({ productId: { $in: p_ids } }).exec();
-    if (product_instance_delete.deletedCount > 0) {
-      this.logger.debug(`Removed ${product_instance_delete.deletedCount.toString()} Product Instances.`);
-      await this.SyncProductInstances();
-    }
-    await this.SyncProducts();
-    if (!suppress_catalog_recomputation) {
-      this.RecomputeCatalogAndEmit();
-    }
-    return { deletedCount: doc.deletedCount, acknowledged: doc.acknowledged };
-  };
 
-  DeleteProduct = async (p_id: string) => {
-    this.logger.debug(`Removing Product ${p_id}`);
-    const productEntry = this.catalog.products[p_id];
 
-    const doc = await this.wProductModel.findByIdAndDelete(p_id).exec();
-    if (!doc) {
-      return null;
-    }
-    // removing ALL product instances from Square
-    await this.BatchDeleteCatalogObjectsFromExternalIds(
-      productEntry.instances.reduce((acc, pi) => [...acc, ...this.catalog.productInstances[pi].externalIDs], []),
-    );
 
-    const product_instance_delete = await this.wProductInstanceModel.deleteMany({ productId: p_id }).exec();
-    if (product_instance_delete.deletedCount > 0) {
-      this.logger.debug(`Removed ${product_instance_delete.deletedCount.toString()} Product Instances.`);
-      await this.SyncProductInstances();
-    }
-    await this.SyncProducts();
-    this.RecomputeCatalogAndEmit();
-    return doc.toObject();
-  };
-
-  CreateProductInstance = async (instance: Omit<IProductInstance, 'id'>) => {
-    // we need to filter these external IDs because it'll interfere with adding the new product to the catalog
-    const filteredExternalIds = GetNonSquareExternalIds(instance.externalIDs);
-    let adjustedInstance: Omit<IProductInstance, 'id'> = {
-      ...instance,
-      externalIDs: filteredExternalIds,
-    };
-
-    if (!instance.displayFlags.pos.hide) {
-      // add the product instance to the square catalog here
-      const product = this.catalog.products[adjustedInstance.productId].product;
-      const upsertResponse = await this.squareService.UpsertCatalogObject(
-        ProductInstanceToSquareCatalogObject(
-          this.LocationsConsidering3pFlag(product.displayFlags.is3p),
-          product,
-          adjustedInstance,
-          product.printerGroup ? this.printerGroups[product.printerGroup] : null,
-          this.CatalogSelectors,
-          [],
-          '',
-        ),
-      );
-      if (!upsertResponse.success) {
-        this.logger.error(`failed to add square product, got errors: ${JSON.stringify(upsertResponse.error)}`);
-        return null;
-      }
-      adjustedInstance = {
-        ...adjustedInstance,
-        externalIDs: [
-          ...adjustedInstance.externalIDs,
-          ...IdMappingsToExternalIds(upsertResponse.result.idMappings, ''),
-        ],
-      };
-    }
-    const doc = new this.wProductInstanceModel(adjustedInstance);
-    await doc.save();
-    await this.SyncProductInstances();
-    this.RecomputeCatalogAndEmit();
-    return doc.toObject();
-  };
-
-  BatchUpdateProductInstance = async (
-    batches: UpdateProductInstanceProps[],
-    suppress_catalog_recomputation: boolean = false,
-  ): Promise<(IProductInstance | null)[]> => {
-    this.logger.log(
-      `Updating product instance(s) ${batches.map((x) => `ID: ${x.piid}, changes: ${JSON.stringify(x.productInstance)}`).join(', ')}, ${suppress_catalog_recomputation ? 'and suppressing the catalog recomputation' : ''}`,
-    );
-
-    // TODO: if switching from hideFromPos === false to hideFromPos === true, we need to delete the product in square
-    const oldProductInstances = batches.map((b) => this.Catalog.productInstances[b.piid]);
-    const newExternalIdses = batches.map((b, i) =>
-      ProductInstanceUpdateMergeExternalIds(
-        oldProductInstances[i].externalIDs,
-        GetNonSquareExternalIds(b.productInstance.externalIDs),
-      ),
-    );
-    const existingSquareExternalIds = newExternalIdses.map((ids) => GetSquareExternalIds(ids)).flat();
-    let existingSquareObjects: CatalogObject[] = [];
-    if (existingSquareExternalIds.length > 0) {
-      const batchRetrieveCatalogObjectsResponse = await this.squareService.BatchRetrieveCatalogObjects(
-        existingSquareExternalIds.map((x) => x.value),
-        false,
-      );
-      if (!batchRetrieveCatalogObjectsResponse.success) {
-        this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
-        );
-        return batches.map((_) => null);
-      }
-      existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
-    }
-
-    const mappings: CatalogIdMapping[] = [];
-    const catalogObjects = batches
-      .map((b, i) => {
-        const mergedInstance = {
-          ...(oldProductInstances[i] as IProductInstance),
-          ...b.productInstance,
-        };
-        return mergedInstance.displayFlags.pos.hide
-          ? []
-          : [
-            ProductInstanceToSquareCatalogObject(
-              this.LocationsConsidering3pFlag(b.product.displayFlags.is3p),
-              b.product,
-              mergedInstance,
-              b.product.printerGroup ? this.printerGroups[b.product.printerGroup] : null,
-              this.CatalogSelectors,
-              existingSquareObjects,
-              ('000' + i).slice(-3),
-            ),
-          ];
-      })
-      .flat();
-    if (catalogObjects.length > 0) {
-      const upsertResponse = await this.squareService.BatchUpsertCatalogObjects(
-        chunk(catalogObjects, SQUARE_BATCH_CHUNK_SIZE).map((x) => ({
-          objects: x,
-        })),
-      );
-      if (!upsertResponse.success) {
-        this.logger.error(`Failed to update square product, got errors: ${JSON.stringify(upsertResponse.error)}`);
-        return batches.map((_) => null);
-      }
-      mappings.push(...(upsertResponse.result.idMappings ?? []));
-    }
-
-    const updated = await Promise.all(
-      batches.map(async (b, i) => {
-        const doc = await this.wProductInstanceModel
-          .findByIdAndUpdate(
-            b.piid,
-            {
-              ...b.productInstance,
-              externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
-            },
-            { new: true },
-          )
-          .exec();
-        if (!doc) {
-          return null;
-        }
-        return doc.toObject();
-      }),
-    );
-
-    if (!suppress_catalog_recomputation) {
-      await this.SyncProductInstances();
-      this.RecomputeCatalogAndEmit();
-    }
-    return updated;
-  };
-
-  UpdateProductInstance = async (
-    props: UpdateProductInstanceProps,
-    suppress_catalog_recomputation: boolean = false,
-  ) => {
-    return (await this.BatchUpdateProductInstance([props], suppress_catalog_recomputation))[0];
-  };
-
-  DeleteProductInstance = async (pi_id: string, suppress_catalog_recomputation: boolean = false) => {
-    const instance = this.Catalog.productInstances[pi_id];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (instance) {
-      const productEntry = this.Catalog.products[instance.productId];
-      if (productEntry.product.baseProductId === pi_id) {
-        this.logger.warn(`Attempted to delete base product instance for product ${productEntry.product.id}`);
-        return null;
-      }
-
-      this.logger.debug(`Removing Product Instance: ${pi_id}`);
-      const doc = await this.wProductInstanceModel.findByIdAndDelete(pi_id).exec();
-      if (!doc) {
-        return null;
-      }
-
-      await this.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
-
-      if (!suppress_catalog_recomputation) {
-        await this.SyncProductInstances();
-        this.RecomputeCatalogAndEmit();
-      }
-      return doc.toObject();
-    }
-    return null;
-  };
 
 
 

@@ -3,6 +3,7 @@ import { Body, Controller, Delete, HttpCode, Param, ParseArrayPipe, Patch, Post 
 import { CreateProductBatchRequestDto, PartialUncommittedProductInstanceDto, UncommittedIProductInstance, UncommittedIProductInstanceDto, UpdateIProductRequestDto, UpdateProductBatchRequestDto } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
+import { CatalogProductService } from '../../config/catalog-provider/catalog-product.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import {
   BatchDeleteProductClassDto,
@@ -11,13 +12,16 @@ import { CatalogOperationException, ProductInstanceNotFoundException, ProductNot
 
 @Controller('api/v1/menu/product')
 export class ProductController {
-  constructor(private readonly catalogProvider: CatalogProviderService) { }
+  constructor(
+    private readonly catalogProvider: CatalogProviderService,
+    private readonly catalogProductService: CatalogProductService,
+  ) { }
 
   @Post()
   @Scopes('write:catalog')
   @HttpCode(201)
   async postProductClass(@Body() body: CreateProductBatchRequestDto) {
-    const createProductResult = await this.catalogProvider.CreateProduct(body.product, body.instances);
+    const createProductResult = await this.catalogProductService.CreateProduct(body.product, body.instances);
     if (!createProductResult) {
       throw new CatalogOperationException('create product', 'Unable to satisfy prerequisites to create Product and instances');
     }
@@ -31,7 +35,7 @@ export class ProductController {
     @Body(new ParseArrayPipe({ items: UpdateProductBatchRequestDto }))
     body: UpdateProductBatchRequestDto[],
   ) {
-    const createBatchesResult = await this.catalogProvider.BatchUpsertProduct(body);
+    const createBatchesResult = await this.catalogProductService.BatchUpsertProduct(body);
     if (!createBatchesResult) {
       throw new CatalogOperationException('batch create products', 'Unable to satisfy prerequisites to create Product(s) and instance(s)');
     }
@@ -41,7 +45,7 @@ export class ProductController {
   @Patch(':pid')
   @Scopes('write:catalog')
   async patchProductClass(@Param('pid') productId: string, @Body() body: UpdateIProductRequestDto) {
-    const doc = await this.catalogProvider.UpdateProduct(productId, body);
+    const doc = await this.catalogProductService.UpdateProduct(productId, body);
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
@@ -51,7 +55,7 @@ export class ProductController {
   @Delete(':pid')
   @Scopes('delete:catalog')
   async deleteProductClass(@Param('pid') productId: string) {
-    const doc = await this.catalogProvider.DeleteProduct(productId);
+    const doc = await this.catalogProductService.DeleteProduct(productId);
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
@@ -62,7 +66,7 @@ export class ProductController {
   @Scopes('delete:catalog')
   @HttpCode(200)
   async batchDeleteProductClasses(@Body() body: BatchDeleteProductClassDto) {
-    const doc = await this.catalogProvider.BatchDeleteProduct(body.pids);
+    const doc = await this.catalogProductService.BatchDeleteProduct(body.pids);
     if (!doc) {
       throw new CatalogOperationException('batch delete products', `Unable to delete Products: ${body.pids.join(', ')}`);
     }
@@ -76,7 +80,7 @@ export class ProductController {
     @Param('pid') productId: string,
     @Body() body: UncommittedIProductInstanceDto,
   ) {
-    const doc = await this.catalogProvider.CreateProductInstance({
+    const doc = await this.catalogProductService.CreateProductInstance({
       productId: productId,
       ...(body as UncommittedIProductInstance),
     });
@@ -97,7 +101,7 @@ export class ProductController {
     if (!product) {
       throw new ProductNotFoundException(productId);
     }
-    const doc = await this.catalogProvider.UpdateProductInstance({
+    const doc = await this.catalogProductService.UpdateProductInstance({
       piid: productInstanceId,
       product,
       productInstance: body,
@@ -111,7 +115,7 @@ export class ProductController {
   @Delete(':pid/:piid')
   @Scopes('delete:catalog')
   async deleteProductInstance(@Param('piid') productInstanceId: string) {
-    const doc = await this.catalogProvider.DeleteProductInstance(productInstanceId);
+    const doc = await this.catalogProductService.DeleteProductInstance(productInstanceId);
     if (!doc) {
       throw new ProductInstanceNotFoundException(productInstanceId);
     }

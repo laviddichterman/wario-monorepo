@@ -1,110 +1,59 @@
-import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Inject, Param, Post, Put } from '@nestjs/common';
 
-import { IOption } from '@wcp/wario-shared';
+import { type IOption, type IOptionType } from '@wcp/wario-shared';
+
+import { UpdateOptionDto } from 'src/dtos/modifier.dto';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import type { UncommitedOption } from '../../config/catalog-provider/catalog-provider.service';
+import { CatalogModifierService } from '../../config/catalog-provider/catalog-modifier.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import {
-  CreateModifierTypeDto,
-  CreateOptionDto,
-  UpdateModifierTypeDto,
-  UpdateOptionDto,
-} from '../../dtos/modifier.dto';
-import { ModifierOptionNotFoundException, ModifierTypeNotFoundException } from '../../exceptions';
+import type {
+  UncommitedOption,
+  UpdateModifierOptionProps,
+  UpdateModifierTypeProps,
+} from '../../config/catalog-provider/catalog.types';
 
 @Controller('api/v1/menu/option')
 export class ModifierController {
-  constructor(private readonly catalogProvider: CatalogProviderService) { }
+  constructor(
+    @Inject(CatalogProviderService) private catalogProviderService: CatalogProviderService,
+    @Inject(CatalogModifierService) private catalogModifierService: CatalogModifierService,
+  ) { }
 
-  @Post()
+  @Post('type')
   @Scopes('write:catalog')
-  @HttpCode(201)
-  async postModifierType(@Body() body: CreateModifierTypeDto) {
-    const options: UncommitedOption[] = body.options;
-    const doc = await this.catalogProvider.CreateModifierType(body, options);
-    return doc;
+  async CreateModifierType(@Body() body: { modifierType: Omit<IOptionType, 'id'>; options: UncommitedOption[] }) {
+    return await this.catalogModifierService.CreateModifierType(body.modifierType, body.options);
   }
 
-  @Patch(':mtid')
+  @Put('type')
   @Scopes('write:catalog')
-  async patchModifierType(@Param('mtid') mtid: string, @Body() body: UpdateModifierTypeDto) {
-    const doc = await this.catalogProvider.UpdateModifierType({
-      id: mtid,
-      modifierType: body
-    });
-    if (!doc) {
-      throw new ModifierTypeNotFoundException(mtid);
-    }
-    return doc;
+  async UpdateModifierType(@Body() body: UpdateModifierTypeProps) {
+    return await this.catalogModifierService.UpdateModifierType(body);
   }
 
-  @Delete(':mtid')
+  @Delete('type/:id')
   @Scopes('delete:catalog')
-  async deleteModifierType(@Param('mtid') mtid: string) {
-    const doc = await this.catalogProvider.DeleteModifierType(mtid);
-    if (!doc) {
-      throw new ModifierTypeNotFoundException(mtid);
-    }
-    return doc;
+  async DeleteModifierType(@Param('id') id: string) {
+    return await this.catalogModifierService.DeleteModifierType(id);
   }
 
-  @Post(':mtid')
+  @Post('option')
   @Scopes('write:catalog')
-  @HttpCode(201)
-  async postModifierOption(
-    @Param('mtid') mtid: string,
-    @Body() body: CreateOptionDto,
-  ) {
-    const new_option = await this.catalogProvider.CreateOption({ ...(body as Omit<IOption, 'id' | 'modifierTypeId'>), modifierTypeId: mtid });
-    if (!new_option) {
-      throw new ModifierTypeNotFoundException(mtid);
-    }
-    return new_option;
+  async CreateOption(@Body() body: Omit<IOption, 'id'>) {
+    return await this.catalogModifierService.CreateOption(body);
   }
 
-  @Patch(':mtid/:moid')
+  @Put('option')
   @Scopes('write:catalog')
-  async patchModifierOption(
-    @Param('mtid') mtid: string,
-    @Param('moid') moid: string,
-    @Body() body: UpdateOptionDto,
-  ) {
-    const modifierTypeEntry = this.catalogProvider.Catalog.modifiers[mtid];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!modifierTypeEntry) {
-      const doc = await this.catalogProvider.UpdateModifierOption({
-        id: moid,
-        modifierTypeId: mtid,
-        modifierOption: {
-          displayName: body.displayName,
-          description: body.description,
-          price: body.price,
-          shortcode: body.shortcode,
-          disabled: body.disabled ? body.disabled : null,
-          externalIDs: body.externalIDs ?? [],
-          ordinal: body.ordinal,
-          metadata: body.metadata,
-          enable: body.enable,
-          displayFlags: body.displayFlags,
-          availability: body.availability,
-        },
-      });
-      if (doc) {
-        return doc;
-      }
-    }
-    throw new ModifierOptionNotFoundException(moid);
+  // todo: change the type to a dto
+  async UpdateModifierOption(@Body() body: UpdateModifierOptionProps) {
+    return await this.catalogModifierService.UpdateModifierOption(body);
   }
 
-  @Delete(':mtid/:moid')
+  @Delete('option/:id')
   @Scopes('delete:catalog')
-  async deleteModifierOption(@Param('moid') moid: string) {
-    const doc = await this.catalogProvider.DeleteModifierOption(moid);
-    if (!doc) {
-      throw new ModifierOptionNotFoundException(moid);
-    }
-    return doc;
+  async DeleteModifierOption(@Param('id') id: string) {
+    return await this.catalogModifierService.DeleteModifierOption(id);
   }
 }
-

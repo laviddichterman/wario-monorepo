@@ -2,12 +2,16 @@ import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@ne
 
 import { type DeletePrinterGroupRequest, type DeletePrinterGroupRequestDto, type PrinterGroupDto } from '@wcp/wario-shared';
 
+import { CatalogPrinterGroupService } from '../../config/catalog-provider/catalog-printer-group.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { PrinterGroupNotFoundException, PrinterGroupOperationException } from '../../exceptions';
 
 @Controller('api/v1/menu/printergroup')
 export class PrinterGroupController {
-  constructor(private readonly catalogProvider: CatalogProviderService) { }
+  constructor(
+    private readonly catalogProvider: CatalogProviderService,
+    private readonly catalogPrinterGroupService: CatalogPrinterGroupService,
+  ) { }
 
   @Get()
   getPrinterGroups() {
@@ -17,7 +21,7 @@ export class PrinterGroupController {
   @Post()
   @HttpCode(201)
   async postPrinterGroup(@Body() body: PrinterGroupDto) {
-    const doc = await this.catalogProvider.CreatePrinterGroup(body);
+    const doc = await this.catalogPrinterGroupService.CreatePrinterGroup(body);
     if (!doc) {
       throw new PrinterGroupOperationException('create printer group', 'Operation returned null');
     }
@@ -29,7 +33,7 @@ export class PrinterGroupController {
     @Param('pgId') pgId: string,
     @Body() body: PrinterGroupDto,
   ) {
-    const doc = await this.catalogProvider.UpdatePrinterGroup({
+    const doc = await this.catalogPrinterGroupService.UpdatePrinterGroup({
       id: pgId,
       printerGroup: {
         name: body.name,
@@ -49,7 +53,7 @@ export class PrinterGroupController {
     @Param('pgId') pgId: string,
     @Body() body: DeletePrinterGroupRequestDto,
   ) {
-    const doc = await this.catalogProvider.DeletePrinterGroup({ id: pgId, ...(body as DeletePrinterGroupRequest) });
+    const doc = await this.catalogPrinterGroupService.DeletePrinterGroup({ id: pgId, ...(body as DeletePrinterGroupRequest) });
     if (!doc) {
       throw new PrinterGroupNotFoundException(pgId);
     }
