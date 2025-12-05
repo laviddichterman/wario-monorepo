@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { chunk } from 'es-toolkit/compat';
@@ -26,15 +27,14 @@ import { SquareService } from '../square/square.service';
 
 import { CatalogFunctionService } from './catalog-function.service';
 import { CatalogProviderService } from './catalog-provider.service';
+import { CatalogSquareSyncService } from './catalog-square-sync.service';
 import {
+  LocationsConsidering3pFlag,
+  SQUARE_BATCH_CHUNK_SIZE,
   UncommitedOption,
   UpdateModifierOptionProps,
   UpdateModifierTypeProps,
 } from './catalog.types';
-
-const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
-  ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
-  : 25;
 
 @Injectable()
 export class CatalogModifierService {
@@ -50,14 +50,17 @@ export class CatalogModifierService {
     private squareService: SquareService,
     @Inject(forwardRef(() => CatalogFunctionService))
     private functionService: CatalogFunctionService,
+    @Inject(forwardRef(() => CatalogSquareSyncService))
+    private catalogSquareSyncService: CatalogSquareSyncService,
   ) { }
 
-  private LocationsConsidering3pFlag = (is3p: boolean) => [
-    this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
-    ...(is3p && this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P
-      ? [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P]
-      : [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION]),
-  ];
+  private getLocationsConsidering3pFlag = (is3p: boolean) =>
+    LocationsConsidering3pFlag(
+      is3p,
+      this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
+      this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
+      this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P,
+    );
 
   ValidateOption = (modifierType: Pick<IOptionType, 'max_selected'>, modifierOption: Partial<UncommitedOption>) => {
     if (modifierType.max_selected === 1) {
@@ -155,7 +158,7 @@ export class CatalogModifierService {
     batchData.forEach((b, i) => {
       catalogObjectsForUpsert.push(
         ModifierTypeToSquareCatalogObject(
-          this.LocationsConsidering3pFlag(b.updatedModifierType.displayFlags.is3p),
+          this.getLocationsConsidering3pFlag(b.updatedModifierType.displayFlags.is3p),
           b.updatedModifierType,
           b.updatedOptions,
           existingSquareObjects,
@@ -245,7 +248,7 @@ export class CatalogModifierService {
     const modifierTypeEntry = this.catalogProvider.Catalog.modifiers[mt_id];
 
     // if there are any square ids associated with this modifier type then we delete them first
-    await this.catalogProvider.BatchDeleteCatalogObjectsFromExternalIds(modifierTypeEntry.modifierType.externalIDs);
+    await this.catalogSquareSyncService.BatchDeleteCatalogObjectsFromExternalIds(modifierTypeEntry.modifierType.externalIDs);
 
     await Promise.all(this.catalogProvider.Catalog.modifiers[mt_id].options.map((op) => this.DeleteModifierOption(op, true)));
 
@@ -422,7 +425,7 @@ export class CatalogModifierService {
       );
       catalogObjectsForUpsert.push(
         ModifierTypeToSquareCatalogObject(
-          this.LocationsConsidering3pFlag(b.modifierTypeEntry.modifierType.displayFlags.is3p),
+          this.getLocationsConsidering3pFlag(b.modifierTypeEntry.modifierType.displayFlags.is3p),
           b.modifierTypeEntry.modifierType,
           options,
           existingSquareObjects,
@@ -487,7 +490,7 @@ export class CatalogModifierService {
     }
 
     // NOTE: this removes the modifiers from the Square ITEMs and ITEM_VARIATIONs as well
-    await this.catalogProvider.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
+    await this.catalogSquareSyncService.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
 
     await this.catalogProvider.RemoveModifierOptionFromProductInstances(doc.modifierTypeId, mo_id);
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -17,6 +18,7 @@ import {
 import { SquareService } from '../square/square.service';
 
 import { CatalogProviderService } from './catalog-provider.service';
+import { CatalogSquareSyncService } from './catalog-square-sync.service';
 import { UpdatePrinterGroupProps } from './catalog.types';
 
 @Injectable()
@@ -30,6 +32,8 @@ export class CatalogPrinterGroupService {
     private dataProviderService: DataProviderService,
     @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
+    @Inject(forwardRef(() => CatalogSquareSyncService))
+    private catalogSquareSyncService: CatalogSquareSyncService,
   ) { }
 
   CreatePrinterGroup = async (printerGroup: Omit<PrinterGroup, 'id'>) => {
@@ -134,7 +138,7 @@ export class CatalogPrinterGroupService {
     }
 
     // NOTE: this removes the category from the Square ITEMs as well
-    await this.catalogProvider.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
+    await this.catalogSquareSyncService.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
 
     await this.catalogProvider.SyncPrinterGroups();
 

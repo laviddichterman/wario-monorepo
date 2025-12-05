@@ -30,15 +30,14 @@ import {
 import { SquareService } from '../square/square.service';
 
 import { CatalogProviderService } from './catalog-provider.service';
+import { CatalogSquareSyncService } from './catalog-square-sync.service';
 import {
   isUpdateProduct,
   isUpdateProductInstance,
+  LocationsConsidering3pFlag,
+  SQUARE_BATCH_CHUNK_SIZE,
   UpdateProductInstanceProps,
 } from './catalog.types';
-
-const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
-  ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
-  : 25;
 
 const ValidateProductModifiersFunctionsCategoriesPrinterGroups = function (
   modifiers: { mtid: string; enable: string | null }[],
@@ -74,14 +73,17 @@ export class CatalogProductService {
     private dataProviderService: DataProviderService,
     @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
+    @Inject(forwardRef(() => CatalogSquareSyncService))
+    private catalogSquareSyncService: CatalogSquareSyncService,
   ) { }
 
-  private LocationsConsidering3pFlag = (is3p: boolean) => [
-    this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
-    ...(is3p && this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P
-      ? [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P]
-      : [this.dataProviderService.KeyValueConfig.SQUARE_LOCATION]),
-  ];
+  private getLocationsConsidering3pFlag = (is3p: boolean) =>
+    LocationsConsidering3pFlag(
+      is3p,
+      this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
+      this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
+      this.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P,
+    );
 
   CreateProduct = async (
     product: Omit<IProduct, 'id' | 'baseProductId'>,
@@ -217,7 +219,7 @@ export class CatalogProductService {
           .filter((pi) => !pi.displayFlags.pos.hide)
           .map((pi, k) =>
             ProductInstanceToSquareCatalogObject(
-              this.LocationsConsidering3pFlag(mergedProduct.displayFlags.is3p),
+              this.getLocationsConsidering3pFlag(mergedProduct.displayFlags.is3p),
               mergedProduct,
               pi,
               mergedProduct.printerGroup ? this.catalogProvider.PrinterGroups[mergedProduct.printerGroup] : null,
@@ -318,7 +320,7 @@ export class CatalogProductService {
             ? []
             : [
               ProductInstanceToSquareCatalogObject(
-                this.LocationsConsidering3pFlag(b.product.displayFlags.is3p),
+                this.getLocationsConsidering3pFlag(b.product.displayFlags.is3p),
                 b.product,
                 pi,
                 b.product.printerGroup ? this.catalogProvider.PrinterGroups[b.product.printerGroup] : null,
@@ -334,7 +336,7 @@ export class CatalogProductService {
             ? []
             : [
               ProductInstanceToSquareCatalogObject(
-                this.LocationsConsidering3pFlag(b.product.displayFlags.is3p),
+                this.getLocationsConsidering3pFlag(b.product.displayFlags.is3p),
                 b.product,
                 pi,
                 b.product.printerGroup ? this.catalogProvider.PrinterGroups[b.product.printerGroup] : null,
@@ -366,7 +368,7 @@ export class CatalogProductService {
           .filter((pi) => !pi.displayFlags.pos.hide)
           .map((pi, j) =>
             ProductInstanceToSquareCatalogObject(
-              this.LocationsConsidering3pFlag(adjustedProduct.displayFlags.is3p),
+              this.getLocationsConsidering3pFlag(adjustedProduct.displayFlags.is3p),
               adjustedProduct,
               pi,
               adjustedProduct.printerGroup
@@ -546,7 +548,7 @@ export class CatalogProductService {
       return null;
     }
     // removing ALL product instances from Square
-    await this.catalogProvider.BatchDeleteCatalogObjectsFromExternalIds(
+    await this.catalogSquareSyncService.BatchDeleteCatalogObjectsFromExternalIds(
       productEntries
         .reduce<string[]>((acc, pe) => [...acc, ...pe.instances], [])
         .reduce<KeyValue[]>(
@@ -578,7 +580,7 @@ export class CatalogProductService {
       return null;
     }
     // removing ALL product instances from Square
-    await this.catalogProvider.BatchDeleteCatalogObjectsFromExternalIds(
+    await this.catalogSquareSyncService.BatchDeleteCatalogObjectsFromExternalIds(
       productEntry.instances.reduce<KeyValue[]>(
         (acc, pi) => [...acc, ...this.catalogProvider.Catalog.productInstances[pi].externalIDs],
         [],
@@ -608,7 +610,7 @@ export class CatalogProductService {
       const product = this.catalogProvider.Catalog.products[adjustedInstance.productId].product;
       const upsertResponse = await this.squareService.UpsertCatalogObject(
         ProductInstanceToSquareCatalogObject(
-          this.LocationsConsidering3pFlag(product.displayFlags.is3p),
+          this.getLocationsConsidering3pFlag(product.displayFlags.is3p),
           product,
           adjustedInstance,
           product.printerGroup ? this.catalogProvider.PrinterGroups[product.printerGroup] : null,
@@ -679,7 +681,7 @@ export class CatalogProductService {
           ? []
           : [
             ProductInstanceToSquareCatalogObject(
-              this.LocationsConsidering3pFlag(b.product.displayFlags.is3p),
+              this.getLocationsConsidering3pFlag(b.product.displayFlags.is3p),
               b.product,
               mergedInstance,
               b.product.printerGroup ? this.catalogProvider.PrinterGroups[b.product.printerGroup] : null,
@@ -754,7 +756,7 @@ export class CatalogProductService {
         return null;
       }
 
-      await this.catalogProvider.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
+      await this.catalogSquareSyncService.BatchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
 
       if (!suppress_catalog_recomputation) {
         await this.catalogProvider.SyncProductInstances();

@@ -325,12 +325,11 @@ Each new service should have:
   - [x] Update `CatalogCategoryService` to use `CatalogProductService.BatchDeleteProduct`
   - [x] Verify build passes
 
-- [ ] Phase 6: Extract CatalogSquareSyncService
-  - [ ] Create `catalog-square-sync.service.ts`
-  - [ ] Move 6 functions
-  - [ ] Update `CatalogProviderService.Bootstrap` to use `CatalogSquareSyncService`
-  - [ ] Update module imports
-  - [ ] Verify tests pass
+- [x] Phase 6: Extract CatalogSquareSyncService
+  - [x] Create `catalog-square-sync.service.ts`
+  - [x] Move 5 functions (BatchDeleteCatalogObjectsFromExternalIds, CheckAllPrinterGroups/ModifierTypes/ProductsSquareIdsAndFixIfNeeded, ForceSquareCatalogCompleteUpsert)
+  - [x] Update `CatalogProviderService.Bootstrap` to use `CatalogSquareSyncService`
+  - [x] Verify build passes
 
 - [ ] Phase 7: Final Cleanup
   - [ ] Review slimmed `CatalogProviderService`
@@ -341,5 +340,5 @@ Each new service should have:
 
 ## Status
 
-**In Progress** - Phases 1-5 completed. Phase 6 (CatalogSquareSyncService) pending.
+**In Progress** - Phases 1-6 completed. Phase 7 (Final Cleanup) pending.
 

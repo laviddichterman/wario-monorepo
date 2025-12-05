@@ -10,6 +10,22 @@ import {
   type UpdateProductBatchRequest,
 } from '@wcp/wario-shared';
 
+// Shared constant for Square API batch operations
+export const SQUARE_BATCH_CHUNK_SIZE = process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE
+  ? parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE)
+  : 25;
+
+// Shared helper for determining Square locations based on 3P flag
+export const LocationsConsidering3pFlag = (
+  is3p: boolean,
+  squareLocationAlternate: string,
+  squareLocation: string,
+  squareLocation3p: string | undefined,
+): string[] => [
+    squareLocationAlternate,
+    ...(is3p && squareLocation3p ? [squareLocation3p] : [squareLocation]),
+  ];
+
 export type UpdateProductInstanceProps = {
   piid: string;
   product: Pick<IProduct, 'price' | 'modifiers' | 'printerGroup' | 'disabled' | 'displayFlags'>;
@@ -46,3 +62,4 @@ export function isUpdateProductInstance(
 ): instance is UpdateIProductUpdateIProductInstance {
   return 'id' in instance;
 }
+
