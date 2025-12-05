@@ -38,10 +38,11 @@ The controller methods return a `response` object directly, often checking `resp
 
 ## 3. Security
 
-### Request Object Mutation
-The `OrderLockInterceptor` mutates the `request` object to add `lockedOrder` and `idempotencyKey`. While common in Express, this can lead to typing issues and implicit dependencies.
+### Request Object Mutation ✅ RESOLVED
 
-**Recommendation:** Use a custom decorator (e.g., `@LockedOrder()`) to extract this information from the execution context in the controller, rather than relying on the mutated request object.
+~~The `OrderLockInterceptor` mutates the `request` object to add `lockedOrder` and `idempotencyKey`. While common in Express, this can lead to typing issues and implicit dependencies.~~
+
+**Solution Implemented:** Created custom parameter decorators (`@LockedOrder()` and `@IdempotencyKey()` in `src/decorators/`) to extract this information from the execution context in the controller, rather than relying on the mutated request object. The controller now uses these decorators and passes the pre-locked order directly to service methods (`CancelLockedOrder`, `ConfirmLockedOrder`, etc.), eliminating duplicate locking logic.
 
 ### IP Address Access
 The `postOrder` method accesses `req.headers` and `req.socket` directly to get the IP address.

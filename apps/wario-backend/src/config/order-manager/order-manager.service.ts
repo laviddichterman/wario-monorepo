@@ -194,7 +194,14 @@ export class OrderManagerService {
       });
   };
 
-  private SendMoveLockedOrderTicket = async (
+  /**
+   * Send a move ticket for a pre-locked order.
+   * The order must already be locked before calling this method.
+   * @param lockedOrder The order that has been atomically locked
+   * @param destination The destination to move the order to
+   * @param additionalMessage Additional message for the move ticket
+   */
+  public SendMoveLockedOrderTicket = async (
     lockedOrder: WOrderInstance,
     destination: string,
     additionalMessage: string,
@@ -277,7 +284,15 @@ export class OrderManagerService {
     }
   };
 
-  private CancelLockedOrder = async (
+  /**
+   * Cancel a pre-locked order.
+   * The order must already be locked before calling this method.
+   * @param lockedOrder The order that has been atomically locked
+   * @param reason The reason for cancellation
+   * @param emailCustomer Whether to email the customer about the cancellation
+   * @param refundToOriginalPayment Whether to refund to the original payment method
+   */
+  public CancelLockedOrder = async (
     lockedOrder: WOrderInstance,
     reason: string,
     emailCustomer: boolean,
@@ -638,7 +653,14 @@ export class OrderManagerService {
     //   });
   };
 
-  private AdjustLockedOrderTime = async (
+  /**
+   * Adjust the fulfillment time of a pre-locked order.
+   * The order must already be locked before calling this method.
+   * @param lockedOrder The order that has been atomically locked
+   * @param newTime The new fulfillment time
+   * @param emailCustomer Whether to email the customer about the reschedule
+   */
+  public AdjustLockedOrderTime = async (
     lockedOrder: WOrderInstance,
     newTime: FulfillmentTime,
     emailCustomer: boolean,
@@ -783,7 +805,12 @@ export class OrderManagerService {
       });
   };
 
-  private ConfirmLockedOrder = async (
+  /**
+   * Confirm a pre-locked order.
+   * The order must already be locked before calling this method.
+   * @param lockedOrder The order that has been atomically locked
+   */
+  public ConfirmLockedOrder = async (
     lockedOrder: WOrderInstance,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(
@@ -986,6 +1013,18 @@ export class OrderManagerService {
       (order) => this.printerService.SendLockedOrder(order, true),
     );
   };
+
+  /**
+   * Send a pre-locked order to the printer service.
+   * The order must already be locked before calling this method.
+   * @param lockedOrder The order that has been atomically locked
+   */
+  public SendLockedOrder = async (
+    lockedOrder: WOrderInstance,
+  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
+    return this.printerService.SendLockedOrder(lockedOrder, true);
+  };
+
 
   CancelOrder = async (
     orderId: string,

@@ -11,13 +11,22 @@ import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { Observable } from 'rxjs';
 
+import {
+  IDEMPOTENCY_KEY,
+  type IdempotencyKeyRequest,
+} from '../decorators/idempotency-key.decorator';
 import { LOCK_ORDER_KEY } from '../decorators/lock-order.decorator';
+import {
+  LOCKED_ORDER_KEY,
+  type LockedOrderRequest,
+} from '../decorators/locked-order.decorator';
 import type { WOrderInstance } from '../models/orders/WOrderInstance';
 
-// Define a custom type for the request object to include added properties
-interface RequestWithLockedOrder {
-  lockedOrder?: WOrderInstance;
-  idempotencyKey?: string;
+/**
+ * Request interface combining all required properties for order locking.
+ * Uses constants from decorators for type-safe property access.
+ */
+interface OrderLockRequest extends LockedOrderRequest, IdempotencyKeyRequest {
   headers: {
     'idempotency-key'?: string;
     [key: string]: string | string[] | undefined;
@@ -42,7 +51,7 @@ export class OrderLockInterceptor implements NestInterceptor {
       return next.handle();
     }
 
-    const request = context.switchToHttp().getRequest<RequestWithLockedOrder>();
+    const request = context.switchToHttp().getRequest<OrderLockRequest>();
     const idempotencyKey = request.headers['idempotency-key'];
     const orderId = request.params.oId as string;
 
@@ -63,9 +72,9 @@ export class OrderLockInterceptor implements NestInterceptor {
       throw new NotFoundException('Order not found or already locked');
     }
 
-    // Attach locked order and idempotency key to request for use in controller
-    request.lockedOrder = order.toObject();
-    request.idempotencyKey = idempotencyKey;
+    // Attach locked order and idempotency key to request for use via decorators
+    request[LOCKED_ORDER_KEY] = order.toObject();
+    request[IDEMPOTENCY_KEY] = idempotencyKey;
 
     return next.handle();
   }

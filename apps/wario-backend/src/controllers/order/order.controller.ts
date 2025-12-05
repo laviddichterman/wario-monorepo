@@ -1,14 +1,14 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpException, Param, Post, Put, Query, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpException, Param, Post, Put, Query, UseInterceptors } from '@nestjs/common';
 
-import { CreateOrderRequestV2Dto, WOrderStatus } from '@wcp/wario-shared';
+import { CreateOrderRequestV2Dto, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { OrderManagerService } from '../../config/order-manager/order-manager.service';
 import { LockOrder } from '../../decorators/lock-order.decorator';
+import { LockedOrder } from '../../decorators/locked-order.decorator';
 import { RealIp } from '../../decorators/real-ip.decorator';
 import {
   CancelOrderRequestDto,
-  ConfirmOrderRequestDto,
   MoveOrderRequestDto,
   RescheduleOrderRequestDto,
 } from '../../dtos/order.dto';
@@ -40,12 +40,14 @@ export class OrderController {
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putCancelOrder(
-    @Param('oId') orderId: string,
-    @Headers('idempotency-key') _idempotencyKey: string,
+    @LockedOrder() order: WOrderInstance | undefined,
     @Body() body: CancelOrderRequestDto,
   ) {
-    const response = await this.orderManager.CancelOrder(
-      orderId,
+    if (!order) {
+      throw new BadRequestException('Failed to acquire lock on order');
+    }
+    const response = await this.orderManager.CancelLockedOrder(
+      order,
       body.reason,
       body.emailCustomer ?? false,
       body.refundToOriginalPayment ?? false,
@@ -61,11 +63,12 @@ export class OrderController {
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putConfirmOrder(
-    @Param('oId') orderId: string,
-    @Headers('idempotency-key') _idempotencyKey: string,
-    @Body() _body: ConfirmOrderRequestDto,
+    @LockedOrder() order: WOrderInstance | undefined,
   ) {
-    const response = await this.orderManager.ConfirmOrder(orderId);
+    if (!order) {
+      throw new BadRequestException('Failed to acquire lock on order');
+    }
+    const response = await this.orderManager.ConfirmLockedOrder(order);
     if (response.status !== 200) {
       throw new HttpException(response, response.status);
     }
@@ -77,12 +80,14 @@ export class OrderController {
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putMoveOrder(
-    @Param('oId') orderId: string,
-    @Headers('idempotency-key') _idempotencyKey: string,
+    @LockedOrder() order: WOrderInstance | undefined,
     @Body() body: MoveOrderRequestDto,
   ) {
-    const response = await this.orderManager.SendMoveOrderTicket(
-      orderId,
+    if (!order) {
+      throw new BadRequestException('Failed to acquire lock on order');
+    }
+    const response = await this.orderManager.SendMoveLockedOrderTicket(
+      order,
       body.destination,
       body.additionalMessage || '',
     );
@@ -97,12 +102,14 @@ export class OrderController {
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putAdjustOrderTime(
-    @Param('oId') orderId: string,
-    @Headers('idempotency-key') _idempotencyKey: string,
+    @LockedOrder() order: WOrderInstance | undefined,
     @Body() body: RescheduleOrderRequestDto,
   ) {
-    const response = await this.orderManager.AdjustOrderTime(
-      orderId,
+    if (!order) {
+      throw new BadRequestException('Failed to acquire lock on order');
+    }
+    const response = await this.orderManager.AdjustLockedOrderTime(
+      order,
       body,
       body.emailCustomer ?? false,
     );
@@ -124,12 +131,14 @@ export class OrderController {
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putSendOrder(
-    @Param('oId') orderId: string,
-    @Headers('idempotency-key') _idempotencyKey: string,
+    @LockedOrder() order: WOrderInstance | undefined,
   ) {
-    const response = await this.orderManager.SendOrder(orderId);
+    if (!order) {
+      throw new BadRequestException('Failed to acquire lock on order');
+    }
+    const response = await this.orderManager.SendLockedOrder(order);
     if (!response.success) {
-      throw new OrderNotFoundException(orderId);
+      throw new OrderNotFoundException(order.id);
     }
     return response;
   }
@@ -159,4 +168,3 @@ export class OrderController {
     return response;
   }
 }
-
