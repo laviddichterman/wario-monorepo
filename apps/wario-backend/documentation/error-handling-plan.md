@@ -557,12 +557,63 @@ Approximate boilerplate removed across all controllers:
 
 ---
 
-### Remaining Work (Phase 4)
+### Phase 4: Service Layer Refactoring ⏸️ DEFERRED (Optional)
 
-#### Phase 4: Service Layer Refactoring
-- [ ] Refactor `OrderManagerService` to throw exceptions instead of returning error objects
-- [ ] Remove `ResponseWithStatusCode` wrapper pattern
-- [ ] Update all service callers to handle exceptions
+> [!NOTE]
+> **This phase is optional.** The error handling system is fully functional with Phases 1-3 complete.
+> Phase 4 is a larger architectural refactoring that can be done incrementally over time.
+
+**Current State:** Services like `OrderManagerService` return `ResponseWithStatusCode<CrudOrderResponse>` objects. Controllers check the status and throw `HttpException` when needed.
+
+**Why Defer?**
+1. **High Risk**: `OrderManagerService` alone is 1,300+ lines with 20+ methods returning `ResponseWithStatusCode`
+2. **Working System**: Controllers already convert response status codes to exceptions
+3. **Breaking Changes**: Would require updating all service callers simultaneously
+4. **Diminishing Returns**: The main benefits (centralized error handling, notifications) are already achieved
+
+**If implementing later:**
+
+| Task | Scope |
+|------|-------|
+| Refactor `OrderManagerService` | ~20 methods, 1,300 lines |
+| Refactor `StoreCreditProviderService` | ~5 methods |
+| Refactor `CatalogProviderService` | ~15 methods |
+| Remove `ResponseWithStatusCode` | Type definitions, all usages |
+
+**Recommended Approach:**
+- Refactor one method at a time during regular maintenance
+- Start with simpler services (e.g., `StoreCreditProviderService`)
+- Add new methods using exception-based pattern
+
+---
+
+## ✅ Implementation Complete
+
+**Summary of Changes:**
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 1 | ✅ Complete | Infrastructure - exception classes, filter, notification service |
+| Phase 2 | ✅ Complete | New controllers automatically use new patterns |
+| Phase 3 | ✅ Complete | All existing controllers migrated |
+| Phase 4 | ⏸️ Deferred | Service layer refactoring (optional) |
+
+**Files Created:**
+- `src/exceptions/` - Custom domain exceptions (order, catalog, payment, printer)
+- `src/filters/all-exceptions.filter.ts` - Global exception filter
+- `src/config/error-notification/error-notification.service.ts` - Email notifications
+
+**Files Modified:**
+- `src/app.module.ts` - Registered global filter
+- `src/config/config.module.ts` - Added ErrorNotificationService
+- `src/controllers/` - All 6 controllers refactored
+
+**Benefits Achieved:**
+- ✅ Centralized error handling
+- ✅ Automatic email notifications for 5xx errors on critical paths
+- ✅ Consistent `WError[]` response format
+- ✅ ~200 lines of boilerplate removed
+- ✅ Custom exceptions for better error semantics
 
 ---
 
@@ -578,5 +629,6 @@ Approximate boilerplate removed across all controllers:
 | `src/config/error-notification/error-notification.service.ts` | Email notification service |
 | `src/filters/all-exceptions.filter.ts` | Global exception filter |
 | `src/filters/index.ts` | Filter barrel export |
+
 
 
