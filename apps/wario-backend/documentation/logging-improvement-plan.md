@@ -139,7 +139,60 @@ async function bootstrap() {
 2.  **app.module.ts Updated**:
     - `PinoLogger` is now injected into `AllExceptionsFilter` factory
 
-### 🔲 Phase 3: Service Refactoring (Pending)
+### 🔄 Phase 3: Service Refactoring (In Progress)
 
-- Incrementally update services to use structured logging patterns
-- Replace `JSON.stringify(err)` with `{ err }` object logging
+#### ✅ Completed Services:
+
+1.  **CatalogProviderService** (`catalog-provider.service.ts`):
+    - Migrated from NestJS `Logger` to `PinoLogger` via `@InjectPinoLogger`
+    - Replaced `logger.log()` with `logger.info()` (PinoLogger API)
+    - Converted all `JSON.stringify(err)` patterns to structured `{ err }` format
+    - Updated 8 sync methods with structured error logging
+
+2.  **SquareService** (`square.service.ts`):
+    - Migrated to `PinoLogger`
+    - Refactored `SquareCallFxnWrapper` to use structured error logging
+    - Downgraded API request logs to `debug`
+
+3.  **CatalogProductService** (`catalog-product.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+    - Downgraded verbose logs to `debug`
+
+4.  **CatalogModifierService** (`catalog-modifier.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+    - Downgraded verbose logs to `debug`
+
+5.  **OrderManagerService** (`order-manager.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+    - Downgraded verbose logs to `debug`
+    - Fixed constructor injection and `errorDetail` references
+
+6.  **DataProviderService** (`data-provider.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+    - Downgraded verbose logs to `debug`
+
+7.  **PrinterService** (`printer.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+    - Downgraded verbose logs to `debug`
+
+8.  **GoogleService** (`google.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+    - Fixed syntax errors
+
+9.  **ThirdPartyOrderService** (`third-party-order.service.ts`):
+    - Migrated to `PinoLogger`
+    - Replaced `JSON.stringify(err)` with `{ err }`
+
+10. **SquareWarioBridge** (`square-wario-bridge.ts`):
+    - Replaced static `Logger` with `PinoLogger` passed via context/arguments
+    - Updated callers in `CatalogProviderService` and `CatalogProductService`
+
+#### 🔲 Remaining Services (for incremental updates):
+
+- None! All planned services have been refactored.

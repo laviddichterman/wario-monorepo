@@ -1,8 +1,9 @@
 import { UTCDate } from '@date-fns/utc';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { formatRFC3339, isBefore, subDays } from 'date-fns';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   CartByPrinterGroup,
@@ -58,7 +59,6 @@ export interface PrinterMessage {
  */
 @Injectable()
 export class PrinterService {
-  private readonly logger = new Logger(PrinterService.name);
 
   constructor(
     @InjectModel('WOrderInstance')
@@ -69,6 +69,8 @@ export class PrinterService {
     private dataProvider: DataProviderService,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogService: CatalogProviderService,
+    @InjectPinoLogger(PrinterService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   /**
@@ -144,7 +146,7 @@ export class PrinterService {
         }
       }
 
-      this.logger.log(`Sent ${squareOrderIds.length.toString()} print orders for order ${order.id}`);
+      this.logger.info({ squareOrderIdsCount: squareOrderIds.length, orderId: order.id }, 'Sent print orders');
 
       return {
         success: true,
@@ -152,7 +154,7 @@ export class PrinterService {
       };
     } catch (error: unknown) {
       const errorDetail = `Failed to send print orders: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Failed to send print orders');
       return {
         success: false,
         squareOrderIds: [],
@@ -236,7 +238,7 @@ export class PrinterService {
         squareOrderIds.push(response.order.id);
       }
 
-      this.logger.log(`Sent move ticket for order ${order.id} to ${destination}`);
+      this.logger.info({ orderId: order.id, destination }, 'Sent move ticket');
 
       return {
         success: true,
@@ -244,7 +246,7 @@ export class PrinterService {
       };
     } catch (error: unknown) {
       const errorDetail = `Failed to send move ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Failed to send move ticket');
       return {
         success: false,
         squareOrderIds: [],
@@ -289,7 +291,7 @@ export class PrinterService {
         squareOrderIds.push(response.order.id);
       }
 
-      this.logger.log(`Sent message ticket: ${ticketName}`);
+      this.logger.info({ ticketName }, 'Sent message ticket');
 
       return {
         success: true,
@@ -297,7 +299,7 @@ export class PrinterService {
       };
     } catch (error: unknown) {
       const errorDetail = `Failed to send message: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Failed to send message');
       return {
         success: false,
         squareOrderIds: [],
@@ -350,7 +352,7 @@ export class PrinterService {
       );
 
       if (!batchOrders.success || !batchOrders.result.orders) {
-        this.logger.warn(`Failed to retrieve print orders for cancellation: ${JSON.stringify(squareOrderIds)}`);
+        this.logger.warn({ squareOrderIds }, 'Failed to retrieve print orders for cancellation');
         return;
       }
 
@@ -378,11 +380,11 @@ export class PrinterService {
             );
           }
         } catch (err) {
-          this.logger.error(`Failed to cancel print order ${order.id}: ${JSON.stringify(err)}`);
+          this.logger.error({ err, orderId: order.id }, 'Failed to cancel print order');
         }
       }
     } catch (error) {
-      this.logger.error(`Error in CancelPrintOrders: ${JSON.stringify(error)}`);
+      this.logger.error({ err: error }, 'Error in CancelPrintOrders');
     }
   }
 
@@ -451,7 +453,7 @@ export class PrinterService {
         squareOrderIds.push(response.order.id);
       }
 
-      this.logger.log(`Sent cancel ticket for order ${order.id}`);
+      this.logger.info({ orderId: order.id }, 'Sent cancel ticket');
 
       return {
         success: true,
@@ -459,7 +461,7 @@ export class PrinterService {
       };
     } catch (error: unknown) {
       const errorDetail = `Failed to send cancel ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Failed to send cancel ticket');
       return {
         success: false,
         squareOrderIds: [],
@@ -532,7 +534,7 @@ export class PrinterService {
         squareOrderIds.push(response.order.id);
       }
 
-      this.logger.log(`Sent time change ticket for order ${order.id}`);
+      this.logger.info({ orderId: order.id }, 'Sent time change ticket');
 
       return {
         success: true,
@@ -540,7 +542,7 @@ export class PrinterService {
       };
     } catch (error: unknown) {
       const errorDetail = `Failed to send time change ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Failed to send time change ticket');
       return {
         success: false,
         squareOrderIds: [],
@@ -558,8 +560,9 @@ export class PrinterService {
     try {
       const timeSpanAgoEnd = subDays(new UTCDate(), 1);
       const timeSpanAgoStart = subDays(timeSpanAgoEnd, 1);
-      this.logger.log(
-        `Clearing old print orders between ${formatRFC3339(timeSpanAgoStart)} and ${formatRFC3339(timeSpanAgoEnd)}`,
+      this.logger.info(
+        { start: formatRFC3339(timeSpanAgoStart), end: formatRFC3339(timeSpanAgoEnd) },
+        'Clearing old print orders',
       );
       const locationsToSearch = this.CleanupLocations;
       const oldOrdersResults = await this.squareService.SearchOrders(locationsToSearch, {
@@ -572,7 +575,7 @@ export class PrinterService {
         sort: { sortField: 'UPDATED_AT', sortOrder: 'ASC' },
       });
       if (oldOrdersResults.success) {
-        this.logger.log(`Found ${String(oldOrdersResults.result.orders?.length ?? 0)} old print orders to complete`);
+        this.logger.info({ count: oldOrdersResults.result.orders?.length ?? 0 }, 'Found old print orders to complete');
         const ordersToComplete = (oldOrdersResults.result.orders ?? []).filter(
           (x) =>
             (x.fulfillments ?? []).length === 1 &&
@@ -595,18 +598,18 @@ export class PrinterService {
               [],
             );
             if (orderUpdateResponse.success) {
-              this.logger.debug(`Marked print order ${squareOrder.id as string} as completed`);
+              this.logger.debug({ squareOrderId: squareOrder.id }, 'Marked print order as completed');
             }
           } catch (err1: unknown) {
             this.logger.error(
-              `Skipping ${squareOrder.id as string} due to error: ${JSON.stringify(err1, Object.getOwnPropertyNames(err1), 2)}`,
+              { err: err1, squareOrderId: squareOrder.id },
+              'Skipping print order completion',
             );
           }
         }
       }
     } catch (err: unknown) {
-      const errorDetail = `Error clearing past print orders: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err }, 'Error clearing past print orders');
     }
   };
   /**
@@ -617,7 +620,8 @@ export class PrinterService {
     releaseLock: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(
-      `Sending order ${JSON.stringify({ id: lockedOrder.id, fulfillment: lockedOrder.fulfillment, customerInfo: lockedOrder.customerInfo }, null, 2)}, lock applied.`,
+      { orderId: lockedOrder.id, fulfillment: lockedOrder.fulfillment, customerInfo: lockedOrder.customerInfo },
+      'Sending order, lock applied.',
     );
     try {
       const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
@@ -675,13 +679,14 @@ export class PrinterService {
         });
     } catch (error: unknown) {
       const errorDetail = `Caught error when attempting to send order: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Caught error when attempting to send order');
       if (releaseLock) {
         try {
           await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
         } catch (err2: unknown) {
           this.logger.error(
-            `Got even worse error in attempting to release lock on order we failed to finish send processing: ${JSON.stringify(err2, Object.getOwnPropertyNames(err2), 2)}`,
+            { err: err2 },
+            'Got even worse error in attempting to release lock on order we failed to finish send processing',
           );
         }
       }

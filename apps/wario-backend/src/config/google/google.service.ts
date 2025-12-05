@@ -1,6 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Interval } from '@nestjs/schedule';
 import { OAuth2Client } from 'google-auth-library';
 import { calendar_v3, google, sheets_v4 } from 'googleapis';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import * as nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -12,14 +14,17 @@ const OAuth2 = google.auth.OAuth2;
 
 @Injectable()
 export class GoogleService implements OnModuleInit {
-  private readonly logger = new Logger(GoogleService.name);
   private accessToken: string;
   private smtpTransport: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   private calendarAPI: calendar_v3.Calendar;
   private sheetsAPI: sheets_v4.Sheets;
   private oauth2Client: OAuth2Client;
 
-  constructor(private readonly dataProvider: DataProviderService) {
+  constructor(
+    private readonly dataProvider: DataProviderService,
+    @InjectPinoLogger(GoogleService.name)
+    private readonly logger: PinoLogger,
+  ) {
     this.calendarAPI = google.calendar('v3');
     this.sheetsAPI = google.sheets('v4');
   }
@@ -28,13 +33,18 @@ export class GoogleService implements OnModuleInit {
     await this.Bootstrap();
   }
 
+  @Interval(2700000)
+  async handleTokenRefresh() {
+    await this.RefreshAccessToken();
+  }
+
   RefreshAccessToken = async () => {
     try {
       const token = await this.oauth2Client.getAccessToken();
-      this.logger.debug(`Refreshing Google OAUTH2 access token to ${token.token as string}`);
+      this.logger.debug({ token: token.token }, 'Refreshing Google OAUTH2 access token');
       this.accessToken = token.token as string;
-    } catch (error) {
-      this.logger.error(`Failed to refresh Google access token, got error ${JSON.stringify(error)}`);
+    } catch (error: unknown) {
+      this.logger.error({ err: error }, 'Failed to refresh Google access token');
     }
   };
 
@@ -55,17 +65,12 @@ export class GoogleService implements OnModuleInit {
       'https://developers.google.com/oauthplayground',
     );
     if (cfg.GOOGLE_REFRESH_TOKEN && cfg.EMAIL_ADDRESS) {
-      this.logger.debug(`Got refresh token from DB config: ${cfg.GOOGLE_REFRESH_TOKEN}`);
+      this.logger.debug({ refreshToken: cfg.GOOGLE_REFRESH_TOKEN }, 'Got refresh token from DB config');
       this.oauth2Client.setCredentials({
         refresh_token: cfg.GOOGLE_REFRESH_TOKEN,
       });
       await this.RefreshAccessToken();
-      // refreshes token every 45 minutes
-      const _REFRESH_ACCESS_INTERVAL = setInterval(() => {
-        void this.RefreshAccessToken();
-      }, 2700000);
-
-      this.logger.debug(`Got EMAIL_ADDRESS from DB config: ${cfg.EMAIL_ADDRESS}`);
+      this.logger.debug({ email: cfg.EMAIL_ADDRESS }, 'Got EMAIL_ADDRESS from DB config');
       this.smtpTransport = nodemailer.createTransport({
         service: 'gmail',
         auth: {
@@ -85,7 +90,7 @@ export class GoogleService implements OnModuleInit {
           callback(new Error('Done fukt up.'));
           return;
         } else {
-          this.logger.log(`Access token: ${this.accessToken}`);
+          this.logger.info({ accessToken: this.accessToken }, 'Access token');
           callback(null, this.accessToken);
           return;
         }
@@ -93,7 +98,7 @@ export class GoogleService implements OnModuleInit {
     } else {
       this.logger.warn('CANT DO IT BRO');
     }
-    this.logger.log(`Finished Bootstrap of GoogleProvider`);
+    this.logger.info('Finished Bootstrap of GoogleProvider');
   };
 
   get AccessToken() {
@@ -121,11 +126,10 @@ export class GoogleService implements OnModuleInit {
     const call_fxn = async () => {
       try {
         const res = await this.smtpTransport.sendMail(mailOptions);
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string, @typescript-eslint/restrict-template-expressions
-        this.logger.debug(`Sent mail with subject ${subject} to ${to}`);
+        this.logger.debug({ subject, to }, 'Sent mail');
         return res;
       } catch (error: unknown) {
-        this.logger.error(`Email of ${JSON.stringify(mailOptions)} not sent, got error: ${JSON.stringify(error)} `);
+        this.logger.error({ err: error, mailOptions }, 'Email not sent');
         //this.#smtpTransport.close(); not sure if this is needed or not?
         throw error;
       }
@@ -145,12 +149,12 @@ export class GoogleService implements OnModuleInit {
           calendarId: 'primary',
           requestBody: eventJson,
         });
-        this.logger.debug(`Created event: ${JSON.stringify(event)}`);
+        this.logger.debug({ event }, 'Created event');
         // event.data is the event object
         return event.data;
-      } catch (err) {
-        this.logger.error(`event not created: ${JSON.stringify(eventJson)}`);
-        this.logger.error(err);
+      } catch (err: unknown) {
+        this.logger.error({ eventJson }, 'Event not created');
+        this.logger.error({ err }, 'Event creation failed');
         throw err;
       }
     };
@@ -165,10 +169,10 @@ export class GoogleService implements OnModuleInit {
           calendarId: 'primary',
           eventId: eventId,
         });
-        this.logger.debug(`Deleted event: ${eventId}`);
+        this.logger.debug({ eventId }, 'Deleted event');
         return true;
-      } catch (err) {
-        this.logger.error(`Event not deleted, got error: ${JSON.stringify(err)}`);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Event not deleted');
         throw err;
       }
     };
@@ -189,11 +193,11 @@ export class GoogleService implements OnModuleInit {
           eventId: eventId,
           requestBody: sparseEvent,
         });
-        this.logger.debug(`Patched event: ${eventId}, updated fields: ${JSON.stringify(sparseEvent, null, 2)}`);
+        this.logger.debug({ eventId, sparseEvent }, 'Patched event');
         // response.data is the event object
         return response.data;
-      } catch (err) {
-        this.logger.error(`Event not updated, got error: ${JSON.stringify(err)}`);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Event not updated');
         throw err;
       }
     };
@@ -212,8 +216,8 @@ export class GoogleService implements OnModuleInit {
           maxResults: 2500,
         });
         return response.data.items;
-      } catch (err) {
-        this.logger.error(`Unable to get events for date, got error: ${JSON.stringify(err)}`);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Unable to get events for date');
         throw err;
       }
     };
@@ -235,8 +239,8 @@ export class GoogleService implements OnModuleInit {
           },
         });
         return response.data;
-      } catch (err) {
-        this.logger.error(`Unable to append to sheet, got error: ${JSON.stringify(err)}`);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Unable to append to sheet');
         throw err;
       }
     };
@@ -255,8 +259,8 @@ export class GoogleService implements OnModuleInit {
           majorDimension: 'ROWS',
         });
         return response.data;
-      } catch (err) {
-        this.logger.error(`Unable to get values from sheet, got error: ${JSON.stringify(err)}`);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Unable to get values from sheet');
         throw err;
       }
     };
@@ -277,8 +281,8 @@ export class GoogleService implements OnModuleInit {
           },
         });
         return response.data;
-      } catch (err) {
-        this.logger.error(`Unable to update values in sheet, got error: ${JSON.stringify(err)}`);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Unable to update values in sheet');
         throw err;
       }
     };

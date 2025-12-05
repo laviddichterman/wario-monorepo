@@ -1,7 +1,8 @@
 
-import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   CatalogGenerator,
@@ -47,7 +48,6 @@ const FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD =
 
 @Injectable()
 export class CatalogProviderService implements OnModuleInit, ICatalogContext {
-  private readonly logger = new Logger(CatalogProviderService.name);
   private categories: Record<string, ICategory>;
   private printerGroups: Record<string, PrinterGroup>;
   private modifier_types: IOptionType[];
@@ -90,10 +90,16 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private catalogProductService: CatalogProductService,
     @Inject(forwardRef(() => CatalogSquareSyncService))
     private catalogSquareSyncService: CatalogSquareSyncService,
+    @InjectPinoLogger(CatalogProviderService.name)
+    private readonly _logger: PinoLogger,
   ) {
     this.apiver = { major: 0, minor: 0, patch: 0 };
     this.requireSquareRebuild = FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD;
     this.squareIdToWarioIdMapping = {};
+  }
+
+  public get logger(): PinoLogger {
+    return this._logger;
   }
 
   set RequireSquareRebuild(value: boolean) {
@@ -157,8 +163,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         (await this.wCategoryModel.find().exec()).map((x) => x.toObject()),
         'id',
       );
-    } catch (err) {
-      this.logger.error(`Failed fetching categories with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed fetching categories');
       return false;
     }
     return true;
@@ -171,8 +177,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         (await this.printerGroupModel.find().exec()).map((x) => x.toObject()),
         'id',
       );
-    } catch (err) {
-      this.logger.error(`Failed fetching printer groups with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed fetching printer groups');
       return false;
     }
     return true;
@@ -182,8 +188,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.debug(`Syncing Modifier Types.`);
     try {
       this.modifier_types = (await this.wOptionTypeModel.find().exec()).map((x) => x.toObject());
-    } catch (err) {
-      this.logger.error(`Failed fetching option types with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed fetching option types');
       return false;
     }
     return true;
@@ -193,8 +199,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.debug(`Syncing Modifier Options.`);
     try {
       this.options = (await this.wOptionModel.find().exec()).map((x) => x.toObject());
-    } catch (err) {
-      this.logger.error(`Failed fetching options with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'SyncModifierOptions failed');
       return false;
     }
     return true;
@@ -204,8 +210,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.debug(`Syncing Products.`);
     try {
       this.products = (await this.wProductModel.find().exec()).map((x) => x.toObject());
-    } catch (err) {
-      this.logger.error(`Failed fetching products with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed fetching products');
       return false;
     }
     return true;
@@ -215,8 +221,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.debug(`Syncing Product Instances.`);
     try {
       this.product_instances = (await this.wProductInstanceModel.find().exec()).map((x) => x.toObject());
-    } catch (err) {
-      this.logger.error(`Failed fetching product instances with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'SyncProductInstances failed');
       return false;
     }
     return true;
@@ -229,8 +235,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         (await this.wProductInstanceFunctionModel.find().exec()).map((x) => x.toObject()),
         'id',
       );
-    } catch (err) {
-      this.logger.error(`Failed fetching product instance functions with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed fetching product instance functions');
       return false;
     }
     return true;
@@ -243,8 +249,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         (await this.wOrderInstanceFunctionModel.find().exec()).map((x) => x.toObject()),
         'id',
       );
-    } catch (err) {
-      this.logger.error(`Failed fetching order instance functions with error: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed fetching order instance functions');
       return false;
     }
     return true;
@@ -271,7 +277,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   Bootstrap = async () => {
-    this.logger.log(`Starting Bootstrap of CatalogProvider, Loading catalog from database...`);
+    this.logger.info(`Starting Bootstrap of CatalogProvider, Loading catalog from database...`);
 
     const newVer = await this.dbVersionModel.findOne().exec();
     this.apiver = newVer as SEMVER;
@@ -297,7 +303,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this.RecomputeCatalog();
       await this.catalogSquareSyncService.CheckAllProductsHaveSquareIdsAndFixIfNeeded();
       if (modifierTypeIdsUpdated.length > 0) {
-        this.logger.log(
+        this.logger.info(
           `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsUpdated.length.toString()} modifier types`,
         );
         await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsUpdated);
@@ -305,11 +311,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     }
 
     if (this.requireSquareRebuild) {
-      this.logger.log('Forcing Square catalog rebuild on load');
+      this._logger.info('Forcing Square catalog rebuild on load');
       await this.catalogSquareSyncService.ForceSquareCatalogCompleteUpsert();
     }
 
-    this.logger.log(`Finished Bootstrap of CatalogProvider`);
+    this.logger.info(`Finished Bootstrap of CatalogProvider`);
   };
 
   UpdateProductsReferencingModifierTypeId = async (mtids: string[]) => {

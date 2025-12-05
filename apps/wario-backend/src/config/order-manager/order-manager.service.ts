@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   format,
@@ -11,6 +11,7 @@ import {
   isSameMinute,
 } from 'date-fns';
 import { FilterQuery, Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Order, Order as SquareOrder } from 'square';
 
 import {
@@ -66,8 +67,6 @@ const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
 
 @Injectable()
 export class OrderManagerService {
-  private readonly logger = new Logger(OrderManagerService.name);
-
   constructor(
     @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
@@ -95,6 +94,8 @@ export class OrderManagerService {
     private printerService: PrinterService,
     @Inject(forwardRef(() => ThirdPartyOrderService))
     private thirdPartyOrderService: ThirdPartyOrderService,
+    @InjectPinoLogger(OrderManagerService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   /**
@@ -129,7 +130,7 @@ export class OrderManagerService {
       )
       .then(async (updateResult) => {
         if (updateResult.modifiedCount > 0) {
-          this.logger.log(`Locked ${String(updateResult.modifiedCount)} orders with service before ${formatISO(endOfRange)}`);
+          this.logger.info(`Locked ${String(updateResult.modifiedCount)} orders with service before ${formatISO(endOfRange)}`);
           await this.orderModel
             .find({
               locked: idempotencyKey,
@@ -158,7 +159,7 @@ export class OrderManagerService {
     testDbOrder: FilterQuery<WOrderInstance>,
     onSuccess: (order: WOrderInstance) => Promise<ResponseWithStatusCode<CrudOrderResponse>>,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    this.logger.log(`Received request(nonce: ${idempotencyKey}) attempting to lock Order ID: ${orderId} `);
+    this.logger.debug({ idempotencyKey, orderId }, 'Received request attempting to lock Order');
     return await this.orderModel
       .findOneAndUpdate({ _id: orderId, locked: null, ...testDbOrder }, { locked: idempotencyKey }, { new: true })
       .then(async (order): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
@@ -179,7 +180,7 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)} `;
-        this.logger.error(errorDetail);
+        this.logger.error({ err }, `Unable to find ${orderId}`);
         return {
           status: 404,
           success: false,
@@ -207,7 +208,14 @@ export class OrderManagerService {
     additionalMessage: string,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(
-      `Sending move ticket for order ${JSON.stringify({ id: lockedOrder.id, fulfillment: lockedOrder.fulfillment, customerInfo: lockedOrder.customerInfo }, null, 2)}.`,
+      {
+        lockedOrder: {
+          id: lockedOrder.id,
+          fulfillment: lockedOrder.fulfillment,
+          customerInfo: lockedOrder.customerInfo,
+        },
+      },
+      'Sending move ticket for order',
     );
     try {
       // send order to alternate location
@@ -262,12 +270,13 @@ export class OrderManagerService {
         });
     } catch (error: unknown) {
       const errorDetail = `Caught error when attempting to send move ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)} `;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Caught error when attempting to send move ticket');
       try {
         await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
       } catch (err2: unknown) {
         this.logger.error(
-          `Got even worse error in attempting to release lock on order we failed to finish send processing: ${JSON.stringify(err2, Object.getOwnPropertyNames(err2), 2)} `,
+          { err: err2 },
+          'Got even worse error in attempting to release lock on order we failed to finish send processing',
         );
       }
       return {
@@ -299,7 +308,8 @@ export class OrderManagerService {
     refundToOriginalPayment: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(
-      `Found order to cancel for ${JSON.stringify(lockedOrder.customerInfo, null, 2)}, order ID: ${lockedOrder.id}. lock applied.`,
+      { customerInfo: lockedOrder.customerInfo, orderId: lockedOrder.id },
+      'Found order to cancel. lock applied.',
     );
     const errors: WError[] = [];
     try {
@@ -545,7 +555,7 @@ export class OrderManagerService {
         });
     } catch (error: unknown) {
       const errorDetail = `Caught error when attempting to cancel order: ${JSON.stringify(error, null, 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err: error }, 'Caught error when attempting to cancel order');
       return {
         status: 500,
         success: false as const,
@@ -571,7 +581,7 @@ export class OrderManagerService {
     const _is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
     const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
     const _oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
-    this.logger.log(
+    this.logger.info(
       `Adjusting order in status: ${lockedOrder.status} with fulfillment status ${lockedOrder.fulfillment.status} to new time of ${format(promisedTime.start, WDateUtils.ISODateTimeNoOffset)}`,
     );
     const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
@@ -638,7 +648,10 @@ export class OrderManagerService {
     //   })
     //   .catch((err: any) => {
     //     const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
-    //     this.logger.error(errorDetail);
+    //     this.logger.error(
+    //       { err },
+    //       'Unable to commit update to order to release lock and update fulfillment time',
+    //     );
     //     return {
     //       status: 500,
     //       success: false,
@@ -669,7 +682,7 @@ export class OrderManagerService {
     const is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
     const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
     const oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
-    this.logger.log(
+    this.logger.info(
       `Adjusting order in status: ${lockedOrder.status} with fulfillment status ${lockedOrder.fulfillment.status} to new time of ${format(promisedTime.start, WDateUtils.ISODateTimeNoOffset)}`,
     );
     const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
@@ -790,7 +803,10 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error(errorDetail);
+        this.logger.error(
+          { err },
+          'Unable to commit update to order to release lock and update fulfillment time',
+        );
         return {
           status: 500,
           success: false,
@@ -814,7 +830,8 @@ export class OrderManagerService {
     lockedOrder: WOrderInstance,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(
-      `Found order to confirm for ${JSON.stringify(lockedOrder.customerInfo, null, 2)}, order ID: ${lockedOrder.id}. lock applied.`,
+      { customerInfo: lockedOrder.customerInfo, orderId: lockedOrder.id },
+      'Found order to confirm. lock applied.',
     );
     // send email
     const _emailResponse = await this.orderNotificationService.CreateExternalConfirmationEmail(lockedOrder);
@@ -881,7 +898,7 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to commit update to order to release lock and confirm. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error(errorDetail);
+        this.logger.error({ err }, 'Unable to commit update to order to release lock and confirm');
         return {
           status: 500,
           success: false as const,
@@ -918,7 +935,7 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error(errorDetail);
+        this.logger.error({ err }, `Unable to find ${orderId}`);
         return {
           status: 500,
           success: false as const,
@@ -945,7 +962,7 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to find orders. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error(errorDetail);
+        this.logger.error({ err }, 'Unable to find orders');
         return {
           status: 500,
           success: false as const,
@@ -972,7 +989,7 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to unlock orders. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error(errorDetail);
+        this.logger.error({ err }, 'Unable to unlock orders');
         return {
           status: 500,
           success: false,
@@ -1074,7 +1091,7 @@ export class OrderManagerService {
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     const requestTime = Date.now();
 
-    this.logger.debug(`From ${ipAddress}, Create Order Request: ${JSON.stringify(createOrderRequest)}`);
+    this.logger.debug({ createOrderRequest, ipAddress }, 'Create Order Request');
 
     // 1. get the fulfillment and other needed constants from the DataProvider, generate a reference ID, quick computations
     if (!Object.hasOwn(this.dataProvider.Fulfillments, createOrderRequest.fulfillment.selectedService)) {
@@ -1089,12 +1106,14 @@ export class OrderManagerService {
     // 2. Rebuild the order from the menu/catalog
     const { noLongerAvailable, rebuiltCart } = this.orderValidationService.RebuildOrderState(createOrderRequest.cart, dateTimeInterval.start, fulfillmentConfig.id);
     if (noLongerAvailable.length > 0) {
-      const errorDetail = `Unable to rebuild order from current catalog data, missing: ${noLongerAvailable.map(x => x.product.m.name).join(', ')}`
-      this.logger.warn(errorDetail);
+      this.logger.warn(
+        { missing: noLongerAvailable.map((x) => x.product.m.name) },
+        'Unable to rebuild order from current catalog data',
+      );
       return {
         status: 410,
         success: false,
-        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'GONE', detail: errorDetail }]
+        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'GONE', detail: 'Unable to rebuild order from current catalog data' }]
       };
     }
 
@@ -1206,14 +1225,17 @@ export class OrderManagerService {
           this.catalogService
         ));
       if (!squareOrderResponse.success) {
-        this.logger.error(`Failed to create order: ${JSON.stringify(squareOrderResponse.error)}`);
+        this.logger.error({ err: squareOrderResponse.error }, 'Failed to create order');
         squareOrderResponse.error.map(e => errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" }))
         throw errors;
       }
 
       squareOrder = squareOrderResponse.result.order!;
       squareOrderVersion = squareOrder.version!;
-      this.logger.log(`For internal id ${referenceId} created Square Order ID: ${squareOrder.id!}`);
+      this.logger.info(
+        { referenceId, squareOrderId: squareOrder.id },
+        'Created Square Order',
+      );
 
       // Payment Part C: process payments with payment processor IN ORDER
       // because it needs to be in order, we can't use Promise.all or map
@@ -1237,7 +1259,14 @@ export class OrderManagerService {
               squarePaymentResponse.error.forEach(e => (errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" })));
               throw errors;
             }
-            this.logger.log(`For internal id ${referenceId} and Square Order ID: ${squareOrder.id!} payment for ${MoneyToDisplayString(squarePaymentResponse.result.amount, true)} successful.`)
+            this.logger.info(
+              {
+                referenceId,
+                squareOrderId: squareOrder.id,
+                amount: MoneyToDisplayString(squarePaymentResponse.result.amount, true),
+              },
+              'Payment successful',
+            );
             sentPayments.push(squarePaymentResponse.result);
             break;
           }
@@ -1265,7 +1294,14 @@ export class OrderManagerService {
               squareMoneyCreditPaymentResponse.error.forEach(e => (errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" })));
               throw errors;
             }
-            this.logger.log(`For internal id ${referenceId} and Square Order ID: ${squareOrder.id!} payment for ${MoneyToDisplayString(squareMoneyCreditPaymentResponse.result.amount, true)} successful.`)
+            this.logger.info(
+              {
+                referenceId,
+                squareOrderId: squareOrder.id,
+                amount: MoneyToDisplayString(squareMoneyCreditPaymentResponse.result.amount, true),
+              },
+              'Payment successful',
+            );
             sentPayments.push(squareMoneyCreditPaymentResponse.result);
             break;
           }
@@ -1298,7 +1334,7 @@ export class OrderManagerService {
             ...(calendarEventId ? [{ key: 'GCALEVENT', value: calendarEventId }] : [])
           ]
         }).save()).toObject();
-        this.logger.log(`Successfully saved OrderInstance to database: ${JSON.stringify(savedOrder)}`)
+        this.logger.info({ savedOrder }, 'Successfully saved OrderInstance to database');
 
         // send email to customer
         const _createExternalEmailInfo = this.orderNotificationService.CreateExternalEmail(
@@ -1313,7 +1349,7 @@ export class OrderManagerService {
 
       } catch (error: any) {
         const errorDetail = `Caught error while saving calendary entry: ${JSON.stringify(error)}`;
-        this.logger.error(errorDetail);
+        this.logger.error({ err: error }, 'Caught error while saving calendary entry');
         errors.push({ category: "INTERNAL_SERVER_ERROR", code: "INTERNAL_SERVER_ERROR", detail: errorDetail });
         throw errors;
       }
@@ -1333,12 +1369,11 @@ export class OrderManagerService {
       await this.orderPaymentService.RefundSquarePayments(sentPayments, 'Refunding failed order');
       await this.orderPaymentService.CancelSquarePayments(sentPayments);
       await this.orderPaymentService.RefundStoreCreditDebits(storeCreditResponses);
-    }
-    catch (err: unknown) {
-      this.logger.error(`Got error when unwinding the order after failure: ${JSON.stringify(err)}`);
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Got error when unwinding the order after failure');
       return { status: 500, success: false, error: errors };
     }
-    this.logger.error(`Got error when unwinding the order after failure: ${JSON.stringify(errors)}`);
+    this.logger.error({ errors }, 'Got error when unwinding the order after failure');
     return { status: 400, success: false, error: errors };
   }
 }

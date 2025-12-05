@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { chunk } from 'es-toolkit/compat';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CatalogIdMapping, CatalogObject } from 'square';
 
 import {
@@ -38,7 +39,6 @@ import {
 
 @Injectable()
 export class CatalogModifierService {
-  private readonly logger = new Logger(CatalogModifierService.name);
 
   constructor(
     private readonly appConfig: AppConfigService,
@@ -53,6 +53,8 @@ export class CatalogModifierService {
     private functionService: CatalogFunctionService,
     @Inject(forwardRef(() => CatalogSquareSyncService))
     private catalogSquareSyncService: CatalogSquareSyncService,
+    @InjectPinoLogger(CatalogModifierService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   private getLocationsConsidering3pFlag = (is3p: boolean) =>
@@ -115,8 +117,11 @@ export class CatalogModifierService {
     suppressFullRecomputation: boolean,
     updateModifierOptionsAndProducts: boolean,
   ): Promise<(IOptionType | null)[]> => {
-    this.logger.log(
-      `Updating modifier type(s) ${batches.map((x) => `ID: ${x.id}, changes: ${JSON.stringify(x.modifierType)}`).join(', ')}`,
+    this.logger.debug(
+      {
+        batches: batches.map((x) => ({ id: x.id, changes: x.modifierType })),
+      },
+      'Updating modifier type(s)',
     );
 
     const batchData = batches.map((b) => {
@@ -148,7 +153,8 @@ export class CatalogModifierService {
       );
       if (!batchRetrieveCatalogObjectsResponse.success) {
         this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
+          { err: batchRetrieveCatalogObjectsResponse.error },
+          'Getting current square CatalogObjects failed',
         );
         return batches.map((_) => null);
       }
@@ -176,8 +182,8 @@ export class CatalogModifierService {
         })),
       );
       if (!upsertResponse.success) {
-        const errorDetail = `Failed to update square modifier options, got errors: ${JSON.stringify(upsertResponse.error)}`;
-        this.logger.error(errorDetail);
+        const errorDetail = 'Failed to update square modifier options';
+        this.logger.error({ err: upsertResponse.error }, errorDetail);
         throw Error(errorDetail);
       }
       mappings.push(...(upsertResponse.result.idMappings ?? []));
@@ -240,7 +246,7 @@ export class CatalogModifierService {
   };
 
   DeleteModifierType = async (mt_id: string) => {
-    this.logger.debug(`Removing Modifier Type: ${mt_id}`);
+    this.logger.debug({ mt_id }, 'Removing Modifier Type');
     const doc = await this.wOptionTypeModel.findByIdAndDelete(mt_id).exec();
     if (!doc) {
       this.logger.warn('Unable to delete the ModifierType from the database.');
@@ -274,11 +280,11 @@ export class CatalogModifierService {
     await Promise.all(
       Object.values(this.catalogProvider.ProductInstanceFunctions).map(async (pif) => {
         if (FindModifierPlacementExpressionsForMTID(pif.expression, mt_id).length > 0) {
-          this.logger.debug(`Found product instance function composed of ${mt_id}, removing PIF with ID: ${pif.id}.`);
+          this.logger.debug({ mt_id, pifId: pif.id }, 'Found product instance function composed of MT, removing PIF');
           // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
           await this.functionService.DeleteProductInstanceFunction(pif.id, true);
         } else if (FindHasAnyModifierExpressionsForMTID(pif.expression, mt_id).length > 0) {
-          this.logger.debug(`Found product instance function composed of ${mt_id}, removing PIF with ID: ${pif.id}.`);
+          this.logger.debug({ mt_id, pifId: pif.id }, 'Found product instance function composed of MT, removing PIF');
           // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
           await this.functionService.DeleteProductInstanceFunction(pif.id, true);
         }
@@ -327,8 +333,11 @@ export class CatalogModifierService {
   };
 
   BatchUpdateModifierOption = async (batches: UpdateModifierOptionProps[]) => {
-    this.logger.log(
-      `Request to update ModifierOption(s) ${batches.map((b) => `ID: ${b.id}, updates: ${JSON.stringify(b.modifierOption)}`).join(', ')}`,
+    this.logger.debug(
+      {
+        batches: batches.map((b) => ({ id: b.id, updates: b.modifierOption })),
+      },
+      'Request to update ModifierOption(s)',
     );
     if (!IsSetOfUniqueStrings(batches.map((b) => b.modifierTypeId))) {
       const errorDetail = `Request for multiple option update batches from the same modifier type.`;
@@ -349,8 +358,8 @@ export class CatalogModifierService {
     const existingSquareExternalIds: string[] = [];
     batchesInfo.forEach((b, _i) => {
       if (!this.ValidateOption(b.modifierTypeEntry.modifierType, b.updatedOption)) {
-        const errorDetail = `Failed validation on modifier option ${JSON.stringify(b.updatedOption)} in a single select modifier type.`;
-        this.logger.error(errorDetail);
+        const errorDetail = `Failed validation on modifier option`;
+        this.logger.error({ option: b.updatedOption }, errorDetail);
         throw Error(errorDetail);
       }
       if (b.batch.modifierOption.metadata) {
@@ -400,8 +409,9 @@ export class CatalogModifierService {
     });
 
     if (squareCatalogObjectsToDelete.length > 0) {
-      this.logger.log(
-        `Deleting Square Catalog Modifiers due to ModifierOption update: ${squareCatalogObjectsToDelete.join(', ')}`,
+      this.logger.debug(
+        { squareCatalogObjectsToDelete },
+        'Deleting Square Catalog Modifiers due to ModifierOption update',
       );
       await this.squareService.BatchDeleteCatalogObjects(squareCatalogObjectsToDelete);
     }
@@ -413,7 +423,8 @@ export class CatalogModifierService {
       );
       if (!batchRetrieveCatalogObjectsResponse.success) {
         this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
+          { err: batchRetrieveCatalogObjectsResponse.error },
+          'Getting current square CatalogObjects failed',
         );
         return batches.map((_) => null);
       }
@@ -444,7 +455,7 @@ export class CatalogModifierService {
         })),
       );
       if (!upsertResponse.success) {
-        this.logger.error(`Failed to update square modifiers, got errors: ${JSON.stringify(upsertResponse.error)}`);
+        this.logger.error({ err: upsertResponse.error }, 'Failed to update square modifiers');
         return batches.map((_) => null);
       }
       mappings = upsertResponse.result.idMappings;
@@ -484,7 +495,7 @@ export class CatalogModifierService {
   };
 
   DeleteModifierOption = async (mo_id: string, suppress_catalog_recomputation: boolean = false) => {
-    this.logger.debug(`Removing Modifier Option ${mo_id}`);
+    this.logger.debug({ mo_id }, 'Removing Modifier Option');
     const doc = await this.wOptionModel.findByIdAndDelete(mo_id).exec();
     if (!doc) {
       return null;
@@ -506,7 +517,8 @@ export class CatalogModifierService {
         const filtered = dependent_pfi_expressions.filter((x) => x.expr.moid === mo_id);
         if (filtered.length > 0) {
           this.logger.debug(
-            `Found product instance function composed of ${doc.modifierTypeId}:${mo_id}, removing PIF with ID: ${pif.id}.`,
+            { modifierTypeId: doc.modifierTypeId, mo_id, pifId: pif.id },
+            'Found product instance function composed of MO, removing PIF',
           );
           // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
           await this.functionService.DeleteProductInstanceFunction(pif.id, true);

@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { UTCDate } from '@date-fns/utc';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { formatISO, formatRFC3339, subMinutes } from 'date-fns';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   CURRENCY,
@@ -27,7 +29,6 @@ import { SquareService } from '../square/square.service';
  */
 @Injectable()
 export class ThirdPartyOrderService {
-  private readonly logger = new Logger(ThirdPartyOrderService.name);
 
   constructor(
     @InjectModel('WOrderInstance')
@@ -38,6 +39,8 @@ export class ThirdPartyOrderService {
     private catalogService: CatalogProviderService,
     @Inject(forwardRef(() => DataProviderService))
     private dataProvider: DataProviderService,
+    @InjectPinoLogger(ThirdPartyOrderService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   /**
@@ -83,7 +86,7 @@ export class ThirdPartyOrderService {
       const ordersToInspect = (recentlyUpdatedOrdersResponse.result.orders ?? []).filter(
         (x) => x.lineItems && x.lineItems.length > 0 && x.fulfillments?.length === 1,
       );
-      const squareOrderIds = ordersToInspect.map((x) => x.id!);
+      const squareOrderIds = ordersToInspect.map((x) => x.id as string);
 
       // Find orders we've already ingested
       const found3pOrders = await this.orderModel
@@ -99,8 +102,10 @@ export class ThirdPartyOrderService {
       const orderInstances: Omit<WOrderInstance, 'id'>[] = [];
 
       ordersToIngest.forEach((squareOrder) => {
+
         const fulfillmentDetails = squareOrder.fulfillments![0];
         const requestedFulfillmentTime = WDateUtils.ComputeFulfillmentTime(
+
           new Date(fulfillmentDetails.pickupDetails!.pickupAt!),
         );
         const fulfillmentTimeClampedRounded =
@@ -137,8 +142,13 @@ export class ThirdPartyOrderService {
           );
 
           if (foundTimeOptionIndex === -1 || optionsForSelectedDate[foundTimeOptionIndex].disabled) {
-            const errorDetail = `Requested fulfillment (${fulfillmentConfig.displayName}) at ${WDateUtils.MinutesToPrintTime(requestedFulfillmentTime.selectedTime)} is no longer valid and could not find suitable time. Ignoring WARIO timing and sending order for originally requested time.`;
-            this.logger.error(errorDetail);
+            this.logger.error(
+              {
+                fulfillmentConfigDisplayName: fulfillmentConfig.displayName,
+                requestedTime: WDateUtils.MinutesToPrintTime(requestedFulfillmentTime.selectedTime),
+              },
+              'Requested fulfillment is no longer valid and could not find suitable time. Ignoring WARIO timing and sending order for originally requested time.',
+            );
           } else {
             adjustedFulfillmentTime = optionsForSelectedDate[foundTimeOptionIndex].value;
           }
@@ -158,6 +168,7 @@ export class ThirdPartyOrderService {
               selectedService: this.dataProvider.KeyValueConfig.THIRD_PARTY_FULFILLMENT,
               status: WFulfillmentStatus.PROPOSED,
               thirdPartyInfo: {
+
                 squareId: squareOrder.id!,
                 source: this.Map3pSource(squareOrder.source?.name ?? ''),
               },
@@ -196,21 +207,21 @@ export class ThirdPartyOrderService {
                 ? `ORT: ${WDateUtils.MinutesToPrintTime(requestedFulfillmentTime.selectedTime)}`
                 : undefined,
           });
-        } catch {
-          this.logger.error(`Skipping ${JSON.stringify(ordersToInspect)} due to error ingesting.`);
+        } catch (err: unknown) {
+          this.logger.error({ err, ordersToInspect }, 'Skipping due to error ingesting.');
         }
       });
 
       if (orderInstances.length > 0) {
-        this.logger.log(
-          `Inserting ${orderInstances.length.toString()} 3p orders... ${JSON.stringify(orderInstances)}`,
+        this.logger.info(
+          { orderInstancesCount: orderInstances.length, orderInstances },
+          'Inserting 3p orders...',
         );
         const saveResponse = await this.orderModel.bulkSave(orderInstances.map((x) => new this.orderModel(x)));
-        this.logger.log(`Save response for 3p order: ${JSON.stringify(saveResponse)}`);
+        this.logger.info({ saveResponse }, 'Save response for 3p order');
       }
     } catch (err: unknown) {
-      const errorDetail = `Got error when attempting to ingest 3p orders: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
-      this.logger.error(errorDetail);
+      this.logger.error({ err }, 'Got error when attempting to ingest 3p orders');
     }
   };
 }

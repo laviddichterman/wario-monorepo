@@ -1,6 +1,4 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-
-import { AppConfigService } from '../app-config.service';
 import { format, formatRFC3339, Interval, isSameMinute } from 'date-fns';
 import { calendar_v3 } from 'googleapis';
 
@@ -26,6 +24,7 @@ import {
 } from '@wcp/wario-shared';
 
 import { WOrderInstance } from '../../models/orders/WOrderInstance';
+import { AppConfigService } from '../app-config.service';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { GoogleService } from '../google/google.service';

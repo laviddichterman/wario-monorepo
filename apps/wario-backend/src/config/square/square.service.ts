@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { parseISO } from 'date-fns';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
   BatchDeleteCatalogObjectsRequest,
   BatchDeleteCatalogObjectsResponse,
@@ -78,8 +79,9 @@ export interface SquareProviderCreatePaymentRequest extends SquareProviderProces
   tipAmount?: IMoney;
   autocomplete: boolean;
 }
+type NonNullableFields<T> = { [P in keyof T]: NonNullable<T[P]> };
 
-const DEFAULT_LIMITS: Required<CatalogInfoResponseLimits> = {
+const DEFAULT_LIMITS: Required<NonNullableFields<CatalogInfoResponseLimits>> = {
   batchDeleteMaxObjectIds: 200,
   batchRetrieveMaxObjectIds: 1000,
   batchUpsertMaxObjectsPerBatch: 1000,
@@ -110,7 +112,7 @@ interface SquareResponseBase {
 const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
   apiRequestMaker: () => Promise<ApiResponse<T>>,
   retry = 0,
-  logger: Logger,
+  logger: PinoLogger,
 ): Promise<SquareProviderApiCallReturnValue<T>> => {
   try {
     const result = await apiRequestMaker();
@@ -131,9 +133,10 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
       };
     }
     return { success: true, result: result.result, error: [] };
-  } catch (error) {
+  } catch (error: unknown) {
+    const err = error as { statusCode: number; errors: SquareError[] };
     try {
-      if (SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(error.statusCode)) {
+      if (SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(err.statusCode)) {
         if (retry < SQUARE_RETRY_CONFIG.maxNumberOfRetries) {
           await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries);
           return await SquareCallFxnWrapper(apiRequestMaker, retry + 1, logger);
@@ -142,11 +145,10 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
       return {
         success: false,
         result: null,
-        error: error.errors as SquareError[],
+        error: err.errors,
       };
-    } catch (_) {
-      const errorDetail = `Got unknown error: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
-      logger.error(errorDetail);
+    } catch {
+      logger.error({ err: error }, 'Got unknown error');
       return {
         success: false,
         result: null,
@@ -164,15 +166,16 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
 
 @Injectable()
 export class SquareService implements OnModuleInit {
-  private readonly logger = new Logger(SquareService.name);
   private client: Client;
-  private catalogLimits: Required<CatalogInfoResponseLimits>;
+  private catalogLimits: Required<NonNullableFields<CatalogInfoResponseLimits>>;
   private catalogIdsToDelete: string[];
   private obliterateModifiersOnLoad: boolean;
 
   constructor(
     private readonly appConfig: AppConfigService,
     private readonly dataProvider: DataProviderService,
+    @InjectPinoLogger(SquareService.name)
+    private readonly logger: PinoLogger,
   ) {
     this.catalogLimits = DEFAULT_LIMITS;
     this.catalogIdsToDelete = [];
@@ -192,7 +195,7 @@ export class SquareService implements OnModuleInit {
   }
 
   private async Bootstrap() {
-    this.logger.log('Starting Bootstrap of SquareService');
+    this.logger.info('Starting Bootstrap of SquareService');
     if (this.dataProvider.KeyValueConfig.SQUARE_TOKEN) {
       this.client = new Client({
         environment: this.appConfig.isProduction ? Environment.Production : Environment.Sandbox,
@@ -208,8 +211,8 @@ export class SquareService implements OnModuleInit {
     const catalogInfoLimitsResponse = await this.GetCatalogInfo();
     if (catalogInfoLimitsResponse.success) {
       this.catalogLimits = {
-        ...DEFAULT_LIMITS,
         ...catalogInfoLimitsResponse.result,
+        ...DEFAULT_LIMITS,
       };
     } else {
       this.logger.error("Can't Bootstrap SQUARE Provider, failed querying catalog limits");
@@ -217,17 +220,17 @@ export class SquareService implements OnModuleInit {
     }
 
     if (this.catalogIdsToDelete.length > 0) {
-      this.logger.log('Migration requested square catalog object deletion.');
+      this.logger.info('Migration requested square catalog object deletion.');
       await this.BatchDeleteCatalogObjects(this.catalogIdsToDelete);
       this.catalogIdsToDelete = [];
     }
 
     if (this.obliterateModifiersOnLoad) {
-      this.logger.log('Obliterating modifiers for this location on load');
+      this.logger.info('Obliterating modifiers for this location on load');
       await this.ObliterateModifiersInSquareCatalog();
     }
 
-    this.logger.log('Finished Bootstrap of SquareService');
+    this.logger.info('Finished Bootstrap of SquareService');
   }
 
   private async ObliterateItemsInSquareCatalog() {
@@ -246,7 +249,7 @@ export class SquareService implements OnModuleInit {
       foundItems.push(...(response.result.items ?? []).map((x) => x.id));
       cursor = response.result.cursor ?? undefined;
     } while (cursor);
-    this.logger.log(`Deleting the following items: ${foundItems.join(', ')}`);
+    this.logger.info(`Deleting the following items: ${foundItems.join(', ')}`);
     await this.BatchDeleteCatalogObjects(foundItems);
   }
 
@@ -266,7 +269,7 @@ export class SquareService implements OnModuleInit {
       );
       cursor = response.result.cursor ?? undefined;
     } while (cursor);
-    this.logger.log(`Deleting the following object Modifier List IDs: ${foundItems.join(', ')}`);
+    this.logger.info(`Deleting the following object Modifier List IDs: ${foundItems.join(', ')}`);
     await this.BatchDeleteCatalogObjects(foundItems);
   }
 
@@ -282,14 +285,14 @@ export class SquareService implements OnModuleInit {
       foundItems.push(...(response.result.objects ?? []).map((x) => x.id));
       cursor = response.result.cursor ?? undefined;
     } while (cursor);
-    this.logger.log(`Deleting the following Category object IDs: ${foundItems.join(', ')}`);
+    this.logger.info(`Deleting the following Category object IDs: ${foundItems.join(', ')}`);
     await this.BatchDeleteCatalogObjects(foundItems);
   }
 
   async GetCatalogInfo(): Promise<SquareProviderApiCallReturnValue<CatalogInfoResponseLimits>> {
     const api = this.client.catalogApi;
     const call_fxn = async (): Promise<ApiResponse<CatalogInfoResponse>> => {
-      this.logger.log('sending Catalog Info request to Square API');
+      this.logger.debug('sending Catalog Info request to Square API');
       return await api.catalogInfo();
     };
     const response = await SquareCallFxnWrapper(call_fxn, 0, this.logger);
@@ -312,7 +315,7 @@ export class SquareService implements OnModuleInit {
       order: order,
     };
     const call_fxn = async (): Promise<ApiResponse<CreateOrderResponse>> => {
-      this.logger.log(`sending order request: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ request_body }, 'sending order request');
       return await orders_api.createOrder(request_body);
     };
     return await SquareCallFxnWrapper(call_fxn, 0, this.logger);
@@ -338,7 +341,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<UpdateOrderResponse>> => {
-      this.logger.log(`sending order update request for order ${orderId}: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ orderId, request_body }, 'sending order update request');
       return await orders_api.updateOrder(orderId, request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -351,7 +354,7 @@ export class SquareService implements OnModuleInit {
   async RetrieveOrder(squareOrderId: string) {
     const orders_api = this.client.ordersApi;
     const callFxn = async (): Promise<ApiResponse<RetrieveOrderResponse>> => {
-      this.logger.log(`Getting Square Order with ID: ${squareOrderId}`);
+      this.logger.debug({ squareOrderId }, 'Getting Square Order');
       return await orders_api.retrieveOrder(squareOrderId);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -360,7 +363,7 @@ export class SquareService implements OnModuleInit {
   async BatchRetrieveOrders(locationId: string, orderIds: string[]) {
     const orders_api = this.client.ordersApi;
     const callFxn = async (): Promise<ApiResponse<BatchRetrieveOrdersResponse>> => {
-      this.logger.debug(`Getting Square Orders: ${orderIds.join(', ')}`);
+      this.logger.debug({ orderIds }, 'Getting Square Orders');
       return await orders_api.batchRetrieveOrders({ orderIds, locationId });
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -376,7 +379,7 @@ export class SquareService implements OnModuleInit {
       locationIds,
     };
     const callFxn = async (): Promise<ApiResponse<SearchOrdersResponse>> => {
-      this.logger.debug(`Searching Square Orders with: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ request_body }, 'Searching Square Orders');
       return await orders_api.searchOrders(request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -428,7 +431,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<CreatePaymentResponse>> => {
-      this.logger.log(`sending payment request: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ request_body }, 'sending payment request');
       return await payments_api.createPayment(request_body);
     };
     const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -522,7 +525,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<PayOrderResponse>> => {
-      this.logger.log(`sending order payment request ${square_order_id}: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ square_order_id, request_body }, 'sending order payment request');
       return await orders_api.payOrder(square_order_id, request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -543,7 +546,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<any>> => {
-      this.logger.log(`sending payment REFUND request: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ request_body }, 'sending payment REFUND request');
       return await refundsApi.refundPayment(request_body);
     };
     const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -569,7 +572,7 @@ export class SquareService implements OnModuleInit {
   async CancelPayment(squarePaymentId: string): Promise<SquareProviderApiCallReturnValue<Payment>> {
     const paymentsApi = this.client.paymentsApi;
     const callFxn = async (): Promise<ApiResponse<any>> => {
-      this.logger.log(`sending payment CANCEL request for: ${squarePaymentId}`);
+      this.logger.debug({ squarePaymentId }, 'sending payment CANCEL request');
       return await paymentsApi.cancelPayment(squarePaymentId);
     };
     const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -596,7 +599,7 @@ export class SquareService implements OnModuleInit {
     };
 
     const callFxn = async (): Promise<ApiResponse<UpsertCatalogObjectResponse>> => {
-      this.logger.log(`sending catalog upsert: ${JSON.stringify(request_body)}`);
+      this.logger.debug({ request_body }, 'sending catalog upsert');
       return await catalogApi.upsertCatalogObject(request_body);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -606,7 +609,7 @@ export class SquareService implements OnModuleInit {
     const catalogApi = this.client.catalogApi;
 
     const callFxn = async (): Promise<ApiResponse<SearchCatalogItemsResponse>> => {
-      this.logger.log(`sending catalog item search: ${JSON.stringify(searchRequest)}`);
+      this.logger.debug({ searchRequest }, 'sending catalog item search');
       return await catalogApi.searchCatalogItems(searchRequest);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -616,7 +619,7 @@ export class SquareService implements OnModuleInit {
     const catalogApi = this.client.catalogApi;
 
     const callFxn = async (): Promise<ApiResponse<SearchCatalogObjectsResponse>> => {
-      this.logger.log(`sending catalog search: ${JSON.stringify(searchRequest)}`);
+      this.logger.debug({ searchRequest }, 'sending catalog search');
       return await catalogApi.searchCatalogObjects(searchRequest);
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -626,7 +629,7 @@ export class SquareService implements OnModuleInit {
     const catalogApi = this.client.catalogApi;
 
     const callFxn = async (): Promise<ApiResponse<ListCatalogResponse>> => {
-      this.logger.log(`sending catalog list request for types: ${types.join(', ')} with cursor: ${cursor}`);
+      this.logger.debug({ types, cursor }, 'sending catalog list request');
       return await catalogApi.listCatalog(cursor, types.join(', '));
     };
     return await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -641,7 +644,7 @@ export class SquareService implements OnModuleInit {
     const responses: SquareProviderApiCallReturnSuccess<BatchUpsertCatalogObjectsResponse>[] = [];
     do {
       const leftovers = remainingObjects.splice(
-        Math.floor(this.catalogLimits.batchUpsertMaxTotalObjects! / this.appConfig.squareBatchChunkSize),
+        Math.floor(this.catalogLimits.batchUpsertMaxTotalObjects / this.appConfig.squareBatchChunkSize),
       );
       const idempotency_key = crypto.randomBytes(22).toString('hex');
       const request_body: BatchUpsertCatalogObjectsRequest = {
@@ -650,7 +653,7 @@ export class SquareService implements OnModuleInit {
       };
 
       const callFxn = async (): Promise<ApiResponse<BatchUpsertCatalogObjectsResponse>> => {
-        this.logger.log(`sending catalog upsert batch: ${JSON.stringify(request_body)}`);
+        this.logger.debug({ request_body }, 'sending catalog upsert batch');
         return await catalogApi.batchUpsertCatalogObjects(request_body);
       };
       const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -679,13 +682,13 @@ export class SquareService implements OnModuleInit {
     let remainingObjects = objectIds.slice();
     const responses: SquareProviderApiCallReturnSuccess<BatchDeleteCatalogObjectsResponse>[] = [];
     do {
-      const leftovers = remainingObjects.splice(this.catalogLimits.batchDeleteMaxObjectIds!);
+      const leftovers = remainingObjects.splice(this.catalogLimits.batchDeleteMaxObjectIds);
       const request_body: BatchDeleteCatalogObjectsRequest = {
         objectIds: remainingObjects,
       };
 
       const callFxn = async (): Promise<ApiResponse<BatchDeleteCatalogObjectsResponse>> => {
-        this.logger.log(`sending catalog delete batch: ${JSON.stringify(request_body)}`);
+        this.logger.debug({ request_body }, 'sending catalog delete batch');
         return await catalogApi.batchDeleteCatalogObjects(request_body);
       };
       const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
@@ -717,14 +720,14 @@ export class SquareService implements OnModuleInit {
     const responses: SquareProviderApiCallReturnSuccess<BatchRetrieveCatalogObjectsResponse>[] = [];
 
     do {
-      const leftovers = remainingObjects.splice(this.catalogLimits.batchRetrieveMaxObjectIds!);
+      const leftovers = remainingObjects.splice(this.catalogLimits.batchRetrieveMaxObjectIds);
       const request_body: BatchRetrieveCatalogObjectsRequest = {
         objectIds: remainingObjects,
         includeRelatedObjects: includeRelated,
       };
 
       const callFxn = async (): Promise<ApiResponse<BatchRetrieveCatalogObjectsResponse>> => {
-        this.logger.log(`sending catalog retrieve batch: ${JSON.stringify(request_body)}`);
+        this.logger.debug({ request_body }, 'sending catalog retrieve batch');
         return await catalogApi.batchRetrieveCatalogObjects(request_body);
       };
       const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Logger } from '@nestjs/common';
 import { formatRFC3339 } from 'date-fns';
+import { type PinoLogger } from 'nestjs-pino';
 import {
   type CatalogIdMapping,
   type CatalogItemModifierListInfo,
@@ -49,9 +49,10 @@ export interface ICatalogContext {
   ReverseMappings: Record<string, string>;
   PrinterGroups: Record<string, PrinterGroup>;
   CatalogSelectors: ICatalogSelectors;
+  logger?: PinoLogger;
 }
 
-const logger = new Logger('SquareWarioBridge');
+
 
 // * add note to payment or whatever so the SQ receipt makes some sense, see https://squareup.com/receipt/preview/jXnAjUa3wdk6al0EofHUg8PUZzFZY
 // this all needs to be stored as part of the square configuration for the merchant. it should be bootstrapped and managed via the catalog sync process
@@ -136,7 +137,7 @@ export const LineItemsToOrderInstanceCart = (
       .map((line) => {
         const pIId = catalogContext.ReverseMappings[line.catalogObjectId!];
         if (!pIId) {
-          logger.error(`Unable to find matching product instance ID for square item variation`);
+          catalogContext.logger?.error('Unable to find matching product instance ID for square item variation');
         }
         const warioProductInstance = catalogContext.Catalog.productInstances[pIId];
         const warioProduct = catalogContext.Catalog.products[warioProductInstance.productId].product;
@@ -188,7 +189,7 @@ export const LineItemsToOrderInstanceCart = (
       });
   } catch (err: unknown) {
     const errorDetail = `Got error when attempting to ingest 3p line items (${JSON.stringify(lineItems)}) got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
-    logger.error(errorDetail);
+    catalogContext.logger?.error({ err, lineItems }, 'Got error when attempting to ingest 3p line items');
     // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw errorDetail;
   }
@@ -211,7 +212,7 @@ export const CreateFulfillment = (info: SquareOrderFulfillmentInfo): OrderFulfil
   };
 };
 
-const OptionInstanceToSquareIdSpecifier = (optionInstance: IOptionInstance) => {
+const OptionInstanceToSquareIdSpecifier = (optionInstance: IOptionInstance, logger?: PinoLogger) => {
   switch (optionInstance.placement) {
     case OptionPlacement.LEFT:
       return 'MODIFIER_LEFT';
@@ -229,7 +230,7 @@ const OptionInstanceToSquareIdSpecifier = (optionInstance: IOptionInstance) => {
           return 'MODIFIER_OTS';
       }
   }
-  logger.error(`UNHANDLED OPTION INSTANCE ${JSON.stringify(optionInstance)}`);
+  logger?.error({ optionInstance }, 'UNHANDLED OPTION INSTANCE');
   return 'MODIFIER_WHOLE';
 };
 
@@ -357,6 +358,7 @@ export const CreateOrdersForPrintingFromCart = (
         orderEntries.push(...cartEntryList.splice(0));
       }
       if (cartEntryList.length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete cartEntriesByPrinterGroup[pgId];
       }
     });
@@ -437,7 +439,7 @@ const WProductModifiersToSquareModifiers = (
       const catalogOption = catalogContext.Catalog.options[option.optionId];
       const squareModifierId = GetSquareIdFromExternalIds(
         catalogOption.externalIDs,
-        OptionInstanceToSquareIdSpecifier(option),
+        OptionInstanceToSquareIdSpecifier(option, catalogContext.logger),
       );
       if (
         modifierTypeEntry.modifierType.max_selected === 1 ||
@@ -641,8 +643,10 @@ export const ProductInstanceToSquareCatalogObject = (
   productInstance: Omit<IProductInstance, 'id' | 'productId'>,
   printerGroup: PrinterGroup | null,
   catalogSelectors: ICatalogSelectors,
+
   currentObjects: Pick<CatalogObject, 'id' | 'version' | 'itemData'>[],
   batch: string,
+  logger?: PinoLogger,
 ): CatalogObject => {
   // todo: we need a way to handle naming of split/super custom product instances
   // do we need to add an additional variation on the square item corresponding to the base product instance for split and otherwise unruly product instances likely with pricingType: VARIABLE?
@@ -665,14 +669,18 @@ export const ProductInstanceToSquareCatalogObject = (
       productInstance.modifiers.find((x) => x.modifierTypeId === mtspec.mtid)?.options ?? [];
     if (modifierEntry.modifierType.max_selected === 1) {
       // single select modifiers get added to the square product
-      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST')!;
+      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST');
       if (squareModifierListId === null) {
-        logger.error(`Missing MODIFIER_LIST in ${JSON.stringify(modifierEntry.modifierType.externalIDs)}`);
+        logger?.error({ externalIDs: modifierEntry.modifierType.externalIDs }, 'Missing MODIFIER_LIST');
         return;
       }
       if (selectedOptionsForModifierType.length > 1) {
-        logger.error(
-          `Mutiple selected modifier options ${JSON.stringify(selectedOptionsForModifierType)} found for single select modifier ${JSON.stringify(mtspec)}`,
+        logger?.error(
+          {
+            selectedOptions: selectedOptionsForModifierType,
+            modifierType: mtspec,
+          },
+          'Multiple selected modifier options found for single select modifier',
         );
         return;
       }
@@ -685,7 +693,7 @@ export const ProductInstanceToSquareCatalogObject = (
             modifierOverrides: selectedOptionsForModifierType.map((optionInstance) => ({
               modifierId: GetSquareIdFromExternalIds(
                 catalogSelectors.option(optionInstance.optionId)!.externalIDs,
-                OptionInstanceToSquareIdSpecifier(optionInstance),
+                OptionInstanceToSquareIdSpecifier(optionInstance, logger),
               )!,
               onByDefault: true,
             })),
@@ -694,9 +702,9 @@ export const ProductInstanceToSquareCatalogObject = (
       });
     } else {
       // add the modifier to the list
-      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST')!;
+      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST');
       if (squareModifierListId === null) {
-        logger.error(`Missing MODIFIER_LIST in ${JSON.stringify(modifierEntry.modifierType.externalIDs)}`);
+        logger?.error({ externalIDs: modifierEntry.modifierType.externalIDs }, 'Missing MODIFIER_LIST');
         return;
       }
       modifierListInfo.push({
@@ -918,7 +926,7 @@ export const ModifierTypeToSquareCatalogObject = (
   const modifierListId =
     GetSquareIdFromExternalIds(modifierType.externalIDs, 'MODIFIER_LIST') ?? `#${batch}_MODIFIER_LIST`;
   const version = currentObjects.find((x) => x.id === modifierListId)?.version ?? null;
-  const displayName = modifierType.displayName?.length > 0 ? modifierType.displayName : modifierType.name;
+  const displayName = modifierType.displayName.length > 0 ? modifierType.displayName : modifierType.name;
   const squareName = modifierType.displayFlags.is3p
     ? displayName
     : `${('0000' + (modifierType.ordinal * 100)).slice(-4)}| ${displayName}`;

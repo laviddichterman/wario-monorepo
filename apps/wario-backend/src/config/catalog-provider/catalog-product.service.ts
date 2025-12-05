@@ -1,7 +1,8 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { chunk } from 'es-toolkit/compat';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CatalogIdMapping, CatalogObject } from 'square';
 
 import {
@@ -63,8 +64,6 @@ const ValidateProductModifiersFunctionsCategoriesPrinterGroups = function (
 
 @Injectable()
 export class CatalogProductService {
-  private readonly logger = new Logger(CatalogProductService.name);
-
   constructor(
     private readonly appConfig: AppConfigService,
     @InjectModel('WProduct') private wProductModel: Model<IProduct>,
@@ -76,6 +75,8 @@ export class CatalogProductService {
     private squareService: SquareService,
     @Inject(forwardRef(() => CatalogSquareSyncService))
     private catalogSquareSyncService: CatalogSquareSyncService,
+    @InjectPinoLogger(CatalogProductService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   private getLocationsConsidering3pFlag = (is3p: boolean) =>
@@ -306,7 +307,8 @@ export class CatalogProductService {
       );
       if (!batchRetrieveCatalogObjectsResponse.success) {
         this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
+          { err: batchRetrieveCatalogObjectsResponse.error },
+          'Getting current square CatalogObjects failed',
         );
         return null;
       }
@@ -398,7 +400,7 @@ export class CatalogProductService {
         })),
       );
       if (!upsertResponse.success) {
-        this.logger.error(`Failed to save square products, got errors: ${JSON.stringify(upsertResponse.error)}`);
+        this.logger.error({ err: upsertResponse.error }, 'Failed to save square products');
         return null;
       }
       mappings = upsertResponse.result.idMappings ?? [];
@@ -463,7 +465,7 @@ export class CatalogProductService {
     });
     if (insertBatchInserts.length) {
       const bulkProductInsert = await this.wProductModel.insertMany(insertBatchInserts.map((o) => o.product));
-      this.logger.debug(`Saved new WProductModels: ${JSON.stringify(bulkProductInsert.map((x) => x.toObject()))}`);
+      this.logger.debug({ count: bulkProductInsert.length }, 'Saved new WProductModels');
     }
     const productInstanceInserts = [...insertBatchInserts, ...updateBatchesInserts];
     if (productInstanceInserts.length) {
@@ -471,7 +473,8 @@ export class CatalogProductService {
         [...insertBatchInserts, ...updateBatchesInserts].flatMap((x) => x.instances),
       );
       this.logger.debug(
-        `Instances creation result: ${JSON.stringify(bulkProductInstanceInsert.map((x) => x.toObject()))}`,
+        { count: bulkProductInstanceInsert.length },
+        'Instances creation result',
       );
     }
     if (bulkUpdate.length) {
@@ -483,7 +486,7 @@ export class CatalogProductService {
           },
         })),
       );
-      this.logger.log(`Bulk update of WProductModel successful: ${JSON.stringify(bulkProductUpdate)}`);
+      this.logger.debug({ result: bulkProductUpdate }, 'Bulk update of WProductModel successful');
       const bulkProductInstanceUpdate = await this.wProductInstanceModel.bulkWrite(
         bulkUpdate.flatMap((b) =>
           b.instances.map((pi) => ({
@@ -494,8 +497,9 @@ export class CatalogProductService {
           })),
         ),
       );
-      this.logger.log(
-        `Bulk update of WProductInstanceModel successful: ${JSON.stringify(bulkProductInstanceUpdate)}`,
+      this.logger.debug(
+        { result: bulkProductInstanceUpdate },
+        'Bulk update of WProductInstanceModel successful',
       );
     }
     await Promise.all([this.catalogProvider.SyncProducts(), this.catalogProvider.SyncProductInstances()]);
@@ -539,7 +543,7 @@ export class CatalogProductService {
   };
 
   BatchDeleteProduct = async (p_ids: string[], suppress_catalog_recomputation: boolean = false) => {
-    this.logger.debug(`Removing Product(s) ${p_ids.join(', ')}`);
+    this.logger.debug({ p_ids }, 'Removing Product(s)');
     const productEntries = p_ids.map((x) => this.catalogProvider.Catalog.products[x]);
 
     // needs to be ._id, NOT .id
@@ -573,7 +577,7 @@ export class CatalogProductService {
   };
 
   DeleteProduct = async (p_id: string) => {
-    this.logger.debug(`Removing Product ${p_id}`);
+    this.logger.debug({ p_id }, 'Removing Product');
     const productEntry = this.catalogProvider.Catalog.products[p_id];
 
     const doc = await this.wProductModel.findByIdAndDelete(p_id).exec();
@@ -618,10 +622,11 @@ export class CatalogProductService {
           this.catalogProvider.CatalogSelectors,
           [],
           '',
+          this.logger,
         ),
       );
       if (!upsertResponse.success) {
-        this.logger.error(`failed to add square product, got errors: ${JSON.stringify(upsertResponse.error)}`);
+        this.logger.error({ err: upsertResponse.error }, 'failed to add square product');
         return null;
       }
       adjustedInstance = {
@@ -643,8 +648,12 @@ export class CatalogProductService {
     batches: UpdateProductInstanceProps[],
     suppress_catalog_recomputation: boolean = false,
   ): Promise<(IProductInstance | null)[]> => {
-    this.logger.log(
-      `Updating product instance(s) ${batches.map((x) => `ID: ${x.piid}, changes: ${JSON.stringify(x.productInstance)}`).join(', ')}, ${suppress_catalog_recomputation ? 'and suppressing the catalog recomputation' : ''}`,
+    this.logger.debug(
+      {
+        batches: batches.map((x) => ({ piid: x.piid, changes: x.productInstance })),
+        suppress_catalog_recomputation,
+      },
+      'Updating product instance(s)',
     );
 
     // TODO: if switching from hideFromPos === false to hideFromPos === true, we need to delete the product in square
@@ -664,7 +673,8 @@ export class CatalogProductService {
       );
       if (!batchRetrieveCatalogObjectsResponse.success) {
         this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
+          { err: batchRetrieveCatalogObjectsResponse.error },
+          'Getting current square CatalogObjects failed',
         );
         return batches.map((_) => null);
       }
@@ -701,7 +711,7 @@ export class CatalogProductService {
         })),
       );
       if (!upsertResponse.success) {
-        this.logger.error(`Failed to update square product, got errors: ${JSON.stringify(upsertResponse.error)}`);
+        this.logger.error({ err: upsertResponse.error }, 'Failed to update square product');
         return batches.map((_) => null);
       }
       mappings.push(...(upsertResponse.result.idMappings ?? []));
@@ -747,11 +757,11 @@ export class CatalogProductService {
     if (instance) {
       const productEntry = this.catalogProvider.Catalog.products[instance.productId];
       if (productEntry.product.baseProductId === pi_id) {
-        this.logger.warn(`Attempted to delete base product instance for product ${productEntry.product.id}`);
+        this.logger.warn({ productId: productEntry.product.id }, 'Attempted to delete base product instance for product');
         return null;
       }
 
-      this.logger.debug(`Removing Product Instance: ${pi_id}`);
+      this.logger.debug({ pi_id }, 'Removing Product Instance');
       const doc = await this.wProductInstanceModel.findByIdAndDelete(pi_id).exec();
       if (!doc) {
         return null;

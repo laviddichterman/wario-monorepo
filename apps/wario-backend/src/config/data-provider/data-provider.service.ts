@@ -1,5 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   FulfillmentConfig,
@@ -19,7 +20,6 @@ import { SocketIoService } from '../socket-io/socket-io.service';
 
 @Injectable()
 export class DataProviderService implements OnModuleInit {
-  private readonly logger = new Logger(DataProviderService.name);
   private settings: IWSettings;
   private fulfillments: Record<string, FulfillmentConfig>;
   private keyvalueconfig: { [key: string]: string };
@@ -34,6 +34,8 @@ export class DataProviderService implements OnModuleInit {
     @InjectModel('SeatingResource')
     private seatingResourceModel: typeof SeatingResourceModel,
     private socketIoService: SocketIoService,
+    @InjectPinoLogger(DataProviderService.name)
+    private readonly logger: PinoLogger,
   ) {
     this.fulfillments = {};
     this.seatingResources = {};
@@ -55,7 +57,7 @@ export class DataProviderService implements OnModuleInit {
         'id',
       );
     } catch (err: unknown) {
-      this.logger.error(`Failed fetching fulfillments with error: ${JSON.stringify(err)}`);
+      this.logger.error({ err }, 'Failed fetching fulfillments');
     }
   };
 
@@ -67,12 +69,12 @@ export class DataProviderService implements OnModuleInit {
         'id',
       );
     } catch (err: unknown) {
-      this.logger.error(`Failed fetching seating resources with error: ${JSON.stringify(err)}`);
+      this.logger.error({ err }, 'Failed fetching seating resources');
     }
   };
 
   private Bootstrap = async () => {
-    this.logger.log('DataProvider: Loading from and bootstrapping to database.');
+    this.logger.info('DataProvider: Loading from and bootstrapping to database.');
 
     await this.syncFulfillments();
     await this.syncSeatingResources();
@@ -83,9 +85,9 @@ export class DataProviderService implements OnModuleInit {
       this.keyvalueconfig = {};
       const keyvalueconfig_document = new this.keyValueModel({ settings: [] });
       await keyvalueconfig_document.save();
-      this.logger.log('Added default (empty) key value config area');
+      this.logger.info('Added default (empty) key value config area');
     } else {
-      this.logger.debug(`Found KeyValueSchema in database: ${JSON.stringify(found_key_value_store)}`);
+      this.logger.debug({ keyValueStore: found_key_value_store }, 'Found KeyValueSchema in database');
       for (const i in found_key_value_store.settings) {
         if (Object.hasOwn(this.keyvalueconfig, found_key_value_store.settings[i].key)) {
           this.logger.error(
@@ -98,7 +100,7 @@ export class DataProviderService implements OnModuleInit {
 
     // check for and populate settings, including operating hours
     const found_settings = await this.settingsModel.findOne();
-    this.logger.log(`Found settings: ${JSON.stringify(found_settings)}`);
+    this.logger.info({ settings: found_settings }, 'Found settings');
     this.settings = found_settings!;
 
     this.logger.debug('Done Bootstrapping DataProvider');
@@ -130,10 +132,10 @@ export class DataProviderService implements OnModuleInit {
       if (db_settings) {
         Object.assign(db_settings, da);
         await db_settings.save();
-        this.logger.debug(`Saved settings ${JSON.stringify(db_settings)}`);
+        this.logger.debug({ settings: db_settings }, 'Saved settings');
       }
     } catch (err: unknown) {
-      this.logger.error(`Error saving settings ${JSON.stringify(err)}`);
+      this.logger.error({ err }, 'Error saving settings');
       throw err;
     }
   };
@@ -184,12 +186,12 @@ export class DataProviderService implements OnModuleInit {
     const savePromise = fm
       .save()
       .then((x) => {
-        this.logger.debug(`Saved new fulfillment: ${JSON.stringify(x)}`);
+        this.logger.debug({ fulfillment: x }, 'Saved new fulfillment');
         this.fulfillments[x.id] = x;
         return x;
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error saving new fulfillment: ${JSON.stringify(err)}`);
+        this.logger.error({ err }, 'Error saving new fulfillment');
         throw err;
       });
     return savePromise;
@@ -200,12 +202,12 @@ export class DataProviderService implements OnModuleInit {
     return this.fulfillmentModel
       .findByIdAndUpdate(id, fulfillment, { new: true })
       .then((doc) => {
-        this.logger.debug(`Updated fulfillment[${id}]: ${JSON.stringify(doc)}`);
+        this.logger.debug({ fulfillmentId: id, fulfillment: doc }, 'Updated fulfillment');
         this.fulfillments[id] = doc!;
         return doc;
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error updating fulfillment: ${JSON.stringify(err)}`);
+        this.logger.error({ err }, 'Error updating fulfillment');
         throw err;
       });
   };
@@ -215,12 +217,12 @@ export class DataProviderService implements OnModuleInit {
     return this.fulfillmentModel
       .findByIdAndDelete(id)
       .then((doc) => {
-        this.logger.debug(`Deleted fulfillment[${id}]: ${JSON.stringify(doc)}`);
+        this.logger.debug({ fulfillmentId: id, fulfillment: doc }, 'Deleted fulfillment');
         delete this.fulfillments[id];
         return doc;
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error deleting fulfillment: ${JSON.stringify(err)}`);
+        this.logger.error({ err }, 'Error deleting fulfillment');
         throw err;
       });
   };
@@ -230,12 +232,12 @@ export class DataProviderService implements OnModuleInit {
     const savePromise = sr
       .save()
       .then((x) => {
-        this.logger.debug(`Saved new seating resource: ${JSON.stringify(x)}`);
+        this.logger.debug({ seatingResource: x }, 'Saved new seating resource');
         this.seatingResources[x.id] = x;
         return x;
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error saving new seating resource: ${JSON.stringify(err)}`);
+        this.logger.error({ err }, 'Error saving new seating resource');
         throw err;
       });
     return savePromise;
@@ -245,12 +247,12 @@ export class DataProviderService implements OnModuleInit {
     return this.seatingResourceModel
       .findByIdAndUpdate(id, seatingResource, { new: true })
       .then((doc) => {
-        this.logger.debug(`Updated Seating Resource[${id}]: ${JSON.stringify(doc)}`);
+        this.logger.debug({ seatingResourceId: id, seatingResource: doc }, 'Updated Seating Resource');
         this.seatingResources[id] = doc!;
         return doc;
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error updating Seating Resource: ${JSON.stringify(err)}`);
+        this.logger.error({ err }, 'Error updating Seating Resource');
         throw err;
       });
   };
@@ -260,12 +262,12 @@ export class DataProviderService implements OnModuleInit {
     return this.seatingResourceModel
       .findByIdAndDelete(id)
       .then((doc) => {
-        this.logger.debug(`Deleted seating resource[${id}]: ${JSON.stringify(doc)}`);
+        this.logger.debug({ seatingResourceId: id, seatingResource: doc }, 'Deleted seating resource');
         delete this.seatingResources[id];
         return doc;
       })
       .catch((err: unknown) => {
-        this.logger.error(`Error deleting seating resource: ${JSON.stringify(err)}`);
+        this.logger.error({ err }, 'Error deleting seating resource');
         throw err;
       });
   };
@@ -281,10 +283,10 @@ export class DataProviderService implements OnModuleInit {
         }
         db_key_values.settings = settings_list;
         await db_key_values.save();
-        this.logger.debug(`Saved key/value config ${JSON.stringify(db_key_values)}`);
+        this.logger.debug({ keyValueConfig: db_key_values }, 'Saved key/value config');
       }
     } catch (err: unknown) {
-      this.logger.error(`Error saving key/value config ${JSON.stringify(err)}`);
+      this.logger.error({ err }, 'Error saving key/value config');
       throw err;
     }
   };
