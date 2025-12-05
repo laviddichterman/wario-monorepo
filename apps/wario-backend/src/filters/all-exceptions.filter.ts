@@ -2,7 +2,7 @@
  * Global exception filter for standardized error handling.
  *
  * This filter catches all exceptions and:
- * 1. Logs them with context
+ * 1. Logs them with structured context via PinoLogger
  * 2. Transforms them to the WError[] format
  * 3. Sends email notifications for critical errors
  * 4. Returns a consistent error response
@@ -13,9 +13,11 @@ import {
   type ExceptionFilter,
   HttpException,
   HttpStatus,
-  Logger,
+  Inject,
+  Optional,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import { PinoLogger } from 'nestjs-pino';
 
 import type { WError } from '@wcp/wario-shared';
 
@@ -35,28 +37,40 @@ interface HttpExceptionResponse {
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
-
   constructor(
-    private readonly errorNotificationService: ErrorNotificationService | null,
-  ) { }
+    @Inject(PinoLogger) private readonly logger: PinoLogger,
+    @Optional() private readonly errorNotificationService: ErrorNotificationService | null,
+  ) {
+    this.logger.setContext(AllExceptionsFilter.name);
+  }
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { status, errors, stack } = this.extractErrorInfo(exception);
+    const { status, errors, stack: _stack } = this.extractErrorInfo(exception);
 
-    // Log the error
-    this.logger.error({
-      timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
-      status,
-      errors,
-      ...(status >= 500 && stack ? { stack } : {}),
-    });
+    // Log with structured error object - pino will serialize the error properly
+    // Note: pino-http already logs the request context, so we only need to log error-specific info
+    if (status >= 500) {
+      this.logger.error(
+        {
+          err: exception instanceof Error ? exception : undefined,
+          status,
+          errors,
+        },
+        'Request failed with server error',
+      );
+    } else {
+      this.logger.warn(
+        {
+          status,
+          errors,
+        },
+        'Request failed with client error',
+      );
+    }
 
     // Send notification for critical errors (async, fire-and-forget)
     if (this.errorNotificationService?.shouldNotify(request.path, status)) {

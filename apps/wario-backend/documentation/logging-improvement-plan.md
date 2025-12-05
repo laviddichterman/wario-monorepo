@@ -127,12 +127,19 @@ async function bootstrap() {
     - `bufferLogs: true` to capture startup logs
     - `app.useLogger(app.get(Logger))` to use pino for all NestJS logging
 
-### 🔲 Phase 2: Global Error Handling Update (Pending)
+### ✅ Phase 2: Global Error Handling Update (Complete)
 
-- Refactor `AllExceptionsFilter` to use structured logging via `PinoLogger`
+1.  **AllExceptionsFilter Refactored** in `all-exceptions.filter.ts`:
+    - Replaced NestJS `Logger` with `PinoLogger` injection
+    - Uses structured logging with `{ err, status, errors }` object pattern
+    - Server errors (5xx) logged at `error` level with full error object
+    - Client errors (4xx) logged at `warn` level
+    - pino automatically serializes error stack traces via the `err` property
+
+2.  **app.module.ts Updated**:
+    - `PinoLogger` is now injected into `AllExceptionsFilter` factory
 
 ### 🔲 Phase 3: Service Refactoring (Pending)
 
 - Incrementally update services to use structured logging patterns
 - Replace `JSON.stringify(err)` with `{ err }` object logging
-

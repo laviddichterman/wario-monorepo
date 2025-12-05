@@ -3,7 +3,7 @@ import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
-import { LoggerModule } from 'nestjs-pino';
+import { LoggerModule, PinoLogger } from 'nestjs-pino';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -75,10 +75,10 @@ import { TasksModule } from './tasks/tasks.module';
     AppService,
     {
       provide: APP_FILTER,
-      useFactory: (errorNotificationService: ErrorNotificationService) => {
-        return new AllExceptionsFilter(errorNotificationService);
+      useFactory: (logger: PinoLogger, errorNotificationService: ErrorNotificationService) => {
+        return new AllExceptionsFilter(logger, errorNotificationService);
       },
-      inject: [ErrorNotificationService],
+      inject: [PinoLogger, ErrorNotificationService],
     },
     {
       provide: APP_GUARD,
