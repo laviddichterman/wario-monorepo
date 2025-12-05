@@ -5,11 +5,15 @@ import { WFunctional } from '@wcp/wario-shared';
 
 import { CreateProductInstanceFunctionDto, UpdateProductInstanceFunctionDto } from 'src/dtos/expression.dto';
 
+import { CatalogFunctionService } from '../../config/catalog-provider/catalog-function.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 
 @Controller('api/v1/query/language/productinstancefunction')
 export class ProductInstanceFunctionController {
-  constructor(private readonly catalogProvider: CatalogProviderService) { }
+  constructor(
+    private readonly catalogProvider: CatalogProviderService,
+    private readonly functionService: CatalogFunctionService,
+  ) { }
 
   @Post()
   @HttpCode(201)
@@ -19,7 +23,7 @@ export class ProductInstanceFunctionController {
     } catch {
       throw new BadRequestException('Expression invalid');
     }
-    const doc = await this.catalogProvider.CreateProductInstanceFunction({
+    const doc = await this.functionService.CreateProductInstanceFunction({
       name: body.name,
       expression: body.expression as IAbstractExpression,
     });
@@ -40,7 +44,7 @@ export class ProductInstanceFunctionController {
       }
     }
 
-    const doc = await this.catalogProvider.UpdateProductInstanceFunction(fxnid, body);
+    const doc = await this.functionService.UpdateProductInstanceFunction(fxnid, body);
     if (!doc) {
       throw new NotFoundException(`Unable to update ProductInstanceFunction: ${fxnid}`);
     }
@@ -49,7 +53,7 @@ export class ProductInstanceFunctionController {
 
   @Delete(':fxnid')
   async deletePIF(@Param('fxnid') fxnid: string) {
-    const doc = await this.catalogProvider.DeleteProductInstanceFunction(fxnid);
+    const doc = await this.functionService.DeleteProductInstanceFunction(fxnid);
     if (!doc) {
       throw new NotFoundException(`Unable to delete ProductInstanceFunction: ${fxnid}`);
     }

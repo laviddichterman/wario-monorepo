@@ -54,6 +54,8 @@ import {
 } from '../square-wario-bridge';
 import { SquareService } from '../square/square.service';
 
+import { CatalogFunctionService } from './catalog-function.service';
+
 function isUpdateProduct(batch: CreateProductBatchRequest | UpdateProductBatchRequest): batch is UpdateProductBatchRequest {
   return 'product' in batch && 'id' in batch.product;
 }
@@ -149,6 +151,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private squareService: SquareService,
     @Inject(forwardRef(() => SocketIoService))
     private socketIoService: SocketIoService,
+    @Inject(forwardRef(() => CatalogFunctionService))
+    private functionService: CatalogFunctionService,
   ) {
     this.apiver = { major: 0, minor: 0, patch: 0 };
     this.requireSquareRebuild = FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD;
@@ -1014,11 +1018,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         if (FindModifierPlacementExpressionsForMTID(pif.expression, mt_id).length > 0) {
           this.logger.debug(`Found product instance function composed of ${mt_id}, removing PIF with ID: ${pif.id}.`);
           // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
-          await this.DeleteProductInstanceFunction(pif.id, true);
+          await this.functionService.DeleteProductInstanceFunction(pif.id, true);
         } else if (FindHasAnyModifierExpressionsForMTID(pif.expression, mt_id).length > 0) {
           this.logger.debug(`Found product instance function composed of ${mt_id}, removing PIF with ID: ${pif.id}.`);
           // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
-          await this.DeleteProductInstanceFunction(pif.id, true);
+          await this.functionService.DeleteProductInstanceFunction(pif.id, true);
         }
       }),
     );
@@ -1283,7 +1287,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
             `Found product instance function composed of ${doc.modifierTypeId}:${mo_id}, removing PIF with ID: ${pif.id}.`,
           );
           // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
-          await this.DeleteProductInstanceFunction(pif.id, true);
+          await this.functionService.DeleteProductInstanceFunction(pif.id, true);
         }
       }),
     );
@@ -1392,15 +1396,17 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       let removedModifierTypes: string[] = [];
       let addedModifierTypes = false;
       const adjustedPrice =
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         b.product.price && b.product.price !== oldProductEntry.product.price ? b.product.price : null;
       const adjustedPrinterGroup = b.product.printerGroup !== oldProductEntry.product.printerGroup;
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (b.product.modifiers) {
         const oldModifierTypes = oldProductEntry.product.modifiers.map((x) => x.mtid);
         const newModifierTypes = b.product.modifiers.map((x) => x.mtid);
         removedModifierTypes = oldModifierTypes.filter((x) => !newModifierTypes.includes(x));
         addedModifierTypes = newModifierTypes.filter((x) => !oldModifierTypes.includes(x)).length > 0;
       }
-      const mergedProduct = { ...oldProductEntry.product, ...b.product };
+      const mergedProduct = { ...(oldProductEntry.product as IProduct), ...(b.product as UpdateIProductRequest) };
 
       const insertInstances = b.instances.filter((b) => !isUpdateProductInstance(b)) as UncommittedIProductInstance[];
       const adjustedInsertInstances: Omit<IProductInstance, 'id'>[] = insertInstances.map((x) => {
@@ -1447,7 +1453,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       externalIdsToDelete.push(
         ...explicitUpdateInstances
           .map((pi) =>
+            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             !this.Catalog.productInstances[pi.id].displayFlags.pos.hide && pi.displayFlags?.pos.hide
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               ? GetSquareExternalIds(pi.externalIDs ?? this.Catalog.productInstances[pi.id].externalIDs)
               : [],
           )
@@ -1458,6 +1466,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         ...explicitUpdateInstances.map((pi) => {
           const oldInstance = this.Catalog.productInstances[pi.id];
           // these need to be deleted from square since they were previously not hidden from POS and now they are
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           const needToDeleteSquareCatalogItem = !oldInstance.displayFlags.pos.hide && pi.displayFlags?.pos.hide;
           const mergedExternalIds = ProductInstanceUpdateMergeExternalIds(
             this.Catalog.productInstances[pi.id].externalIDs,
@@ -1546,7 +1555,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         externalIDs: GetNonSquareExternalIds(b.product.externalIDs),
       };
       const adjustedInstances: Omit<IProductInstance, 'id' | 'productId'>[] = b.instances.map((x) => ({
-        ...x,
+        ...(x as UncommittedIProductInstance),
         externalIDs: GetNonSquareExternalIds(x.externalIDs),
       }));
       // first add the stuff to square so we can write to the DB in two operations
@@ -1932,89 +1941,17 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return null;
   };
 
-  CreateProductInstanceFunction = async (productInstanceFunction: Omit<IProductInstanceFunction, 'id'>) => {
-    const doc = new this.wProductInstanceFunctionModel(productInstanceFunction);
-    await doc.save();
-    await this.SyncProductInstanceFunctions();
-    this.RecomputeCatalogAndEmit();
-    return doc.toObject();
-  };
 
-  // TODO: I don't think the original handled the partial case properly
-  UpdateProductInstanceFunction = async (
-    pif_id: string,
-    productInstanceFunction: Partial<Omit<IProductInstanceFunction, 'id'>>,
-  ) => {
-    const updated = await this.wProductInstanceFunctionModel
-      .findByIdAndUpdate(pif_id, productInstanceFunction, { new: true })
-      .exec();
-    if (!updated) {
-      return null;
-    }
-    await this.SyncProductInstanceFunctions();
-    this.RecomputeCatalogAndEmit();
-    return updated.toObject();
-  };
 
-  DeleteProductInstanceFunction = async (pif_id: string, suppress_catalog_recomputation = false) => {
-    this.logger.debug(`Removing Product Instance Function: ${pif_id}`);
-    const doc = await this.wProductInstanceFunctionModel.findByIdAndDelete(pif_id).exec();
-    if (!doc) {
-      return null;
-    }
-    const options_update = await this.wOptionModel.updateMany({ enable: pif_id }, { $set: { enable: null } }).exec();
-    if (options_update.modifiedCount > 0) {
-      this.logger.debug(`Removed ${doc.id as string} from ${options_update.modifiedCount.toString()} Modifier Options.`);
-      await this.SyncOptions();
-    }
-    const products_update = await this.wProductModel
-      .updateMany({ 'modifiers.enable': pif_id }, { $set: { 'modifiers.$.enable': null } })
-      .exec();
-    if (products_update.modifiedCount > 0) {
-      this.logger.debug(`Removed ${doc.id as string} from ${products_update.modifiedCount.toString()} Products.`);
-      await this.SyncProducts();
-    }
 
-    await this.SyncProductInstanceFunctions();
-    if (!suppress_catalog_recomputation) {
-      this.RecomputeCatalogAndEmit();
-    }
-    return doc.toObject();
-  };
 
-  CreateOrderInstanceFunction = async (orderInstanceFunction: Omit<OrderInstanceFunction, 'id'>) => {
-    const doc = new this.wOrderInstanceFunctionModel(orderInstanceFunction);
-    await doc.save();
-    await this.SyncOrderInstanceFunctions();
-    this.RecomputeCatalogAndEmit();
-    return doc.toObject();
-  };
 
-  UpdateOrderInstanceFunction = async (
-    id: string,
-    orderInstanceFunction: Partial<Omit<OrderInstanceFunction, 'id'>>,
-  ) => {
-    const updated = await this.wOrderInstanceFunctionModel.findByIdAndUpdate(id, orderInstanceFunction, { new: true });
-    if (!updated) {
-      return null;
-    }
-    await this.SyncOrderInstanceFunctions();
-    this.RecomputeCatalogAndEmit();
-    return updated.toObject();
-  };
 
-  DeleteOrderInstanceFunction = async (id: string, suppress_catalog_recomputation = false) => {
-    this.logger.debug(`Removing Order Instance Function: ${id}`);
-    const doc = await this.wOrderInstanceFunctionModel.findByIdAndDelete(id);
-    if (!doc) {
-      return null;
-    }
-    await this.SyncOrderInstanceFunctions();
-    if (!suppress_catalog_recomputation) {
-      this.RecomputeCatalogAndEmit();
-    }
-    return doc.toObject();
-  };
+
+
+
+
+
 
   /**
    * Checks and removes fulfullment ID from ICategory.serviceDisable and IProduct.serviceDisable and IProduct.modifiers.serviceDisable

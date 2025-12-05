@@ -65,8 +65,8 @@ graph TD
 
 ---
 
-### 2. `ModifierService`
-**File:** `modifier.service.ts`  
+### 2. `CatalogModifierService`
+**File:** `catalog-modifier.service.ts`  
 **Responsibility:** ModifierTypes + ModifierOptions CRUD
 
 | Current Function | New Name | Notes |
@@ -87,8 +87,8 @@ graph TD
 
 ---
 
-### 3. `ProductService`
-**File:** `product.service.ts`  
+### 3. `CatalogProductService`
+**File:** `catalog-product.service.ts`  
 **Responsibility:** Products + ProductInstances CRUD
 
 | Current Function | New Name | Notes |
@@ -112,8 +112,8 @@ graph TD
 
 ---
 
-### 4. `CategoryService`
-**File:** `category.service.ts`  
+### 4. `CatalogCategoryService`
+**File:** `catalog-category.service.ts`  
 **Responsibility:** Categories CRUD
 
 | Current Function | New Name | Notes |
@@ -130,8 +130,8 @@ graph TD
 
 ---
 
-### 5. `PrinterGroupService`
-**File:** `printer-group.service.ts`  
+### 5. `CatalogPrinterGroupService`
+**File:** `catalog-printer-group.service.ts`  
 **Responsibility:** PrinterGroups CRUD
 
 | Current Function | New Name | Notes |
@@ -149,8 +149,8 @@ graph TD
 
 ---
 
-### 6. `FunctionService`
-**File:** `function.service.ts`  
+### 6. `CatalogFunctionService`
+**File:** `catalog-function.service.ts`  
 **Responsibility:** ProductInstanceFunctions + OrderInstanceFunctions CRUD
 
 | Current Function | New Name | Notes |
@@ -168,8 +168,8 @@ graph TD
 
 ---
 
-### 7. `SquareSyncService`
-**File:** `square-sync.service.ts`  
+### 7. `CatalogSquareSyncService`
+**File:** `catalog-square-sync.service.ts`  
 **Responsibility:** Square catalog synchronization and validation
 
 | Current Function | New Name | Notes |
@@ -205,12 +205,12 @@ graph TD
 src/config/catalog-provider/
 ├── catalog-provider.module.ts       # Updated module (imports all services)
 ├── catalog-provider.service.ts      # Slimmed coordinator (state + sync)
-├── modifier.service.ts              # ModifierTypes + ModifierOptions
-├── product.service.ts               # Products + ProductInstances
-├── category.service.ts              # Categories
-├── printer-group.service.ts         # PrinterGroups
-├── function.service.ts              # ProductInstance + OrderInstance Functions
-├── square-sync.service.ts           # Square catalog synchronization
+├── catalog-modifier.service.ts              # ModifierTypes + ModifierOptions
+├── catalog-product.service.ts               # Products + ProductInstances
+├── catalog-category.service.ts              # Categories
+├── catalog-printer-group.service.ts         # PrinterGroups
+├── catalog-function.service.ts              # ProductInstance + OrderInstance Functions
+├── catalog-square-sync.service.ts           # Square catalog synchronization
 └── catalog.types.ts                 # Shared types (UpdateProps, etc.)
 ```
 
@@ -220,33 +220,33 @@ All services stay in the same folder since they're tightly coupled and share the
 
 ## Implementation Phases
 
-### Phase 1: Extract FunctionService (Lowest Risk)
+### Phase 1: Extract CatalogFunctionService (Lowest Risk)
 - ProductInstanceFunctions and OrderInstanceFunctions are self-contained
 - No Square integration
 - Simple CRUD operations
 - ~100 lines
 
-### Phase 2: Extract CategoryService
+### Phase 2: Extract CatalogCategoryService
 - No Square integration
 - Simple CRUD with cycle detection
 - ~90 lines
 
-### Phase 3: Extract PrinterGroupService
+### Phase 3: Extract CatalogPrinterGroupService
 - Has Square integration
 - Moderate complexity
 - ~115 lines
 
-### Phase 4: Extract ModifierService
+### Phase 4: Extract CatalogModifierService
 - Has Square integration
 - Moderate complexity
 - ~450 lines
 
-### Phase 5: Extract ProductService
+### Phase 5: Extract CatalogProductService
 - Has Square integration
 - Most complex due to `BatchUpsertProduct`
 - ~670 lines
 
-### Phase 6: Extract SquareSyncService
+### Phase 6: Extract CatalogSquareSyncService
 - Square validation and sync logic
 - ~200 lines
 
@@ -261,7 +261,7 @@ All services stay in the same folder since they're tightly coupled and share the
 Several services need to reference each other. Use NestJS `forwardRef`:
 
 ```typescript
-// In ProductService
+// In CatalogProductService
 constructor(
   @Inject(forwardRef(() => CatalogProviderService))
   private catalogProvider: CatalogProviderService,
@@ -270,10 +270,10 @@ constructor(
 
 **Dependency Graph:**
 - `CatalogProviderService` → all other services
-- `PrinterGroupService` → `ProductService` (for cascading updates)
-- `CategoryService` → `ProductService` (for cascading deletes)
-- `ModifierService` → `ProductService` (for cascading updates)
-- `SquareSyncService` → `PrinterGroupService`, `ModifierService`, `ProductService`
+- `CatalogPrinterGroupService` → `CatalogProductService` (for cascading updates)
+- `CatalogCategoryService` → `CatalogProductService` (for cascading deletes)
+- `CatalogModifierService` → `CatalogProductService` (for cascading updates)
+- `CatalogSquareSyncService` → `CatalogPrinterGroupService`, `CatalogModifierService`, `CatalogProductService`
 
 ---
 
@@ -288,45 +288,45 @@ Each new service should have:
 
 ## Migration Checklist
 
-- [ ] Phase 1: Extract FunctionService
-  - [ ] Create `function.module.ts` and `function.service.ts`
-  - [ ] Move 6 functions
-  - [ ] Update `CatalogProviderService` to use `FunctionService`
-  - [ ] Update module imports
-  - [ ] Verify tests pass
+- [x] Phase 1: Extract CatalogFunctionService
+  - [x] Create `catalog-function.service.ts`
+  - [x] Move 6 functions
+  - [x] Update `CatalogProviderService` to use `CatalogFunctionService`
+  - [x] Update module imports
+  - [x] Verify tests pass
 
-- [ ] Phase 2: Extract CategoryService
-  - [ ] Create `category.module.ts` and `category.service.ts`
+- [ ] Phase 2: Extract CatalogCategoryService
+  - [ ] Create `catalog-category.module.ts` and `catalog-category.service.ts`
   - [ ] Move 3 functions
-  - [ ] Update `CatalogProviderService` to use `CategoryService`
+  - [ ] Update `CatalogProviderService` to use `CatalogCategoryService`
   - [ ] Update module imports
   - [ ] Verify tests pass
 
-- [ ] Phase 3: Extract PrinterGroupService
-  - [ ] Create `printer-group.module.ts` and `printer-group.service.ts`
+- [ ] Phase 3: Extract CatalogPrinterGroupService
+  - [ ] Create `catalog-printer-group.module.ts` and `catalog-printer-group.service.ts`
   - [ ] Move 4 functions
-  - [ ] Update `CatalogProviderService` to use `PrinterGroupService`
+  - [ ] Update `CatalogProviderService` to use `CatalogPrinterGroupService`
   - [ ] Update module imports
   - [ ] Verify tests pass
 
-- [ ] Phase 4: Extract ModifierService
-  - [ ] Create `modifier.module.ts` and `modifier.service.ts`
+- [ ] Phase 4: Extract CatalogModifierService
+  - [ ] Create `catalog-modifier.module.ts` and `catalog-modifier.service.ts`
   - [ ] Move 8 functions
-  - [ ] Update `CatalogProviderService` to use `ModifierService`
+  - [ ] Update `CatalogProviderService` to use `CatalogModifierService`
   - [ ] Update module imports
   - [ ] Verify tests pass
 
-- [ ] Phase 5: Extract ProductService
-  - [ ] Create `product.module.ts` and `product.service.ts`
+- [ ] Phase 5: Extract CatalogProductService
+  - [ ] Create `catalog-product.module.ts` and `catalog-product.service.ts`
   - [ ] Move 11 functions
-  - [ ] Update `CatalogProviderService` to use `ProductService`
+  - [ ] Update `CatalogProviderService` to use `CatalogProductService`
   - [ ] Update module imports
   - [ ] Verify tests pass
 
-- [ ] Phase 6: Extract SquareSyncService
-  - [ ] Create `square-sync.module.ts` and `square-sync.service.ts`
+- [ ] Phase 6: Extract CatalogSquareSyncService
+  - [ ] Create `catalog-square-sync.module.ts` and `catalog-square-sync.service.ts`
   - [ ] Move 6 functions
-  - [ ] Update `CatalogProviderService.Bootstrap` to use `SquareSyncService`
+  - [ ] Update `CatalogProviderService.Bootstrap` to use `CatalogSquareSyncService`
   - [ ] Update module imports
   - [ ] Verify tests pass
 
