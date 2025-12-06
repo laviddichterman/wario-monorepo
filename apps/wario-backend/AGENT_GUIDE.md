@@ -99,8 +99,46 @@ pnpm output backend:start:dev
 
 ## 5. Gotchas & Warnings
 
-- > [!WARNING]
-  > **Do not bypass `OrderManager`**. Directly modifying the `OrderModel` (Mongoose model) in a controller skips validation and locking. Always loop through `OrderManagerService`.
+> [!WARNING]
+> **Do not bypass `OrderManager`**. Directly modifying the `OrderModel` (Mongoose model) in a controller skips validation and locking. Always loop through `OrderManagerService`.
 
-- > [!CAUTION]
-  > **Square Rate Limits**. The `SquareService` handles retries, but be mindful of batch sizes when syncing catalog items.
+> [!CAUTION]
+> **Square Rate Limits**. The `SquareService` handles retries, but be mindful of batch sizes when syncing catalog items.
+
+## 6. Configuration & Initialization Patterns
+
+### AppConfigService
+
+**File:** `src/config/app-config.service.ts`
+
+The **single source of truth** for environment variables. Never use `process.env` directly in services.
+
+```typescript
+// ❌ Bad - scattered env reads
+const chunkSize = parseInt(process.env.WARIO_SQUARE_BATCH_CHUNK_SIZE || '25');
+
+// ✅ Good - use AppConfigService
+constructor(private appConfig: AppConfigService) {}
+const chunkSize = this.appConfig.squareBatchChunkSize;
+```
+
+### MigrationFlagsService
+
+**File:** `src/config/migration-flags.service.ts`
+
+Holds **mutable runtime flags** that can be set by database migrations. Decouples `DatabaseManagerService` from other services.
+
+- `requireSquareRebuild` - Triggers full Square catalog rebuild
+- `obliterateModifiersOnLoad` - Clears and re-syncs modifiers
+
+> [!IMPORTANT]
+> **Circular Dependency Pattern**: If service A needs to set state in service B, but B depends on A, use `MigrationFlagsService` as a shared state holder instead of `forwardRef`.
+
+### Avoiding Circular Dependencies
+
+When you encounter `UnknownDependenciesException` or initialization order issues:
+
+1. **Check if it's just for setting flags** - Use `MigrationFlagsService`
+2. **Check if it's for reading config** - Use `AppConfigService`
+3. **Only use `forwardRef`** for true bidirectional runtime calls between services
+4. **Consider if the dependency is even needed** - Often services are injected but never used

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { parseISO } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
@@ -54,6 +54,7 @@ import { CURRENCY, IMoney, OrderPaymentAllocated, PaymentMethod, StoreCreditPaym
 import { ExponentialBackoffWaitFunction } from '../../utils/utils';
 import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
+import { MigrationFlagsService } from '../migration-flags.service';
 import { BigIntMoneyToIntMoney, IMoneyToBigIntMoney, MapPaymentStatus } from '../square-wario-bridge';
 
 
@@ -167,36 +168,33 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
 };
 
 @Injectable()
-export class SquareService implements OnModuleInit {
+export class SquareService {
   private client: Client;
   private catalogLimits: Required<NonNullableFields<CatalogInfoResponseLimits>>;
   private catalogIdsToDelete: string[];
-  private obliterateModifiersOnLoad: boolean;
+  private _isInitialized = false;
 
   constructor(
     private readonly appConfig: AppConfigService,
+    @Inject(forwardRef(() => DataProviderService))
     private readonly dataProvider: DataProviderService,
+    private readonly migrationFlags: MigrationFlagsService,
     @InjectPinoLogger(SquareService.name)
     private readonly logger: PinoLogger,
   ) {
     this.catalogLimits = DEFAULT_LIMITS;
     this.catalogIdsToDelete = [];
-    this.obliterateModifiersOnLoad = false;
   }
 
   set CatalogIdsToDeleteOnLoad(value: string[]) {
     this.catalogIdsToDelete = value.slice();
   }
 
-  set ObliterateModifiersOnLoad(value: boolean) {
-    this.obliterateModifiersOnLoad = value;
+  get isInitialized(): boolean {
+    return this._isInitialized;
   }
 
-  async onModuleInit() {
-    await this.Bootstrap();
-  }
-
-  private async Bootstrap() {
+  async Bootstrap() {
     this.logger.info('Starting Bootstrap of SquareService');
     if (this.dataProvider.KeyValueConfig.SQUARE_TOKEN) {
       this.client = new Client({
@@ -227,11 +225,12 @@ export class SquareService implements OnModuleInit {
       this.catalogIdsToDelete = [];
     }
 
-    if (this.obliterateModifiersOnLoad) {
+    if (this.migrationFlags.obliterateModifiersOnLoad) {
       this.logger.info('Obliterating modifiers for this location on load');
       await this.ObliterateModifiersInSquareCatalog();
     }
 
+    this._isInitialized = true;
     this.logger.info('Finished Bootstrap of SquareService');
   }
 

@@ -25,7 +25,7 @@ import { UpdatePrinterGroupProps } from './catalog.types';
 @Injectable()
 export class CatalogPrinterGroupService {
   constructor(
-    @InjectModel('WPrinterGroup') private printerGroupModel: Model<PrinterGroup>,
+    @InjectModel('WPrinterGroupSchema') private printerGroupModel: Model<PrinterGroup>,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
     private dataProviderService: DataProviderService,

@@ -66,8 +66,8 @@ const ValidateProductModifiersFunctionsCategoriesPrinterGroups = function (
 export class CatalogProductService {
   constructor(
     private readonly appConfig: AppConfigService,
-    @InjectModel('WProduct') private wProductModel: Model<IProduct>,
-    @InjectModel('WProductInstance') private wProductInstanceModel: Model<IProductInstance>,
+    @InjectModel('WProductSchema') private wProductModel: Model<IProduct>,
+    @InjectModel('WProductInstanceSchema') private wProductInstanceModel: Model<IProductInstance>,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
     private dataProviderService: DataProviderService,

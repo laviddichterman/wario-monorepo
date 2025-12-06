@@ -13,8 +13,8 @@ import { CatalogProviderService } from './catalog-provider.service';
 @Injectable()
 export class CatalogCategoryService {
   constructor(
-    @InjectModel('WCategory') private wCategoryModel: Model<ICategory>,
-    @InjectModel('WProduct') private wProductModel: Model<IProduct>,
+    @InjectModel('WCategorySchema') private wCategoryModel: Model<ICategory>,
+    @InjectModel('WProductSchema') private wProductModel: Model<IProduct>,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
     @Inject(forwardRef(() => CatalogProductService))

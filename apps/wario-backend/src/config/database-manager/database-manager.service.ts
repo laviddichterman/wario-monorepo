@@ -1,22 +1,21 @@
-import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { parseISO } from 'date-fns';
-import { Connection, Model, Schema } from 'mongoose';
+import { Connection, Schema } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import { SEMVER, WDateUtils } from '@wcp/wario-shared';
-import { IOptionType } from '@wcp/wario-shared';
 
 // We need to import package.json. In NestJS build, it might not be in the same relative path.
 // For now, let's assume we can require it or use a const.
 import PACKAGE_JSON from '../../../package.json';
 import { WOptionModel } from '../../models/catalog/options/WOptionSchema';
+import { WOptionTypeModel } from '../../models/catalog/options/WOptionTypeSchema';
 import { WProductModel } from '../../models/catalog/products/WProductSchema';
 import DBVersion from '../../models/DBVersionSchema';
 import { WOrderInstanceModel } from '../../models/orders/WOrderInstance';
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
+import { MigrationFlagsService } from '../migration-flags.service';
 import { WARIO_SQUARE_ID_METADATA_KEY } from '../square-wario-bridge';
-import { SquareService } from '../square/square.service';
 
 interface IMigrationFunctionObject {
   [index: string]: [SEMVER, () => Promise<void>];
@@ -31,11 +30,8 @@ export class DatabaseManagerService implements OnModuleInit {
     @InjectModel('WProductSchema') private productModel: typeof WProductModel,
     @InjectModel('WOptionSchema') private optionModel: typeof WOptionModel,
     @InjectModel('WOptionTypeSchema')
-    private optionTypeModel: Model<IOptionType>,
-    @Inject(forwardRef(() => CatalogProviderService))
-    private catalogProvider: CatalogProviderService,
-    @Inject(forwardRef(() => SquareService))
-    private squareService: SquareService,
+    private optionTypeModel: typeof WOptionTypeModel,
+    private migrationFlags: MigrationFlagsService,
     @InjectConnection() private connection: Connection,
     @InjectPinoLogger(DatabaseManagerService.name)
     private readonly logger: PinoLogger,
@@ -72,7 +68,7 @@ export class DatabaseManagerService implements OnModuleInit {
     '0.5.38': [
       { major: 0, minor: 5, patch: 39 },
       async () => {
-        this.catalogProvider.RequireSquareRebuild = true;
+        this.migrationFlags.requireSquareRebuild = true;
       },
     ],
     '0.5.39': [{ major: 0, minor: 5, patch: 40 }, async () => { }],
@@ -103,8 +99,8 @@ export class DatabaseManagerService implements OnModuleInit {
           },
         );
         this.logger.info({ result: allModifierTypeUpdate }, 'Updated modifier types');
-        this.squareService.ObliterateModifiersOnLoad = true;
-        this.catalogProvider.RequireSquareRebuild = true;
+        this.migrationFlags.obliterateModifiersOnLoad = true;
+        this.migrationFlags.requireSquareRebuild = true;
       },
     ],
     '0.5.43': [

@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { OAuth2Client } from 'google-auth-library';
 import { calendar_v3, google, sheets_v4 } from 'googleapis';
@@ -13,7 +13,7 @@ import { DataProviderService } from '../data-provider/data-provider.service';
 const OAuth2 = google.auth.OAuth2;
 
 @Injectable()
-export class GoogleService implements OnModuleInit {
+export class GoogleService {
   private accessToken: string;
   private smtpTransport: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   private calendarAPI: calendar_v3.Calendar;
@@ -21,16 +21,13 @@ export class GoogleService implements OnModuleInit {
   private oauth2Client: OAuth2Client;
 
   constructor(
+    @Inject(forwardRef(() => DataProviderService))
     private readonly dataProvider: DataProviderService,
     @InjectPinoLogger(GoogleService.name)
     private readonly logger: PinoLogger,
   ) {
     this.calendarAPI = google.calendar('v3');
     this.sheetsAPI = google.sheets('v4');
-  }
-
-  async onModuleInit() {
-    await this.Bootstrap();
   }
 
   @Interval(2700000)

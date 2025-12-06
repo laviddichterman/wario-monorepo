@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
@@ -16,7 +16,9 @@ import { SeatingResourceModel } from '../../models/orders/WSeatingResource';
 import { FulfillmentModel } from '../../models/settings/FulfillmentSchema';
 import { KeyValueModel } from '../../models/settings/KeyValueSchema';
 import { SettingsModel } from '../../models/settings/SettingsSchema';
+import { GoogleService } from '../google/google.service';
 import { SocketIoService } from '../socket-io/socket-io.service';
+import { SquareService } from '../square/square.service';
 
 @Injectable()
 export class DataProviderService implements OnModuleInit {
@@ -34,6 +36,10 @@ export class DataProviderService implements OnModuleInit {
     @InjectModel('SeatingResource')
     private seatingResourceModel: typeof SeatingResourceModel,
     private socketIoService: SocketIoService,
+    @Inject(forwardRef(() => SquareService))
+    private squareService: SquareService,
+    @Inject(forwardRef(() => GoogleService))
+    private googleService: GoogleService,
     @InjectPinoLogger(DataProviderService.name)
     private readonly logger: PinoLogger,
   ) {
@@ -103,7 +109,13 @@ export class DataProviderService implements OnModuleInit {
     this.logger.info({ settings: found_settings }, 'Found settings');
     this.settings = found_settings!;
 
-    this.logger.debug('Done Bootstrapping DataProvider');
+    this.logger.debug('Done Bootstrapping DataProvider, now initializing dependent services...');
+
+    // Bootstrap services that depend on KeyValueConfig being loaded
+    await this.googleService.Bootstrap();
+    await this.squareService.Bootstrap();
+
+    this.logger.debug('Done Bootstrapping all dependent services');
   };
 
   get Settings() {

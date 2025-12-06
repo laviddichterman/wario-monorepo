@@ -22,7 +22,8 @@ import {
   SEMVER,
 } from '@wcp/wario-shared';
 
-import { DataProviderService } from '../data-provider/data-provider.service';
+import { AppConfigService } from '../app-config.service';
+import { MigrationFlagsService } from '../migration-flags.service';
 import { SocketIoService } from '../socket-io/socket-io.service';
 import {
   GenerateSquareReverseMapping,
@@ -35,16 +36,6 @@ import { CatalogModifierService } from './catalog-modifier.service';
 import { CatalogPrinterGroupService } from './catalog-printer-group.service';
 import { CatalogProductService } from './catalog-product.service';
 import { CatalogSquareSyncService } from './catalog-square-sync.service';
-
-
-const SUPPRESS_SQUARE_SYNC =
-  process.env.WARIO_SUPPRESS_SQUARE_INIT_SYNC === '1' || process.env.WARIO_SUPPRESS_SQUARE_INIT_SYNC === 'true';
-const FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD =
-  process.env.WARIO_FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD === '1' ||
-  process.env.WARIO_SUPPRESS_SQUARE_INIT_SYNC === 'true';
-
-
-
 
 @Injectable()
 export class CatalogProviderService implements OnModuleInit, ICatalogContext {
@@ -59,23 +50,23 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   private catalog: ICatalog;
   private squareIdToWarioIdMapping: Record<string, string>;
   private apiver: SEMVER;
-  private requireSquareRebuild: boolean;
 
   constructor(
-    @InjectModel('DBVersion') private dbVersionModel: Model<SEMVER>,
-    @InjectModel('WCategory') private wCategoryModel: Model<ICategory>,
-    @InjectModel('WProductInstance')
+    @InjectModel('DBVersionSchema') private dbVersionModel: Model<SEMVER>,
+    @InjectModel('WCategorySchema') private wCategoryModel: Model<ICategory>,
+    @InjectModel('WProductInstanceSchema')
     private wProductInstanceModel: Model<IProductInstance>,
-    @InjectModel('WProduct') private wProductModel: Model<IProduct>,
-    @InjectModel('WOption') private wOptionModel: Model<IOption>,
-    @InjectModel('WOptionType') private wOptionTypeModel: Model<IOptionType>,
+    @InjectModel('WProductSchema') private wProductModel: Model<IProduct>,
+    @InjectModel('WOptionSchema') private wOptionModel: Model<IOption>,
+    @InjectModel('WOptionTypeSchema') private wOptionTypeModel: Model<IOptionType>,
     @InjectModel('WProductInstanceFunction')
     private wProductInstanceFunctionModel: Model<IProductInstanceFunction>,
     @InjectModel('WOrderInstanceFunction')
     private wOrderInstanceFunctionModel: Model<OrderInstanceFunction>,
-    @InjectModel('WPrinterGroup')
+    @InjectModel('WPrinterGroupSchema')
     private printerGroupModel: Model<PrinterGroup>,
-    private dataProviderService: DataProviderService,
+    private appConfig: AppConfigService,
+    private migrationFlags: MigrationFlagsService,
     @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
     @Inject(forwardRef(() => SocketIoService))
@@ -94,16 +85,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private readonly _logger: PinoLogger,
   ) {
     this.apiver = { major: 0, minor: 0, patch: 0 };
-    this.requireSquareRebuild = FORCE_SQUARE_CATALOG_REBUILD_ON_LOAD;
     this.squareIdToWarioIdMapping = {};
   }
 
   public get logger(): PinoLogger {
     return this._logger;
-  }
-
-  set RequireSquareRebuild(value: boolean) {
-    this.requireSquareRebuild = value;
   }
 
   get PrinterGroups() {
@@ -173,8 +159,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncPrinterGroups = async () => {
     this.logger.debug(`Syncing Printer Groups.`);
     try {
+      const results = await this.printerGroupModel.find().exec();
       this.printerGroups = ReduceArrayToMapByKey(
-        (await this.printerGroupModel.find().exec()).map((x) => x.toObject()),
+        results.map((x) => x.toObject()),
         'id',
       );
     } catch (err: unknown) {
@@ -295,10 +282,15 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
     this.RecomputeCatalog();
 
-    if (SUPPRESS_SQUARE_SYNC) {
-      this.logger.warn('Suppressing Square Catalog Sync at launch. Catalog skew may result.');
+    const shouldSuppressSquareSync = this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
+    if (shouldSuppressSquareSync) {
+      if (!this.squareService.isInitialized) {
+        this.logger.warn('Square service not yet initialized, skipping Square Catalog Sync. Will sync on next catalog update.');
+      } else {
+        this.logger.warn('Suppressing Square Catalog Sync at launch. Catalog skew may result.');
+      }
     } else {
-      await this.catalogSquareSyncService.CheckAllPrinterGroupsSquareIdsAndFixIfNeeded();
+      await this.catalogSquareSyncService.CheckAllPrinterGroupsSquareIdsAndFixIfNeeded(this.printerGroups);
       const modifierTypeIdsUpdated = await this.catalogSquareSyncService.CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded();
       this.RecomputeCatalog();
       await this.catalogSquareSyncService.CheckAllProductsHaveSquareIdsAndFixIfNeeded();
@@ -310,9 +302,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       }
     }
 
-    if (this.requireSquareRebuild) {
+    if (this.migrationFlags.requireSquareRebuild && this.squareService.isInitialized) {
       this._logger.info('Forcing Square catalog rebuild on load');
       await this.catalogSquareSyncService.ForceSquareCatalogCompleteUpsert();
+    } else if (this.migrationFlags.requireSquareRebuild) {
+      this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
     }
 
     this.logger.info(`Finished Bootstrap of CatalogProvider`);

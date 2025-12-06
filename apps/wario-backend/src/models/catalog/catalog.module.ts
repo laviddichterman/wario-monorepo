@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
+import DBVersion, { DBVersionSchema } from '../DBVersionSchema';
+
 import { WCategoryModel } from './category/WCategorySchema';
 import { WOptionModel } from './options/WOptionSchema';
 import { WOptionTypeModel } from './options/WOptionTypeSchema';
@@ -11,14 +13,16 @@ import { PrinterGroupModel } from './WPrinterGroupSchema';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: 'WCategorySchema', schema: WCategoryModel.schema },
-      { name: 'WOptionSchema', schema: WOptionModel.schema },
-      { name: 'WOptionTypeSchema', schema: WOptionTypeModel.schema },
-      { name: 'WProductInstanceSchema', schema: WProductInstanceModel.schema },
-      { name: 'WProductSchema', schema: WProductModel.schema },
-      { name: 'WPrinterGroupSchema', schema: PrinterGroupModel.schema },
+      { name: DBVersion.modelName, schema: DBVersionSchema },
+      { name: WCategoryModel.modelName, schema: WCategoryModel.schema },
+      { name: WOptionModel.modelName, schema: WOptionModel.schema },
+      { name: WOptionTypeModel.modelName, schema: WOptionTypeModel.schema },
+      { name: WProductInstanceModel.modelName, schema: WProductInstanceModel.schema },
+      { name: WProductModel.modelName, schema: WProductModel.schema },
+      { name: PrinterGroupModel.modelName, schema: PrinterGroupModel.schema },
     ]),
   ],
   exports: [MongooseModule],
 })
-export class CatalogModule {}
+export class CatalogModule { }
+

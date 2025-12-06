@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CatalogObject } from 'square';
 
-import { IOptionType, KeyValue } from '@wcp/wario-shared';
+import { IOptionType, KeyValue, PrinterGroup } from '@wcp/wario-shared';
 
 import {
   GetNonSquareExternalIds,
@@ -43,8 +43,12 @@ export class CatalogSquareSyncService {
     return true;
   };
 
-  CheckAllPrinterGroupsSquareIdsAndFixIfNeeded = async () => {
-    const squareCatalogObjectIds = Object.values(this.catalogProvider.PrinterGroups)
+  CheckAllPrinterGroupsSquareIdsAndFixIfNeeded = async (printerGroups: Record<string, PrinterGroup>) => {
+    if (Object.keys(printerGroups).length === 0) {
+      this.logger.warn('PrinterGroups is empty, skipping Square sync check');
+      return null;
+    }
+    const squareCatalogObjectIds = Object.values(printerGroups)
       .map((printerGroup) => GetSquareExternalIds(printerGroup.externalIDs).map((x) => x.value))
       .flat();
     if (squareCatalogObjectIds.length > 0) {

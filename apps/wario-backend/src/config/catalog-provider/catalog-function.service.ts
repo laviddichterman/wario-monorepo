@@ -19,8 +19,8 @@ export class CatalogFunctionService {
     private wProductInstanceFunctionModel: Model<IProductInstanceFunction>,
     @InjectModel('WOrderInstanceFunction')
     private wOrderInstanceFunctionModel: Model<OrderInstanceFunction>,
-    @InjectModel('WOption') private wOptionModel: Model<IOption>,
-    @InjectModel('WProduct') private wProductModel: Model<IProduct>,
+    @InjectModel('WOptionSchema') private wOptionModel: Model<IOption>,
+    @InjectModel('WProductSchema') private wProductModel: Model<IProduct>,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
     @InjectPinoLogger(CatalogFunctionService.name)

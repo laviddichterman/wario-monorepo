@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 
+import { OrdersModule } from '../models/orders/orders.module';
+
 import { AccountingController } from './accounting/accounting.controller';
 import { CategoryController } from './category/category.controller';
 import { DeliveryAddressController } from './delivery-address/delivery-address.controller';
@@ -15,6 +17,7 @@ import { SettingsController } from './settings/settings.controller';
 import { StoreCreditController } from './store-credit/store-credit.controller';
 
 @Module({
+  imports: [OrdersModule],
   controllers: [
     OrderController,
     ProductController,
@@ -31,4 +34,4 @@ import { StoreCreditController } from './store-credit/store-credit.controller';
     SeatingResourceController,
   ],
 })
-export class ControllersModule {}
+export class ControllersModule { }

@@ -42,8 +42,8 @@ export class CatalogModifierService {
 
   constructor(
     private readonly appConfig: AppConfigService,
-    @InjectModel('WOptionType') private wOptionTypeModel: Model<IOptionType>,
-    @InjectModel('WOption') private wOptionModel: Model<IOption>,
+    @InjectModel('WOptionTypeSchema') private wOptionTypeModel: Model<IOptionType>,
+    @InjectModel('WOptionSchema') private wOptionModel: Model<IOption>,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
     private dataProviderService: DataProviderService,
