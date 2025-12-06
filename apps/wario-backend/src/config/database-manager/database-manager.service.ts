@@ -1,7 +1,8 @@
-import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { parseISO } from 'date-fns';
 import { Connection, Model, Schema } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import { SEMVER, WDateUtils } from '@wcp/wario-shared';
 import { IOptionType } from '@wcp/wario-shared';
@@ -23,8 +24,6 @@ interface IMigrationFunctionObject {
 
 @Injectable()
 export class DatabaseManagerService implements OnModuleInit {
-  private readonly logger = new Logger(DatabaseManagerService.name);
-
   constructor(
     @InjectModel('DBVersionSchema') private dbVersionModel: typeof DBVersion,
     @InjectModel('WOrderInstance')
@@ -38,7 +37,9 @@ export class DatabaseManagerService implements OnModuleInit {
     @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
     @InjectConnection() private connection: Connection,
-  ) {}
+    @InjectPinoLogger(DatabaseManagerService.name)
+    private readonly logger: PinoLogger,
+  ) { }
 
   async onModuleInit() {
     await this.Bootstrap();
@@ -52,18 +53,15 @@ export class DatabaseManagerService implements OnModuleInit {
   };
 
   private UPGRADE_MIGRATION_FUNCTIONS: IMigrationFunctionObject = {
-    '0.5.18': [{ major: 0, minor: 5, patch: 19 }, async () => {}],
+    '0.5.18': [{ major: 0, minor: 5, patch: 19 }, async () => { }],
     '0.5.19': [
       { major: 0, minor: 5, patch: 20 },
       async () => {
         const allOrders = await this.orderModel.find();
         await Promise.all(
           allOrders.map(async (o) => {
-            // @ts-ignore
             const newTime = WDateUtils.formatISODate(parseISO(o.fulfillment.selectedDate));
-            // @ts-ignore
-            this.logger.log(`Converting ${o.fulfillment.selectedDate} to ${newTime}`);
-            // @ts-ignore
+            this.logger.info(`Converting ${o.fulfillment.selectedDate} to ${newTime}`);
             return this.orderModel.findByIdAndUpdate(o.id, {
               'fulfillment.selectedDate': WDateUtils.formatISODate(parseISO(o.fulfillment.selectedDate)),
             });
@@ -77,9 +75,9 @@ export class DatabaseManagerService implements OnModuleInit {
         this.catalogProvider.RequireSquareRebuild = true;
       },
     ],
-    '0.5.39': [{ major: 0, minor: 5, patch: 40 }, async () => {}],
-    '0.5.40': [{ major: 0, minor: 5, patch: 41 }, async () => {}],
-    '0.5.41': [{ major: 0, minor: 5, patch: 42 }, async () => {}],
+    '0.5.39': [{ major: 0, minor: 5, patch: 40 }, async () => { }],
+    '0.5.40': [{ major: 0, minor: 5, patch: 41 }, async () => { }],
+    '0.5.41': [{ major: 0, minor: 5, patch: 42 }, async () => { }],
     '0.5.42': [
       { major: 0, minor: 5, patch: 43 },
       async () => {
@@ -93,7 +91,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           },
         );
-        this.logger.log(`Updated options: ${JSON.stringify(allOptionsUpdate)}`);
+        this.logger.info({ result: allOptionsUpdate }, 'Updated options');
         const allModifierTypeUpdate = await this.optionTypeModel.updateMany(
           {},
           {
@@ -104,7 +102,7 @@ export class DatabaseManagerService implements OnModuleInit {
             },
           },
         );
-        this.logger.log(`Updated modifier types: ${JSON.stringify(allModifierTypeUpdate)}`);
+        this.logger.info({ result: allModifierTypeUpdate }, 'Updated modifier types');
         this.squareService.ObliterateModifiersOnLoad = true;
         this.catalogProvider.RequireSquareRebuild = true;
       },
@@ -126,9 +124,7 @@ export class DatabaseManagerService implements OnModuleInit {
             ),
           );
           const updatedFulfillments = await WFulfillmentSchema.updateMany({}, { exposeFulfillment: true }, {});
-          this.logger.log(
-            `Updated fulfillments, setting exposeFulfillment to true, got result: ${JSON.stringify(updatedFulfillments)}`,
-          );
+          this.logger.info({ result: updatedFulfillments }, 'Updated fulfillments, setting exposeFulfillment to true');
         }
         {
           // mass set is3p to false on OptionType
@@ -176,7 +172,7 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.5.57': [{ major: 0, minor: 5, patch: 58 }, async () => {}],
+    '0.5.57': [{ major: 0, minor: 5, patch: 58 }, async () => { }],
     '0.5.58': [
       { major: 0, minor: 5, patch: 59 },
       async () => {
@@ -257,6 +253,7 @@ export class DatabaseManagerService implements OnModuleInit {
         await Promise.all(
           allOrders.map(async (o) => {
             o.discounts.forEach((d) => {
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               d.discount.balance = d.discount.amount;
             });
             o.payments.forEach((p) => {
@@ -265,11 +262,11 @@ export class DatabaseManagerService implements OnModuleInit {
             return await o
               .save()
               .then((doc) => {
-                this.logger.log(`Updated WOrderInstance (${doc.id}) with new schema`);
+                this.logger.info(`Updated WOrderInstance (${doc.id as string}) with new schema`);
                 return doc;
               })
-              .catch((err) => {
-                this.logger.error(`Failed to update WOrderInstance got error: ${JSON.stringify(err)}`);
+              .catch((err: unknown) => {
+                this.logger.error({ err }, 'Failed to update WOrderInstance');
                 throw err;
               });
           }),
@@ -303,7 +300,7 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.5.61': [{ major: 0, minor: 5, patch: 62 }, async () => {}],
+    '0.5.61': [{ major: 0, minor: 5, patch: 62 }, async () => { }],
     '0.5.62': [
       { major: 0, minor: 5, patch: 63 },
       async () => {
@@ -390,9 +387,7 @@ export class DatabaseManagerService implements OnModuleInit {
             ),
           );
           const updatedFulfillments = await WFulfillmentSchema.updateMany({}, { allowTipping: true }, { new: true });
-          this.logger.log(
-            `Updated fulfillments, setting allowTipping to true, got result: ${JSON.stringify(updatedFulfillments)}`,
-          );
+          this.logger.info({ result: updatedFulfillments }, 'Updated fulfillments, setting allowTipping to true');
         }
       },
     ],
@@ -423,12 +418,12 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.5.69': [{ major: 0, minor: 5, patch: 84 }, async () => {}],
-    '0.5.84': [{ major: 0, minor: 5, patch: 85 }, async () => {}],
-    '0.5.85': [{ major: 0, minor: 5, patch: 86 }, async () => {}],
-    '0.5.86': [{ major: 0, minor: 5, patch: 87 }, async () => {}],
-    '0.5.87': [{ major: 0, minor: 5, patch: 88 }, async () => {}],
-    '0.5.88': [{ major: 0, minor: 5, patch: 89 }, async () => {}],
+    '0.5.69': [{ major: 0, minor: 5, patch: 84 }, async () => { }],
+    '0.5.84': [{ major: 0, minor: 5, patch: 85 }, async () => { }],
+    '0.5.85': [{ major: 0, minor: 5, patch: 86 }, async () => { }],
+    '0.5.86': [{ major: 0, minor: 5, patch: 87 }, async () => { }],
+    '0.5.87': [{ major: 0, minor: 5, patch: 88 }, async () => { }],
+    '0.5.88': [{ major: 0, minor: 5, patch: 89 }, async () => { }],
     '0.5.89': [
       { major: 0, minor: 6, patch: 0 },
       async () => {
@@ -456,13 +451,11 @@ export class DatabaseManagerService implements OnModuleInit {
               return await prod
                 .save()
                 .then((doc) => {
-                  this.logger.log(
-                    `Updated ProductModel ${doc.id} with availability: ${JSON.stringify(doc.availability)}`,
-                  );
+                  this.logger.info({ productId: doc.id, availability: doc.availability }, 'Updated ProductModel with availability');
                   return doc;
                 })
-                .catch((err) => {
-                  this.logger.error(`Failed to update ProductModel ${prod.id} got error: ${JSON.stringify(err)}`);
+                .catch((err: unknown) => {
+                  this.logger.error({ err, productId: prod.id as string }, 'Failed to update ProductModel');
                   throw err;
                 });
             }),
@@ -482,24 +475,22 @@ export class DatabaseManagerService implements OnModuleInit {
           const elts = await WOptionModel.find();
           await Promise.all(
             elts.map(async (opt) => {
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               if (opt.availability === null) {
                 // If availability is null, set it to an empty array
                 opt.availability = [];
               } else if (!Array.isArray(opt.availability)) {
                 // If availability is not an array, wrap it in an array
-                // @ts-ignore
                 opt.availability = [opt.availability];
               }
               return await opt
                 .save()
                 .then((doc) => {
-                  this.logger.log(
-                    `Updated WOptionModel ${doc.id} with availability: ${JSON.stringify(doc.availability)}`,
-                  );
+                  this.logger.info({ optionId: doc.id as string, availability: doc.availability }, 'Updated WOptionModel with availability');
                   return doc;
                 })
-                .catch((err) => {
-                  this.logger.error(`Failed to update WOptionModel ${opt.id} got error: ${JSON.stringify(err)}`);
+                .catch((err: unknown) => {
+                  this.logger.error({ err, optionId: opt.id as string }, 'Failed to update WOptionModel');
                   throw err;
                 });
             }),
@@ -507,12 +498,12 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.6.0': [{ major: 0, minor: 6, patch: 1 }, async () => {}],
-    '0.6.1': [{ major: 0, minor: 6, patch: 2 }, async () => {}],
-    '0.6.2': [{ major: 0, minor: 6, patch: 3 }, async () => {}],
-    '0.6.3': [{ major: 0, minor: 6, patch: 4 }, async () => {}],
-    '0.6.4': [{ major: 0, minor: 6, patch: 5 }, async () => {}],
-    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => {}],
+    '0.6.0': [{ major: 0, minor: 6, patch: 1 }, async () => { }],
+    '0.6.1': [{ major: 0, minor: 6, patch: 2 }, async () => { }],
+    '0.6.2': [{ major: 0, minor: 6, patch: 3 }, async () => { }],
+    '0.6.3': [{ major: 0, minor: 6, patch: 4 }, async () => { }],
+    '0.6.4': [{ major: 0, minor: 6, patch: 5 }, async () => { }],
+    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => { }],
     '0.6.6': [
       { major: 0, minor: 6, patch: 7 },
       async () => {
@@ -551,27 +542,23 @@ export class DatabaseManagerService implements OnModuleInit {
                 return await prod
                   .save()
                   .then((doc) => {
-                    this.logger.log(
-                      `Updated ProductInstanceModel ${doc.id} with POS scoped fields: ${JSON.stringify(doc.displayFlags!.pos)}`,
-                    );
+                    this.logger.info({ productInstanceId: doc.id as string, posFields: doc.displayFlags!.pos }, 'Updated ProductInstanceModel with POS scoped fields');
                     return doc;
                   })
-                  .catch((err) => {
-                    this.logger.error(
-                      `Failed to update ProductInstanceModel ${prod.id} got error: ${JSON.stringify(err)}`,
-                    );
+                  .catch((err: unknown) => {
+                    this.logger.error({ err, productInstanceId: prod.id as string }, 'Failed to update ProductInstanceModel');
                     throw err;
                   });
               }
-              this.logger.warn(`ProductInstanceModel ${prod.id} has no displayFlags, skipping.`);
+              this.logger.warn(`ProductInstanceModel ${prod.id as string} has no displayFlags, skipping.`);
               return prod;
             }),
           );
         }
       },
     ],
-    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => {}],
-    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => {}],
+    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => { }],
+    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => { }],
   };
 
   Bootstrap = async () => {
@@ -583,13 +570,13 @@ export class DatabaseManagerService implements OnModuleInit {
     };
 
     // load version from the DB
-    this.logger.log('Running database upgrade bootstrap.');
+    this.logger.info('Running database upgrade bootstrap.');
 
     let current_db_version = '0.0.0';
 
     const db_version = await this.dbVersionModel.find({});
     if (db_version.length > 1) {
-      this.logger.error(`Found more than one DB version entry: ${JSON.stringify(db_version)}, deleting all.`);
+      this.logger.error({ db_version }, 'Found more than one DB version entry, deleting all');
       await this.dbVersionModel.deleteMany({});
     } else if (db_version.length === 1) {
       current_db_version = `${db_version[0].major.toString()}.${db_version[0].minor.toString()}.${db_version[0].patch.toString()}`;
@@ -600,7 +587,7 @@ export class DatabaseManagerService implements OnModuleInit {
       if (Object.hasOwn(this.UPGRADE_MIGRATION_FUNCTIONS, current_db_version)) {
         const [next_ver, migration_function] = this.UPGRADE_MIGRATION_FUNCTIONS[current_db_version];
         const next_ver_string = `${next_ver.major.toString()}.${next_ver.minor.toString()}.${next_ver.patch.toString()}`;
-        this.logger.log(`Running migration function from ${current_db_version} to ${next_ver_string}`);
+        this.logger.info(`Running migration function from ${current_db_version} to ${next_ver_string}`);
         await migration_function();
         await this.SetVersion(next_ver);
         current_db_version = next_ver_string;
@@ -612,6 +599,6 @@ export class DatabaseManagerService implements OnModuleInit {
         current_db_version = PACKAGE_JSON.version;
       }
     }
-    this.logger.log('Database upgrade checks completed.');
+    this.logger.info('Database upgrade checks completed.');
   };
 }

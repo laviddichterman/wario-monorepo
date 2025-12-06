@@ -1,7 +1,8 @@
 import { Stream } from 'stream';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { format, isBefore, isValid, parseISO, startOfDay } from 'date-fns';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import qrcode from 'qrcode';
 import voucher_codes from 'voucher-code-generator';
 
@@ -32,12 +33,12 @@ const ACTIVE_RANGE = `${ACTIVE_SHEET}!A2:M`;
 
 @Injectable()
 export class StoreCreditProviderService {
-  private readonly logger = new Logger(StoreCreditProviderService.name);
-
   constructor(
     private readonly googleService: GoogleService,
     private readonly squareService: SquareService,
     private readonly dataProviderService: DataProviderService,
+    @InjectPinoLogger(StoreCreditProviderService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   GenerateCreditCode = () => {
@@ -269,9 +270,7 @@ export class StoreCreditProviderService {
           return { success: false };
         }
         if ((entry[10] != lock.enc || entry[11] != lock.iv || entry[12] != lock.auth)) {
-          this.logger.error(
-            `WE HAVE A CHEATER FOLKS, store credit key ${String(entry[7])}, expecting encoded: ${JSON.stringify(lock)}.`,
-          );
+          this.logger.error({ code: entry[7], lock }, 'Cheater detected: store credit lock mismatch');
           return { success: false };
         }
         if (entry[8]) {
@@ -307,13 +306,13 @@ export class StoreCreditProviderService {
           new_range,
           new_entry,
         );
-        this.logger.log(
+        this.logger.info(
           `Debited ${MoneyToDisplayString(amount, true)} from code ${code} yielding balance of ${new_balance}.`,
         );
         return { success: true, entry: entry, index: i };
       }
     }
-    this.logger.error(`Not sure how, but the store credit key wasn't found: ${code}`);
+    this.logger.error({ code }, 'Store credit key not found');
     return { success: false };
   };
 
@@ -371,18 +370,16 @@ export class StoreCreditProviderService {
           new_range,
           new_entry,
         );
-        this.logger.log(
+        this.logger.info(
           `Refunded ${MoneyToDisplayString(amount, true)} to code ${code} yielding balance of ${newBalance}.`,
         );
         return { success: true, entry: new_entry, index: creditCodeIndex };
-      } catch (err) {
-        this.logger.error(
-          `Failed to refund ${MoneyToDisplayString(amount, true)} to code ${code}, error: ${JSON.stringify(err)}`,
-        );
+      } catch (err: unknown) {
+        this.logger.error({ err, code, amount }, 'Failed to refund store credit');
         return { success: false };
       }
     } else {
-      this.logger.error(`Not sure how, but the store credit key wasn't found: ${code}`);
+      this.logger.error({ code }, 'Store credit key not found');
       return { success: false };
     }
   };
@@ -393,7 +390,7 @@ export class StoreCreditProviderService {
     const qr_code_fs = await this.GenerateQRCodeFS(creditCode);
     await this.CreateCreditFromCreditCode({ ...request, creditCode });
     await this.CreateExternalEmail(request, creditCode, qr_code_fs);
-    this.logger.log(
+    this.logger.info(
       `Store credit code: ${creditCode} of type ${request.creditType} for ${amountAsString} added by ${request.addedBy} for reason: ${request.reason}.`,
     );
     return { credit_code: creditCode, status: 200 };
@@ -425,7 +422,7 @@ export class StoreCreditProviderService {
       const squareOrder = create_order_response.result.order;
       let squareOrderVersion = squareOrder.version as number;
       const squareOrderId = squareOrder.id as string;
-      this.logger.log(`For internal id ${referenceId} created Square Order ID: ${squareOrderId} for ${amountString}`);
+      this.logger.info(`For internal id ${referenceId} created Square Order ID: ${squareOrderId} for ${amountString}`);
       const payment_response = await this.squareService.ProcessPayment({
         locationId: this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
         sourceId: nonce,
@@ -448,7 +445,7 @@ export class StoreCreditProviderService {
           creditCode,
           expiration: null,
         }).then((_) => {
-          this.logger.log(
+          this.logger.info(
             `Store credit code: ${creditCode} and Square Order ID: ${squareOrderId} payment for ${amountString} successful, credit logged to spreadsheet.`,
           );
           return {

@@ -1,6 +1,7 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import { ICategory, IProduct } from '@wcp/wario-shared';
 
@@ -11,8 +12,6 @@ import { CatalogProviderService } from './catalog-provider.service';
 
 @Injectable()
 export class CatalogCategoryService {
-  private readonly logger = new Logger(CatalogCategoryService.name);
-
   constructor(
     @InjectModel('WCategory') private wCategoryModel: Model<ICategory>,
     @InjectModel('WProduct') private wProductModel: Model<IProduct>,
@@ -21,6 +20,8 @@ export class CatalogCategoryService {
     @Inject(forwardRef(() => CatalogProductService))
     private catalogProductService: CatalogProductService,
     private dataProviderService: DataProviderService,
+    @InjectPinoLogger(CatalogCategoryService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   CreateCategory = async (category: Omit<ICategory, 'id'>) => {

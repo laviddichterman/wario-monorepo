@@ -1,5 +1,6 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { calendar_v3 } from 'googleapis';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import { GoogleService } from '../google/google.service';
 
@@ -8,11 +9,11 @@ import { GoogleService } from '../google/google.service';
  */
 @Injectable()
 export class OrderCalendarService {
-  private readonly logger = new Logger(OrderCalendarService.name);
-
   constructor(
     @Inject(forwardRef(() => GoogleService))
     private googleService: GoogleService,
+    @InjectPinoLogger(OrderCalendarService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   /**
@@ -24,12 +25,12 @@ export class OrderCalendarService {
     try {
       const result = await this.googleService.CreateCalendarEvent(eventJson);
       if (result?.id) {
-        this.logger.log(`Created calendar event with ID: ${result.id}`);
+        this.logger.info(`Created calendar event with ID: ${result.id}`);
         return result.id;
       }
       return null;
     } catch (error: unknown) {
-      this.logger.error(`Failed to create calendar event: ${error}`);
+      this.logger.error({ err: error }, 'Failed to create calendar event');
       return null;
     }
   }
@@ -42,9 +43,9 @@ export class OrderCalendarService {
   async ModifyCalendarEvent(eventId: string, eventJson: calendar_v3.Schema$Event): Promise<void> {
     try {
       await this.googleService.ModifyCalendarEvent(eventId, eventJson);
-      this.logger.log(`Modified calendar event: ${eventId}`);
+      this.logger.info(`Modified calendar event: ${eventId}`);
     } catch (error: unknown) {
-      this.logger.error(`Failed to modify calendar event ${eventId}: ${error}`);
+      this.logger.error({ err: error, eventId }, 'Failed to modify calendar event');
     }
   }
 
@@ -55,9 +56,9 @@ export class OrderCalendarService {
   async DeleteCalendarEvent(eventId: string): Promise<void> {
     try {
       await this.googleService.DeleteCalendarEvent(eventId);
-      this.logger.log(`Deleted calendar event: ${eventId}`);
+      this.logger.info(`Deleted calendar event: ${eventId}`);
     } catch (error: unknown) {
-      this.logger.error(`Failed to delete calendar event ${eventId}: ${error}`);
+      this.logger.error({ err: error, eventId }, 'Failed to delete calendar event');
     }
   }
 }

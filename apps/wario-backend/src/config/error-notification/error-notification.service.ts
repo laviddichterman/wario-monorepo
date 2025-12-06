@@ -2,7 +2,8 @@
  * Service for sending error notifications.
  * Centralizes the logic for notifying administrators about critical errors.
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { WError } from '@wcp/wario-shared';
 
@@ -21,12 +22,13 @@ export interface ErrorContext {
 
 @Injectable()
 export class ErrorNotificationService {
-  private readonly logger = new Logger(ErrorNotificationService.name);
-
   constructor(
     private readonly googleService: GoogleService,
     private readonly dataProvider: DataProviderService,
+    @InjectPinoLogger(ErrorNotificationService.name)
+    private readonly logger: PinoLogger,
   ) { }
+
 
   /**
    * Send an email notification for critical errors.
@@ -59,11 +61,12 @@ export class ErrorNotificationService {
         htmlBody,
       );
 
-      this.logger.log(`Sent error notification email for ${context.method} ${context.path}`);
-    } catch (emailError) {
+      this.logger.info(`Sent error notification email for ${context.method} ${context.path}`);
+    } catch (emailError: unknown) {
       // Log but don't throw - we don't want email failures to affect the response
       this.logger.error(
-        `Failed to send error notification email: ${JSON.stringify(emailError)}`,
+        { err: emailError },
+        'Failed to send error notification email',
       );
     }
   }

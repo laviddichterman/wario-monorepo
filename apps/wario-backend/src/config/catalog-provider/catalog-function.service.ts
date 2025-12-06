@@ -1,6 +1,7 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   IOption,
@@ -13,8 +14,6 @@ import { CatalogProviderService } from './catalog-provider.service';
 
 @Injectable()
 export class CatalogFunctionService {
-  private readonly logger = new Logger(CatalogFunctionService.name);
-
   constructor(
     @InjectModel('WProductInstanceFunction')
     private wProductInstanceFunctionModel: Model<IProductInstanceFunction>,
@@ -24,6 +23,8 @@ export class CatalogFunctionService {
     @InjectModel('WProduct') private wProductModel: Model<IProduct>,
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
+    @InjectPinoLogger(CatalogFunctionService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   CreateProductInstanceFunction = async (productInstanceFunction: Omit<IProductInstanceFunction, 'id'>) => {

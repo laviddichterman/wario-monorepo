@@ -1,4 +1,5 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CatalogObject } from 'square';
 
 import { IOptionType, KeyValue } from '@wcp/wario-shared';
@@ -18,8 +19,6 @@ import { UpdateModifierTypeProps, UpdatePrinterGroupProps } from './catalog.type
 
 @Injectable()
 export class CatalogSquareSyncService {
-  private readonly logger = new Logger(CatalogSquareSyncService.name);
-
   constructor(
     @Inject(forwardRef(() => CatalogProviderService))
     private catalogProvider: CatalogProviderService,
@@ -31,6 +30,8 @@ export class CatalogSquareSyncService {
     private catalogModifierService: CatalogModifierService,
     @Inject(forwardRef(() => CatalogProductService))
     private catalogProductService: CatalogProductService,
+    @InjectPinoLogger(CatalogSquareSyncService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   BatchDeleteCatalogObjectsFromExternalIds = async (externalIds: KeyValue[]) => {
@@ -106,7 +107,7 @@ export class CatalogSquareSyncService {
                 externalIDs: GetNonSquareExternalIds(x.modifierType.externalIDs),
               },
             });
-            this.logger.log(`Pruning square catalog IDs from options: ${x.options.join(', ')}`);
+            this.logger.info(`Pruning square catalog IDs from options: ${x.options.join(', ')}`);
             optionUpdates.push(
               ...x.options.map((oId) => ({
                 id: oId,

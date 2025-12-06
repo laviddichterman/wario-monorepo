@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { CatalogObject } from 'square';
 
 import {
@@ -23,8 +24,6 @@ import { UpdatePrinterGroupProps } from './catalog.types';
 
 @Injectable()
 export class CatalogPrinterGroupService {
-  private readonly logger = new Logger(CatalogPrinterGroupService.name);
-
   constructor(
     @InjectModel('WPrinterGroup') private printerGroupModel: Model<PrinterGroup>,
     @Inject(forwardRef(() => CatalogProviderService))
@@ -34,10 +33,12 @@ export class CatalogPrinterGroupService {
     private squareService: SquareService,
     @Inject(forwardRef(() => CatalogSquareSyncService))
     private catalogSquareSyncService: CatalogSquareSyncService,
+    @InjectPinoLogger(CatalogPrinterGroupService.name)
+    private readonly logger: PinoLogger,
   ) { }
 
   CreatePrinterGroup = async (printerGroup: Omit<PrinterGroup, 'id'>) => {
-    this.logger.log(`Creating Printer Group: ${JSON.stringify(printerGroup)}`);
+    this.logger.info({ printerGroup }, 'Creating Printer Group');
     const upsertResponse = await this.squareService.BatchUpsertCatalogObjects([
       {
         objects: PrinterGroupToSquareCatalogObjectPlusDummyProduct(
@@ -49,7 +50,7 @@ export class CatalogPrinterGroupService {
       },
     ]);
     if (!upsertResponse.success) {
-      this.logger.error(`failed to add square category, got errors: ${JSON.stringify(upsertResponse.error)}`);
+      this.logger.error({ errors: upsertResponse.error }, 'Failed to add square category');
       return null;
     }
 
@@ -63,9 +64,7 @@ export class CatalogPrinterGroupService {
   };
 
   BatchUpdatePrinterGroup = async (batches: UpdatePrinterGroupProps[]): Promise<(PrinterGroup | null)[]> => {
-    this.logger.log(
-      `Updating printer group(s) ${batches.map((x) => `ID: ${x.id}, changes: ${JSON.stringify(x.printerGroup)}`).join(', ')}`,
-    );
+    this.logger.info({ batches: batches.map((x) => ({ id: x.id, changes: x.printerGroup })) }, 'Updating printer group(s)');
 
     const oldPGs = batches.map((b) => this.catalogProvider.PrinterGroups[b.id]);
     const newExternalIdses = batches.map((b, i) => b.printerGroup.externalIDs ?? oldPGs[i].externalIDs);
@@ -77,9 +76,7 @@ export class CatalogPrinterGroupService {
         false,
       );
       if (!batchRetrieveCatalogObjectsResponse.success) {
-        this.logger.error(
-          `Getting current square CatalogObjects failed with ${JSON.stringify(batchRetrieveCatalogObjectsResponse.error)}`,
-        );
+        this.logger.error({ errors: batchRetrieveCatalogObjectsResponse.error }, 'Getting current square CatalogObjects failed');
         return batches.map((_) => null);
       }
       existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
@@ -97,7 +94,7 @@ export class CatalogPrinterGroupService {
       catalogObjects.map((x) => ({ objects: x })),
     );
     if (!upsertResponse.success) {
-      this.logger.error(`Failed to update square categories, got errors: ${JSON.stringify(upsertResponse.error)}`);
+      this.logger.error({ errors: upsertResponse.error }, 'Failed to update square categories');
       return batches.map((_) => null);
     }
 

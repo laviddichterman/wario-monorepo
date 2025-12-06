@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { format } from 'date-fns';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import type { Namespace, Server, Socket } from 'socket.io';
 
 import { type FulfillmentConfig, type ICatalog, type IWSettings, type SeatingResource, WDateUtils } from '@wcp/wario-shared';
@@ -12,7 +13,6 @@ import type { DataProviderService } from '../data-provider/data-provider.service
 @WebSocketGateway({ namespace: 'nsRO', cors: { origin: '*' } })
 @Injectable()
 export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect {
-  private readonly logger = new Logger(SocketIoService.name);
   private clientCount = 0;
 
   // Lazy injection to avoid circular dependencies
@@ -22,7 +22,11 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
   @WebSocketServer()
   server: Namespace; // This is the namespace 'nsRO'
 
-  constructor(private readonly appConfig: AppConfigService) { }
+  constructor(
+    private readonly appConfig: AppConfigService,
+    @InjectPinoLogger(SocketIoService.name)
+    private readonly logger: PinoLogger,
+  ) { }
 
   // Setter for lazy injection from DataProviderService
   setDataProvider(dataProvider: DataProviderService) {
@@ -38,7 +42,7 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     ++this.clientCount;
     const connectTime = Date.now();
 
-    this.logger.log(`WebSocket client connected. Total connections: ${String(this.clientCount)}`);
+    this.logger.info(`WebSocket client connected. Total connections: ${String(this.clientCount)}`);
 
     // Emit initial state to newly connected client
     client.emit('WCP_SERVER_TIME', {
@@ -60,7 +64,7 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
 
   handleDisconnect(_client: Socket) {
     --this.clientCount;
-    this.logger.log(`WebSocket client disconnected. Total connections: ${String(this.clientCount)}`);
+    this.logger.info(`WebSocket client disconnected. Total connections: ${String(this.clientCount)}`);
   }
 
   EmitFulfillmentsTo(dest: Socket | Namespace | Server, fulfillments: Record<string, FulfillmentConfig>) {
