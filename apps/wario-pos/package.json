@@ -14,7 +14,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.9.0",
+    "@auth0/auth0-react": "^2.10.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fontsource-variable/dm-sans": "^5.2.8",
@@ -61,7 +61,7 @@
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
     "react-hook-form": "^7.68.0",
-    "react-i18next": "^16.3.5",
+    "react-i18next": "^16.4.0",
     "react-papaparse": "^4.4.0",
     "react-router": "^7.10.1",
     "rrule": "^2.8.1",
