@@ -41,12 +41,12 @@ wario-monorepo/
 
 ## Package Links
 
-- [apps/wario-backend/AGENT_GUIDE.md](apps/wario-backend/AGENT_GUIDE.md)
-- [apps/wario-pos/AGENT_GUIDE.md](apps/wario-pos/AGENT_GUIDE.md)
-- [apps/wario-fe-order/AGENT_GUIDE.md](apps/wario-fe-order/AGENT_GUIDE.md)
-- [apps/wario-fe-menu/AGENT_GUIDE.md](apps/wario-fe-menu/AGENT_GUIDE.md)
-- [apps/wario-fe-credit/AGENT_GUIDE.md](apps/wario-fe-credit/AGENT_GUIDE.md)
-- [apps/wario-fe-faq/AGENT_GUIDE.md](apps/wario-fe-faq/AGENT_GUIDE.md)
-- [packages/wario-shared/AGENT_GUIDE.md](packages/wario-shared/AGENT_GUIDE.md)
-- [packages/wario-ux-shared/AGENT_GUIDE.md](packages/wario-ux-shared/AGENT_GUIDE.md)
-- [packages/wario-fe-ux-shared/AGENT_GUIDE.md](packages/wario-fe-ux-shared/AGENT_GUIDE.md)
+- [/apps/wario-backend/AGENT_GUIDE.md](/apps/wario-backend/AGENT_GUIDE.md)
+- [/apps/wario-pos/AGENT_GUIDE.md](/apps/wario-pos/AGENT_GUIDE.md)
+- [/apps/wario-fe-order/AGENT_GUIDE.md](/apps/wario-fe-order/AGENT_GUIDE.md)
+- [/apps/wario-fe-menu/AGENT_GUIDE.md](/apps/wario-fe-menu/AGENT_GUIDE.md)
+- [/apps/wario-fe-credit/AGENT_GUIDE.md](/apps/wario-fe-credit/AGENT_GUIDE.md)
+- [/apps/wario-fe-faq/AGENT_GUIDE.md](/apps/wario-fe-faq/AGENT_GUIDE.md)
+- [/packages/wario-shared/AGENT_GUIDE.md](/packages/wario-shared/AGENT_GUIDE.md)
+- [/packages/wario-ux-shared/AGENT_GUIDE.md](/packages/wario-ux-shared/AGENT_GUIDE.md)
+- [/packages/wario-fe-ux-shared/AGENT_GUIDE.md](/packages/wario-fe-ux-shared/AGENT_GUIDE.md)
