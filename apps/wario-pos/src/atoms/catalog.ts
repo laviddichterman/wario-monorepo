@@ -19,7 +19,7 @@ export const detailPanelSizesAtom = atom<Record<GridRowId, DetailPanelSize>>({})
 // Actions
 export const closeDialogueAtom = atom(
   null,
-  (get, set) => {
+  (_get, set) => {
     set(dialogueStateAtom, 'NONE');
     set(selectedCategoryIdAtom, null);
     set(selectedModifierOptionIdAtom, null);
@@ -31,17 +31,17 @@ export const closeDialogueAtom = atom(
 
 export const openCategoryInterstitialAtom = atom(
   null,
-  (get, set) => { set(dialogueStateAtom, 'CategoryInterstitial'); }
+  (_get, set) => { set(dialogueStateAtom, 'CategoryInterstitial'); }
 );
 
 export const openCategoryAddAtom = atom(
   null,
-  (get, set) => { set(dialogueStateAtom, 'CategoryAdd'); }
+  (_get, set) => { set(dialogueStateAtom, 'CategoryAdd'); }
 );
 
 export const openCategoryEditAtom = atom(
   null,
-  (get, set, categoryId: string) => {
+  (_get, set, categoryId: string) => {
     set(selectedCategoryIdAtom, categoryId);
     set(dialogueStateAtom, 'CategoryEdit');
   }
@@ -49,7 +49,7 @@ export const openCategoryEditAtom = atom(
 
 export const openCategoryDeleteAtom = atom(
   null,
-  (get, set, categoryId: string) => {
+  (_get, set, categoryId: string) => {
     set(selectedCategoryIdAtom, categoryId);
     set(dialogueStateAtom, 'CategoryDelete');
   }
@@ -57,22 +57,22 @@ export const openCategoryDeleteAtom = atom(
 
 export const openProductClassAddAtom = atom(
   null,
-  (get, set) => { set(dialogueStateAtom, 'ProductAdd'); }
+  (_get, set) => { set(dialogueStateAtom, 'ProductAdd'); }
 );
 
 export const openProductImportAtom = atom(
   null,
-  (get, set) => { set(dialogueStateAtom, 'ProductImport'); }
+  (_get, set) => { set(dialogueStateAtom, 'ProductImport'); }
 );
 
 export const openHierarchicalProductImportAtom = atom(
   null,
-  (get, set) => { set(dialogueStateAtom, 'HierarchicalProductImport'); }
+  (_get, set) => { set(dialogueStateAtom, 'HierarchicalProductImport'); }
 );
 
 export const openProductEditAtom = atom(
   null,
-  (get, set, productId: string) => {
+  (_get, set, productId: string) => {
     set(selectedProductClassIdAtom, productId);
     set(dialogueStateAtom, 'ProductEdit');
   }
@@ -80,7 +80,7 @@ export const openProductEditAtom = atom(
 
 export const openProductDisableUntilEodAtom = atom(
   null,
-  (get, set, productId: string) => {
+  (_get, set, productId: string) => {
     set(selectedProductClassIdAtom, productId);
     set(dialogueStateAtom, 'ProductDisableUntilEod');
   }
@@ -88,7 +88,7 @@ export const openProductDisableUntilEodAtom = atom(
 
 export const openProductDisableAtom = atom(
   null,
-  (get, set, productId: string) => {
+  (_get, set, productId: string) => {
     set(selectedProductClassIdAtom, productId);
     set(dialogueStateAtom, 'ProductDisable');
   }
@@ -96,7 +96,7 @@ export const openProductDisableAtom = atom(
 
 export const openProductEnableAtom = atom(
   null,
-  (get, set, productId: string) => {
+  (_get, set, productId: string) => {
     set(selectedProductClassIdAtom, productId);
     set(dialogueStateAtom, 'ProductEnable');
   }
@@ -104,7 +104,7 @@ export const openProductEnableAtom = atom(
 
 export const openProductCopyAtom = atom(
   null,
-  (get, set, productId: string) => {
+  (_get, set, productId: string) => {
     set(selectedProductClassIdAtom, productId);
     set(dialogueStateAtom, 'ProductCopy');
   }
@@ -112,7 +112,7 @@ export const openProductCopyAtom = atom(
 
 export const openProductDeleteAtom = atom(
   null,
-  (get, set, productId: string) => {
+  (_get, set, productId: string) => {
     set(selectedProductClassIdAtom, productId);
     set(dialogueStateAtom, 'ProductDelete');
   }
@@ -120,7 +120,7 @@ export const openProductDeleteAtom = atom(
 
 export const openProductInstanceAddAtom = atom(
   null,
-  (get, set, parentProductId: string) => {
+  (_get, set, parentProductId: string) => {
     set(selectedProductClassIdAtom, parentProductId);
     set(dialogueStateAtom, 'ProductInstanceAdd');
   }
@@ -128,7 +128,7 @@ export const openProductInstanceAddAtom = atom(
 
 export const openProductInstanceEditAtom = atom(
   null,
-  (get, set, productInstanceId: string) => {
+  (_get, set, productInstanceId: string) => {
     set(selectedProductInstanceIdAtom, productInstanceId);
     set(dialogueStateAtom, 'ProductInstanceEdit');
   }
@@ -136,7 +136,7 @@ export const openProductInstanceEditAtom = atom(
 
 export const openProductInstanceDeleteAtom = atom(
   null,
-  (get, set, productInstanceId: string) => {
+  (_get, set, productInstanceId: string) => {
     set(selectedProductInstanceIdAtom, productInstanceId);
     set(dialogueStateAtom, 'ProductInstanceDelete');
   }
@@ -153,12 +153,12 @@ export const setDetailPanelSizeForRowIdAtom = atom(
 // Modifier Type Actions
 export const openModifierTypeAddAtom = atom(
   null,
-  (get, set) => { set(dialogueStateAtom, 'ModifierTypeAdd'); }
+  (_get, set) => { set(dialogueStateAtom, 'ModifierTypeAdd'); }
 );
 
 export const openModifierTypeEditAtom = atom(
   null,
-  (get, set, modifierTypeId: string) => {
+  (_get, set, modifierTypeId: string) => {
     set(selectedModifierTypeIdAtom, modifierTypeId);
     set(dialogueStateAtom, 'ModifierTypeEdit');
   }
@@ -166,7 +166,7 @@ export const openModifierTypeEditAtom = atom(
 
 export const openModifierTypeCopyAtom = atom(
   null,
-  (get, set, modifierTypeId: string) => {
+  (_get, set, modifierTypeId: string) => {
     set(selectedModifierTypeIdAtom, modifierTypeId);
     set(dialogueStateAtom, 'ModifierTypeCopy');
   }
@@ -174,7 +174,7 @@ export const openModifierTypeCopyAtom = atom(
 
 export const openModifierTypeDeleteAtom = atom(
   null,
-  (get, set, modifierTypeId: string) => {
+  (_get, set, modifierTypeId: string) => {
     set(selectedModifierTypeIdAtom, modifierTypeId);
     set(dialogueStateAtom, 'ModifierTypeDelete');
   }
@@ -183,7 +183,7 @@ export const openModifierTypeDeleteAtom = atom(
 // Modifier Option Actions
 export const openModifierOptionAddAtom = atom(
   null,
-  (get, set, modifierTypeId: string) => {
+  (_get, set, modifierTypeId: string) => {
     set(selectedModifierTypeIdAtom, modifierTypeId);
     set(dialogueStateAtom, 'ModifierOptionAdd');
   }
@@ -191,7 +191,7 @@ export const openModifierOptionAddAtom = atom(
 
 export const openModifierOptionEditAtom = atom(
   null,
-  (get, set, modifierOptionId: string) => {
+  (_get, set, modifierOptionId: string) => {
     set(selectedModifierOptionIdAtom, modifierOptionId);
     set(dialogueStateAtom, 'ModifierOptionEdit');
   }
@@ -199,7 +199,7 @@ export const openModifierOptionEditAtom = atom(
 
 export const openModifierOptionDeleteAtom = atom(
   null,
-  (get, set, modifierOptionId: string) => {
+  (_get, set, modifierOptionId: string) => {
     set(selectedModifierOptionIdAtom, modifierOptionId);
     set(dialogueStateAtom, 'ModifierOptionDelete');
   }
@@ -207,7 +207,7 @@ export const openModifierOptionDeleteAtom = atom(
 
 export const openModifierOptionDisableUntilEodAtom = atom(
   null,
-  (get, set, modifierOptionId: string) => {
+  (_get, set, modifierOptionId: string) => {
     set(selectedModifierOptionIdAtom, modifierOptionId);
     set(dialogueStateAtom, 'ModifierOptionDisableUntilEod');
   }
@@ -215,7 +215,7 @@ export const openModifierOptionDisableUntilEodAtom = atom(
 
 export const openModifierOptionDisableAtom = atom(
   null,
-  (get, set, modifierOptionId: string) => {
+  (_get, set, modifierOptionId: string) => {
     set(selectedModifierOptionIdAtom, modifierOptionId);
     set(dialogueStateAtom, 'ModifierOptionDisable');
   }
@@ -223,8 +223,9 @@ export const openModifierOptionDisableAtom = atom(
 
 export const openModifierOptionEnableAtom = atom(
   null,
-  (get, set, modifierOptionId: string) => {
+  (_get, set, modifierOptionId: string) => {
     set(selectedModifierOptionIdAtom, modifierOptionId);
     set(dialogueStateAtom, 'ModifierOptionEnable');
   }
 );
+
