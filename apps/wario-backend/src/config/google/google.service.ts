@@ -134,7 +134,7 @@ export class GoogleService implements OnModuleInit {
         throw error;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   CreateCalendarEvent = async (
@@ -158,7 +158,7 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   DeleteCalendarEvent = async (eventId: string, retry = 0, max_retry = 5) => {
@@ -176,7 +176,7 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   ModifyCalendarEvent = async (
@@ -201,7 +201,7 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   GetEventsForDate = async (min_date: string, max_date: string, tz: string, retry = 0, max_retry = 5) => {
@@ -221,7 +221,7 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   AppendToSheet = async (sheetId: string, range: string, fields: unknown[], retry = 0, max_retry = 5) => {
@@ -244,7 +244,7 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   GetValuesFromSheet = async (sheetId: string, range: string, retry = 0, max_retry = 5) => {
@@ -264,7 +264,7 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 
   UpdateValuesInSheet = async (sheetId: string, range: string, fields: unknown[], retry = 0, max_retry = 5) => {
@@ -286,6 +286,6 @@ export class GoogleService implements OnModuleInit {
         throw err;
       }
     };
-    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry);
+    return await ExponentialBackoff(call_fxn, () => true, retry, max_retry, this.logger);
   };
 }

@@ -1,6 +1,5 @@
-import { Logger } from '@nestjs/common';
+import { type PinoLogger } from "nestjs-pino";
 
-const logger = new Logger('Utils');
 
 // import { RetryConfiguration } from "square/dist/core";
 export const IS_PRODUCTION = process.env.NODE_ENV !== 'development';
@@ -66,7 +65,7 @@ export const IS_PRODUCTION = process.env.NODE_ENV !== 'development';
 //     }
 // }
 
-export async function ExponentialBackoffWaitFunction(retry: number, max_retry: number) {
+export async function ExponentialBackoffWaitFunction(retry: number, max_retry: number, logger: PinoLogger) {
   const waittime = 2 ** (retry + 1) * 10 + 1000 * Math.random();
   logger.warn(`Waiting ${waittime.toFixed(2)} on retry ${String(retry + 1)} of ${String(max_retry)}`);
   return await new Promise((res) => setTimeout(res, waittime));
@@ -77,14 +76,15 @@ export async function ExponentialBackoff<T>(
   retry_checker: (err: unknown) => boolean,
   retry: number,
   max_retry: number,
+  logger: PinoLogger,
 ): Promise<T> {
   try {
     const response = await request();
     return response;
   } catch (err: unknown) {
     if (retry_checker(err) && retry < max_retry) {
-      await ExponentialBackoffWaitFunction(retry, max_retry);
-      return await ExponentialBackoff<T>(request, retry_checker, retry + 1, max_retry);
+      await ExponentialBackoffWaitFunction(retry, max_retry, logger);
+      return await ExponentialBackoff<T>(request, retry_checker, retry + 1, max_retry, logger);
     }
     throw err;
   }

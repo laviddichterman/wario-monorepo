@@ -120,7 +120,7 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
     const result = await apiRequestMaker();
     if (SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(result.statusCode)) {
       if (retry < SQUARE_RETRY_CONFIG.maxNumberOfRetries) {
-        await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries);
+        await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries, logger);
         return await SquareCallFxnWrapper(apiRequestMaker, retry + 1, logger);
       }
     }
@@ -140,7 +140,7 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
     try {
       if (SQUARE_RETRY_CONFIG.httpStatusCodesToRetry.includes(err.statusCode)) {
         if (retry < SQUARE_RETRY_CONFIG.maxNumberOfRetries) {
-          await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries);
+          await ExponentialBackoffWaitFunction(retry, SQUARE_RETRY_CONFIG.maxNumberOfRetries, logger);
           return await SquareCallFxnWrapper(apiRequestMaker, retry + 1, logger);
         }
       }
@@ -304,7 +304,7 @@ export class SquareService implements OnModuleInit {
     return {
       success: false,
       result: null,
-      error: response.error ?? [],
+      error: response.error,
     };
   }
 
@@ -461,8 +461,11 @@ export class SquareService implements OnModuleInit {
               tipAmount: tipMoney,
               status: paymentStatus,
               payment: {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 amountTendered: BigIntMoneyToIntMoney(response.result.payment.cashDetails!.buyerSuppliedMoney),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 change: response.result.payment.cashDetails!.changeBackMoney
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                   ? BigIntMoneyToIntMoney(response.result.payment.cashDetails!.changeBackMoney)
                   : { currency: amount.currency, amount: 0 },
               },
@@ -567,7 +570,7 @@ export class SquareService implements OnModuleInit {
     return {
       success: false,
       result: null,
-      error: response.error ?? [],
+      error: response.error,
     };
   }
 
@@ -588,7 +591,7 @@ export class SquareService implements OnModuleInit {
     return {
       success: false,
       result: null,
-      error: response.error ?? [],
+      error: response.error,
     };
   }
 
