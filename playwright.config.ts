@@ -1,4 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
+import { PORT as ORDER_PORT } from './apps/wario-fe-order/vite.config';
+import { PORT as POS_PORT } from './apps/wario-pos/vite.config';
+import { PORT as CREDIT_PORT } from './apps/wario-fe-credit/vite.config';
+import { PORT as MENU_PORT } from './apps/wario-fe-menu/vite.config';
+import { PORT as FAQ_PORT } from './apps/wario-fe-faq/vite.config';
 
 /**
  * Playwright configuration for wario monorepo E2E tests.
@@ -17,11 +22,11 @@ const isIntegration = process.env.E2E_MODE === 'integration';
 
 // App port mappings (from vite.config.ts files)
 const APP_PORTS = {
-  order: 3000,
-  credit: 3001,
-  menu: 3002,
-  pos: 3003,
-  faq: 3004,
+  order: ORDER_PORT,
+  credit: CREDIT_PORT,
+  menu: MENU_PORT,
+  pos: POS_PORT,
+  faq: FAQ_PORT,
 } as const;
 
 export default defineConfig({
