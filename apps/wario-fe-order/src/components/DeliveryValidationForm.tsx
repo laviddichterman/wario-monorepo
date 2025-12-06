@@ -1,32 +1,34 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
 import Clear from '@mui/icons-material/Clear';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 
-import { FormProvider, RHFTextField, } from '@wcp/wario-ux-shared/components';
-import { type DeliveryInfoFormData, useDeliveryAreaLink, useValidateDeliveryAddressMutation } from "@wcp/wario-ux-shared/query";
-import { ErrorResponseOutput, OkResponseOutput } from "@wcp/wario-ux-shared/styled";
+import { FormProvider, RHFTextField } from '@wcp/wario-ux-shared/components';
+import {
+  type DeliveryInfoFormData,
+  useDeliveryAreaLink,
+  useValidateDeliveryAddressMutation,
+} from '@wcp/wario-ux-shared/query';
+import { ErrorResponseOutput, OkResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-import axios from "@/utils/axios";
+import axios from '@/utils/axios';
 
-import { deliveryAddressSchema, selectDeliveryInfo, useFulfillmentStore } from "@/stores/useFulfillmentStore";
-
-
+import { deliveryAddressSchema, selectDeliveryInfo, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 
 function useDeliveryInfoForm() {
   const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
   const useFormApi = useForm<DeliveryInfoFormData>({
     defaultValues: {
-      address: deliveryInfo?.address ?? "",
-      address2: deliveryInfo?.address2 ?? "",
-      deliveryInstructions: deliveryInfo?.deliveryInstructions ?? "",
-      zipcode: deliveryInfo?.zipcode ?? "",
+      address: deliveryInfo?.address ?? '',
+      address2: deliveryInfo?.address2 ?? '',
+      deliveryInstructions: deliveryInfo?.deliveryInstructions ?? '',
+      zipcode: deliveryInfo?.zipcode ?? '',
     },
     resolver: zodResolver(deliveryAddressSchema),
-    mode: 'onBlur'
+    mode: 'onBlur',
   });
 
   return useFormApi;
@@ -38,7 +40,11 @@ export default function DeliveryInfoForm() {
   const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
   const DELIVERY_LINK = useDeliveryAreaLink() as string;
   const deliveryForm = useDeliveryInfoForm();
-  const { handleSubmit, reset, formState: { isValid } } = deliveryForm;
+  const {
+    handleSubmit,
+    reset,
+    formState: { isValid },
+  } = deliveryForm;
   const resetValidatedAddress = () => {
     reset();
     setDeliveryInfo(null);
@@ -49,42 +55,42 @@ export default function DeliveryInfoForm() {
     if (isValid && validateDeliveryAddressMutation.isIdle) {
       validateDeliveryAddressMutation.mutate(formData, {
         onSuccess: (data) => {
-          setDeliveryInfo(
-            {
-              address: formData.address,
-              address2: formData.address2,
-              zipcode: formData.zipcode,
-              deliveryInstructions: formData.deliveryInstructions,
-              validation: {
-
-                address_components: data.address_components,
-                found: data.found,
-                in_area: data.in_area,
-                validated_address: data.validated_address,
-              }
-            });
+          setDeliveryInfo({
+            address: formData.address,
+            address2: formData.address2,
+            zipcode: formData.zipcode,
+            deliveryInstructions: formData.deliveryInstructions,
+            validation: {
+              address_components: data.address_components,
+              found: data.found,
+              in_area: data.in_area,
+              validated_address: data.validated_address,
+            },
+          });
         },
         onError: (_error) => {
           setDeliveryInfo(null);
-        }
+        },
       });
     }
-  }
+  };
 
   return (
     <>
       <span className="flexbox">
         <span className="flexbox__item one-whole">Delivery Information:</span>
       </span>
-      {validateDeliveryAddressMutation.isSuccess && validateDeliveryAddressMutation.data.in_area && deliveryInfo ?
+      {validateDeliveryAddressMutation.isSuccess && validateDeliveryAddressMutation.data.in_area && deliveryInfo ? (
         <OkResponseOutput>
           Found an address in our delivery area: <br />
           <span className="title cart">
             {`${deliveryInfo.address}${deliveryInfo.address2 ? ` ${deliveryInfo.address2}` : ''}, ${deliveryInfo.zipcode}`}
-            <IconButton name="remove" onClick={resetValidatedAddress}><Clear /></IconButton>
+            <IconButton name="remove" onClick={resetValidatedAddress}>
+              <Clear />
+            </IconButton>
           </span>
         </OkResponseOutput>
-        :
+      ) : (
         <FormProvider<DeliveryInfoFormData> methods={deliveryForm}>
           <span className="flexbox">
             <span className="flexbox__item one-half">
@@ -93,7 +99,7 @@ export default function DeliveryInfoForm() {
                 disabled={validateDeliveryAddressMutation.isPending}
                 autoComplete="shipping address-line1"
                 label="Address:"
-                placeholder={"Address"}
+                placeholder={'Address'}
               />
             </span>
             <span className="flexbox__item one-quarter soft-half--sides">
@@ -114,17 +120,20 @@ export default function DeliveryInfoForm() {
             </span>
           </span>
         </FormProvider>
-      }
-      {validateDeliveryAddressMutation.isSuccess && !validateDeliveryAddressMutation.data.in_area &&
+      )}
+      {validateDeliveryAddressMutation.isSuccess && !validateDeliveryAddressMutation.data.in_area && (
         <ErrorResponseOutput>
-          The address {validateDeliveryAddressMutation.data.validated_address} isn't in our <Link target="_blank" href={DELIVERY_LINK}>delivery area</Link>
+          The address {validateDeliveryAddressMutation.data.validated_address} isn't in our{' '}
+          <Link target="_blank" href={DELIVERY_LINK}>
+            delivery area
+          </Link>
         </ErrorResponseOutput>
-      }
-      {validateDeliveryAddressMutation.isError &&
+      )}
+      {validateDeliveryAddressMutation.isError && (
         <ErrorResponseOutput>
           Unable to determine the specified address. Send us a text or email if you continue having issues.
         </ErrorResponseOutput>
-      }
+      )}
 
       <span className="flexbox">
         <span className="flexbox__item one-whole">
@@ -134,9 +143,19 @@ export default function DeliveryInfoForm() {
           <input type="text" id="delivery-instructions-text" name="delivery_instructions" size={40} />
         </span>
       </span>
-      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <Button type="submit" disabled={!isValid || validateDeliveryAddressMutation.isPending} className="btn" onClick={() => handleSubmit((e) => { setDeliveryInfoAndAttemptToValidate(e); })()}>Validate Delivery Address</Button>
+      {}
+      <Button
+        type="submit"
+        disabled={!isValid || validateDeliveryAddressMutation.isPending}
+        className="btn"
+        onClick={() =>
+          void handleSubmit((e) => {
+            setDeliveryInfoAndAttemptToValidate(e);
+          })()
+        }
+      >
+        Validate Delivery Address
+      </Button>
     </>
-  )
+  );
 }
-

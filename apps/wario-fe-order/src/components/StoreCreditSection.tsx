@@ -15,26 +15,30 @@ import axiosInstance from '@/utils/axios';
 
 import { usePaymentStore } from '@/stores/usePaymentStore';
 
-
-
 export function StoreCreditSection() {
-  const {
-    storeCreditInput,
-    clearCreditCode,
-    setStoreCreditValidation,
-    setStoreCreditInput,
-    storeCreditValidations
-  } = usePaymentStore();
+  const { storeCreditInput, clearCreditCode, setStoreCreditValidation, setStoreCreditInput, storeCreditValidations } =
+    usePaymentStore();
 
   const validateCreditMutation = useValidateStoreCreditMutation({ axiosInstance });
 
   const [useCreditCheckbox, setUseCreditCheckbox] = useState<boolean>(validateCreditMutation.isSuccess);
   const [localCreditCode, setLocalCreditCode] = useState<string>(storeCreditInput);
-  const isCreditValidated = useMemo(() => validateCreditMutation.isSuccess && storeCreditValidations.length > 0, [validateCreditMutation.isSuccess, storeCreditValidations]);
-  const isCreditInvalid = useMemo(() => validateCreditMutation.isError || (validateCreditMutation.isSuccess && storeCreditValidations.length === 0), [validateCreditMutation.isError, validateCreditMutation.isSuccess, storeCreditValidations]);
+  const isCreditValidated = useMemo(
+    () => validateCreditMutation.isSuccess && storeCreditValidations.length > 0,
+    [validateCreditMutation.isSuccess, storeCreditValidations],
+  );
+  const isCreditInvalid = useMemo(
+    () => validateCreditMutation.isError || (validateCreditMutation.isSuccess && storeCreditValidations.length === 0),
+    [validateCreditMutation.isError, validateCreditMutation.isSuccess, storeCreditValidations],
+  );
   const setLocalCreditCodeAndAttemptToValidate = function (code: string) {
     setLocalCreditCode(code);
-    if (!validateCreditMutation.isPending && !validateCreditMutation.isSuccess && code.length === 19 && CREDIT_REGEX.test(code)) {
+    if (
+      !validateCreditMutation.isPending &&
+      !validateCreditMutation.isSuccess &&
+      code.length === 19 &&
+      CREDIT_REGEX.test(code)
+    ) {
       setStoreCreditInput(code);
       validateCreditMutation.mutate(code, {
         onSuccess: (data) => {
@@ -42,8 +46,7 @@ export function StoreCreditSection() {
             setStoreCreditValidation(code, data);
           }
         },
-        onError: () => {
-        },
+        onError: () => {},
       });
     }
   };
@@ -62,36 +65,52 @@ export function StoreCreditSection() {
         sx={{ pt: 2 }}
         size={{
           xs: 12,
-          sm: useCreditCheckbox ? 6 : 12
-        }}>
+          sm: useCreditCheckbox ? 6 : 12,
+        }}
+      >
         <FormControlLabel
-          control={<Checkbox checked={useCreditCheckbox} onChange={(e) => { handleSetUseCreditCheckbox(e.target.checked) }} />}
+          control={
+            <Checkbox
+              checked={useCreditCheckbox}
+              onChange={(e) => {
+                handleSetUseCreditCheckbox(e.target.checked);
+              }}
+            />
+          }
           label="Use Digital Gift Card / Store Credit"
         />
       </Grid>
-      {useCreditCheckbox &&
+      {useCreditCheckbox && (
         <Grid
           sx={{ px: 2 }}
           container
           size={{
             xs: 12,
-            sm: 6
-          }}>
+            sm: 6,
+          }}
+        >
           <StoreCreditInputComponent
             autoFocus
-            endAdornment={isCreditInvalid ? <Error /> : (isCreditValidated ? <Done /> : undefined)}
+            endAdornment={isCreditInvalid ? <Error /> : isCreditValidated ? <Done /> : undefined}
             name="Credit Code"
             label="Code:"
             id="store_credit_code"
             disabled={isCreditValidated || validateCreditMutation.isPending}
             value={localCreditCode}
-            onChange={(e: { target: { value: string } }) => { setLocalCreditCodeAndAttemptToValidate(e.target.value) }}
+            onChange={(e: { target: { value: string } }) => {
+              setLocalCreditCodeAndAttemptToValidate(e.target.value);
+            }}
           />
-        </Grid>}
-      {isCreditValidated &&
+        </Grid>
+      )}
+      {isCreditValidated && (
         <Grid size={12}>
-          <ErrorResponseOutput>Code entered looks to be invalid. Please check your input and try again. Please copy/paste from the e-mail you received. Credit codes are case sensitive.</ErrorResponseOutput>
-        </Grid>}
+          <ErrorResponseOutput>
+            Code entered looks to be invalid. Please check your input and try again. Please copy/paste from the e-mail
+            you received. Credit codes are case sensitive.
+          </ErrorResponseOutput>
+        </Grid>
+      )}
     </Grid>
   );
 }

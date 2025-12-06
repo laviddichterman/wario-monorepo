@@ -26,37 +26,83 @@ export interface NavigationProps {
   hidden?: boolean;
 }
 
-export function Navigation({ canNext, canBack, nextText = "Next", backText = "Back", handleNext, handleBack, onBackWhenDisabled, onNextWhenDisabled, hasBack = true, hasNext = true, hidden }: NavigationProps) {
+export function Navigation({
+  canNext,
+  canBack,
+  nextText = 'Next',
+  backText = 'Back',
+  handleNext,
+  handleBack,
+  onBackWhenDisabled,
+  onNextWhenDisabled,
+  hasBack = true,
+  hasNext = true,
+  hidden,
+}: NavigationProps) {
   const currentStage = useStepperStore((s) => s.stage);
   const theme = useTheme();
   const useVerticalStepper = useMediaQuery(theme.breakpoints.up('md'));
 
-  return <Box sx={{ float: 'right', display: 'block', mx: 'auto', width: '100%', pt: 3, pb: 2, ...(hidden ? { display: 'none' } : {}) }}>
-    <Box sx={{ float: 'right', width: '33.3%', textAlign: 'right' }}>
-      {hasNext ?
-        <WarioButton
-          size="small"
-          endIcon={<KeyboardArrowRight />}
-          onClick={handleNext}
-          disabled={!canNext}
-          {...(!canNext ? (onNextWhenDisabled ?? {}) : {})}
-        > {nextText}
-        </WarioButton> : <div>&nbsp;</div>}
-    </Box>
-    <Box sx={{ py: 0.5, textAlign: 'center', verticalAlign: 'center', float: 'right', my: 'auto', height: '100%', minWidth: '33.3%' }}>
-      {!useVerticalStepper ?
-        <span>{`${(currentStage + 1).toString()} / ${NUM_STAGES.toString()}`}</span> : <div>&nbsp;</div>
-      }
-    </Box>
-    <Box sx={{ float: 'right', width: '33.3%', textAlign: 'left' }}>
-      {hasBack ? <WarioButton size="small"
-        startIcon={<KeyboardArrowLeft />}
-        onClick={handleBack}
-        disabled={!canBack}
-        {...(!canBack ? onBackWhenDisabled : {})}
+  return (
+    <Box
+      sx={{
+        float: 'right',
+        display: 'block',
+        mx: 'auto',
+        width: '100%',
+        pt: 3,
+        pb: 2,
+        ...(hidden ? { display: 'none' } : {}),
+      }}
+    >
+      <Box sx={{ float: 'right', width: '33.3%', textAlign: 'right' }}>
+        {hasNext ? (
+          <WarioButton
+            size="small"
+            endIcon={<KeyboardArrowRight />}
+            onClick={handleNext}
+            disabled={!canNext}
+            {...(!canNext ? (onNextWhenDisabled ?? {}) : {})}
+          >
+            {' '}
+            {nextText}
+          </WarioButton>
+        ) : (
+          <div>&nbsp;</div>
+        )}
+      </Box>
+      <Box
+        sx={{
+          py: 0.5,
+          textAlign: 'center',
+          verticalAlign: 'center',
+          float: 'right',
+          my: 'auto',
+          height: '100%',
+          minWidth: '33.3%',
+        }}
       >
-        {backText}
-      </WarioButton> : <div>&nbsp;</div>}
+        {!useVerticalStepper ? (
+          <span>{`${(currentStage + 1).toString()} / ${NUM_STAGES.toString()}`}</span>
+        ) : (
+          <div>&nbsp;</div>
+        )}
+      </Box>
+      <Box sx={{ float: 'right', width: '33.3%', textAlign: 'left' }}>
+        {hasBack ? (
+          <WarioButton
+            size="small"
+            startIcon={<KeyboardArrowLeft />}
+            onClick={handleBack}
+            disabled={!canBack}
+            {...(!canBack ? onBackWhenDisabled : {})}
+          >
+            {backText}
+          </WarioButton>
+        ) : (
+          <div>&nbsp;</div>
+        )}
+      </Box>
     </Box>
-  </Box>;
-};
+  );
+}
