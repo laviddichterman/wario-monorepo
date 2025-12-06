@@ -24,6 +24,10 @@ export type DistributivePick<T, K extends keyof T> = T extends unknown
   ? Pick<T, K>
   : never
 
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 export type NonNullableFields<T> = { [P in keyof T]: NonNullable<T[P]> };
 
 export type Selector<T> = (id: string) => (T | undefined);

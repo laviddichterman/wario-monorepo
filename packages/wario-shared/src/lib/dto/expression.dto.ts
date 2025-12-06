@@ -227,7 +227,7 @@ export type IAbstractOrderExpressionDto =
   | AbstractOrderExpressionIfElseExpressionDto
   | AbstractOrderExpressionLogicalExpressionDto;
 
-export class IOrderInstanceFunctionDto {
+export class OrderInstanceFunctionDto {
   @IsString()
   @IsNotEmpty()
   id!: string;

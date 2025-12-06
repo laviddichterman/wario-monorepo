@@ -2,7 +2,6 @@ import { describe, expect, it } from '@jest/globals';
 
 import type {
   AbstractOrderExpression,
-  IOption,
   WOrderInstancePartial,
 } from '../src/lib/derived-types';
 import {
@@ -13,68 +12,43 @@ import {
   OrderInstanceFunctionType,
 } from '../src/lib/enums';
 import { OrderFunctional } from '../src/lib/objects/OrderFunctional';
-import type { ICatalogModifierSelectors } from '../src/lib/types';
 
-// Mock catalog selectors for testing
-const createMockCatModSelectors = (
-  options: Record<string, Partial<IOption>> = {}
-): ICatalogModifierSelectors => ({
-  option: (id: string) => options[id] as IOption | undefined,
-  modifierEntry: () => undefined,
-});
+import { createMockCatalogSelectorsFromArrays } from './mocks';
 
-// Helper to create a minimal order instance for testing
+// Helper function to create a mock order
 const createMockOrder = (): WOrderInstancePartial => ({
   cart: [],
-  fulfillment: {
-    status: 'PROPOSED' as const,
-    selectedService: 'pickup',
-    selectedDate: new Date().toISOString(),
-    selectedTime: Date.now(),
-  },
-  customerInfo: {
-    givenName: 'Test',
-    familyName: 'User',
-    mobileNum: '555-1234',
-    email: 'test@example.com',
-    referral: '',
-  },
-  discounts: [],
-  payments: [],
-  tip: { value: { isPercentage: false }, isSuggestion: true },
-  specialInstructions: '',
-  metrics: { numGuests: 1, ua: '' },
-});
+} as unknown as WOrderInstancePartial);
 
 describe('OrderFunctional.ProcessConstLiteralStatement', () => {
   it('should return the value for a boolean literal', () => {
-    const stmt = { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true };
+    const stmt = { discriminator: ConstLiteralDiscriminator.BOOLEAN as const, value: true };
     expect(OrderFunctional.ProcessConstLiteralStatement(stmt)).toBe(true);
   });
 
   it('should return the value for a number literal', () => {
-    const stmt = { discriminator: ConstLiteralDiscriminator.NUMBER, value: 42 };
+    const stmt = { discriminator: ConstLiteralDiscriminator.NUMBER as const, value: 42 };
     expect(OrderFunctional.ProcessConstLiteralStatement(stmt)).toBe(42);
   });
 
   it('should return the value for a string literal', () => {
-    const stmt = { discriminator: ConstLiteralDiscriminator.STRING, value: 'hello' };
+    const stmt = { discriminator: ConstLiteralDiscriminator.STRING as const, value: 'hello' };
     expect(OrderFunctional.ProcessConstLiteralStatement(stmt)).toBe('hello');
   });
 
   it('should return the value for a modifier placement literal', () => {
-    const stmt = { discriminator: ConstLiteralDiscriminator.MODIFIER_PLACEMENT, value: OptionPlacement.LEFT };
+    const stmt = { discriminator: ConstLiteralDiscriminator.MODIFIER_PLACEMENT as const, value: OptionPlacement.LEFT };
     expect(OrderFunctional.ProcessConstLiteralStatement(stmt)).toBe(OptionPlacement.LEFT);
   });
 
   it('should return the value for a modifier qualifier literal', () => {
-    const stmt = { discriminator: ConstLiteralDiscriminator.MODIFIER_QUALIFIER, value: OptionQualifier.HEAVY };
+    const stmt = { discriminator: ConstLiteralDiscriminator.MODIFIER_QUALIFIER as const, value: OptionQualifier.HEAVY };
     expect(OrderFunctional.ProcessConstLiteralStatement(stmt)).toBe(OptionQualifier.HEAVY);
   });
 });
 
 describe('OrderFunctional.ProcessLogicalOperatorStatement', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays({});
   const mockOrder = createMockOrder();
 
   const createConstBoolExpr = (value: boolean): AbstractOrderExpression => ({
@@ -204,7 +178,7 @@ describe('OrderFunctional.ProcessLogicalOperatorStatement', () => {
 });
 
 describe('OrderFunctional.ProcessIfElseStatement', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays({});
   const mockOrder = createMockOrder();
 
   const createConstBoolExpr = (value: boolean): AbstractOrderExpression => ({
@@ -237,7 +211,7 @@ describe('OrderFunctional.ProcessIfElseStatement', () => {
 });
 
 describe('OrderFunctional.ProcessAbstractOrderExpressionStatement', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays({});
   const mockOrder = createMockOrder();
 
   it('should process ConstLiteral expression', () => {
@@ -274,7 +248,7 @@ describe('OrderFunctional.ProcessAbstractOrderExpressionStatement', () => {
 });
 
 describe('OrderFunctional.ProcessOrderInstanceFunction', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays({});
   const mockOrder = createMockOrder();
 
   it('should process an order instance function', () => {
@@ -291,7 +265,7 @@ describe('OrderFunctional.ProcessOrderInstanceFunction', () => {
 });
 
 describe('OrderFunctional.AbstractOrderExpressionStatementToString', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays({});
 
   it('should convert boolean literal to string (true)', () => {
     const expr: AbstractOrderExpression = {
@@ -382,7 +356,7 @@ describe('OrderFunctional.AbstractOrderExpressionStatementToString', () => {
 });
 
 describe('OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays({});
 
   it('should convert boolean literal to human readable string', () => {
     const expr: AbstractOrderExpression = {

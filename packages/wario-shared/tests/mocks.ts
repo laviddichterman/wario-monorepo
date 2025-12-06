@@ -3,11 +3,21 @@
  * These helpers create properly typed mock objects for testing.
  */
 
+import { type DeepPartial, ReduceArrayToMapByKey } from '../src';
 import type {
+  AbstractOrderExpression,
+  AbstractOrderExpressionConstLiteral,
+  AbstractOrderExpressionIfElseExpression,
+  AbstractOrderExpressionLogicalExpression,
   CatalogCategoryEntry,
   CatalogModifierEntry,
   CatalogProductEntry,
   CategoryDisplayFlags,
+  ICatalog,
+  ICategory,
+  IConstLiteralExpression,
+  IIfElseExpression,
+  ILogicalExpression,
   IMoney,
   IOption,
   IOptionDisplayFlags,
@@ -21,18 +31,25 @@ import type {
   IProductInstanceDisplayFlagsMenu,
   IProductInstanceDisplayFlagsOrder,
   IProductInstanceDisplayFlagsPos,
+  IProductInstanceFunction,
   IProductModifier,
   IProductOrderGuide,
+  OrderInstanceFunction,
   PrepTiming,
+  SEMVER,
 } from '../src/lib/derived-types';
 import {
   CALL_LINE_DISPLAY,
   CategoryDisplay,
+  ConstLiteralDiscriminator,
   CURRENCY,
   DISPLAY_AS,
+  LogicalFunctionOperator,
   MODIFIER_CLASS,
+  OrderInstanceFunctionType,
   PriceDisplay,
 } from '../src/lib/enums';
+import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
 import type { ICatalogModifierSelectors, ICatalogSelectors } from '../src/lib/types';
 
 // ============================================================================
@@ -265,9 +282,15 @@ export const createMockCategory = (
 });
 
 // ============================================================================
-// Catalog Selectors Helpers
+// Catalog Selectors Helpers (DEPRECATED)
 // ============================================================================
 
+/**
+ * @deprecated Use createMockCatalogSelectorsFromArrays instead.
+ * This function creates selectors from Record objects, which doesn't properly
+ * validate relationships between entities. Use createMockCatalogSelectorsFromArrays
+ * which uses CatalogGenerator for proper validation.
+ */
 export const createMockCatModSelectors = (
   options: Record<string, IOption> = {},
   modifierEntries: Record<string, CatalogModifierEntry> = {}
@@ -276,6 +299,12 @@ export const createMockCatModSelectors = (
   modifierEntry: (id: string) => modifierEntries[id],
 });
 
+/**
+ * @deprecated Use createMockCatalogSelectorsFromArrays instead.
+ * This function creates selectors from Record objects, which doesn't properly
+ * validate relationships between entities. Use createMockCatalogSelectorsFromArrays
+ * which uses CatalogGenerator for proper validation.
+ */
 export const createMockCatalogSelectors = (
   products: Record<string, CatalogProductEntry> = {},
   options: Record<string, IOption> = {},
@@ -298,3 +327,93 @@ export const createMockCatalogSelectors = (
   orderInstanceFunction: () => undefined,
   orderInstanceFunctions: () => [],
 });
+
+// ============================================================================
+// Catalog Generation Helpers
+// ============================================================================
+
+export interface CreateMockCatalogOptions {
+  categories?: ICategory[];
+  modifierTypes?: IOptionType[];
+  options?: IOption[];
+  products?: IProduct[];
+  productInstances?: IProductInstance[];
+  productInstanceFunctions?: IProductInstanceFunction[];
+  orderInstanceFunctions?: OrderInstanceFunction[];
+  apiVersion?: SEMVER;
+}
+
+/**
+ * Creates a mock ICatalog from arrays of entities using CatalogGenerator.
+ * This is useful for tests that need a full catalog structure.
+ */
+export const createMockCatalog = (opts: CreateMockCatalogOptions = {}): ICatalog => {
+  return CatalogGenerator(
+    opts.categories ?? [],
+    opts.modifierTypes ?? [],
+    opts.options ?? [],
+    opts.products ?? [],
+    opts.productInstances ?? [],
+    ReduceArrayToMapByKey(opts.productInstanceFunctions ?? [], "id"),
+    ReduceArrayToMapByKey(opts.orderInstanceFunctions ?? [], "id"),
+    opts.apiVersion ?? { major: 1, minor: 0, patch: 0 }
+  );
+};
+
+/**
+ * Creates ICatalogSelectors from arrays of entities.
+ * Convenience wrapper around createMockCatalog and ICatalogSelectorWrapper.
+ */
+export const createMockCatalogSelectorsFromArrays = (opts: CreateMockCatalogOptions = {}): ICatalogSelectors => {
+  return ICatalogSelectorWrapper(createMockCatalog(opts));
+};
+
+
+// ============================================================================
+// Order Instance Function Helpers
+// ============================================================================
+export const createMockAbstractOrderExpressionConstLiteral = (overrides: IConstLiteralExpression = { discriminator: ConstLiteralDiscriminator.NUMBER, value: 0 }): AbstractOrderExpressionConstLiteral => ({
+  discriminator: OrderInstanceFunctionType.ConstLiteral,
+  expr: overrides
+});
+
+export const createMockAbstractOrderExpressionIfElse = (overrides: DeepPartial<IIfElseExpression<AbstractOrderExpression>> = {}): AbstractOrderExpressionIfElseExpression => ({
+  discriminator: OrderInstanceFunctionType.IfElse,
+  expr: {
+    false_branch: createMockAbstractOrderExpression(overrides.false_branch),
+    true_branch: createMockAbstractOrderExpression(overrides.true_branch),
+    test: createMockAbstractOrderExpression(overrides.test),
+  }
+});
+
+export const createMockAbstractOrderExpressionLogical = (overrides: DeepPartial<ILogicalExpression<AbstractOrderExpression>> = {}): AbstractOrderExpressionLogicalExpression => ({
+  discriminator: OrderInstanceFunctionType.Logical,
+  expr: {
+    operandA: createMockAbstractOrderExpression(overrides.operandA),
+    operandB: createMockAbstractOrderExpression(overrides.operandB),
+    operator: overrides.operator ?? LogicalFunctionOperator.AND,
+  }
+});
+
+export const createMockAbstractOrderExpression = (overrides: DeepPartial<AbstractOrderExpression> = {}): AbstractOrderExpression => {
+  switch (overrides.discriminator ?? OrderInstanceFunctionType.ConstLiteral) {
+    case OrderInstanceFunctionType.IfElse:
+      return createMockAbstractOrderExpressionIfElse(overrides.expr as IIfElseExpression<AbstractOrderExpression>);
+    case OrderInstanceFunctionType.Logical:
+      return createMockAbstractOrderExpressionLogical(overrides.expr as ILogicalExpression<AbstractOrderExpression>);
+    case OrderInstanceFunctionType.ConstLiteral:
+    default:
+      return createMockAbstractOrderExpressionConstLiteral(overrides.expr as IConstLiteralExpression);
+  }
+}
+
+export const createMockOrderInstanceFunction = (overrides: DeepPartial<OrderInstanceFunction> = {}): OrderInstanceFunction => ({
+  id: 'of1',
+  name: 'Test Order Instance Function',
+  ...overrides,
+  expression: createMockAbstractOrderExpression(overrides.expression),
+});
+
+// ============================================================================
+// Product Instance Function Helpers
+// ============================================================================

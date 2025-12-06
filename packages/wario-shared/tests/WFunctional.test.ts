@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { CatalogGenerator, ICatalogSelectorWrapper } from '../src';
 import type {
   IAbstractExpression,
   IOption,
@@ -21,6 +22,8 @@ import {
   WFunctional,
 } from '../src/lib/objects/WFunctional';
 import type { ICatalogModifierSelectors, WCPProduct } from '../src/lib/types';
+
+import { createMockOption, createMockOptionType } from './mocks';
 
 // Mock catalog selectors for testing
 const createMockCatModSelectors = (
@@ -562,10 +565,7 @@ describe('WFunctional.ProcessProductInstanceFunction', () => {
 });
 
 describe('WFunctional.AbstractExpressionStatementToString', () => {
-  const mockSelectors = createMockCatModSelectors(
-    { opt1: { displayName: 'Extra Cheese' } as IOption },
-    { mt1: { modifierType: { name: 'Toppings' }, options: ['opt1'] } }
-  );
+  const mockSelectors = ICatalogSelectorWrapper(CatalogGenerator([], [createMockOptionType({ id: "mt1", name: "Toppings" })], [createMockOption({ id: "opt1", displayName: "Extra Cheese" })], [], [], {}, {}, { major: 1, minor: 0, patch: 0 }));
 
   it('should convert boolean literal to string', () => {
     const expr: IAbstractExpression = {

@@ -1,9 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type {
-  CatalogCategoryEntry,
-  CatalogModifierEntry,
-  CatalogProductEntry,
   IProductInstanceDisplayFlags,
   IProductModifier,
   ProductModifierEntry,
@@ -13,6 +10,7 @@ import {
   CURRENCY,
   OptionPlacement,
   OptionQualifier,
+  PriceDisplay,
 } from '../src/lib/enums';
 import {
   CheckRequiredModifiersAreAvailable,
@@ -31,7 +29,7 @@ import {
 import type { WProductMetadata } from '../src/lib/types';
 
 import {
-  createMockCatalogSelectors,
+  createMockCatalogSelectorsFromArrays,
   createMockCategory,
   createMockCategoryDisplayFlags,
   createMockOption,
@@ -127,83 +125,63 @@ describe('CheckRequiredModifiersAreAvailable', () => {
 
 describe('IsThisCategoryVisibleForFulfillment', () => {
   it('should return true when category exists and is not disabled for fulfillment', () => {
-    const category: CatalogCategoryEntry = {
-      category: createMockCategory({
-        id: 'cat1',
-        name: 'Test Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: [],
-        display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
-      }),
-      products: [],
-      children: [],
-    };
-    const categorySelector = (id: string) => id === 'cat1' ? category : undefined;
+    const category = createMockCategory({
+      id: 'cat1',
+      name: 'Test Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: [],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const catalog = createMockCatalogSelectorsFromArrays({ categories: [category] });
 
-    expect(IsThisCategoryVisibleForFulfillment(categorySelector, 'cat1', 'pickup')).toBe(true);
+    expect(IsThisCategoryVisibleForFulfillment(catalog.category, 'cat1', 'pickup')).toBe(true);
   });
 
   it('should return false when category does not exist', () => {
-    const categorySelector = () => undefined;
+    const catalog = createMockCatalogSelectorsFromArrays();
 
-    expect(IsThisCategoryVisibleForFulfillment(categorySelector, 'cat1', 'pickup')).toBe(false);
+    expect(IsThisCategoryVisibleForFulfillment(catalog.category, 'cat1', 'pickup')).toBe(false);
   });
 
   it('should return false when category is disabled for fulfillment', () => {
-    const category: CatalogCategoryEntry = {
-      category: createMockCategory({
-        id: 'cat1',
-        name: 'Test Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: ['pickup'],
-        display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
-      }),
-      products: [],
-      children: [],
-    };
-    const categorySelector = (id: string) => id === 'cat1' ? category : undefined;
+    const category = createMockCategory({
+      id: 'cat1',
+      name: 'Test Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: ['pickup'],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const catalog = createMockCatalogSelectorsFromArrays({ categories: [category] });
 
-    expect(IsThisCategoryVisibleForFulfillment(categorySelector, 'cat1', 'pickup')).toBe(false);
+    expect(IsThisCategoryVisibleForFulfillment(catalog.category, 'cat1', 'pickup')).toBe(false);
   });
 
   it('should check parent category visibility recursively', () => {
-    const parentCategory: CatalogCategoryEntry = {
-      category: createMockCategory({
-        id: 'parent',
-        name: 'Parent Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: ['pickup'],
-      }),
-      products: [],
-      children: ['cat1'],
-    };
-    const childCategory: CatalogCategoryEntry = {
-      category: createMockCategory({
-        id: 'cat1',
-        name: 'Child Category',
-        description: '',
-        parent_id: 'parent',
-        ordinal: 0,
-        serviceDisable: [],
-        display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
-      }),
-      products: [],
-      children: [],
-    };
-    const categorySelector = (id: string) => {
-      if (id === 'cat1') return childCategory;
-      if (id === 'parent') return parentCategory;
-      return undefined;
-    };
+    const parentCategory = createMockCategory({
+      id: 'parent',
+      name: 'Parent Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: ['pickup'],
+    });
+    const childCategory = createMockCategory({
+      id: 'cat1',
+      name: 'Child Category',
+      description: '',
+      parent_id: 'parent',
+      ordinal: 0,
+      serviceDisable: [],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const catalog = createMockCatalogSelectorsFromArrays({ categories: [parentCategory, childCategory] });
 
     // Child is visible, but parent is disabled for pickup
-    expect(IsThisCategoryVisibleForFulfillment(categorySelector, 'cat1', 'pickup')).toBe(false);
+    expect(IsThisCategoryVisibleForFulfillment(catalog.category, 'cat1', 'pickup')).toBe(false);
   });
 });
 
@@ -212,37 +190,37 @@ describe('FilterProductUsingCatalog', () => {
   const fulfillmentId = 'pickup';
 
   it('should return false when product entry does not exist', () => {
-    const catalogs = createMockCatalogSelectors();
+    const catalogs = createMockCatalogSelectorsFromArrays();
     const displayFlags = createMockProductInstance().displayFlags;
 
     expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(false);
   });
 
   it('should return false when product is disabled for fulfillment', () => {
-    const product = createMockProduct({ serviceDisable: ['pickup'] });
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
-    const catalogs = createMockCatalogSelectors({ prod1: productEntry });
+    const product = createMockProduct({ id: 'prod1', serviceDisable: ['pickup'], category_ids: [] });
+    const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
     const displayFlags = createMockProductInstance().displayFlags;
 
     expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(false);
   });
 
   it('should return false when hide flag is true', () => {
-    const product = createMockProduct();
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
-    const catalogs = createMockCatalogSelectors({ prod1: productEntry });
-    const displayFlags: IProductInstanceDisplayFlags = {
-      menu: { show_modifier_options: true, adornment: '', suppress_exhaustive_modifier_list: false, price_display: 'ALWAYS' as const, hide: true },
-      order: { hide: false, skip_customization: false, adornment: '', suppress_exhaustive_modifier_list: false, price_display: 'ALWAYS' as const },
-    };
+    const product = createMockProduct({ id: 'prod1', category_ids: [] });
+    const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
+    const displayFlags: IProductInstanceDisplayFlags = createMockProductInstanceDisplayFlags({
+      menu: createMockProductInstanceDisplayFlagsMenu({ show_modifier_options: true, adornment: '', suppress_exhaustive_modifier_list: false, price_display: PriceDisplay.ALWAYS, hide: true }),
+      order: createMockProductInstanceDisplayFlagsOrder({ hide: false, skip_customization: false, adornment: '', suppress_exhaustive_modifier_list: false, price_display: PriceDisplay.ALWAYS }),
+    });
 
     expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, GetMenuHideDisplayFlag, orderTime, fulfillmentId)).toBe(false);
   });
 
   it('should return true when product is enabled and visible', () => {
-    const product = createMockProduct();
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
-    const catalogs = createMockCatalogSelectors({ prod1: productEntry });
+    const product = createMockProduct({ id: 'prod1', category_ids: [] });
+    const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
     const displayFlags = createMockProductInstance().displayFlags;
 
     expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(true);
@@ -254,10 +232,9 @@ describe('FilterProductInstanceUsingCatalog', () => {
   const fulfillmentId = 'pickup';
 
   it('should delegate to FilterProductUsingCatalog with instance properties', () => {
-    const product = createMockProduct();
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
-    const productInstance = createMockProductInstance({ productId: 'prod1' });
-    const catalogs = createMockCatalogSelectors({ prod1: productEntry });
+    const product = createMockProduct({ id: 'prod1', category_ids: [] });
+    const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
 
     expect(FilterProductInstanceUsingCatalog(productInstance, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(true);
   });
@@ -267,63 +244,56 @@ describe('DoesProductExistInCatalog', () => {
   const fulfillmentId = 'pickup';
 
   it('should return false when product does not exist', () => {
-    const catalog = createMockCatalogSelectors();
+    const catalog = createMockCatalogSelectorsFromArrays();
 
     expect(DoesProductExistInCatalog('prod1', [], fulfillmentId, catalog)).toBe(false);
   });
 
   it('should return false when category is not visible for fulfillment', () => {
-    const product = createMockProduct({ category_ids: ['cat1'] });
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
-    const category: CatalogCategoryEntry = {
-      category: {
-        id: 'cat1',
-        name: 'Test Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: ['pickup'],
-        displayFlags: { nesting: 'FLAT' as const },
-      },
-      products: ['prod1'],
-      children: [],
-    };
-    const catalog = createMockCatalogSelectors({ prod1: productEntry }, {}, {}, { cat1: category });
+    const category = createMockCategory({
+      id: 'cat1',
+      name: 'Test Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: ['pickup'],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const product = createMockProduct({ id: 'prod1', category_ids: ['cat1'] });
+    const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const catalog = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance], categories: [category] });
 
     expect(DoesProductExistInCatalog('prod1', [], fulfillmentId, catalog)).toBe(false);
   });
 
   it('should return true when product and all modifiers exist', () => {
-    const product = createMockProduct({ category_ids: ['cat1'] });
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
-    const category: CatalogCategoryEntry = {
-      category: {
-        id: 'cat1',
-        name: 'Test Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: [],
-        displayFlags: { nesting: 'FLAT' as const },
-      },
-      products: ['prod1'],
-      children: [],
-    };
-    const modifierEntry: CatalogModifierEntry = {
-
-      modifierType: createMockOptionType({
-        id: 'mt1',
-        name: 'Toppings',
-        ordinal: 0,
-        min_selected: 0,
-        max_selected: 10,
-        displayFlags: createMockOptionTypeDisplayFlags({}),
-      }
-      ),
-      options: ['opt1'],
-    };
-    const option = createMockOption({ id: 'opt1' });
-    const catalog = createMockCatalogSelectors({ prod1: productEntry }, { opt1: option }, { mt1: modifierEntry }, { cat1: category });
+    const category = createMockCategory({
+      id: 'cat1',
+      name: 'Test Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: [],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const modifierType = createMockOptionType({
+      id: 'mt1',
+      name: 'Toppings',
+      ordinal: 0,
+      min_selected: 0,
+      max_selected: 10,
+      displayFlags: createMockOptionTypeDisplayFlags(),
+    });
+    const option = createMockOption({ id: 'opt1', modifierTypeId: 'mt1' });
+    const product = createMockProduct({ id: 'prod1', category_ids: ['cat1'] });
+    const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const catalog = createMockCatalogSelectorsFromArrays({
+      products: [product],
+      productInstances: [productInstance],
+      categories: [category],
+      modifierTypes: [modifierType],
+      options: [option]
+    });
 
     const modifiers: ProductModifierEntry[] = [
       { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
@@ -335,53 +305,46 @@ describe('DoesProductExistInCatalog', () => {
 
 describe('SelectProductInstancesInCategory', () => {
   it('should return empty array when category has no products', () => {
-    const category: CatalogCategoryEntry = {
-      category: {
-        id: 'cat1',
-        name: 'Test Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: [],
-        displayFlags: { nesting: 'FLAT' as const },
-      },
-      products: [],
-      children: [],
-    };
-    const productSelector = () => undefined;
+    const category = createMockCategory({
+      id: 'cat1',
+      name: 'Test Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: [],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const catalog = createMockCatalogSelectorsFromArrays({ categories: [category] });
+    const categoryEntry = catalog.category('cat1');
+    if (!categoryEntry) throw new Error('Category not found');
 
-    expect(SelectProductInstancesInCategory(category, productSelector)).toEqual([]);
+    expect(SelectProductInstancesInCategory(categoryEntry, catalog.productEntry)).toEqual([]);
   });
 
   it('should return all product instances from products in the category', () => {
-    const category: CatalogCategoryEntry = {
-      category: {
-        id: 'cat1',
-        name: 'Test Category',
-        description: '',
-        parent_id: null,
-        ordinal: 0,
-        serviceDisable: [],
-        displayFlags: { nesting: 'FLAT' as const },
-      },
-      products: ['prod1', 'prod2'],
-      children: [],
-    };
-    const productEntry1: CatalogProductEntry = {
-      product: createMockProduct({ id: 'prod1' }),
-      instances: ['pi1', 'pi2']
-    };
-    const productEntry2: CatalogProductEntry = {
-      product: createMockProduct({ id: 'prod2' }),
-      instances: ['pi3']
-    };
-    const productSelector = (id: string) => {
-      if (id === 'prod1') return productEntry1;
-      if (id === 'prod2') return productEntry2;
-      return undefined;
-    };
+    const category = createMockCategory({
+      id: 'cat1',
+      name: 'Test Category',
+      description: '',
+      parent_id: null,
+      ordinal: 0,
+      serviceDisable: [],
+      display_flags: createMockCategoryDisplayFlags({ nesting: CategoryDisplay.FLAT }),
+    });
+    const product1 = createMockProduct({ id: 'prod1', category_ids: ['cat1'] });
+    const product2 = createMockProduct({ id: 'prod2', category_ids: ['cat1'] });
+    const pi1 = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
+    const pi2 = createMockProductInstance({ id: 'pi2', productId: 'prod1' });
+    const pi3 = createMockProductInstance({ id: 'pi3', productId: 'prod2' });
+    const catalog = createMockCatalogSelectorsFromArrays({
+      categories: [category],
+      products: [product1, product2],
+      productInstances: [pi1, pi2, pi3]
+    });
+    const categoryEntry = catalog.category('cat1');
+    if (!categoryEntry) throw new Error('Category not found');
 
-    expect(SelectProductInstancesInCategory(category, productSelector)).toEqual(['pi1', 'pi2', 'pi3']);
+    expect(SelectProductInstancesInCategory(categoryEntry, catalog.productEntry)).toEqual(['pi1', 'pi2', 'pi3']);
   });
 });
 
@@ -392,26 +355,12 @@ describe('SortProductModifierEntries', () => {
       { modifierTypeId: 'mt1', options: [] },
       { modifierTypeId: 'mt3', options: [] },
     ];
-    const modifierEntry1: CatalogModifierEntry = {
-      modifierType: { id: 'mt1', name: 'First', ordinal: 1 } as CatalogModifierEntry['modifierType'],
-      options: [],
-    };
-    const modifierEntry2: CatalogModifierEntry = {
-      modifierType: { id: 'mt2', name: 'Second', ordinal: 2 } as CatalogModifierEntry['modifierType'],
-      options: [],
-    };
-    const modifierEntry3: CatalogModifierEntry = {
-      modifierType: { id: 'mt3', name: 'Third', ordinal: 3 } as CatalogModifierEntry['modifierType'],
-      options: [],
-    };
-    const modifierTypeSelector = (id: string) => {
-      if (id === 'mt1') return modifierEntry1;
-      if (id === 'mt2') return modifierEntry2;
-      if (id === 'mt3') return modifierEntry3;
-      return undefined;
-    };
+    const mt1 = createMockOptionType({ id: 'mt1', name: 'First', ordinal: 1 });
+    const mt2 = createMockOptionType({ id: 'mt2', name: 'Second', ordinal: 2 });
+    const mt3 = createMockOptionType({ id: 'mt3', name: 'Third', ordinal: 3 });
+    const catalog = createMockCatalogSelectorsFromArrays({ modifierTypes: [mt1, mt2, mt3] });
 
-    const sorted = SortProductModifierEntries(modifiers, modifierTypeSelector);
+    const sorted = SortProductModifierEntries(modifiers, catalog.modifierEntry);
     expect(sorted.map(m => m.modifierTypeId)).toEqual(['mt1', 'mt2', 'mt3']);
   });
 });
@@ -423,14 +372,13 @@ describe('SortProductModifierOptions', () => {
       { optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
       { optionId: 'opt2', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
     ];
-    const optionSelector = (id: string) => {
-      if (id === 'opt1') return createMockOption({ id: 'opt1', ordinal: 1 });
-      if (id === 'opt2') return createMockOption({ id: 'opt2', ordinal: 2 });
-      if (id === 'opt3') return createMockOption({ id: 'opt3', ordinal: 3 });
-      return undefined;
-    };
+    const mt1 = createMockOptionType({ id: 'mt1', name: 'First', ordinal: 1 });
+    const opt1 = createMockOption({ id: 'opt1', modifierTypeId: 'mt1', ordinal: 1 });
+    const opt2 = createMockOption({ id: 'opt2', modifierTypeId: 'mt1', ordinal: 2 });
+    const opt3 = createMockOption({ id: 'opt3', modifierTypeId: 'mt1', ordinal: 3 });
+    const catalog = createMockCatalogSelectorsFromArrays({ modifierTypes: [mt1], options: [opt1, opt2, opt3] });
 
-    const sorted = SortProductModifierOptions(options, optionSelector);
+    const sorted = SortProductModifierOptions(options, catalog.option);
     expect(sorted.map(o => o.optionId)).toEqual(['opt1', 'opt2', 'opt3']);
   });
 });

@@ -62,8 +62,8 @@ import type {
   IIfElseExpressionDto,
   ILogicalExpressionDto,
   IModifierPlacementExpressionDto,
-  IOrderInstanceFunctionDto,
   IProductInstanceFunctionDto,
+  OrderInstanceFunctionDto,
   ProductMetadataExpressionDto,
 } from './dto/expression.dto';
 import type { FulfillmentAutogratDto, FulfillmentConfigDto, FulfillmentMessagesDto } from './dto/fulfillment.dto';
@@ -305,7 +305,7 @@ export type AbstractOrderExpression =
   | AbstractOrderExpressionIfElseExpression
   | AbstractOrderExpressionLogicalExpression;
 
-export type OrderInstanceFunction = Omit<IOrderInstanceFunctionDto, never>;
+export type OrderInstanceFunction = Omit<OrderInstanceFunctionDto, never>;
 
 // =============================================================================
 // Printer Group (from printer-group.dto.ts)
