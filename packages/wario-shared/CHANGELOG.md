@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 1.1.0
+
+### Minor Changes
+
+- f7b0795: fix descriminated type creation and derivation
+
 ## 1.0.0
 
 ### Major Changes
