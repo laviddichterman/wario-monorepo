@@ -13,9 +13,11 @@ Welcome to the Wario platform monorepo.
 
 **Detailed Package Guides:**
 
-- [Backend](../apps/wario-backend/AGENT_GUIDE.md)
-- [POS](../apps/wario-pos/AGENT_GUIDE.md)
-- [Shared Logic](../packages/wario-shared/AGENT_GUIDE.md)
+- [Backend](apps/wario-backend/AGENT_GUIDE.md)
+- [POS](apps/wario-pos/AGENT_GUIDE.md)
+- [Shared Logic](packages/wario-shared/AGENT_GUIDE.md)
+- [UX Shared](packages/wario-ux-shared/AGENT_GUIDE.md)
+- [FE UX Shared](packages/wario-fe-ux-shared/AGENT_GUIDE.md)
 
 ## Quick Start
 

@@ -1,35 +1,59 @@
+---
+trigger: always_on
+---
+
 # Development Workflow
 
-## Workspace Management
+## Prerequisites
 
-We use `pnpm` workspaces.
+- **Node.js**: v20+ (LTS recommended)
+- **pnpm**: v8+ (`npm install -g pnpm`)
+- **MongoDB**: Local or Docker instance for backend
 
-### Running Applications
-
-Most apps have a `dev` script or similar. Use `pnpm output <script_name>` to run from root, or `cd` into the directory.
+## Getting Started
 
 ```bash
-# Start the Backend
-pnpm output backend:start:dev
+# Clone the repo
+git clone <repo-url>
+cd wario-monorepo
 
-# Start the POS
-pnpm output pos:dev
+# Install all dependencies
+pnpm install
 
-# Start the Ordering App
-pnpm output order:dev
+# Copy environment template (if exists)
+cp apps/wario-backend/.env.example apps/wario-backend/.env
+# Edit .env with your local values
 ```
 
-### Testing
+## Running Applications
 
-#### Unit Tests (Jest)
+Run scripts from the root using `pnpm <script_name>`:
+
+```bash
+# Start the Backend (dev mode with watch)
+pnpm backend:start
+
+# Start the POS
+pnpm pos:dev
+
+# Start the Ordering App
+pnpm order:dev
+
+# Start all apps in parallel
+pnpm dev
+```
+
+## Testing
+
+### Unit Tests (Jest)
 
 Located alongside source files (`*.spec.ts`).
 
 ```bash
-pnpm output backend:test
+pnpm backend:test
 ```
 
-#### E2E Tests (Playwright)
+### E2E Tests (Playwright)
 
 Located in root `e2e/`.
 
@@ -39,6 +63,9 @@ pnpm e2e
 
 # Run integration tests (Live backend)
 pnpm e2e:integration
+
+# Interactive UI mode
+pnpm e2e:ui
 
 # Debug mode
 pnpm e2e --debug

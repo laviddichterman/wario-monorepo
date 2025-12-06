@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Tech Stack & Architecture
 
 This guide describes the core technologies used across `wario-monorepo`.
@@ -14,6 +18,18 @@ We use three distinct libraries for state management. **Do not mix these up.**
 
 > [!WARNING]
 > **Redux is Banned**. If you see Redux code, it is legacy. Do not write new Redux code.
+
+### When to Use Zustand vs. Jotai
+
+- **Use Zustand** if:
+  - The state needs to persist across navigation (e.g., a multi-step wizard like "Build a Pizza").
+  - The state is fundamentally "app-level" (e.g., auth user, global settings, cart).
+  - You need actions/reducers with complex logic.
+
+- **Use Jotai** if:
+  - The state is ephemeral and modal-scoped (e.g., "Which dialog is open?", "Which row is selected?").
+  - You want to avoid prop-drilling for cross-component communication.
+  - The state is simple (just a value or two) and doesn't need a full store.
 
 ## Frontend
 
