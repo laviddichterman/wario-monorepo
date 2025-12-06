@@ -1,18 +1,26 @@
 import { snakeCase, startCase } from 'es-toolkit/compat';
+import { useAtom, useAtomValue } from 'jotai';
+import { useCallback } from 'react';
 
-import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup } from "@mui/material";
+import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup } from '@mui/material';
 
-import type { KeyValue } from "@wcp/wario-shared";
-import { DISPLAY_AS, formatDecimal, MODIFIER_CLASS, parseInteger } from "@wcp/wario-shared";
-import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
-import { CheckedNumericInput } from "@wcp/wario-ux-shared/components";;
+import { DISPLAY_AS, formatDecimal, MODIFIER_CLASS, parseInteger } from '@wcp/wario-shared';
+import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 
-import { ExternalIdsExpansionPanelComponent } from "../../ExternalIdsExpansionPanelComponent";
-import { IntNumericPropertyComponent } from "../../property-components/IntNumericPropertyComponent";
-import { StringEnumPropertyComponent } from "../../property-components/StringEnumPropertyComponent";
-import { StringPropertyComponent } from "../../property-components/StringPropertyComponent";
-import { ToggleBooleanPropertyComponent } from "../../property-components/ToggleBooleanPropertyComponent";
-import { ElementActionComponent } from "../element.action.component";
+import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
+import { IntNumericPropertyComponent } from '@/components/wario/property-components/IntNumericPropertyComponent';
+import { StringEnumPropertyComponent } from '@/components/wario/property-components/StringEnumPropertyComponent';
+import { StringPropertyComponent } from '@/components/wario/property-components/StringPropertyComponent';
+import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
+
+import {
+  modifierTypeFormAtom,
+  modifierTypeFormIsValidAtom,
+  modifierTypeFormProcessingAtom,
+  type ModifierTypeFormState,
+} from '@/atoms/forms/modifierTypeFormAtoms';
+
+import { ElementActionComponent } from '../element.action.component';
 
 export interface ModifierTypeUiProps {
   onCloseCallback: VoidFunction;
@@ -22,84 +30,91 @@ export type ModifierTypeModifyUiProps = {
   modifier_type_id: string;
 } & ModifierTypeUiProps;
 
-export type ModifierTypeContainerProps =
-  ValSetValNamed<number, 'ordinal'> &
-  ValSetValNamed<number, 'minSelected'> &
-  ValSetValNamed<number | null, 'maxSelected'> &
-  ValSetValNamed<string, 'name'> &
-  ValSetValNamed<string, 'displayName'> &
-  ValSetValNamed<KeyValue[], 'externalIds'> &
-  ValSetValNamed<string, 'templateString'> &
-  ValSetValNamed<string, 'multipleItemSeparator'> &
-  ValSetValNamed<string, 'nonEmptyGroupPrefix'> &
-  ValSetValNamed<string, 'nonEmptyGroupSuffix'> &
-  ValSetValNamed<boolean, 'is3p'> &
-  ValSetValNamed<boolean, 'omitOptionIfNotAvailable'> &
-  ValSetValNamed<boolean, 'omitSectionIfNoAvailableOptions'> &
-  ValSetValNamed<boolean, 'useToggleIfOnlyTwoOptions'> &
-  ValSetValNamed<boolean, 'isHiddenDuringCustomization'> &
-  ValSetValNamed<DISPLAY_AS, 'emptyDisplayAs'> &
-  ValSetValNamed<MODIFIER_CLASS, 'modifierClass'> & {
-    confirmText: string;
-    onConfirmClick: VoidFunction;
-    isProcessing: boolean;
-  };
+/**
+ * Hook to manage ModifierType form state.
+ * Returns the form state and a type-safe field updater.
+ */
+export const useModifierTypeForm = () => {
+  const [form, setForm] = useAtom(modifierTypeFormAtom);
+  const isValid = useAtomValue(modifierTypeFormIsValidAtom);
+  const [isProcessing, setIsProcessing] = useAtom(modifierTypeFormProcessingAtom);
 
-export const IsValidModifierType = (props: Pick<ModifierTypeContainerProps, 'name' | 'maxSelected' | 'minSelected' | 'useToggleIfOnlyTwoOptions'>) => !(props.name.length === 0 ||
-  (Number.isFinite(props.maxSelected) && (props.maxSelected as number) < props.minSelected) ||
-  (props.useToggleIfOnlyTwoOptions && (props.maxSelected !== 1 || props.minSelected !== 1)));
+  const updateField = useCallback(
+    <K extends keyof ModifierTypeFormState>(field: K, value: ModifierTypeFormState[K]) => {
+      setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    },
+    [setForm],
+  );
 
-export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
+  return { form, updateField, isValid, isProcessing, setIsProcessing };
+};
+
+/**
+ * Form body for ModifierType - reads state from Jotai atoms.
+ * This replaces the old ModifierTypeContainer which required 30+ props.
+ */
+export const ModifierTypeFormBody = () => {
+  const { form, updateField, isProcessing } = useModifierTypeForm();
+
+  if (!form) return null;
+
   const handleSetMaxSelected = (val: number | null) => {
     if (val !== 1) {
-      if (props.emptyDisplayAs === DISPLAY_AS.LIST_CHOICES) {
-        props.setEmptyDisplayAs(DISPLAY_AS.YOUR_CHOICE_OF);
+      if (form.emptyDisplayAs === DISPLAY_AS.LIST_CHOICES) {
+        updateField('emptyDisplayAs', DISPLAY_AS.YOUR_CHOICE_OF);
       }
-      props.setUseToggleIfOnlyTwoOptions(false);
+      updateField('useToggleIfOnlyTwoOptions', false);
     }
-    props.setMaxSelected(val);
-  }
+    updateField('maxSelected', val);
+  };
 
   const handleSetMinSelected = (val: number) => {
     if (val !== 1) {
-      props.setUseToggleIfOnlyTwoOptions(false);
+      updateField('useToggleIfOnlyTwoOptions', false);
     }
-    if (props.maxSelected !== null && props.maxSelected < val) {
-      props.setMaxSelected(val);
+    if (form.maxSelected !== null && form.maxSelected < val) {
+      updateField('maxSelected', val);
     }
-    props.setMinSelected(val);
-  }
+    updateField('minSelected', val);
+  };
+
   return (
     <>
       <Grid size={12}>
         <StringPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Modifier Type Name"
-          setValue={props.setName}
-          value={props.name}
+          setValue={(v) => {
+            updateField('name', v);
+          }}
+          value={form.name}
         />
       </Grid>
       <Grid size={12}>
         <StringPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Display Name (Optional)"
-          setValue={props.setDisplayName}
-          value={props.displayName}
+          setValue={(v) => {
+            updateField('displayName', v);
+          }}
+          value={form.displayName}
         />
       </Grid>
       <Grid size={4}>
         <IntNumericPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Ordinal"
-          value={props.ordinal}
-          setValue={props.setOrdinal}
+          value={form.ordinal}
+          setValue={(v) => {
+            updateField('ordinal', v);
+          }}
         />
       </Grid>
       <Grid size={4}>
         <IntNumericPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Min Selected"
-          value={props.minSelected}
+          value={form.minSelected}
           setValue={handleSetMinSelected}
         />
       </Grid>
@@ -113,51 +128,64 @@ export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
             allowEmpty: true,
             formatFunction: (i) => formatDecimal(i, 2),
             parseFunction: parseInteger,
-            min: props.minSelected
+            min: form.minSelected,
           }}
           pattern="[0-9]*"
-          value={props.maxSelected}
-          disabled={props.isProcessing}
-          onChange={(e: number | "") => { handleSetMaxSelected(e ? e : null); }}
+          value={form.maxSelected}
+          disabled={isProcessing}
+          onChange={(e: number | '') => {
+            handleSetMaxSelected(e ? e : null);
+          }}
         />
       </Grid>
       <Grid size={6}>
         <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Omit Section If No Available Options"
-          value={props.omitSectionIfNoAvailableOptions}
-          setValue={props.setOmitSectionIfNoAvailableOptions}
+          value={form.omitSectionIfNoAvailableOptions}
+          setValue={(v) => {
+            updateField('omitSectionIfNoAvailableOptions', v);
+          }}
         />
       </Grid>
       <Grid size={6}>
         <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Omit Option If Not Available"
-          value={props.omitOptionIfNotAvailable}
-          setValue={props.setOmitOptionIfNotAvailable}
+          value={form.omitOptionIfNotAvailable}
+          setValue={(v) => {
+            updateField('omitOptionIfNotAvailable', v);
+          }}
         />
       </Grid>
       <Grid size={6}>
         <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing || props.maxSelected !== 1 || props.minSelected !== 1}
+          disabled={isProcessing || form.maxSelected !== 1 || form.minSelected !== 1}
           label="Use Toggle If Only Two Options"
-          value={props.useToggleIfOnlyTwoOptions}
-          setValue={props.setUseToggleIfOnlyTwoOptions}
+          value={form.useToggleIfOnlyTwoOptions}
+          setValue={(v) => {
+            updateField('useToggleIfOnlyTwoOptions', v);
+          }}
         />
       </Grid>
       <Grid size={6}>
         <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Hide from user customization"
-          setValue={props.setIsHiddenDuringCustomization}
-          value={props.isHiddenDuringCustomization} />
+          setValue={(v) => {
+            updateField('isHiddenDuringCustomization', v);
+          }}
+          value={form.isHiddenDuringCustomization}
+        />
       </Grid>
       <Grid container size={12}>
         <StringEnumPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Modifier Class"
-          value={props.modifierClass}
-          setValue={props.setModifierClass}
+          value={form.modifierClass}
+          setValue={(v) => {
+            updateField('modifierClass', v);
+          }}
           options={Object.values(MODIFIER_CLASS)}
         />
       </Grid>
@@ -168,95 +196,121 @@ export const ModifierTypeContainer = (props: ModifierTypeContainerProps) => {
             aria-label="empty-display-as"
             name="empty-display-as"
             row
-            value={props.emptyDisplayAs}
-            onChange={(e) => { props.setEmptyDisplayAs(e.target.value as DISPLAY_AS); }}
+            value={form.emptyDisplayAs}
+            onChange={(e) => {
+              updateField('emptyDisplayAs', e.target.value as DISPLAY_AS);
+            }}
           >
-            {Object.values(DISPLAY_AS).map((opt, i) =>
+            {Object.values(DISPLAY_AS).map((opt, i) => (
               <FormControlLabel
                 key={i}
                 value={opt}
-                disabled={opt === DISPLAY_AS.LIST_CHOICES && props.maxSelected !== 1}
+                disabled={opt === DISPLAY_AS.LIST_CHOICES && form.maxSelected !== 1}
                 control={<Radio />}
                 label={startCase(snakeCase(opt))}
               />
-            )}
+            ))}
           </RadioGroup>
         </FormControl>
       </Grid>
       <Grid size={3}>
         <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Is 3rd Party"
-          setValue={props.setIs3p}
-          value={props.is3p} />
+          setValue={(v) => {
+            updateField('is3p', v);
+          }}
+          value={form.is3p}
+        />
       </Grid>
       <Grid size={6}>
         <StringPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Template String"
-          setValue={props.setTemplateString}
-          value={props.templateString}
+          setValue={(v) => {
+            updateField('templateString', v);
+          }}
+          value={form.templateString}
         />
       </Grid>
       <Grid size={6}>
         <StringPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Multiple Item Separator"
-          setValue={props.setMultipleItemSeparator}
-          value={props.multipleItemSeparator}
+          setValue={(v) => {
+            updateField('multipleItemSeparator', v);
+          }}
+          value={form.multipleItemSeparator}
         />
       </Grid>
       <Grid size={6}>
         <StringPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Non-Empty Group Prefix"
-          setValue={props.setNonEmptyGroupPrefix}
-          value={props.nonEmptyGroupPrefix}
+          setValue={(v) => {
+            updateField('nonEmptyGroupPrefix', v);
+          }}
+          value={form.nonEmptyGroupPrefix}
         />
       </Grid>
       <Grid size={6}>
         <StringPropertyComponent
-          disabled={props.isProcessing}
+          disabled={isProcessing}
           label="Non-Empty Group Suffix"
-          setValue={props.setNonEmptyGroupSuffix}
-          value={props.nonEmptyGroupSuffix}
+          setValue={(v) => {
+            updateField('nonEmptyGroupSuffix', v);
+          }}
+          value={form.nonEmptyGroupSuffix}
         />
       </Grid>
       <Grid size={12}>
         <ExternalIdsExpansionPanelComponent
-          title='External IDs'
-          disabled={props.isProcessing}
-          value={props.externalIds}
-          setValue={props.setExternalIds}
+          title="External IDs"
+          disabled={isProcessing}
+          value={form.externalIds}
+          setValue={(v) => {
+            updateField('externalIds', v);
+          }}
         />
       </Grid>
     </>
   );
-}
-
-
-export type ModifierTypeComponentProps = ModifierTypeContainerProps & {
-  confirmText: string;
-  onConfirmClick: VoidFunction;
-  isProcessing: boolean;
-  disableConfirm: boolean;
-  children?: React.ReactNode;
 };
 
-export const ModifierTypeComponent = (props: ModifierTypeComponentProps & ModifierTypeUiProps) => (
-  <ElementActionComponent
-    onCloseCallback={props.onCloseCallback}
-    onConfirmClick={props.onConfirmClick}
-    isProcessing={props.isProcessing}
-    disableConfirmOn={props.disableConfirm || !IsValidModifierType(props) || props.isProcessing}
-    confirmText={props.confirmText}
-    body={
-      <>
-        <ModifierTypeContainer {...props} />
-        {props.children}
-      </>
-    }
-  />
-);
+export interface ModifierTypeFormComponentProps {
+  confirmText: string;
+  onCloseCallback: VoidFunction;
+  onConfirmClick: VoidFunction;
+  disableConfirm?: boolean;
+  children?: React.ReactNode;
+}
 
-export default ModifierTypeComponent;
+/**
+ * Complete ModifierType form with actions.
+ * Wraps ModifierTypeFormBody with confirm/cancel buttons.
+ */
+export const ModifierTypeFormComponent = ({
+  confirmText,
+  onCloseCallback,
+  onConfirmClick,
+  disableConfirm = false,
+  children,
+}: ModifierTypeFormComponentProps) => {
+  const { isValid, isProcessing } = useModifierTypeForm();
+
+  return (
+    <ElementActionComponent
+      onCloseCallback={onCloseCallback}
+      onConfirmClick={onConfirmClick}
+      isProcessing={isProcessing}
+      disableConfirmOn={disableConfirm || !isValid || isProcessing}
+      confirmText={confirmText}
+      body={
+        <>
+          <ModifierTypeFormBody />
+          {children}
+        </>
+      }
+    />
+  );
+};
