@@ -27,8 +27,8 @@ trigger: always_on
 - **DTOs**: If a DTO is used by API, it belongs in `packages/wario-shared`.
 - **Components**:
   - If specific to one app -> `apps/<app>/src/components`.
-  - If user interface tool generic (shared between customer facing and wario-pos) -> `packages/wario-ux-shared`.
-  - If customer facing generic (shared between wario-fe-\* apps) -> `packages/wario-fe-ux-shared`.
+  - If user interface generic -> `packages/wario-ux-shared`.
+  - If customer facing user interface generic -> `packages/wario-fe-ux-shared`.
 
 ### 5. Idempotency Keys
 
@@ -57,9 +57,9 @@ trigger: always_on
 
 - **Update Guides**: At the end of every task, review the `AGENT_GUIDE.md` for the modified package(s). If architecture, conventions, or critical files have changed, update the guide immediately. The guides must remain the "Sole Source of Truth".
 
-### 8. Architect Code Review
+### 8. Architect Self-Review
 
-- **Mandatory Sub-Agent Review**: Before marking a task as complete or finalizing an implementation plan, and **BEFORE** updating any agent documentation, you MUST invoke a high-effort sub-agent.
-  - **Persona**: The sub-agent should act as the "Code Reviewer and Technology Architect".
-  - **Goal**: Poke holes in the plan/code, look for edge cases, security flaws, or architectural violations (e.g., Redux usage), and play "devil's advocate".
-  - **Action**: Only proceed after addressing the Architect's concerns.
+- **Mandatory Review Step**: Before marking a task as complete or finalizing an implementation plan, and **BEFORE** updating any agent documentation, you MUST perform a self-review with an "Architect" mindset.
+  - **Persona**: Adopt the role of a "Code Reviewer and Technology Architect".
+  - **Goal**: Critically evaluate your own plan/code. Look for edge cases, security flaws, or architectural violations (e.g., Redux usage), and play "devil's advocate".
+  - **Action**: Document any concerns found and address them before proceeding.

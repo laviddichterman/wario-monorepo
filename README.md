@@ -26,5 +26,5 @@ Welcome to the Wario platform monorepo.
 pnpm install
 
 # Start Backend
-pnpm output backend:start:dev
+pnpm backend:start
 ```
