@@ -264,15 +264,13 @@ export class StoreCreditProviderService {
         const credit_balance = Math.round(Number(entry[3]) * 100);
         if (amount.amount > credit_balance) {
           this.logger.error(
-            `We have a cheater folks, store credit key ${entry[7]}, attempted to use ${MoneyToDisplayString(amount, true)} but had balance ${credit_balance}`,
+            `We have a cheater folks, store credit key ${String(entry[7])}, attempted to use ${MoneyToDisplayString(amount, true)} but had balance ${credit_balance}`,
           );
           return { success: false };
         }
-        // If lock is provided, validate it. If not provided (e.g. from RedeemCredit without lock), skip validation?
-        // The original code required lock.
-        if (lock && (entry[10] != lock.enc || entry[11] != lock.iv || entry[12] != lock.auth)) {
+        if ((entry[10] != lock.enc || entry[11] != lock.iv || entry[12] != lock.auth)) {
           this.logger.error(
-            `WE HAVE A CHEATER FOLKS, store credit key ${entry[7].toString()}, expecting encoded: ${JSON.stringify(lock)}.`,
+            `WE HAVE A CHEATER FOLKS, store credit key ${String(entry[7])}, expecting encoded: ${JSON.stringify(lock)}.`,
           );
           return { success: false };
         }
@@ -280,7 +278,7 @@ export class StoreCreditProviderService {
           const expiration = startOfDay(parseISO(String(entry[8])));
           if (isBefore(expiration, beginningOfToday)) {
             this.logger.error(
-              `We have a cheater folks, store credit key ${entry[7]}, attempted to use after expiration of ${entry[8]}.`,
+              `We have a cheater folks, store credit key ${String(entry[7])}, attempted to use after expiration of ${String(entry[8])}.`,
             );
             return { success: false };
           }
@@ -317,24 +315,6 @@ export class StoreCreditProviderService {
     }
     this.logger.error(`Not sure how, but the store credit key wasn't found: ${code}`);
     return { success: false };
-  };
-
-  RedeemCredit = async (request: ValidateLockAndSpendRequest): Promise<{ status: number; success: boolean }> => {
-    // Note: This version doesn't validate lock because OrderManagerService didn't pass it in my implementation.
-    // I should probably fix OrderManagerService to pass the lock if possible.
-    // For now, I'll call ValidateLockAndSpend with undefined lock, and I modified ValidateLockAndSpend to handle it (or I should).
-    // Actually, looking at my ValidateLockAndSpend implementation above, I added `if (lock && ...)` check.
-    // But wait, if I don't validate lock, anyone can spend any credit if they know the code.
-    // The code is `###-##-###-REFERENCEID`. It's somewhat guessable but hard.
-    // The lock is the security mechanism.
-    // I should really fix OrderManagerService to pass the lock.
-    // But for now, to fix the lint error and get it working:
-    const result = await this.ValidateLockAndSpend(request);
-    if (result.success) {
-      return { status: 200, success: true };
-    } else {
-      return { status: 400, success: false };
-    }
   };
 
   CheckAndRefundStoreCredit = async (old_entry: unknown[], index: number) => {
@@ -495,14 +475,13 @@ export class StoreCreditProviderService {
         // });
       } else {
         this.logger.error('Failed to process payment: %o', payment_response);
-        if (create_order_response.result) {
-          await this.squareService.OrderStateChange(
-            this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
-            squareOrderId,
-            squareOrderVersion,
-            'CANCELED',
-          );
-        }
+        await this.squareService.OrderStateChange(
+          this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
+          squareOrderId,
+          squareOrderVersion,
+          'CANCELED',
+        );
+
         return {
           status: 400,
           success: false,
