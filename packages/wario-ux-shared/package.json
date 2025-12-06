@@ -1,6 +1,6 @@
 {
   "name": "@wcp/wario-ux-shared",
-  "version": "7.0.0",
+  "version": "8.0.0",
   "description": "Shared UX elements across WARIO",
   "repository": {
     "type": "git",
