@@ -379,11 +379,11 @@ export class PrinterService {
               [],
             );
           }
-        } catch (err) {
+        } catch (err: unknown) {
           this.logger.error({ err, orderId: order.id }, 'Failed to cancel print order');
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error({ err: error }, 'Error in CancelPrintOrders');
     }
   }
@@ -428,7 +428,7 @@ export class PrinterService {
 
         return {
           squareItemVariationId: squareId,
-          message: entries.map((x) => `CANCEL ${x.quantity}x:${x.product.m.name}`),
+          message: entries.map((x) => `CANCEL ${String(x.quantity)}x:${x.product.m.name}`),
         };
       })
         .filter((m): m is PrinterMessage => m !== null);

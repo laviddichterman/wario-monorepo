@@ -1347,13 +1347,13 @@ export class OrderManagerService {
         // success!
         return { status: 200, success: true, result: savedOrder };
 
-      } catch (error: any) {
+      } catch (error: unknown) {
         const errorDetail = `Caught error while saving calendary entry: ${JSON.stringify(error)}`;
         this.logger.error({ err: error }, 'Caught error while saving calendary entry');
         errors.push({ category: "INTERNAL_SERVER_ERROR", code: "INTERNAL_SERVER_ERROR", detail: errorDetail });
         throw errors;
       }
-    } catch (err: any) {
+    } catch {
       // pass
     }
 
