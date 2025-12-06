@@ -54,6 +54,7 @@ const PrinterGroupAddContainer = ({ onCloseCallback }: PrinterGroupAddContainerP
           onCloseCallback();
         },
       });
+      return current;
     });
   };
 

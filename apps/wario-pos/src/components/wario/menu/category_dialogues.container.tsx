@@ -33,14 +33,44 @@ import ProductEditContainer from './product/product.edit.container';
 import ProductEnableContainer from './product/product.enable.container';
 import ProductImportContainer from './product/product.import.container';
 
+const ProductInstanceAddDialogue = () => {
+  const selectedProductClassId = useAtomValue(selectedProductClassIdAtom);
+  const closeDialogue = useSetAtom(closeDialogueAtom);
+  const dialogueState = useAtomValue(dialogueStateAtom);
+
+  // Only fetch base name when dialog is open and we have a valid ID
+  const isOpen = dialogueState === 'ProductInstanceAdd' && selectedProductClassId !== null;
+  const baseName = useBaseProductNameByProductId(isOpen ? selectedProductClassId : '');
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <DialogContainer
+      maxWidth={'xl'}
+      title={`Add Product Instance for: ${baseName}`}
+      onClose={() => {
+        closeDialogue();
+      }}
+      open={true}
+      innerComponent={
+        <ProductInstanceAddContainer
+          onCloseCallback={() => {
+            closeDialogue();
+          }}
+          parent_product_id={selectedProductClassId}
+        />
+      }
+    />
+  );
+};
+
 const CategoryDialoguesContainer = () => {
   const dialogueState = useAtomValue(dialogueStateAtom);
   const selectedCategoryId = useAtomValue(selectedCategoryIdAtom);
   const selectedProductClassId = useAtomValue(selectedProductClassIdAtom);
   const selectedProductInstanceId = useAtomValue(selectedProductInstanceIdAtom);
-
-  const baseProductName = useBaseProductNameByProductId(selectedProductClassId || '');
-  const selectedProductClassBaseProductInstanceName = selectedProductClassId ? baseProductName : '';
 
   const closeDialogue = useSetAtom(closeDialogueAtom);
   const openCategoryAdd = useSetAtom(openCategoryAddAtom);
@@ -265,24 +295,7 @@ const CategoryDialoguesContainer = () => {
           )
         }
       />
-      <DialogContainer
-        maxWidth={'xl'}
-        title={`Add Product Instance for: ${selectedProductClassBaseProductInstanceName}`}
-        onClose={() => {
-          closeDialogue();
-        }}
-        open={dialogueState === 'ProductInstanceAdd'}
-        innerComponent={
-          selectedProductClassId !== null && (
-            <ProductInstanceAddContainer
-              onCloseCallback={() => {
-                closeDialogue();
-              }}
-              parent_product_id={selectedProductClassId}
-            />
-          )
-        }
-      />
+      <ProductInstanceAddDialogue />
       <DialogContainer
         maxWidth={'xl'}
         title={'Edit Product Instance'}
