@@ -1,9 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { CatalogGenerator, ICatalogSelectorWrapper } from '../src';
 import type {
   IAbstractExpression,
-  IOption,
   ProductModifierEntry,
 } from '../src/lib/derived-types';
 import {
@@ -21,18 +19,9 @@ import {
   LogicalFunctionOperatorToHumanString,
   WFunctional,
 } from '../src/lib/objects/WFunctional';
-import type { ICatalogModifierSelectors, WCPProduct } from '../src/lib/types';
+import type { WCPProduct } from '../src/lib/types';
 
-import { createMockOption, createMockOptionType } from './mocks';
-
-// Mock catalog selectors for testing
-const createMockCatModSelectors = (
-  options: Record<string, Partial<IOption>> = {},
-  modifierEntries: Record<string, { modifierType: { name: string }; options: string[] }> = {}
-): ICatalogModifierSelectors => ({
-  option: (id: string) => options[id] as IOption | undefined,
-  modifierEntry: (id: string) => modifierEntries[id] as ReturnType<ICatalogModifierSelectors['modifierEntry']>,
-});
+import { createMockCatalogSelectorsFromArrays, createMockOption, createMockOptionMetadata, createMockOptionType } from './mocks';
 
 describe('LogicalFunctionOperatorToHumanString', () => {
   it('should return "and" for AND operator', () => {
@@ -95,7 +84,7 @@ describe('WFunctional.ProcessConstLiteralStatement', () => {
 });
 
 describe('WFunctional.ProcessLogicalOperatorStatement', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays();
   const emptyModifiers: WCPProduct['modifiers'] = [];
 
   const createConstBoolExpr = (value: boolean): IAbstractExpression => ({
@@ -225,7 +214,7 @@ describe('WFunctional.ProcessLogicalOperatorStatement', () => {
 });
 
 describe('WFunctional.ProcessIfElseStatement', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays();
   const emptyModifiers: WCPProduct['modifiers'] = [];
 
   const createConstBoolExpr = (value: boolean): IAbstractExpression => ({
@@ -331,7 +320,7 @@ describe('WFunctional.ProcessModifierPlacementExtractionOperatorStatement', () =
 describe('WFunctional.ProcessProductMetadataExpression', () => {
   it('should return 0 when no modifiers are provided', () => {
     const modifiers: ProductModifierEntry[] = [];
-    const mockSelectors = createMockCatModSelectors();
+    const mockSelectors = createMockCatalogSelectorsFromArrays();
     const stmt = { field: MetadataField.FLAVOR, location: PRODUCT_LOCATION.LEFT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(0);
   });
@@ -346,9 +335,12 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
         ],
       },
     ];
-    const mockSelectors = createMockCatModSelectors({
-      opt1: { metadata: { flavor_factor: 2, bake_factor: 1, can_split: true } },
-      opt2: { metadata: { flavor_factor: 3, bake_factor: 1, can_split: true } },
+    const mockSelectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }) }),
+        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 3, bake_factor: 1, can_split: true }) }),
+      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
     const stmt = { field: MetadataField.FLAVOR, location: PRODUCT_LOCATION.LEFT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(2);
@@ -363,8 +355,11 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
         ],
       },
     ];
-    const mockSelectors = createMockCatModSelectors({
-      opt1: { metadata: { flavor_factor: 2, bake_factor: 1, can_split: true } },
+    const mockSelectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }) }),
+      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
     const stmt = { field: MetadataField.FLAVOR, location: PRODUCT_LOCATION.LEFT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(2);
@@ -379,8 +374,11 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
         ],
       },
     ];
-    const mockSelectors = createMockCatModSelectors({
-      opt1: { metadata: { flavor_factor: 2, bake_factor: 3, can_split: true } },
+    const mockSelectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 3, can_split: true }) }),
+      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
     const stmt = { field: MetadataField.WEIGHT, location: PRODUCT_LOCATION.RIGHT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(3);
@@ -483,7 +481,7 @@ describe('FindHasAnyModifierExpressionsForMTID', () => {
 });
 
 describe('WFunctional.ProcessAbstractExpressionStatement', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays();
   const emptyModifiers: WCPProduct['modifiers'] = [];
 
   it('should process ConstLiteral expression', () => {
@@ -548,7 +546,7 @@ describe('WFunctional.ProcessAbstractExpressionStatement', () => {
 });
 
 describe('WFunctional.ProcessProductInstanceFunction', () => {
-  const mockSelectors = createMockCatModSelectors();
+  const mockSelectors = createMockCatalogSelectorsFromArrays();
   const emptyModifiers: WCPProduct['modifiers'] = [];
 
   it('should process a product instance function', () => {
@@ -565,8 +563,7 @@ describe('WFunctional.ProcessProductInstanceFunction', () => {
 });
 
 describe('WFunctional.AbstractExpressionStatementToString', () => {
-  const mockSelectors = ICatalogSelectorWrapper(CatalogGenerator([], [createMockOptionType({ id: "mt1", name: "Toppings" })], [createMockOption({ id: "opt1", displayName: "Extra Cheese" })], [], [], {}, {}, { major: 1, minor: 0, patch: 0 }));
-
+  const mockSelectors = createMockCatalogSelectorsFromArrays({ modifierTypes: [createMockOptionType({ id: "mt1", name: "Toppings" })], options: [createMockOption({ id: "opt1", displayName: "Extra Cheese" })] });
   it('should convert boolean literal to string', () => {
     const expr: IAbstractExpression = {
       discriminator: ProductInstanceFunctionType.ConstLiteral,

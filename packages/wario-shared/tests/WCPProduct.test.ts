@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-misused-spread */
+
 import { describe, expect, it } from '@jest/globals';
 
 import type {
@@ -24,9 +24,9 @@ import {
 import type { MetadataModifierMap, WProductMetadata } from '../src/lib/types';
 
 import {
-  createMockCatModSelectors,
-  createMockModifierEntry,
+  createMockCatalogSelectorsFromArrays,
   createMockOption,
+  createMockOptionType,
   createMockProduct,
 } from './mocks';
 
@@ -62,17 +62,17 @@ describe('SortModifersAndOptions', () => {
       { modifierTypeId: 'mt1', options: [{ optionId: 'opt2', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
     ];
 
-    const modifierEntry1 = createMockModifierEntry({ modifierType: { ...createMockModifierEntry().modifierType, id: 'mt1', ordinal: 1 }, options: ['opt2'] });
-    const modifierEntry2 = createMockModifierEntry({ modifierType: { ...createMockModifierEntry().modifierType, id: 'mt2', ordinal: 2 }, options: ['opt1', 'opt3'] });
-
-    const selectors = createMockCatModSelectors(
-      {
-        opt1: createMockOption({ id: 'opt1', ordinal: 1 }),
-        opt2: createMockOption({ id: 'opt2', ordinal: 2 }),
-        opt3: createMockOption({ id: 'opt3', ordinal: 3 }),
-      },
-      { mt1: modifierEntry1, mt2: modifierEntry2 }
-    );
+    const selectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', ordinal: 1 }),
+        createMockOption({ id: 'opt2', ordinal: 2 }),
+        createMockOption({ id: 'opt3', ordinal: 3 }),
+      ],
+      modifierTypes: [
+        createMockOptionType({ id: 'mt1', ordinal: 1 }),
+        createMockOptionType({ id: 'mt2', ordinal: 2 }),
+      ],
+    });
 
     const sorted = SortModifersAndOptions(modifiers, selectors);
 
@@ -199,18 +199,13 @@ describe('ComputePotentialPrices', () => {
       flavor_count: [0, 0],
     };
 
-    const modifierEntry = createMockModifierEntry({
-      modifierType: { ...createMockModifierEntry().modifierType, id: 'mt1', min_selected: 1, max_selected: 1 },
-      options: ['opt1', 'opt2'],
+    const selectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', price: { amount: 100, currency: CURRENCY.USD } }),
+        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', price: { amount: 200, currency: CURRENCY.USD } }),
+      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1', min_selected: 1, max_selected: 1 })],
     });
-
-    const selectors = createMockCatModSelectors(
-      {
-        opt1: createMockOption({ id: 'opt1', price: { amount: 100, currency: CURRENCY.USD } }),
-        opt2: createMockOption({ id: 'opt2', price: { amount: 200, currency: CURRENCY.USD } }),
-      },
-      { mt1: modifierEntry }
-    );
 
     const prices = ComputePotentialPrices(metadata, selectors);
 
@@ -254,22 +249,16 @@ describe('ComputePotentialPrices', () => {
       flavor_count: [0, 0],
     };
 
-    const modifierEntry1 = createMockModifierEntry({
-      modifierType: { ...createMockModifierEntry().modifierType, id: 'mt1', min_selected: 1, max_selected: 1 },
-      options: ['opt1'],
+    const selectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', price: { amount: 100, currency: CURRENCY.USD } }),
+        createMockOption({ id: 'opt2', modifierTypeId: 'mt2', price: { amount: 200, currency: CURRENCY.USD } }),
+      ],
+      modifierTypes: [
+        createMockOptionType({ id: 'mt1', min_selected: 1, max_selected: 1 }),
+        createMockOptionType({ id: 'mt2', min_selected: 1, max_selected: 1 }),
+      ],
     });
-    const modifierEntry2 = createMockModifierEntry({
-      modifierType: { ...createMockModifierEntry().modifierType, id: 'mt2', min_selected: 1, max_selected: 1 },
-      options: ['opt2'],
-    });
-
-    const selectors = createMockCatModSelectors(
-      {
-        opt1: createMockOption({ id: 'opt1', price: { amount: 100, currency: CURRENCY.USD } }),
-        opt2: createMockOption({ id: 'opt2', price: { amount: 200, currency: CURRENCY.USD } }),
-      },
-      { mt1: modifierEntry1, mt2: modifierEntry2 }
-    );
 
     const prices = ComputePotentialPrices(metadata, selectors);
 
@@ -283,7 +272,7 @@ describe('ComputePotentialPrices', () => {
 describe('WProductDisplayOptions', () => {
   it('should return empty array when no modifiers', () => {
     const exhaustive_modifiers = { left: [], right: [], whole: [] };
-    const selectors = createMockCatModSelectors({}, {});
+    const selectors = createMockCatalogSelectorsFromArrays({});
 
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);
 
@@ -297,10 +286,10 @@ describe('WProductDisplayOptions', () => {
       whole: [['mt1', 'opt1'] as [string, string]],
     };
 
-    const modifierEntry = createMockModifierEntry({ modifierType: { ...createMockModifierEntry().modifierType, id: 'mt1' }, options: ['opt1'] });
-    const option = createMockOption({ id: 'opt1', displayName: 'Extra Cheese' });
-
-    const selectors = createMockCatModSelectors({ opt1: option }, { mt1: modifierEntry });
+    const selectors = createMockCatalogSelectorsFromArrays({
+      options: [createMockOption({ id: 'opt1', modifierTypeId: 'mt1', displayName: 'Extra Cheese' })],
+      modifierTypes: [createMockOptionType({ id: 'mt1' })],
+    });
 
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);
 
@@ -316,12 +305,13 @@ describe('WProductDisplayOptions', () => {
       whole: [],
     };
 
-    const modifierEntry = createMockModifierEntry({ modifierType: { ...createMockModifierEntry().modifierType, id: 'mt1' }, options: ['opt1', 'opt2'] });
-    const option1 = createMockOption({ id: 'opt1', displayName: 'Pepperoni' });
-    const option2 = createMockOption({ id: 'opt2', displayName: 'Mushrooms' });
-
-    const selectors = createMockCatModSelectors({ opt1: option1, opt2: option2 }, { mt1: modifierEntry });
-
+    const selectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', displayName: 'Pepperoni' }),
+        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', displayName: 'Mushrooms' }),
+      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1' })],
+    });
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);
 
     expect(result).toHaveLength(2);
@@ -338,11 +328,13 @@ describe('WProductDisplayOptions', () => {
       whole: [['mt1', 'opt1'] as [string, string], ['mt1', 'opt2'] as [string, string]],
     };
 
-    const modifierEntry = createMockModifierEntry({ modifierType: { ...createMockModifierEntry().modifierType, id: 'mt1' }, options: ['opt1', 'opt2'] });
-    const option1 = createMockOption({ id: 'opt1', displayName: 'Visible', displayFlags: { omit_from_name: false, omit_from_shortname: false } });
-    const option2 = createMockOption({ id: 'opt2', displayName: 'Hidden', displayFlags: { omit_from_name: true, omit_from_shortname: false } });
-
-    const selectors = createMockCatModSelectors({ opt1: option1, opt2: option2 }, { mt1: modifierEntry });
+    const selectors = createMockCatalogSelectorsFromArrays({
+      options: [
+        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', displayName: 'Visible', displayFlags: { omit_from_name: false, omit_from_shortname: false } }),
+        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', displayName: 'Hidden', displayFlags: { omit_from_name: true, omit_from_shortname: false } }),
+      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1' })],
+    });
 
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);
 

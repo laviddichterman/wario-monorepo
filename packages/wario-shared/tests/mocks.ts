@@ -11,7 +11,6 @@ import type {
   AbstractOrderExpressionLogicalExpression,
   CatalogCategoryEntry,
   CatalogModifierEntry,
-  CatalogProductEntry,
   CategoryDisplayFlags,
   ICatalog,
   ICategory,
@@ -50,7 +49,7 @@ import {
   PriceDisplay,
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
-import type { ICatalogModifierSelectors, ICatalogSelectors } from '../src/lib/types';
+import type { ICatalogSelectors } from '../src/lib/types';
 
 // ============================================================================
 // Primitive / Leaf Type Helpers
@@ -279,53 +278,6 @@ export const createMockCategory = (
   serviceDisable: [],
   display_flags: createMockCategoryDisplayFlags(overrides.display_flags),
   ...overrides,
-});
-
-// ============================================================================
-// Catalog Selectors Helpers (DEPRECATED)
-// ============================================================================
-
-/**
- * @deprecated Use createMockCatalogSelectorsFromArrays instead.
- * This function creates selectors from Record objects, which doesn't properly
- * validate relationships between entities. Use createMockCatalogSelectorsFromArrays
- * which uses CatalogGenerator for proper validation.
- */
-export const createMockCatModSelectors = (
-  options: Record<string, IOption> = {},
-  modifierEntries: Record<string, CatalogModifierEntry> = {}
-): ICatalogModifierSelectors => ({
-  option: (id: string) => options[id],
-  modifierEntry: (id: string) => modifierEntries[id],
-});
-
-/**
- * @deprecated Use createMockCatalogSelectorsFromArrays instead.
- * This function creates selectors from Record objects, which doesn't properly
- * validate relationships between entities. Use createMockCatalogSelectorsFromArrays
- * which uses CatalogGenerator for proper validation.
- */
-export const createMockCatalogSelectors = (
-  products: Record<string, CatalogProductEntry> = {},
-  options: Record<string, IOption> = {},
-  modifiers: Record<string, CatalogModifierEntry> = {},
-  categories: Record<string, CatalogCategoryEntry> = {},
-  productInstances: Record<string, IProductInstance> = {}
-): ICatalogSelectors => ({
-  productEntry: (id: string) => products[id],
-  option: (id: string) => options[id],
-  modifierEntry: (id: string) => modifiers[id],
-  category: (id: string) => categories[id],
-  productInstance: (id: string) => productInstances[id],
-  productInstanceFunction: () => undefined,
-  options: () => Object.keys(options),
-  modifierEntries: () => Object.keys(modifiers),
-  categories: () => Object.keys(categories),
-  productInstances: () => Object.keys(productInstances),
-  productEntries: () => Object.keys(products),
-  productInstanceFunctions: () => [],
-  orderInstanceFunction: () => undefined,
-  orderInstanceFunctions: () => [],
 });
 
 // ============================================================================
