@@ -276,8 +276,9 @@ export function useParentProductEntryFromProductInstanceId(productInstanceId: st
 }
 
 export function useBaseProductByProductId(productClassId: string) {
-  const productEntry = useProductEntryById(productClassId) as CatalogProductEntry;
-  const productInstance = useProductInstanceById(productEntry.product.baseProductId);
+  const productEntry = useProductEntryById(productClassId);
+  const baseProductId = productEntry?.product.baseProductId ?? '';
+  const productInstance = useProductInstanceById(baseProductId);
   return productInstance;
 }
 
