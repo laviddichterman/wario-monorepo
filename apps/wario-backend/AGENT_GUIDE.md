@@ -1,0 +1,106 @@
+# Agent Guide - `wario-backend`
+
+## 1. Identity & Purpose
+
+`wario-backend` is the **central nervous system** of the Wario platform. It is a NestJS application responsible for:
+
+- **Order Management**: The lifecycle of an order from creation (Draft) to completion (Completed/Canceled).
+- **Hardening & Validation**: Ensuring that data entering the system (from POS or web) is valid before it hits the database.
+- **Integrations**: Managing the "Bridge" to Square for payments and catalog synchronization.
+- **Real-time Updates**: Broadcasting socket events to connected clients (Kitchen Display, POS).
+
+## 2. Technical Architecture
+
+### Core Framework
+
+- **NestJS**: Standard modular architecture.
+- **Database**: MongoDB via `mongoose`.
+- **Logging**: `nestjs-pino`. **Strict Rule**: _Never_ use `console.log`. Always inject `PinoLogger`.
+
+### Directory Structure (`src/`)
+
+- `app.module.ts`: Root module.
+- `config/`: **CRITICAL**. Despite the name, this contains the **Domain Services** (Business Logic).
+  - `order-manager/`: Core order logic (state machine, transitions).
+  - `square/`: Wrappers for Square API interaction.
+  - `catalog-provider/`: Source of truth for menu items.
+- `controllers/`: REST endpoints.
+  - `order/`: Endpoints for manipulating orders (`POST /api/v1/order`).
+- `models/`: Mongoose Schemas & DTOs.
+  - `orders/`: `WOrderInstance` schema.
+- `auth/`: JWT strategies and Guards.
+
+### Key Design Patterns
+
+#### 1. The Locking Mechanism
+
+**File:** `src/decorators/lock-order.decorator.ts`, `src/interceptors/order-lock.interceptor.ts`
+**Concept:** To prevent race conditions (e.g., two POS tablets modifying the same order), checking out or modifying an order requires a **Lock**.
+
+- **Usage:** Controllers use `@LockOrder()` which triggers the `OrderLockInterceptor`.
+- **Flow:** Request -> Interceptor acquires DB lock on OrderID -> Controller Action -> Response -> Lock released.
+- **Gotcha:** If you write a new mutation endpoint for an Order, you **MUST** use this mechanism.
+
+#### 2. Scope-Based Authorization
+
+**File:** `src/auth/decorators/scopes.decorator.ts`
+**Concept:** Endpoints are protected by OAuth scopes via `@Scopes('scope:name')`.
+
+- **Common Scopes:** `read:order`, `write:order`, `cancel:order`.
+
+#### 3. Square Service Wrapper
+
+**File:** `src/config/square/square.service.ts`
+**Concept:** A robust wrapper around the official Square SDK.
+
+- **Features:**
+  - **Exponential Backoff:** Built-in retry logic for 429/500 errors (`SquareCallFxnWrapper`).
+  - **BigInt Mapping:** Converts Wario's `number`-based money to Square's `BigInt` money.
+- **Rule:** **Always** use this service for Square calls; never instantiate the Square Client directly.
+
+## 3. Critical Workflows
+
+### Order Lifecycle
+
+1.  **Creation**: `POST /api/v1/order`. Validates payload against `CreateOrderRequestV2Dto`.
+2.  **Modifications**: Can only happen if Order is open.
+3.  **Payment**: Handled via `PayOrder` in `SquareService`. Linking a Square Payment ID to the Wario Order.
+4.  **Completion**: Moving an order to 'COMPLETED' triggers receipt generation and potentially loyalty points (if implemented).
+
+### Catalog Sync
+
+The `CatalogProvider` service acts as the cache/proxy for Square's Catalog. Wario does _not_ own the master catalog; Square does. We sync down from it.
+
+## 4. Developer Guide
+
+### Running Locally
+
+```bash
+# Start in dev mode with watch
+pnpm output backend:start:dev
+```
+
+### Testing
+
+- **Unit Tests:** `*.spec.ts` files next to the source.
+- **E2E Tests:** Located in `test/`. Run via `pnpm output backend:test:e2e`.
+
+### Common Tasks
+
+- **Adding a new API Endpoint**:
+  1.  Create controller method in `src/controllers/foo/foo.controller.ts`.
+  2.  Add DTO in `src/dtos/`.
+  3.  Implement logic in `src/config/foo/foo.service.ts`.
+  4.  Add `@Scopes()` and `@UseGuards(JwtAuthGuard)`.
+
+- **Modifying Order Schema**:
+  1.  Edit `src/models/orders/WOrderInstance.ts`.
+  2.  **CRITICAL**: Update the shared DTO in `packages/wario-shared` first to keep frontend in sync.
+
+## 5. Gotchas & Warnings
+
+- > [!WARNING]
+  > **Do not bypass `OrderManager`**. Directly modifying the `OrderModel` (Mongoose model) in a controller skips validation and locking. Always loop through `OrderManagerService`.
+
+- > [!CAUTION]
+  > **Square Rate Limits**. The `SquareService` handles retries, but be mindful of batch sizes when syncing catalog items.
