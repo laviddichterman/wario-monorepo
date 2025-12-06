@@ -1,55 +1,58 @@
-import { type Dispatch, type SetStateAction } from "react";
+import { Grid, TextField } from '@mui/material';
 
-import { Grid, TextField } from "@mui/material";
+import { useProductInstanceFunctionForm } from '@/atoms/forms/productInstanceFunctionFormAtoms';
 
-import { type IAbstractExpression } from "@wcp/wario-shared";
-
-import { ElementActionComponent, type ElementActionComponentProps } from "../element.action.component";
+import { ElementActionComponent, type ElementActionComponentProps } from '../element.action.component';
 
 import AbstractExpressionFunctionalContainer from './abstract_expression_functional.container';
 
-export interface ProductInstanceFunctionComponentProps {
-  isProcessing: boolean;
-  functionName: string;
-  setFunctionName: Dispatch<SetStateAction<string>>;
-  expression: IAbstractExpression | null;
-  setExpression: Dispatch<SetStateAction<IAbstractExpression | null>>;
-}
+// =============================================================================
+// FORM COMPONENT
+// =============================================================================
 
-const ProductInstanceFunctionComponent = ({
+type ProductInstanceFunctionFormComponentProps = Omit<ElementActionComponentProps, 'disableConfirmOn' | 'body'>;
+
+const ProductInstanceFunctionFormComponent = ({
   isProcessing,
-  functionName,
-  setFunctionName,
-  expression,
-  setExpression,
   ...forwardRefs
-}: ProductInstanceFunctionComponentProps & Omit<ElementActionComponentProps, 'disableConfirmOn' | 'body'>) => (
-  <ElementActionComponent
-    {...forwardRefs}
-    isProcessing={isProcessing}
-    disableConfirmOn={functionName.length === 0 || expression === null || isProcessing}
-    body={
-      <>
-        <Grid size={12}>
-          <TextField
-            label="Function Name"
-            type="text"
-            slotProps={{
-              htmlInput: { size: 40 }
-            }}
-            value={functionName}
-            size="small"
-            onChange={(e) => { setFunctionName(e.target.value); }}
-          />
-        </Grid>
-        <Grid size={12}>
-          <AbstractExpressionFunctionalContainer
-            value={expression}
-            setValue={setExpression}
-          />
-        </Grid>
-      </>}
-  />
-);
+}: ProductInstanceFunctionFormComponentProps) => {
+  const { form, updateField, isValid } = useProductInstanceFunctionForm();
 
-export default ProductInstanceFunctionComponent;
+  if (!form) return null;
+
+  return (
+    <ElementActionComponent
+      {...forwardRefs}
+      isProcessing={isProcessing}
+      disableConfirmOn={!isValid || isProcessing}
+      body={
+        <>
+          <Grid size={12}>
+            <TextField
+              label="Function Name"
+              type="text"
+              slotProps={{
+                htmlInput: { size: 40 },
+              }}
+              value={form.functionName}
+              size="small"
+              onChange={(e) => {
+                updateField('functionName', e.target.value);
+              }}
+            />
+          </Grid>
+          <Grid size={12}>
+            <AbstractExpressionFunctionalContainer
+              value={form.expression}
+              setValue={(val) => {
+                updateField('expression', val);
+              }}
+            />
+          </Grid>
+        </>
+      }
+    />
+  );
+};
+
+export default ProductInstanceFunctionFormComponent;

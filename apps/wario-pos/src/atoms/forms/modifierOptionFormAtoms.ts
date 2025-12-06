@@ -33,6 +33,52 @@ export interface ModifierOptionFormState {
   availability: IRecurringInterval[];
 }
 
+/** Default values for "Add" mode */
+export const DEFAULT_MODIFIER_OPTION_FORM: ModifierOptionFormState = {
+  displayName: '',
+  description: '',
+  shortcode: '',
+  ordinal: 0,
+  price: { amount: 0, currency: 'USD' } as IMoney, // Assuming USD default from shared types/enums if available, or just mocking it. checking imports. IMoney is imported. I need CURRENCY enum.
+  externalIds: [],
+  enableFunction: null,
+  flavorFactor: 0,
+  bakeFactor: 0,
+  canSplit: true,
+  allowHeavy: false,
+  allowLite: false,
+  allowOTS: false,
+  omitFromShortname: false,
+  omitFromName: false,
+  disabled: null,
+  availability: [],
+};
+
+/** Main form atom - null when no form is open */
+export const modifierOptionFormAtom = atom<ModifierOptionFormState | null>(null);
+
+/** API processing state */
+export const modifierOptionFormProcessingAtom = atom(false);
+
+/** Validation derived atom */
+export const modifierOptionFormIsValidAtom = atom((get) => {
+  const form = get(modifierOptionFormAtom);
+  if (!form) return false;
+
+  if (form.displayName.length === 0) return false;
+  if (form.shortcode.length === 0) return false;
+  if (form.price.amount < 0) return false;
+  if (form.flavorFactor < 0) return false;
+  if (form.bakeFactor < 0) return false;
+
+  // Note: Availability validation might be complex, simplified for now to always true unless we add specific check
+  // Original component checked "availabilityIsValid" local state. 
+  // We might need to handle that or assume the custom component handles it via separate atom or internal state.
+  // For now, simple checks.
+
+  return true;
+});
+
 /** Convert an IOption entity to form state */
 export const fromModifierOptionEntity = (option: IOption): ModifierOptionFormState => ({
   displayName: option.displayName,

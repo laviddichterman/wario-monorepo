@@ -1,11 +1,17 @@
-import { useSnackbar } from "notistack";
-import { useState } from "react";
-
-import type { KeyValue } from "@wcp/wario-shared";
+import { useAtom, useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
 import { useAddPrinterGroupMutation } from '@/hooks/usePrinterGroupsQuery';
 
-import PrinterGroupComponent from "./PrinterGroupComponent";
+import {
+  DEFAULT_PRINTER_GROUP_FORM,
+  printerGroupFormAtom,
+  printerGroupFormProcessingAtom,
+  toPrinterGroupApiBody,
+} from '@/atoms/forms/printerGroupFormAtoms';
+
+import { PrinterGroupComponent } from './PrinterGroupComponent';
 
 export interface PrinterGroupAddContainerProps {
   onCloseCallback: VoidFunction;
@@ -15,51 +21,43 @@ const PrinterGroupAddContainer = ({ onCloseCallback }: PrinterGroupAddContainerP
   const { enqueueSnackbar } = useSnackbar();
   const addMutation = useAddPrinterGroupMutation();
 
-  const [name, setName] = useState("");
-  const [singleItemPerTicket, setSingleItemPerTicket] = useState(false);
-  const [isExpo, setIsExpo] = useState(false);
-  const [externalIds, setExternalIds] = useState<KeyValue[]>([]);
+  const setFormState = useSetAtom(printerGroupFormAtom);
+  const [isProcessing, setIsProcessing] = useAtom(printerGroupFormProcessingAtom);
+
+  useEffect(() => {
+    setFormState(DEFAULT_PRINTER_GROUP_FORM);
+    return () => {
+      setFormState(null);
+    };
+  }, [setFormState]);
 
   const addPrinterGroup = () => {
-    addMutation.mutate(
-      {
-        name,
-        isExpo,
-        singleItemPerTicket
-      },
-      {
+    setFormState((current) => {
+      if (!current || isProcessing) return current;
+
+      setIsProcessing(true);
+      const body = toPrinterGroupApiBody(current);
+
+      addMutation.mutate(body, {
         onSuccess: () => {
-          enqueueSnackbar(`Added new printer group: ${name}.`);
-          onCloseCallback();
+          enqueueSnackbar(`Added new printer group: ${current.name}.`);
         },
         onError: (error) => {
           enqueueSnackbar(
-            `Unable to add printer group: ${name}. Got error: ${JSON.stringify(error, null, 2)}.`,
-            { variant: "error" }
+            `Unable to add printer group: ${current.name}. Got error: ${JSON.stringify(error, null, 2)}.`,
+            { variant: 'error' },
           );
           console.error(error);
         },
-      }
-    );
+        onSettled: () => {
+          setIsProcessing(false);
+          onCloseCallback();
+        },
+      });
+    });
   };
 
-  return (
-    <PrinterGroupComponent
-      confirmText="Add"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={addPrinterGroup}
-      isProcessing={addMutation.isPending}
-      name={name}
-      setName={setName}
-      isExpo={isExpo}
-      setIsExpo={setIsExpo}
-      singleItemPerTicket={singleItemPerTicket}
-      setSingleItemPerTicket={setSingleItemPerTicket}
-      externalIds={externalIds}
-      setExternalIds={setExternalIds}
-    />
-  );
+  return <PrinterGroupComponent confirmText="Add" onCloseCallback={onCloseCallback} onConfirmClick={addPrinterGroup} />;
 };
 
 export default PrinterGroupAddContainer;
-

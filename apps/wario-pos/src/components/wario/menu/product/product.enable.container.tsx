@@ -1,21 +1,19 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
 
-import { Grid } from "@mui/material";
+import { Grid } from '@mui/material';
 
-import type { IProduct } from "@wcp/wario-shared";
+import type { IProduct } from '@wcp/wario-shared';
 import { useBaseProductNameByProductId, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from "@/config";
+import { useSetProductDisabledMutation } from '@/hooks/useProductMutations';
 
-import { ElementActionComponent } from "../element.action.component";
+import { ElementActionComponent } from '../element.action.component';
 
 import type { ProductQuickActionProps } from './product.delete.container';
 
 const ProductEnableContainer = ({ product_id, onCloseCallback }: ProductQuickActionProps) => {
   const productName = useBaseProductNameByProductId(product_id);
-  const product = useValueFromProductEntryById(product_id, "product");
+  const product = useValueFromProductEntryById(product_id, 'product');
 
   if (!product || !productName) {
     return null;
@@ -33,48 +31,38 @@ interface InnerProps {
 const ProductEnableContainerInner = ({ product, productName, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
-  const editProduct = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: IProduct = Object.assign({}, product, {
-          disabled: null
-        });
-        const response = await fetch(`${HOST_API}/api/v1/menu/product/${product.id}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Enabled ${productName}.`)
+  const setDisabledMutation = useSetProductDisabledMutation();
+
+  const enableProduct = () => {
+    if (setDisabledMutation.isPending) return;
+
+    setDisabledMutation.mutate(
+      { product, disabled: null },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Enabled ${productName}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`, {
+            variant: 'error',
+          });
+          console.error(error);
+        },
+        onSettled: () => {
           onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: "error" });
-        setIsProcessing(false);
-      }
-    }
+        },
+      },
+    );
   };
 
   return (
     <ElementActionComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void editProduct()}
-      isProcessing={isProcessing}
-      disableConfirmOn={isProcessing}
+      onConfirmClick={enableProduct}
+      isProcessing={setDisabledMutation.isPending}
+      disableConfirmOn={setDisabledMutation.isPending}
       confirmText="Confirm"
-      body={
-        <Grid size={12}>
-          Are you sure you'd like to enable {productName}?
-        </Grid>
-      }
+      body={<Grid size={12}>Are you sure you'd like to enable {productName}?</Grid>}
     />
   );
 };

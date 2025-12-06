@@ -1,99 +1,89 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useAtomValue, useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import { type ICategory } from "@wcp/wario-shared";
-import { useCategoryIds, useValueFromCategoryEntryById } from '@wcp/wario-ux-shared/query';
+import type { ICategory } from '@wcp/wario-shared';
+import { useValueFromCategoryEntryById } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from "@/config";
+import { useEditCategoryMutation } from '@/hooks/useCategoryMutations';
 
-import CategoryComponent, { type CategoryEditProps } from "./category.component";
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
+
+import { categoryFormAtom, categoryFormProcessingAtom, fromCategoryEntity } from '@/atoms/forms/categoryFormAtoms';
+
+import { CategoryComponent } from './category.component';
+
+const useCategoryById = (id: string | null) => useValueFromCategoryEntryById(id ?? '', 'category') ?? null;
+
+const CategoryNullGuard = createNullGuard(useCategoryById);
+export interface CategoryEditProps {
+  categoryId: string | null;
+  onCloseCallback: VoidFunction;
+}
 
 const CategoryEditContainer = ({ categoryId, onCloseCallback }: CategoryEditProps) => {
+  return (
+    <CategoryNullGuard
+      id={categoryId}
+      child={(category: ICategory) => (
+        <CategoryEditContainerInner category={category} onCloseCallback={onCloseCallback} />
+      )}
+    />
+  );
+};
+
+interface InnerProps {
+  category: ICategory;
+  onCloseCallback: VoidFunction;
+}
+
+const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
 
-  const categoryIds = useCategoryIds();
-  const category = useValueFromCategoryEntryById(categoryId, 'category') as ICategory;
-  const [description, setDescription] = useState(category.description);
-  const [name, setName] = useState(category.name);
-  const [subheading, setSubheading] = useState(category.subheading);
-  const [footnotes, setFootnotes] = useState(category.footnotes);
-  const [ordinal, setOrdinal] = useState(category.ordinal || 0);
-  const [parent, setParent] = useState(category.parent_id ?? null);
-  const [callLineName, setCallLineName] = useState(category.display_flags.call_line_name);
-  const [callLineDisplay, setCallLineDisplay] = useState(category.display_flags.call_line_display);
-  const [nestedDisplay, setNestedDisplay] = useState(category.display_flags.nesting);
-  const [serviceDisable, setServiceDisable] = useState(category.serviceDisable);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const setFormState = useSetAtom(categoryFormAtom);
+  const setIsProcessing = useSetAtom(categoryFormProcessingAtom);
+  const formState = useAtomValue(categoryFormAtom);
 
-  const editCategory = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<ICategory, "id"> = {
-          description,
-          subheading,
-          footnotes,
-          name,
-          ordinal,
-          serviceDisable,
-          parent_id: parent,
-          display_flags: {
-            call_line_name: callLineName,
-            call_line_display: callLineDisplay,
-            nesting: nestedDisplay
-          }
-        };
-        const response = await fetch(`${HOST_API}/api/v1/menu/category/${category.id}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Updated category: ${name}.`);
+  const editMutation = useEditCategoryMutation();
+
+  // Initialize form from existing entity
+  useEffect(() => {
+    setFormState(fromCategoryEntity(category));
+    return () => {
+      setFormState(null);
+    };
+  }, [category, setFormState]);
+
+  const editCategory = () => {
+    if (!formState || editMutation.isPending) return;
+
+    setIsProcessing(true);
+    editMutation.mutate(
+      { id: category.id, form: formState },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Updated category: ${formState.name}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(`Unable to update category: ${formState.name}. Got error ${JSON.stringify(error, null, 2)}`, {
+            variant: 'error',
+          });
+          console.error(error);
+        },
+        onSettled: () => {
+          setIsProcessing(false);
           onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to update category: ${name}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
+        },
+      },
+    );
   };
 
   return (
     <CategoryComponent
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void editCategory()}
-      isProcessing={isProcessing}
-      categoryIds={categoryIds.filter(c => c !== category.id)}
-      description={description}
-      setDescription={setDescription}
-      name={name}
-      setName={setName}
-      ordinal={ordinal}
-      setOrdinal={setOrdinal}
-      parent={parent}
-      setParent={setParent}
-      subheading={subheading}
-      setSubheading={setSubheading}
-      footnotes={footnotes}
-      setFootnotes={setFootnotes}
-      callLineName={callLineName}
-      setCallLineName={setCallLineName}
-      callLineDisplay={callLineDisplay}
-      setCallLineDisplay={setCallLineDisplay}
-      nestedDisplay={nestedDisplay}
-      setNestedDisplay={setNestedDisplay}
-      serviceDisable={serviceDisable}
-      setServiceDisable={setServiceDisable}
+      onConfirmClick={editCategory}
+      excludeCategoryId={category.id}
     />
   );
 };

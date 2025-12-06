@@ -1,72 +1,55 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
-import type { IOption } from '@wcp/wario-shared';
+import { useAddModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
-import {
-  DEFAULT_MODIFIER_TYPE_FORM,
-  modifierTypeFormAtom,
-  toModifierTypeApiBody,
-} from '@/atoms/forms/modifierTypeFormAtoms';
-import { HOST_API } from '@/config';
+import { DEFAULT_MODIFIER_TYPE_FORM, modifierTypeFormAtom } from '@/atoms/forms/modifierTypeFormAtoms';
 
 import { ModifierTypeFormComponent, type ModifierTypeUiProps, useModifierTypeForm } from './modifier_type.component';
 
 const ModifierTypeAddContainer = ({ onCloseCallback }: ModifierTypeUiProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
 
   const setFormState = useSetAtom(modifierTypeFormAtom);
-  const { form, isProcessing, setIsProcessing } = useModifierTypeForm();
+  const { form, setIsProcessing } = useModifierTypeForm();
+
+  const addMutation = useAddModifierTypeMutation();
 
   // Initialize form with defaults on mount
   useEffect(() => {
     setFormState(DEFAULT_MODIFIER_TYPE_FORM);
-    return () => { setFormState(null); };
+    return () => {
+      setFormState(null);
+    };
   }, [setFormState]);
 
-  const addModifierType = async () => {
-    if (!form || isProcessing) return;
+  const addModifierType = () => {
+    if (!form || addMutation.isPending) return;
 
     setIsProcessing(true);
-    try {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body: ReturnType<typeof toModifierTypeApiBody> & { options: Omit<IOption, 'modifierTypeId' | 'id'>[] } = {
-        ...toModifierTypeApiBody(form),
-        options: [],
-      };
-
-      const response = await fetch(`${HOST_API}/api/v1/menu/option/`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+    addMutation.mutate(
+      { form, options: [] },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Added new modifier type: ${form.name}.`);
         },
-        body: JSON.stringify(body),
-      });
-
-      if (response.status === 201) {
-        enqueueSnackbar(`Added new modifier type: ${form.name}.`);
-        onCloseCallback();
-      }
-    } catch (error) {
-      enqueueSnackbar(`Unable to add modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`, {
-        variant: 'error',
-      });
-      console.error(error);
-    } finally {
-      setIsProcessing(false);
-    }
+        onError: (error) => {
+          enqueueSnackbar(`Unable to add modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`, {
+            variant: 'error',
+          });
+          console.error(error);
+        },
+        onSettled: () => {
+          setIsProcessing(false);
+          onCloseCallback();
+        },
+      },
+    );
   };
 
   return (
-    <ModifierTypeFormComponent
-      confirmText="Add"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void addModifierType()}
-    />
+    <ModifierTypeFormComponent confirmText="Add" onCloseCallback={onCloseCallback} onConfirmClick={addModifierType} />
   );
 };
 

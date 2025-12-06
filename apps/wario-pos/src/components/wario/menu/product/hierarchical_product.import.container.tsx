@@ -1,4 +1,3 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from 'notistack';
 import type { ParseResult } from 'papaparse';
 import { unparse } from 'papaparse';
@@ -8,8 +7,6 @@ import { useState } from 'react';
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
 import type {
-  IProduct,
-  IProductInstance,
   IProductModifier,
   KeyValue,
   UncommittedIProduct,
@@ -23,8 +20,7 @@ import type { ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query';
 
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
-
-import { HOST_API } from '@/config';
+import { type BatchUpsertProductResponse, useBatchUpsertProductMutation } from '@/hooks/useProductMutations';
 
 import GenericCsvImportComponent from '../../generic_csv_import.component';
 import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
@@ -66,7 +62,7 @@ type HierarchicalProductImportComponentProps = {
 const HierarchicalProductImportComponent = (props: HierarchicalProductImportComponentProps) => {
   const catalogSelectors = useCatalogSelectors();
   const categories = useCategoryIds();
-  const { data: printerGroups } = usePrinterGroupsMap();
+  const printerGroups = usePrinterGroupsMap();
   return (
     <ElementActionComponent
       {...props}
@@ -536,11 +532,6 @@ function GenerateProducts(
   return ProcessCat(catalog);
 }
 
-type BatchUpsertProductResponse = {
-  product: IProduct;
-  instances: IProductInstance[];
-}[];
-
 const ResponseBodyToCSVProducts = (responseBody: BatchUpsertProductResponse): CSVProduct[] =>
   responseBody.flatMap((r) =>
     r.instances.map((i) => ({
@@ -589,50 +580,42 @@ const HierarchicalProductImportContainer = ({ onCloseCallback }: { onCloseCallba
   const [modifiers, setModifiers] = useState<IProductModifier[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [data, setData] = useState<CSVProduct[]>([]);
-  const { getAccessTokenSilently } = useAuth0();
+  const batchUpsertProductMutation = useBatchUpsertProductMutation();
 
-  const addProducts = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      // step 1: structure the data
-      const catalog = data.reduce<HierarchicalProductStructure>(
-        (acc: HierarchicalProductStructure, curr: CSVProduct) => GenerateHierarchicalProductStructure(acc, curr, 0),
-        { category: '', products: [], subcategories: {} },
-      );
-      const products = GenerateProducts(catalog, modifiers, parentCategories, printerGroup);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+  const addProducts = () => {
+    if (batchUpsertProductMutation.isPending || isProcessing) return;
+    setIsProcessing(true);
+    // step 1: structure the data
+    const catalog = data.reduce<HierarchicalProductStructure>(
+      (acc: HierarchicalProductStructure, curr: CSVProduct) => GenerateHierarchicalProductStructure(acc, curr, 0),
+      { category: '', products: [], subcategories: {} },
+    );
+    const products = GenerateProducts(catalog, modifiers, parentCategories, printerGroup);
 
-        const response = await fetch(`${HOST_API}/api/v1/menu/productbatch/`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(products),
-        });
-        if (response.status === 201) {
-          enqueueSnackbar(`Imported ${products.length.toString()} products.`);
-          if (downloadCSV) {
-            // read response body as BatchUpsertProductResponse
-            const responseBody = (await response.json()) as BatchUpsertProductResponse;
-            DownloadCSV(responseBody, 'import_results');
-          }
+    batchUpsertProductMutation.mutate(products, {
+      onSuccess: (response) => {
+        enqueueSnackbar(`Imported ${products.length.toString()} products.`);
+        if (downloadCSV) {
+          // read response body as BatchUpsertProductResponse
+          DownloadCSV(response, 'import_results');
         }
-      } catch (error) {
-        enqueueSnackbar(`Unable to import. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: 'error' });
+      },
+      onError: (error) => {
+        enqueueSnackbar(`Unable to import batch. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: 'error' });
         console.error(error);
-      }
-    }
-    setIsProcessing(false);
-    onCloseCallback();
+      },
+      onSettled: () => {
+        setIsProcessing(false);
+        onCloseCallback();
+      },
+    });
   };
 
   return (
     <HierarchicalProductImportComponent
       confirmText="Import"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void addProducts()}
+      onConfirmClick={addProducts}
       isProcessing={isProcessing}
       disableConfirmOn={isProcessing || data.length === 0 || (createCategories && parentCategories.length > 1)}
       createCategories={createCategories}

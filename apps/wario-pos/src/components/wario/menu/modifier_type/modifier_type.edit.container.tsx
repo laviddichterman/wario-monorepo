@@ -1,4 +1,3 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
@@ -6,12 +5,11 @@ import { useEffect } from 'react';
 import type { IOptionType } from '@wcp/wario-shared';
 import { useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
 
-import {
-  fromModifierTypeEntity,
-  modifierTypeFormAtom,
-  toModifierTypeApiBody,
-} from '@/atoms/forms/modifierTypeFormAtoms';
-import { HOST_API } from '@/config';
+import { useEditModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
+
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
+
+import { fromModifierTypeEntity, modifierTypeFormAtom } from '@/atoms/forms/modifierTypeFormAtoms';
 
 import {
   ModifierTypeFormComponent,
@@ -19,12 +17,22 @@ import {
   useModifierTypeForm,
 } from './modifier_type.component';
 
+const useModifierTypeById = (id: string | null) => {
+  return useValueFromModifierEntryById(id ?? '', 'modifierType');
+};
+
+// Create null guard at module level to follow Rules of Hooks
+const ModifierTypeNullGuard = createNullGuard(useModifierTypeById);
+
 const ModifierTypeEditContainer = ({ modifier_type_id, onCloseCallback }: ModifierTypeModifyUiProps) => {
-  const modifier_type = useValueFromModifierEntryById(modifier_type_id, 'modifierType');
-  if (!modifier_type) {
-    return null;
-  }
-  return <ModifierTypeEditContainerInner onCloseCallback={onCloseCallback} modifier_type={modifier_type} />;
+  return (
+    <ModifierTypeNullGuard
+      id={modifier_type_id}
+      child={(modifier_type) => (
+        <ModifierTypeEditContainerInner onCloseCallback={onCloseCallback} modifier_type={modifier_type} />
+      )}
+    />
+  );
 };
 
 interface InnerProps {
@@ -34,54 +42,46 @@ interface InnerProps {
 
 const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
 
   const setFormState = useSetAtom(modifierTypeFormAtom);
-  const { form, isProcessing, setIsProcessing } = useModifierTypeForm();
+  const { form, setIsProcessing } = useModifierTypeForm();
+
+  const editMutation = useEditModifierTypeMutation();
 
   // Initialize form from existing entity
   useEffect(() => {
     setFormState(fromModifierTypeEntity(modifier_type));
-    return () => { setFormState(null); };
+    return () => {
+      setFormState(null);
+    };
   }, [modifier_type, setFormState]);
 
-  const editModifierType = async () => {
-    if (!form || isProcessing) return;
+  const editModifierType = () => {
+    if (!form || editMutation.isPending) return;
 
     setIsProcessing(true);
-    try {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body = toModifierTypeApiBody(form);
-
-      const response = await fetch(`${HOST_API}/api/v1/menu/option/${modifier_type.id}`, {
-        method: 'PATCH',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+    editMutation.mutate(
+      { id: modifier_type.id, form },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Updated modifier type: ${form.name}.`);
         },
-        body: JSON.stringify(body),
-      });
-
-      if (response.status === 200) {
-        enqueueSnackbar(`Updated modifier type: ${form.name}.`);
-        onCloseCallback();
-      }
-    } catch (error) {
-      enqueueSnackbar(`Unable to edit modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`, {
-        variant: 'error',
-      });
-      console.error(error);
-    } finally {
-      setIsProcessing(false);
-    }
+        onError: (error) => {
+          enqueueSnackbar(`Unable to edit modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`, {
+            variant: 'error',
+          });
+          console.error(error);
+        },
+        onSettled: () => {
+          setIsProcessing(false);
+          onCloseCallback();
+        },
+      },
+    );
   };
 
   return (
-    <ModifierTypeFormComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void editModifierType()}
-    />
+    <ModifierTypeFormComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={editModifierType} />
   );
 };
 

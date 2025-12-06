@@ -1,5 +1,6 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import type { PrinterGroup } from '@wcp/wario-shared';
 
@@ -43,21 +44,26 @@ export function usePrinterGroupsQuery() {
 }
 
 /**
+ * Hook to get a specific printer group by ID
+ */
+export function usePrinterGroupById(id: string | null) {
+  const { data } = usePrinterGroupsQuery();
+  return id ? data?.find((pg) => pg.id === id) ?? null : null;
+}
+
+/**
  * Hook that returns printer groups as a Record keyed by ID
  * Convenient for lookups
  */
 export function usePrinterGroupsMap() {
   const query = usePrinterGroupsQuery();
 
-  const printerGroupsMap = query.data?.reduce((acc, pg) => {
+  const printerGroupsMap = useMemo(() => query.data?.reduce((acc, pg) => {
     acc[pg.id] = pg;
     return acc;
-  }, {} as Record<string, PrinterGroup>);
+  }, {} as Record<string, PrinterGroup>) ?? {}, [query.data]);
 
-  return {
-    ...query,
-    data: printerGroupsMap ?? {},
-  };
+  return printerGroupsMap;
 }
 
 // ============================================================================

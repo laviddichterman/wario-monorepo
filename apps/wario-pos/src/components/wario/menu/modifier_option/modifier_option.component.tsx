@@ -1,24 +1,37 @@
-import { useState } from "react";
+import { useAtom, useAtomValue } from 'jotai';
+import { useState } from 'react';
 
-import { Autocomplete, Grid, TextField } from "@mui/material";
+import { Autocomplete, Grid, TextField } from '@mui/material';
 
-import { type IMoney, type IOptionType, type IRecurringInterval, type IWInterval, type KeyValue } from "@wcp/wario-shared";
-import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
-import { useCatalogSelectors, useProductInstanceFunctionIds } from "@wcp/wario-ux-shared/query";
+import {
+  type IMoney,
+  type IOptionType,
+  type IRecurringInterval,
+  type IWInterval,
+  type KeyValue,
+} from '@wcp/wario-shared';
+import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
+import { useCatalogSelectors, useProductInstanceFunctionIds } from '@wcp/wario-ux-shared/query';
 
-import AvailabilityListBuilderComponent from "@/components/wario/AvailabilityListBuilderComponent";
-import DatetimeBasedDisableComponent, { IsDisableValueValid } from "@/components/wario/datetime_based_disable.component";
-import { ExternalIdsExpansionPanelComponent } from "@/components/wario/ExternalIdsExpansionPanelComponent";
-import { FloatNumericPropertyComponent } from "@/components/wario/property-components/FloatNumericPropertyComponent";
-import { IMoneyPropertyComponent } from "@/components/wario/property-components/IMoneyPropertyComponent";
-import { IntNumericPropertyComponent } from "@/components/wario/property-components/IntNumericPropertyComponent";
-import { StringPropertyComponent } from "@/components/wario/property-components/StringPropertyComponent";
-import { ToggleBooleanPropertyComponent } from "@/components/wario/property-components/ToggleBooleanPropertyComponent";
+import AvailabilityListBuilderComponent from '@/components/wario/AvailabilityListBuilderComponent';
+import DatetimeBasedDisableComponent from '@/components/wario/datetime_based_disable.component';
+import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
+import { FloatNumericPropertyComponent } from '@/components/wario/property-components/FloatNumericPropertyComponent';
+import { IMoneyPropertyComponent } from '@/components/wario/property-components/IMoneyPropertyComponent';
+import { IntNumericPropertyComponent } from '@/components/wario/property-components/IntNumericPropertyComponent';
+import { StringPropertyComponent } from '@/components/wario/property-components/StringPropertyComponent';
+import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
-import { ElementActionComponent } from "../element.action.component";
+import {
+  modifierOptionFormAtom,
+  modifierOptionFormIsValidAtom,
+  modifierOptionFormProcessingAtom,
+  type ModifierOptionFormState,
+} from '@/atoms/forms/modifierOptionFormAtoms';
 
-type ModifierOptionContainerProps =
-  ValSetValNamed<string, 'displayName'> &
+import { ElementActionComponent } from '../element.action.component';
+
+export type ModifierOptionContainerProps = ValSetValNamed<string, 'displayName'> &
   ValSetValNamed<string, 'description'> &
   ValSetValNamed<string, 'shortcode'> &
   ValSetValNamed<number, 'ordinal'> &
@@ -34,39 +47,34 @@ type ModifierOptionContainerProps =
   ValSetValNamed<boolean, 'omitFromShortname'> &
   ValSetValNamed<boolean, 'omitFromName'> &
   ValSetValNamed<IRecurringInterval[], 'availability'> &
-  ValSetValNamed<IWInterval | null, 'disabled'> &
-  {
+  ValSetValNamed<IWInterval | null, 'disabled'> & {
     modifierType: Omit<IOptionType, 'id'>;
     isProcessing: boolean;
-  }
+  };
 
-type ModifierOptionComponentProps = ModifierOptionContainerProps &
-{
-  confirmText: string
-  onCloseCallback: VoidFunction;
-  onConfirmClick: VoidFunction;
-}
-
-export const ModifierOptionContainer = (props: ModifierOptionContainerProps & ValSetValNamed<boolean, 'availabilityIsValid'>) => {
+export const ModifierOptionContainer = (
+  props: ModifierOptionContainerProps & ValSetValNamed<boolean, 'availabilityIsValid'>,
+) => {
   const catalogSelectors = useCatalogSelectors();
   const productInstanceFunctions = useProductInstanceFunctionIds();
   const handleSetAllowOTS = (value: boolean) => {
     if (props.modifierType.max_selected !== 1) {
       props.setAllowOTS(value);
     }
-  }
+  };
   const handleSetCanSplit = (value: boolean) => {
     if (props.modifierType.max_selected !== 1) {
       props.setCanSplit(value);
     }
-  }
+  };
   return (
     <>
       <Grid
         size={{
           xs: 12,
-          md: 6
-        }}>
+          md: 6,
+        }}
+      >
         <StringPropertyComponent
           disabled={props.isProcessing}
           label="Display Name"
@@ -77,8 +85,9 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
       <Grid
         size={{
           xs: 12,
-          md: 6
-        }}>
+          md: 6,
+        }}
+      >
         <StringPropertyComponent
           disabled={props.isProcessing}
           label="Description"
@@ -89,8 +98,9 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
       <Grid
         size={{
           xs: 12,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <StringPropertyComponent
           disabled={props.isProcessing}
           label="Short Code"
@@ -101,8 +111,9 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
       <Grid
         size={{
           xs: 6,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <IMoneyPropertyComponent
           disabled={props.isProcessing}
           label="Price"
@@ -113,8 +124,9 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
       <Grid
         size={{
           xs: 6,
-          sm: 4
-        }}>
+          sm: 4,
+        }}
+      >
         <IntNumericPropertyComponent
           disabled={props.isProcessing}
           label="Ordinal"
@@ -144,7 +156,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           label="Can Split"
           value={props.modifierType.max_selected !== 1 && props.canSplit}
           setValue={handleSetCanSplit}
-          labelPlacement='end'
+          labelPlacement="end"
         />
       </Grid>
       <Grid size={4}>
@@ -153,7 +165,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           label="Allow Heavy"
           value={props.allowHeavy}
           setValue={props.setAllowHeavy}
-          labelPlacement='end'
+          labelPlacement="end"
         />
       </Grid>
       <Grid size={4}>
@@ -162,7 +174,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           label="Allow Lite"
           value={props.allowLite}
           setValue={props.setAllowLite}
-          labelPlacement='end'
+          labelPlacement="end"
         />
       </Grid>
       <Grid size={4}>
@@ -171,7 +183,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           label="Allow OTS"
           value={props.modifierType.max_selected !== 1 && props.allowOTS}
           setValue={handleSetAllowOTS}
-          labelPlacement='end'
+          labelPlacement="end"
         />
       </Grid>
       <Grid size={12}>
@@ -179,7 +191,9 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           fullWidth
           options={productInstanceFunctions}
           value={props.enableFunction}
-          onChange={(_e, v) => { props.setEnableFunction(v); }}
+          onChange={(_e, v) => {
+            props.setEnableFunction(v);
+          }}
           getOptionLabel={(option) => catalogSelectors?.productInstanceFunction(option).name || option}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Enable Function Name" />}
@@ -191,7 +205,7 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           label="Omit from shortname"
           value={props.omitFromShortname}
           setValue={props.setOmitFromShortname}
-          labelPlacement='end'
+          labelPlacement="end"
         />
       </Grid>
       <Grid size={6}>
@@ -200,12 +214,12 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
           label="Omit from name"
           value={props.omitFromName}
           setValue={props.setOmitFromName}
-          labelPlacement='end'
+          labelPlacement="end"
         />
       </Grid>
       <Grid size={12}>
         <ExternalIdsExpansionPanelComponent
-          title='External IDs'
+          title="External IDs"
           disabled={props.isProcessing}
           value={props.externalIds}
           setValue={props.setExternalIds}
@@ -229,24 +243,142 @@ export const ModifierOptionContainer = (props: ModifierOptionContainerProps & Va
       </Grid>
     </>
   );
+};
+
+// =============================================================================
+// NEW JOTAI-BASED EXPORTS
+// =============================================================================
+
+export const useModifierOptionForm = () => {
+  const form = useAtomValue(modifierOptionFormAtom);
+  const isValid = useAtomValue(modifierOptionFormIsValidAtom);
+  const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
+  return { form, isValid, isProcessing };
+};
+
+export const ModifierOptionFormBody = ({ modifierType }: { modifierType: Omit<IOptionType, 'id'> }) => {
+  const [form, setForm] = useAtom(modifierOptionFormAtom);
+  const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
+  const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
+
+  if (!form) return null;
+
+  const updateField = <K extends keyof ModifierOptionFormState>(field: K, value: ModifierOptionFormState[K]) => {
+    setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  return (
+    <ModifierOptionContainer
+      modifierType={modifierType}
+      isProcessing={isProcessing}
+      displayName={form.displayName}
+      setDisplayName={(v) => {
+        updateField('displayName', v);
+      }}
+      description={form.description}
+      setDescription={(v) => {
+        updateField('description', v);
+      }}
+      shortcode={form.shortcode}
+      setShortcode={(v) => {
+        updateField('shortcode', v);
+      }}
+      ordinal={form.ordinal}
+      setOrdinal={(v) => {
+        updateField('ordinal', v);
+      }}
+      price={form.price}
+      setPrice={(v) => {
+        updateField('price', v);
+      }}
+      externalIds={form.externalIds}
+      setExternalIds={(v) => {
+        updateField('externalIds', v);
+      }}
+      enableFunction={form.enableFunction}
+      setEnableFunction={(v) => {
+        updateField('enableFunction', v);
+      }}
+      flavorFactor={form.flavorFactor}
+      setFlavorFactor={(v) => {
+        updateField('flavorFactor', v);
+      }}
+      bakeFactor={form.bakeFactor}
+      setBakeFactor={(v) => {
+        updateField('bakeFactor', v);
+      }}
+      canSplit={form.canSplit}
+      setCanSplit={(v) => {
+        updateField('canSplit', v);
+      }}
+      allowHeavy={form.allowHeavy}
+      setAllowHeavy={(v) => {
+        updateField('allowHeavy', v);
+      }}
+      allowLite={form.allowLite}
+      setAllowLite={(v) => {
+        updateField('allowLite', v);
+      }}
+      allowOTS={form.allowOTS}
+      setAllowOTS={(v) => {
+        updateField('allowOTS', v);
+      }}
+      omitFromShortname={form.omitFromShortname}
+      setOmitFromShortname={(v) => {
+        updateField('omitFromShortname', v);
+      }}
+      omitFromName={form.omitFromName}
+      setOmitFromName={(v) => {
+        updateField('omitFromName', v);
+      }}
+      availability={form.availability}
+      setAvailability={(v) => {
+        updateField('availability', v);
+      }}
+      disabled={form.disabled}
+      setDisabled={(v) => {
+        updateField('disabled', v);
+      }}
+      availabilityIsValid={availabilityIsValid}
+      setAvailabilityIsValid={setAvailabilityIsValid}
+    />
+  );
+};
+
+export interface ModifierOptionFormProps {
+  confirmText: string;
+  onCloseCallback: VoidFunction;
+  onConfirmClick: VoidFunction;
+  disableConfirm?: boolean;
+  modifierType: Omit<IOptionType, 'id'>;
+  children?: React.ReactNode;
 }
 
-export const ModifierOptionComponent = (props: ModifierOptionComponentProps) => {
-  const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
+export const ModifierOptionComponent = ({
+  confirmText,
+  onCloseCallback,
+  onConfirmClick,
+  disableConfirm = false,
+  children,
+  modifierType,
+}: ModifierOptionFormProps) => {
+  const { isValid, isProcessing } = useModifierOptionForm();
+
   return (
     <ElementActionComponent
-      onCloseCallback={props.onCloseCallback}
-      onConfirmClick={props.onConfirmClick}
-      isProcessing={props.isProcessing}
-      disableConfirmOn={!IsDisableValueValid(props.disabled) || props.displayName.length === 0 || props.shortcode.length === 0 ||
-        props.price.amount < 0 || props.flavorFactor < 0 || props.bakeFactor < 0 || props.isProcessing || !availabilityIsValid}
-      confirmText={props.confirmText}
+      onCloseCallback={onCloseCallback}
+      onConfirmClick={onConfirmClick}
+      isProcessing={isProcessing}
+      disableConfirmOn={disableConfirm || !isValid || isProcessing}
+      confirmText={confirmText}
       body={
-        <ModifierOptionContainer {...props}
-          availabilityIsValid={availabilityIsValid}
-          setAvailabilityIsValid={setAvailabilityIsValid}
-        />
+        <>
+          <ModifierOptionFormBody modifierType={modifierType} />
+          {children}
+        </>
       }
     />
   );
-}
+};
+
+export default ModifierOptionComponent;

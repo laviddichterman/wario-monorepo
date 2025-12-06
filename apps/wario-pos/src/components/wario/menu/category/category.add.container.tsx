@@ -1,14 +1,12 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import type { ICategory } from "@wcp/wario-shared";
-import { CALL_LINE_DISPLAY, CategoryDisplay } from "@wcp/wario-shared";
-import { useCategoryIds } from '@wcp/wario-ux-shared/query';
+import { useAddCategoryMutation } from '@/hooks/useCategoryMutations';
 
-import { HOST_API } from "@/config";
+import { categoryFormAtom, categoryFormProcessingAtom, DEFAULT_CATEGORY_FORM } from '@/atoms/forms/categoryFormAtoms';
 
-import CategoryComponent from "./category.component";
+import { CategoryComponent } from './category.component';
 
 export interface CategoryAddContainerProps {
   onCloseCallback: VoidFunction;
@@ -16,89 +14,41 @@ export interface CategoryAddContainerProps {
 
 const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const categoryIds = useCategoryIds();
-  const [description, setDescription] = useState<string | null>("");
-  const [subheading, setSubheading] = useState<string | null>("");
-  const [footnotes, setFootnotes] = useState<string | null>("");
-  const [name, setName] = useState("");
-  const [ordinal, setOrdinal] = useState(0);
-  const [parent, setParent] = useState<string | null>(null);
-  const [callLineName, setCallLineName] = useState("");
-  const [callLineDisplay, setCallLineDisplay] = useState<CALL_LINE_DISPLAY>(CALL_LINE_DISPLAY.SHORTNAME);
-  const [nestedDisplay, setNestedDisplay] = useState<CategoryDisplay>(CategoryDisplay.TAB);
-  const [serviceDisable, setServiceDisable] = useState<string[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const setFormState = useSetAtom(categoryFormAtom);
+  const [isProcessing, setIsProcessing] = useAtom(categoryFormProcessingAtom);
+  const formState = useAtomValue(categoryFormAtom);
 
-  const addCategory = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<ICategory, "id"> = {
-          description,
-          subheading,
-          footnotes,
-          name,
-          ordinal,
-          serviceDisable,
-          parent_id: parent,
-          display_flags: {
-            call_line_name: callLineName,
-            call_line_display: callLineDisplay,
-            nesting: nestedDisplay
-          }
-        };
-        const response = await fetch(`${HOST_API}/api/v1/menu/category`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
+  const addMutation = useAddCategoryMutation();
+
+  useEffect(() => {
+    setFormState(DEFAULT_CATEGORY_FORM);
+    return () => {
+      setFormState(null);
+    };
+  }, [setFormState]);
+
+  const addCategory = () => {
+    if (!formState || addMutation.isPending || isProcessing) return;
+
+    setIsProcessing(true);
+    addMutation.mutate(formState, {
+      onSuccess: () => {
+        enqueueSnackbar(`Added new category: ${formState.name}.`);
+      },
+      onError: (error) => {
+        enqueueSnackbar(`Unable to add category: ${formState.name}. Got error: ${JSON.stringify(error, null, 2)}.`, {
+          variant: 'error',
         });
-        if (response.status === 201) {
-          enqueueSnackbar(`Added new category: ${name}.`);
-          onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to add category: ${name}. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: "error" });
         console.error(error);
+      },
+      onSettled: () => {
         setIsProcessing(false);
-      }
-    }
+        onCloseCallback();
+      },
+    });
   };
 
-  return (
-    <CategoryComponent
-      categoryIds={categoryIds}
-      confirmText="Add"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void addCategory()}
-      isProcessing={isProcessing}
-      description={description}
-      setDescription={setDescription}
-      name={name}
-      setName={setName}
-      ordinal={ordinal}
-      setOrdinal={setOrdinal}
-      parent={parent}
-      setParent={setParent}
-      subheading={subheading}
-      setSubheading={setSubheading}
-      footnotes={footnotes}
-      setFootnotes={setFootnotes}
-      callLineName={callLineName}
-      setCallLineName={setCallLineName}
-      callLineDisplay={callLineDisplay}
-      setCallLineDisplay={setCallLineDisplay}
-      nestedDisplay={nestedDisplay}
-      setNestedDisplay={setNestedDisplay}
-      serviceDisable={serviceDisable}
-      setServiceDisable={setServiceDisable}
-    />
-  );
+  return <CategoryComponent confirmText="Add" onCloseCallback={onCloseCallback} onConfirmClick={addCategory} />;
 };
 
 export default CategoryAddContainer;

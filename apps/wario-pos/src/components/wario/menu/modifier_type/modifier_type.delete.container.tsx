@@ -1,53 +1,51 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
 
 import { useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from "@/config";
+import { useDeleteModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
-import ElementDeleteComponent from "../element.delete.component";
+import ElementDeleteComponent from '../element.delete.component';
 
-import { type ModifierTypeModifyUiProps } from "./modifier_type.component";
+export interface ModifierTypeModifyUiProps {
+  modifier_type_id: string;
+  onCloseCallback: VoidFunction;
+}
 
 const ModifierTypeDeleteContainer = ({ modifier_type_id, onCloseCallback }: ModifierTypeModifyUiProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_type = useValueFromModifierEntryById(modifier_type_id, "modifierType");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const modifier_type = useValueFromModifierEntryById(modifier_type_id, 'modifierType');
 
-  const deleteModifierType = async () => {
-    if (!isProcessing && modifier_type) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
-        const response = await fetch(`${HOST_API}/api/v1/menu/option/${modifier_type_id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          }
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Deleted modifier type: ${modifier_type.name}.`);
-          onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to delete modifier type: ${modifier_type.name}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
+  const deleteMutation = useDeleteModifierTypeMutation();
+
+  const deleteModifierType = () => {
+    if (!modifier_type || deleteMutation.isPending) return;
+
+    deleteMutation.mutate(modifier_type_id, {
+      onSuccess: () => {
+        enqueueSnackbar(`Deleted modifier type: ${modifier_type.name}.`);
+      },
+      onError: (error) => {
+        enqueueSnackbar(
+          `Unable to delete modifier type: ${modifier_type.name}. Got error ${JSON.stringify(error, null, 2)}`,
+          { variant: 'error' },
+        );
         console.error(error);
-        setIsProcessing(false);
-      }
-    }
+      },
+      onSettled: () => {
+        onCloseCallback();
+      },
+    });
   };
 
   return (
-    modifier_type && <ElementDeleteComponent
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void deleteModifierType()}
-      name={modifier_type.name}
-      isProcessing={isProcessing}
-    />
+    modifier_type && (
+      <ElementDeleteComponent
+        onCloseCallback={onCloseCallback}
+        onConfirmClick={deleteModifierType}
+        name={modifier_type.name}
+        isProcessing={deleteMutation.isPending}
+      />
+    )
   );
 };
 

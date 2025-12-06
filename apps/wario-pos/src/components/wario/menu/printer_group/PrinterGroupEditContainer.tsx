@@ -1,61 +1,89 @@
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useAtom, useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import { useEditPrinterGroupMutation } from '@/hooks/usePrinterGroupsQuery';
+import type { PrinterGroup } from '@wcp/wario-shared';
 
-import PrinterGroupComponent from "./PrinterGroupComponent";
-import type { PrinterGroupEditProps } from "./PrinterGroupComponent";
+import { useEditPrinterGroupMutation, usePrinterGroupById } from '@/hooks/usePrinterGroupsQuery';
 
-const PrinterGroupEditContainer = ({ printerGroup, onCloseCallback }: PrinterGroupEditProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-  const editMutation = useEditPrinterGroupMutation();
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
-  const [name, setName] = useState(printerGroup.name);
-  const [singleItemPerTicket, setSingleItemPerTicket] = useState(printerGroup.singleItemPerTicket);
-  const [externalIds, setExternalIds] = useState(printerGroup.externalIDs);
-  const [isExpo, setIsExpo] = useState(printerGroup.isExpo);
+import {
+  fromPrinterGroupEntity,
+  printerGroupFormAtom,
+  printerGroupFormProcessingAtom,
+  toPrinterGroupApiBody,
+} from '@/atoms/forms/printerGroupFormAtoms';
 
-  const editCategory = () => {
-    editMutation.mutate(
-      {
-        id: printerGroup.id,
-        name,
-        isExpo,
-        singleItemPerTicket
-      },
-      {
-        onSuccess: () => {
-          enqueueSnackbar(`Updated printer group: ${name}.`);
-          onCloseCallback();
-        },
-        onError: (error) => {
-          enqueueSnackbar(
-            `Unable to update printer group: ${name}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' }
-          );
-          console.error(error);
-        },
-      }
-    );
-  };
+import type { PrinterGroupEditProps } from './PrinterGroupComponent';
+import { PrinterGroupComponent } from './PrinterGroupComponent';
 
+// Create null guard at module level to follow Rules of Hooks
+const PrinterGroupNullGuard = createNullGuard(usePrinterGroupById);
+
+const PrinterGroupEditContainer = ({ printerGroupId, onCloseCallback }: PrinterGroupEditProps) => {
   return (
-    <PrinterGroupComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={editCategory}
-      isProcessing={editMutation.isPending}
-      name={name}
-      setName={setName}
-      isExpo={isExpo}
-      setIsExpo={setIsExpo}
-      singleItemPerTicket={singleItemPerTicket}
-      setSingleItemPerTicket={setSingleItemPerTicket}
-      externalIds={externalIds}
-      setExternalIds={setExternalIds}
+    <PrinterGroupNullGuard
+      id={printerGroupId}
+      child={(printerGroup) => (
+        <PrinterGroupEditContainerInner printerGroup={printerGroup} onCloseCallback={onCloseCallback} />
+      )}
     />
   );
 };
 
-export default PrinterGroupEditContainer;
+const PrinterGroupEditContainerInner = ({
+  printerGroup,
+  onCloseCallback,
+}: {
+  printerGroup: PrinterGroup;
+  onCloseCallback: () => void;
+}) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const editMutation = useEditPrinterGroupMutation();
 
+  const setFormState = useSetAtom(printerGroupFormAtom);
+  const [isProcessing, setIsProcessing] = useAtom(printerGroupFormProcessingAtom);
+
+  useEffect(() => {
+    setFormState(fromPrinterGroupEntity(printerGroup));
+    return () => {
+      setFormState(null);
+    };
+  }, [printerGroup, setFormState]);
+
+  const editPrinterGroup = () => {
+    setFormState((current) => {
+      if (!current || isProcessing) return current;
+
+      setIsProcessing(true);
+      const body = toPrinterGroupApiBody(current);
+
+      editMutation.mutate(
+        { ...body, id: printerGroup.id },
+        {
+          onSuccess: () => {
+            enqueueSnackbar(`Updated printer group: ${current.name}.`);
+          },
+          onError: (error) => {
+            enqueueSnackbar(
+              `Unable to update printer group: ${current.name}. Got error ${JSON.stringify(error, null, 2)}`,
+              { variant: 'error' },
+            );
+            console.error(error);
+          },
+          onSettled: () => {
+            setIsProcessing(false);
+            onCloseCallback();
+          },
+        },
+      );
+      return current;
+    });
+  };
+  return (
+    <PrinterGroupComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={editPrinterGroup} />
+  );
+};
+
+export default PrinterGroupEditContainer;
