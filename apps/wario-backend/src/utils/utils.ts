@@ -81,16 +81,12 @@ export async function ExponentialBackoff<T>(
   try {
     const response = await request();
     return response;
-  } catch (err) {
-    if (retry_checker(err)) {
-      if (retry < max_retry && retry_checker(err)) {
-        await ExponentialBackoffWaitFunction(retry, max_retry);
-        return await ExponentialBackoff<T>(request, retry_checker, retry + 1, max_retry);
-      } else {
-        throw err;
-      }
+  } catch (err: unknown) {
+    if (retry_checker(err) && retry < max_retry) {
+      await ExponentialBackoffWaitFunction(retry, max_retry);
+      return await ExponentialBackoff<T>(request, retry_checker, retry + 1, max_retry);
     }
-    return err;
+    throw err;
   }
 }
 
