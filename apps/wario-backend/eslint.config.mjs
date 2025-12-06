@@ -6,6 +6,9 @@ import { default as main } from "../../eslint.config.mjs";
 export default defineConfig([
   main,
   {
+    ignores: ['test/jest-environment.js'],
+  },
+  {
     languageOptions: {
       globals: {
         ...globals.node,

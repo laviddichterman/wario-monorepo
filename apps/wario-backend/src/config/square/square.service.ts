@@ -11,6 +11,7 @@ import {
   BatchRetrieveOrdersResponse,
   BatchUpsertCatalogObjectsRequest,
   BatchUpsertCatalogObjectsResponse,
+  CancelPaymentResponse,
   CatalogInfoResponse,
   CatalogInfoResponseLimits,
   CatalogObject,
@@ -29,6 +30,7 @@ import {
   PayOrderRequest,
   PayOrderResponse,
   RefundPaymentRequest,
+  RefundPaymentResponse,
   RetrieveOrderResponse,
   SearchCatalogItemsRequest,
   SearchCatalogItemsResponse,
@@ -237,7 +239,7 @@ export class SquareService implements OnModuleInit {
     // get all items in the Slices category and delete them
     const foundItems: string[] = [];
     let cursor: string | undefined;
-    let response;
+    let response: SquareProviderApiCallReturnValue<SearchCatalogItemsResponse>;
     do {
       response = await this.SearchCatalogItems({
         enabledLocationIds: [this.dataProvider.KeyValueConfig.SQUARE_LOCATION],
@@ -256,7 +258,7 @@ export class SquareService implements OnModuleInit {
   private async ObliterateModifiersInSquareCatalog() {
     const foundItems: string[] = [];
     let cursor: string | undefined;
-    let response;
+    let response: SquareProviderApiCallReturnValue<ListCatalogResponse>;
     do {
       response = await this.ListCatalogObjects(['MODIFIER_LIST'], cursor);
       if (!response.success) {
@@ -276,7 +278,7 @@ export class SquareService implements OnModuleInit {
   private async ObliterateCategoriesInSquareCatalog() {
     const foundItems: string[] = [];
     let cursor: string | undefined;
-    let response;
+    let response: SquareProviderApiCallReturnValue<ListCatalogResponse>;
     do {
       response = await this.ListCatalogObjects(['CATEGORY'], cursor);
       if (!response.success) {
@@ -545,7 +547,7 @@ export class SquareService implements OnModuleInit {
       paymentId: squarePaymentId,
     };
 
-    const callFxn = async (): Promise<ApiResponse<any>> => {
+    const callFxn = async (): Promise<ApiResponse<RefundPaymentResponse>> => {
       this.logger.debug({ request_body }, 'sending payment REFUND request');
       return await refundsApi.refundPayment(request_body);
     };
@@ -571,7 +573,7 @@ export class SquareService implements OnModuleInit {
 
   async CancelPayment(squarePaymentId: string): Promise<SquareProviderApiCallReturnValue<Payment>> {
     const paymentsApi = this.client.paymentsApi;
-    const callFxn = async (): Promise<ApiResponse<any>> => {
+    const callFxn = async (): Promise<ApiResponse<CancelPaymentResponse>> => {
       this.logger.debug({ squarePaymentId }, 'sending payment CANCEL request');
       return await paymentsApi.cancelPayment(squarePaymentId);
     };
