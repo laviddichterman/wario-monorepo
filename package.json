@@ -72,6 +72,7 @@
     "pos:start": "pnpm -r --filter \"./apps/wario-pos\" run start",
     "pos:typecheck": "pnpm -r --filter \"./apps/wario-pos\" run typecheck",
     "start": "pnpm -r --parallel --filter \"./apps/*\" run start",
+    "test": "pnpm -r --filter \"./{apps,packages}/*\" run test",
     "typecheck": "pnpm -r --filter \"./{apps,packages}/*\" run typecheck",
     "version-packages": "changeset version"
   },

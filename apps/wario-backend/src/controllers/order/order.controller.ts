@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Get, HttpCode, HttpException, Param, Post, Put, Query, UseInterceptors } from '@nestjs/common';
 
-import { CreateOrderRequestV2Dto, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+import { CreateOrderRequestV2Dto, type WOrderInstance, WOrderStatus } from "@wcp/wario-shared";
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { OrderManagerService } from '../../config/order-manager/order-manager.service';
