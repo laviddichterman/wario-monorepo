@@ -23,6 +23,9 @@ export type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omi
 export type DistributivePick<T, K extends keyof T> = T extends unknown
   ? Pick<T, K>
   : never
+
+export type NonNullableFields<T> = { [P in keyof T]: NonNullable<T[P]> };
+
 export type Selector<T> = (id: string) => (T | undefined);
 export type SelectIds = () => string[];
 export interface EntitySelector<T> {

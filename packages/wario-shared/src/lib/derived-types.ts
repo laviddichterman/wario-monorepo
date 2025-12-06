@@ -66,7 +66,7 @@ import type {
   IProductInstanceFunctionDto,
   ProductMetadataExpressionDto,
 } from './dto/expression.dto';
-import type { FulfillmentConfigDto } from './dto/fulfillment.dto';
+import type { FulfillmentAutogratDto, FulfillmentConfigDto, FulfillmentMessagesDto } from './dto/fulfillment.dto';
 import type {
   DateIntervalEntryDto,
   OperatingHourSpecificationDto,
@@ -85,18 +85,25 @@ import type {
 } from './dto/modifier.dto';
 import type {
   CashPaymentAllocatedDto,
+  CashPaymentDataDto,
   CashPaymentProposedDto,
   CoreCartEntryDto,
   CreateOrderRequestV2Dto,
+  CreditPaymentAllocatedDataDto,
   CreditPaymentAllocatedDto,
+  CreditPaymentProposedDataDto,
   CreditPaymentProposedDto,
   CustomerInfoDataDto,
   DineInInfoDto,
   FulfillmentDataDto,
   FulfillmentTimeDto,
+  KeyValueOrderDto,
   MetricsDto,
+  OrderLineDiscountCodeAmountDataDto,
   OrderLineDiscountCodeAmountDto,
+  OrderManualAmountDiscountDataDto,
   OrderManualAmountDiscountDto,
+  OrderManualPercentDiscountDataDto,
   OrderManualPercentDiscountDto,
   OrderTaxDto,
   StoreCreditPaymentAllocatedDto,
@@ -114,8 +121,12 @@ import type {
   IProductDisplayFlagsDto,
   IProductDto,
   IProductInstanceDisplayFlagsDto,
+  IProductInstanceDisplayFlagsMenuDto,
+  IProductInstanceDisplayFlagsOrderDto,
+  IProductInstanceDisplayFlagsPosDto,
   IProductInstanceDto,
   IProductModifierDto,
+  IProductOrderGuideDto,
   PrepTimingDto,
   ProductModifierEntryDto,
   UncommittedIProductDto,
@@ -168,6 +179,8 @@ export type SetLeadTimesRequest = Record<string, number>;
 // Fulfillment Types (from fulfillment.dto.ts)
 // =============================================================================
 
+export type FulfillmentMessages = Omit<FulfillmentMessagesDto, never>;
+export type FulfillmentAutograt = Omit<FulfillmentAutogratDto, never>;
 export type FulfillmentConfig = Omit<FulfillmentConfigDto, never>;
 export type FulfillmentConfigMap = Record<string, FulfillmentConfig>;
 
@@ -198,10 +211,14 @@ export type CategoryDisplayFlags = Omit<CategoryDisplayFlagsDto, never>;
 // =============================================================================
 
 export type PrepTiming = Omit<PrepTimingDto, never>;
+export type IProductOrderGuide = Omit<IProductOrderGuideDto, never>;
 export type IProductModifier = Omit<IProductModifierDto, never>;
 export type IProduct = Omit<IProductDto, never>;
 export type IProductDisplayFlags = Omit<IProductDisplayFlagsDto, never>;
 export type ProductModifierEntry = Omit<ProductModifierEntryDto, never>;
+export type IProductInstanceDisplayFlagsPos = Omit<IProductInstanceDisplayFlagsPosDto, never>;
+export type IProductInstanceDisplayFlagsMenu = Omit<IProductInstanceDisplayFlagsMenuDto, never>;
+export type IProductInstanceDisplayFlagsOrder = Omit<IProductInstanceDisplayFlagsOrderDto, never>;
 export type IProductInstance = Omit<IProductInstanceDto, never>;
 export type IProductInstanceDisplayFlags = Omit<IProductInstanceDisplayFlagsDto, never>;
 
@@ -314,6 +331,7 @@ export type CoreCartEntry<T = WCPProductV2> = Omit<CoreCartEntryDto, 'product'> 
   product: T;
 };
 export type Metrics = Omit<MetricsDto, never>;
+export type KeyValueOrder = Omit<KeyValueOrderDto, never>;
 
 // Tender/Payment base types
 export type TenderBase = TenderBaseAllocated | TenderBaseProposed;
@@ -326,11 +344,14 @@ export type StoreCreditPaymentProposed = Omit<StoreCreditPaymentProposedDto, nev
 export type StoreCreditPaymentAllocated = Omit<StoreCreditPaymentAllocatedDto, never>;
 export type StoreCreditPayment = StoreCreditPaymentProposed | StoreCreditPaymentAllocated;
 
+export type CashPaymentData = Omit<CashPaymentDataDto, never>;
 export type CashPaymentProposed = Omit<CashPaymentProposedDto, never>;
 export type CashPaymentAllocated = Omit<CashPaymentAllocatedDto, never>;
 export type CashPayment = CashPaymentAllocated | CashPaymentProposed;
 
+export type CreditPaymentProposedData = Omit<CreditPaymentProposedDataDto, never>;
 export type CreditPaymentProposed = Omit<CreditPaymentProposedDto, never>;
+export type CreditPaymentAllocatedData = Omit<CreditPaymentAllocatedDataDto, never>;
 export type CreditPaymentAllocated = Omit<CreditPaymentAllocatedDto, never>;
 export type CreditPayment = CreditPaymentProposed | CreditPaymentAllocated;
 
@@ -339,8 +360,11 @@ export type OrderPaymentAllocated = CashPaymentAllocated | CreditPaymentAllocate
 export type OrderPayment = CashPayment | CreditPayment | StoreCreditPayment;
 
 // Discount types
+export type OrderManualPercentDiscountData = Omit<OrderManualPercentDiscountDataDto, never>;
 export type OrderManualPercentDiscount = Omit<OrderManualPercentDiscountDto, never>;
+export type OrderManualAmountDiscountData = Omit<OrderManualAmountDiscountDataDto, never>;
 export type OrderManualAmountDiscount = Omit<OrderManualAmountDiscountDto, never>;
+export type OrderLineDiscountCodeAmountData = Omit<OrderLineDiscountCodeAmountDataDto, never>;
 export type OrderLineDiscountCodeAmount = Omit<OrderLineDiscountCodeAmountDto, never>;
 export type OrderLineDiscount = OrderLineDiscountCodeAmount | OrderManualAmountDiscount | OrderManualPercentDiscount;
 
