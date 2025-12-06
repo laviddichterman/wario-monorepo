@@ -1,16 +1,18 @@
-import { useCallback } from "react";
-import { createSelector } from "reselect";
+import { useAtomValue, useSetAtom } from "jotai";
+import { useCallback, useMemo } from "react";
 
 import { DeleteOutline, Edit } from "@mui/icons-material";
 import { Tooltip } from '@mui/material';
 import { GRID_DETAIL_PANEL_TOGGLE_COL_DEF, GRID_TREE_DATA_GROUPING_FIELD, GridActionsCellItem, GridDetailPanelToggleCell, type GridRenderCellParams, type GridRowId, gridRowNodeSelector, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
-import { getCategoryEntryById, getCategoryEntryIds, weakMapCreateSelector } from "@wcp/wario-ux-shared";
+import { useCatalogQuery, useCategoryIds, useValueFromCategoryById } from "@wcp/wario-ux-shared/query";
 
-import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
-
-import { openCategoryDelete, openCategoryEdit, setDetailPanelSizeForRowId } from '@/redux/slices/CatalogSlice';
-import { type RootState, selectProductIdsInCategoryAfterDisableFilter } from "@/redux/store";
+import {
+  hideDisabledProductsAtom,
+  openCategoryDeleteAtom,
+  openCategoryEditAtom,
+  setDetailPanelSizeForRowIdAtom
+} from "@/atoms/catalog";
 
 import { TableWrapperComponent, type ToolbarAction } from "../../table_wrapper.component";
 import ProductTableContainer from "../product/product_table.container";
@@ -18,96 +20,94 @@ import ProductTableContainer from "../product/product_table.container";
 
 interface RowType { path: string[]; id: string; };
 
+// Hook to replace selectProductIdsInCategoryAfterDisableFilter
+const useProductIdsInCategoryAfterDisableFilter = (categoryId: string) => {
+  const hideDisabledProducts = useAtomValue(hideDisabledProductsAtom);
+  const { data: catalog } = useCatalogQuery();
+
+  return useMemo(() => {
+    if (!catalog) return [];
+    const products = Object.values(catalog.products);
+    const filteredProducts = !hideDisabledProducts ? products : products.filter((x) =>
+      (!x.product.disabled || x.product.disabled.start <= x.product.disabled.end));
+
+    return filteredProducts.filter((x) =>
+      x.product.category_ids.includes(categoryId)).map(x => x.product.id);
+  }, [catalog, hideDisabledProducts, categoryId]);
+};
+
 const DetailPanelContent = (params: GridRowParams<RowType>) => {
-  const dispatch = useAppDispatch();
-  const productsInCategory = useAppSelector(s => selectProductIdsInCategoryAfterDisableFilter(s, params.row.id));
+  const setDetailPanelSizeForRowId = useSetAtom(setDetailPanelSizeForRowIdAtom);
+  const productsInCategory = useProductIdsInCategoryAfterDisableFilter(params.row.id);
   return productsInCategory.length > 0 && <ProductTableContainer
     disableToolbar={true}
     product_ids={productsInCategory}
-    setPanelsExpandedSize={(size: number) => dispatch(setDetailPanelSizeForRowId({ id: params.row.id, size: size }))}
+    setPanelsExpandedSize={(size: number) => { setDetailPanelSizeForRowId({ id: params.row.id, size: size }); }}
   />;
 };
 
-const selectCategoryCallLineName = weakMapCreateSelector(
-  (s: RootState, cId: string) => getCategoryEntryById(s.ws.categories, cId),
-  (category) => category.category.display_flags.call_line_name
-);
-
 const CategoryCallLineName = (params: GridRenderCellParams<RowType>) => {
-  const callLineName = useAppSelector(s => selectCategoryCallLineName(s, params.row.id));
+  const callLineName = useValueFromCategoryById(params.row.id, 'display_flags')?.call_line_name;
   return <>{callLineName}</>;
 }
 
-const selectCategoryOrdinal = weakMapCreateSelector(
-  (s: RootState, cId: string) => getCategoryEntryById(s.ws.categories, cId),
-  (category) => category.category.ordinal
-);
-
 const CategoryOrdinal = (params: GridRenderCellParams<RowType>) => {
-  const ordinal = useAppSelector(s => selectCategoryOrdinal(s, params.row.id));
+  const ordinal = useValueFromCategoryById(params.row.id, 'ordinal');
   return <>{ordinal}</>;
 }
 
-const selectCategoryDescription = weakMapCreateSelector(
-  (s: RootState, cId: string) => getCategoryEntryById(s.ws.categories, cId),
-  (category) => category.category.description
-);
-
 const CategoryDescription = (params: GridRenderCellParams<RowType>) => {
-  const desc = useAppSelector(s => selectCategoryDescription(s, params.row.id));
+  const desc = useValueFromCategoryById(params.row.id, 'description');
   return <>{desc}</>;
 }
 
-const selectCategorySubheading = weakMapCreateSelector(
-  (s: RootState, cId: string) => getCategoryEntryById(s.ws.categories, cId),
-  (category) => category.category.subheading
-);
-
 const CategorySubheading = (params: GridRenderCellParams<RowType>) => {
-  const subheading = useAppSelector(s => selectCategorySubheading(s, params.row.id));
+  const subheading = useValueFromCategoryById(params.row.id, 'subheading');
   return <>{subheading}</>;
 }
 
-const selectCategoryFootnotes = weakMapCreateSelector(
-  (s: RootState, cId: string) => getCategoryEntryById(s.ws.categories, cId),
-  (category) => category.category.footnotes
-);
-
 const CategoryFootnotes = (params: GridRenderCellParams<RowType>) => {
-  const footnotes = useAppSelector(s => selectCategoryFootnotes(s, params.row.id));
+  const footnotes = useValueFromCategoryById(params.row.id, 'footnotes');
   return <>{footnotes}</>;
 }
 
 const CategoryGridDetailPanelToggleCell = (params: GridRenderCellParams<RowType>) => {
-  const products = useAppSelector(s => selectProductIdsInCategoryAfterDisableFilter(s, params.id as string));
+  const products = useProductIdsInCategoryAfterDisableFilter(params.id as string);
   return products.length > 0 ? <GridDetailPanelToggleCell {...params} /> : <></>
 }
 
-const selectCategoryIdsWithTreePath = createSelector(
-  (s: RootState) => s.ws.categories,
-  (categories) => {
+// Hook to replace selectCategoryIdsWithTreePath
+const useCategoryIdsWithTreePath = () => {
+  const { data: catalog } = useCatalogQuery();
+  const categoryIds = useCategoryIds();
+
+  return useMemo(() => {
+    if (!catalog) return [];
+
     const pathMap: Record<string, string[]> = {};
     const ComputePath: (cId: string) => string[] = (cId) => {
       if (!Object.hasOwn(pathMap, cId)) {
-        const cat = getCategoryEntryById(categories, cId);
+        const cat = catalog.categories[cId];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!cat) return []; // Should not happen if data is consistent
         pathMap[cId] = cat.category.parent_id !== null ? [...ComputePath(cat.category.parent_id), cat.category.name] : [cat.category.name];
       }
       return pathMap[cId];
     };
-    const category_ids = getCategoryEntryIds(categories);
-    return category_ids.map(x => ({ path: ComputePath(x), id: x }));
-  }
-);
+
+    return categoryIds.map(x => ({ path: ComputePath(x), id: x }));
+  }, [catalog, categoryIds]);
+};
 
 interface CategoryTableContainerProps {
   toolbarActions?: ToolbarAction[];
 }
 
 const CategoryTableContainer = (props: CategoryTableContainerProps) => {
-  const dispatch = useAppDispatch();
-  const categories = useAppSelector(selectCategoryIdsWithTreePath);
+  const openCategoryEdit = useSetAtom(openCategoryEditAtom);
+  const openCategoryDelete = useSetAtom(openCategoryDeleteAtom);
+  const categories = useCategoryIdsWithTreePath();
 
-  // const getDetailPanelHeight = useAppSelector(s => ({ row }: { row: CatalogCategoryEntry }) => selectDetailPanelSizeForRowId(s, row.category.id));
   const apiRef = useGridApiRef();
   const rowNodeSelector = useCallback((rowId: GridRowId) => gridRowNodeSelector(apiRef, rowId), [apiRef]);
 
@@ -144,12 +144,12 @@ const CategoryTableContainer = (props: CategoryTableContainerProps) => {
         <GridActionsCellItem
           icon={<Tooltip title="Edit Category"><Edit /></Tooltip>}
           label="Edit Category"
-          onClick={() => dispatch(openCategoryEdit(params.row.id))}
+          onClick={() => { openCategoryEdit(params.row.id); }}
           key={`EDIT${params.id.toString()}`} />,
         <GridActionsCellItem
           icon={<Tooltip title="Delete Category"><DeleteOutline /></Tooltip>}
           label="Delete Category"
-          onClick={() => dispatch(openCategoryDelete(params.row.id))}
+          onClick={() => { openCategoryDelete(params.row.id); }}
           key={`DELETE${params.id.toString()}`} />
       ]
     },

@@ -1,78 +1,96 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useMemo, useState } from "react";
+import { useSnackbar } from 'notistack';
+import { useMemo, useState } from 'react';
 
-import { Warning } from "@mui/icons-material";
-import { Autocomplete, Grid, TextField } from "@mui/material";
+import { Warning } from '@mui/icons-material';
+import { Autocomplete, Grid, TextField } from '@mui/material';
 
-import { ReduceArrayToMapByKey } from "@wcp/wario-shared";
+import type { PrinterGroup } from '@wcp/wario-shared';
 
-import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
+import { useDeletePrinterGroupMutation, usePrinterGroupById, usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
-import { HOST_API } from "@/config";
-import { getPrinterGroups, queryPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
-import { ToggleBooleanPropertyComponent } from "../../property-components/ToggleBooleanPropertyComponent";
-import { ElementActionComponent } from "../element.action.component";
+import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
+import { ElementActionComponent } from '../element.action.component';
 
-import type { PrinterGroupEditProps } from "./PrinterGroupComponent";
+import { type PrinterGroupEditProps } from './PrinterGroupComponent';
 
+// Create null guard at module level to follow Rules of Hooks
+const PrinterGroupNullGuard = createNullGuard(usePrinterGroupById);
 
-const PrinterGroupDeleteContainer = ({ printerGroup, onCloseCallback }: PrinterGroupEditProps) => {
+const PrinterGroupDeleteContainer = ({ printerGroupId, onCloseCallback }: PrinterGroupEditProps) => {
+  return (
+    <PrinterGroupNullGuard
+      id={printerGroupId}
+      child={(printerGroup) => (
+        <PrinterGroupDeleteContainerInner printerGroup={printerGroup} onCloseCallback={onCloseCallback} />
+      )}
+    />
+  );
+};
+
+const PrinterGroupDeleteContainerInner = ({
+  printerGroup,
+  onCloseCallback,
+}: {
+  printerGroup: PrinterGroup;
+  onCloseCallback: () => void;
+}) => {
   const { enqueueSnackbar } = useSnackbar();
-  const dispatch = useAppDispatch();
-  const printerGroups = useAppSelector(s => ReduceArrayToMapByKey(getPrinterGroups(s.printerGroup.printerGroups), 'id'));
+  const printerGroups = usePrinterGroupsMap();
+  const deleteMutation = useDeletePrinterGroupMutation();
+
   const [reassign, setReassign] = useState(true);
   const [destinationPrinterGroup, setDestinationPrinterGroup] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const disableConfirmOn = useMemo(() => isProcessing || (reassign && destinationPrinterGroup === null) || (!reassign && destinationPrinterGroup !== null) || destinationPrinterGroup === printerGroup.id, [printerGroup.id, isProcessing, destinationPrinterGroup, reassign])
-  const { getAccessTokenSilently } = useAuth0();
+
+  const disableConfirmOn = useMemo(
+    () =>
+      deleteMutation.isPending ||
+      (reassign && destinationPrinterGroup === null) ||
+      (!reassign && destinationPrinterGroup !== null) ||
+      destinationPrinterGroup === printerGroup.id,
+    [printerGroup.id, deleteMutation.isPending, destinationPrinterGroup, reassign],
+  );
+
   const handleSetReassign = (value: boolean) => {
     if (value) {
       setReassign(true);
     } else {
       setDestinationPrinterGroup(null);
-      setReassign(false)
-    }
-  }
-
-  const deletePrinterGroup = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      const reqBody = {
-        reassign,
-        printerGroup: reassign ? destinationPrinterGroup : null
-      };
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog write:catalog" } });
-        const response = await fetch(`${HOST_API}/api/v1/menu/printergroup/${printerGroup.id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reqBody)
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Deleted printer group: ${printerGroup.name}.`);
-          void dispatch(queryPrinterGroups(token));
-          onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to delete category: ${printerGroup.name}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
+      setReassign(false);
     }
   };
 
+  const deletePrinterGroup = () => {
+    deleteMutation.mutate(
+      {
+        id: printerGroup.id,
+        reassign,
+        printerGroup: reassign ? destinationPrinterGroup : null,
+      },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Deleted printer group: ${printerGroup.name}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(
+            `Unable to delete category: ${printerGroup.name}. Got error ${JSON.stringify(error, null, 2)}`,
+            { variant: 'error' },
+          );
+          console.error(error);
+        },
+        onSettled: () => {
+          onCloseCallback();
+        },
+      },
+    );
+  };
 
   return (
     <ElementActionComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void deletePrinterGroup()}
-      isProcessing={isProcessing}
+      onConfirmClick={deletePrinterGroup}
+      isProcessing={deleteMutation.isPending}
       disableConfirmOn={disableConfirmOn}
       confirmText="Confirm"
       body={
@@ -82,29 +100,31 @@ const PrinterGroupDeleteContainer = ({ printerGroup, onCloseCallback }: PrinterG
           </Grid>
           <Grid size={4}>
             <ToggleBooleanPropertyComponent
-              disabled={isProcessing}
+              disabled={deleteMutation.isPending}
               label="Reassign"
               value={reassign}
               setValue={handleSetReassign}
-              labelPlacement='end'
+              labelPlacement="end"
             />
           </Grid>
           <Grid size={12}>
             <Autocomplete
               filterSelectedOptions
-              disabled={isProcessing || !reassign}
-              options={Object.keys(printerGroups).filter(p => p !== printerGroup.id)}
+              disabled={deleteMutation.isPending || !reassign}
+              options={Object.keys(printerGroups).filter((p) => p !== printerGroup.id)}
               value={destinationPrinterGroup}
-              onChange={(_, v) => { setDestinationPrinterGroup(v); }}
+              onChange={(_, v) => {
+                setDestinationPrinterGroup(v);
+              }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(pgId) => printerGroups[pgId].name ?? "Undefined"}
+              getOptionLabel={(pgId) => printerGroups[pgId].name ?? 'Undefined'}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Printer Group" />}
             />
           </Grid>
         </>
-
-      } />
+      }
+    />
   );
 };
 

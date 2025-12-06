@@ -5,8 +5,8 @@ import type {
   IOption,
   IOptionInstance,
   IProduct,
-  IProductDisplayFlags,
   IProductInstance,
+  IProductInstanceDisplayFlags,
   ProductModifierEntry,
 } from "../derived-types";
 import {
@@ -39,10 +39,10 @@ export const CheckRequiredModifiersAreAvailable = (product: IProduct, modifiers:
   return passes;
 }
 
-type DisableFlagGetterType = (x: Pick<IProductDisplayFlags, "menu"> | Pick<IProductDisplayFlags, "order">) => boolean;
+type DisableFlagGetterType = (x: Pick<IProductInstanceDisplayFlags, "menu"> | Pick<IProductInstanceDisplayFlags, "order">) => boolean;
 
-export const GetMenuHideDisplayFlag: DisableFlagGetterType = (x) => !(x as Pick<IProductDisplayFlags, "menu">).menu.hide;
-export const GetOrderHideDisplayFlag: DisableFlagGetterType = (x) => !(x as Pick<IProductDisplayFlags, "order">).order.hide;
+export const GetMenuHideDisplayFlag: DisableFlagGetterType = (x) => !(x as Pick<IProductInstanceDisplayFlags, "menu">).menu.hide;
+export const GetOrderHideDisplayFlag: DisableFlagGetterType = (x) => !(x as Pick<IProductInstanceDisplayFlags, "order">).order.hide;
 export const IgnoreHideDisplayFlags: DisableFlagGetterType = (_x) => true;
 
 /**
@@ -62,14 +62,14 @@ export function FilterProductInstanceUsingCatalog(item: IProductInstance, catalo
  * Checks if a product is enabled and visible
  * @param {string} productId - the product type to check 
  * @param {ProductModifierEntry[]} modifiers - product modifier entry list of selected/placed modifiers
- * @param {IProductDisplayFlags} display_flags - either the display flags for the specific product instance we're checking
+ * @param {IProductInstanceDisplayFlags} display_flags - either the display flags for the specific product instance we're checking
  * @param {Pick<ICatalogSelectors, "productEntry" | "option">} catalogSelectors - the menu from which to pull catalog data
  * @param {DisableFlagGetterType} hide_product_functor - getter function to check if the product should be hidden
  * @param {Date | number} order_time - from getTime or Date.valueOf() the time to use to check for disable/enable status
  * @param {string} fulfillmentId - the service selected
  * @returns {boolean} returns true if item is enabled and visible
  */
-export function FilterProductUsingCatalog(productId: string, modifiers: ProductModifierEntry[], display_flags: IProductDisplayFlags, catalogSelectors: Pick<ICatalogSelectors, "productEntry" | "option">, hide_product_functor: DisableFlagGetterType, order_time: Date | number, fulfillmentId: string) {
+export function FilterProductUsingCatalog(productId: string, modifiers: ProductModifierEntry[], display_flags: IProductInstanceDisplayFlags, catalogSelectors: Pick<ICatalogSelectors, "productEntry" | "option">, hide_product_functor: DisableFlagGetterType, order_time: Date | number, fulfillmentId: string) {
   const productClass = catalogSelectors.productEntry(productId);
   return productClass !== undefined &&
     productClass.product.serviceDisable.indexOf(fulfillmentId) === -1 &&

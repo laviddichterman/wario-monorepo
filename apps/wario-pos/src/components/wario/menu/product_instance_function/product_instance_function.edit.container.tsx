@@ -1,68 +1,95 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import { type IAbstractExpression, type IProductInstanceFunction } from "@wcp/wario-shared";
-import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared";
+import type { IProductInstanceFunction } from '@wcp/wario-shared';
+import { useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { useEditProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
 
-import { HOST_API } from "@/config";
+import {
+  fromProductInstanceFunctionEntity,
+  productInstanceFunctionFormAtom,
+  useProductInstanceFunctionForm,
+} from '@/atoms/forms/productInstanceFunctionFormAtoms';
 
-import ProductInstanceFunctionComponent from "./product_instance_function.component";
-import { type ProductInstanceFunctionQuickActionProps } from './product_instance_function.delete.container';
+import ProductInstanceFunctionFormComponent from './product_instance_function.component';
 
-const ProductInstanceFunctionEditContainer = ({ pifId, onCloseCallback }: ProductInstanceFunctionQuickActionProps) => {
-  const { enqueueSnackbar } = useSnackbar();
+interface ProductInstanceFunctionEditContainerProps {
+  pifId: string;
+  onCloseCallback: VoidFunction;
+}
 
-  // todo: look into the assertion of truthy, maybe the caller of this container should process the selection and confirm non-falsy?
-  const productInstanceFunction = useAppSelector(s => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId))
+const ProductInstanceFunctionEditContainer = ({
+  pifId,
+  onCloseCallback,
+}: ProductInstanceFunctionEditContainerProps) => {
+  const productInstanceFunction = useProductInstanceFunctionById(pifId);
 
-  const [functionName, setFunctionName] = useState(productInstanceFunction.name);
-  const [expression, setExpression] = useState<IAbstractExpression | null>(productInstanceFunction.expression);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
-
-  const editProductInstanceFunction = async () => {
-    if (!isProcessing && functionName && expression !== null) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<IProductInstanceFunction, "id"> = {
-          name: functionName,
-          expression
-        };
-        const response = await fetch(`${HOST_API}/api/v1/query/language/productinstancefunction/${pifId}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Updated product instance function: ${functionName}.`);
-          onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to edit product instance function: ${functionName}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
-  };
+  if (!productInstanceFunction) {
+    return null;
+  }
 
   return (
-    <ProductInstanceFunctionComponent
+    <ProductInstanceFunctionEditContainerInner
+      productInstanceFunction={productInstanceFunction}
+      onCloseCallback={onCloseCallback}
+    />
+  );
+};
+
+const ProductInstanceFunctionEditContainerInner = ({
+  productInstanceFunction,
+  onCloseCallback,
+}: {
+  productInstanceFunction: IProductInstanceFunction;
+  onCloseCallback: VoidFunction;
+}) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const editMutation = useEditProductInstanceFunctionMutation();
+
+  const setForm = useSetAtom(productInstanceFunctionFormAtom);
+  const { form, isValid } = useProductInstanceFunctionForm();
+
+  // Initialize form on mount with entity data
+  useEffect(() => {
+    setForm(fromProductInstanceFunctionEntity(productInstanceFunction));
+    return () => {
+      setForm(null);
+    };
+  }, [productInstanceFunction, setForm]);
+
+  const editProductInstanceFunction = () => {
+    if (!form || !isValid || editMutation.isPending) return;
+
+    editMutation.mutate(
+      { id: productInstanceFunction.id, form },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Updated product instance function: ${form.functionName}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(
+            `Unable to edit product instance function: ${form.functionName}. Got error ${JSON.stringify(error, null, 2)}`,
+            { variant: 'error' },
+          );
+          console.error(error);
+        },
+        onSettled: () => {
+          onCloseCallback();
+        },
+      },
+    );
+  };
+
+  if (!form) return null;
+
+  return (
+    <ProductInstanceFunctionFormComponent
       confirmText="Save"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void editProductInstanceFunction()}
-      isProcessing={isProcessing}
-      functionName={functionName}
-      setFunctionName={setFunctionName}
-      expression={expression}
-      setExpression={setExpression}
+      onConfirmClick={editProductInstanceFunction}
+      isProcessing={editMutation.isPending}
     />
   );
 };

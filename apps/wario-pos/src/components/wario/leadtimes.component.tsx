@@ -4,9 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, CardHeader, Grid } from '@mui/material';
 
-import { getFulfillments } from '@wcp/wario-ux-shared';
-
-import { useAppSelector } from '@/hooks/useRedux';
+import { useFulfillments } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from '@/config';
 
@@ -16,15 +14,16 @@ export const LeadTimesComp = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { getAccessTokenSilently } = useAuth0();
 
-  const FULFILLMENTS = useAppSelector(s => getFulfillments(s.ws.fulfillments));
+  const fulfillments = useFulfillments();
+
   const [dirty, setDirty] = useState<Record<string, boolean>>({});
   const [localLeadTime, setLocalLeadTime] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
 
   // maintains the state of the dirty array and the localLeadTimes
   useEffect(() => {
-    // overwrite the local lead time with either the dirty value or the value from the received FULFILLMENTS
-    const newLocalLeadTime = FULFILLMENTS.reduce((acc: Record<string, number>, fulfillment) => {
+    // overwrite the local lead time with either the dirty value or the value from the received fulfillments
+    const newLocalLeadTime = fulfillments.reduce((acc: Record<string, number>, fulfillment) => {
       const id = fulfillment.id;
       const isDirty = Object.hasOwn(dirty, id) && dirty[id] && Object.hasOwn(localLeadTime, id);
       return {
@@ -33,20 +32,20 @@ export const LeadTimesComp = () => {
           localLeadTime[fulfillment.id] : (fulfillment.leadTime)
       }
     }, {})
-    setDirty(FULFILLMENTS.reduce((acc: Record<string, boolean>, fulfillment) => ({
+    setDirty(fulfillments.reduce((acc: Record<string, boolean>, fulfillment) => ({
       ...acc,
       [fulfillment.id]: newLocalLeadTime[fulfillment.id] !== fulfillment.leadTime
     }), {}));
     setLocalLeadTime(newLocalLeadTime);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [FULFILLMENTS, setDirty, setLocalLeadTime]);
+  }, [fulfillments, setDirty, setLocalLeadTime]);
 
   const leadtimesToUpdate: Record<string, number> = useMemo(() => Object.entries(localLeadTime).reduce((acc, [key, value]) => dirty[key] ? ({ ...acc, [key]: value }) : acc, {}), [dirty, localLeadTime]);
 
   const onChangeLeadTimes = (fId: string, leadTime: number) => {
     if (localLeadTime[fId] !== leadTime) {
       setLocalLeadTime({ ...localLeadTime, [fId]: leadTime });
-      setDirty({ ...dirty, [fId]: FULFILLMENTS.find(x => x.id === fId)?.leadTime !== leadTime });
+      setDirty({ ...dirty, [fId]: fulfillments.find(x => x.id === fId)?.leadTime !== leadTime });
     }
   };
 
@@ -67,13 +66,13 @@ export const LeadTimesComp = () => {
           enqueueSnackbar(
             `
               Updated lead time(s): ${Object.entries(leadtimesToUpdate).map(([key, value]) =>
-              `${FULFILLMENTS.find(x => x.id === key)?.displayName ?? key}: ${value.toString()} minutes`
+              `${fulfillments.find(x => x.id === key)?.displayName ?? key}: ${value.toString()} minutes`
             ).join(', ')
 
             }
             `)
 
-          setDirty(FULFILLMENTS.reduce((acc, fulfillment) => ({ ...acc, [fulfillment.id]: false }), {}));
+          setDirty(fulfillments.reduce((acc, fulfillment) => ({ ...acc, [fulfillment.id]: false }), {}));
         }
         setIsProcessing(false);
       } catch (error) {
@@ -95,13 +94,13 @@ export const LeadTimesComp = () => {
               xs: 8,
               md: 10
             }}>
-            {Object.values(FULFILLMENTS).map((fulfillment) => {
+            {Object.values(fulfillments).map((fulfillment) => {
               return (
                 <Grid
                   key={fulfillment.id}
                   size={{
-                    xs: FULFILLMENTS.length % 2 === 0 ? 6 : 12,
-                    md: FULFILLMENTS.length % 2 === 0 ? 6 : (FULFILLMENTS.length % 3 === 0 ? 4 : 12)
+                    xs: fulfillments.length % 2 === 0 ? 6 : 12,
+                    md: fulfillments.length % 2 === 0 ? 6 : (fulfillments.length % 3 === 0 ? 4 : 12)
                   }}>
                   <IntNumericPropertyComponent
                     sx={{ ml: 3, mb: 2, mr: 1 }}

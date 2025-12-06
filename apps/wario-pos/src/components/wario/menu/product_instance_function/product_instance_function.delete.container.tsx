@@ -1,60 +1,54 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
 
-import { getProductInstanceFunctionById } from "@wcp/wario-ux-shared";
+import { useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { useDeleteProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
 
-import { HOST_API } from "@/config";
-
-import ElementDeleteComponent from "../element.delete.component";
+import ElementDeleteComponent from '../element.delete.component';
 
 export interface ProductInstanceFunctionQuickActionProps {
   pifId: string;
   onCloseCallback: VoidFunction;
 }
 
-const ProductInstanceFunctionDeleteContainer = ({ pifId, onCloseCallback }: ProductInstanceFunctionQuickActionProps) => {
+const ProductInstanceFunctionDeleteContainer = ({
+  pifId,
+  onCloseCallback,
+}: ProductInstanceFunctionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const productInstanceFunction = useAppSelector(s => getProductInstanceFunctionById(s.ws.productInstanceFunctions, pifId))
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const productInstanceFunction = useProductInstanceFunctionById(pifId);
+  const deleteMutation = useDeleteProductInstanceFunctionMutation();
 
-  const deletePIF = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
-        const response = await fetch(`${HOST_API}/api/v1/query/language/productinstancefunction/${pifId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          }
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Deleted product instance function: ${productInstanceFunction.name}.`);
-          onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to delete product instance function: ${productInstanceFunction.name}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
+  const deleteProductInstanceFunction = () => {
+    if (deleteMutation.isPending || !productInstanceFunction) return;
+
+    deleteMutation.mutate(pifId, {
+      onSuccess: () => {
+        enqueueSnackbar(`Deleted product instance function: ${productInstanceFunction.name}.`);
+      },
+      onError: (error) => {
+        enqueueSnackbar(
+          `Unable to delete product instance function: ${productInstanceFunction.name}. Got error ${JSON.stringify(error, null, 2)}`,
+          { variant: 'error' },
+        );
         console.error(error);
-        setIsProcessing(false);
-      }
-    }
+      },
+      onSettled: () => {
+        onCloseCallback();
+      },
+    });
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  return productInstanceFunction ?
+  return productInstanceFunction ? (
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void deletePIF()}
+      onConfirmClick={deleteProductInstanceFunction}
       name={productInstanceFunction.name}
-      isProcessing={isProcessing}
+      isProcessing={deleteMutation.isPending}
     />
-    : <></>;
+  ) : (
+    <></>
+  );
 };
 
 export default ProductInstanceFunctionDeleteContainer;

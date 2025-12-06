@@ -1,30 +1,33 @@
-import { SelectCatalogSelectors, selectGroupedAndOrderedCart, SelectTaxRate, WCheckoutCartComponent } from '@wcp/wario-ux-shared';
+import { type ICatalogSelectors } from '@wcp/wario-shared';
+import { WCheckoutCartComponent } from '@wcp/wario-ux-shared/components';
+import { useCatalogSelectors, useTaxRate } from '@wcp/wario-ux-shared/query';
 
-import { SelectDiscountsApplied, SelectPaymentsApplied, SelectTaxAmount, SelectTipValue, SelectTotal } from '@/app/selectors';
-import { getCart } from '@/app/slices/WCartSlice';
-import { useAppSelector } from '@/app/useHooks';
+import { useGroupedAndOrderedCart } from '@/hooks/useDerivedState';
+import { useDiscountsApplied, useOrderTotal, usePaymentsApplied, useTaxAmount, useTipValue } from '@/hooks/useOrderTotals';
+import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
+
+import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 
 export function WCheckoutCart() {
-  //const ungroupedCart = useAppSelector(s=>getCart(s.cart.cart));
-  const cart = useAppSelector(s => selectGroupedAndOrderedCart(s, getCart(s.cart.cart)));
-  const submitToWarioResponse = useAppSelector(s => s.payment.warioResponse);
-  const TAX_RATE = useAppSelector(SelectTaxRate);
-  const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
-  const tipValue = useAppSelector(SelectTipValue);
-  const taxValue = useAppSelector(SelectTaxAmount);
-  const paymentsApplied = useAppSelector(SelectPaymentsApplied);
-  const discountsApplied = useAppSelector(SelectDiscountsApplied);
-  const total = useAppSelector(SelectTotal);
+  const cart = useGroupedAndOrderedCart();
+  const submitToWarioMutation = useSubmitOrderMutation();
+  const TAX_RATE = useTaxRate() as number;
+  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
+  const tipValue = useTipValue();
+  const taxValue = useTaxAmount();
+  const paymentsApplied = usePaymentsApplied();
+  const discountsApplied = useDiscountsApplied();
+  const total = useOrderTotal();
 
-  const selectedService = useAppSelector(s => s.fulfillment.selectedService);
+  const selectedService = useFulfillmentStore(selectSelectedService);
   if (selectedService === null) {
     return null;
   }
   return <WCheckoutCartComponent
     cart={cart}
     catalogSelectors={catalogSelectors}
-    discounts={submitToWarioResponse && submitToWarioResponse.success ? submitToWarioResponse.result.discounts : discountsApplied}
-    payments={submitToWarioResponse && submitToWarioResponse.success ? submitToWarioResponse.result.payments : paymentsApplied}
+    discounts={submitToWarioMutation.isSuccess ? submitToWarioMutation.data.result.discounts : discountsApplied}
+    payments={submitToWarioMutation.isSuccess ? submitToWarioMutation.data.result.payments : paymentsApplied}
     selectedService={selectedService}
     taxRate={TAX_RATE}
     taxValue={taxValue}

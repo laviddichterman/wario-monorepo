@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 
-import { ComputeCartSubTotal, ComputeTaxAmount, ComputeTipBasis, ComputeTipValue, DateTimeIntervalBuilder, type WOrderInstance } from "@wcp/wario-shared";
-import { getFulfillmentById, SelectCatalogSelectors, SelectTaxRate, WCheckoutCartComponent } from '@wcp/wario-ux-shared';
+import { ComputeCartSubTotal, ComputeTaxAmount, ComputeTipBasis, ComputeTipValue, type WOrderInstance } from "@wcp/wario-shared";
+import { WCheckoutCartComponent } from "@wcp/wario-ux-shared/components";
+import { useCatalogSelectors, useTaxRate } from "@wcp/wario-ux-shared/query";
 
-import { useAppSelector } from "../../../hooks/useRedux";
-import { selectFullGroupedCartInfo } from "../../../redux/store";
+import { useGroupedAndSortedCart } from "@/hooks/useOrdersQuery";
+
 
 
 export type WOrderCheckoutCartContainerProps = {
@@ -13,11 +14,9 @@ export type WOrderCheckoutCartContainerProps = {
 };
 
 export const WOrderCheckoutCartContainer = (props: WOrderCheckoutCartContainerProps) => {
-  const TAX_RATE = useAppSelector(SelectTaxRate);
-  const catalogSelectors = useAppSelector(s => SelectCatalogSelectors(s.ws));
-  const fulfillmentMaxDuration = useAppSelector(s => getFulfillmentById(s.ws.fulfillments, props.order.fulfillment.selectedService).maxDuration);
-  const serviceTimeInterval = useMemo(() => DateTimeIntervalBuilder(props.order.fulfillment, fulfillmentMaxDuration), [props.order.fulfillment, fulfillmentMaxDuration]);
-  const fullGroupedCart = useAppSelector(s => selectFullGroupedCartInfo(s, props.order.cart, serviceTimeInterval.start, props.order.fulfillment.selectedService));
+  const TAX_RATE = useTaxRate() as number;
+  const catalogSelectors = useCatalogSelectors();
+  const fullGroupedCart = useGroupedAndSortedCart(props.order);
   const cartSubtotal = useMemo(() => ComputeCartSubTotal(fullGroupedCart.map(x => x[1]).flat()), [fullGroupedCart]);
   const taxBasis = useMemo(() => ({ currency: cartSubtotal.currency, amount: cartSubtotal.amount - props.order.discounts.reduce((acc, x) => acc + x.discount.amount.amount, 0) }), [props.order, cartSubtotal]);
   const taxAmount = useMemo(() => ComputeTaxAmount(taxBasis, TAX_RATE), [taxBasis, TAX_RATE]);
@@ -25,7 +24,7 @@ export const WOrderCheckoutCartContainer = (props: WOrderCheckoutCartContainerPr
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const tipAmount = useMemo(() => ComputeTipValue(props.order.tip ?? null, tipBasis), [props.order.tip, tipBasis]);
 
-  return <WCheckoutCartComponent
+  return catalogSelectors && <WCheckoutCartComponent
     cart={fullGroupedCart}
     catalogSelectors={catalogSelectors}
     hideProductDescriptions={props.hideProductDescriptions}

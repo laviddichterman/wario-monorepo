@@ -1,6 +1,6 @@
 import type { ColorSystem } from '@mui/material/styles';
 
-import { normalizeSlotProps } from '@wcp/wario-ux-shared';
+import { normalizeSlotProps } from '@wcp/wario-ux-shared/common';
 
 import { createPaletteChannel, hexToRgbChannel } from '@/utils/color';
 import { setFont } from '@/utils/font';

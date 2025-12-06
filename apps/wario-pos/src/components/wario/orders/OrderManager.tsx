@@ -1,17 +1,13 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useEffect, useState } from "react";
 
 import { CheckCircleOutline } from "@mui/icons-material";
 import { Box, Button, Card, Tooltip, Typography } from "@mui/material";
 import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
-import { WDateUtils, type WOrderInstance } from "@wcp/wario-shared";
-import { FullScreenPulsingContainer } from "@wcp/wario-ux-shared";
+import { WDateUtils, type WOrderInstance, WOrderStatus } from "@wcp/wario-shared";
+import { FullScreenPulsingContainer } from "@wcp/wario-ux-shared/containers";
 
-import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
-
-import { pollOpenOrders, unlockOrders } from "@/redux/slices/OrdersSlice";
-import { selectEventTitleStringForOrder, selectOrdersNeedingAttention } from "@/redux/store";
+import { useConfirmOrderMutation, useOrdersQuery, useUnlockOrdersMutation } from "@/hooks/useOrdersQuery";
 
 import { TableWrapperComponent } from "../table_wrapper.component";
 
@@ -24,22 +20,23 @@ export interface OrderManagerComponentProps {
 type RowType = WOrderInstance;
 
 const EventTitle = (params: GridRenderCellParams<RowType>) => {
-  const selectEventTitleString = useAppSelector(s => selectEventTitleStringForOrder(s, params.row));
-  return <>{selectEventTitleString}</>;
+  // Simplified title generation to avoid broken Redux selector
+  const order = params.row;
+  const title = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
+  return <>{title}</>;
 }
 
 export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerComponentProps) => {
   const apiRef = useGridApiRef();
-  const currentTime = useAppSelector(s => s.ws.currentTime);
-  const orderSliceState = useAppSelector(s => s.orders.requestStatus)
-  const { getAccessTokenSilently } = useAuth0();
-  const dispatch = useAppDispatch();
+  const { data: ordersMap = {} } = useOrdersQuery(null); // Fetch for today/default
+  const unlockMutation = useUnlockOrdersMutation();
+  const confirmMutation = useConfirmOrderMutation();
 
-  //const socketAuthState = useAppSelector((s) => s.orders.status);
-  const pollOpenOrdersStatus = useAppSelector((s) => s.orders.pollingStatus);
-  const orders = useAppSelector(selectOrdersNeedingAttention);
+  const orders = Object.values(ordersMap).filter(x => x.status === WOrderStatus.OPEN);
+
   const [hasNewOrder, setHasNewOrder] = useState(orders.length > 0);
   const [suppressedNewOrderNoticeForOrder, setSuppressedNewOrderNotice] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     if (orders.filter(x => !Object.hasOwn(suppressedNewOrderNoticeForOrder, x.id)).length > 0) {
       setHasNewOrder(true);
@@ -48,28 +45,15 @@ export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerCompon
       setHasNewOrder(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orders]);
+  }, [orders.length]); // Depend on length or specific updates
+
   const suppressNotice = () => {
     setSuppressedNewOrderNotice(orders.reduce((acc, order) => ({ ...acc, [order.id]: true }), suppressedNewOrderNoticeForOrder));
     setHasNewOrder(false);
   }
 
-  useEffect(() => {
-    const pollForOrders = async () => {
-      if (pollOpenOrdersStatus !== 'PENDING') {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "read:order" } });
-        await dispatch(pollOpenOrders({ token, date: WDateUtils.formatISODate(currentTime) }));
-      }
-    }
-    void pollForOrders();
-    const timer = setInterval(() => void pollForOrders(), 30000);
-    return () => { clearInterval(timer); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTime])
-
-  const callUnlockOrders = async () => {
-    const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
-    void dispatch(unlockOrders(token));
+  const callUnlockOrders = () => {
+    unlockMutation.mutate();
   }
 
   if (hasNewOrder) {
@@ -77,7 +61,7 @@ export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerCompon
   }
   return (
     <Card>
-      <Button onClick={() => void callUnlockOrders()} >UNLOCK</Button>
+      <Button onClick={() => { callUnlockOrders(); }} disabled={unlockMutation.isPending}>UNLOCK</Button>
       <TableWrapperComponent
         title="Orders Needing Attention"
         apiRef={apiRef}
@@ -95,7 +79,7 @@ export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerCompon
               <GridActionsCellItem
                 icon={<Tooltip title="Confirm Order"><CheckCircleOutline /></Tooltip>}
                 label="Confirm Order"
-                disabled={orderSliceState === 'PENDING'}
+                disabled={confirmMutation.isPending} // Mutations handle their own loading state
                 onClick={() => { handleConfirmOrder(params.row.id); }}
                 key={`CONFIRM${params.row.id}`} />
             ]

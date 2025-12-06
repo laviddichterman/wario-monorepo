@@ -3,7 +3,7 @@ import { startTransition, useCallback, useRef, useState } from 'react';
 
 import type { Breakpoint } from '@mui/material/styles';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { mergeClasses, mergeRefs } from '@/utils';
 

@@ -18,15 +18,13 @@ import {
   ListItemText,
   TextField
 } from '@mui/material';
-import { LocalizationProvider, StaticDatePicker } from '@mui/x-date-pickers';
+import { StaticDatePicker } from '@mui/x-date-pickers';
 
 import { type FulfillmentConfig, GetNextAvailableServiceDate, type IWInterval, type PostBlockedOffToFulfillmentsRequest, WDateUtils } from "@wcp/wario-shared";
-import { getFulfillmentById, getFulfillments, SelectDateFnsAdapter, type ValSetValNamed, weakMapCreateSelector } from "@wcp/wario-ux-shared";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { type ValSetValNamed } from "@wcp/wario-ux-shared/common";
+import { useCurrentTime, useFulfillments, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from '@/config';
-import { type RootState } from "@/redux/store";
 
 const TrimOptionsBeforeDisabled = function <T extends { disabled: boolean; }>(opts: T[]) {
   const idx = opts.findIndex((elt: T) => elt.disabled);
@@ -59,16 +57,15 @@ const ServiceSelectionCheckbox = (props: ServiceSelectionCheckboxProps) => {
   )
 }
 
-const selectFulfillmentIdAndNamesWithOperatingHours = weakMapCreateSelector(
-  (s: RootState) => s.ws.fulfillments,
-  (fulfillments) => getFulfillments(fulfillments).filter(x => WDateUtils.HasOperatingHours(x.operatingHours)).map(x => ({ id: x.id, name: x.displayName }))
-)
+function useFulfillmentsWithOperatingHours() {
+  const fulfillments = useFulfillments();
+  return fulfillments.filter(x => WDateUtils.HasOperatingHours(x.operatingHours));
+}
 
-const selectSelectedFulfillments = weakMapCreateSelector(
-  (s: RootState, _selectedServices: string[]) => s.ws.fulfillments,
-  (_: RootState, selectedServices: string[]) => selectedServices,
-  (fulfillments, selectedFulfillments) => selectedFulfillments.map(x => getFulfillmentById(fulfillments, x))
-)
+function useSelectedFulfillments(selectedServices: string[]) {
+  const fulfillments = useFulfillments();
+  return useMemo(() => fulfillments.filter((v) => selectedServices.includes(v.id)), [fulfillments, selectedServices]);
+}
 
 const OptionsForDate = (fulfillments: Pick<FulfillmentConfig, "blockedOff" | "timeStep" | "leadTime" | "leadTimeOffset" | "operatingHours" | "specialHours">[], isoDate: string | null, currentTimeISO: string) => {
   if (fulfillments.length > 0 && isoDate) {
@@ -78,20 +75,20 @@ const OptionsForDate = (fulfillments: Pick<FulfillmentConfig, "blockedOff" | "ti
   return [];
 }
 
-const selectOptionsForDate = weakMapCreateSelector(
-  (s: RootState, _isoDate: string | null, selectedServices: string[]) => selectSelectedFulfillments(s, selectedServices),
-  (_s: RootState, isoDate: string | null, _selectedServices: string[]) => isoDate,
-  (s: RootState, _isoDate: string | null, _selectedServices: string[]) => formatISO(s.ws.currentTime),
-  (selectedServices, isoDate, currentTimeIsoString) => OptionsForDate(selectedServices, isoDate, currentTimeIsoString)
-)
+function useOptionsForDate(isoDate: string | null, selectedServices: string[]) {
+  const selectedFulfillments = useSelectedFulfillments(selectedServices);
+  const currentTime = useCurrentTime();
+  return useMemo(() => OptionsForDate(selectedFulfillments, isoDate, formatISO(currentTime)), [selectedFulfillments, isoDate, currentTime]);
+}
+
 
 type FulfillmentBlockOffListProps = { fId: string } & ValSetValNamed<boolean, 'isProcessing'>;
 const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const { getAccessTokenSilently } = useAuth0();
-  const filteredFulfillments = useAppSelector(selectFulfillmentIdAndNamesWithOperatingHours);
-  const fulfillmentName = useAppSelector((s: RootState) => getFulfillmentById(s.ws.fulfillments, props.fId).displayName);
-  const fulfillmentBlockOffArray = useAppSelector((s: RootState) => getFulfillmentById(s.ws.fulfillments, props.fId).blockedOff);
+  const filteredFulfillments = useFulfillmentsWithOperatingHours();
+  const fulfillmentName = useValueFromFulfillmentById(props.fId, 'displayName') ?? "";
+  const fulfillmentBlockOffArray = useValueFromFulfillmentById(props.fId, 'blockedOff') ?? [];
   const deleteBlockedOff = async (fulfillmentId: string, isoDate: string, interval: IWInterval) => {
     try {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order_config" } });
@@ -173,23 +170,19 @@ const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
   </Grid> : <></>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
-export const selectNextAvailableServiceDate = weakMapCreateSelector(
-  (s: RootState, _selectedServices: string[]) => s.ws.currentTime,
-  (s: RootState, _selectedServices: string[]) => s.ws.fulfillments,
-  (_s: RootState, selectedServices: string[]) => selectedServices,
-  (currentTime, fulfillments, selectedServices) => GetNextAvailableServiceDate(selectedServices.map(x => getFulfillmentById(fulfillments, x)), formatISO(currentTime), 0)
-);
-
+function useNextAvailableServiceDate(selectedServices: string[]) {
+  const selectedFulfillments = useSelectedFulfillments(selectedServices);
+  const currentTime = useCurrentTime();
+  return useMemo(() => GetNextAvailableServiceDate(selectedFulfillments, formatISO(currentTime), 0), [selectedFulfillments, currentTime]);
+}
 
 const DateSelector = ({ selectedDate, selectedServices, setSelectedDate }: { selectedServices: string[] } & ValSetValNamed<string | null, 'selectedDate'>) => {
-  const DateAdapter = useAppSelector(SelectDateFnsAdapter);
-  const isoCurrentDate = useAppSelector(s => formatISO(s.ws.currentTime));
-  const selectedFulfillmentInfo = useAppSelector(s => selectSelectedFulfillments(s, selectedServices));
+  const isoCurrentDate = useCurrentTime();
+  const selectedFulfillments = useSelectedFulfillments(selectedServices);
   const minDate = useMemo(() => startOfDay(isoCurrentDate), [isoCurrentDate]);
   const getOptionsForDate = useCallback((isoDate: string) =>
-    OptionsForDate(selectedFulfillmentInfo, isoDate, isoCurrentDate),
-    [selectedFulfillmentInfo, isoCurrentDate]);
+    OptionsForDate(selectedFulfillments, isoDate, formatISO(isoCurrentDate)),
+    [selectedFulfillments, isoCurrentDate]);
   const handleSetSelectedDate = useCallback((date: Date | null) => {
     if (date) {
       const isoDate = WDateUtils.formatISODate(date);
@@ -198,7 +191,7 @@ const DateSelector = ({ selectedDate, selectedServices, setSelectedDate }: { sel
       setSelectedDate(null);
     }
   }, [setSelectedDate]);
-  return (<LocalizationProvider dateAdapter={DateAdapter}>
+  return (
     <StaticDatePicker
       slotProps={{ toolbar: { hidden: true } }}
       displayStaticWrapperAs="desktop"
@@ -209,24 +202,22 @@ const DateSelector = ({ selectedDate, selectedServices, setSelectedDate }: { sel
       value={selectedDate ? parseISO(selectedDate) : null}
       onChange={(date: Date | null) => { handleSetSelectedDate(date); }}
     />
-  </LocalizationProvider>)
+  );
 }
 
 export const BlockOffComp = () => {
   const { enqueueSnackbar } = useSnackbar();
 
-  const fulfillmentIdsAndNames = useAppSelector(selectFulfillmentIdAndNamesWithOperatingHours);
-
+  const fulfillmentIdsAndNames = useFulfillmentsWithOperatingHours();
   const [selectedServices, setSelectedServices] = useState<string[]>(fulfillmentIdsAndNames.map(x => x.id));
-  const nextAvailableDate = useAppSelector(s => selectNextAvailableServiceDate(s, selectedServices));
-
+  const nextAvailableDate = useNextAvailableServiceDate(selectedServices);
   const [selectedDate, setSelectedDate] = useState<string | null>(nextAvailableDate?.selectedDate ?? null);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [endTime, setEndTime] = useState<number | null>(null);
 
   const canPostBlockedOff = useMemo(() => selectedDate !== null && startTime !== null && endTime !== null, [selectedDate, startTime, endTime]);
 
-  const timeOptions = useAppSelector(s => selectOptionsForDate(s, selectedDate, selectedServices));
+  const timeOptions = useOptionsForDate(selectedDate, selectedServices);
   const endTimeOptions = useMemo(() => startTime !== null ? TrimOptionsBeforeDisabled(timeOptions.filter(x => x.value >= startTime)) : timeOptions, [startTime, timeOptions]);
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -295,7 +286,7 @@ export const BlockOffComp = () => {
         if (response.status === 201) {
           enqueueSnackbar(`Blocked off ${IntervalToString(interval)} on
               ${format(parseISO(selectedDate), WDateUtils.ServiceDateDisplayFormat)} 
-              for services: ${selectedServices.map(fId => fulfillmentIdsAndNames.find((x) => x.id === fId)?.name).join(', ')}`)
+              for services: ${selectedServices.map(fId => fulfillmentIdsAndNames.find((x) => x.id === fId)?.displayName).join(', ')}`)
           setStartTime(null);
           setEndTime(null);
         }
@@ -328,7 +319,7 @@ export const BlockOffComp = () => {
                 fulfillmentIdsAndNames.map((x) => (
                   <Grid key={x.id} size={Math.floor(12 / fulfillmentIdsAndNames.length)}>
                     <ServiceSelectionCheckbox
-                      service_name={x.name}
+                      service_name={x.displayName}
                       selected={selectedServices.indexOf(x.id) !== -1}
                       onChange={() => { onChangeServiceSelection(x.id); }}
                     />

@@ -1,3 +1,4 @@
+import { useAtom, useSetAtom } from 'jotai';
 import { useMemo } from 'react';
 
 import AddBox from '@mui/icons-material/AddBox';
@@ -7,13 +8,12 @@ import type { SxProps, Theme } from '@mui/material/styles';
 
 import { paths } from '@/routes/paths';
 
-import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
-
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
 import CategoryTableContainer from '@/components/wario/menu/category/category_table.container';
+import CategoryDialoguesContainer from '@/components/wario/menu/category_dialogues.container';
 
+import { hideDisabledProductsAtom, openCategoryInterstitialAtom } from '@/atoms/catalog';
 import { DashboardContent } from '@/layouts/dashboard';
-import { openCategoryInterstitial, setHideDisabled } from '@/redux/slices/CatalogSlice';
 
 // ----------------------------------------------------------------------
 
@@ -23,28 +23,49 @@ type Props = {
   sx?: SxProps<Theme>;
 };
 
-
 export function CatalogCategoryProductView(_props: Props) {
-  const dispatch = useAppDispatch();
-  const hideDisabled = useAppSelector(s => s.catalog.hideDisabledProducts);
-  const toolbarActions = useMemo(() => [
-    {
-      size: 4,
-      elt: <FormControlLabel
-        sx={{ mx: 2 }}
-        key="HIDE"
-        control={<Switch
-          checked={hideDisabled}
-          onChange={e => dispatch(setHideDisabled(e.target.checked))}
-          name="Hide Disabled" />}
-        labelPlacement="end"
-        label="Hide Disabled" />
-    },
-    {
-      size: 1,
-      elt: <Tooltip key="AddNew" title="Add new..."><IconButton onClick={() => dispatch(openCategoryInterstitial())}><AddBox /></IconButton></Tooltip>
-    }
-  ], [dispatch, hideDisabled]);
+  const [hideDisabled, setHideDisabled] = useAtom(hideDisabledProductsAtom);
+  const openCategoryInterstitial = useSetAtom(openCategoryInterstitialAtom);
+
+  const toolbarActions = useMemo(
+    () => [
+      {
+        size: 4,
+        elt: (
+          <FormControlLabel
+            sx={{ mx: 2 }}
+            key="HIDE"
+            control={
+              <Switch
+                checked={hideDisabled}
+                onChange={(e) => {
+                  setHideDisabled(e.target.checked);
+                }}
+                name="Hide Disabled"
+              />
+            }
+            labelPlacement="end"
+            label="Hide Disabled"
+          />
+        ),
+      },
+      {
+        size: 1,
+        elt: (
+          <Tooltip key="AddNew" title="Add new...">
+            <IconButton
+              onClick={() => {
+                openCategoryInterstitial();
+              }}
+            >
+              <AddBox />
+            </IconButton>
+          </Tooltip>
+        ),
+      },
+    ],
+    [setHideDisabled, openCategoryInterstitial, hideDisabled],
+  );
 
   return (
     <>
@@ -58,12 +79,12 @@ export function CatalogCategoryProductView(_props: Props) {
           sx={{ mb: { xs: 3, md: 5 } }}
         />
 
-
         <Grid container spacing={2}>
           <Grid size={12}>
             <CategoryTableContainer toolbarActions={toolbarActions} />
           </Grid>
         </Grid>
+        <CategoryDialoguesContainer />
       </DashboardContent>
     </>
   );

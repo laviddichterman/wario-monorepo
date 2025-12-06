@@ -1,6 +1,6 @@
 import { TextField, type TextFieldProps } from "@mui/material";
 
-import { type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
 
 export type StringPropertyComponentProps = {
   sx?: TextFieldProps['sx'];

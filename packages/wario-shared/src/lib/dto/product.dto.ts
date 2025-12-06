@@ -66,11 +66,8 @@ export class IProductModifierDto {
   serviceDisable!: string[];
 }
 
-export class IProductDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
+export class UncommittedIProductDto {
+  //Omit<IProduct, 'id' | 'baseProductId'>;
   @ValidateNested()
   @Type(() => IMoneyDto)
   price!: IMoneyDto;
@@ -109,12 +106,18 @@ export class IProductDto {
   category_ids!: string[];
 
   @IsString()
-  @IsNotEmpty()
-  baseProductId!: string;
-
-  @IsString()
   @IsOptional()
   printerGroup!: string | null;
+}
+
+export class IProductDto extends UncommittedIProductDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  baseProductId!: string;
 }
 
 export class IProductInstanceDisplayFlagsPosDto {
@@ -191,7 +194,7 @@ export class IProductInstanceDisplayFlagsOrderDto {
   suppress_exhaustive_modifier_list!: boolean;
 }
 
-export class IProductDisplayFlagsFullDto {
+export class IProductInstanceDisplayFlagsDto {
   @ValidateNested()
   @Type(() => IProductInstanceDisplayFlagsPosDto)
   pos!: IProductInstanceDisplayFlagsPosDto;
@@ -216,14 +219,8 @@ export class ProductModifierEntryDto {
   options!: IOptionInstanceDto[];
 }
 
-export class IProductInstanceDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  productId!: string;
+export class UncommittedIProductInstanceDto {
+  // = Omit<IProductInstance, 'id' | 'productId'>;
 
   // ordinal for product matching
   @IsInt()
@@ -236,8 +233,8 @@ export class IProductInstanceDto {
   modifiers!: ProductModifierEntryDto[];
 
   @ValidateNested()
-  @Type(() => IProductDisplayFlagsFullDto)
-  displayFlags!: IProductDisplayFlagsFullDto;
+  @Type(() => IProductInstanceDisplayFlagsDto)
+  displayFlags!: IProductInstanceDisplayFlagsDto;
 
   @ValidateNested({ each: true })
   @Type(() => KeyValueDto)
@@ -254,4 +251,15 @@ export class IProductInstanceDto {
   @IsString()
   @IsNotEmpty()
   shortcode!: string;
+}
+
+export class IProductInstanceDto extends UncommittedIProductInstanceDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  productId!: string;
+
 }

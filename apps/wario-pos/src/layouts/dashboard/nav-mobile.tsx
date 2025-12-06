@@ -3,7 +3,8 @@ import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 
-import { Logo, spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
+import { Logo } from '@wcp/wario-ux-shared/components';
 
 import { usePathname } from '@/routes/hooks';
 

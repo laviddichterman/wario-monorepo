@@ -1,68 +1,60 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
 
-import { Grid } from "@mui/material";
+import { Grid } from '@mui/material';
 
-import type { IOption } from "@wcp/wario-shared";
-import { getModifierOptionById } from "@wcp/wario-ux-shared";
+import type { IOption } from '@wcp/wario-shared';
+import { useOptionById } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { useSetModifierOptionDisabledMutation } from '@/hooks/useModifierOptionMutations';
 
-import { HOST_API } from "@/config";
+import { ElementActionComponent } from '../element.action.component';
 
-import { ElementActionComponent } from "../element.action.component";
-
-import type { ModifierOptionQuickActionProps } from "./modifier_option.delete.container";
+import type { ModifierOptionQuickActionProps } from './modifier_option.delete.container';
 
 const ModifierOptionDisableContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_option = useAppSelector(s => getModifierOptionById(s.ws.modifierOptions, modifier_option_id));
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
-  const editModifierOption = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: IOption = {
-          ...modifier_option,
-          disabled: { start: 1, end: 0 }
-        };
-        const response = await fetch(`${HOST_API}/api/v1/menu/option/${modifier_option.modifierTypeId}/${modifier_option.id}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 200) {
+  const modifier_option = useOptionById(modifier_option_id) as IOption | null;
+
+  const setDisabledMutation = useSetModifierOptionDisabledMutation();
+
+  const disableModifierOption = () => {
+    if (!modifier_option || setDisabledMutation.isPending) return;
+
+    setDisabledMutation.mutate(
+      {
+        modifierTypeId: modifier_option.modifierTypeId,
+        option: modifier_option,
+        disabled: { start: 1, end: 0 },
+      },
+      {
+        onSuccess: () => {
           enqueueSnackbar(`Disabled modifier option: ${modifier_option.displayName}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(
+            `Unable to update modifier option: ${modifier_option.displayName}. Got error ${JSON.stringify(error, null, 2)}`,
+            { variant: 'error' },
+          );
+          console.error(error);
+        },
+        onSettled: () => {
           onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to update modifier option: ${modifier_option.displayName}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
+        },
+      },
+    );
   };
 
   return (
-    <ElementActionComponent
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void editModifierOption()}
-      isProcessing={isProcessing}
-      disableConfirmOn={isProcessing}
-      confirmText="Confirm"
-      body={
-        <Grid size={12}>
-          Are you sure you'd like to disable {modifier_option.displayName}?
-        </Grid>
-      }
-    />
+    modifier_option && (
+      <ElementActionComponent
+        onCloseCallback={onCloseCallback}
+        onConfirmClick={disableModifierOption}
+        isProcessing={setDisabledMutation.isPending}
+        disableConfirmOn={setDisabledMutation.isPending}
+        confirmText="Confirm"
+        body={<Grid size={12}>Are you sure you'd like to disable {modifier_option.displayName}?</Grid>}
+      />
+    )
   );
 };
 

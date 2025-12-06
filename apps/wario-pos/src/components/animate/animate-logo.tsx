@@ -3,7 +3,7 @@ import { m } from 'motion/react';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { varAlpha } from '@/utils';
 

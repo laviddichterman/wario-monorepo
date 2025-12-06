@@ -183,3 +183,28 @@ export class SeatingSectionDto {
   @IsNotEmpty()
   name!: string;
 }
+
+export class IWSettingsDto {
+  @IsNumber()
+  additional_pizza_lead_time!: number;
+
+  @IsNotEmpty()
+  config!: Record<string, number | string | boolean>;
+
+  // {
+  // SQUARE_APPLICATION_ID: String,
+  // SQUARE_LOCATION: String,
+  // DEFAULT_FULFILLMENTID: String,
+  // TIP_PREAMBLE: String,
+  // TAX_RATE: Number,
+  // ALLOW_ADVANCED: Boolean,
+  // MAX_PARTY_SIZE: Number,
+  // DELIVERY_LINK: String,
+  // DELIVERY_FEE: Number,
+  // AUTOGRAT_THRESHOLD: Number,
+  // MESSAGE_REQUEST_VEGAN: String,
+  // MESSAGE_REQUEST_HALF: String,
+  // MESSAGE_REQUEST_WELLDONE: String,
+  // MESSAGE_REQUEST_SLICING: String
+  // };
+}

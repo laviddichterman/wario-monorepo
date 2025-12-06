@@ -1,5 +1,6 @@
 import { formatDecimal, parseInteger } from "@wcp/wario-shared";
-import { CheckedNumericInput, type CheckedNumericInputProps, type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
+import { CheckedNumericInput, type CheckedNumericInputProps } from "@wcp/wario-ux-shared/components";
 
 export type IntNumericPropertyComponentProps = {
   min?: number;

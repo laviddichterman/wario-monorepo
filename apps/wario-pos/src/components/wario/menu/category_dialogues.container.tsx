@@ -1,220 +1,334 @@
-import { DialogContainer } from "@wcp/wario-ux-shared";
+import { useAtomValue, useSetAtom } from 'jotai';
 
-import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
+import { DialogContainer } from '@wcp/wario-ux-shared/containers';
+import { useBaseProductNameByProductId } from '@wcp/wario-ux-shared/query';
 
-import { closeDialogue, openCategoryAdd, openHierarchicalProductImport, openProductClassAdd, openProductImport } from '@/redux/slices/CatalogSlice';
-import { selectBaseProductName } from "@/redux/store";
+import {
+  closeDialogueAtom,
+  dialogueStateAtom,
+  openCategoryAddAtom,
+  openHierarchicalProductImportAtom,
+  openProductClassAddAtom,
+  openProductImportAtom,
+  selectedCategoryIdAtom,
+  selectedProductClassIdAtom,
+  selectedProductInstanceIdAtom,
+} from '@/atoms/catalog';
 
-import InterstitialDialog from "../interstitial.dialog.component";
+import InterstitialDialog from '../interstitial.dialog.component';
 
-import CategoryAddContainer from "./category/category.add.container";
-import CategoryDeleteContainer from "./category/category.delete.container";
-import CategoryEditContainer from "./category/category.edit.container";
-import HierarchicalProductImportContainer from "./product/hierarchical_product.import.container";
-import ProductInstanceAddContainer from "./product/instance/product_instance.add.container";
-import ProductInstanceDeleteContainer from "./product/instance/product_instance.delete.container";
-import ProductInstanceEditContainer from "./product/instance/product_instance.edit.container";
-import ProductAddContainer from "./product/product.add.container";
-import ProductCopyContainer from "./product/product.copy.container";
-import ProductDeleteContainer from "./product/product.delete.container";
-import ProductDisableContainer from "./product/product.disable.container";
-import ProductDisableUntilEodContainer from "./product/product.disable_until_eod.container";
-import ProductEditContainer from "./product/product.edit.container";
-import ProductEnableContainer from "./product/product.enable.container";
-import ProductImportContainer from "./product/product.import.container";
+import CategoryAddContainer from './category/category.add.container';
+import CategoryDeleteContainer from './category/category.delete.container';
+import CategoryEditContainer from './category/category.edit.container';
+import HierarchicalProductImportContainer from './product/hierarchical_product.import.container';
+import ProductInstanceAddContainer from './product/instance/product_instance.add.container';
+import ProductInstanceDeleteContainer from './product/instance/product_instance.delete.container';
+import ProductInstanceEditContainer from './product/instance/product_instance.edit.container';
+import ProductAddContainer from './product/product.add.container';
+import { ProductCopyContainer } from './product/product.copy.container';
+import ProductDeleteContainer from './product/product.delete.container';
+import ProductDisableContainer from './product/product.disable.container';
+import ProductDisableUntilEodContainer from './product/product.disable_until_eod.container';
+import ProductEditContainer from './product/product.edit.container';
+import ProductEnableContainer from './product/product.enable.container';
+import ProductImportContainer from './product/product.import.container';
+
+const ProductInstanceAddDialogue = () => {
+  const selectedProductClassId = useAtomValue(selectedProductClassIdAtom);
+  const closeDialogue = useSetAtom(closeDialogueAtom);
+  const dialogueState = useAtomValue(dialogueStateAtom);
+
+  // Only fetch base name when dialog is open and we have a valid ID
+  const isOpen = dialogueState === 'ProductInstanceAdd' && selectedProductClassId !== null;
+  const baseName = useBaseProductNameByProductId(isOpen ? selectedProductClassId : '');
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <DialogContainer
+      maxWidth={'xl'}
+      title={`Add Product Instance for: ${baseName}`}
+      onClose={() => {
+        closeDialogue();
+      }}
+      open={true}
+      innerComponent={
+        <ProductInstanceAddContainer
+          onCloseCallback={() => {
+            closeDialogue();
+          }}
+          parent_product_id={selectedProductClassId}
+        />
+      }
+    />
+  );
+};
 
 const CategoryDialoguesContainer = () => {
-  const dispatch = useAppDispatch();
-  const dialogueState = useAppSelector(s => s.catalog.dialogueState);
-  const selectedCategoryId = useAppSelector(s => s.catalog.selectedCategoryId);
-  const selectedProductClassId = useAppSelector(s => s.catalog.selectedProductClassId);
-  const selectedProductInstanceId = useAppSelector(s => s.catalog.selectedProductInstanceId);
-  const selectedProductClassBaseProductInstanceName = useAppSelector(s => s.catalog.selectedProductClassId ? selectBaseProductName(s, s.catalog.selectedProductClassId) : "");
+  const dialogueState = useAtomValue(dialogueStateAtom);
+  const selectedCategoryId = useAtomValue(selectedCategoryIdAtom);
+  const selectedProductClassId = useAtomValue(selectedProductClassIdAtom);
+  const selectedProductInstanceId = useAtomValue(selectedProductInstanceIdAtom);
+
+  const closeDialogue = useSetAtom(closeDialogueAtom);
+  const openCategoryAdd = useSetAtom(openCategoryAddAtom);
+  const openProductClassAdd = useSetAtom(openProductClassAddAtom);
+  const openProductImport = useSetAtom(openProductImportAtom);
+  const openHierarchicalProductImport = useSetAtom(openHierarchicalProductImportAtom);
+
   return (
     <>
       <InterstitialDialog
-        dialogTitle={"Add new..."}
+        dialogTitle={'Add new...'}
         options={[
           {
-            title: "Add Category",
-            cb: () => { dispatch(openCategoryAdd()) },
+            title: 'Add Category',
+            cb: () => {
+              openCategoryAdd();
+            },
             open: dialogueState === 'CategoryAdd',
-            onClose: () => dispatch(closeDialogue()),
+            onClose: () => {
+              closeDialogue();
+            },
             component: (
               <CategoryAddContainer
-                onCloseCallback={() => { dispatch(closeDialogue()) }}
+                onCloseCallback={() => {
+                  closeDialogue();
+                }}
               />
             ),
           },
           {
-            title: "Add Product",
-            cb: () => { dispatch(openProductClassAdd()) },
+            title: 'Add Product',
+            cb: () => {
+              openProductClassAdd();
+            },
             open: dialogueState === 'ProductAdd',
-            onClose: () => dispatch(closeDialogue()),
+            onClose: () => {
+              closeDialogue();
+            },
             component: (
               <ProductAddContainer
-                onCloseCallback={() => { dispatch(closeDialogue()) }}
+                onCloseCallback={() => {
+                  closeDialogue();
+                }}
               />
             ),
           },
           {
-            title: "Import Products",
-            cb: () => { dispatch(openProductImport()) },
+            title: 'Import Products',
+            cb: () => {
+              openProductImport();
+            },
             open: dialogueState === 'ProductImport',
-            onClose: () => dispatch(closeDialogue()),
+            onClose: () => {
+              closeDialogue();
+            },
             component: (
               <ProductImportContainer
-                onCloseCallback={() => { dispatch(closeDialogue()) }}
+                onCloseCallback={() => {
+                  closeDialogue();
+                }}
               />
             ),
           },
           {
-            title: "Import Hierarchical Products",
-            cb: () => { dispatch(openHierarchicalProductImport()) },
+            title: 'Import Hierarchical Products',
+            cb: () => {
+              openHierarchicalProductImport();
+            },
             open: dialogueState === 'HierarchicalProductImport',
-            onClose: () => dispatch(closeDialogue()),
+            onClose: () => {
+              closeDialogue();
+            },
             component: (
               <HierarchicalProductImportContainer
-                onCloseCallback={() => { dispatch(closeDialogue()) }}
+                onCloseCallback={() => {
+                  closeDialogue();
+                }}
               />
             ),
           },
         ]}
-        onClose={() => dispatch(closeDialogue())}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'CategoryInterstitial'}
       />
       <DialogContainer
-        title={"Edit Category"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Edit Category'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'CategoryEdit'}
         innerComponent={
-          selectedCategoryId !== null && <CategoryEditContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            categoryId={selectedCategoryId}
-          />
+          selectedCategoryId !== null && (
+            <CategoryEditContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              categoryId={selectedCategoryId}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Delete Category"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Delete Category'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'CategoryDelete'}
         innerComponent={
-          selectedCategoryId !== null && <CategoryDeleteContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            categoryId={selectedCategoryId}
-          />
+          selectedCategoryId !== null && (
+            <CategoryDeleteContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              categoryId={selectedCategoryId}
+            />
+          )
         }
       />
       <DialogContainer
-        maxWidth={"xl"}
-        title={"Edit Product"}
-        onClose={() => dispatch(closeDialogue())}
+        maxWidth={'xl'}
+        title={'Edit Product'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductEdit'}
         innerComponent={
-          selectedProductClassId !== null &&
-          <ProductEditContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_id={selectedProductClassId}
-          />
+          selectedProductClassId !== null && (
+            <ProductEditContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_id={selectedProductClassId}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Disable Product Until End-of-Day"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Disable Product Until End-of-Day'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductDisableUntilEod'}
         innerComponent={
-          selectedProductClassId !== null &&
-          <ProductDisableUntilEodContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_id={selectedProductClassId}
-          />
+          selectedProductClassId !== null && (
+            <ProductDisableUntilEodContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_id={selectedProductClassId}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Disable Product"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Disable Product'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductDisable'}
         innerComponent={
-          selectedProductClassId !== null &&
-          <ProductDisableContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_id={selectedProductClassId}
-          />
+          selectedProductClassId !== null && (
+            <ProductDisableContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_id={selectedProductClassId}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Enable Product"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Enable Product'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductEnable'}
         innerComponent={
-          selectedProductClassId !== null &&
-          <ProductEnableContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_id={selectedProductClassId}
-          />
+          selectedProductClassId !== null && (
+            <ProductEnableContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_id={selectedProductClassId}
+            />
+          )
         }
       />
       <DialogContainer
-        maxWidth={"xl"}
-        title={"Copy Product"}
-        onClose={() => dispatch(closeDialogue())}
+        maxWidth={'xl'}
+        title={'Copy Product'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductCopy'}
         innerComponent={
-          selectedProductClassId !== null &&
-          <ProductCopyContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_id={selectedProductClassId}
-          />
+          selectedProductClassId !== null && (
+            <ProductCopyContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_id={selectedProductClassId}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Delete Product"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Delete Product'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductDelete'}
         innerComponent={
-          selectedProductClassId !== null &&
-          <ProductDeleteContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_id={selectedProductClassId}
-          />
+          selectedProductClassId !== null && (
+            <ProductDeleteContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_id={selectedProductClassId}
+            />
+          )
         }
       />
+      <ProductInstanceAddDialogue />
       <DialogContainer
-        maxWidth={"xl"}
-        title={`Add Product Instance for: ${selectedProductClassBaseProductInstanceName}`}
-        onClose={() => dispatch(closeDialogue())}
-        open={dialogueState === 'ProductInstanceAdd'}
-        innerComponent={
-          selectedProductClassId !== null &&
-          <ProductInstanceAddContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            parent_product_id={selectedProductClassId}
-          />
-        }
-      />
-      <DialogContainer
-        maxWidth={"xl"}
-        title={"Edit Product Instance"}
-        onClose={() => dispatch(closeDialogue())}
+        maxWidth={'xl'}
+        title={'Edit Product Instance'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductInstanceEdit'}
         innerComponent={
-          selectedProductInstanceId !== null &&
-          <ProductInstanceEditContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_instance_id={selectedProductInstanceId}
-          />
+          selectedProductInstanceId !== null && (
+            <ProductInstanceEditContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_instance_id={selectedProductInstanceId}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Delete Product Instance"}
-        onClose={() => dispatch(closeDialogue())}
+        title={'Delete Product Instance'}
+        onClose={() => {
+          closeDialogue();
+        }}
         open={dialogueState === 'ProductInstanceDelete'}
         innerComponent={
-          selectedProductInstanceId !== null &&
-          <ProductInstanceDeleteContainer
-            onCloseCallback={() => { dispatch(closeDialogue()) }}
-            product_instance_id={selectedProductInstanceId}
-          />
+          selectedProductInstanceId !== null && (
+            <ProductInstanceDeleteContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              product_instance_id={selectedProductInstanceId}
+            />
+          )
         }
       />
     </>

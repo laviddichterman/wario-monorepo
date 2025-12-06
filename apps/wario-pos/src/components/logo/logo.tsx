@@ -2,7 +2,8 @@ import type { LinkProps } from '@mui/material/Link';
 import Link from '@mui/material/Link';
 import { styled } from '@mui/material/styles';
 
-import { LogoSVG, spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
+import { LogoSVG } from '@wcp/wario-ux-shared/components';
 
 import { RouterLink } from '@/routes/components';
 

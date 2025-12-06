@@ -43,6 +43,17 @@ export class ConstModifierQualifierLiteralExpressionDto {
   value!: OptionQualifier;
 }
 
+/**
+ * Discriminated union type for constant literal expressions.
+ * Used as the inner expression type for ConstLiteral abstract expressions.
+ */
+export type IConstLiteralExpressionDto =
+  | ConstStringLiteralExpressionDto
+  | ConstNumberLiteralExpressionDto
+  | ConstBooleanLiteralExpressionDto
+  | ConstModifierPlacementLiteralExpressionDto
+  | ConstModifierQualifierLiteralExpressionDto;
+
 // Product Metadata Expression
 export class ProductMetadataExpressionDto {
   @IsEnum(MetadataField)
@@ -102,7 +113,7 @@ export class ILogicalExpressionDto<T> {
 export class AbstractExpressionConstLiteralDto {
   @ValidateNested()
   @Type(() => Object)
-  expr!: ConstStringLiteralExpressionDto | ConstNumberLiteralExpressionDto | ConstBooleanLiteralExpressionDto | ConstModifierPlacementLiteralExpressionDto | ConstModifierQualifierLiteralExpressionDto;
+  expr!: IConstLiteralExpressionDto;
 
   @IsEnum(ProductInstanceFunctionType)
   discriminator!: ProductInstanceFunctionType.ConstLiteral;
@@ -115,6 +126,24 @@ export class AbstractExpressionProductMetadataDto {
 
   @IsEnum(ProductInstanceFunctionType)
   discriminator!: ProductInstanceFunctionType.ProductMetadata;
+}
+
+export class AbstractExpressionIfElseExpressionDto {
+  @ValidateNested()
+  @Type(() => IIfElseExpressionDto)
+  expr!: IIfElseExpressionDto<IAbstractExpressionDto>;
+
+  @IsEnum(ProductInstanceFunctionType)
+  discriminator!: ProductInstanceFunctionType.IfElse;
+}
+
+export class AbstractExpressionLogicalExpressionDto {
+  @ValidateNested()
+  @Type(() => ILogicalExpressionDto)
+  expr!: ILogicalExpressionDto<IAbstractExpressionDto>;
+
+  @IsEnum(ProductInstanceFunctionType)
+  discriminator!: ProductInstanceFunctionType.Logical;
 }
 
 export class AbstractExpressionModifierPlacementExpressionDto {
@@ -135,6 +164,18 @@ export class AbstractExpressionHasAnyOfModifierExpressionDto {
   discriminator!: ProductInstanceFunctionType.HasAnyOfModifierType;
 }
 
+/**
+ * Discriminated union type for product instance abstract expressions.
+ * The discriminator field is ProductInstanceFunctionType enum.
+ */
+export type IAbstractExpressionDto =
+  | AbstractExpressionConstLiteralDto
+  | AbstractExpressionProductMetadataDto
+  | AbstractExpressionIfElseExpressionDto
+  | AbstractExpressionLogicalExpressionDto
+  | AbstractExpressionModifierPlacementExpressionDto
+  | AbstractExpressionHasAnyOfModifierExpressionDto;
+
 export class IProductInstanceFunctionDto {
   @IsString()
   @IsNotEmpty()
@@ -142,7 +183,7 @@ export class IProductInstanceFunctionDto {
 
   @ValidateNested()
   @Type(() => Object)
-  expression!: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  expression!: IAbstractExpressionDto;
 
   @IsString()
   @IsNotEmpty()
@@ -153,11 +194,38 @@ export class IProductInstanceFunctionDto {
 export class AbstractOrderExpressionConstLiteralDto {
   @ValidateNested()
   @Type(() => Object)
-  expr!: ConstStringLiteralExpressionDto | ConstNumberLiteralExpressionDto | ConstBooleanLiteralExpressionDto | ConstModifierPlacementLiteralExpressionDto | ConstModifierQualifierLiteralExpressionDto;
+  expr!: IConstLiteralExpressionDto;
 
   @IsEnum(OrderInstanceFunctionType)
   discriminator!: OrderInstanceFunctionType.ConstLiteral;
 }
+
+export class AbstractOrderExpressionIfElseExpressionDto {
+  @ValidateNested()
+  @Type(() => IIfElseExpressionDto)
+  expr!: IIfElseExpressionDto<IAbstractOrderExpressionDto>;
+
+  @IsEnum(OrderInstanceFunctionType)
+  discriminator!: OrderInstanceFunctionType.IfElse;
+}
+
+export class AbstractOrderExpressionLogicalExpressionDto {
+  @ValidateNested()
+  @Type(() => ILogicalExpressionDto)
+  expr!: ILogicalExpressionDto<IAbstractOrderExpressionDto>;
+
+  @IsEnum(OrderInstanceFunctionType)
+  discriminator!: OrderInstanceFunctionType.Logical;
+}
+
+/**
+ * Discriminated union type for order instance abstract expressions.
+ * The discriminator field is OrderInstanceFunctionType enum.
+ */
+export type IAbstractOrderExpressionDto =
+  | AbstractOrderExpressionConstLiteralDto
+  | AbstractOrderExpressionIfElseExpressionDto
+  | AbstractOrderExpressionLogicalExpressionDto;
 
 export class OrderInstanceFunctionDto {
   @IsString()
@@ -166,7 +234,7 @@ export class OrderInstanceFunctionDto {
 
   @ValidateNested()
   @Type(() => Object)
-  expression!: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  expression!: IAbstractOrderExpressionDto;
 
   @IsString()
   @IsNotEmpty()

@@ -86,7 +86,12 @@
     "typescript.preferences.importModuleSpecifier": "non-relative",
     // If you want to ensure VS Code uses a workspace TS 5.9+:
     // (Pick one of the options in section 3 below; leave commented if using VS Code's built-in TS)
-    "typescript.tsdk": "root/packages/wario-shared/node_modules/typescript/lib"
+    "typescript.tsdk": "root/packages/wario-shared/node_modules/typescript/lib",
+    "cSpell.words": [
+      "autograt",
+      "Autogratuity",
+      "WARIO"
+    ]
   },
   "launch": {
     "version": "0.2.0",

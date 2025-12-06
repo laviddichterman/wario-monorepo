@@ -8,6 +8,7 @@ import perfectionist from "eslint-plugin-perfectionist";
 import pluginQuery from '@tanstack/eslint-plugin-query'
 import globals from 'globals';
 import { defineConfig } from "eslint/config";
+import eslintConfigPrettier from "eslint-config-prettier";
 
 const basicRules = () => {
   return {
@@ -25,7 +26,13 @@ const basicRules = () => {
       { allowConstantExport: true },
     ],
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "@typescript-eslint/no-extraneous-class": [
+      "error",
+      {
+        "allowWithDecorator": true
+      }
+    ]
   };
 };
 
@@ -165,5 +172,6 @@ export default defineConfig([
     ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**", "**/node_modules/**", "**/eslint.config.*"],
   },
   tsConfig,
-  packageJsonConfig
+  packageJsonConfig,
+  eslintConfigPrettier,
 ]);

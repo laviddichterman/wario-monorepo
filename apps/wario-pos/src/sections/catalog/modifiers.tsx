@@ -4,10 +4,10 @@ import type { SxProps, Theme } from '@mui/material/styles';
 import { paths } from '@/routes/paths';
 
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
+import ModifierDialoguesContainer from '@/components/wario/menu/modifier_dialogues.container';
 import ModifierTypeTableContainer from '@/components/wario/menu/modifier_type/modifier_type_table.container';
 
 import { DashboardContent } from '@/layouts/dashboard';
-
 // ----------------------------------------------------------------------
 
 type Props = {
@@ -15,7 +15,6 @@ type Props = {
   description?: string;
   sx?: SxProps<Theme>;
 };
-
 
 export function CatalogModifierView(_props: Props) {
   return (
@@ -36,6 +35,7 @@ export function CatalogModifierView(_props: Props) {
             <ModifierTypeTableContainer />
           </Grid>
         </Grid>
+        <ModifierDialoguesContainer />
       </DashboardContent>
     </>
   );

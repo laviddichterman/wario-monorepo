@@ -7,7 +7,7 @@ import { styled } from '@mui/material/styles';
 import type { TypographyProps } from '@mui/material/Typography';
 import Typography from '@mui/material/Typography';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { mergeClasses } from '@/utils/classes';
 

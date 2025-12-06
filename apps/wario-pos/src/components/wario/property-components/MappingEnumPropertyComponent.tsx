@@ -2,7 +2,7 @@ import { kebabCase, snakeCase, startCase } from "es-toolkit/compat";
 
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 
-import { type ValSetVal } from "@wcp/wario-ux-shared";
+import { type ValSetVal } from "@wcp/wario-ux-shared/common";
 
 export type MappingEnumPropertyComponentProps<TEnum> = {
   options: Record<string, TEnum>;

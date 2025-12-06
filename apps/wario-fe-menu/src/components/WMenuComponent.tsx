@@ -1,5 +1,4 @@
-import { createSelector } from '@reduxjs/toolkit';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import TabContext from '@mui/lab/TabContext';
@@ -12,67 +11,33 @@ import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Typography, { type TypographyProps } from '@mui/material/Typography';
 
-import { CategoryDisplay, WDateUtils } from '@wcp/wario-shared';
-import { getProductInstanceById, LoadingScreen, type ProductCategoryFilter, scrollToElementOffsetAfterDelay, SelectDefaultFulfillmentId, SelectParentProductEntryFromProductInstanceId, SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory, SelectProductMetadata, Separator } from '@wcp/wario-ux-shared';
+import { CategoryDisplay, type IProductInstanceDto } from '@wcp/wario-shared';
+import { scrollToElementOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
+import { useCategoryNameFromCategoryById, useProductEntryById, useProductInstanceById, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
+import { Separator } from '@wcp/wario-ux-shared/styled';
 
-import { setService } from '../app/slices/WFulfillmentSlice';
-import { GetNextAvailableServiceDateTimeForMenu, type RootState, SelectMenuCategoryId, SelectMenuFooterFromCategoryById, SelectMenuNameFromCategoryById, SelectMenuNestingFromCategoryById, SelectMenuSubtitleFromCategoryById } from '../app/store';
-import { useAppDispatch, useAppSelector } from "../app/useHooks";
+import { useMenuCategoryId, usePopulatedSubcategoryIdsInCategoryForNextAvailableTime, useProductInstanceIdsInCategoryForNextAvailableTime, useProductMetadataForMenu } from '@/hooks/useQuery';
 
 import { WMenuDataGrid } from './WMenuTableComponent';
 import { WModifiersComponent } from './WModifiersComponent';
 import { ProductDisplay } from './WProductComponent';
-
-export const SelectProductMetadataForMenu = createSelector(
-  (s: RootState, productInstanceId: string) => getProductInstanceById(s.ws.productInstances, productInstanceId),
-  (s: RootState, _: string) => WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTimeForMenu(s)),
-  (s: RootState, _: string) => SelectDefaultFulfillmentId(s),
-  (s: RootState, _: string) => s.ws,
-  (_s: RootState, productInstanceId: string) => productInstanceId,
-  (productInstance, service_time, fulfillmentId, socketState, _productInstanceId) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return SelectProductMetadata(socketState, productInstance.productId, productInstance.modifiers, service_time, fulfillmentId!);
-  }
-)
-
-export const SelectPopulatedSubcategoryIdsInCategoryForNextAvailableTime = createSelector(
-  (s: RootState, _categoryId: string, _filter: ProductCategoryFilter) => s,
-  (_s: RootState, categoryId: string, _filter: ProductCategoryFilter) => categoryId,
-  (_s: RootState, _categoryId: string, filter: ProductCategoryFilter) => filter,
-  (s: RootState, _categoryId: string, _filter: ProductCategoryFilter) => SelectDefaultFulfillmentId(s),
-  (s: RootState, _: string, _filter: ProductCategoryFilter) => WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTimeForMenu(s)),
-  (s, categoryId, filter, fulfillmentId, nextAvailableTime) => {
-    return fulfillmentId !== null ? SelectPopulatedSubcategoryIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, filter, nextAvailableTime, fulfillmentId) : [];
-  }
-);
-
-export const SelectProductInstanceIdsInCategoryForNextAvailableTime = createSelector(
-  (s: RootState, _categoryId: string, _filter: ProductCategoryFilter) => s,
-  (_s: RootState, categoryId: string, _filter: ProductCategoryFilter) => categoryId,
-  (_s: RootState, _categoryId: string, filter: ProductCategoryFilter) => filter,
-  (s: RootState, _categoryId: string, _filter: ProductCategoryFilter) => SelectDefaultFulfillmentId(s),
-  (s: RootState, _: string, _filter: ProductCategoryFilter) => WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTimeForMenu(s)),
-  (s, categoryId, filter, fulfillmentId, nextAvailableTime) => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, filter, nextAvailableTime, fulfillmentId!);
-  }
-);
 
 
 interface WMenuDisplayProps { categoryId: string; }
 
 
 function MenuNameTypography({ categoryId, ...props }: WMenuDisplayProps & TypographyProps) {
-  const menuName = useAppSelector(s => SelectMenuNameFromCategoryById(s.ws.categories, categoryId));
+  const menuName = useCategoryNameFromCategoryById(categoryId);
   return <Typography {...props} dangerouslySetInnerHTML={{ __html: menuName }} />
 }
 
 function WMenuProductInstanceDisplay({ productInstanceId }: { productInstanceId: string; }) {
-  const product = useAppSelector(s => getProductInstanceById(s.ws.productInstances, productInstanceId));
-  const productClass = useAppSelector(s => SelectParentProductEntryFromProductInstanceId(s.ws, productInstanceId));
-  const productMetadata = useAppSelector(s => SelectProductMetadataForMenu(s, productInstanceId));
+  const product = useProductInstanceById(productInstanceId) as IProductInstanceDto;
+  const productClass = useProductEntryById(product.productId);
+  const productMetadata = useProductMetadataForMenu(productInstanceId);
 
-  return productClass ?
+  return productClass && productMetadata ?
     <Box sx={{ pt: 4 }}>
       <ProductDisplay
         description
@@ -88,9 +53,9 @@ function WMenuProductInstanceDisplay({ productInstanceId }: { productInstanceId:
 }
 
 function WMenuSection({ categoryId }: WMenuDisplayProps) {
-  const subtitle = useAppSelector(s => SelectMenuSubtitleFromCategoryById(s.ws.categories, categoryId));
-  const footnotes = useAppSelector(s => SelectMenuFooterFromCategoryById(s.ws.categories, categoryId));
-  const productsInstanceIds = useAppSelector(s => SelectProductInstanceIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
+  const subtitle = useValueFromCategoryById(categoryId, 'subheading');
+  const footnotes = useValueFromCategoryById(categoryId, 'footnotes');
+  const productsInstanceIds = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   return (
     // TODO: need to fix the location of the menu subtitle
     <Box sx={{ pt: 0 }}>
@@ -111,8 +76,8 @@ function WMenuSection({ categoryId }: WMenuDisplayProps) {
 let WMenuRecursive: ({ categoryId }: WMenuDisplayProps) => React.JSX.Element;
 
 function WMenuAccordion({ categoryId }: WMenuDisplayProps) {
-  const hasProductsToDisplay = useAppSelector(s => SelectProductInstanceIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu').length > 0);
-  const populatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
+  const productsToDisplay = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
+  const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   const [activePanel, setActivePanel] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
   const toggleAccordion = useCallback((event: React.SyntheticEvent, i: number) => {
@@ -129,6 +94,7 @@ function WMenuAccordion({ categoryId }: WMenuDisplayProps) {
     setIsExpanded(true);
     scrollToElementOffsetAfterDelay(ref, 450, 'start');
   }, [activePanel, isExpanded]);
+  const hasProductsToDisplay = productsToDisplay.length > 0;
   return (
     <Box>
       {hasProductsToDisplay && (
@@ -153,9 +119,11 @@ function WMenuAccordion({ categoryId }: WMenuDisplayProps) {
 
 
 function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
-  const populatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
-  const hasProductsToDisplay = useAppSelector(s => SelectProductInstanceIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu').length > 0);
-  const menuName = useAppSelector(s => SelectMenuNameFromCategoryById(s.ws.categories, categoryId));
+  const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
+  const productsToDisplay = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
+  const hasProductsToDisplay = productsToDisplay.length > 0;
+
+  const menuName = useCategoryNameFromCategoryById(categoryId);
   const [active, setActive] = useState<string>(populatedSubcategories[0]);
   return (
     <Box>
@@ -217,7 +185,7 @@ function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
 }
 
 function WMenuFlat({ categoryId }: WMenuDisplayProps) {
-  const populatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu'));
+  const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   return (
     <Box>
       {populatedSubcategories.map((subSection) => (
@@ -232,8 +200,10 @@ function WMenuFlat({ categoryId }: WMenuDisplayProps) {
 }
 
 WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
-  const nesting = useAppSelector(s => SelectMenuNestingFromCategoryById(s.ws.categories, categoryId));
-  const hasPopulatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategoryForNextAvailableTime(s, categoryId, 'Menu').length > 0);
+  const nesting = useValueFromCategoryById(categoryId, 'display_flags')?.nesting || CategoryDisplay.FLAT;
+  const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
+
+  const hasPopulatedSubcategories = populatedSubcategories.length > 0;
   switch (nesting) {
     case CategoryDisplay.TAB:
       return hasPopulatedSubcategories ? <WMenuTabbed categoryId={categoryId} /> : <WMenuFlat categoryId={categoryId} />;
@@ -252,22 +222,14 @@ WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
   }
 }
 
+
+
 export default function WMenuComponent() {
-  const dispatch = useAppDispatch();
+  const MENU_DATA = useMenuCategoryId();
 
-  const FulfillmentId = useAppSelector(SelectDefaultFulfillmentId);
-  // const currentTime = useAppSelector(s=>WDateUtils.ComputeServiceDateTime(GetNextAvailableServiceDateTimeForMenu(s)));
-  // NOTE THIS WILL BE NULL UNTIL WE ASSIGN A FULFILLMENT
-  const MENU_CATID = useAppSelector(SelectMenuCategoryId);
-  useEffect(() => {
-    if (FulfillmentId !== null) {
-      dispatch(setService(FulfillmentId));
-    }
-  }, [dispatch, FulfillmentId]);
-
-  if (!MENU_CATID) {
+  if (!MENU_DATA) {
     return <LoadingScreen />;
   }
   // console.log(`${WDateUtils.formatISODate(currentTime)} ${WDateUtils.MinutesToPrintTime(WDateUtils.ComputeFulfillmentTime(currentTime).selectedTime)}`);
-  return (<WMenuRecursive categoryId={MENU_CATID} />);
+  return (<WMenuRecursive categoryId={MENU_DATA} />);
 }

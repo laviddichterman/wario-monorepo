@@ -1,75 +1,88 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useAtom, useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import type { PrinterGroup } from "@wcp/wario-shared";
+import type { PrinterGroup } from '@wcp/wario-shared';
 
-import { useAppDispatch } from "@/hooks/useRedux";
+import { useEditPrinterGroupMutation, usePrinterGroupById } from '@/hooks/usePrinterGroupsQuery';
 
-import { HOST_API } from "@/config";
-import { queryPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
-import PrinterGroupComponent from "./PrinterGroupComponent";
-import type { PrinterGroupEditProps } from "./PrinterGroupComponent";
+import {
+  fromPrinterGroupEntity,
+  printerGroupFormAtom,
+  printerGroupFormProcessingAtom,
+  toPrinterGroupApiBody,
+} from '@/atoms/forms/printerGroupFormAtoms';
 
-const PrinterGroupEditContainer = ({ printerGroup, onCloseCallback }: PrinterGroupEditProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-  const dispatch = useAppDispatch();
-  const [name, setName] = useState(printerGroup.name);
-  const [singleItemPerTicket, setSingleItemPerTicket] = useState(printerGroup.singleItemPerTicket);
-  const [externalIds, setExternalIds] = useState(printerGroup.externalIDs);
-  const [isExpo, setIsExpo] = useState(printerGroup.isExpo);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+import type { PrinterGroupEditProps } from './PrinterGroupComponent';
+import { PrinterGroupComponent } from './PrinterGroupComponent';
 
-  const editCategory = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<PrinterGroup, "id"> = {
-          name,
-          externalIDs: externalIds,
-          isExpo,
-          singleItemPerTicket
-        };
-        const response = await fetch(`${HOST_API}/api/v1/menu/printergroup/${printerGroup.id}`, {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Updated printer group: ${name}.`);
-          void dispatch(queryPrinterGroups(token));
-          onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to update printer group: ${name}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
-  };
+// Create null guard at module level to follow Rules of Hooks
+const PrinterGroupNullGuard = createNullGuard(usePrinterGroupById);
 
+const PrinterGroupEditContainer = ({ printerGroupId, onCloseCallback }: PrinterGroupEditProps) => {
   return (
-    <PrinterGroupComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void editCategory()}
-      isProcessing={isProcessing}
-      name={name}
-      setName={setName}
-      isExpo={isExpo}
-      setIsExpo={setIsExpo}
-      singleItemPerTicket={singleItemPerTicket}
-      setSingleItemPerTicket={setSingleItemPerTicket}
-      externalIds={externalIds}
-      setExternalIds={setExternalIds}
+    <PrinterGroupNullGuard
+      id={printerGroupId}
+      child={(printerGroup) => (
+        <PrinterGroupEditContainerInner printerGroup={printerGroup} onCloseCallback={onCloseCallback} />
+      )}
     />
+  );
+};
+
+const PrinterGroupEditContainerInner = ({
+  printerGroup,
+  onCloseCallback,
+}: {
+  printerGroup: PrinterGroup;
+  onCloseCallback: () => void;
+}) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const editMutation = useEditPrinterGroupMutation();
+
+  const setFormState = useSetAtom(printerGroupFormAtom);
+  const [isProcessing, setIsProcessing] = useAtom(printerGroupFormProcessingAtom);
+
+  useEffect(() => {
+    setFormState(fromPrinterGroupEntity(printerGroup));
+    return () => {
+      setFormState(null);
+    };
+  }, [printerGroup, setFormState]);
+
+  const editPrinterGroup = () => {
+    setFormState((current) => {
+      if (!current || isProcessing) return current;
+
+      setIsProcessing(true);
+      const body = toPrinterGroupApiBody(current);
+
+      editMutation.mutate(
+        { ...body, id: printerGroup.id },
+        {
+          onSuccess: () => {
+            enqueueSnackbar(`Updated printer group: ${current.name}.`);
+          },
+          onError: (error) => {
+            enqueueSnackbar(
+              `Unable to update printer group: ${current.name}. Got error ${JSON.stringify(error, null, 2)}`,
+              { variant: 'error' },
+            );
+            console.error(error);
+          },
+          onSettled: () => {
+            setIsProcessing(false);
+            onCloseCallback();
+          },
+        },
+      );
+      return current;
+    });
+  };
+  return (
+    <PrinterGroupComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={editPrinterGroup} />
   );
 };
 

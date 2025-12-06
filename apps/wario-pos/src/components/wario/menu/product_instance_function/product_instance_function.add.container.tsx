@@ -1,64 +1,67 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import { type IAbstractExpression, type IProductInstanceFunction } from "@wcp/wario-shared";
+import { useAddProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
 
-import { HOST_API } from "@/config";
+import {
+  DEFAULT_PRODUCT_INSTANCE_FUNCTION_FORM,
+  productInstanceFunctionFormAtom,
+  useProductInstanceFunctionForm,
+} from '@/atoms/forms/productInstanceFunctionFormAtoms';
 
-import ProductInstanceFunctionComponent from "./product_instance_function.component";
+import ProductInstanceFunctionFormComponent from './product_instance_function.component';
 
 interface ProductInstanceFunctionAddContainerProps {
   onCloseCallback: VoidFunction;
 }
+
 const ProductInstanceFunctionAddContainer = ({ onCloseCallback }: ProductInstanceFunctionAddContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
+  const addMutation = useAddProductInstanceFunctionMutation();
 
-  const [functionName, setFunctionName] = useState("");
-  const [expression, setExpression] = useState<IAbstractExpression | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const setForm = useSetAtom(productInstanceFunctionFormAtom);
+  const { form, isValid } = useProductInstanceFunctionForm();
 
-  const addProductInstanceFunction = async () => {
-    if (!isProcessing && expression != null) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<IProductInstanceFunction, "id"> = {
-          name: functionName,
-          expression
-        };
-        const response = await fetch(`${HOST_API}/api/v1/query/language/productinstancefunction/`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 201) {
-          enqueueSnackbar(`Added product instance function: ${functionName}.`);
+  // Initialize form on mount
+  useEffect(() => {
+    setForm(DEFAULT_PRODUCT_INSTANCE_FUNCTION_FORM);
+    return () => {
+      setForm(null);
+    };
+  }, [setForm]);
+
+  const addProductInstanceFunction = () => {
+    if (!form || !isValid || addMutation.isPending) return;
+
+    addMutation.mutate(
+      { form },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Added product instance function: ${form.functionName}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(
+            `Unable to add product instance function: ${form.functionName}. Got error ${JSON.stringify(error, null, 2)}`,
+            { variant: 'error' },
+          );
+          console.error(error);
+        },
+        onSettled: () => {
           onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to add product instance function: ${functionName}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
+        },
+      },
+    );
   };
 
+  if (!form) return null;
+
   return (
-    <ProductInstanceFunctionComponent
+    <ProductInstanceFunctionFormComponent
       confirmText="Add"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void addProductInstanceFunction()}
-      isProcessing={isProcessing}
-      functionName={functionName}
-      setFunctionName={setFunctionName}
-      expression={expression}
-      setExpression={setExpression}
+      onConfirmClick={addProductInstanceFunction}
+      isProcessing={addMutation.isPending}
     />
   );
 };

@@ -1,15 +1,17 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useAtom, useSetAtom } from 'jotai';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
 
-import type { KeyValue, PrinterGroup } from "@wcp/wario-shared";
+import { useAddPrinterGroupMutation } from '@/hooks/usePrinterGroupsQuery';
 
-import { useAppDispatch } from "@/hooks/useRedux";
+import {
+  DEFAULT_PRINTER_GROUP_FORM,
+  printerGroupFormAtom,
+  printerGroupFormProcessingAtom,
+  toPrinterGroupApiBody,
+} from '@/atoms/forms/printerGroupFormAtoms';
 
-import { HOST_API } from "@/config";
-import { queryPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
-
-import PrinterGroupComponent from "./PrinterGroupComponent";
+import { PrinterGroupComponent } from './PrinterGroupComponent';
 
 export interface PrinterGroupAddContainerProps {
   onCloseCallback: VoidFunction;
@@ -17,63 +19,46 @@ export interface PrinterGroupAddContainerProps {
 
 const PrinterGroupAddContainer = ({ onCloseCallback }: PrinterGroupAddContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const dispatch = useAppDispatch();
-  const [name, setName] = useState("");
-  const [singleItemPerTicket, setSingleItemPerTicket] = useState(false);
-  const [isExpo, setIsExpo] = useState(false);
-  const [externalIds, setExternalIds] = useState<KeyValue[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const addMutation = useAddPrinterGroupMutation();
 
-  const addPrinterGroup = async () => {
-    if (!isProcessing) {
+  const setFormState = useSetAtom(printerGroupFormAtom);
+  const [isProcessing, setIsProcessing] = useAtom(printerGroupFormProcessingAtom);
+
+  useEffect(() => {
+    setFormState(DEFAULT_PRINTER_GROUP_FORM);
+    return () => {
+      setFormState(null);
+    };
+  }, [setFormState]);
+
+  const addPrinterGroup = () => {
+    setFormState((current) => {
+      if (!current || isProcessing) return current;
+
       setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<PrinterGroup, "id"> = {
-          name,
-          externalIDs: externalIds,
-          isExpo,
-          singleItemPerTicket
-        };
-        const response = await fetch(`${HOST_API}/api/v1/menu/printergroup`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 201) {
-          enqueueSnackbar(`Added new printer group: ${name}.`);
-          void dispatch(queryPrinterGroups(token));
+      const body = toPrinterGroupApiBody(current);
+
+      addMutation.mutate(body, {
+        onSuccess: () => {
+          enqueueSnackbar(`Added new printer group: ${current.name}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(
+            `Unable to add printer group: ${current.name}. Got error: ${JSON.stringify(error, null, 2)}.`,
+            { variant: 'error' },
+          );
+          console.error(error);
+        },
+        onSettled: () => {
+          setIsProcessing(false);
           onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to add printer group: ${name}. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: "error" });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
+        },
+      });
+      return current;
+    });
   };
 
-  return (
-    <PrinterGroupComponent
-      confirmText="Add"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void addPrinterGroup()}
-      isProcessing={isProcessing}
-      name={name}
-      setName={setName}
-      isExpo={isExpo}
-      setIsExpo={setIsExpo}
-      singleItemPerTicket={singleItemPerTicket}
-      setSingleItemPerTicket={setSingleItemPerTicket}
-      externalIds={externalIds}
-      setExternalIds={setExternalIds}
-    />
-  );
+  return <PrinterGroupComponent confirmText="Add" onCloseCallback={onCloseCallback} onConfirmClick={addPrinterGroup} />;
 };
 
 export default PrinterGroupAddContainer;

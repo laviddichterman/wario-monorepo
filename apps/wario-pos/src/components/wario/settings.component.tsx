@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, Grid } from '@mui/material';
 
 import { type FulfillmentConfig } from "@wcp/wario-shared";
-import { DialogContainer } from '@wcp/wario-ux-shared';
+import { DialogContainer } from '@wcp/wario-ux-shared/containers';
 
 import FulfillmentAddContainer from './FulfillmentAddContainer';
 import FulfillmentDeleteContainer from './FulfillmentDeleteContainer';

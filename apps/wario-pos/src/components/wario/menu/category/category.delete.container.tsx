@@ -1,66 +1,86 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 
-import { Grid } from "@mui/material";
+import { Grid } from '@mui/material';
 
-import { getCategoryEntryById } from "@wcp/wario-ux-shared";
+import type { ICategory } from '@wcp/wario-shared';
+import { useValueFromCategoryEntryById } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { useDeleteCategoryMutation } from '@/hooks/useCategoryMutations';
 
-import { HOST_API } from "@/config";
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
+import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
-import { ToggleBooleanPropertyComponent } from "../../property-components/ToggleBooleanPropertyComponent";
-import ElementDeleteComponent from "../element.delete.component";
+import ElementDeleteComponent from '../element.delete.component';
 
-import { type CategoryEditProps } from "./category.component";
+const useCategoryById = (id: string | null) => useValueFromCategoryEntryById(id ?? '', 'category') ?? null;
 
-const CategoryDeleteContainer = ({ categoryId, onCloseCallback }: CategoryEditProps) => {
+const CategoryNullGuard = createNullGuard(useCategoryById);
+export interface CategoryDeleteProps {
+  categoryId: string | null;
+  onCloseCallback: VoidFunction;
+}
+
+const CategoryDeleteContainer = ({ categoryId, onCloseCallback }: CategoryDeleteProps) => {
+  return (
+    <CategoryNullGuard
+      id={categoryId}
+      child={(category: ICategory) => (
+        <CategoryDeleteContainerInner category={category} onCloseCallback={onCloseCallback} />
+      )}
+    />
+  );
+};
+
+interface CategoryDeleteContainerProps {
+  category: ICategory;
+  onCloseCallback: VoidFunction;
+}
+
+const CategoryDeleteContainerInner = ({ category, onCloseCallback }: CategoryDeleteContainerProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const categoryName = useAppSelector(s => getCategoryEntryById(s.ws.categories, categoryId).category.name);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
   const [deleteContainedProducts, setDeleteContainedProducts] = useState(false);
 
-  const deleteCategory = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
-        const responseDeleteCategory = await fetch(`${HOST_API}/api/v1/menu/category/${categoryId}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ delete_contained_products: deleteContainedProducts }),
-        });
-        if (responseDeleteCategory.status === 200) {
-          enqueueSnackbar(`Deleted category: ${categoryName}${deleteContainedProducts ? " and contained products" : ""}.`);
-          onCloseCallback();
-        }
-      } catch (error) {
-        enqueueSnackbar(`Unable to delete category: ${categoryName}. Got error ${JSON.stringify(error, null, 2)}`, { variant: 'error' });
-        console.error(error);
-      }
-      setIsProcessing(false);
-    }
-  };
+  const deleteMutation = useDeleteCategoryMutation();
 
+  const deleteCategory = () => {
+    if (deleteMutation.isPending) return;
+
+    deleteMutation.mutate(
+      { id: category.id, deleteContainedProducts },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(
+            `Deleted category: ${category.name}${deleteContainedProducts ? ' and contained products' : ''}.`,
+          );
+        },
+        onError: (error) => {
+          enqueueSnackbar(`Unable to delete category: ${category.name}. Got error ${JSON.stringify(error, null, 2)}`, {
+            variant: 'error',
+          });
+          console.error(error);
+        },
+        onSettled: () => {
+          onCloseCallback();
+        },
+      },
+    );
+  };
 
   return (
     <ElementDeleteComponent
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void deleteCategory()}
-      name={categoryName}
-      isProcessing={isProcessing}
+      onConfirmClick={deleteCategory}
+      name={category.name}
+      isProcessing={deleteMutation.isPending}
       additionalBody={
         <Grid size={12}>
           <ToggleBooleanPropertyComponent
-            disabled={isProcessing}
+            disabled={deleteMutation.isPending}
             label="Delete Contained Products"
             setValue={setDeleteContainedProducts}
-            value={deleteContainedProducts} />
+            value={deleteContainedProducts}
+          />
         </Grid>
       }
     />

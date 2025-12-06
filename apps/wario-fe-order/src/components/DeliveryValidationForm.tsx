@@ -1,86 +1,111 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
 import Clear from '@mui/icons-material/Clear';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 
-import { ErrorResponseOutput, FormProvider, OkResponseOutput, RHFTextField, SelectDeliveryAreaLink } from '@wcp/wario-ux-shared';
+import { FormProvider, RHFTextField } from '@wcp/wario-ux-shared/components';
+import {
+  type DeliveryInfoFormData,
+  useDeliveryAreaLink,
+  useValidateDeliveryAddressMutation,
+} from '@wcp/wario-ux-shared/query';
+import { ErrorResponseOutput, OkResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-import { deliveryAddressSchema, type DeliveryInfoFormData, setDeliveryInfo, validateDeliveryAddress } from '@/app/slices/WFulfillmentSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import axios from '@/utils/axios';
 
-
+import { deliveryAddressSchema, selectDeliveryInfo, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 
 function useDeliveryInfoForm() {
+  const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
   const useFormApi = useForm<DeliveryInfoFormData>({
     defaultValues: {
-      address: useAppSelector(s => s.fulfillment.deliveryInfo?.address ?? ""),
-      address2: useAppSelector(s => s.fulfillment.deliveryInfo?.address2 ?? ""),
-      deliveryInstructions: useAppSelector(s => s.fulfillment.deliveryInfo?.deliveryInstructions ?? ""),
-      zipcode: useAppSelector(s => s.fulfillment.deliveryInfo?.zipcode ?? ""),
+      address: deliveryInfo?.address ?? '',
+      address2: deliveryInfo?.address2 ?? '',
+      deliveryInstructions: deliveryInfo?.deliveryInstructions ?? '',
+      zipcode: deliveryInfo?.zipcode ?? '',
     },
     resolver: zodResolver(deliveryAddressSchema),
-    mode: 'onBlur'
+    mode: 'onBlur',
   });
 
   return useFormApi;
 }
 
 export default function DeliveryInfoForm() {
-  const dispatch = useAppDispatch();
-  const DELIVERY_LINK = useAppSelector(SelectDeliveryAreaLink);
-  const deliveryValidationLoading = useAppSelector(s => s.fulfillment.deliveryValidationStatus);
-
+  const validateDeliveryAddressMutation = useValidateDeliveryAddressMutation({ axiosInstance: axios });
+  const setDeliveryInfo = useFulfillmentStore((s) => s.setDeliveryInfo);
+  const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
+  const DELIVERY_LINK = useDeliveryAreaLink() as string;
   const deliveryForm = useDeliveryInfoForm();
-  const { handleSubmit, reset, formState: { isValid } } = deliveryForm;
-  const validatedDeliveryAddress = useAppSelector(s => s.fulfillment.deliveryInfo?.address);
-  const validatedDeliveryAddress2 = useAppSelector(s => s.fulfillment.deliveryInfo?.address2 ?? "");
-  const validatedZipcode = useAppSelector(s => s.fulfillment.deliveryInfo?.zipcode);
+  const {
+    handleSubmit,
+    reset,
+    formState: { isValid },
+  } = deliveryForm;
   const resetValidatedAddress = () => {
     reset();
-    dispatch(setDeliveryInfo(null));
+    setDeliveryInfo(null);
   };
 
   const setDeliveryInfoAndAttemptToValidate = function (formData: DeliveryInfoFormData) {
     console.log(formData);
-    if (isValid && deliveryValidationLoading !== 'PENDING') {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      dispatch(validateDeliveryAddress(formData));
+    if (isValid && validateDeliveryAddressMutation.isIdle) {
+      validateDeliveryAddressMutation.mutate(formData, {
+        onSuccess: (data) => {
+          setDeliveryInfo({
+            address: formData.address,
+            address2: formData.address2,
+            zipcode: formData.zipcode,
+            deliveryInstructions: formData.deliveryInstructions,
+            validation: {
+              address_components: data.address_components,
+              found: data.found,
+              in_area: data.in_area,
+              validated_address: data.validated_address,
+            },
+          });
+        },
+        onError: (_error) => {
+          setDeliveryInfo(null);
+        },
+      });
     }
-  }
+  };
 
   return (
     <>
       <span className="flexbox">
         <span className="flexbox__item one-whole">Delivery Information:</span>
       </span>
-      {deliveryValidationLoading === 'VALID' ?
+      {validateDeliveryAddressMutation.isSuccess && validateDeliveryAddressMutation.data.in_area && deliveryInfo ? (
         <OkResponseOutput>
           Found an address in our delivery area: <br />
           <span className="title cart">
-            {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/restrict-template-expressions */}
-            {`${validatedDeliveryAddress!}${validatedDeliveryAddress2 ? ` ${validatedDeliveryAddress2}` : ''}, ${validatedZipcode}`}
-            <IconButton name="remove" onClick={resetValidatedAddress}><Clear /></IconButton>
+            {`${deliveryInfo.address}${deliveryInfo.address2 ? ` ${deliveryInfo.address2}` : ''}, ${deliveryInfo.zipcode}`}
+            <IconButton name="remove" onClick={resetValidatedAddress}>
+              <Clear />
+            </IconButton>
           </span>
         </OkResponseOutput>
-        :
+      ) : (
         <FormProvider<DeliveryInfoFormData> methods={deliveryForm}>
           <span className="flexbox">
             <span className="flexbox__item one-half">
               <RHFTextField
                 name="address"
-                disabled={deliveryValidationLoading === 'PENDING'}
+                disabled={validateDeliveryAddressMutation.isPending}
                 autoComplete="shipping address-line1"
                 label="Address:"
-                placeholder={"Address"}
+                placeholder={'Address'}
               />
             </span>
             <span className="flexbox__item one-quarter soft-half--sides">
               <RHFTextField
                 name="address2"
-                disabled={deliveryValidationLoading === 'PENDING'}
+                disabled={validateDeliveryAddressMutation.isPending}
                 autoComplete="shipping address-line2"
                 label="Apt/Unit:"
               />
@@ -88,24 +113,27 @@ export default function DeliveryInfoForm() {
             <span className="flexbox__item one-quarter">
               <RHFTextField
                 name="zipcode"
-                disabled={deliveryValidationLoading === 'PENDING'}
+                disabled={validateDeliveryAddressMutation.isPending}
                 autoComplete="shipping postal-code"
                 label="ZIP Code:"
               />
             </span>
           </span>
         </FormProvider>
-      }
-      {deliveryValidationLoading === 'OUTSIDE_RANGE' &&
+      )}
+      {validateDeliveryAddressMutation.isSuccess && !validateDeliveryAddressMutation.data.in_area && (
         <ErrorResponseOutput>
-          The address {validatedDeliveryAddress} isn't in our <Link target="_blank" href={DELIVERY_LINK}>delivery area</Link>
+          The address {validateDeliveryAddressMutation.data.validated_address} isn't in our{' '}
+          <Link target="_blank" href={DELIVERY_LINK}>
+            delivery area
+          </Link>
         </ErrorResponseOutput>
-      }
-      {deliveryValidationLoading === 'INVALID' &&
+      )}
+      {validateDeliveryAddressMutation.isError && (
         <ErrorResponseOutput>
           Unable to determine the specified address. Send us a text or email if you continue having issues.
         </ErrorResponseOutput>
-      }
+      )}
 
       <span className="flexbox">
         <span className="flexbox__item one-whole">
@@ -115,9 +143,19 @@ export default function DeliveryInfoForm() {
           <input type="text" id="delivery-instructions-text" name="delivery_instructions" size={40} />
         </span>
       </span>
-      {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <Button type="submit" disabled={!isValid || deliveryValidationLoading === 'PENDING'} className="btn" onClick={() => handleSubmit((e) => { setDeliveryInfoAndAttemptToValidate(e); })()}>Validate Delivery Address</Button>
+      {}
+      <Button
+        type="submit"
+        disabled={!isValid || validateDeliveryAddressMutation.isPending}
+        className="btn"
+        onClick={() =>
+          void handleSubmit((e) => {
+            setDeliveryInfoAndAttemptToValidate(e);
+          })()
+        }
+      >
+        Validate Delivery Address
+      </Button>
     </>
-  )
+  );
 }
-

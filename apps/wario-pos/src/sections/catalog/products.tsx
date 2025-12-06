@@ -1,3 +1,4 @@
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useMemo } from 'react';
 
 import { AddBox } from '@mui/icons-material';
@@ -5,16 +6,15 @@ import { FormControlLabel, IconButton, Switch, Tooltip } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-import { paths } from '@/routes/paths';
+import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
-import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
+import { paths } from '@/routes/paths';
 
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
 import ProductTableContainer from '@/components/wario/menu/product/product_table.container';
 
+import { hideDisabledProductsAtom, openCategoryInterstitialAtom } from '@/atoms/catalog';
 import { DashboardContent } from '@/layouts/dashboard';
-import { openCategoryInterstitial, setHideDisabled } from '@/redux/slices/CatalogSlice';
-import { selectProductIdsAfterDisableFilter } from '@/redux/store';
 
 // ----------------------------------------------------------------------
 
@@ -24,11 +24,25 @@ type Props = {
   sx?: SxProps<Theme>;
 };
 
+const useProductIdsAfterDisableFilter = () => {
+  const hideDisabledProducts = useAtomValue(hideDisabledProductsAtom);
+  const { data: catalog } = useCatalogQuery();
+
+  return useMemo(() => {
+    if (!catalog) return [];
+    const products = Object.values(catalog.products);
+    const filteredProducts = !hideDisabledProducts ? products : products.filter((x) =>
+      (!x.product.disabled || x.product.disabled.start <= x.product.disabled.end));
+
+    return filteredProducts.map(x => x.product.id);
+  }, [catalog, hideDisabledProducts]);
+};
 
 export function CatalogProductView(_props: Props) {
-  const productsAfterDisableFilter = useAppSelector(selectProductIdsAfterDisableFilter);
-  const dispatch = useAppDispatch();
-  const hideDisabled = useAppSelector(s => s.catalog.hideDisabledProducts);
+  const productsAfterDisableFilter = useProductIdsAfterDisableFilter();
+  const [hideDisabled, setHideDisabled] = useAtom(hideDisabledProductsAtom);
+  const openCategoryInterstitial = useSetAtom(openCategoryInterstitialAtom);
+
   const toolbarActions = useMemo(() => [
     {
       size: 4,
@@ -37,16 +51,16 @@ export function CatalogProductView(_props: Props) {
         key="HIDE"
         control={<Switch
           checked={hideDisabled}
-          onChange={e => dispatch(setHideDisabled(e.target.checked))}
+          onChange={e => { setHideDisabled(e.target.checked); }}
           name="Hide Disabled" />}
         labelPlacement="end"
         label="Hide Disabled" />
     },
     {
       size: 1,
-      elt: <Tooltip key="AddNew" title="Add new..."><IconButton onClick={() => dispatch(openCategoryInterstitial())}><AddBox /></IconButton></Tooltip>
+      elt: <Tooltip key="AddNew" title="Add new..."><IconButton onClick={() => { openCategoryInterstitial(); }}><AddBox /></IconButton></Tooltip>
     }
-  ], [dispatch, hideDisabled]);
+  ], [setHideDisabled, openCategoryInterstitial, hideDisabled]);
   return (
     <>
       <DashboardContent>

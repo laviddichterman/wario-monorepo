@@ -9,22 +9,16 @@ import { type BoxProps } from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-import { CreateWCPProduct, type WProduct } from '@wcp/wario-shared';
-import {
-  getProductInstanceById, scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay, SelectCatalogSelectors,
-  SelectPopulatedSubcategoryIdsInCategory, SelectProductInstanceIdsInCategory
-} from '@wcp/wario-ux-shared';
+import { CreateWCPProduct, type ICatalogSelectors, type WProduct } from '@wcp/wario-shared';
+import { scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
+import { useCatalogSelectors, useCategoryNameFromCategoryById, usePopulatedSubcategoryIdsInCategory, useProductInstanceById, useProductInstancesInCategory, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 
-import {
-  SelectMenuNameFromCategoryById, SelectMenuSubtitleFromCategoryById,
-  SelectProductInstanceHasSelectableModifiersByProductInstanceId,
-  SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData
-} from '@/app/selectors';
-import { addToCart, FindDuplicateInCart, getCart, updateCartQuantity } from '@/app/slices/WCartSlice';
-import { customizeProduct } from '@/app/slices/WCustomizerSlice';
-import { SelectServiceDateTime } from '@/app/slices/WFulfillmentSlice';
-import { setTimeToFirstProductIfUnset } from '@/app/slices/WMetricsSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { useProductHasSelectableModifiersByProductInstanceId, useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData } from '@/hooks/useDerivedState';
+
+import { findDuplicateInCart, selectCart, useCartStore } from '@/stores/useCartStore';
+import { useCustomizerStore } from '@/stores/useCustomizerStore';
+import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
+import { useMetricsStore } from '@/stores/useMetricsStore';
 
 import { ClickableProductDisplay } from '../WProductComponent';
 
@@ -39,41 +33,43 @@ export interface ShopClickableProductDisplayProps {
 
 
 function ShopClickableProductDisplay({ productInstanceId, returnToId, sourceCategoryId, setScrollToOnReturn, ...props }: ShopClickableProductDisplayProps & BoxProps) {
-  const dispatch = useAppDispatch();
-  const productEntrySelector = useAppSelector(s => SelectCatalogSelectors(s.ws).productEntry);
-  const modiferEntrySelector = useAppSelector(s => SelectCatalogSelectors(s.ws).modifierEntry);
-  const cart = useAppSelector(s => getCart(s.cart.cart));
-  const productInstance = useAppSelector(s => getProductInstanceById(s.ws.productInstances, productInstanceId));
-  const productMetadata = useAppSelector(s => SelectProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(s, productInstanceId));
-  const productHasSelectableModifiers = useAppSelector(s => SelectProductInstanceHasSelectableModifiersByProductInstanceId(s, productInstanceId));
+  const { productEntry: productEntrySelector, modifierEntry: modiferEntrySelector } = useCatalogSelectors() as ICatalogSelectors;
+  const cart = useCartStore(selectCart);
+  const { setTimeToFirstProductIfUnset } = useMetricsStore();
+
+  const { addToCart, updateCartQuantity } = useCartStore();
+  const customizeProduct = useCustomizerStore((s) => s.customizeProduct);
+  const productInstance = useProductInstanceById(productInstanceId);
+  const productMetadata = useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(productInstanceId);
+  const productHasSelectableModifiers = useProductHasSelectableModifiersByProductInstanceId(productInstanceId);
   const onProductSelection = useCallback(() => {
     // either dispatch to the customizer or to the cart
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+
     if (productInstance && productMetadata) {
       const productCopy: WProduct = { p: CreateWCPProduct(productInstance.productId, productInstance.modifiers), m: structuredClone(productMetadata) };
       if ((!productCopy.m.incomplete && productInstance.displayFlags.order.skip_customization) || !productHasSelectableModifiers) {
-        const matchInCart = FindDuplicateInCart(cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, productCopy.p);
+        const matchInCart = findDuplicateInCart(cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, productCopy.p);
         if (matchInCart !== null) {
           enqueueSnackbar(`Changed ${productCopy.m.name} quantity to ${(matchInCart.quantity + 1).toString()}.`, { variant: 'success' });
-          dispatch(updateCartQuantity({ id: matchInCart.id, newQuantity: matchInCart.quantity + 1 }));
+          updateCartQuantity(matchInCart.id, matchInCart.quantity + 1);
         }
         else {
           // it's a new entry!
           enqueueSnackbar(`Added ${productCopy.m.name} to order.`, { variant: 'success', autoHideDuration: 3000, disableWindowBlurListener: true });
-          dispatch(setTimeToFirstProductIfUnset(Date.now()));
-          dispatch(addToCart({ categoryId: sourceCategoryId, product: productCopy }));
+          setTimeToFirstProductIfUnset(Date.now());
+          addToCart(sourceCategoryId, productCopy);
         }
       }
       else {
         // add to the customizer
-        dispatch(customizeProduct({ product: productCopy, categoryId: sourceCategoryId }));
+        customizeProduct(productCopy, sourceCategoryId);
         scrollToIdOffsetAfterDelay('WARIO_order', 0);
       }
       setScrollToOnReturn(returnToId);
     }
-  }, [cart, dispatch, productEntrySelector, modiferEntrySelector, productInstance, productMetadata, productHasSelectableModifiers, sourceCategoryId, returnToId, setScrollToOnReturn]);
+  }, [productInstance, productMetadata, productHasSelectableModifiers, setScrollToOnReturn, returnToId, cart, modiferEntrySelector, productEntrySelector, sourceCategoryId, updateCartQuantity, setTimeToFirstProductIfUnset, addToCart, customizeProduct]);
 
-  return <ClickableProductDisplay
+  return productMetadata && <ClickableProductDisplay
     {...props}
     onClick={onProductSelection}
     productMetadata={productMetadata}
@@ -93,13 +89,12 @@ interface AccordionSubCategoryProps {
 }
 
 function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccordion, index, setScrollToOnReturn }: WShopForProductsStageProps & AccordionSubCategoryProps) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const selectedService = useAppSelector(s => s.fulfillment.selectedService!);
-  const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
-  const menuName = useAppSelector(s => SelectMenuNameFromCategoryById(s.ws.categories, categoryId));
-  const subtitle = useAppSelector(s => SelectMenuSubtitleFromCategoryById(s.ws.categories, categoryId));
+
+  const selectedService = useFulfillmentStore(selectSelectedService) as string;
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
+  const productInstancesIdsInCategory = useProductInstancesInCategory(categoryId, 'Order', serviceDateTime, selectedService);
+  const menuName = useCategoryNameFromCategoryById(categoryId);
+  const subtitle = useValueFromCategoryById(categoryId, 'subheading');
   return (
     <Accordion id={`accordion-${categoryId}`} key={index} expanded={activePanel === index && isExpanded} onChange={(e) => { toggleAccordion(e, index); }} >
       <AccordionSummary expandIcon={activePanel === index && isExpanded ? <ExpandMore /> : <ExpandMore />}>
@@ -127,14 +122,10 @@ function AccordionSubCategory({ categoryId, activePanel, isExpanded, toggleAccor
 }
 
 export function WShopForProductsStage({ categoryId, setScrollToOnReturn }: WShopForProductsStageProps) {
-  // TODO: we need to handle if this is null by choice. how to we bypass this stage?
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const selectedService = useAppSelector(s => s.fulfillment.selectedService!);
-  const serviceDateTime = useAppSelector(s => SelectServiceDateTime(s.fulfillment));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const populatedSubcategories = useAppSelector(s => SelectPopulatedSubcategoryIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const productInstancesIdsInCategory = useAppSelector(s => SelectProductInstanceIdsInCategory(s.ws.categories, s.ws.products, s.ws.productInstances, s.ws.modifierOptions, categoryId, 'Order', serviceDateTime!, selectedService));
+  const selectedService = useFulfillmentStore(selectSelectedService) as string;
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
+  const populatedSubcategories = usePopulatedSubcategoryIdsInCategory(categoryId, 'Order', serviceDateTime, selectedService);
+  const productInstancesIdsInCategory = useProductInstancesInCategory(categoryId, 'Order', serviceDateTime, selectedService);
   const [activePanel, setActivePanel] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
 

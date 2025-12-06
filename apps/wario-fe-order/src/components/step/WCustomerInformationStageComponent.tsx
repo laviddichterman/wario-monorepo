@@ -1,51 +1,49 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from 'react';
 import { useForm } from "react-hook-form";
 
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-import { FormProvider, RHFMailTextField, RHFPhoneInput, RHFTextField, Separator, StageTitle } from '@wcp/wario-ux-shared';
+import { FormProvider, RHFMailTextField, RHFPhoneInput, RHFTextField } from '@wcp/wario-ux-shared/components';
+import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
 import { Navigation } from '@/components/Navigation';
 
-import { backStage, nextStage } from '@/app/slices/StepperSlice';
-import { type CustomerInfoRHF, customerInfoSchema, setCustomerInfo } from '@/app/slices/WCustomerInfoSlice';
-import { useAppDispatch, useAppSelector } from '@/app/useHooks';
+import { type CustomerInfoRHF, customerInfoSchema, useCustomerInfoStore } from "@/stores/useCustomerInfoStore";
+import { useStepperStore } from "@/stores/useStepperStore";
 
 // TODO: use funny names as the placeholder info for the names here and randomize it. So sometimes it would be the empire carpet guy, other times eagle man
 
-function useCIForm() {
-  const useFormApi = useForm<CustomerInfoRHF>({
-    defaultValues: {
-      givenName: useAppSelector(s => s.ci.givenName),
-      familyName: useAppSelector(s => s.ci.familyName),
-      mobileNum: useAppSelector(s => s.ci.mobileNum),
-      mobileNumRaw: useAppSelector(s => s.ci.mobileNumRaw),
-      email: useAppSelector(s => s.ci.email),
-      referral: useAppSelector(s => s.ci.referral) || "",
-    },
+// Get initial values outside component to avoid re-subscription
+const getInitialCustomerInfo = (): CustomerInfoRHF => {
+  const state = useCustomerInfoStore.getState();
+  return {
+    givenName: state.givenName,
+    familyName: state.familyName,
+    mobileNum: state.mobileNum,
+    mobileNumRaw: state.mobileNumRaw,
+    email: state.email,
+    referral: state.referral || "",
+  };
+};
+
+export default function WCustomerInformationStage() {
+  // Initialize form with store values - defaultValues is only used on first render
+  const cIForm = useForm<CustomerInfoRHF>({
+    defaultValues: getInitialCustomerInfo(),
     resolver: zodResolver(customerInfoSchema),
     mode: "onBlur",
-
   });
 
-  return useFormApi;
-}
+  const setCustomerInfo = useCustomerInfoStore((s) => s.setCustomerInfo);
+  const nextStage = useStepperStore((s) => s.nextStage);
+  const backStage = useStepperStore((s) => s.backStage);
+  const { getValues, formState: { isValid, errors }, handleSubmit } = cIForm;
 
-export function WCustomerInformationStage() {
-  const cIForm = useCIForm();
-  const dispatch = useAppDispatch();
-  const { getValues, watch, formState: { isValid, errors, isDirty }, handleSubmit } = cIForm;
   const handleNext = () => {
-    dispatch(setCustomerInfo(getValues()));
-    dispatch(nextStage());
+    setCustomerInfo(getValues());
+    nextStage();
   }
-  useEffect(() => {
-    if (isValid) {
-      dispatch(setCustomerInfo(watch()));
-    }
-  }, [isValid, isDirty, watch, dispatch])
   return (
     <>
       <StageTitle>Tell us a little about you.</StageTitle>
@@ -103,7 +101,7 @@ export function WCustomerInformationStage() {
         </Grid>
       </FormProvider>
       {/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-      <Navigation canBack canNext={isValid} handleBack={() => dispatch(backStage())} handleNext={handleSubmit(handleNext)} />
+      <Navigation canBack canNext={isValid} handleBack={backStage} handleNext={handleSubmit(handleNext)} />
     </>
   );
 }

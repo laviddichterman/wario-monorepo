@@ -3,8 +3,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 
 import { type IWSettings } from "@wcp/wario-shared";
-
-import { useAppSelector } from "@/hooks/useRedux";
+import { useSettingsQuery } from "@wcp/wario-ux-shared/query";
 
 import { HOST_API } from "@/config";
 
@@ -14,13 +13,12 @@ import { KeyValuesContainer, type KeyValuesRowType } from "./keyvalues.container
 export const StoreSettingsComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const settings = useAppSelector(s => s.ws.settings!);
+  const { data: settings } = useSettingsQuery();
   const [isProcessing, setIsProcessing] = useState(false);
   const { getAccessTokenSilently } = useAuth0();
 
   const onSubmit = async (values: KeyValuesRowType<string | number | boolean>[]) => {
-    if (!isProcessing) {
+    if (!isProcessing && settings) {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order_config" } });
@@ -48,8 +46,7 @@ export const StoreSettingsComponent = () => {
     }
   };
 
-
-  return <KeyValuesContainer
+  return settings && <KeyValuesContainer
     canAdd
     canEdit
     canRemove

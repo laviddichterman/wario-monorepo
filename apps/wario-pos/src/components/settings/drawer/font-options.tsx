@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import type { SliderProps } from '@mui/material/Slider';
 import Slider, { sliderClasses } from '@mui/material/Slider';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { setFont } from '@/utils';
 

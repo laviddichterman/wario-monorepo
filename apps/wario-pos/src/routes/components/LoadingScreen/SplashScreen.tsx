@@ -4,7 +4,7 @@ import Portal from '@mui/material/Portal';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 
-import { LoadingScreen } from '@wcp/wario-ux-shared';
+import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 
 import { type AnimateLogoProps, AnimateLogoZoom } from '@/components/animate/animate-logo';
 

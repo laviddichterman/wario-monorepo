@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsArray, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
-import { DiscountMethod, PaymentMethod, StoreCreditType, TenderBaseStatus, WFulfillmentStatus, WOrderStatus } from '../enums';
+import { DiscountMethod, PaymentMethod, TenderBaseStatus, WFulfillmentStatus, WOrderStatus } from '../enums';
 
 import { DeliveryInfoDto, EncryptStringLockDto, IMoneyDto, TipSelectionAmountDto, TipSelectionPercentageDto } from './common.dto';
 import { ProductModifierEntryDto } from './product.dto';
@@ -428,40 +428,6 @@ export class OrderTaxDto {
   @ValidateNested()
   @Type(() => IMoneyDto)
   amount!: IMoneyDto;
-}
-
-// Store Credit Request DTOs
-export class IssueStoreCreditRequestDto {
-  @ValidateNested()
-  @Type(() => IMoneyDto)
-  amount!: IMoneyDto;
-
-  @IsString()
-  @IsNotEmpty()
-  addedBy!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  reason!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  recipientNameFirst!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  recipientNameLast!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  recipientEmail!: string;
-
-  @IsEnum(StoreCreditType)
-  creditType!: StoreCreditType;
-
-  @IsString()
-  @IsOptional()
-  expiration!: string | null;
 }
 
 // Main Order DTOs

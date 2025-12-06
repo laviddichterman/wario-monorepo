@@ -4,9 +4,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import { GridActionsCellItem, type GridRowParams, useGridApiRef } from "@mui/x-data-grid-premium";
 
 import { type FulfillmentConfig } from "@wcp/wario-shared";
-import { getFulfillments } from "@wcp/wario-ux-shared";
-
-import { useAppSelector } from "../../hooks/useRedux";
+import { useFulfillments } from "@wcp/wario-ux-shared/query";
 
 import { TableWrapperComponent } from "./table_wrapper.component";
 
@@ -22,7 +20,7 @@ const FulfillmentTableContainer = ({
   setIsFulfillmentAddOpen,
   setFulfillmentToEdit
 }: FulfillmentTableContainerProps) => {
-  const fulfillments = useAppSelector(s => getFulfillments(s.ws.fulfillments));
+  const fulfillments = useFulfillments();
   const apiRef = useGridApiRef();
 
   const editFulfillment = (fulfillment: FulfillmentConfig) => () => {

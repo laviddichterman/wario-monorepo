@@ -69,6 +69,31 @@ export function BlockedOffIntervalsForServicesAndDate(blockedOffs: DateIntervals
   }, []));
 }
 
+/**
+ * Utility class for date and time operations related to service fulfillment.
+ * 
+ * @remarks
+ * This class provides static methods for:
+ * - Date/time formatting and parsing
+ * - Computing service date/times and fulfillment times
+ * - Managing operating hours and special hours
+ * - Handling blocked-off time intervals
+ * - Computing availability for services
+ * - Interval set operations (union, subtraction)
+ * 
+ * @example
+ * ```typescript
+ * // Check if currently open
+ * const isOpen = WDateUtils.AreWeOpenNow(configs, new Date());
+ * 
+ * // Get available time options for a date
+ * const info = WDateUtils.GetInfoMapForAvailabilityComputation(configs, '2023-12-25', 0);
+ * const options = WDateUtils.GetOptionsForDate(info, '2023-12-25', new Date().toISOString());
+ * 
+ * // Format time in minutes to display string
+ * const displayTime = WDateUtils.MinutesToPrintTime(720); // "12:00PM"
+ * ```
+ */
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class WDateUtils {
 
@@ -258,6 +283,19 @@ export class WDateUtils {
     return pushed_time > operatingIntervals[operatingIntervals.length - 1].end ? -1 : pushed_time;
   }
 
+  /**
+   * Computes an information map used for availability calculations based on fulfillment configurations.
+   * 
+   * @param configs - Array of fulfillment configuration objects containing blockedOff times, timeStep, 
+   *                  leadTime, leadTimeOffset, operatingHours, and specialHours properties
+   * @param date - The date string to compute availability information for
+   * @param cartBasedLeadTime - The lead time in minutes based on cart contents
+   * @returns An AvailabilityInfoMap containing:
+   *          - blockedOffUnion: Combined blocked off intervals across all services for the date
+   *          - operatingIntervals: Operating hour intervals for all services on the date
+   *          - minTimeStep: The minimum time step across all configurations (capped at 1440 minutes)
+   *          - leadTime: The effective lead time (max of minimum service lead time and cart-based lead time)
+   */
   static GetInfoMapForAvailabilityComputation(configs: Pick<FulfillmentConfig, 'blockedOff' | 'timeStep' | 'leadTime' | 'leadTimeOffset' | 'operatingHours' | 'specialHours'>[], date: string, cartBasedLeadTime: number) {
     const jsDate = parseISO(date);
     const isoDate = WDateUtils.formatISODate(jsDate);

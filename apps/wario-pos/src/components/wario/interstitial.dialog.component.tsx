@@ -3,7 +3,7 @@ import React from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { Avatar, List, ListItemAvatar, ListItemButton, ListItemText } from '@mui/material';
 
-import { DialogContainer, type IDialogContainer } from '@wcp/wario-ux-shared';
+import { DialogContainer, type IDialogContainer } from '@wcp/wario-ux-shared/containers';
 
 interface InterstitialDialogProps {
   onClose: IDialogContainer['onClose'];

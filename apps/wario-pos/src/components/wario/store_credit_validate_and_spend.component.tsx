@@ -9,7 +9,7 @@ import { Button, Card, CardHeader, Divider, Grid, IconButton, List, ListItem, Ty
 
 import type { IMoney, SpendCreditResponse, ValidateAndLockCreditResponse, ValidateLockAndSpendRequest } from '@wcp/wario-shared';
 import { CURRENCY, MoneyToDisplayString, StoreCreditType } from '@wcp/wario-shared';
-import { DialogContainer } from "@wcp/wario-ux-shared";
+import { DialogContainer } from "@wcp/wario-ux-shared/containers";
 
 import { HOST_API } from "@/config";
 

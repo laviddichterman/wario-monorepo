@@ -1,36 +1,36 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useState } from "react";
 
 import { Grid, TextField } from "@mui/material";
 
-import { useAppDispatch, useAppSelector } from "../../../hooks/useRedux";
-import { moveOrder } from "../../../redux/slices/OrdersSlice";
+import { useMoveOrderMutation } from "@/hooks/useOrdersQuery";
+
 import { ElementActionComponent, type ElementActionComponentProps } from "../menu/element.action.component";
 
 type WOrderMoveComponentProps = { orderId: string; onCloseCallback: ElementActionComponentProps['onCloseCallback'] };
 const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
-  const { getAccessTokenSilently } = useAuth0();
-  const dispatch = useAppDispatch();
-  const orderSliceState = useAppSelector(s => s.orders.requestStatus);
-  const [destination, setDestination] = useState("");
+  const moveMutation = useMoveOrderMutation();
+  const [destination, setDestination] = useState<string>("");
   const [additionalMessage, setAdditionalMessage] = useState("");
 
-  const submitToWario = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (orderSliceState !== 'PENDING') {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order" } });
-      await dispatch(moveOrder({ orderId: props.orderId, destination, additionalMessage, token: token }));
-      if (props.onCloseCallback) {
-        props.onCloseCallback(e); return;
+  const submitToWario = (e: React.MouseEvent<HTMLButtonElement>) => {
+    moveMutation.mutate(
+      { orderId: props.orderId, destination, additionalMessage },
+      {
+        onSuccess: () => {
+          if (props.onCloseCallback) {
+            props.onCloseCallback(e);
+          }
+        }
       }
-    }
+    );
   }
 
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
-      onConfirmClick={(e) => void submitToWario(e)}
-      isProcessing={orderSliceState === 'PENDING'}
-      disableConfirmOn={orderSliceState === 'PENDING' || destination.length < 2}
+      onConfirmClick={submitToWario}
+      isProcessing={moveMutation.isPending}
+      disableConfirmOn={moveMutation.isPending || destination.length < 2}
       confirmText={'Send Move Ticket'}
       body={
         <>
@@ -40,7 +40,7 @@ const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
               label="Destination"
               type="text"
               value={destination}
-              onChange={(e) => { setDestination(e.target.value); }}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setDestination(e.target.value); }}
             />
           </Grid>
           <Grid size={12}>

@@ -155,7 +155,7 @@ Products and product instances:
 - `IProductInstanceDisplayFlagsPosDto` - POS display flags
 - `IProductInstanceDisplayFlagsMenuDto` - Menu display flags
 - `IProductInstanceDisplayFlagsOrderDto` - Order display flags
-- `IProductDisplayFlagsFullDto` - All display flags combined
+- `IProductInstanceDisplayFlagsDto` - All product instance display flags combined
 - `ProductModifierEntryDto` - Product modifier entry
 - `IProductInstanceDto` - Product instance
 

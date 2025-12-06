@@ -1,26 +1,32 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import type { ParseResult } from "papaparse";
-import { unparse } from "papaparse";
-import type { Dispatch, SetStateAction } from "react";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
+import type { ParseResult } from 'papaparse';
+import { unparse } from 'papaparse';
+import type { Dispatch, SetStateAction } from 'react';
+import { useState } from 'react';
 
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
-import type { CreateIProduct, CreateIProductInstance, IProduct, IProductInstance, IProductModifier, KeyValue, UpdateIProduct, UpdateIProductUpdateIProductInstance, UpsertProductBatch } from "@wcp/wario-shared";
-import { PriceDisplay, ReduceArrayToMapByKey } from "@wcp/wario-shared";
-import type { ValSetValNamed } from "@wcp/wario-ux-shared";
+import type {
+  IProductModifier,
+  KeyValue,
+  UncommittedIProduct,
+  UncommittedIProductInstance,
+  UpdateIProductRequest,
+  UpdateIProductUpdateIProductInstance,
+  UpsertProductBatchRequest,
+} from '@wcp/wario-shared';
+import { PriceDisplay } from '@wcp/wario-shared';
+import type { ValSetValNamed } from '@wcp/wario-ux-shared/common';
+import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query';
 
-import { useAppSelector } from "@/hooks/useRedux";
+import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
+import { type BatchUpsertProductResponse, useBatchUpsertProductMutation } from '@/hooks/useProductMutations';
 
-import { HOST_API } from "@/config";
-import { getPrinterGroups } from '@/redux/slices/PrinterGroupSlice';
+import GenericCsvImportComponent from '../../generic_csv_import.component';
+import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
+import { ElementActionComponent } from '../element.action.component';
 
-import GenericCsvImportComponent from "../../generic_csv_import.component";
-import { ToggleBooleanPropertyComponent } from "../../property-components/ToggleBooleanPropertyComponent";
-import { ElementActionComponent } from "../element.action.component";
-
-import ProductModifierComponent from "./ProductModifierComponent";
+import ProductModifierComponent from './ProductModifierComponent';
 
 interface CSVProduct {
   ID: string;
@@ -32,13 +38,13 @@ interface CSVProduct {
   Price: string;
   Disabled: string;
   [index: string]: string;
-};
+}
 
 interface HierarchicalProductStructure {
   category: string;
   subcategories: { [index: string]: HierarchicalProductStructure };
   products: CSVProduct[];
-};
+}
 
 type HierarchicalProductImportComponentProps = {
   confirmText: string;
@@ -54,9 +60,9 @@ type HierarchicalProductImportComponentProps = {
   ValSetValNamed<IProductModifier[], 'modifiers'>;
 
 const HierarchicalProductImportComponent = (props: HierarchicalProductImportComponentProps) => {
-  const categories = useAppSelector(s => s.ws.catalog?.categories ?? {});
-  // const catalog = useAppSelector(s => s.ws.catalog!);
-  const printerGroups = useAppSelector(s => ReduceArrayToMapByKey(getPrinterGroups(s.printerGroup.printerGroups), 'id'));
+  const catalogSelectors = useCatalogSelectors();
+  const categories = useCategoryIds();
+  const printerGroups = usePrinterGroupsMap();
   return (
     <ElementActionComponent
       {...props}
@@ -66,14 +72,15 @@ const HierarchicalProductImportComponent = (props: HierarchicalProductImportComp
             <Autocomplete
               multiple
               filterSelectedOptions
-              options={Object.keys(categories)}
+              options={categories}
               value={props.parentCategories.filter((x) => x)}
-              onChange={(_e, v) => { props.setParentCategories(v); }}
-              getOptionLabel={(option) => categories[option].category.name}
+              onChange={(_e, v) => {
+                props.setParentCategories(v);
+              }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              getOptionLabel={(option) => catalogSelectors?.category(option)?.category.name ?? option}
               isOptionEqualToValue={(o, v) => o === v}
-              renderInput={(params) => (
-                <TextField {...params} label="Categories" />
-              )}
+              renderInput={(params) => <TextField {...params} label="Categories" />}
             />
           </Grid>
           <Grid size={6}>
@@ -81,9 +88,11 @@ const HierarchicalProductImportComponent = (props: HierarchicalProductImportComp
               filterSelectedOptions
               options={Object.keys(printerGroups)}
               value={props.printerGroup}
-              onChange={(_e, v) => { props.setPrinterGroup(v); }}
+              onChange={(_e, v) => {
+                props.setPrinterGroup(v);
+              }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(pgId) => printerGroups[pgId].name ?? "Undefined"}
+              getOptionLabel={(pgId) => printerGroups[pgId].name ?? 'Undefined'}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Printer Group" />}
             />
@@ -107,12 +116,21 @@ const HierarchicalProductImportComponent = (props: HierarchicalProductImportComp
             />
           </Grid>
           <Grid size={12}>
-            <ProductModifierComponent isProcessing={props.isProcessing} modifiers={props.modifiers} setModifiers={props.setModifiers} />
+            <ProductModifierComponent
+              isProcessing={props.isProcessing}
+              modifiers={props.modifiers}
+              setModifiers={props.setModifiers}
+            />
           </Grid>
           <Grid size={12}>
-            <GenericCsvImportComponent onAccepted={(data: ParseResult<CSVProduct>) => { props.setFileData(data.data); }} />
+            <GenericCsvImportComponent
+              onAccepted={(data: ParseResult<CSVProduct>) => {
+                props.setFileData(data.data);
+              }}
+            />
           </Grid>
-        </>}
+        </>
+      }
     />
   );
 };
@@ -309,27 +327,43 @@ export interface IProductDisplayFlags {
 
  */
 
-function GenerateHierarchicalProductStructure(acc: HierarchicalProductStructure, curr: CSVProduct, depth: number): HierarchicalProductStructure {
+function GenerateHierarchicalProductStructure(
+  acc: HierarchicalProductStructure,
+  curr: CSVProduct,
+  depth: number,
+): HierarchicalProductStructure {
   const splitCats = curr.Categories.split(',');
   if (depth < splitCats.length) {
     acc.subcategories[splitCats[depth]] = GenerateHierarchicalProductStructure(
-      Object.hasOwn(acc.subcategories, splitCats[depth]) ?
-        acc.subcategories[splitCats[depth]] :
-        {
-          category: splitCats[depth],
-          products: [],
-          subcategories: {}
-        }, curr, depth + 1);
+      Object.hasOwn(acc.subcategories, splitCats[depth])
+        ? acc.subcategories[splitCats[depth]]
+        : {
+            category: splitCats[depth],
+            products: [],
+            subcategories: {},
+          },
+      curr,
+      depth + 1,
+    );
     return acc;
   }
   return { ...acc, products: [...acc.products, curr] } as HierarchicalProductStructure;
 }
 
-function CSVProductToProduct(prod: CSVProduct, ordinal: number, singularNoun: string, modifiers: IProductModifier[], parentCategories: string[], printerGroup: string | null): UpsertProductBatch {
+function CSVProductToProduct(
+  prod: CSVProduct,
+  ordinal: number,
+  singularNoun: string,
+  modifiers: IProductModifier[],
+  parentCategories: string[],
+  printerGroup: string | null,
+): UpsertProductBatchRequest {
   // omit Categories to get it inside the externalIds
   const { ID, Description, DisplayName, PosName, Price, Shortname, Disabled, ...others } = prod;
-  const externalIds: KeyValue[] = Object.entries(others).filter(([_, value]) => value).map(([key, value]) => ({ key, value }));
-  const disabledValue = (/true/i).test(Disabled) ? { start: 1, end: 0 } : null;
+  const externalIds: KeyValue[] = Object.entries(others)
+    .filter(([_, value]) => value)
+    .map(([key, value]) => ({ key, value }));
+  const disabledValue = /true/i.test(Disabled) ? { start: 1, end: 0 } : null;
   console.log({ disabledValue, Disabled });
   if (ID) {
     const [productId, productInstanceId] = ID.split('/');
@@ -338,7 +372,7 @@ function CSVProductToProduct(prod: CSVProduct, ordinal: number, singularNoun: st
         id: productId,
         baseProductId: productInstanceId,
         externalIDs: [],
-        price: { amount: Number.parseFloat(Price) * 100, currency: "USD" },
+        price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
         category_ids: parentCategories,
         printerGroup,
         modifiers,
@@ -357,43 +391,45 @@ function CSVProductToProduct(prod: CSVProduct, ordinal: number, singularNoun: st
           singular_noun: singularNoun,
           order_guide: {
             suggestions: [],
-            warnings: []
-          }
-        }
-      } as UpdateIProduct,
-      instances: [{
-        id: productInstanceId,
-        displayName: DisplayName,
-        description: Description || "",
-        externalIDs: externalIds,
-        ordinal,
-        shortcode: Shortname,
-        modifiers: [],
-        displayFlags: {
-          pos: {
-            hide: false,
-            name: PosName,
-            skip_customization: true,
+            warnings: [],
           },
-          menu: {
-            adornment: "",
-            hide: false,
-            ordinal,
-            show_modifier_options: false,
-            price_display: PriceDisplay.ALWAYS,
-            suppress_exhaustive_modifier_list: false
+        },
+      } as UpdateIProductRequest,
+      instances: [
+        {
+          id: productInstanceId,
+          displayName: DisplayName,
+          description: Description || '',
+          externalIDs: externalIds,
+          ordinal,
+          shortcode: Shortname,
+          modifiers: [],
+          displayFlags: {
+            pos: {
+              hide: false,
+              name: PosName,
+              skip_customization: true,
+            },
+            menu: {
+              adornment: '',
+              hide: false,
+              ordinal,
+              show_modifier_options: false,
+              price_display: PriceDisplay.ALWAYS,
+              suppress_exhaustive_modifier_list: false,
+            },
+            order: {
+              ordinal,
+              adornment: '',
+              hide: false,
+              price_display: PriceDisplay.ALWAYS,
+              skip_customization: true,
+              suppress_exhaustive_modifier_list: false,
+            },
           },
-          order: {
-            ordinal,
-            adornment: '',
-            hide: false,
-            price_display: PriceDisplay.ALWAYS,
-            skip_customization: true,
-            suppress_exhaustive_modifier_list: false
-          },
-        }
-      } as UpdateIProductUpdateIProductInstance]
-    }
+        } as UpdateIProductUpdateIProductInstance,
+      ],
+    };
   }
   return {
     product: {
@@ -402,7 +438,7 @@ function CSVProductToProduct(prod: CSVProduct, ordinal: number, singularNoun: st
       timing: null,
       externalIDs: [],
       serviceDisable: [],
-      price: { amount: Number.parseFloat(Price) * 100, currency: "USD" },
+      price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
       displayFlags: {
         is3p: false,
         bake_differential: 100,
@@ -412,50 +448,57 @@ function CSVProductToProduct(prod: CSVProduct, ordinal: number, singularNoun: st
         singular_noun: singularNoun,
         order_guide: {
           suggestions: [],
-          warnings: []
-        }
+          warnings: [],
+        },
       },
       category_ids: parentCategories,
       printerGroup,
-      modifiers
-    } as CreateIProduct,
-    instances: [{
-      displayName: DisplayName,
-      modifiers: [],
-      description: Description || "",
-      externalIDs: externalIds,
-      displayFlags: {
-        pos: {
-          hide: false,
-          name: PosName,
-          skip_customization: true,
+      modifiers,
+    } as UncommittedIProduct,
+    instances: [
+      {
+        displayName: DisplayName,
+        modifiers: [],
+        description: Description || '',
+        externalIDs: externalIds,
+        displayFlags: {
+          pos: {
+            hide: false,
+            name: PosName,
+            skip_customization: true,
+          },
+          menu: {
+            adornment: '',
+            hide: false,
+            ordinal,
+            show_modifier_options: false,
+            price_display: PriceDisplay.ALWAYS,
+            suppress_exhaustive_modifier_list: false,
+          },
+          order: {
+            ordinal,
+            adornment: '',
+            hide: false,
+            price_display: PriceDisplay.ALWAYS,
+            skip_customization: true,
+            suppress_exhaustive_modifier_list: false,
+          },
         },
-        menu: {
-          adornment: "",
-          hide: false,
-          ordinal,
-          show_modifier_options: false,
-          price_display: PriceDisplay.ALWAYS,
-          suppress_exhaustive_modifier_list: false
-        },
-        order: {
-          ordinal,
-          adornment: '',
-          hide: false,
-          price_display: PriceDisplay.ALWAYS,
-          skip_customization: true,
-          suppress_exhaustive_modifier_list: false
-        },
-      },
-      ordinal,
-      shortcode: Shortname,
-    } as CreateIProductInstance]
-  } as UpsertProductBatch;
+        ordinal,
+        shortcode: Shortname,
+      } as UncommittedIProductInstance,
+    ],
+  } as UpsertProductBatchRequest;
 }
 
-function GenerateProducts(catalog: HierarchicalProductStructure, modifiers: IProductModifier[], parentCategories: string[], printerGroup: string | null): UpsertProductBatch[] {
+function GenerateProducts(
+  catalog: HierarchicalProductStructure,
+  modifiers: IProductModifier[],
+  parentCategories: string[],
+  printerGroup: string | null,
+): UpsertProductBatchRequest[] {
   let ordinal = 0;
-  const ProcessCat = (cat: HierarchicalProductStructure): UpsertProductBatch[] => {
+  const ProcessCat = (cat: HierarchicalProductStructure): UpsertProductBatchRequest[] => {
     // const categoryPreferenceModifierTypeRequest: Omit<IOptionType, "id"> & { options: Omit<IOption, 'modifierTypeId' | 'id'>[]; } = {
     //   name: `${cat.category} preference`,
     //   displayName: cat.category,
@@ -479,30 +522,39 @@ function GenerateProducts(catalog: HierarchicalProductStructure, modifiers: IPro
     //   options: []
     // };
     const sp = Object.values(cat.subcategories).flatMap((x) => ProcessCat(x));
-    return [...sp, ...cat.products.map((prod) => CSVProductToProduct(prod, ++ordinal, catalog.category, modifiers, parentCategories, printerGroup))];
-  }
+    return [
+      ...sp,
+      ...cat.products.map((prod) =>
+        CSVProductToProduct(prod, ++ordinal, catalog.category, modifiers, parentCategories, printerGroup),
+      ),
+    ];
+  };
   return ProcessCat(catalog);
 }
 
-type BatchUpsertProductResponse = {
-  product: IProduct;
-  instances: IProductInstance[];
-}[];
-
-const ResponseBodyToCSVProducts = (responseBody: BatchUpsertProductResponse): CSVProduct[] => responseBody.flatMap((r) => r.instances.map((i) => ({
-  ID: `${r.product.id}/${i.id}`,
-  Disabled: r.product.disabled && r.product.disabled.start > r.product.disabled.end ? "TRUE" : "FALSE",
-  Categories: i.externalIDs.filter(x => x.key === 'Categories').map(x => x.value).join(','),
-  DisplayName: i.displayName,
-  Description: i.description,
-  PosName: i.displayFlags.pos.name,
-  Shortname: i.shortcode,
-  Price: (r.product.price.amount / 100).toFixed(2),
-  ...i.externalIDs.reduce((acc, curr) => (curr.key.startsWith("SQID") ? acc : { ...acc, [curr.key]: curr.value }), {})
-})));
+const ResponseBodyToCSVProducts = (responseBody: BatchUpsertProductResponse): CSVProduct[] =>
+  responseBody.flatMap((r) =>
+    r.instances.map((i) => ({
+      ID: `${r.product.id}/${i.id}`,
+      Disabled: r.product.disabled && r.product.disabled.start > r.product.disabled.end ? 'TRUE' : 'FALSE',
+      Categories: i.externalIDs
+        .filter((x) => x.key === 'Categories')
+        .map((x) => x.value)
+        .join(','),
+      DisplayName: i.displayName,
+      Description: i.description,
+      PosName: i.displayFlags.pos.name,
+      Shortname: i.shortcode,
+      Price: (r.product.price.amount / 100).toFixed(2),
+      ...i.externalIDs.reduce(
+        (acc, curr) => (curr.key.startsWith('SQID') ? acc : { ...acc, [curr.key]: curr.value }),
+        {},
+      ),
+    })),
+  );
 
 /**
- * 
+ *
  * @param data - The CSV string data to be downloaded as a CSV file.
  * @param fileName - The name of the file that will be downloaded(.csv).
  */
@@ -519,7 +571,6 @@ const DownloadCSV = (data: BatchUpsertProductResponse, fileName: string) => {
   document.body.removeChild(link);
 };
 
-
 const HierarchicalProductImportContainer = ({ onCloseCallback }: { onCloseCallback: VoidFunction }) => {
   const { enqueueSnackbar } = useSnackbar();
   const [parentCategories, setParentCategories] = useState<string[]>([]);
@@ -529,49 +580,42 @@ const HierarchicalProductImportContainer = ({ onCloseCallback }: { onCloseCallba
   const [modifiers, setModifiers] = useState<IProductModifier[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [data, setData] = useState<CSVProduct[]>([]);
-  const { getAccessTokenSilently } = useAuth0();
+  const batchUpsertProductMutation = useBatchUpsertProductMutation();
 
-  const addProducts = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      // step 1: structure the data
-      const catalog = data.reduce<HierarchicalProductStructure>((acc: HierarchicalProductStructure, curr: CSVProduct) =>
-        GenerateHierarchicalProductStructure(acc, curr, 0), { category: "", products: [], subcategories: {} });
-      const products = GenerateProducts(catalog, modifiers, parentCategories, printerGroup);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
+  const addProducts = () => {
+    if (batchUpsertProductMutation.isPending || isProcessing) return;
+    setIsProcessing(true);
+    // step 1: structure the data
+    const catalog = data.reduce<HierarchicalProductStructure>(
+      (acc: HierarchicalProductStructure, curr: CSVProduct) => GenerateHierarchicalProductStructure(acc, curr, 0),
+      { category: '', products: [], subcategories: {} },
+    );
+    const products = GenerateProducts(catalog, modifiers, parentCategories, printerGroup);
 
-        const response = await fetch(`${HOST_API}/api/v1/menu/productbatch/`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(products),
-        });
-        if (response.status === 201) {
-          enqueueSnackbar(`Imported ${products.length.toString()} products.`);
-          if (downloadCSV) {
-
-            // read response body as BatchUpsertProductResponse
-            const responseBody = await response.json() as BatchUpsertProductResponse;
-            DownloadCSV(responseBody, "import_results");
-          }
+    batchUpsertProductMutation.mutate(products, {
+      onSuccess: (response) => {
+        enqueueSnackbar(`Imported ${products.length.toString()} products.`);
+        if (downloadCSV) {
+          // read response body as BatchUpsertProductResponse
+          DownloadCSV(response, 'import_results');
         }
-      } catch (error) {
-        enqueueSnackbar(`Unable to import. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: "error" });
+      },
+      onError: (error) => {
+        enqueueSnackbar(`Unable to import batch. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: 'error' });
         console.error(error);
-      }
-    }
-    setIsProcessing(false);
-    onCloseCallback();
+      },
+      onSettled: () => {
+        setIsProcessing(false);
+        onCloseCallback();
+      },
+    });
   };
 
   return (
     <HierarchicalProductImportComponent
       confirmText="Import"
       onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void addProducts()}
+      onConfirmClick={addProducts}
       isProcessing={isProcessing}
       disableConfirmOn={isProcessing || data.length === 0 || (createCategories && parentCategories.length > 1)}
       createCategories={createCategories}

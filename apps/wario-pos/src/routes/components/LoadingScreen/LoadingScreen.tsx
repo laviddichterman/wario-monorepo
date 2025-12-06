@@ -5,7 +5,7 @@ import Portal from '@mui/material/Portal';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { styled } from '@mui/material/styles';
 
-import { spreadSx } from '@wcp/wario-ux-shared/common/SxSpreadUtils';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 // ----------------------------------------------------------------------
 

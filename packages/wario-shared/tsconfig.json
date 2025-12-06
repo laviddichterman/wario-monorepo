@@ -16,6 +16,7 @@
     "src",
     "tests",
     "jest.config.cjs",
+    "jest-environment.cjs",
     "tsup.config.ts"
   ]
 }

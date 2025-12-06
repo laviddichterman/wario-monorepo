@@ -3,6 +3,7 @@ import { IsNotEmpty, IsObject, IsString, ValidateNested } from 'class-validator'
 
 import { ICategoryDto } from './category.dto';
 import { SemverDto } from './common.dto';
+import type { IProductInstanceFunctionDto, OrderInstanceFunctionDto } from './expression.dto';
 import { IOptionDto, IOptionTypeDto } from './modifier.dto';
 import { IProductDto, IProductInstanceDto } from './product.dto';
 
@@ -53,10 +54,10 @@ export class ICatalogDto {
   productInstances!: Record<string, IProductInstanceDto>;
 
   @IsObject()
-  productInstanceFunctions!: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  productInstanceFunctions!: Record<string, IProductInstanceFunctionDto>;
 
   @IsObject()
-  orderInstanceFunctions!: Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+  orderInstanceFunctions!: Record<string, OrderInstanceFunctionDto>;
 
   @IsString()
   @IsNotEmpty()

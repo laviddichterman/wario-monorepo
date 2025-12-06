@@ -1,6 +1,7 @@
 {
   "recommendations": [
     "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
     "streetsidesoftware.code-spell-checker",
     "graphql.vscode-graphql",
     "ms-azuretools.vscode-docker"

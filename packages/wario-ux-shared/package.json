@@ -8,6 +8,7 @@
     "directory": "packages/wario-ux-shared"
   },
   "license": "GPL-3.0-or-later",
+  "sideEffects": false,
   "type": "module",
   "exports": {
     ".": {
@@ -15,13 +16,38 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./*": {
-      "types": "./dist/types/*.d.ts",
-      "import": "./dist/*.js",
-      "default": "./dist/*.js"
+    "./common": {
+      "types": "./dist/types/common/index.d.ts",
+      "import": "./dist/common.js",
+      "default": "./dist/common.js"
+    },
+    "./components": {
+      "types": "./dist/types/components/index.d.ts",
+      "import": "./dist/components.js",
+      "default": "./dist/components.js"
+    },
+    "./containers": {
+      "types": "./dist/types/containers/index.d.ts",
+      "import": "./dist/containers.js",
+      "default": "./dist/containers.js"
     },
     "./phone-metadata.custom.json": {
       "default": "./dist/phone-metadata.custom.json"
+    },
+    "./query": {
+      "types": "./dist/types/query/index.d.ts",
+      "import": "./dist/query.js",
+      "default": "./dist/query.js"
+    },
+    "./redux": {
+      "types": "./dist/types/redux/index.d.ts",
+      "import": "./dist/redux.js",
+      "default": "./dist/redux.js"
+    },
+    "./styled": {
+      "types": "./dist/types/styled/index.d.ts",
+      "import": "./dist/styled.js",
+      "default": "./dist/styled.js"
     }
   },
   "main": "./dist/index.js",
@@ -41,6 +67,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@tanstack/react-query-devtools": "^5.91.1",
     "@types/geojson": "^7946.0.16",
     "@types/mailcheck": "^1.1.37",
     "@types/node": "^24.10.1",
@@ -54,8 +81,8 @@
     "globals": "^16.5.0",
     "libphonenumber-metadata-generator": "^2.0.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.0",
-    "vite": "^7.2.4",
+    "typescript-eslint": "^8.48.1",
+    "vite": "^7.2.6",
     "vite-plugin-checker": "^0.11.0",
     "vite-plugin-dts": "^4.5.4",
     "vite-plugin-static-copy": "^3.1.4"
@@ -69,7 +96,7 @@
     "@mui/system": "^7.3.3",
     "@mui/x-date-pickers": "^8.17.0",
     "@mui/x-license": "^8.17.0",
-    "@reduxjs/toolkit": "^2.5.0",
+    "@tanstack/react-query": "^5.90.11",
     "@wcp/wario-shared": "workspace:*",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
@@ -82,11 +109,9 @@
     "react-hook-form": "^7.65.0",
     "react-imask": "^7.6.1",
     "react-phone-number-input": "^3.4.13",
-    "react-redux": "^9.2.0",
-    "redux": "^5.0.1",
-    "reselect": "^5.1.1",
     "socket.io-client": "^4.8.1",
-    "zod": "4.1.12"
+    "zod": "4.1.12",
+    "zustand": "^5.0.9"
   },
   "publishConfig": {
     "access": "public",

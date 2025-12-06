@@ -6,7 +6,11 @@
   "license": "GPL-3.0-only",
   "author": "Dave Lichterman / Lavid Industries LLC <dave@windycitypie.com>",
   "scripts": {
+    "backend:build": "pnpm --filter ./apps/wario-backend build",
+    "backend:lint": "pnpm --filter ./apps/wario-backend lint",
     "backend:start": "pnpm --filter ./apps/wario-backend start",
+    "backend:test": "pnpm --filter ./apps/wario-backend test",
+    "backend:typecheck": "pnpm --filter ./apps/wario-backend typecheck",
     "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
     "changeset": "changeset",
     "checkall": "pnpm build && pnpm lint && pnpm typecheck",
@@ -23,6 +27,12 @@
     "credit:start": "pnpm -r --filter \"./apps/wario-fe-credit\" run start",
     "credit:typecheck": "pnpm -r --filter \"./apps/wario-fe-credit\" run typecheck",
     "dev": "pnpm -r --parallel --filter \"./apps/*\" run dev",
+    "e2e": "playwright test",
+    "e2e:codegen": "playwright codegen",
+    "e2e:integration": "E2E_MODE=integration playwright test",
+    "e2e:order": "playwright test --project=order-chromium",
+    "e2e:order:integration": "E2E_MODE=integration playwright test --project=order-chromium",
+    "e2e:ui": "playwright test --ui",
     "faq:build": "pnpm -r --filter \"./apps/wario-fe-faq\" run build",
     "faq:clean": "pnpm -r --filter \"./apps/wario-fe-faq\" run clean",
     "faq:deploy:prod": "pnpm -r --filter \"./apps/wario-fe-faq\" run deploy:prod",
@@ -68,14 +78,17 @@
     "pos:start": "pnpm -r --filter \"./apps/wario-pos\" run start",
     "pos:typecheck": "pnpm -r --filter \"./apps/wario-pos\" run typecheck",
     "start": "pnpm -r --parallel --filter \"./apps/*\" run start",
+    "test": "pnpm -r --filter \"./{apps,packages}/*\" run test",
     "typecheck": "pnpm -r --filter \"./{apps,packages}/*\" run typecheck",
     "version-packages": "changeset version"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.29.7",
+    "@changesets/cli": "^2.29.8",
+    "@playwright/test": "^1.57.0",
     "@tanstack/eslint-plugin-query": "^5.91.2",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-package-json": "^0.85.0",
     "eslint-plugin-perfectionist": "^4.15.1",
@@ -85,11 +98,12 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^16.5.0",
     "jsonc-eslint-parser": "^2.4.1",
+    "prettier": "^3.7.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.0"
+    "typescript-eslint": "^8.48.1"
   },
-  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c",
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
   "engines": {
     "node": ">=20"
   }

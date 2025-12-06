@@ -13,15 +13,16 @@ import {
   MoneyToDisplayString, type PurchaseStoreCreditRequest,
   type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces
 } from '@wcp/wario-shared';
+import { handleAxiosError, ZodEmailSchema } from "@wcp/wario-ux-shared/common";
 import {
-  ErrorResponseOutput, FormProvider, handleAxiosError, MoneyInput, RHFCheckbox,
-  RHFMailTextField, RHFTextField, SelectSquareAppId, SelectSquareLocationId,
-  SquareButtonCSS, ZodEmailSchema
-} from '@wcp/wario-ux-shared';
+  FormProvider, MoneyInput, RHFCheckbox,
+  RHFMailTextField, RHFTextField,
+} from '@wcp/wario-ux-shared/components';
+import { useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
+import { ErrorResponseOutput, SquareButtonCSS } from '@wcp/wario-ux-shared/styled';
 
 import axiosInstance from '@/utils/axios';
 
-import { useAppSelector } from '@/app/useHooks';
 import { IS_PRODUCTION } from "@/config";
 
 const Title = styled(Typography)({
@@ -30,7 +31,7 @@ const Title = styled(Typography)({
   textTransform: 'uppercase'
 })
 
-type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount'>
+type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount' | 'nonce'>
 
 const creditPurchaseInfoSchemaBase = {
   // amount: z.number().min(2, "Minimum purchase amount is $2.00").max(200000, "Maximum purchase amount is $2000.00"),
@@ -78,10 +79,9 @@ function useCPForm() {
 type PurchaseStatus = 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'FAILED_UNKNOWN' | 'INVALID_DATA';
 
 export default function WStoreCreditPurchase() {
+  const squareApplicationId = useSquareAppId() as string;
+  const squareLocationId = useSquareLocationId() as string;
 
-  const squareApplicationId = useAppSelector(SelectSquareAppId);
-
-  const squareLocationId = useAppSelector(SelectSquareLocationId);
   const cPForm = useCPForm();
   const { getValues, watch, formState: { isValid, errors } } = cPForm;
   const sendEmailToRecipientState = watch('sendEmailToRecipient');

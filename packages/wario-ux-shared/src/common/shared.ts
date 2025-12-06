@@ -1,33 +1,47 @@
 import { type Dispatch, type SetStateAction } from 'react';
 
+/**
+ * Helper to run a callback using requestIdleCallback when available,
+ * falling back to immediate execution otherwise.
+ * This helps avoid "[Violation] 'setTimeout' handler took Nms" warnings
+ * by deferring non-critical work to idle periods.
+ */
+const runWhenIdle = (callback: () => void) => {
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(callback);
+  } else {
+    callback();
+  }
+};
+
 export const scrollToElementOffsetAfterDelay = (element: Element, delay: number, location: ScrollLogicalPosition, offsetY: number = 0) => {
-  setTimeout(function () {
-    if (offsetY === 0) {
-      // console.log(`${element} has bbox of ${JSON.stringify(element.getBoundingClientRect())}, scrolling to ${location}}`);
-      element.scrollIntoView({ behavior: 'smooth', block: location });
-    } else {
-      const bbox = element.getBoundingClientRect();
-      const loc = (location === 'start' ? bbox.top : ((bbox.top + bbox.bottom) / 2)) + offsetY;
-      // console.log(`${element.nodeName} has bbox of ${JSON.stringify(bbox)}, scrolling to ${loc}`);
-      window.scrollTo({ behavior: 'smooth', top: loc });
-    }
+  setTimeout(() => {
+    runWhenIdle(() => {
+      if (offsetY === 0) {
+        element.scrollIntoView({ behavior: 'smooth', block: location });
+      } else {
+        const bbox = element.getBoundingClientRect();
+        const loc = (location === 'start' ? bbox.top : ((bbox.top + bbox.bottom) / 2)) + offsetY;
+        window.scrollTo({ behavior: 'smooth', top: loc });
+      }
+    });
   }, delay);
 }
 
 export const scrollToIdOffsetAfterDelay = (elementId: string, delay: number, offsetY: number = 0) => {
-  setTimeout(function () {
-    const foundElement = document.getElementById(elementId);
-    if (foundElement) {
-      const bbox = foundElement.getBoundingClientRect();
-      if (offsetY === 0) {
-        // console.log(`${elementId} has bbox of ${JSON.stringify(foundElement.getBoundingClientRect())}, scrolling to start}`);
-        foundElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else {
-        const loc = bbox.top + offsetY;
-        // console.log(`${elementId} has bbox of ${JSON.stringify(foundElement.getBoundingClientRect())}, scrolling to ${loc}`);
-        window.scrollTo({ behavior: 'smooth', top: loc });
+  setTimeout(() => {
+    runWhenIdle(() => {
+      const foundElement = document.getElementById(elementId);
+      if (foundElement) {
+        if (offsetY === 0) {
+          foundElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          const bbox = foundElement.getBoundingClientRect();
+          const loc = bbox.top + offsetY;
+          window.scrollTo({ behavior: 'smooth', top: loc });
+        }
       }
-    }
+    });
   }, delay);
 }
 
@@ -44,10 +58,4 @@ export function useIndexedState<S>(x: [S[], Dispatch<SetStateAction<S[]>>]) {
   }] as const;
 };
 
-// const nonProduction: boolean = import.meta.env.DEV;
-
-// export const isNonProduction = () => nonProduction;
-
-// const nonProduction: boolean = process.env.REACT_APP_ENV ? process.env.REACT_APP_ENV !== 'production' : true;
-
-// export const isNonProduction = () => nonProduction;
+export type ProductCategoryFilter = "Menu" | "Order" | null;

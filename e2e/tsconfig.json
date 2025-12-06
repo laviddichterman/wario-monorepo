@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "types": [
+      "node"
+    ],
+    "paths": {
+      "@wcp/wario-shared": [
+        "../packages/wario-shared/src/index.ts"
+      ],
+      "@wcp/wario-shared/testing": [
+        "../packages/wario-shared/src/testing.ts"
+      ]
+    }
+  },
+  "include": [
+    "./**/*.ts",
+    "../playwright.config.ts"
+  ]
+}

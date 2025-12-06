@@ -1,0 +1,80 @@
+import { Global, Module } from '@nestjs/common';
+
+import { CatalogModule } from '../models/catalog/catalog.module';
+import { OrdersModule } from '../models/orders/orders.module';
+import { SettingsModule } from '../models/settings/settings.module';
+
+import { AppConfigService } from './app-config.service';
+import { CatalogCategoryService } from './catalog-provider/catalog-category.service';
+import { CatalogFunctionService } from './catalog-provider/catalog-function.service';
+import { CatalogModifierService } from './catalog-provider/catalog-modifier.service';
+import { CatalogPrinterGroupService } from './catalog-provider/catalog-printer-group.service';
+import { CatalogProductService } from './catalog-provider/catalog-product.service';
+import { CatalogProviderService } from './catalog-provider/catalog-provider.service';
+import { CatalogSquareSyncService } from './catalog-provider/catalog-square-sync.service';
+import { DataProviderService } from './data-provider/data-provider.service';
+import { DatabaseManagerService } from './database-manager/database-manager.service';
+import { ErrorNotificationService } from './error-notification/error-notification.service';
+import { GoogleService } from './google/google.service';
+import { OrderCalendarService } from './order-calendar/order-calendar.service';
+import { OrderManagerService } from './order-manager/order-manager.service';
+import { OrderNotificationService } from './order-notification/order-notification.service';
+import { OrderPaymentService } from './order-payment/order-payment.service';
+import { OrderValidationService } from './order-validation/order-validation.service';
+import { PrinterService } from './printer/printer.service';
+import { SquareService } from './square/square.service';
+import { StoreCreditProviderService } from './store-credit-provider/store-credit-provider.service';
+import { ThirdPartyOrderService } from './third-party-order/third-party-order.service';
+
+@Global()
+@Module({
+  imports: [OrdersModule, CatalogModule, SettingsModule],
+  providers: [
+    AppConfigService,
+    DataProviderService,
+    CatalogProviderService,
+    CatalogFunctionService,
+    CatalogCategoryService,
+    CatalogPrinterGroupService,
+    CatalogModifierService,
+    CatalogProductService,
+    CatalogSquareSyncService,
+    ErrorNotificationService,
+    OrderCalendarService,
+    OrderManagerService,
+    OrderNotificationService,
+    OrderPaymentService,
+    OrderValidationService,
+    PrinterService,
+    ThirdPartyOrderService,
+    GoogleService,
+    SquareService,
+    StoreCreditProviderService,
+    DatabaseManagerService,
+  ],
+  exports: [
+    AppConfigService,
+    DataProviderService,
+    CatalogProviderService,
+    CatalogFunctionService,
+    CatalogCategoryService,
+    CatalogPrinterGroupService,
+    CatalogModifierService,
+    CatalogProductService,
+    CatalogSquareSyncService,
+    ErrorNotificationService,
+    OrderCalendarService,
+    OrderManagerService,
+    OrderNotificationService,
+    OrderPaymentService,
+    OrderValidationService,
+    PrinterService,
+    ThirdPartyOrderService,
+    GoogleService,
+    SquareService,
+    StoreCreditProviderService,
+    DatabaseManagerService,
+  ],
+})
+export class ConfigModule { }
+

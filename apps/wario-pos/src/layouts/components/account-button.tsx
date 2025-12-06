@@ -4,7 +4,7 @@ import Avatar from '@mui/material/Avatar';
 import type { IconButtonProps } from '@mui/material/IconButton';
 import IconButton from '@mui/material/IconButton';
 
-import { spreadSx } from '@wcp/wario-ux-shared';
+import { spreadSx } from '@wcp/wario-ux-shared/common';
 
 import { AnimateBorder, transitionTap, varHover, varTap } from '@/components/animate';
 

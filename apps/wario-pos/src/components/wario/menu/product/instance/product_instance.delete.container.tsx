@@ -1,12 +1,10 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
 
-import { getProductInstanceById } from "@wcp/wario-ux-shared";
+import { useProductInstanceById } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from "../../../../../config";
-import { useAppSelector } from "../../../../../hooks/useRedux";
-import ElementDeleteComponent from "../../element.delete.component";
+import { useDeleteProductInstanceMutation } from '@/hooks/useProductInstanceMutations';
+
+import ElementDeleteComponent from '../../element.delete.component';
 
 export interface ProductInstanceQuickActionProps {
   product_instance_id: string;
@@ -15,42 +13,44 @@ export interface ProductInstanceQuickActionProps {
 
 const ProductInstanceDeleteContainer = ({ product_instance_id, onCloseCallback }: ProductInstanceQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const product_instance = useAppSelector(s => getProductInstanceById(s.ws.productInstances, product_instance_id));
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
+  const product_instance = useProductInstanceById(product_instance_id);
 
-  const deleteProductInstance = async () => {
-    if (!isProcessing) {
-      setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
-        const response = await fetch(`${HOST_API}/api/v1/menu/product/${product_instance.productId}/${product_instance.id}`, {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          }
-        });
-        if (response.status === 200) {
-          enqueueSnackbar(`Deleted product: ${product_instance.displayName}.`)
+  const deleteMutation = useDeleteProductInstanceMutation();
+
+  const deleteProductInstance = () => {
+    if (!product_instance || deleteMutation.isPending) return;
+
+    deleteMutation.mutate(
+      {
+        productId: product_instance.productId,
+        instanceId: product_instance.id,
+      },
+      {
+        onSuccess: () => {
+          enqueueSnackbar(`Deleted product: ${product_instance.displayName}.`);
+        },
+        onError: (error) => {
+          enqueueSnackbar(`Unable to delete ${product_instance.displayName}. Got error: ${JSON.stringify(error)}.`, {
+            variant: 'error',
+          });
+          console.error(error);
+        },
+        onSettled: () => {
           onCloseCallback();
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to delete ${product_instance.displayName}. Got error: ${JSON.stringify(error)}.`, { variant: "error" });
-        console.error(error);
-        setIsProcessing(false);
-      }
-    }
+        },
+      },
+    );
   };
 
   return (
-    <ElementDeleteComponent
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void deleteProductInstance()}
-      name={product_instance.displayName}
-      isProcessing={isProcessing}
-    />
+    product_instance && (
+      <ElementDeleteComponent
+        onCloseCallback={onCloseCallback}
+        onConfirmClick={deleteProductInstance}
+        name={product_instance.displayName}
+        isProcessing={deleteMutation.isPending}
+      />
+    )
   );
 };
 
