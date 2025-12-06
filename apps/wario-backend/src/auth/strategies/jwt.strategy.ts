@@ -19,9 +19,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,
-        jwksUri: `https://${configService.get('AUTH_DOMAIN')}/.well-known/jwks.json`,
+        jwksUri: `https://${String(configService.get('AUTH_DOMAIN'))}/.well-known/jwks.json`,
       }),
-      issuer: `https://${configService.get('AUTH_DOMAIN')}/`,
+      issuer: `https://${String(configService.get('AUTH_DOMAIN'))}/`,
       audience: configService.get('AUTH_AUDIENCE'),
       algorithms: ['RS256'],
     });

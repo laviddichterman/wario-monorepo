@@ -2,8 +2,6 @@ import { Body, Controller, Delete, Inject, Param, Post, Put } from '@nestjs/comm
 
 import { type IOption, type IOptionType } from '@wcp/wario-shared';
 
-import { UpdateOptionDto } from 'src/dtos/modifier.dto';
-
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogModifierService } from '../../config/catalog-provider/catalog-modifier.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';

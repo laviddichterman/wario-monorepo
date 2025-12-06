@@ -6,7 +6,7 @@ import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogCategoryService } from '../../config/catalog-provider/catalog-category.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { DeleteCategoryDto, UpdateCategoryDto } from '../../dtos/category.dto';
-import { CatalogOperationException, CategoryNotFoundException } from '../../exceptions';
+import { CategoryNotFoundException } from '../../exceptions';
 
 @Controller('api/v1/menu/category')
 export class CategoryController {
@@ -20,10 +20,6 @@ export class CategoryController {
   @HttpCode(201)
   async postCategory(@Body() body: UncommittedCategoryDto) {
     const doc = await this.catalogCategoryService.CreateCategory(body);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!doc) {
-      throw new CatalogOperationException('create category', 'Operation returned null');
-    }
     return doc;
   }
 

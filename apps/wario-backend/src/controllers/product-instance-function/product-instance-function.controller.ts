@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, HttpCode, InternalServerErrorException, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post } from '@nestjs/common';
 
 import { IAbstractExpression } from '@wcp/wario-shared';
 import { WFunctional } from '@wcp/wario-shared';
@@ -27,10 +27,6 @@ export class ProductInstanceFunctionController {
       name: body.name,
       expression: body.expression as IAbstractExpression,
     });
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!doc) {
-      throw new InternalServerErrorException('Unable to create ProductInstanceFunction as requested.');
-    }
     return doc;
   }
 
