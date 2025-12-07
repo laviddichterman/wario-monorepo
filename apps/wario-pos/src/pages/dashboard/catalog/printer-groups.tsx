@@ -1,4 +1,4 @@
-import { CatalogProductFunctionView } from '@/sections/catalog/product-functions';
+import { CatalogPrinterGroupView } from '@/sections/catalog/printer-groups';
 
 import { RoleBasedGuard } from '@/auth/guard';
 
@@ -13,7 +13,7 @@ export default function Page() {
     <>
       <title>{metadata.title}</title>
       <RoleBasedGuard scopes={['write:order']}>
-        <CatalogProductFunctionView />
+        <CatalogPrinterGroupView />
       </RoleBasedGuard>
     </>
   );

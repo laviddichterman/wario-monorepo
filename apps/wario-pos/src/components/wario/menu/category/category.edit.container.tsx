@@ -3,7 +3,7 @@ import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import type { ICategory } from '@wcp/wario-shared';
-import { useValueFromCategoryEntryById } from '@wcp/wario-ux-shared/query';
+import { useCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useEditCategoryMutation } from '@/hooks/useCategoryMutations';
 
@@ -12,8 +12,6 @@ import { createNullGuard } from '@/components/wario/catalog-null-guard';
 import { categoryFormAtom, categoryFormProcessingAtom, fromCategoryEntity } from '@/atoms/forms/categoryFormAtoms';
 
 import { CategoryComponent } from './category.component';
-
-const useCategoryById = (id: string | null) => useValueFromCategoryEntryById(id ?? '', 'category') ?? null;
 
 const CategoryNullGuard = createNullGuard(useCategoryById);
 export interface CategoryEditProps {

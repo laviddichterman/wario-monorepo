@@ -1,3 +1,4 @@
+import ModifierDialoguesContainer from '@/components/wario/menu/modifier_dialogues.container';
 import ModifierTypeTableContainer from '@/components/wario/menu/modifier_type/modifier_type_table.container';
 
 import { CONFIG } from '@/config';
@@ -11,6 +12,7 @@ export default function Page() {
     <>
       <title>{metadata.title}</title>
       <ModifierTypeTableContainer />
+      <ModifierDialoguesContainer />
     </>
   );
 }

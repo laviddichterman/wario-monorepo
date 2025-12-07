@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Grid } from '@mui/material';
 
 import type { ICategory } from '@wcp/wario-shared';
-import { useValueFromCategoryEntryById } from '@wcp/wario-ux-shared/query';
+import { useCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useDeleteCategoryMutation } from '@/hooks/useCategoryMutations';
 
@@ -12,8 +12,6 @@ import { createNullGuard } from '@/components/wario/catalog-null-guard';
 import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
 import ElementDeleteComponent from '../element.delete.component';
-
-const useCategoryById = (id: string | null) => useValueFromCategoryEntryById(id ?? '', 'category') ?? null;
 
 const CategoryNullGuard = createNullGuard(useCategoryById);
 export interface CategoryDeleteProps {

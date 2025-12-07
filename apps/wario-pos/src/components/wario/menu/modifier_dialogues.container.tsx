@@ -1,7 +1,9 @@
 import { useAtomValue, useSetAtom } from 'jotai';
 
 import { DialogContainer } from '@wcp/wario-ux-shared/containers';
-import { useModifierTypeNameById } from '@wcp/wario-ux-shared/query';
+import { useModifierTypeById } from '@wcp/wario-ux-shared/query';
+
+import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
 import {
   closeDialogueAtom,
@@ -21,12 +23,42 @@ import ModifierTypeCopyContainer from './modifier_type/modifier_type.copy.contai
 import ModifierTypeDeleteContainer from './modifier_type/modifier_type.delete.container';
 import ModifierTypeEditContainer from './modifier_type/modifier_type.edit.container';
 
+const ModifierTypeNullGuard = createNullGuard(useModifierTypeById);
+
+const ModifierOptionAdd = () => {
+  const modifierTypeId = useAtomValue(selectedModifierTypeIdAtom);
+  const closeDialogue = useSetAtom(closeDialogueAtom);
+  const dialogueState = useAtomValue(dialogueStateAtom);
+
+  return (
+    <ModifierTypeNullGuard
+      id={modifierTypeId}
+      child={(modifierType) => (
+        <DialogContainer
+          maxWidth={'xl'}
+          title={`Add Modifier Option for Type: ${modifierType.name}`}
+          onClose={() => {
+            closeDialogue();
+          }}
+          open={dialogueState === 'ModifierOptionAdd'}
+          innerComponent={
+            <ModifierOptionAddContainer
+              onCloseCallback={() => {
+                closeDialogue();
+              }}
+              modifierTypeId={modifierType.id}
+            />
+          }
+        />
+      )}
+    />
+  );
+};
+
 const ModifierDialoguesContainer = () => {
   const dialogueState = useAtomValue(dialogueStateAtom);
   const modifierOptionId = useAtomValue(selectedModifierOptionIdAtom);
   const modifierTypeId = useAtomValue(selectedModifierTypeIdAtom);
-
-  const modifierTypeName = useModifierTypeNameById(modifierTypeId || '');
   const closeDialogue = useSetAtom(closeDialogueAtom);
 
   return (
@@ -117,25 +149,7 @@ const ModifierDialoguesContainer = () => {
           )
         }
       />
-
-      <DialogContainer
-        maxWidth={'xl'}
-        title={`Add Modifier Option for Type: ${modifierTypeName}`}
-        onClose={() => {
-          closeDialogue();
-        }}
-        open={dialogueState === 'ModifierOptionAdd'}
-        innerComponent={
-          modifierTypeId !== null && (
-            <ModifierOptionAddContainer
-              onCloseCallback={() => {
-                closeDialogue();
-              }}
-              modifierTypeId={modifierTypeId}
-            />
-          )
-        }
-      />
+      <ModifierOptionAdd />
       <DialogContainer
         title={'Add Modifier Type'}
         onClose={() => {

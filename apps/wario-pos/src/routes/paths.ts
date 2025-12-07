@@ -82,7 +82,7 @@ export const paths = {
       },
       modifiers: `${ROOTS.DASHBOARD}/catalog/modifiers`,
       productfunctions: `${ROOTS.DASHBOARD}/catalog/product-functions`,
-      printergroups: `${ROOTS.DASHBOARD}/catalog/printergroups`,
+      printergroups: `${ROOTS.DASHBOARD}/catalog/printer-groups`,
     },
   },
 };
