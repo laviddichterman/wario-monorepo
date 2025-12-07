@@ -10,9 +10,29 @@
  *   mockCatalogProviderService,
  *   createMockModel,
  *   TestUsers,
+ *   createMockWOrderInstance,
  * } from '../test/utils';
  * ```
  */
+
+// Catalog test helpers (wraps @wcp/wario-shared/testing)
+export {
+  asUncommittedOption,
+  asUncommittedOptionType,
+  asUncommittedProduct,
+  asUncommittedProductInstance,
+  createCatalogWithModifiers,
+  createMinimalCatalogOptions,
+  createMockCatalog,
+  type CreateMockCatalogOptions,
+  createMockCatalogSelectorsFromArrays,
+  createMockCategory,
+  createMockOption,
+  createMockOptionType,
+  createMockProduct,
+  createMockProductInstance,
+  setupMockCatalog,
+} from './catalog-test-helpers';
 
 // Auth mocks
 export {
@@ -43,6 +63,35 @@ export {
   mockSquareService,
   mockStoreCreditProviderService,
 } from './mock-services';
+
+// Order mocks
+export {
+  createMockCancelledOrder,
+  createMockCart,
+  createMockCartEntry,
+  type CreateMockCartEntryOptions,
+  createMockCashPayment,
+  createMockCompletedOrder,
+  createMockConfirmedOrder,
+  createMockCreditPayment,
+  createMockCustomerInfo,
+  type CreateMockCustomerInfoOptions,
+  type CreateMockDiscountOptions,
+  createMockFulfillmentData,
+  type CreateMockFulfillmentOptions,
+  createMockManualDiscount,
+  createMockMetrics,
+  createMockMoneyBackend,
+  createMockOrderTax,
+  type CreateMockPaymentOptions,
+  createMockStoreCreditPayment,
+  type CreateMockStoreCreditPaymentOptions,
+  createMockTipAmount,
+  createMockTipPercentage,
+  createMockWOrderInstance,
+  type CreateMockWOrderInstanceOptions,
+  resetOrderIdCounter,
+} from './order-mocks';
 
 // Core utilities
 export {
