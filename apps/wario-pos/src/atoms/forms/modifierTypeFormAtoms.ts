@@ -1,4 +1,5 @@
-import { atom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { useCallback } from 'react';
 
 import type { IOptionType, KeyValue } from '@wcp/wario-shared';
 import { DISPLAY_AS, MODIFIER_CLASS } from '@wcp/wario-shared';
@@ -109,3 +110,23 @@ export const fromModifierTypeEntity = (entity: IOptionType): ModifierTypeFormSta
   nonEmptyGroupSuffix: entity.displayFlags.non_empty_group_suffix,
   is3p: entity.displayFlags.is3p,
 });
+
+
+/**
+ * Hook to manage ModifierType form state.
+ * Returns the form state and a type-safe field updater.
+ */
+export const useModifierTypeForm = () => {
+  const [form, setForm] = useAtom(modifierTypeFormAtom);
+  const isValid = useAtomValue(modifierTypeFormIsValidAtom);
+  const [isProcessing, setIsProcessing] = useAtom(modifierTypeFormProcessingAtom);
+
+  const updateField = useCallback(
+    <K extends keyof ModifierTypeFormState>(field: K, value: ModifierTypeFormState[K]) => {
+      setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    },
+    [setForm],
+  );
+
+  return { form, updateField, isValid, isProcessing, setIsProcessing };
+};

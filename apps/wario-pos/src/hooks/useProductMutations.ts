@@ -6,25 +6,16 @@ import type {
   IProduct,
   IProductInstance,
   IWInterval,
-  UncommittedIProduct,
-  UncommittedIProductInstance,
   UpsertProductBatchRequest,
 } from '@wcp/wario-shared';
 
 import axiosInstance from '@/utils/axios';
 
 import { type ProductFormState, toProductApiBody } from '@/atoms/forms/productFormAtoms';
-import { type ProductInstanceFormState, toProductInstanceApiBody } from '@/atoms/forms/productInstanceFormAtoms';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface AddProductRequest {
-  productForm: ProductFormState;
-  instanceForm: ProductInstanceFormState;
-}
-
 
 interface EditProductRequest {
   id: string;
@@ -56,18 +47,9 @@ export function useAddProductMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ productForm, instanceForm }: AddProductRequest) => {
+    mutationFn: async (req: CreateProductBatchRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-
-      const productBody: UncommittedIProduct = toProductApiBody(productForm);
-      const instanceBody: UncommittedIProductInstance = toProductInstanceApiBody(instanceForm);
-
-      const body: CreateProductBatchRequest = {
-        instances: [instanceBody],
-        product: productBody,
-      };
-
-      const response = await axiosInstance.post<IProduct>('/api/v1/menu/product/', body, {
+      const response = await axiosInstance.post<IProduct>('/api/v1/menu/product/', req, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

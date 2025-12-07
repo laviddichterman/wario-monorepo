@@ -14,6 +14,7 @@ import {
   DEFAULT_PRODUCT_INSTANCE_FORM,
   productInstanceFormAtom,
   productInstanceFormProcessingAtom,
+  toProductInstanceApiBody,
 } from '@/atoms/forms/productInstanceFormAtoms';
 
 import { ProductInstanceContainer } from './instance/product_instance.component';
@@ -35,7 +36,6 @@ const ProductAddContainer = ({ onCloseCallback }: ProductAddContainerProps) => {
   const instanceForm = useAtomValue(productInstanceFormAtom);
 
   const addMutation = useAddProductMutation();
-
   useEffect(() => {
     setProductForm(DEFAULT_PRODUCT_FORM);
     setInstanceForm(DEFAULT_PRODUCT_INSTANCE_FORM);
@@ -52,7 +52,7 @@ const ProductAddContainer = ({ onCloseCallback }: ProductAddContainerProps) => {
     setInstanceProcessing(true);
 
     addMutation.mutate(
-      { productForm, instanceForm },
+      { instances: [toProductInstanceApiBody(instanceForm)], product: toProductApiBody(productForm) },
       {
         onSuccess: () => {
           enqueueSnackbar(`Created base product ${instanceForm.displayName}`);

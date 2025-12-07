@@ -48,13 +48,7 @@ export type DashboardLayoutProps = LayoutBaseProps & {
   };
 };
 
-export function DashboardLayout({
-  sx,
-  cssVars,
-  children,
-  slotProps,
-  layoutQuery = 'lg',
-}: DashboardLayoutProps) {
+export function DashboardLayout({ sx, cssVars, children, slotProps, layoutQuery = 'lg' }: DashboardLayoutProps) {
   const theme = useTheme();
   const { hasScopes } = useAuthContext();
 
@@ -128,10 +122,7 @@ export function DashboardLayout({
           )}
 
           {/** @slot Divider */}
-          {isNavHorizontal && (
-            <VerticalDivider sx={{ [theme.breakpoints.up(layoutQuery)]: { display: 'flex' } }} />
-          )}
-
+          {isNavHorizontal && <VerticalDivider sx={{ [theme.breakpoints.up(layoutQuery)]: { display: 'flex' } }} />}
         </>
       ),
       rightArea: (
@@ -168,12 +159,8 @@ export function DashboardLayout({
       cssVars={navVars.section}
       checkPermissions={canDisplayItemByRole}
       onToggleNav={() => {
-        settings.setField(
-          'navLayout',
-          settings.state.navLayout === 'vertical' ? 'mini' : 'vertical'
-        );
-      }
-      }
+        settings.setField('navLayout', settings.state.navLayout === 'vertical' ? 'mini' : 'vertical');
+      }}
     />
   );
 

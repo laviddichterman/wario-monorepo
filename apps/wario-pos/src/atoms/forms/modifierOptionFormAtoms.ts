@@ -1,4 +1,4 @@
-import { atom } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 
 import type {
@@ -159,3 +159,11 @@ export const modifierOptionCopyCountAtom = atom(0);
  * Stores the modifier type being copied (read-only reference for child components).
  */
 export const modifierTypeCopySourceAtom = atom<IOptionType | null>(null);
+
+
+export const useModifierOptionForm = () => {
+  const form = useAtomValue(modifierOptionFormAtom);
+  const isValid = useAtomValue(modifierOptionFormIsValidAtom);
+  const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
+  return { form, isValid, isProcessing };
+};

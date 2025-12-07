@@ -1,6 +1,4 @@
 import { snakeCase, startCase } from 'es-toolkit/compat';
-import { useAtom, useAtomValue } from 'jotai';
-import { useCallback } from 'react';
 
 import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup } from '@mui/material';
 
@@ -13,12 +11,7 @@ import { StringEnumPropertyComponent } from '@/components/wario/property-compone
 import { StringPropertyComponent } from '@/components/wario/property-components/StringPropertyComponent';
 import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
-import {
-  modifierTypeFormAtom,
-  modifierTypeFormIsValidAtom,
-  modifierTypeFormProcessingAtom,
-  type ModifierTypeFormState,
-} from '@/atoms/forms/modifierTypeFormAtoms';
+import { useModifierTypeForm } from '@/atoms/forms/modifierTypeFormAtoms';
 
 import { ElementActionComponent } from '../element.action.component';
 
@@ -29,26 +22,6 @@ export interface ModifierTypeUiProps {
 export type ModifierTypeModifyUiProps = {
   modifier_type_id: string;
 } & ModifierTypeUiProps;
-
-/**
- * Hook to manage ModifierType form state.
- * Returns the form state and a type-safe field updater.
- */
-export const useModifierTypeForm = () => {
-  const [form, setForm] = useAtom(modifierTypeFormAtom);
-  const isValid = useAtomValue(modifierTypeFormIsValidAtom);
-  const [isProcessing, setIsProcessing] = useAtom(modifierTypeFormProcessingAtom);
-
-  const updateField = useCallback(
-    <K extends keyof ModifierTypeFormState>(field: K, value: ModifierTypeFormState[K]) => {
-      setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
-    },
-    [setForm],
-  );
-
-  return { form, updateField, isValid, isProcessing, setIsProcessing };
-};
-
 /**
  * Form body for ModifierType - reads state from Jotai atoms.
  * This replaces the old ModifierTypeContainer which required 30+ props.

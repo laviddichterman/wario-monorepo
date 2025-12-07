@@ -4,9 +4,13 @@ import { useEffect } from 'react';
 
 import { useAddModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
-import { DEFAULT_MODIFIER_TYPE_FORM, modifierTypeFormAtom } from '@/atoms/forms/modifierTypeFormAtoms';
+import {
+  DEFAULT_MODIFIER_TYPE_FORM,
+  modifierTypeFormAtom,
+  useModifierTypeForm,
+} from '@/atoms/forms/modifierTypeFormAtoms';
 
-import { ModifierTypeFormComponent, type ModifierTypeUiProps, useModifierTypeForm } from './modifier_type.component';
+import { ModifierTypeFormComponent, type ModifierTypeUiProps } from './modifier_type.component';
 
 const ModifierTypeAddContainer = ({ onCloseCallback }: ModifierTypeUiProps) => {
   const { enqueueSnackbar } = useSnackbar();

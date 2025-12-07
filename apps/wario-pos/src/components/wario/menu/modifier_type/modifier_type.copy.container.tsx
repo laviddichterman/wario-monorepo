@@ -31,12 +31,13 @@ import {
   modifierTypeFormAtom,
   modifierTypeFormProcessingAtom,
   toModifierTypeApiBody,
+  useModifierTypeForm,
 } from '@/atoms/forms/modifierTypeFormAtoms';
 import { HOST_API } from '@/config';
 
 import { ModifierOptionContainer } from '../modifier_option/modifier_option.component';
 
-import { ModifierTypeFormComponent, useModifierTypeForm } from './modifier_type.component';
+import { ModifierTypeFormComponent } from './modifier_type.component';
 
 export interface ModifierTypeCopyContainerProps {
   modifierTypeId: string;

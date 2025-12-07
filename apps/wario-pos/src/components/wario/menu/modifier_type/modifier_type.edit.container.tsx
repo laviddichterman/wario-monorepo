@@ -9,13 +9,9 @@ import { useEditModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
-import { fromModifierTypeEntity, modifierTypeFormAtom } from '@/atoms/forms/modifierTypeFormAtoms';
+import { fromModifierTypeEntity, modifierTypeFormAtom, useModifierTypeForm } from '@/atoms/forms/modifierTypeFormAtoms';
 
-import {
-  ModifierTypeFormComponent,
-  type ModifierTypeModifyUiProps,
-  useModifierTypeForm,
-} from './modifier_type.component';
+import { ModifierTypeFormComponent, type ModifierTypeModifyUiProps } from './modifier_type.component';
 
 const useModifierTypeById = (id: string | null) => {
   return useValueFromModifierEntryById(id ?? '', 'modifierType');

@@ -24,9 +24,9 @@ import { ToggleBooleanPropertyComponent } from '@/components/wario/property-comp
 
 import {
   modifierOptionFormAtom,
-  modifierOptionFormIsValidAtom,
   modifierOptionFormProcessingAtom,
   type ModifierOptionFormState,
+  useModifierOptionForm,
 } from '@/atoms/forms/modifierOptionFormAtoms';
 
 import { ElementActionComponent } from '../element.action.component';
@@ -248,14 +248,6 @@ export const ModifierOptionContainer = (
 // =============================================================================
 // NEW JOTAI-BASED EXPORTS
 // =============================================================================
-
-export const useModifierOptionForm = () => {
-  const form = useAtomValue(modifierOptionFormAtom);
-  const isValid = useAtomValue(modifierOptionFormIsValidAtom);
-  const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
-  return { form, isValid, isProcessing };
-};
-
 export const ModifierOptionFormBody = ({ modifierType }: { modifierType: Omit<IOptionType, 'id'> }) => {
   const [form, setForm] = useAtom(modifierOptionFormAtom);
   const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
