@@ -61,4 +61,33 @@ export class AppConfigService {
   get port(): number {
     return this.configService.get<number>('PORT') ?? 3000;
   }
+
+  // ============ CORS Configuration ============
+
+  /**
+   * Returns allowed CORS origins for both HTTP and WebSocket connections.
+   * In development, allows localhost origins.
+   * In production, reads from CORS_ORIGINS env var (comma-separated).
+   */
+  get corsOrigins(): (string | RegExp)[] {
+    const envOrigins = this.configService.get<string>('CORS_ORIGINS');
+    if (envOrigins) {
+      return envOrigins.split(',').map(origin => origin.trim());
+    }
+
+    // Default development origins
+    return [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:3002',
+      'http://localhost:3003',
+      'http://localhost:5173', // Vite default
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+      /https:\/\/.*\.windycitypie\.com$/,
+      /https:\/\/windycitypie\.com$/,
+      /https:\/\/.*\.breezytownpizza\.com$/,
+      /https:\/\/breezytownpizza\.com$/,
+    ];
+  }
 }

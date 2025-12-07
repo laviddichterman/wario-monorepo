@@ -108,7 +108,7 @@ export class CatalogModifierService {
       this.catalogProvider.RecomputeCatalog();
       await this.UpdateModifierType({ id: modifierTypeId, modifierType: {} });
     }
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -236,7 +236,7 @@ export class CatalogModifierService {
       );
       await this.catalogProvider.SyncProductInstances();
 
-      this.catalogProvider.RecomputeCatalogAndEmit();
+      this.catalogProvider.RecomputeCatalog();
     }
     return updatedModifierTypes;
   };
@@ -292,7 +292,7 @@ export class CatalogModifierService {
     );
     await this.catalogProvider.SyncOptions();
     await this.catalogProvider.SyncModifierTypes();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -323,7 +323,7 @@ export class CatalogModifierService {
       id: modifierOption.modifierTypeId,
       modifierType: {},
     });
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     // since we have new external IDs, we need to pull the modifier option from the catalog after the above syncing
     return this.catalogProvider.Catalog.options[doc.id as string];
   };
@@ -489,7 +489,7 @@ export class CatalogModifierService {
     // Delegate product instance updates to CatalogProviderService
     await this.catalogProvider.UpdateProductInstancesForOptionChanges(updatedOptions);
 
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
 
     return updated;
   };
@@ -526,7 +526,7 @@ export class CatalogModifierService {
       }),
     );
     if (!suppress_catalog_recomputation) {
-      this.catalogProvider.RecomputeCatalogAndEmit();
+      this.catalogProvider.RecomputeCatalog();
     }
     return doc.toObject();
   };

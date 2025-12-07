@@ -503,7 +503,7 @@ export class CatalogProductService {
       );
     }
     await Promise.all([this.catalogProvider.SyncProducts(), this.catalogProvider.SyncProductInstances()]);
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
 
     const reconstructedBatches: Record<
       number,
@@ -571,7 +571,7 @@ export class CatalogProductService {
     }
     await this.catalogProvider.SyncProducts();
     if (!suppress_catalog_recomputation) {
-      this.catalogProvider.RecomputeCatalogAndEmit();
+      this.catalogProvider.RecomputeCatalog();
     }
     return { deletedCount: doc.deletedCount, acknowledged: doc.acknowledged };
   };
@@ -598,7 +598,7 @@ export class CatalogProductService {
       await this.catalogProvider.SyncProductInstances();
     }
     await this.catalogProvider.SyncProducts();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -640,7 +640,7 @@ export class CatalogProductService {
     const doc = new this.wProductInstanceModel(adjustedInstance);
     await doc.save();
     await this.catalogProvider.SyncProductInstances();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -739,7 +739,7 @@ export class CatalogProductService {
 
     if (!suppress_catalog_recomputation) {
       await this.catalogProvider.SyncProductInstances();
-      this.catalogProvider.RecomputeCatalogAndEmit();
+      this.catalogProvider.RecomputeCatalog();
     }
     return updated;
   };
@@ -771,7 +771,7 @@ export class CatalogProductService {
 
       if (!suppress_catalog_recomputation) {
         await this.catalogProvider.SyncProductInstances();
-        this.catalogProvider.RecomputeCatalogAndEmit();
+        this.catalogProvider.RecomputeCatalog();
       }
       return doc.toObject();
     }

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
 import { OAuth2Client } from 'google-auth-library';
 import { calendar_v3, google, sheets_v4 } from 'googleapis';
@@ -13,7 +13,7 @@ import { DataProviderService } from '../data-provider/data-provider.service';
 const OAuth2 = google.auth.OAuth2;
 
 @Injectable()
-export class GoogleService {
+export class GoogleService implements OnModuleInit {
   private accessToken: string;
   private smtpTransport: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   private calendarAPI: calendar_v3.Calendar;
@@ -21,7 +21,6 @@ export class GoogleService {
   private oauth2Client: OAuth2Client;
 
   constructor(
-    @Inject(forwardRef(() => DataProviderService))
     private readonly dataProvider: DataProviderService,
     @InjectPinoLogger(GoogleService.name)
     private readonly logger: PinoLogger,
@@ -45,7 +44,7 @@ export class GoogleService {
     }
   };
 
-  Bootstrap = async () => {
+  async onModuleInit() {
     // this bootstrapping requires having used https://developers.google.com/oauthplayground/ to get a refresh token.
     // 1. Go to https://developers.google.com/oauthplayground/
     // 2. set scopes to https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive https://mail.google.com/

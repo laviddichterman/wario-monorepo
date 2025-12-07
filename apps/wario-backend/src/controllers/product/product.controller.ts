@@ -5,6 +5,7 @@ import { CreateProductBatchRequestDto, PartialUncommittedProductInstanceDto, Unc
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProductService } from '../../config/catalog-provider/catalog-product.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
+import { SocketIoService } from '../../config/socket-io/socket-io.service';
 import {
   BatchDeleteProductClassDto,
 } from '../../dtos/product.dto';
@@ -15,6 +16,7 @@ export class ProductController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly catalogProductService: CatalogProductService,
+    private readonly socketIoService: SocketIoService,
   ) { }
 
   @Post()
@@ -25,6 +27,7 @@ export class ProductController {
     if (!createProductResult) {
       throw new CatalogOperationException('create product', 'Unable to satisfy prerequisites to create Product and instances');
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return createProductResult;
   }
 
@@ -39,6 +42,7 @@ export class ProductController {
     if (!createBatchesResult) {
       throw new CatalogOperationException('batch create products', 'Unable to satisfy prerequisites to create Product(s) and instance(s)');
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return createBatchesResult;
   }
 
@@ -49,6 +53,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -59,6 +64,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -70,6 +76,7 @@ export class ProductController {
     if (!doc) {
       throw new CatalogOperationException('batch delete products', `Unable to delete Products: ${body.pids.join(', ')}`);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -87,6 +94,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -109,6 +117,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductInstanceNotFoundException(productInstanceId);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -119,6 +128,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductInstanceNotFoundException(productInstanceId);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 }

@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { parseISO } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
@@ -168,7 +168,7 @@ const SquareCallFxnWrapper = async <T extends SquareResponseBase>(
 };
 
 @Injectable()
-export class SquareService {
+export class SquareService implements OnModuleInit {
   private client: Client;
   private catalogLimits: Required<NonNullableFields<CatalogInfoResponseLimits>>;
   private catalogIdsToDelete: string[];
@@ -176,7 +176,6 @@ export class SquareService {
 
   constructor(
     private readonly appConfig: AppConfigService,
-    @Inject(forwardRef(() => DataProviderService))
     private readonly dataProvider: DataProviderService,
     private readonly migrationFlags: MigrationFlagsService,
     @InjectPinoLogger(SquareService.name)
@@ -194,7 +193,7 @@ export class SquareService {
     return this._isInitialized;
   }
 
-  async Bootstrap() {
+  async onModuleInit() {
     this.logger.info('Starting Bootstrap of SquareService');
     if (this.dataProvider.KeyValueConfig.SQUARE_TOKEN) {
       this.client = new Client({

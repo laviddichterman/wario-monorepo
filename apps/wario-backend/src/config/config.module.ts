@@ -35,8 +35,8 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
   providers: [
     AppConfigService,
     MigrationFlagsService,
-    SocketIoService,
     DataProviderService,
+    SocketIoService,
     CatalogProviderService,
     CatalogFunctionService,
     CatalogCategoryService,
@@ -60,8 +60,8 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
   exports: [
     AppConfigService,
     MigrationFlagsService,
-    SocketIoService,
     DataProviderService,
+    SocketIoService,
     CatalogProviderService,
     CatalogFunctionService,
     CatalogCategoryService,

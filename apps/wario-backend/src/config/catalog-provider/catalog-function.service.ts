@@ -31,7 +31,7 @@ export class CatalogFunctionService {
     const doc = new this.wProductInstanceFunctionModel(productInstanceFunction);
     await doc.save();
     await this.catalogProvider.SyncProductInstanceFunctions();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -46,7 +46,7 @@ export class CatalogFunctionService {
       return null;
     }
     await this.catalogProvider.SyncProductInstanceFunctions();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return updated.toObject();
   };
 
@@ -71,7 +71,7 @@ export class CatalogFunctionService {
 
     await this.catalogProvider.SyncProductInstanceFunctions();
     if (!suppress_catalog_recomputation) {
-      this.catalogProvider.RecomputeCatalogAndEmit();
+      this.catalogProvider.RecomputeCatalog();
     }
     return doc.toObject();
   };
@@ -80,7 +80,7 @@ export class CatalogFunctionService {
     const doc = new this.wOrderInstanceFunctionModel(orderInstanceFunction);
     await doc.save();
     await this.catalogProvider.SyncOrderInstanceFunctions();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -93,7 +93,7 @@ export class CatalogFunctionService {
       return null;
     }
     await this.catalogProvider.SyncOrderInstanceFunctions();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return updated.toObject();
   };
 
@@ -105,7 +105,7 @@ export class CatalogFunctionService {
     }
     await this.catalogProvider.SyncOrderInstanceFunctions();
     if (!suppress_catalog_recomputation) {
-      this.catalogProvider.RecomputeCatalogAndEmit();
+      this.catalogProvider.RecomputeCatalog();
     }
     return doc.toObject();
   };

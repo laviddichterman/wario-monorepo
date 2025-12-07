@@ -24,7 +24,6 @@ import {
 
 import { AppConfigService } from '../app-config.service';
 import { MigrationFlagsService } from '../migration-flags.service';
-import { SocketIoService } from '../socket-io/socket-io.service';
 import {
   GenerateSquareReverseMapping,
   ICatalogContext,
@@ -67,10 +66,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private printerGroupModel: Model<PrinterGroup>,
     private appConfig: AppConfigService,
     private migrationFlags: MigrationFlagsService,
-    @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
-    @Inject(forwardRef(() => SocketIoService))
-    private socketIoService: SocketIoService,
     @Inject(forwardRef(() => CatalogFunctionService))
     private functionService: CatalogFunctionService,
     @Inject(forwardRef(() => CatalogPrinterGroupService))
@@ -137,8 +133,6 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   }
 
   async onModuleInit() {
-    // Register with SocketIoService for initial state emission
-    this.socketIoService.setCatalogProvider(this);
     await this.Bootstrap();
   }
 
@@ -244,7 +238,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   RecomputeCatalog = () => {
-    this.logger.debug('Recomputing catalog');
+    this.logger.warn('Recomputing catalog');
     this.catalog = CatalogGenerator(
       Object.values(this.categories),
       this.modifier_types,
@@ -255,12 +249,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this.orderInstanceFunctions,
       this.apiver,
     );
+    this.logger.warn({ api: this.catalog.api, products: this.catalog.products.length }, 'Recomputed catalog');
     this.squareIdToWarioIdMapping = GenerateSquareReverseMapping(this.catalog);
-  };
-
-  RecomputeCatalogAndEmit = () => {
-    this.RecomputeCatalog();
-    this.socketIoService.EmitCatalog(this.catalog);
   };
 
   Bootstrap = async () => {
@@ -309,7 +299,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
     }
 
-    this.logger.info(`Finished Bootstrap of CatalogProvider`);
+    this.logger.info({ catalog: this.Catalog.api, productCount: this.products.length, modifierTypeCount: this.modifier_types.length, categoryCount: Object.keys(this.categories).length }, 'Finished Bootstrap of CatalogProvider');
   };
 
   UpdateProductsReferencingModifierTypeId = async (mtids: string[]) => {
@@ -335,7 +325,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       await this.catalogProductService.BatchUpsertProduct(batches);
     }
     if (!suppress_catalog_recomputation) {
-      this.RecomputeCatalogAndEmit();
+      this.RecomputeCatalog();
     }
   };
 
@@ -414,7 +404,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       await this.SyncCategories();
     }
     if (products_update.modifiedCount > 0 || category_update.modifiedCount > 0) {
-      this.RecomputeCatalogAndEmit();
+      this.RecomputeCatalog();
     }
   };
 }

@@ -5,6 +5,7 @@ import { UncommittedCategoryDto } from '@wcp/wario-shared';
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogCategoryService } from '../../config/catalog-provider/catalog-category.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
+import { SocketIoService } from '../../config/socket-io/socket-io.service';
 import { DeleteCategoryDto, UpdateCategoryDto } from '../../dtos/category.dto';
 import { CategoryNotFoundException } from '../../exceptions';
 
@@ -13,6 +14,7 @@ export class CategoryController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly catalogCategoryService: CatalogCategoryService,
+    private readonly socketIoService: SocketIoService,
   ) { }
 
   @Post()
@@ -20,6 +22,7 @@ export class CategoryController {
   @HttpCode(201)
   async postCategory(@Body() body: UncommittedCategoryDto) {
     const doc = await this.catalogCategoryService.CreateCategory(body);
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -31,6 +34,7 @@ export class CategoryController {
     if (!doc) {
       throw new CategoryNotFoundException(catid);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -42,6 +46,7 @@ export class CategoryController {
     if (!doc) {
       throw new CategoryNotFoundException(catid);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 }

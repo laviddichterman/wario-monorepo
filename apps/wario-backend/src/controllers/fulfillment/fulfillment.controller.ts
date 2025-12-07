@@ -53,6 +53,8 @@ export class FulfillmentController {
       await this.catalogProvider.BackfillRemoveFulfillment(fulfillmentId);
       const doc = await this.dataProvider.deleteFulfillment(fulfillmentId);
       await this.dataProvider.syncFulfillments();
+      // emit the catalog as we removed its dependencies earlier and we want to avoid having the catalogProvider need to have socketio as a dependency
+      this.socketIoService.EmitCatalogTo(this.socketIoService.server, this.catalogProvider.Catalog);
       this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
       return doc;
     } catch (error) {

@@ -436,18 +436,18 @@ export class DatabaseManagerService implements OnModuleInit {
           const elts = await WProductModel.find();
           await Promise.all(
             elts.map(async (prod) => {
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               if (prod.availability === null) {
                 // If availability is null, set it to an empty array
                 prod.availability = [];
               } else if (!Array.isArray(prod.availability)) {
                 // If availability is not an array, wrap it in an array
-                // @ts-ignore
                 prod.availability = [prod.availability];
               }
               return await prod
                 .save()
                 .then((doc) => {
-                  this.logger.info({ productId: doc.id, availability: doc.availability }, 'Updated ProductModel with availability');
+                  this.logger.info({ productId: doc.id as string, availability: doc.availability }, 'Updated ProductModel with availability');
                   return doc;
                 })
                 .catch((err: unknown) => {
@@ -538,6 +538,7 @@ export class DatabaseManagerService implements OnModuleInit {
                 return await prod
                   .save()
                   .then((doc) => {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                     this.logger.info({ productInstanceId: doc.id as string, posFields: doc.displayFlags!.pos }, 'Updated ProductInstanceModel with POS scoped fields');
                     return doc;
                   })

@@ -7,12 +7,14 @@ import { CreateProductInstanceFunctionDto, UpdateProductInstanceFunctionDto } fr
 
 import { CatalogFunctionService } from '../../config/catalog-provider/catalog-function.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
+import { SocketIoService } from '../../config/socket-io/socket-io.service';
 
 @Controller('api/v1/query/language/productinstancefunction')
 export class ProductInstanceFunctionController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly functionService: CatalogFunctionService,
+    private readonly socketIoService: SocketIoService,
   ) { }
 
   @Post()
@@ -27,6 +29,7 @@ export class ProductInstanceFunctionController {
       name: body.name,
       expression: body.expression as IAbstractExpression,
     });
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -44,6 +47,7 @@ export class ProductInstanceFunctionController {
     if (!doc) {
       throw new NotFoundException(`Unable to update ProductInstanceFunction: ${fxnid}`);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
@@ -53,6 +57,7 @@ export class ProductInstanceFunctionController {
     if (!doc) {
       throw new NotFoundException(`Unable to delete ProductInstanceFunction: ${fxnid}`);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 }

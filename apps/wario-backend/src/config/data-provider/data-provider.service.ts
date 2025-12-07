@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
@@ -16,10 +16,6 @@ import { SeatingResourceModel } from '../../models/orders/WSeatingResource';
 import { FulfillmentModel } from '../../models/settings/FulfillmentSchema';
 import { KeyValueModel } from '../../models/settings/KeyValueSchema';
 import { SettingsModel } from '../../models/settings/SettingsSchema';
-import { GoogleService } from '../google/google.service';
-import { SocketIoService } from '../socket-io/socket-io.service';
-import { SquareService } from '../square/square.service';
-
 @Injectable()
 export class DataProviderService implements OnModuleInit {
   private settings: IWSettings;
@@ -35,11 +31,6 @@ export class DataProviderService implements OnModuleInit {
     private fulfillmentModel: typeof FulfillmentModel,
     @InjectModel('SeatingResource')
     private seatingResourceModel: typeof SeatingResourceModel,
-    private socketIoService: SocketIoService,
-    @Inject(forwardRef(() => SquareService))
-    private squareService: SquareService,
-    @Inject(forwardRef(() => GoogleService))
-    private googleService: GoogleService,
     @InjectPinoLogger(DataProviderService.name)
     private readonly logger: PinoLogger,
   ) {
@@ -50,8 +41,6 @@ export class DataProviderService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    // Register with SocketIoService for initial state emission
-    this.socketIoService.setDataProvider(this);
     await this.Bootstrap();
   }
 
@@ -94,28 +83,23 @@ export class DataProviderService implements OnModuleInit {
       this.logger.info('Added default (empty) key value config area');
     } else {
       this.logger.debug({ keyValueStore: found_key_value_store }, 'Found KeyValueSchema in database');
-      for (const i in found_key_value_store.settings) {
-        if (Object.hasOwn(this.keyvalueconfig, found_key_value_store.settings[i].key)) {
+      for (const setting of found_key_value_store.settings) {
+        if (Object.hasOwn(this.keyvalueconfig, setting.key)) {
           this.logger.error(
-            `Clobbering key: ${found_key_value_store.settings[i].key} containing ${this.keyvalueconfig[found_key_value_store.settings[i].key]}`,
+            `Clobbering key: ${setting.key} containing ${this.keyvalueconfig[setting.key]}`,
           );
         }
-        this.keyvalueconfig[found_key_value_store.settings[i].key] = found_key_value_store.settings[i].value;
+        this.keyvalueconfig[setting.key] = setting.value;
       }
     }
 
     // check for and populate settings, including operating hours
     const found_settings = await this.settingsModel.findOne();
     this.logger.info({ settings: found_settings }, 'Found settings');
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.settings = found_settings!;
 
-    this.logger.debug('Done Bootstrapping DataProvider, now initializing dependent services...');
-
-    // Bootstrap services that depend on KeyValueConfig being loaded
-    await this.googleService.Bootstrap();
-    await this.squareService.Bootstrap();
-
-    this.logger.debug('Done Bootstrapping all dependent services');
+    this.logger.debug('Done Bootstrapping DataProvider');
   };
 
   get Settings() {
@@ -199,7 +183,7 @@ export class DataProviderService implements OnModuleInit {
       .save()
       .then((x) => {
         this.logger.debug({ fulfillment: x }, 'Saved new fulfillment');
-        this.fulfillments[x.id] = x;
+        this.fulfillments[x.id as string] = x;
         return x;
       })
       .catch((err: unknown) => {
@@ -215,6 +199,7 @@ export class DataProviderService implements OnModuleInit {
       .findByIdAndUpdate(id, fulfillment, { new: true })
       .then((doc) => {
         this.logger.debug({ fulfillmentId: id, fulfillment: doc }, 'Updated fulfillment');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.fulfillments[id] = doc!;
         return doc;
       })
@@ -230,6 +215,7 @@ export class DataProviderService implements OnModuleInit {
       .findByIdAndDelete(id)
       .then((doc) => {
         this.logger.debug({ fulfillmentId: id, fulfillment: doc }, 'Deleted fulfillment');
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.fulfillments[id];
         return doc;
       })
@@ -245,7 +231,7 @@ export class DataProviderService implements OnModuleInit {
       .save()
       .then((x) => {
         this.logger.debug({ seatingResource: x }, 'Saved new seating resource');
-        this.seatingResources[x.id] = x;
+        this.seatingResources[x.id as string] = x;
         return x;
       })
       .catch((err: unknown) => {
@@ -260,6 +246,7 @@ export class DataProviderService implements OnModuleInit {
       .findByIdAndUpdate(id, seatingResource, { new: true })
       .then((doc) => {
         this.logger.debug({ seatingResourceId: id, seatingResource: doc }, 'Updated Seating Resource');
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.seatingResources[id] = doc!;
         return doc;
       })
@@ -275,6 +262,7 @@ export class DataProviderService implements OnModuleInit {
       .findByIdAndDelete(id)
       .then((doc) => {
         this.logger.debug({ seatingResourceId: id, seatingResource: doc }, 'Deleted seating resource');
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete this.seatingResources[id];
         return doc;
       })

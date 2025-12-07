@@ -4,6 +4,7 @@ import { type DeletePrinterGroupRequest, type DeletePrinterGroupRequestDto, type
 
 import { CatalogPrinterGroupService } from '../../config/catalog-provider/catalog-printer-group.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
+import { SocketIoService } from '../../config/socket-io/socket-io.service';
 import { PrinterGroupNotFoundException, PrinterGroupOperationException } from '../../exceptions';
 
 @Controller('api/v1/menu/printergroup')
@@ -11,6 +12,7 @@ export class PrinterGroupController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly catalogPrinterGroupService: CatalogPrinterGroupService,
+    private readonly socketIoService: SocketIoService,
   ) { }
 
   @Get()
@@ -57,6 +59,7 @@ export class PrinterGroupController {
     if (!doc) {
       throw new PrinterGroupNotFoundException(pgId);
     }
+    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 }

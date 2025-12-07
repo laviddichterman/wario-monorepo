@@ -28,7 +28,7 @@ export class CatalogCategoryService {
     const doc = new this.wCategoryModel(category);
     await doc.save();
     await this.catalogProvider.SyncCategories();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 
@@ -65,7 +65,7 @@ export class CatalogCategoryService {
       return null;
     }
     await this.catalogProvider.SyncCategories();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     // is this going to still be valid after the Sync above?
     return response.toObject();
   };
@@ -108,7 +108,7 @@ export class CatalogCategoryService {
       }
     }
     await this.catalogProvider.SyncCategories();
-    this.catalogProvider.RecomputeCatalogAndEmit();
+    this.catalogProvider.RecomputeCatalog();
     return doc.toObject();
   };
 }
