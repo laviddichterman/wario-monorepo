@@ -51,7 +51,7 @@ export { SquareError };
 
 import { CURRENCY, IMoney, OrderPaymentAllocated, PaymentMethod, StoreCreditPayment, StoreCreditPaymentData } from '@wcp/wario-shared';
 
-import { ExponentialBackoffWaitFunction } from '../../utils/utils';
+import { ExponentialBackoffWaitFunction } from '../../utils/exponential-backoff';
 import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { MigrationFlagsService } from '../migration-flags.service';
