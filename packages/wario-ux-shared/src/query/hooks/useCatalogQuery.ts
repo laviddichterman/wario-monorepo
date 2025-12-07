@@ -63,26 +63,29 @@ export function useCategoryIds() {
 /**
  * Hook to get a specific category by ID
  */
-export function useCategoryById(id: string) {
+export function useCategoryEntryById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.categories[id] ?? null;
+  return catalog?.categories[id ?? ''] ?? null;
 }
 
-export function useValueFromCategoryEntryById<K extends keyof CatalogCategoryEntry>(id: string, key: K) {
+export function useValueFromCategoryEntryById<K extends keyof CatalogCategoryEntry>(id: string | null, key: K) {
+  const categoryEntry = useCategoryEntryById(id);
+  // Simple derived value - returns the specific key from the category
+  const value = categoryEntry ? categoryEntry[key] : null;
+  return value;
+}
+
+export const useCategoryById = (id: string | null) => useValueFromCategoryEntryById(id, 'category');
+
+export function useValueFromCategoryById<K extends keyof ICategory>(id: string | null, key: K) {
   const categoryEntry = useCategoryById(id);
   // Simple derived value - returns the specific key from the category
   const value = categoryEntry ? categoryEntry[key] : null;
   return value;
 }
-export function useValueFromCategoryById<K extends keyof ICategory>(id: string, key: K) {
-  const categoryEntry = useValueFromCategoryEntryById(id, 'category');
-  // Simple derived value - returns the specific key from the category
-  const value = categoryEntry ? categoryEntry[key] : null;
-  return value;
-}
 
-export function useCategoryNameFromCategoryById(categoryId: string) {
-  const category = useValueFromCategoryEntryById(categoryId, 'category');
+export function useCategoryNameFromCategoryById(categoryId: string | null) {
+  const category = useCategoryById(categoryId);
   return category?.description || category?.name || '';
 }
 
@@ -90,7 +93,7 @@ export function useCategoryNameFromCategoryById(categoryId: string) {
  * Hook to check if category exists and is allowed for fulfillment
  * Replaces SelectCategoryExistsAndIsAllowedForFulfillment
  */
-export function useDoesCategoryDisableFulfillment(categoryId: string, fulfillmentId: string) {
+export function useDoesCategoryDisableFulfillment(categoryId: string | null, fulfillmentId: string) {
   const serviceDisable = useValueFromCategoryById(categoryId, 'serviceDisable');
   return serviceDisable && serviceDisable.indexOf(fulfillmentId) === -1;
 }
@@ -106,31 +109,34 @@ export function useModifierEntryIds() {
 /**
  * Hook to get a specific modifier entry by ID
  */
-export function useModifierEntryById(id: string) {
+export function useModifierEntryById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.modifiers[id] ?? null;
+  return catalog?.modifiers[id ?? ''] ?? null;
 }
 
-export function useValueFromModifierEntryById<K extends keyof CatalogModifierEntry>(id: string, key: K) {
+export function useValueFromModifierEntryById<K extends keyof CatalogModifierEntry>(id: string | null, key: K) {
   const modifierEntry = useModifierEntryById(id);
   const value = modifierEntry ? modifierEntry[key] : null;
   return value;
 }
 
-export function useValueFromModifierTypeById<K extends keyof IOptionType>(id: string, key: K) {
-  const modifierEntry = useValueFromModifierEntryById(id, 'modifierType');
+export const useModifierTypeById = (id: string | null) => useValueFromModifierEntryById(id, 'modifierType');
+
+
+export function useValueFromModifierTypeById<K extends keyof IOptionType>(id: string | null, key: K) {
+  const modifierEntry = useModifierTypeById(id);
   const value = modifierEntry ? modifierEntry[key] : null;
   return value;
 }
 
-export function useModifierTypeNameById(id: string) {
-  const modifierEntry = useValueFromModifierEntryById(id, 'modifierType') as IOptionType;
-  return modifierEntry.displayName || modifierEntry.name;
+export function useModifierTypeNameById(id: string | null) {
+  const modifierEntry = useModifierTypeById(id);
+  return modifierEntry?.displayName || modifierEntry?.name || '';
 }
 
-export function useIsModifierTypeVisibleById(modifierTypeId: string, hasSelectable: boolean) {
-  const modifierType = useValueFromModifierEntryById(modifierTypeId, 'modifierType');
-  return IsModifierTypeVisible(modifierType, hasSelectable);
+export function useIsModifierTypeVisibleById(modifierTypeId: string | null, hasSelectable: boolean) {
+  const modifierType = useModifierTypeById(modifierTypeId);
+  return modifierType ? IsModifierTypeVisible(modifierType, hasSelectable) : false;
 }
 
 /**
@@ -144,12 +150,12 @@ export function useOptionIds() {
 /**
  * Hook to get a specific option by ID
  */
-export function useOptionById(id: string) {
+export function useOptionById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.options[id] ?? null;
+  return catalog?.options[id ?? ''] ?? null;
 }
 
-export function useValueFromOptionById<K extends keyof IOption>(id: string, key: K) {
+export function useValueFromOptionById<K extends keyof IOption>(id: string | null, key: K) {
   const optionEntry = useOptionById(id);
   const value = optionEntry ? optionEntry[key] : null;
   return value;
@@ -174,18 +180,18 @@ export function useProductEntries() {
 /**
  * Hook to get a specific product entry by ID
  */
-export function useProductEntryById(id: string) {
+export function useProductEntryById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.products[id] ?? null;
+  return catalog?.products[id ?? ''] ?? null;
 }
 
-export function useValueFromProductEntryById<K extends keyof CatalogProductEntry>(id: string, key: K) {
+export function useValueFromProductEntryById<K extends keyof CatalogProductEntry>(id: string | null, key: K) {
   const productEntry = useProductEntryById(id);
   const value = productEntry ? productEntry[key] : null;
   return value;
 }
 
-export function useValueFromProductTypeById<K extends keyof IProduct>(id: string, key: K) {
+export function useValueFromProductTypeById<K extends keyof IProduct>(id: string | null, key: K) {
   const productEntry = useValueFromProductEntryById(id, 'product');
   const value = productEntry ? productEntry[key] : null;
   return value;
@@ -202,12 +208,12 @@ export function useProductInstanceIds() {
 /**
  * Hook to get a specific product instance by ID
  */
-export function useProductInstanceById(id: string) {
+export function useProductInstanceById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.productInstances[id] ?? null;
+  return catalog?.productInstances[id ?? ''] ?? null;
 }
 
-export function useValueFromProductInstanceById<K extends keyof IProductInstance>(id: string, key: K) {
+export function useValueFromProductInstanceById<K extends keyof IProductInstance>(id: string | null, key: K) {
   const product = useProductInstanceById(id);
   const value = product ? product[key] : null;
   return value;
@@ -224,9 +230,9 @@ export function useOrderInstanceFunctionIds() {
 /**
  * Hook to get a specific order instance function by ID
  */
-export function useOrderInstanceFunctionById(id: string) {
+export function useOrderInstanceFunctionById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.orderInstanceFunctions[id] ?? null;
+  return catalog?.orderInstanceFunctions[id ?? ''] ?? null;
 }
 
 /**
@@ -240,12 +246,12 @@ export function useProductInstanceFunctionIds() {
 /**
  * Hook to get a specific product instance function by ID
  */
-export function useProductInstanceFunctionById(id: string) {
+export function useProductInstanceFunctionById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.productInstanceFunctions[id] ?? null;
+  return catalog?.productInstanceFunctions[id ?? ''] ?? null;
 }
 
-export function useValueFromProductInstanceFunctionById<K extends keyof IProductInstanceFunction>(id: string, key: K) {
+export function useValueFromProductInstanceFunctionById<K extends keyof IProductInstanceFunction>(id: string | null, key: K) {
   const productInstanceFunction = useProductInstanceFunctionById(id);
   const value = productInstanceFunction ? productInstanceFunction[key] : null;
   return value;
@@ -371,14 +377,14 @@ export function useProductInstancesInCategory(
   order_time: Date | number,
   fulfillmentId: string,
 ) {
-  const category = useCategoryById(categoryId);
+  const categoryEntry = useCategoryEntryById(categoryId);
   const catalogSelectors = useCatalogSelectors();
   const { data: catalog } = useCatalogQuery();
 
-  if (!catalog || !catalogSelectors || !category || category.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
+  if (!catalog || !catalogSelectors || !categoryEntry || categoryEntry.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
     return [];
   }
-  const categoryProductInstances = filteredProducts(category, filter, catalogSelectors, order_time, fulfillmentId);
+  const categoryProductInstances = filteredProducts(categoryEntry, filter, catalogSelectors, order_time, fulfillmentId);
   switch (filter) {
     case 'Menu':
       categoryProductInstances.sort((a, b) => a.displayFlags.menu.ordinal - b.displayFlags.menu.ordinal);
