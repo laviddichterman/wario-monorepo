@@ -57,7 +57,14 @@ trigger: always_on
 
 - **Update Guides**: At the end of every task, review the `AGENT_GUIDE.md` for the modified package(s). If architecture, conventions, or critical files have changed, update the guide immediately. The guides must remain the "Sole Source of Truth".
 
-### 8. Architect Self-Review
+### 8. Testing Code Quality
+
+- **Properly Typed Mocks**: All test code and mock data **MUST** be properly typed and pass both linting and type-checking. Do not use `any` to bypass type issues in tests.
+- **Mock Infrastructure First**: If the mock infrastructure doesn't exist to generate properly typed test data, plan and implement it **before** writing the tests themselves.
+- **Type Assertion Helpers**: When testing return values that should satisfy an interface (e.g., `IOptionType`, `IProduct`), use type assertion helper functions that verify required properties exist.
+- **ESLint Compliance**: Test files must pass ESLint. Use targeted `eslint-disable` comments only for well-known patterns (e.g., `@typescript-eslint/unbound-method` for Jest mock assertions).
+
+### 9. Architect Self-Review
 
 - **Mandatory Review Step**: Before marking a task as complete or finalizing an implementation plan, and **BEFORE** updating any agent documentation, you MUST perform a self-review with an "Architect" mindset.
   - **Persona**: Adopt the role of a "Code Reviewer and Technology Architect".
