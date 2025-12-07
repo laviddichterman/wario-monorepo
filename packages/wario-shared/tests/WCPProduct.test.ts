@@ -1,17 +1,7 @@
-
 import { describe, expect, it } from '@jest/globals';
 
-import type {
-  CatalogProductEntry,
-  ProductModifierEntry,
-} from '../src/lib/derived-types';
-import {
-  CURRENCY,
-  DISABLE_REASON,
-  MODIFIER_MATCH,
-  OptionPlacement,
-  OptionQualifier,
-} from '../src/lib/enums';
+import type { CatalogProductEntry, ProductModifierEntry } from '../src/lib/derived-types';
+import { CURRENCY, DISABLE_REASON, MODIFIER_MATCH, OptionPlacement, OptionQualifier } from '../src/lib/enums';
 import {
   ComputePotentialPrices,
   CreateWCPProduct,
@@ -33,7 +23,10 @@ import {
 describe('CreateWCPProduct', () => {
   it('should create a product with given productId and modifiers', () => {
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
     const product = CreateWCPProduct('prod1', modifiers);
 
@@ -43,7 +36,10 @@ describe('CreateWCPProduct', () => {
 
   it('should create a deep copy of modifiers', () => {
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
     const product = CreateWCPProduct('prod1', modifiers);
 
@@ -58,8 +54,17 @@ describe('CreateWCPProduct', () => {
 describe('SortModifersAndOptions', () => {
   it('should sort modifiers by ordinal and options within each modifier', () => {
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt2', options: [{ optionId: 'opt3', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }, { optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt2', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt2',
+        options: [
+          { optionId: 'opt3', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          { optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+        ],
+      },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt2', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
 
     const selectors = createMockCatalogSelectorsFromArrays({
@@ -68,10 +73,7 @@ describe('SortModifersAndOptions', () => {
         createMockOption({ id: 'opt2', ordinal: 2 }),
         createMockOption({ id: 'opt3', ordinal: 3 }),
       ],
-      modifierTypes: [
-        createMockOptionType({ id: 'mt1', ordinal: 1 }),
-        createMockOptionType({ id: 'mt2', ordinal: 2 }),
-      ],
+      modifierTypes: [createMockOptionType({ id: 'mt1', ordinal: 1 }), createMockOptionType({ id: 'mt2', ordinal: 2 })],
     });
 
     const sorted = SortModifersAndOptions(modifiers, selectors);
@@ -123,7 +125,7 @@ describe('WProductCompare', () => {
     const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
 
     const selectors = {
-      productEntry: (id: string) => id === 'prod1' ? productEntry : undefined,
+      productEntry: (id: string) => (id === 'prod1' ? productEntry : undefined),
       modifierEntry: () => undefined,
     };
 
@@ -141,7 +143,7 @@ describe('WProductCompare', () => {
     const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
 
     const selectors = {
-      productEntry: (id: string) => id === 'prod1' ? productEntry : undefined,
+      productEntry: (id: string) => (id === 'prod1' ? productEntry : undefined),
       modifierEntry: () => undefined,
     };
 
@@ -186,8 +188,20 @@ describe('ComputePotentialPrices', () => {
           has_selectable: true,
           meets_minimum: false,
           options: {
-            opt1: { placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR, enable_left: { enable: DISABLE_REASON.ENABLED }, enable_right: { enable: DISABLE_REASON.ENABLED }, enable_whole: { enable: DISABLE_REASON.ENABLED } },
-            opt2: { placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR, enable_left: { enable: DISABLE_REASON.ENABLED }, enable_right: { enable: DISABLE_REASON.ENABLED }, enable_whole: { enable: DISABLE_REASON.ENABLED } },
+            opt1: {
+              placement: OptionPlacement.NONE,
+              qualifier: OptionQualifier.REGULAR,
+              enable_left: { enable: DISABLE_REASON.ENABLED },
+              enable_right: { enable: DISABLE_REASON.ENABLED },
+              enable_whole: { enable: DISABLE_REASON.ENABLED },
+            },
+            opt2: {
+              placement: OptionPlacement.NONE,
+              qualifier: OptionQualifier.REGULAR,
+              enable_left: { enable: DISABLE_REASON.ENABLED },
+              enable_right: { enable: DISABLE_REASON.ENABLED },
+              enable_whole: { enable: DISABLE_REASON.ENABLED },
+            },
           },
         },
       },
@@ -230,14 +244,26 @@ describe('ComputePotentialPrices', () => {
           has_selectable: true,
           meets_minimum: false,
           options: {
-            opt1: { placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR, enable_left: { enable: DISABLE_REASON.ENABLED }, enable_right: { enable: DISABLE_REASON.ENABLED }, enable_whole: { enable: DISABLE_REASON.ENABLED } },
+            opt1: {
+              placement: OptionPlacement.NONE,
+              qualifier: OptionQualifier.REGULAR,
+              enable_left: { enable: DISABLE_REASON.ENABLED },
+              enable_right: { enable: DISABLE_REASON.ENABLED },
+              enable_whole: { enable: DISABLE_REASON.ENABLED },
+            },
           },
         },
         mt2: {
           has_selectable: true,
           meets_minimum: false,
           options: {
-            opt2: { placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR, enable_left: { enable: DISABLE_REASON.ENABLED }, enable_right: { enable: DISABLE_REASON.ENABLED }, enable_whole: { enable: DISABLE_REASON.ENABLED } },
+            opt2: {
+              placement: OptionPlacement.NONE,
+              qualifier: OptionQualifier.REGULAR,
+              enable_left: { enable: DISABLE_REASON.ENABLED },
+              enable_right: { enable: DISABLE_REASON.ENABLED },
+              enable_whole: { enable: DISABLE_REASON.ENABLED },
+            },
           },
         },
       },
@@ -263,9 +289,7 @@ describe('ComputePotentialPrices', () => {
     const prices = ComputePotentialPrices(metadata, selectors);
 
     // Base 1000 + opt1 100 + opt2 200 = 1300
-    expect(prices).toEqual([
-      { amount: 1300, currency: CURRENCY.USD },
-    ]);
+    expect(prices).toEqual([{ amount: 1300, currency: CURRENCY.USD }]);
   });
 });
 
@@ -330,8 +354,18 @@ describe('WProductDisplayOptions', () => {
 
     const selectors = createMockCatalogSelectorsFromArrays({
       options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', displayName: 'Visible', displayFlags: { omit_from_name: false, omit_from_shortname: false } }),
-        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', displayName: 'Hidden', displayFlags: { omit_from_name: true, omit_from_shortname: false } }),
+        createMockOption({
+          id: 'opt1',
+          modifierTypeId: 'mt1',
+          displayName: 'Visible',
+          displayFlags: { omit_from_name: false, omit_from_shortname: false },
+        }),
+        createMockOption({
+          id: 'opt2',
+          modifierTypeId: 'mt1',
+          displayName: 'Hidden',
+          displayFlags: { omit_from_name: true, omit_from_shortname: false },
+        }),
       ],
       modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });

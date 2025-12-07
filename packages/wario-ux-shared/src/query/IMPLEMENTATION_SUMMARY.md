@@ -32,7 +32,7 @@ packages/wario-ux-shared/src/query/
 ### Data Flow
 
 ```
-Server 
+Server
   ↓ Socket.io events (WCP_CATALOG, WCP_FULFILLMENTS, etc.)
   ↓
 SocketProvider (context)
@@ -123,7 +123,7 @@ The `useCatalogSelectors()` hook returns selector functions that match the Redux
 ### Socket Events Handled
 
 - `WCP_CATALOG` → Updates `catalog` query
-- `WCP_FULFILLMENTS` → Updates `fulfillments` query  
+- `WCP_FULFILLMENTS` → Updates `fulfillments` query
 - `WCP_SERVER_TIME` → Updates `serverTime` query + starts polling
 - `WCP_SETTINGS` → Updates `settings` query
 
@@ -150,10 +150,10 @@ import {
   // Providers
   WarioQueryProvider,
   SocketProvider,
-  
+
   // Query client
   createWarioQueryClient,
-  
+
   // Hooks
   useCatalogQuery,
   useCatalogSelectors,
@@ -164,7 +164,7 @@ import {
   useServerTime,
   useIsSocketDataLoaded,
   useSocket,
-  
+
   // Types
   QUERY_KEYS,
   SOCKET_EVENTS,
@@ -177,20 +177,22 @@ import {
 ### To Use This Implementation
 
 1. **Install dependencies in an app**:
+
    ```bash
    cd apps/wario-pos  # or any app
    pnpm add @tanstack/react-query@^5.62.0
    ```
 
 2. **Add provider (keep Redux for now)**:
+
    ```tsx
    import { WarioQueryProvider } from '@wcp/wario-ux-shared';
-   
+
    <ReduxProvider store={store}>
      <WarioQueryProvider hostAPI={config.HOST_API} namespace={config.SOCKETIO.ns}>
        <App />
      </WarioQueryProvider>
-   </ReduxProvider>
+   </ReduxProvider>;
    ```
 
 3. **Migrate components incrementally** using the migration guide

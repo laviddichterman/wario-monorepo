@@ -5,49 +5,56 @@ export enum DayOfTheWeek {
   WEDNESDAY,
   THURSDAY,
   FRIDAY,
-  SATURDAY
-};
+  SATURDAY,
+}
 
 export enum FulfillmentType {
   PickUp = 'PickUp',
   DineIn = 'DineIn',
   Delivery = 'Delivery',
   Shipping = 'Shipping',
-  ThirdParty = 'ThirdParty'
+  ThirdParty = 'ThirdParty',
 }
 
 export enum DISPLAY_AS {
   OMIT = 'OMIT',
   YOUR_CHOICE_OF = 'YOUR_CHOICE_OF',
-  LIST_CHOICES = 'LIST_CHOICES'
-};
+  LIST_CHOICES = 'LIST_CHOICES',
+}
 
-export enum MODIFIER_MATCH { NO_MATCH, AT_LEAST, EXACT_MATCH };
+export enum MODIFIER_MATCH {
+  NO_MATCH,
+  AT_LEAST,
+  EXACT_MATCH,
+}
 
-export enum PRODUCT_LOCATION { LEFT, RIGHT };
+export enum PRODUCT_LOCATION {
+  LEFT,
+  RIGHT,
+}
 
 export enum PriceDisplay {
   'FROM_X' = 'FROM_X',
   'VARIES' = 'VARIES',
   'ALWAYS' = 'ALWAYS',
   'MIN_TO_MAX' = 'MIN_TO_MAX',
-  'LIST' = 'LIST'
-};
+  'LIST' = 'LIST',
+}
 
 export enum ProductInstanceFunctionType {
-  'ConstLiteral' = "ConstLiteral",
+  'ConstLiteral' = 'ConstLiteral',
   'IfElse' = 'IfElse',
   'Logical' = 'Logical',
   'ModifierPlacement' = 'ModifierPlacement',
   'HasAnyOfModifierType' = 'HasAnyOfModifierType',
-  'ProductMetadata' = 'ProductMetadata'
-};
+  'ProductMetadata' = 'ProductMetadata',
+}
 
 export enum OrderInstanceFunctionType {
-  'ConstLiteral' = "ConstLiteral",
+  'ConstLiteral' = 'ConstLiteral',
   'IfElse' = 'IfElse',
-  'Logical' = 'Logical'
-};
+  'Logical' = 'Logical',
+}
 
 export enum MODIFIER_CLASS {
   SIZE = 'SIZE',
@@ -55,46 +62,55 @@ export enum MODIFIER_CLASS {
   SUB = 'SUB',
   REMOVAL = 'REMOVAL',
   NOTE = 'NOTE',
-  PROMPT = 'PROMPT'
-};
+  PROMPT = 'PROMPT',
+}
 export enum CALL_LINE_DISPLAY {
   'SHORTCODE' = 'SHORTCODE',
   'SHORTNAME' = 'SHORTNAME',
-  'QUANTITY' = 'QUANTITY'
-};
+  'QUANTITY' = 'QUANTITY',
+}
 export enum CURRENCY {
-  USD = "USD"
-};
+  USD = 'USD',
+}
 
 export enum OptionPlacement {
-  'NONE', 'LEFT', 'RIGHT', 'WHOLE'
-};
+  'NONE',
+  'LEFT',
+  'RIGHT',
+  'WHOLE',
+}
 
 export enum OptionQualifier {
-  'REGULAR', 'LITE', 'HEAVY', 'OTS'
-};
+  'REGULAR',
+  'LITE',
+  'HEAVY',
+  'OTS',
+}
 
 export enum ConstLiteralDiscriminator {
-  NUMBER = "NUMBER",
-  BOOLEAN = "BOOLEAN",
-  STRING = "STRING",
-  MODIFIER_PLACEMENT = "MODIFIER_PLACEMENT",
-  MODIFIER_QUALIFIER = "MODIFIER_QUALIFIER"
-};
+  NUMBER = 'NUMBER',
+  BOOLEAN = 'BOOLEAN',
+  STRING = 'STRING',
+  MODIFIER_PLACEMENT = 'MODIFIER_PLACEMENT',
+  MODIFIER_QUALIFIER = 'MODIFIER_QUALIFIER',
+}
 
-export enum MetadataField { 'FLAVOR', 'WEIGHT' };
+export enum MetadataField {
+  'FLAVOR',
+  'WEIGHT',
+}
 
 export enum LogicalFunctionOperator {
-  'AND' = "AND",
-  'OR' = "OR",
-  'NOT' = "NOT",
-  'EQ' = "EQ",
-  'NE' = "NE",
-  'GT' = "GT",
-  'GE' = "GE",
-  'LT' = "LT",
-  'LE' = "LE"
-};
+  'AND' = 'AND',
+  'OR' = 'OR',
+  'NOT' = 'NOT',
+  'EQ' = 'EQ',
+  'NE' = 'NE',
+  'GT' = 'GT',
+  'GE' = 'GE',
+  'LT' = 'LT',
+  'LE' = 'LE',
+}
 
 export enum DISABLE_REASON {
   ENABLED = 0,
@@ -107,29 +123,29 @@ export enum DISABLE_REASON {
   DISABLED_NO_SPLITTING,
   DISABLED_SPLIT_DIFFERENTIAL,
   DISABLED_FULFILLMENT_TYPE,
-  DISABLED_AVAILABILITY
-};
+  DISABLED_AVAILABILITY,
+}
 
 export enum StoreCreditType {
   'MONEY' = 'MONEY',
-  'DISCOUNT' = 'DISCOUNT'
-};
+  'DISCOUNT' = 'DISCOUNT',
+}
 
 export enum SeatingShape {
-  RECTANGLE = "RECTANGLE",
-  ELLIPSE = "ELLIPSE"
-};
+  RECTANGLE = 'RECTANGLE',
+  ELLIPSE = 'ELLIPSE',
+}
 
 export enum WSeatingStatus {
-  "PENDING" = "PENDING", // seating not yet confirmed
-  "ASSIGNED" = "ASSIGNED", // seating has been assigned by a human
-  "WAITING_ARRIVAL" = "WAITING_ARRIVAL", // waiting for guests to arrive
-  "SEATED_WAITING" = "SEATED_WAITING", // some guests are seated, some guests still pending arrival
-  "SEATED" = "SEATED", // all guests have arrived and are seated
-  "WAITING_FOR_CHECK" = "WAITING_FOR_CHECK", // guests are waiting for the check
-  "PAID" = "PAID", // guests have paid the check
-  "COMPLETED" = "COMPLETED", // guests have left the table
-};
+  'PENDING' = 'PENDING', // seating not yet confirmed
+  'ASSIGNED' = 'ASSIGNED', // seating has been assigned by a human
+  'WAITING_ARRIVAL' = 'WAITING_ARRIVAL', // waiting for guests to arrive
+  'SEATED_WAITING' = 'SEATED_WAITING', // some guests are seated, some guests still pending arrival
+  'SEATED' = 'SEATED', // all guests have arrived and are seated
+  'WAITING_FOR_CHECK' = 'WAITING_FOR_CHECK', // guests are waiting for the check
+  'PAID' = 'PAID', // guests have paid the check
+  'COMPLETED' = 'COMPLETED', // guests have left the table
+}
 
 export enum WFulfillmentStatus {
   'PROPOSED' = 'PROPOSED', // initial state of a new fulfillment
@@ -137,27 +153,27 @@ export enum WFulfillmentStatus {
   'CONFIRMED' = 'CONFIRMED', // confirmed by fulfiller
   'PROCESSING' = 'PROCESSING', // fulfillment has been started
   'COMPLETED' = 'COMPLETED', // fulfillment has been completed
-  'CANCELED' = 'CANCELED' // fulfillment has been canceled
-};
+  'CANCELED' = 'CANCELED', // fulfillment has been canceled
+}
 
 export enum WOrderStatus {
   'OPEN' = 'OPEN', // order submitted to WARIO, yet to be manually confirmed by staff
   'CONFIRMED' = 'CONFIRMED', // confirmed by staff, not yet charged
   'PROCESSING' = 'PROCESSING', // order has been started, is active
   'COMPLETED' = 'COMPLETED', // order has been completed, fulfilled, and charged
-  'CANCELED' = 'CANCELED' // order has been canceled and refunded
-};
+  'CANCELED' = 'CANCELED', // order has been canceled and refunded
+}
 
 export enum DiscountMethod {
   CreditCodeAmount = 'CreditCodeAmount',
   ManualPercentage = 'ManualPercentage',
-  ManualAmount = 'ManualAmount'
-};
+  ManualAmount = 'ManualAmount',
+}
 
 export enum PaymentMethod {
-  Cash = "Cash",
-  CreditCard = "CreditCard",
-  StoreCredit = "StoreCredit",
+  Cash = 'Cash',
+  CreditCard = 'CreditCard',
+  StoreCredit = 'StoreCredit',
   //  External
 }
 
@@ -165,7 +181,7 @@ export enum TenderBaseStatus {
   PROPOSED = 'PROPOSED',
   AUTHORIZED = 'AUTHORIZED',
   COMPLETED = 'COMPLETED',
-  CANCELED = 'CANCELED'
+  CANCELED = 'CANCELED',
 }
 
 // Note: Display logic might fallback to a different display option depending on live catalog data
@@ -180,5 +196,5 @@ export enum CategoryDisplay {
   // child categories have no child categories
   // metadata fields used to populate columns
   // child categories are used as sortable/filterable columns in the table
-  'TABLE' = 'TABLE'
-};
+  'TABLE' = 'TABLE',
+}

@@ -90,7 +90,9 @@ describe('ModifierController', () => {
       (mockCatalogService.CreateModifierType as jest.Mock).mockResolvedValue(mockModifierType);
 
       const body = {
-        modifierType: asUncommittedOptionType(createMockOptionType({ name: 'Toppings', min_selected: 0, max_selected: 5 })),
+        modifierType: asUncommittedOptionType(
+          createMockOptionType({ name: 'Toppings', min_selected: 0, max_selected: 5 }),
+        ),
         options: [],
       };
       const result = await controller.CreateModifierType(body);
@@ -167,7 +169,9 @@ describe('ModifierController', () => {
         modifierTypeId: 'mt-123',
         modifierOption: { displayName: 'Updated Pepperoni' },
       };
-      const result = await controller.UpdateModifierOption(body as Parameters<typeof controller.UpdateModifierOption>[0]);
+      const result = await controller.UpdateModifierOption(
+        body as Parameters<typeof controller.UpdateModifierOption>[0],
+      );
 
       // Verify result satisfies IOption interface
       assertIsOption(result);

@@ -84,8 +84,7 @@ type HeaderRootProps = Pick<HeaderSectionProps, 'disableOffset' | 'disableElevat
 };
 
 const HeaderRoot = styled(AppBar, {
-  shouldForwardProp: (prop: string) =>
-    !['isOffset', 'disableOffset', 'disableElevation', 'sx'].includes(prop),
+  shouldForwardProp: (prop: string) => !['isOffset', 'disableOffset', 'disableElevation', 'sx'].includes(prop),
 })<HeaderRootProps>(({ isOffset, disableOffset, disableElevation, theme }) => {
   const pauseZindex = { top: -1, bottom: -2 };
 

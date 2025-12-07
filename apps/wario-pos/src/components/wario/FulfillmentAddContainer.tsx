@@ -1,13 +1,19 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import type { Polygon } from 'geojson';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 
-import { type DateIntervalsEntries, DayOfTheWeek, type FulfillmentConfig, FulfillmentType, type OperatingHourSpecification } from "@wcp/wario-shared";
+import {
+  type DateIntervalsEntries,
+  DayOfTheWeek,
+  type FulfillmentConfig,
+  FulfillmentType,
+  type OperatingHourSpecification,
+} from '@wcp/wario-shared';
 
-import { HOST_API } from "../../config";
+import { HOST_API } from '../../config';
 
-import FulfillmentComponent from "./FulfillmentComponent";
+import FulfillmentComponent from './FulfillmentComponent';
 const EmptyOperatingHours: OperatingHourSpecification = {
   [DayOfTheWeek.SUNDAY]: [],
   [DayOfTheWeek.MONDAY]: [],
@@ -15,14 +21,14 @@ const EmptyOperatingHours: OperatingHourSpecification = {
   [DayOfTheWeek.WEDNESDAY]: [],
   [DayOfTheWeek.THURSDAY]: [],
   [DayOfTheWeek.FRIDAY]: [],
-  [DayOfTheWeek.SATURDAY]: []
+  [DayOfTheWeek.SATURDAY]: [],
 };
 
 const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFunction }) => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [ordinal, setOrdinal] = useState(0);
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState('');
   const [shortcode, setShortcode] = useState('');
   const [exposeFulfillment, setExposeFulfillment] = useState(true);
   const [service, setService] = useState(FulfillmentType.PickUp);
@@ -36,7 +42,7 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
   const [requirePrepayment, setRequirePrepayment] = useState(true);
   const [allowPrepayment, setAllowPrepayment] = useState(true);
   const [allowTipping, setAllowTipping] = useState(true);
-  const [autograt, setAutograt] = useState<{ function: string, percentage: number } | null>(null);
+  const [autograt, setAutograt] = useState<{ function: string; percentage: number } | null>(null);
   const [serviceChargeFunctionId, setServiceChargeFunctionId] = useState<string | null>(null);
   const [leadTime, setLeadTime] = useState(35);
   const [leadTimeOffset, setLeadTimeOffset] = useState(0);
@@ -78,22 +84,26 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
     setTimeStep(15);
     setMaxGuests(null);
     setServiceArea(null);
-  }
+  };
 
-  const canSubmit = !isProcessing && menuCategoryId !== null && orderCategoryId !== null && ((confirmationMessage.length > 0 && instructions.length > 0) || !exposeFulfillment);
+  const canSubmit =
+    !isProcessing &&
+    menuCategoryId !== null &&
+    orderCategoryId !== null &&
+    ((confirmationMessage.length > 0 && instructions.length > 0) || !exposeFulfillment);
 
   const addFulfillment = async () => {
     if (canSubmit) {
       setIsProcessing(true);
       try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<FulfillmentConfig, "id"> = {
+        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+        const body: Omit<FulfillmentConfig, 'id'> = {
           displayName,
           exposeFulfillment,
           shortcode,
           ordinal,
           service,
-          terms: terms.filter(x => x.length > 0),
+          terms: terms.filter((x) => x.length > 0),
           messages: {
             DESCRIPTION: fulfillmentDescription.length === 0 ? null : fulfillmentDescription,
             CONFIRMATION: confirmationMessage,
@@ -116,14 +126,13 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
           maxDuration,
           timeStep,
           maxGuests: maxGuests ?? undefined,
-          serviceArea: serviceArea ?? undefined
-
+          serviceArea: serviceArea ?? undefined,
         };
         const response = await fetch(`${HOST_API}/api/v1/config/fulfillment/`, {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
         });
@@ -133,9 +142,10 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
           onCloseCallback();
         }
         setIsProcessing(false);
-
       } catch (error) {
-        enqueueSnackbar(`Unable to add fulfillment: ${displayName}. Got error: ${JSON.stringify(error)}.`, { variant: "error" });
+        enqueueSnackbar(`Unable to add fulfillment: ${displayName}. Got error: ${JSON.stringify(error)}.`, {
+          variant: 'error',
+        });
         console.error(error);
         setIsProcessing(false);
       }

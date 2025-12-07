@@ -66,7 +66,7 @@ export const useCustomizerStore = create<CustomizerStore>()(
             advancedModifierInitialState: defaultOptionState,
           },
           false,
-          'editCartEntry'
+          'editCartEntry',
         );
       },
 
@@ -82,7 +82,7 @@ export const useCustomizerStore = create<CustomizerStore>()(
             advancedModifierInitialState: defaultOptionState,
           },
           false,
-          'customizeProduct'
+          'customizeProduct',
         );
       },
 
@@ -92,7 +92,7 @@ export const useCustomizerStore = create<CustomizerStore>()(
             showAdvanced: state.allowAdvanced && show,
           }),
           false,
-          'setShowAdvanced'
+          'setShowAdvanced',
         );
       },
 
@@ -107,8 +107,7 @@ export const useCustomizerStore = create<CustomizerStore>()(
             ) {
               return {
                 advancedModifierOption: option,
-                advancedModifierInitialState:
-                  state.selectedProduct.m.modifier_map[option[0]].options[option[1]],
+                advancedModifierInitialState: state.selectedProduct.m.modifier_map[option[0]].options[option[1]],
               };
             }
             return {
@@ -117,7 +116,7 @@ export const useCustomizerStore = create<CustomizerStore>()(
             };
           },
           false,
-          'setAdvancedModifierOption'
+          'setAdvancedModifierOption',
         );
       },
 
@@ -134,12 +133,12 @@ export const useCustomizerStore = create<CustomizerStore>()(
             return {};
           },
           false,
-          'updateCustomizerProduct'
+          'updateCustomizerProduct',
         );
       },
     }),
-    { name: 'customizer-store' }
-  )
+    { name: 'customizer-store' },
+  ),
 );
 
 // Selectors
@@ -148,11 +147,7 @@ export const selectSelectedWProduct = (state: CustomizerStore) => state.selected
 export const selectCartId = (state: CustomizerStore) => state.cartId;
 export const selectCategoryId = (state: CustomizerStore) => state.categoryId;
 
-export const selectOptionState = (
-  modifierMap: MetadataModifierMap,
-  mtId: string,
-  moId: string
-) => {
+export const selectOptionState = (modifierMap: MetadataModifierMap, mtId: string, moId: string) => {
   if (Object.hasOwn(modifierMap, mtId)) {
     return modifierMap[mtId].options[moId];
   }

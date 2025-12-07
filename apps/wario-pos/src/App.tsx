@@ -31,10 +31,7 @@ export default function App({ children }: AppProps) {
       <Auth0AuthProvider>
         <SettingsProvider defaultSettings={defaultSettings}>
           <LocalizationProvider>
-            <ThemeProvider
-              defaultMode={themeConfig.defaultMode}
-              modeStorageKey={themeConfig.modeStorageKey}
-            >
+            <ThemeProvider defaultMode={themeConfig.defaultMode} modeStorageKey={themeConfig.modeStorageKey}>
               <MotionLazy>
                 <Snackbar />
                 <ProgressBar />
@@ -44,8 +41,8 @@ export default function App({ children }: AppProps) {
             </ThemeProvider>
           </LocalizationProvider>
         </SettingsProvider>
-      </Auth0AuthProvider >
-    </I18nProvider >
+      </Auth0AuthProvider>
+    </I18nProvider>
   );
 }
 

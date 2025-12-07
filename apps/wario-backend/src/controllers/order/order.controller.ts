@@ -1,33 +1,36 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, HttpException, Param, Post, Put, Query, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 
-import { CreateOrderRequestV2Dto, type WOrderInstance, WOrderStatus } from "@wcp/wario-shared";
+import { CreateOrderRequestV2Dto, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { OrderManagerService } from '../../config/order-manager/order-manager.service';
 import { LockOrder } from '../../decorators/lock-order.decorator';
 import { LockedOrder } from '../../decorators/locked-order.decorator';
 import { RealIp } from '../../decorators/real-ip.decorator';
-import {
-  CancelOrderRequestDto,
-  MoveOrderRequestDto,
-  RescheduleOrderRequestDto,
-} from '../../dtos/order.dto';
+import { CancelOrderRequestDto, MoveOrderRequestDto, RescheduleOrderRequestDto } from '../../dtos/order.dto';
 import { OrderNotFoundException } from '../../exceptions';
 import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor';
 
 @Controller('api/v1/order')
 export class OrderController {
-  constructor(
-    private readonly orderManager: OrderManagerService,
-  ) { }
+  constructor(private readonly orderManager: OrderManagerService) {}
 
   @Post()
   @Scopes('write:order')
   @HttpCode(201)
-  async postOrder(
-    @Body() body: CreateOrderRequestV2Dto,
-    @RealIp() ipAddress: string,
-  ) {
+  async postOrder(@Body() body: CreateOrderRequestV2Dto, @RealIp() ipAddress: string) {
     const response = await this.orderManager.CreateOrder(body, ipAddress);
     if (response.status !== 201) {
       throw new HttpException(response, response.status);
@@ -39,10 +42,7 @@ export class OrderController {
   @Scopes('cancel:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putCancelOrder(
-    @LockedOrder() order: WOrderInstance | undefined,
-    @Body() body: CancelOrderRequestDto,
-  ) {
+  async putCancelOrder(@LockedOrder() order: WOrderInstance | undefined, @Body() body: CancelOrderRequestDto) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -62,9 +62,7 @@ export class OrderController {
   @Scopes('write:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putConfirmOrder(
-    @LockedOrder() order: WOrderInstance | undefined,
-  ) {
+  async putConfirmOrder(@LockedOrder() order: WOrderInstance | undefined) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -79,10 +77,7 @@ export class OrderController {
   @Scopes('write:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putMoveOrder(
-    @LockedOrder() order: WOrderInstance | undefined,
-    @Body() body: MoveOrderRequestDto,
-  ) {
+  async putMoveOrder(@LockedOrder() order: WOrderInstance | undefined, @Body() body: MoveOrderRequestDto) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -101,18 +96,11 @@ export class OrderController {
   @Scopes('write:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putAdjustOrderTime(
-    @LockedOrder() order: WOrderInstance | undefined,
-    @Body() body: RescheduleOrderRequestDto,
-  ) {
+  async putAdjustOrderTime(@LockedOrder() order: WOrderInstance | undefined, @Body() body: RescheduleOrderRequestDto) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
-    const response = await this.orderManager.AdjustLockedOrderTime(
-      order,
-      body,
-      body.emailCustomer ?? false,
-    );
+    const response = await this.orderManager.AdjustLockedOrderTime(order, body, body.emailCustomer ?? false);
     if (response.status !== 200) {
       throw new HttpException(response, response.status);
     }
@@ -130,9 +118,7 @@ export class OrderController {
   @Scopes('send:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putSendOrder(
-    @LockedOrder() order: WOrderInstance | undefined,
-  ) {
+  async putSendOrder(@LockedOrder() order: WOrderInstance | undefined) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -155,10 +141,7 @@ export class OrderController {
 
   @Get()
   @Scopes('read:order')
-  async getOrders(
-    @Query('date') date: string,
-    @Query('status') status: string,
-  ) {
+  async getOrders(@Query('date') date: string, @Query('status') status: string) {
     const queryDate = date ? date : null;
     const queryStatus = status ? WOrderStatus[status as keyof typeof WOrderStatus] : null;
     const response = await this.orderManager.GetOrders({

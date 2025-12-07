@@ -1,6 +1,10 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
-import { type DeletePrinterGroupRequest, type DeletePrinterGroupRequestDto, type PrinterGroupDto } from '@wcp/wario-shared';
+import {
+  type DeletePrinterGroupRequest,
+  type DeletePrinterGroupRequestDto,
+  type PrinterGroupDto,
+} from '@wcp/wario-shared';
 
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { SocketIoService } from '../../config/socket-io/socket-io.service';
@@ -11,7 +15,7 @@ export class PrinterGroupController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Get()
   getPrinterGroups() {
@@ -29,10 +33,7 @@ export class PrinterGroupController {
   }
 
   @Patch(':pgId')
-  async patchPrinterGroup(
-    @Param('pgId') pgId: string,
-    @Body() body: PrinterGroupDto,
-  ) {
+  async patchPrinterGroup(@Param('pgId') pgId: string, @Body() body: PrinterGroupDto) {
     const doc = await this.catalogProvider.UpdatePrinterGroup({
       id: pgId,
       printerGroup: {
@@ -49,16 +50,9 @@ export class PrinterGroupController {
   }
 
   @Delete(':pgId')
-  async deletePrinterGroup(
-    @Param('pgId') pgId: string,
-    @Body() body: DeletePrinterGroupRequestDto,
-  ) {
+  async deletePrinterGroup(@Param('pgId') pgId: string, @Body() body: DeletePrinterGroupRequestDto) {
     const doc = await this.catalogProvider.DeletePrinterGroup({ id: pgId, ...(body as DeletePrinterGroupRequest) });
-    if (!doc) {
-      throw new PrinterGroupNotFoundException(pgId);
-    }
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 }
-

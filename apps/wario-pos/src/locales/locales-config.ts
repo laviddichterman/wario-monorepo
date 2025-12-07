@@ -1,23 +1,14 @@
-import { enUS, es, type Locale } from "date-fns/locale";
+import { enUS, es, type Locale } from 'date-fns/locale';
 import type { InitOptions } from 'i18next';
 import resourcesToBackend from 'i18next-resources-to-backend';
 
 // MUI Core Locales
-import {
-  enUS as enUSCore,
-  esES as esESCore,
-} from '@mui/material/locale';
+import { enUS as enUSCore, esES as esESCore } from '@mui/material/locale';
 import type { Components, Theme } from '@mui/material/styles';
 // MUI Data Grid Locales
-import {
-  enUS as enUSDataGrid,
-  esES as esESDataGrid,
-} from '@mui/x-data-grid-premium/locales';
+import { enUS as enUSDataGrid, esES as esESDataGrid } from '@mui/x-data-grid-premium/locales';
 // MUI Date Pickers Locales
-import {
-  enUS as enUSDate,
-  esES as esESDate,
-} from '@mui/x-date-pickers/locales';
+import { enUS as enUSDate, esES as esESDate } from '@mui/x-date-pickers/locales';
 
 // ----------------------------------------------------------------------
 
@@ -78,7 +69,7 @@ export const allLangs: LangOption[] = [
 // ----------------------------------------------------------------------
 
 export const i18nResourceLoader = resourcesToBackend(
-  (lang: LangCode, namespace: string) => import(`./langs/${lang}/${namespace}.json`)
+  (lang: LangCode, namespace: string) => import(`./langs/${lang}/${namespace}.json`),
 );
 
 export function i18nOptions(lang = fallbackLng, namespace = defaultNS): InitOptions {

@@ -29,7 +29,6 @@ import { SquareService } from '../square/square.service';
  */
 @Injectable()
 export class ThirdPartyOrderService {
-
   constructor(
     @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
@@ -38,7 +37,7 @@ export class ThirdPartyOrderService {
     private dataProvider: DataProviderService,
     @InjectPinoLogger(ThirdPartyOrderService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Maps a 3rd party source name to a short code.
@@ -99,10 +98,8 @@ export class ThirdPartyOrderService {
       const orderInstances: Omit<WOrderInstance, 'id'>[] = [];
 
       ordersToIngest.forEach((squareOrder) => {
-
         const fulfillmentDetails = squareOrder.fulfillments![0];
         const requestedFulfillmentTime = WDateUtils.ComputeFulfillmentTime(
-
           new Date(fulfillmentDetails.pickupDetails!.pickupAt!),
         );
         const fulfillmentTimeClampedRounded =
@@ -123,7 +120,10 @@ export class ThirdPartyOrderService {
           });
 
           // Determine what available time we have for this order
-          const cartLeadTime = DetermineCartBasedLeadTime(cart, this.catalogProviderService.CatalogSelectors.productEntry);
+          const cartLeadTime = DetermineCartBasedLeadTime(
+            cart,
+            this.catalogProviderService.CatalogSelectors.productEntry,
+          );
           const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation(
             [fulfillmentConfig],
             requestedFulfillmentTime.selectedDate,
@@ -165,7 +165,6 @@ export class ThirdPartyOrderService {
               selectedService: this.dataProvider.KeyValueConfig.THIRD_PARTY_FULFILLMENT,
               status: WFulfillmentStatus.PROPOSED,
               thirdPartyInfo: {
-
                 squareId: squareOrder.id!,
                 source: this.Map3pSource(squareOrder.source?.name ?? ''),
               },
@@ -210,10 +209,7 @@ export class ThirdPartyOrderService {
       });
 
       if (orderInstances.length > 0) {
-        this.logger.info(
-          { orderInstancesCount: orderInstances.length, orderInstances },
-          'Inserting 3p orders...',
-        );
+        this.logger.info({ orderInstancesCount: orderInstances.length, orderInstances }, 'Inserting 3p orders...');
         const saveResponse = await this.orderModel.bulkSave(orderInstances.map((x) => new this.orderModel(x)));
         this.logger.info({ saveResponse }, 'Save response for 3p order');
       }

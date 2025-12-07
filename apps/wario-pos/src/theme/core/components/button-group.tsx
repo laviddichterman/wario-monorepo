@@ -29,10 +29,7 @@ const containedVariants = [
   ...(colorKeys.palette.map((colorKey) => ({
     props: (props) => props.variant === 'contained' && props.color === colorKey,
     style: ({ theme }) => ({
-      borderColor: varAlpha(
-        theme.vars.palette[colorKey].darkChannel,
-        theme.vars.opacity.outlined.border
-      ),
+      borderColor: varAlpha(theme.vars.palette[colorKey].darkChannel, theme.vars.opacity.outlined.border),
     }),
   })) satisfies ButtonGroupVariants),
 ] satisfies ButtonGroupVariants;

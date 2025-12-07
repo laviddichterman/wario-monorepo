@@ -13,9 +13,7 @@ import { QUERY_KEYS } from '../types';
  * Hook to query settings data
  * Data is populated via Socket.io events, not HTTP requests
  */
-export function useSettingsQuery(
-  options?: Omit<UseQueryOptions<IWSettings | null>, 'queryKey' | 'queryFn'>
-) {
+export function useSettingsQuery(options?: Omit<UseQueryOptions<IWSettings | null>, 'queryKey' | 'queryFn'>) {
   return useQuery<IWSettings | null>({
     queryKey: QUERY_KEYS.settings,
     queryFn: () => {
@@ -30,14 +28,14 @@ export function useSettingsQuery(
 
 /**
  * Hook to get a specific setting by key
- * @param key 
- * @returns 
+ * @param key
+ * @returns
  */
 export function useSetting(key: keyof IWSettings['config']) {
   const { data: settings } = useSettingsQuery();
 
   // Simple derived value - returns the setting or null
-  const setting = settings ? (settings.config[key]) : null;
+  const setting = settings ? settings.config[key] : null;
   return setting;
 }
 

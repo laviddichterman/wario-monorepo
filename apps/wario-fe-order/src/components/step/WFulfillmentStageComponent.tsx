@@ -24,8 +24,10 @@ import FulfillmentTerms from './fulfillment/FulfillmentTerms';
 function useSortedVisibleFulfillments() {
   const fulfillments = useFulfillments();
   const ServiceOptions = useMemo(() => {
-    return fulfillments.filter((fulfillment) =>
-      fulfillment.exposeFulfillment && WDateUtils.HasOperatingHours(fulfillment.operatingHours))
+    return fulfillments
+      .filter(
+        (fulfillment) => fulfillment.exposeFulfillment && WDateUtils.HasOperatingHours(fulfillment.operatingHours),
+      )
       .sort((x, y) => x.ordinal - y.ordinal)
       .map((fulfillment) => {
         return { label: fulfillment.displayName, value: fulfillment.id, disabled: false };
@@ -49,31 +51,55 @@ export default function WFulfillmentStageComponent() {
   const hasServiceTerms = useSelectedFulfillmentHasServiceTerms();
   const serviceServiceEnum = useFulfillmentService(selectedService);
 
-  const hasAgreedToTermsIfAny = useMemo(() => (!hasServiceTerms || hasAgreedToTerms), [hasServiceTerms, hasAgreedToTerms]);
-  const hasCompletedDineInInfoIfNeeded = useMemo(() => (serviceServiceEnum !== FulfillmentType.DineIn || dineInInfo !== null), [serviceServiceEnum, dineInInfo]);
-  const hasCompletedDeliveryInfoIfNeeded = useMemo(() => (serviceServiceEnum !== FulfillmentType.Delivery || deliveryInfo !== null), [serviceServiceEnum, deliveryInfo]);
-  const hasSelectedServiceDateAndTime = useMemo(() => selectedService !== null && serviceDate !== null && serviceTime !== null && serviceServiceEnum !== null, [serviceDate, serviceTime, selectedService, serviceServiceEnum]);
+  const hasAgreedToTermsIfAny = useMemo(
+    () => !hasServiceTerms || hasAgreedToTerms,
+    [hasServiceTerms, hasAgreedToTerms],
+  );
+  const hasCompletedDineInInfoIfNeeded = useMemo(
+    () => serviceServiceEnum !== FulfillmentType.DineIn || dineInInfo !== null,
+    [serviceServiceEnum, dineInInfo],
+  );
+  const hasCompletedDeliveryInfoIfNeeded = useMemo(
+    () => serviceServiceEnum !== FulfillmentType.Delivery || deliveryInfo !== null,
+    [serviceServiceEnum, deliveryInfo],
+  );
+  const hasSelectedServiceDateAndTime = useMemo(
+    () => selectedService !== null && serviceDate !== null && serviceTime !== null && serviceServiceEnum !== null,
+    [serviceDate, serviceTime, selectedService, serviceServiceEnum],
+  );
 
   const missingInformationText = useMemo(() => {
     if (!hasSelectedServiceDateAndTime) {
-      return "Please select a service, date, and time.";
+      return 'Please select a service, date, and time.';
     }
     if (!hasAgreedToTermsIfAny) {
-      return "Please agree to the terms and conditions above.";
+      return 'Please agree to the terms and conditions above.';
     }
     if (!hasCompletedDineInInfoIfNeeded) {
-      return "Please select a party size.";
+      return 'Please select a party size.';
     }
     if (!hasCompletedDeliveryInfoIfNeeded) {
-      return "Please fill out the delivery information.";
+      return 'Please fill out the delivery information.';
     }
-  }, [hasSelectedServiceDateAndTime, hasAgreedToTermsIfAny, hasCompletedDineInInfoIfNeeded, hasCompletedDeliveryInfoIfNeeded]);
+  }, [
+    hasSelectedServiceDateAndTime,
+    hasAgreedToTermsIfAny,
+    hasCompletedDineInInfoIfNeeded,
+    hasCompletedDeliveryInfoIfNeeded,
+  ]);
   const valid = useMemo(() => {
-    return hasSelectedServiceDateAndTime &&
+    return (
+      hasSelectedServiceDateAndTime &&
       hasAgreedToTermsIfAny &&
       hasCompletedDineInInfoIfNeeded &&
-      hasCompletedDeliveryInfoIfNeeded;
-  }, [hasSelectedServiceDateAndTime, hasAgreedToTermsIfAny, hasCompletedDineInInfoIfNeeded, hasCompletedDeliveryInfoIfNeeded]);
+      hasCompletedDeliveryInfoIfNeeded
+    );
+  }, [
+    hasSelectedServiceDateAndTime,
+    hasAgreedToTermsIfAny,
+    hasCompletedDineInInfoIfNeeded,
+    hasCompletedDeliveryInfoIfNeeded,
+  ]);
 
   return (
     <>
@@ -87,22 +113,33 @@ export default function WFulfillmentStageComponent() {
         />
         <FulfillmentTerms />
         <FulfillmentDateTimeSelector />
-        {(serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null) && (
-          <FulfillmentPartySizeSelector
-          />
-        )}
+        {serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null && <FulfillmentPartySizeSelector />}
 
-        {(serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null) &&
+        {serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null && (
           <Grid size={12}>
             <DeliveryInfoForm />
-          </Grid>}
+          </Grid>
+        )}
       </Grid>
       {/* maybe move this to the calendar? */}
-      {hasSelectedDateExpired && <ErrorResponseOutput>The previously selected service date has expired.</ErrorResponseOutput>}
-      <Navigation hidden={serviceTime === null} hasBack={false}
+      {hasSelectedDateExpired && (
+        <ErrorResponseOutput>The previously selected service date has expired.</ErrorResponseOutput>
+      )}
+      <Navigation
+        hidden={serviceTime === null}
+        hasBack={false}
         onNextWhenDisabled={{
-          onMouseOver: () => enqueueSnackbar(missingInformationText, { variant: 'warning' })
-        }} canBack={false} canNext={valid} handleBack={() => { return; }} handleNext={() => { nextStage(); }} />
+          onMouseOver: () => enqueueSnackbar(missingInformationText, { variant: 'warning' }),
+        }}
+        canBack={false}
+        canNext={valid}
+        handleBack={() => {
+          return;
+        }}
+        handleNext={() => {
+          nextStage();
+        }}
+      />
     </>
   );
 }

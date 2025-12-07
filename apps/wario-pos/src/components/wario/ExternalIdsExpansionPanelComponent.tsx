@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
 import { ExpandMore } from '@mui/icons-material';
-import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/material";
+import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 
-import { type IWInterval, type KeyValue } from "@wcp/wario-shared";
-import { type ValSetVal } from "@wcp/wario-ux-shared/common";
+import { type IWInterval, type KeyValue } from '@wcp/wario-shared';
+import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 
 import KeyValuesContainer from './keyvalues.container';
 
@@ -14,13 +14,19 @@ export type ExternalIdsExpansionPanelProps = {
 } & ValSetVal<KeyValue[]>;
 
 export const IsDisableValueValid = (value: IWInterval | null) =>
-  value === null || (value.start === 1 && value.end === 0) || (value.start <= value.end);
+  value === null || (value.start === 1 && value.end === 0) || value.start <= value.end;
 
 export const ExternalIdsExpansionPanelComponent = (props: ExternalIdsExpansionPanelProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <Accordion sx={{ p: 2 }} expanded={isExpanded} onChange={(_, ex) => { setIsExpanded(ex); }}  >
+    <Accordion
+      sx={{ p: 2 }}
+      expanded={isExpanded}
+      onChange={(_, ex) => {
+        setIsExpanded(ex);
+      }}
+    >
       <AccordionSummary expandIcon={<ExpandMore />}>
         <Typography sx={{ ml: 4 }}>{props.title}</Typography>
       </AccordionSummary>
@@ -36,7 +42,6 @@ export const ExternalIdsExpansionPanelComponent = (props: ExternalIdsExpansionPa
         />
       </AccordionDetails>
     </Accordion>
-
   );
 };
 

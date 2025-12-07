@@ -24,11 +24,8 @@ import type { UpdatePrinterGroupProps } from './catalog.types';
 
 export type { UpdatePrinterGroupProps };
 
-
-
 // ============================================================================
 // Dependencies Interface
-
 
 // ============================================================================
 
@@ -42,14 +39,15 @@ export interface PrinterGroupDeps {
 
   syncPrinterGroups: () => Promise<boolean>;
   batchDeleteCatalogObjectsFromExternalIds: (ids: KeyValue[]) => Promise<unknown>;
-  updateProductsWithConstraint: (match: FilterQuery<IProduct>, update: Partial<IProduct>, force: boolean) => Promise<unknown>;
+  updateProductsWithConstraint: (
+    match: FilterQuery<IProduct>,
+    update: Partial<IProduct>,
+    force: boolean,
+  ) => Promise<unknown>;
 }
-
-
 
 // ============================================================================
 // Operations
-
 
 // ============================================================================
 
@@ -79,8 +77,14 @@ export const createPrinterGroup = async (deps: PrinterGroupDeps, printerGroup: O
   return doc.toObject();
 };
 
-export const batchUpdatePrinterGroup = async (deps: PrinterGroupDeps, batches: UpdatePrinterGroupProps[]): Promise<(PrinterGroup | null)[]> => {
-  deps.logger.info({ batches: batches.map((x) => ({ id: x.id, changes: x.printerGroup })) }, 'Updating printer group(s)');
+export const batchUpdatePrinterGroup = async (
+  deps: PrinterGroupDeps,
+  batches: UpdatePrinterGroupProps[],
+): Promise<(PrinterGroup | null)[]> => {
+  deps.logger.info(
+    { batches: batches.map((x) => ({ id: x.id, changes: x.printerGroup })) },
+    'Updating printer group(s)',
+  );
 
   const oldPGs = batches.map((b) => deps.printerGroups[b.id]);
   const newExternalIdses = batches.map((b, i) => b.printerGroup.externalIDs ?? oldPGs[i].externalIDs);
@@ -92,7 +96,10 @@ export const batchUpdatePrinterGroup = async (deps: PrinterGroupDeps, batches: U
       false,
     );
     if (!batchRetrieveCatalogObjectsResponse.success) {
-      deps.logger.error({ errors: batchRetrieveCatalogObjectsResponse.error }, 'Getting current square CatalogObjects failed');
+      deps.logger.error(
+        { errors: batchRetrieveCatalogObjectsResponse.error },
+        'Getting current square CatalogObjects failed',
+      );
       return batches.map((_) => null);
     }
     existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
@@ -143,7 +150,10 @@ export const updatePrinterGroup = async (deps: PrinterGroupDeps, props: UpdatePr
   return (await batchUpdatePrinterGroup(deps, [props]))[0];
 };
 
-export const deletePrinterGroup = async (deps: PrinterGroupDeps, request: DeletePrinterGroupRequest & { id: string }) => {
+export const deletePrinterGroup = async (
+  deps: PrinterGroupDeps,
+  request: DeletePrinterGroupRequest & { id: string },
+) => {
   deps.logger.debug(`Removing Printer Group ${request.id}`);
   if (request.reassign) {
     const dest = await deps.wPrinterGroupModel.findById(request.printerGroup).exec();

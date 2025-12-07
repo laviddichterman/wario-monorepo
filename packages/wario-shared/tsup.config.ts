@@ -8,7 +8,7 @@ export default defineConfig({
   outDir: 'dist',
   // build both formats
   format: ['esm', 'cjs'],
-  dts: true,                 // one .d.ts for both
+  dts: true, // one .d.ts for both
   target: 'es2022',
   sourcemap: true,
   clean: true,
@@ -16,5 +16,5 @@ export default defineConfig({
   // ensure predictable filenames
   outExtension({ format }) {
     return format === 'cjs' ? { js: '.cjs' } : { js: '.js' };
-  }
+  },
 });

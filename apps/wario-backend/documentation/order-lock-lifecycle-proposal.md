@@ -5,6 +5,7 @@
 The `OrderLockInterceptor` handles locking orders atomically, but unlocking is currently handled within each service method. Service methods like `CancelLockedOrder`, `ConfirmLockedOrder`, etc. each set `locked: null` in their `findOneAndUpdate` calls.
 
 **Current flow:**
+
 1. Interceptor locks order (sets `locked: idempotencyKey`)
 2. Controller extracts locked order via `@LockedOrder()` decorator
 3. Service method does work AND atomically updates order with `locked: null`
@@ -24,36 +25,30 @@ return next.handle().pipe(
       const updatedOrder = await this.orderModel.findOneAndUpdate(
         { _id: orderId, locked: idempotencyKey },
         { ...result.result, locked: null },
-        { new: true }
+        { new: true },
       );
       return { ...result, result: updatedOrder?.toObject() };
     }
     // No order in result (pure failure), just clear the lock
-    await this.orderModel.findOneAndUpdate(
-      { _id: orderId, locked: idempotencyKey },
-      { locked: null }
-    );
+    await this.orderModel.findOneAndUpdate({ _id: orderId, locked: idempotencyKey }, { locked: null });
     return result;
   }),
   // Handle unhandled exceptions (service threw instead of returning)
   catchError(async (error) => {
-    await this.orderModel.findOneAndUpdate(
-      { _id: orderId, locked: idempotencyKey },
-      { locked: null }
-    );
+    await this.orderModel.findOneAndUpdate({ _id: orderId, locked: idempotencyKey }, { locked: null });
     throw error;
-  })
+  }),
 );
 ```
 
 ### Coverage Matrix
 
-| Scenario | Order in result? | Action |
-|----------|-----------------|--------|
-| Success | Yes | Atomic update + unlock |
-| Handled error (partial success) | Yes | Atomic update + unlock |
-| Handled error (no changes made) | No | Just unlock |
-| Unhandled exception | N/A | Just unlock, re-throw |
+| Scenario                        | Order in result? | Action                 |
+| ------------------------------- | ---------------- | ---------------------- |
+| Success                         | Yes              | Atomic update + unlock |
+| Handled error (partial success) | Yes              | Atomic update + unlock |
+| Handled error (no changes made) | No               | Just unlock            |
+| Unhandled exception             | N/A              | Just unlock, re-throw  |
 
 ### Benefits
 

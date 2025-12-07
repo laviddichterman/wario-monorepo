@@ -11,7 +11,7 @@ export const themeOptions: ThemeOptions = {
     },
   },
   zIndex: {
-    snackbar: 2500
+    snackbar: 2500,
   },
   typography: {
     allVariants: {
@@ -45,29 +45,29 @@ export const themeOptions: ThemeOptions = {
     MuiTabs: {
       styleOverrides: {
         flexContainer: {
-          flexWrap: 'wrap'
-        }
-      }
+          flexWrap: 'wrap',
+        },
+      },
     },
     MuiTab: {
       styleOverrides: {
         root: {
-          border: "1px dotted rgba(255,0,0,0.0)",
+          border: '1px dotted rgba(255,0,0,0.0)',
           '&.Mui-selected': {
-            backgroundColor: "#c59d5f",
+            backgroundColor: '#c59d5f',
             color: 'black',
-            borderBottom: "1px solid #000000",
-          }
+            borderBottom: '1px solid #000000',
+          },
         },
-      }
+      },
     },
     MuiAccordion: {
       styleOverrides: {
         root: {
-          border: "1px solid #000000",
+          border: '1px solid #000000',
           backgroundColor: '#fcfcfc',
-        }
-      }
+        },
+      },
     },
     MuiInputBase: {
       styleOverrides: {
@@ -78,70 +78,68 @@ export const themeOptions: ThemeOptions = {
             outlineWidth: 0,
             '&:focus': {
               outlineWidth: 0,
-            }
-          }
+            },
+          },
         },
       },
     },
     MuiAccordionSummary: {
       styleOverrides: {
         content: {
-          margin: "0px",
+          margin: '0px',
         },
         root: {
           paddingLeft: 0,
           borderBottom: '1px solid',
-        }
-      }
+        },
+      },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          backgroundColor: "black",
-          "&.Mui-disabled": {
-            pointerEvents: "unset",
-            cursor: "not-allowed",
-            backgroundColor: "#D3D3D3",
-            color: 'black'
+          backgroundColor: 'black',
+          '&.Mui-disabled': {
+            pointerEvents: 'unset',
+            cursor: 'not-allowed',
+            backgroundColor: '#D3D3D3',
+            color: 'black',
           },
-          "&.Mui-selected": {
-            backgroundColor: "#c59d5f"
+          '&.Mui-selected': {
+            backgroundColor: '#c59d5f',
           },
-          "&:hover": {
-            backgroundColor: "#c59d5f"
+          '&:hover': {
+            backgroundColor: '#c59d5f',
           },
         },
-      }
+      },
     },
     MuiGrid: {
-      styleOverrides: {
-
-      }
+      styleOverrides: {},
     },
     MuiToggleButton: {
       styleOverrides: {
         root: {
-          backgroundColor: "black",
-          "&.Mui-disabled": {
-            pointerEvents: "unset",
-            cursor: "not-allowed",
-            backgroundColor: "#D3D3D3",
-            color: 'black'
+          backgroundColor: 'black',
+          '&.Mui-disabled': {
+            pointerEvents: 'unset',
+            cursor: 'not-allowed',
+            backgroundColor: '#D3D3D3',
+            color: 'black',
           },
-          "&.Mui-selected": {
+          '&.Mui-selected': {
             color: 'white',
-            backgroundColor: "#c59d5f",
-            "&:hover": {
+            backgroundColor: '#c59d5f',
+            '&:hover': {
               color: 'white',
-              backgroundColor: "#c59d5f"
+              backgroundColor: '#c59d5f',
             },
           },
-          "&:hover": {
+          '&:hover': {
             color: 'white',
-            backgroundColor: "#c59d5f"
+            backgroundColor: '#c59d5f',
           },
         },
-      }
-    }
-  }
+      },
+    },
+  },
 };

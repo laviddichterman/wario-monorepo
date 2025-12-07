@@ -31,14 +31,14 @@ export class AccountingController {
     private readonly catalogProvider: CatalogProviderService,
     private readonly googleService: GoogleService,
     private readonly orderManager: OrderManagerService,
-  ) { }
+  ) {}
 
   @Get('tips')
   async getTips(@Query('date') date: string) {
     const tips_date = startOfDay(parseISO(date));
     const min_date = formatRFC3339(tips_date);
     const max_date = formatRFC3339(addDays(tips_date, 1));
-    const events = await this.googleService.GetEventsForDate(min_date, max_date, 'America/Los_Angeles') || [];
+    const events = (await this.googleService.GetEventsForDate(min_date, max_date, 'America/Los_Angeles')) || [];
     const tips_array: (number | string)[] = [];
     events.map((event) => {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -62,10 +62,7 @@ export class AccountingController {
       throw new Error('Failed to fetch orders');
     }
     const orders = ordersResponse.result;
-    const CategorySalesMapMerger = (
-      sales_map: CategorySalesMap,
-      cart: CoreCartEntry<WProduct>[],
-    ): CategorySalesMap => {
+    const CategorySalesMapMerger = (sales_map: CategorySalesMap, cart: CoreCartEntry<WProduct>[]): CategorySalesMap => {
       return cart.reduce((acc, e) => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const product = this.catalogProvider.CatalogSelectors.productEntry(e.product.p.productId)!;

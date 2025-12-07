@@ -1,15 +1,17 @@
-import React from "react";
+import React from 'react';
 
 import { Box, Button, DialogActions, DialogContent, Grid, LinearProgress } from '@mui/material';
 
-const GenerateActionsHtmlFromList = (actions: React.ReactNode[]) => actions.length === 0 ? "" :
-  (<Grid container justifyContent="flex-end" size={12}>
-    {actions.map((action, idx) => (
-      <Grid key={idx}>
-        {action}
-      </Grid>
-    ))}
-  </Grid>)
+const GenerateActionsHtmlFromList = (actions: React.ReactNode[]) =>
+  actions.length === 0 ? (
+    ''
+  ) : (
+    <Grid container justifyContent="flex-end" size={12}>
+      {actions.map((action, idx) => (
+        <Grid key={idx}>{action}</Grid>
+      ))}
+    </Grid>
+  );
 
 export interface ElementActionComponentProps {
   onCloseCallback: React.MouseEventHandler<HTMLButtonElement> | null;
@@ -25,20 +27,17 @@ const ElementActionComponent = ({
   onConfirmClick,
   isProcessing,
   disableConfirmOn,
-  confirmText
+  confirmText,
 }: ElementActionComponentProps) => {
-
   const actions_html = GenerateActionsHtmlFromList([
-    onCloseCallback !== null && <Button
-      onClick={onCloseCallback}
-      disabled={isProcessing}>
-      Cancel
-    </Button>,
-    <Button
-      onClick={onConfirmClick}
-      disabled={isProcessing || disableConfirmOn}>
+    onCloseCallback !== null && (
+      <Button onClick={onCloseCallback} disabled={isProcessing}>
+        Cancel
+      </Button>
+    ),
+    <Button onClick={onConfirmClick} disabled={isProcessing || disableConfirmOn}>
       {confirmText}
-    </Button>
+    </Button>,
   ]);
 
   return (
@@ -50,7 +49,7 @@ const ElementActionComponent = ({
       </DialogContent>
       <DialogActions>
         {actions_html}
-        {isProcessing ? <LinearProgress /> : ""}
+        {isProcessing ? <LinearProgress /> : ''}
       </DialogActions>
     </Box>
   );

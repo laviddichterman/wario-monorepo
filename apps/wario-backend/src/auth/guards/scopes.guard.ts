@@ -5,7 +5,7 @@ import { SCOPES_KEY } from '../decorators/scopes.decorator';
 
 @Injectable()
 export class ScopesGuard implements CanActivate {
-  constructor(private reflector: Reflector) { }
+  constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredScopes = this.reflector.getAllAndOverride<string[] | undefined>(SCOPES_KEY, [

@@ -22,7 +22,7 @@ export function useTranslate(namespace?: Namespace) {
     (lang: LangCode) => {
       settings.setState({ direction: i18n.dir(lang) });
     },
-    [i18n, settings]
+    [i18n, settings],
   );
 
   const handleChangeLang = useCallback(
@@ -44,7 +44,7 @@ export function useTranslate(namespace?: Namespace) {
         console.error(error);
       }
     },
-    [i18n, tMessages, updateDirection]
+    [i18n, tMessages, updateDirection],
   );
 
   const handleResetLang = useCallback(() => {

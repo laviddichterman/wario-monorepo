@@ -1,9 +1,25 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 import { DiscountMethod, PaymentMethod, TenderBaseStatus, WFulfillmentStatus, WOrderStatus } from '../enums';
 
-import { DeliveryInfoDto, EncryptStringLockDto, IMoneyDto, TipSelectionAmountDto, TipSelectionPercentageDto } from './common.dto';
+import {
+  DeliveryInfoDto,
+  EncryptStringLockDto,
+  IMoneyDto,
+  TipSelectionAmountDto,
+  TipSelectionPercentageDto,
+} from './common.dto';
 import { ProductModifierEntryDto } from './product.dto';
 import { WSeatingInfoDto } from './seating.dto';
 
@@ -303,7 +319,7 @@ export class CreditPaymentProposedDto extends TenderBaseProposedDto {
 export class CreditPaymentAllocatedDataDto {
   @IsString()
   @IsNotEmpty()
-  readonly processor!: "SQUARE";
+  readonly processor!: 'SQUARE';
 
   @IsString()
   @IsNotEmpty()
@@ -494,7 +510,11 @@ export class WOrderInstanceDto extends WOrderInstancePartialDto {
   @ValidateNested({ each: true })
   @Type(() => OrderLineDiscountCodeAmountDto)
   @IsArray()
-  readonly discounts!: (OrderLineDiscountCodeAmountDto | OrderManualAmountDiscountDto | OrderManualPercentDiscountDto)[];
+  readonly discounts!: (
+    | OrderLineDiscountCodeAmountDto
+    | OrderManualAmountDiscountDto
+    | OrderManualPercentDiscountDto
+  )[];
 
   @ValidateNested({ each: true })
   @IsArray()

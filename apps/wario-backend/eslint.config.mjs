@@ -1,6 +1,7 @@
 // @ts-check
 import globals from 'globals';
 import { defineConfig } from "eslint/config";
+import eslintConfigPrettier from "eslint-config-prettier";
 import { default as main } from "../../eslint.config.mjs";
 
 export default defineConfig([
@@ -28,4 +29,5 @@ export default defineConfig([
       "react-hooks/exhaustive-deps": "off",
     }
   },
+  eslintConfigPrettier,
 ]);

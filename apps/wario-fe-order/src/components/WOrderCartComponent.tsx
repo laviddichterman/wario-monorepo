@@ -21,19 +21,22 @@ import { useCartStore } from '@/stores/useCartStore';
 
 import { ProductDisplay } from './WProductComponent';
 
-
 const RemoveFromCart = styled(Clear)(() => ({
   border: '1px solid',
   borderRadius: 16,
-  padding: 4
-}))
+  padding: 4,
+}));
 
 interface IOrderCart {
   isProductEditDialogOpen: boolean;
   setProductToEdit: (entry: CartEntry) => void;
 }
 
-export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProductToEdit }: { cartEntry: CartEntry } & IOrderCart) {
+export function WOrderCartEntry({
+  cartEntry,
+  isProductEditDialogOpen,
+  setProductToEdit,
+}: { cartEntry: CartEntry } & IOrderCart) {
   const { removeFromCart, updateCartQuantity } = useCartStore();
   const hasSelectableModifiers = useHasSelectableModifiers(cartEntry.product.m.modifier_map);
   const setRemoveEntry = () => {
@@ -45,15 +48,15 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
     }
   };
   return (
-    <TableRow className={`cart-item${hasSelectableModifiers ? " editible" : ""}`}>
+    <TableRow className={`cart-item${hasSelectableModifiers ? ' editible' : ''}`}>
       <TableCell sx={{ py: 0 }}>
         <ProductDisplay productMetadata={cartEntry.product.m} description displayContext="order" />
       </TableCell>
       <TableCell sx={{ py: 1 }}>
-        <Grid container alignContent={'center'} >
+        <Grid container alignContent={'center'}>
           <Grid sx={{ p: 1, alignContent: 'center' }} size={12}>
             <CheckedNumericInput
-              size='small'
+              size="small"
               fullWidth
               pattern={'[0-9]*'}
               step={1}
@@ -64,25 +67,37 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
                 formatFunction: (v) => formatDecimal(v, 0),
                 parseFunction: parseInteger,
                 min: 1,
-                max: 99
+                max: 99,
               }}
               value={cartEntry.quantity}
               disabled={cartEntry.isLocked}
-              onChange={(value: number) => { setEntryQuantity(value); }}
+              onChange={(value: number) => {
+                setEntryQuantity(value);
+              }}
             />
           </Grid>
           <Grid sx={{ py: 1, pl: 1, textAlign: 'center' }} size={6}>
-            <IconButton disabled={cartEntry.isLocked} name="remove" onClick={() => { setRemoveEntry(); }} >
-              <RemoveFromCart /></IconButton>
+            <IconButton
+              disabled={cartEntry.isLocked}
+              name="remove"
+              onClick={() => {
+                setRemoveEntry();
+              }}
+            >
+              <RemoveFromCart />
+            </IconButton>
           </Grid>
           <Grid sx={{ py: 1, pr: 1, textAlign: 'center' }} size={6}>
-            {hasSelectableModifiers &&
+            {hasSelectableModifiers && (
               <IconButton
                 disabled={isProductEditDialogOpen || cartEntry.isLocked}
-                onClick={() => { setProductToEdit(cartEntry); }}
+                onClick={() => {
+                  setProductToEdit(cartEntry);
+                }}
               >
                 <Edit />
-              </IconButton>}
+              </IconButton>
+            )}
           </Grid>
         </Grid>
       </TableCell>
@@ -92,23 +107,39 @@ export function WOrderCartEntry({ cartEntry, isProductEditDialogOpen, setProduct
 
 export function WOrderCart({ isProductEditDialogOpen, setProductToEdit }: IOrderCart) {
   const groupedCart = useGroupedAndOrderedCart();
-  return groupedCart.length === 0 ? <></> :
+  return groupedCart.length === 0 ? (
+    <></>
+  ) : (
     <div id="orderCart">
-      <Typography variant="h4" sx={{ p: 2, textTransform: 'uppercase', fontFamily: 'Source Sans Pro', }}>Current Order</Typography>
+      <Typography variant="h4" sx={{ p: 2, textTransform: 'uppercase', fontFamily: 'Source Sans Pro' }}>
+        Current Order
+      </Typography>
       <TableContainer elevation={0} component={Paper}>
         <Table size="small">
           <TableHead>
             <TableRow>
               <TableCell width={'85%'}>Item</TableCell>
-              <TableCell sx={{ minWidth: 100 }} align='center'>Quantity</TableCell>
+              <TableCell sx={{ minWidth: 100 }} align="center">
+                Quantity
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {groupedCart.map(x => x[1].map((cartEntry: CartEntry) => (
-              <WOrderCartEntry key={cartEntry.id} cartEntry={cartEntry} isProductEditDialogOpen={isProductEditDialogOpen} setProductToEdit={setProductToEdit} />
-            ))).flat()}
+            {groupedCart
+              .map((x) =>
+                x[1].map((cartEntry: CartEntry) => (
+                  <WOrderCartEntry
+                    key={cartEntry.id}
+                    cartEntry={cartEntry}
+                    isProductEditDialogOpen={isProductEditDialogOpen}
+                    setProductToEdit={setProductToEdit}
+                  />
+                )),
+              )
+              .flat()}
           </TableBody>
         </Table>
       </TableContainer>
     </div>
+  );
 }

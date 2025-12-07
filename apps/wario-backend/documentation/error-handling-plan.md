@@ -7,6 +7,7 @@ This document outlines a comprehensive strategy for standardizing error handling
 ## Current State Analysis
 
 ### Pattern 1: OrderController (Notification-based)
+
 The `OrderController` has a unique pattern where errors trigger email notifications:
 
 ```typescript
@@ -31,6 +32,7 @@ async postOrder(@Body() body: CreateOrderRequestV2Dto) {
 ```
 
 **Issues:**
+
 - Notification logic duplicated in every method
 - Manual status code checking on responses
 - Inconsistent re-throwing of `HttpException` vs `NotFoundException`
@@ -38,6 +40,7 @@ async postOrder(@Body() body: CreateOrderRequestV2Dto) {
 ---
 
 ### Pattern 2: Catalog Controllers (Simple try/catch)
+
 Controllers like `ProductController`, `ModifierController` follow a simpler pattern:
 
 ```typescript
@@ -57,6 +60,7 @@ async postProductClass(@Body() body: CreateProductBatchRequestDto) {
 ```
 
 **Issues:**
+
 - Null-check for failure instead of proper error types
 - Every method has boilerplate try/catch
 - No error logging or notification
@@ -64,6 +68,7 @@ async postProductClass(@Body() body: CreateProductBatchRequestDto) {
 ---
 
 ### Pattern 3: CategoryController (No try/catch)
+
 Some controllers have minimal or no error handling:
 
 ```typescript
@@ -78,6 +83,7 @@ async postCategory(@Body() body: UncommittedCategoryDto) {
 ```
 
 **Issues:**
+
 - Uncaught exceptions will be handled by NestJS's default filter (500)
 - No structured error responses
 - Inconsistent with other controllers
@@ -85,6 +91,7 @@ async postCategory(@Body() body: UncommittedCategoryDto) {
 ---
 
 ### Pattern 4: Service Response Types
+
 Services return `ResponseWithStatusCode<CrudOrderResponse>` which requires manual handling:
 
 ```typescript
@@ -92,15 +99,18 @@ Services return `ResponseWithStatusCode<CrudOrderResponse>` which requires manua
 return {
   status: 404,
   success: false,
-  error: [{
-    category: 'INVALID_REQUEST_ERROR',
-    code: 'NOT_FOUND',
-    detail: errorDetail,
-  }],
+  error: [
+    {
+      category: 'INVALID_REQUEST_ERROR',
+      code: 'NOT_FOUND',
+      detail: errorDetail,
+    },
+  ],
 };
 ```
 
 **Issues:**
+
 - Status codes embedded in response body
 - Controllers must manually convert to `HttpException`
 - Inconsistent with NestJS's exception-based flow
@@ -121,6 +131,7 @@ src/
 ```
 
 **Responsibilities:**
+
 - Log all exceptions with context
 - Transform exceptions to standardized `WError[]` format
 - Send critical error notifications (emails) for 5xx errors
@@ -185,11 +196,13 @@ export class OrderNotFoundException extends NotFoundException {
   constructor(orderId: string) {
     super({
       success: false,
-      error: [{
-        category: 'INVALID_REQUEST_ERROR',
-        code: 'ORDER_NOT_FOUND',
-        detail: `Order ${orderId} not found`,
-      }],
+      error: [
+        {
+          category: 'INVALID_REQUEST_ERROR',
+          code: 'ORDER_NOT_FOUND',
+          detail: `Order ${orderId} not found`,
+        },
+      ],
     });
   }
 }
@@ -198,11 +211,13 @@ export class OrderLockedException extends ConflictException {
   constructor(orderId: string) {
     super({
       success: false,
-      error: [{
-        category: 'INVALID_REQUEST_ERROR',
-        code: 'ORDER_LOCKED',
-        detail: `Order ${orderId} is already locked`,
-      }],
+      error: [
+        {
+          category: 'INVALID_REQUEST_ERROR',
+          code: 'ORDER_LOCKED',
+          detail: `Order ${orderId} is already locked`,
+        },
+      ],
     });
   }
 }
@@ -232,10 +247,7 @@ export class ErrorNotificationService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendCriticalErrorEmail(
-    request: Request,
-    errors: WError[],
-  ): Promise<void> {
+  async sendCriticalErrorEmail(request: Request, errors: WError[]): Promise<void> {
     const email = this.configService.get('ADMIN_EMAIL');
     await this.googleService.SendEmail(
       email,
@@ -263,7 +275,7 @@ For consistent response formatting:
 export class ResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map(data => {
+      map((data) => {
         // If already in standard format, return as-is
         if (data?.success !== undefined) {
           return data;
@@ -286,6 +298,7 @@ export class ResponseInterceptor implements NestInterceptor {
 Services should throw exceptions instead of returning error objects:
 
 **Before:**
+
 ```typescript
 // OrderManagerService
 LockAndActOnOrder = async (...): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
@@ -302,6 +315,7 @@ LockAndActOnOrder = async (...): Promise<ResponseWithStatusCode<CrudOrderRespons
 ```
 
 **After:**
+
 ```typescript
 // OrderManagerService
 LockAndActOnOrder = async (...): Promise<WOrderInstance> => {
@@ -319,21 +333,25 @@ LockAndActOnOrder = async (...): Promise<WOrderInstance> => {
 ## Implementation Phases
 
 ### Phase 1: Infrastructure (Low Risk)
+
 1. Create `ErrorNotificationService`
 2. Create `AllExceptionsFilter`
 3. Create custom exception classes
 4. Register global filter in `app.module.ts`
 
 ### Phase 2: New Controllers (No Breaking Changes)
+
 1. Apply new patterns to any new controllers
 2. Update existing tests to use new patterns
 
 ### Phase 3: Gradual Migration (Incremental)
+
 1. Start with lowest-traffic controllers (`CategoryController`, `PrinterGroupController`)
 2. Move to `ProductController`, `ModifierController`
 3. Finish with high-traffic `OrderController`, `StoreCreditController`
 
 ### Phase 4: Service Layer (Highest Risk)
+
 1. Refactor services to throw exceptions
 2. Update all callers
 3. Remove `ResponseWithStatusCode` wrapper pattern
@@ -370,28 +388,29 @@ All error responses will follow the existing `WError` format from `wario-shared`
 ```typescript
 interface ErrorResponse {
   success: false;
-  error: WError[];  // Array of { category, code, detail }
+  error: WError[]; // Array of { category, code, detail }
 }
 ```
 
 **HTTP Status Code Mapping:**
 
-| Exception Type | HTTP Status | category |
-|---------------|-------------|----------|
-| `NotFoundException` | 404 | `INVALID_REQUEST_ERROR` |
-| `BadRequestException` | 400 | `INVALID_REQUEST_ERROR` |
-| `ConflictException` | 409 | `INVALID_REQUEST_ERROR` |
-| `UnprocessableEntityException` | 422 | `INVALID_REQUEST_ERROR` |
-| `UnauthorizedException` | 401 | `AUTHENTICATION_ERROR` |
-| `ForbiddenException` | 403 | `AUTHORIZATION_ERROR` |
-| `BadGatewayException` | 502 | `API_ERROR` |
-| `InternalServerErrorException` | 500 | `API_ERROR` |
+| Exception Type                 | HTTP Status | category                |
+| ------------------------------ | ----------- | ----------------------- |
+| `NotFoundException`            | 404         | `INVALID_REQUEST_ERROR` |
+| `BadRequestException`          | 400         | `INVALID_REQUEST_ERROR` |
+| `ConflictException`            | 409         | `INVALID_REQUEST_ERROR` |
+| `UnprocessableEntityException` | 422         | `INVALID_REQUEST_ERROR` |
+| `UnauthorizedException`        | 401         | `AUTHENTICATION_ERROR`  |
+| `ForbiddenException`           | 403         | `AUTHORIZATION_ERROR`   |
+| `BadGatewayException`          | 502         | `API_ERROR`             |
+| `InternalServerErrorException` | 500         | `API_ERROR`             |
 
 ---
 
 ## Logging Strategy
 
 All errors will be logged with:
+
 - Timestamp
 - Request ID (via correlation ID)
 - HTTP method and path
@@ -426,12 +445,12 @@ All errors will be logged with:
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                      | Mitigation                                      |
+| ------------------------- | ----------------------------------------------- |
 | Breaking existing clients | Phase 4 maintains response format compatibility |
-| Missing notifications | Global filter catches all unhandled exceptions |
-| Over-notifying | Add rate limiting and severity filtering |
-| Performance | Async notification (fire-and-forget) |
+| Missing notifications     | Global filter catches all unhandled exceptions  |
+| Over-notifying            | Add rate limiting and severity filtering        |
+| Performance               | Async notification (fire-and-forget)            |
 
 ---
 
@@ -451,16 +470,18 @@ All errors will be logged with:
 ### Phase 1: Infrastructure ✅ COMPLETED
 
 #### 1. Custom Exception Classes
+
 Created in `src/exceptions/`:
 
-| File | Exceptions |
-|------|------------|
-| `order.exceptions.ts` | `OrderNotFoundException`, `OrderLockedException`, `InvalidOrderStateException`, `OrderValidationException`, `OrderProcessingException` |
+| File                    | Exceptions                                                                                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `order.exceptions.ts`   | `OrderNotFoundException`, `OrderLockedException`, `InvalidOrderStateException`, `OrderValidationException`, `OrderProcessingException`                                                       |
 | `catalog.exceptions.ts` | `ProductNotFoundException`, `ProductInstanceNotFoundException`, `CategoryNotFoundException`, `ModifierTypeNotFoundException`, `ModifierOptionNotFoundException`, `CatalogOperationException` |
-| `payment.exceptions.ts` | `PaymentProcessingException`, `StoreCreditNotFoundException`, `InsufficientCreditException`, `InvalidPaymentAmountException` |
-| `index.ts` | Barrel export for all exceptions |
+| `payment.exceptions.ts` | `PaymentProcessingException`, `StoreCreditNotFoundException`, `InsufficientCreditException`, `InvalidPaymentAmountException`                                                                 |
+| `index.ts`              | Barrel export for all exceptions                                                                                                                                                             |
 
 **Usage Example:**
+
 ```typescript
 import { OrderNotFoundException } from '../exceptions';
 
@@ -471,18 +492,22 @@ if (!order) {
 ```
 
 #### 2. ErrorNotificationService
+
 Created at `src/config/error-notification/error-notification.service.ts`
 
 **Features:**
+
 - `sendCriticalErrorEmail()` - Sends formatted HTML email with error details
 - `shouldNotify()` - Determines if error warrants notification (5xx on `/order`, `/store-credit`, `/payment`)
 - Fire-and-forget pattern - email failures don't affect response
 - Registered in global `ConfigModule`
 
 #### 3. Global Exception Filter
+
 Created at `src/filters/all-exceptions.filter.ts`
 
 **Features:**
+
 - Catches ALL exceptions (not just HttpException)
 - Logs errors with structured context
 - Transforms any exception to `WError[]` format
@@ -490,6 +515,7 @@ Created at `src/filters/all-exceptions.filter.ts`
 - Registered in `app.module.ts` via `APP_FILTER`
 
 **Registration in app.module.ts:**
+
 ```typescript
 {
   provide: APP_FILTER,
@@ -503,12 +529,14 @@ Created at `src/filters/all-exceptions.filter.ts`
 ### Phase 2: New Controllers ✅ COMPLETED
 
 The infrastructure is now in place and will automatically:
+
 1. Catch any unhandled exceptions in new controllers
 2. Convert them to the `WError[]` format
 3. Log them with full context
 4. Send email notifications for 5xx errors on critical paths
 
 **New controllers can use the custom exceptions directly:**
+
 ```typescript
 @Controller('api/v1/new-feature')
 export class NewFeatureController {
@@ -533,24 +561,26 @@ All controllers have been migrated to use custom exceptions and the global filte
 
 #### Changes Made
 
-| Controller | Changes |
-|------------|---------|
-| `CategoryController` | Replaced `NotFoundException`/`InternalServerErrorException` with `CategoryNotFoundException`/`CatalogOperationException` |
-| `PrinterGroupController` | Removed try/catch blocks, added `PrinterGroupNotFoundException`/`PrinterGroupOperationException` |
-| `ProductController` | Removed all try/catch blocks (~50 lines), uses `ProductNotFoundException`/`ProductInstanceNotFoundException`/`CatalogOperationException` |
-| `ModifierController` | Removed try/catch blocks, uses `ModifierTypeNotFoundException`/`ModifierOptionNotFoundException` |
-| `OrderController` | **Removed `SendFailureNoticeOnErrorCatch` method** - global filter now handles email notifications. Removed all try/catch blocks, uses `OrderNotFoundException` |
-| `StoreCreditController` | Removed manual email notifications, removed GoogleService/DataProviderService dependencies, uses `StoreCreditNotFoundException`/`InsufficientCreditException` |
+| Controller               | Changes                                                                                                                                                         |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CategoryController`     | Replaced `NotFoundException`/`InternalServerErrorException` with `CategoryNotFoundException`/`CatalogOperationException`                                        |
+| `PrinterGroupController` | Removed try/catch blocks, added `PrinterGroupNotFoundException`/`PrinterGroupOperationException`                                                                |
+| `ProductController`      | Removed all try/catch blocks (~50 lines), uses `ProductNotFoundException`/`ProductInstanceNotFoundException`/`CatalogOperationException`                        |
+| `ModifierController`     | Removed try/catch blocks, uses `ModifierTypeNotFoundException`/`ModifierOptionNotFoundException`                                                                |
+| `OrderController`        | **Removed `SendFailureNoticeOnErrorCatch` method** - global filter now handles email notifications. Removed all try/catch blocks, uses `OrderNotFoundException` |
+| `StoreCreditController`  | Removed manual email notifications, removed GoogleService/DataProviderService dependencies, uses `StoreCreditNotFoundException`/`InsufficientCreditException`   |
 
 #### New Printer Exceptions
 
 Created `src/exceptions/printer.exceptions.ts`:
+
 - `PrinterGroupNotFoundException` - Thrown when a printer group cannot be found
 - `PrinterGroupOperationException` - Thrown when printer group operations fail
 
 #### Lines of Code Removed
 
 Approximate boilerplate removed across all controllers:
+
 - **~200 lines** of try/catch blocks
 - **~40 lines** of manual email notification code
 - **2 controller dependencies** removed (GoogleService, DataProviderService from StoreCreditController)
@@ -566,6 +596,7 @@ Approximate boilerplate removed across all controllers:
 **Current State:** Services like `OrderManagerService` return `ResponseWithStatusCode<CrudOrderResponse>` objects. Controllers check the status and throw `HttpException` when needed.
 
 **Why Defer?**
+
 1. **High Risk**: `OrderManagerService` alone is 1,300+ lines with 20+ methods returning `ResponseWithStatusCode`
 2. **Working System**: Controllers already convert response status codes to exceptions
 3. **Breaking Changes**: Would require updating all service callers simultaneously
@@ -573,14 +604,15 @@ Approximate boilerplate removed across all controllers:
 
 **If implementing later:**
 
-| Task | Scope |
-|------|-------|
-| Refactor `OrderManagerService` | ~20 methods, 1,300 lines |
-| Refactor `StoreCreditProviderService` | ~5 methods |
-| Refactor `CatalogProviderService` | ~15 methods |
-| Remove `ResponseWithStatusCode` | Type definitions, all usages |
+| Task                                  | Scope                        |
+| ------------------------------------- | ---------------------------- |
+| Refactor `OrderManagerService`        | ~20 methods, 1,300 lines     |
+| Refactor `StoreCreditProviderService` | ~5 methods                   |
+| Refactor `CatalogProviderService`     | ~15 methods                  |
+| Remove `ResponseWithStatusCode`       | Type definitions, all usages |
 
 **Recommended Approach:**
+
 - Refactor one method at a time during regular maintenance
 - Start with simpler services (e.g., `StoreCreditProviderService`)
 - Add new methods using exception-based pattern
@@ -591,24 +623,27 @@ Approximate boilerplate removed across all controllers:
 
 **Summary of Changes:**
 
-| Phase | Status | Description |
-|-------|--------|-------------|
+| Phase   | Status      | Description                                                      |
+| ------- | ----------- | ---------------------------------------------------------------- |
 | Phase 1 | ✅ Complete | Infrastructure - exception classes, filter, notification service |
-| Phase 2 | ✅ Complete | New controllers automatically use new patterns |
-| Phase 3 | ✅ Complete | All existing controllers migrated |
-| Phase 4 | ⏸️ Deferred | Service layer refactoring (optional) |
+| Phase 2 | ✅ Complete | New controllers automatically use new patterns                   |
+| Phase 3 | ✅ Complete | All existing controllers migrated                                |
+| Phase 4 | ⏸️ Deferred | Service layer refactoring (optional)                             |
 
 **Files Created:**
+
 - `src/exceptions/` - Custom domain exceptions (order, catalog, payment, printer)
 - `src/filters/all-exceptions.filter.ts` - Global exception filter
 - `src/config/error-notification/error-notification.service.ts` - Email notifications
 
 **Files Modified:**
+
 - `src/app.module.ts` - Registered global filter
 - `src/config/config.module.ts` - Added ErrorNotificationService
 - `src/controllers/` - All 6 controllers refactored
 
 **Benefits Achieved:**
+
 - ✅ Centralized error handling
 - ✅ Automatic email notifications for 5xx errors on critical paths
 - ✅ Consistent `WError[]` response format
@@ -619,16 +654,13 @@ Approximate boilerplate removed across all controllers:
 
 ### File Summary
 
-| Path | Description |
-|------|-------------|
-| `src/exceptions/index.ts` | Barrel export |
-| `src/exceptions/order.exceptions.ts` | Order domain exceptions |
-| `src/exceptions/catalog.exceptions.ts` | Catalog domain exceptions |
-| `src/exceptions/payment.exceptions.ts` | Payment domain exceptions |
-| `src/exceptions/printer.exceptions.ts` | Printer group exceptions |
+| Path                                                          | Description                |
+| ------------------------------------------------------------- | -------------------------- |
+| `src/exceptions/index.ts`                                     | Barrel export              |
+| `src/exceptions/order.exceptions.ts`                          | Order domain exceptions    |
+| `src/exceptions/catalog.exceptions.ts`                        | Catalog domain exceptions  |
+| `src/exceptions/payment.exceptions.ts`                        | Payment domain exceptions  |
+| `src/exceptions/printer.exceptions.ts`                        | Printer group exceptions   |
 | `src/config/error-notification/error-notification.service.ts` | Email notification service |
-| `src/filters/all-exceptions.filter.ts` | Global exception filter |
-| `src/filters/index.ts` | Filter barrel export |
-
-
-
+| `src/filters/all-exceptions.filter.ts`                        | Global exception filter    |
+| `src/filters/index.ts`                                        | Filter barrel export       |

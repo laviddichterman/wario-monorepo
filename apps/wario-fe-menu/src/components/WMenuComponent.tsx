@@ -14,42 +14,49 @@ import Typography, { type TypographyProps } from '@mui/material/Typography';
 import { CategoryDisplay, type IProductInstanceDto } from '@wcp/wario-shared';
 import { scrollToElementOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
-import { useCategoryNameFromCategoryById, useProductEntryById, useProductInstanceById, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
+import {
+  useCategoryNameFromCategoryById,
+  useProductEntryById,
+  useProductInstanceById,
+  useValueFromCategoryById,
+} from '@wcp/wario-ux-shared/query';
 import { Separator } from '@wcp/wario-ux-shared/styled';
 
-import { useMenuCategoryId, usePopulatedSubcategoryIdsInCategoryForNextAvailableTime, useProductInstanceIdsInCategoryForNextAvailableTime, useProductMetadataForMenu } from '@/hooks/useQuery';
+import {
+  useMenuCategoryId,
+  usePopulatedSubcategoryIdsInCategoryForNextAvailableTime,
+  useProductInstanceIdsInCategoryForNextAvailableTime,
+  useProductMetadataForMenu,
+} from '@/hooks/useQuery';
 
 import { WMenuDataGrid } from './WMenuTableComponent';
 import { WModifiersComponent } from './WModifiersComponent';
 import { ProductDisplay } from './WProductComponent';
 
-
-interface WMenuDisplayProps { categoryId: string; }
-
+interface WMenuDisplayProps {
+  categoryId: string;
+}
 
 function MenuNameTypography({ categoryId, ...props }: WMenuDisplayProps & TypographyProps) {
   const menuName = useCategoryNameFromCategoryById(categoryId);
-  return <Typography {...props} dangerouslySetInnerHTML={{ __html: menuName }} />
+  return <Typography {...props} dangerouslySetInnerHTML={{ __html: menuName }} />;
 }
 
-function WMenuProductInstanceDisplay({ productInstanceId }: { productInstanceId: string; }) {
+function WMenuProductInstanceDisplay({ productInstanceId }: { productInstanceId: string }) {
   const product = useProductInstanceById(productInstanceId) as IProductInstanceDto;
   const productClass = useProductEntryById(product.productId);
   const productMetadata = useProductMetadataForMenu(productInstanceId);
 
-  return productClass && productMetadata ?
+  return productClass && productMetadata ? (
     <Box sx={{ pt: 4 }}>
-      <ProductDisplay
-        description
-        allowAdornment
-        dots
-        displayContext="menu"
-        price
-        productMetadata={productMetadata}
-      />
-      {product.displayFlags.menu.show_modifier_options && productClass.product.modifiers.length &&
-        <WModifiersComponent productInstanceId={productInstanceId} />}
-    </Box> : <></>
+      <ProductDisplay description allowAdornment dots displayContext="menu" price productMetadata={productMetadata} />
+      {product.displayFlags.menu.show_modifier_options && productClass.product.modifiers.length && (
+        <WModifiersComponent productInstanceId={productInstanceId} />
+      )}
+    </Box>
+  ) : (
+    <></>
+  );
 }
 
 function WMenuSection({ categoryId }: WMenuDisplayProps) {
@@ -59,10 +66,10 @@ function WMenuSection({ categoryId }: WMenuDisplayProps) {
   return (
     // TODO: need to fix the location of the menu subtitle
     <Box sx={{ pt: 0 }}>
-      {subtitle !== null &&
-        <Typography variant="h6" dangerouslySetInnerHTML={{ __html: subtitle }} />
-      }
-      {productsInstanceIds.map((pIId, k) => <WMenuProductInstanceDisplay productInstanceId={pIId} key={k} />)}
+      {subtitle !== null && <Typography variant="h6" dangerouslySetInnerHTML={{ __html: subtitle }} />}
+      {productsInstanceIds.map((pIId, k) => (
+        <WMenuProductInstanceDisplay productInstanceId={pIId} key={k} />
+      ))}
       {footnotes && (
         <small>
           <span dangerouslySetInnerHTML={{ __html: footnotes }} />
@@ -80,43 +87,49 @@ function WMenuAccordion({ categoryId }: WMenuDisplayProps) {
   const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   const [activePanel, setActivePanel] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
-  const toggleAccordion = useCallback((event: React.SyntheticEvent, i: number) => {
-    event.preventDefault();
-    const ref = event.currentTarget;
-    if (activePanel === i) {
-      if (isExpanded) {
-        setIsExpanded(false);
-        scrollToElementOffsetAfterDelay(ref, 200, 'center');
-        return;
+  const toggleAccordion = useCallback(
+    (event: React.SyntheticEvent, i: number) => {
+      event.preventDefault();
+      const ref = event.currentTarget;
+      if (activePanel === i) {
+        if (isExpanded) {
+          setIsExpanded(false);
+          scrollToElementOffsetAfterDelay(ref, 200, 'center');
+          return;
+        }
       }
-    }
-    setActivePanel(i);
-    setIsExpanded(true);
-    scrollToElementOffsetAfterDelay(ref, 450, 'start');
-  }, [activePanel, isExpanded]);
+      setActivePanel(i);
+      setIsExpanded(true);
+      scrollToElementOffsetAfterDelay(ref, 450, 'start');
+    },
+    [activePanel, isExpanded],
+  );
   const hasProductsToDisplay = productsToDisplay.length > 0;
   return (
     <Box>
-      {hasProductsToDisplay && (
-        <WMenuSection categoryId={categoryId} />
-      )}
+      {hasProductsToDisplay && <WMenuSection categoryId={categoryId} />}
       {populatedSubcategories.map((subSection, i) => {
         return (
           <Box sx={{ pt: 1 }} key={i}>
-            <Accordion expanded={isExpanded && activePanel === i} onChange={(e, _) => { toggleAccordion(e, i); }}  >
+            <Accordion
+              expanded={isExpanded && activePanel === i}
+              onChange={(e, _) => {
+                toggleAccordion(e, i);
+              }}
+            >
               <AccordionSummary expandIcon={<ExpandMore />}>
-                <MenuNameTypography variant='h4' sx={{ ml: 2, py: 2 }} categoryId={subSection} />
+                <MenuNameTypography variant="h4" sx={{ ml: 2, py: 2 }} categoryId={subSection} />
               </AccordionSummary>
               <AccordionDetails>
                 <WMenuRecursive categoryId={subSection} />
               </AccordionDetails>
             </Accordion>
-          </Box>);
-      }
-      )}
-    </Box>);
+          </Box>
+        );
+      })}
+    </Box>
+  );
 }
-
 
 function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
   const populatedSubcategories = usePopulatedSubcategoryIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
@@ -127,49 +140,65 @@ function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
   const [active, setActive] = useState<string>(populatedSubcategories[0]);
   return (
     <Box>
-      {hasProductsToDisplay && (
-        <WMenuSection categoryId={categoryId} />
-      )}
+      {hasProductsToDisplay && <WMenuSection categoryId={categoryId} />}
       <TabContext value={active}>
-        <Box sx={{
-          padding: "10px 0px 0px 0",
-          border: '0px solid rgba(81, 81, 80, 0.67)',
-          borderBottom: 1,
-          color: "#515150",
-        }}>
+        <Box
+          sx={{
+            padding: '10px 0px 0px 0',
+            border: '0px solid rgba(81, 81, 80, 0.67)',
+            borderBottom: 1,
+            color: '#515150',
+          }}
+        >
           <TabList
             slotProps={{ indicator: { hidden: true } }}
             scrollButtons={false}
             centered
-            onChange={(_, v: string) => { setActive(v); }}
+            onChange={(_, v: string) => {
+              setActive(v);
+            }}
             aria-label={`${menuName} tab navigation`}
           >
             {populatedSubcategories.map((section, i) => (
-              <Tab sx={[
-                {
-                  '&.Mui-selected': {
-                    color: "white",
+              <Tab
+                sx={[
+                  {
+                    '&.Mui-selected': {
+                      color: 'white',
+                    },
                   },
-                },
-                {
-                  '&:hover': {
-                    color: "white",
-                    backgroundColor: "#c59d5f"
+                  {
+                    '&:hover': {
+                      color: 'white',
+                      backgroundColor: '#c59d5f',
+                    },
                   },
-                }, {
-                  fontFamily: 'Cabin',
-                  color: "#fff",
-                  backgroundColor: "#252525",
-                  mx: 0.5,
-                  my: .5,
-                  transition: 'all .15s',
-                  padding: "6px 5px",
-                  fontSize: "12px",
-                  letterSpacing: '.15em',
-                  borderRadius: '3px',
-                  fontWeight: 400,
-                  textSizeAdjust: "100%"
-                }]} wrapped key={i} label={<MenuNameTypography variant='h6' categoryId={section} sx={{ fontWeight: 400, fontSize: "12px", color: '#fff' }} />} value={section} />
+                  {
+                    fontFamily: 'Cabin',
+                    color: '#fff',
+                    backgroundColor: '#252525',
+                    mx: 0.5,
+                    my: 0.5,
+                    transition: 'all .15s',
+                    padding: '6px 5px',
+                    fontSize: '12px',
+                    letterSpacing: '.15em',
+                    borderRadius: '3px',
+                    fontWeight: 400,
+                    textSizeAdjust: '100%',
+                  },
+                ]}
+                wrapped
+                key={i}
+                label={
+                  <MenuNameTypography
+                    variant="h6"
+                    categoryId={section}
+                    sx={{ fontWeight: 400, fontSize: '12px', color: '#fff' }}
+                  />
+                }
+                value={section}
+              />
             ))}
           </TabList>
         </Box>
@@ -177,11 +206,12 @@ function WMenuTabbed({ categoryId }: WMenuDisplayProps) {
           return (
             <TabPanel sx={{ p: 0 }} key={subSection} value={subSection}>
               <WMenuRecursive categoryId={subSection} />
-            </TabPanel>);
-        }
-        )}
+            </TabPanel>
+          );
+        })}
       </TabContext>
-    </Box>);
+    </Box>
+  );
 }
 
 function WMenuFlat({ categoryId }: WMenuDisplayProps) {
@@ -193,10 +223,11 @@ function WMenuFlat({ categoryId }: WMenuDisplayProps) {
           <MenuNameTypography variant="h4" sx={{ ml: 2 }} categoryId={subSection} />
           <Separator />
           <WMenuRecursive categoryId={subSection} />
-        </Box>)
-      )}
+        </Box>
+      ))}
       <WMenuSection categoryId={categoryId} />
-    </Box>);
+    </Box>
+  );
 }
 
 WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
@@ -206,23 +237,29 @@ WMenuRecursive = ({ categoryId }: WMenuDisplayProps) => {
   const hasPopulatedSubcategories = populatedSubcategories.length > 0;
   switch (nesting) {
     case CategoryDisplay.TAB:
-      return hasPopulatedSubcategories ? <WMenuTabbed categoryId={categoryId} /> : <WMenuFlat categoryId={categoryId} />;
+      return hasPopulatedSubcategories ? (
+        <WMenuTabbed categoryId={categoryId} />
+      ) : (
+        <WMenuFlat categoryId={categoryId} />
+      );
     case CategoryDisplay.ACCORDION:
-      return hasPopulatedSubcategories ? <WMenuAccordion categoryId={categoryId} /> : <WMenuFlat categoryId={categoryId} />;
+      return hasPopulatedSubcategories ? (
+        <WMenuAccordion categoryId={categoryId} />
+      ) : (
+        <WMenuFlat categoryId={categoryId} />
+      );
     case CategoryDisplay.TABLE:
       // expected catalog structure:
       // either 0 child categories and many contained products OR no contained products to many child categories
       // child categories have no child categories
       // metadata fields used to populate columns
-      // description used to 
+      // description used to
       return <WMenuDataGrid categoryId={categoryId} />;
     case CategoryDisplay.FLAT:
     default:
       return <WMenuFlat categoryId={categoryId} />;
   }
-}
-
-
+};
 
 export default function WMenuComponent() {
   const MENU_DATA = useMenuCategoryId();
@@ -231,5 +268,5 @@ export default function WMenuComponent() {
     return <LoadingScreen />;
   }
   // console.log(`${WDateUtils.formatISODate(currentTime)} ${WDateUtils.MinutesToPrintTime(WDateUtils.ComputeFulfillmentTime(currentTime).selectedTime)}`);
-  return (<WMenuRecursive categoryId={MENU_DATA} />);
+  return <WMenuRecursive categoryId={MENU_DATA} />;
 }

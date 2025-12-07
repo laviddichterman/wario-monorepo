@@ -19,7 +19,7 @@ type Props = FiltersResultProps & {
 
 const isFiltered = (filters: ICalendarFilters) => {
   return !!filters.startDate && !!filters.endDate;
-}
+};
 
 export function CalendarFiltersResult({ filters, totalResults, sx }: Props) {
   const { state: currentFilters, setState: updateFilters, resetState: resetFilters } = filters;
@@ -30,11 +30,14 @@ export function CalendarFiltersResult({ filters, totalResults, sx }: Props) {
 
   return (
     isFiltered(currentFilters) && (
-      <FiltersResult totalResults={totalResults} onReset={() => { resetFilters(); }} sx={sx}>
-        <FiltersBlock
-          label="Date:"
-          isShow={Boolean(currentFilters.startDate && currentFilters.endDate)}
-        >
+      <FiltersResult
+        totalResults={totalResults}
+        onReset={() => {
+          resetFilters();
+        }}
+        sx={sx}
+      >
+        <FiltersBlock label="Date:" isShow={Boolean(currentFilters.startDate && currentFilters.endDate)}>
           <Chip
             {...chipProps}
             label={fDateRangeShortLabel(currentFilters.startDate, currentFilters.endDate)}

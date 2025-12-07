@@ -39,8 +39,8 @@ export function registerIcons() {
   iconSets.forEach((iconSet) => {
     const iconSetConfig = {
       ...iconSet,
-      width: (iconSet.prefix === 'carbon' ? 32 : 24),
-      height: (iconSet.prefix === 'carbon' ? 32 : 24),
+      width: iconSet.prefix === 'carbon' ? 32 : 24,
+      height: iconSet.prefix === 'carbon' ? 32 : 24,
     };
 
     addCollection(iconSetConfig);

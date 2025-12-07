@@ -3,13 +3,7 @@ import { primary, secondary } from '../core/palette';
 
 // ----------------------------------------------------------------------
 
-export type ThemeColorPreset =
-  | 'default'
-  | 'preset1'
-  | 'preset2'
-  | 'preset3'
-  | 'preset4'
-  | 'preset5';
+export type ThemeColorPreset = 'default' | 'preset1' | 'preset2' | 'preset3' | 'preset4' | 'preset5';
 
 export const primaryColorPresets: Record<ThemeColorPreset, PaletteColorNoChannels> = {
   default: {

@@ -45,12 +45,7 @@ export {
 } from './mock-auth';
 
 // Database mocks
-export {
-  createAllMockModelProviders,
-  createMockModel,
-  createMockModelProvider,
-  ModelNames,
-} from './mock-database';
+export { createAllMockModelProviders, createMockModel, createMockModelProvider, ModelNames } from './mock-database';
 
 // Service mocks
 export {

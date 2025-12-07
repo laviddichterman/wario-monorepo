@@ -1,6 +1,6 @@
 import React from 'react';
 import { type FieldError, useFormContext } from 'react-hook-form';
-import PhoneInput, { type Country, } from 'react-phone-number-input/react-hook-form-input-core'
+import PhoneInput, { type Country } from 'react-phone-number-input/react-hook-form-input-core';
 
 import { type TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
@@ -15,19 +15,27 @@ interface IPhoneInputParams {
   [x: string]: unknown;
 }
 
-export function RHFPhoneInput({ placeholder, error, label, country, name, ...other }: IPhoneInputParams & Omit<TextFieldProps, 'error' | 'name' | 'label'>) {
-
-  const InputComponent = React.forwardRef((props, ref) =>
-    <TextField {...props}
+export function RHFPhoneInput({
+  placeholder,
+  error,
+  label,
+  country,
+  name,
+  ...other
+}: IPhoneInputParams & Omit<TextFieldProps, 'error' | 'name' | 'label'>) {
+  const InputComponent = React.forwardRef((props, ref) => (
+    <TextField
+      {...props}
       inputRef={ref}
       error={!!error}
       inputMode="tel"
       autoComplete="mobile tel"
-      helperText={error?.message ?? " "}
+      helperText={error?.message ?? ' '}
       placeholder={placeholder}
       label={label}
       {...other}
-    />);
+    />
+  ));
 
   const { control } = useFormContext();
   return (
@@ -40,6 +48,4 @@ export function RHFPhoneInput({ placeholder, error, label, country, name, ...oth
       inputComponent={InputComponent}
     />
   );
-
-
 }

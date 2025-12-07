@@ -14,7 +14,7 @@ export class TasksService {
     private readonly thirdPartyOrderService: ThirdPartyOrderService,
     @InjectPinoLogger(TasksService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleSendOrders() {
@@ -28,11 +28,9 @@ export class TasksService {
     await this.printerService.ClearPastOrders();
   }
 
-
   @Cron('*/35 * * * * *') // Every 35 seconds
   async handleQuery3pOrders() {
     this.logger.debug('Running Query3pOrders task');
     await this.thirdPartyOrderService.Query3pOrders();
   }
 }
-

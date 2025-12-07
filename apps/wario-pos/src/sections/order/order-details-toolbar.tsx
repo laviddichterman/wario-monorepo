@@ -84,10 +84,13 @@ export function OrderDetailsToolbar({
               <Label
                 variant="soft"
                 color={
-                  (status === 'completed' ? 'success' :
-                    (status === 'pending' ? 'warning' :
-                      (status === 'cancelled' ? 'error' :
-                        'default')))
+                  status === 'completed'
+                    ? 'success'
+                    : status === 'pending'
+                      ? 'warning'
+                      : status === 'cancelled'
+                        ? 'error'
+                        : 'default'
                 }
               >
                 {status}
@@ -119,11 +122,7 @@ export function OrderDetailsToolbar({
             {status}
           </Button>
 
-          <Button
-            color="inherit"
-            variant="outlined"
-            startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}
-          >
+          <Button color="inherit" variant="outlined" startIcon={<Iconify icon="solar:printer-minimalistic-bold" />}>
             Print
           </Button>
 

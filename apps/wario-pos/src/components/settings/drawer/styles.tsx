@@ -44,15 +44,7 @@ const LargeLabel = styled('span')(({ theme }) => ({
   }),
 }));
 
-export function LargeBlock({
-  sx,
-  title,
-  tooltip,
-  children,
-  canReset,
-  onReset,
-  ...other
-}: LargeBlockProps) {
+export function LargeBlock({ sx, title, tooltip, children, canReset, onReset, ...other }: LargeBlockProps) {
   return (
     <LargeBlockRoot sx={sx} {...other}>
       <LargeLabel>
@@ -64,11 +56,7 @@ export function LargeBlock({
         {title}
         {tooltip && (
           <Tooltip title={tooltip} placement="right" arrow>
-            <Iconify
-              width={14}
-              icon="eva:info-outline"
-              sx={{ ml: 0.5, mr: -0.5, opacity: 0.48, cursor: 'pointer' }}
-            />
+            <Iconify width={14} icon="eva:info-outline" sx={{ ml: 0.5, mr: -0.5, opacity: 0.48, cursor: 'pointer' }} />
           </Tooltip>
         )}
       </LargeLabel>

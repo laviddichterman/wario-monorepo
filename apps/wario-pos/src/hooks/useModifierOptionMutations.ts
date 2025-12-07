@@ -71,16 +71,12 @@ export function useEditModifierOptionMutation() {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
       const body = toModifierOptionApiBody(form);
 
-      const response = await axiosInstance.patch<IOption>(
-        `/api/v1/menu/option/${modifierTypeId}/${optionId}`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await axiosInstance.patch<IOption>(`/api/v1/menu/option/${modifierTypeId}/${optionId}`, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       return response.data;
     },
@@ -97,15 +93,12 @@ export function useDeleteModifierOptionMutation() {
     mutationFn: async ({ modifierTypeId, optionId }: DeleteModifierOptionRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
 
-      const response = await axiosInstance.delete<IOption>(
-        `/api/v1/menu/option/${modifierTypeId}/${optionId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await axiosInstance.delete<IOption>(`/api/v1/menu/option/${modifierTypeId}/${optionId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       return response.data;
     },
@@ -127,16 +120,12 @@ export function useSetModifierOptionDisabledMutation() {
         disabled,
       };
 
-      const response = await axiosInstance.patch<IOption>(
-        `/api/v1/menu/option/${modifierTypeId}/${option.id}`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await axiosInstance.patch<IOption>(`/api/v1/menu/option/${modifierTypeId}/${option.id}`, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       return response.data;
     },

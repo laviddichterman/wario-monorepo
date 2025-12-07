@@ -94,8 +94,7 @@ export function paperStyles(theme: Theme, options?: PaperStyleOptions): CSSObjec
     ...theme.mixins.bgGradient({
       images: [`url(${cyanShape})`, `url(${redShape})`],
       sizes: ['50%', '50%'],
-      positions:
-        theme.direction === 'rtl' ? ['top left', 'right bottom'] : ['top right', 'left bottom'],
+      positions: theme.direction === 'rtl' ? ['top left', 'right bottom'] : ['top right', 'left bottom'],
     }),
     backdropFilter: `blur(${blur.toString()}px)`,
     WebkitBackdropFilter: `blur(${blur.toString()}px)`,
@@ -149,7 +148,7 @@ export function filledStyles(theme: Theme, colorKey: ColorKey, options?: StyleOp
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!colorKey) {
     console.warn(
-      '[filledStyles] Missing colorKey. Please provide a valid color such as "primary", "black", or "default".'
+      '[filledStyles] Missing colorKey. Please provide a valid color such as "primary", "black", or "default".',
     );
     return {};
   }
@@ -196,7 +195,7 @@ export function filledStyles(theme: Theme, colorKey: ColorKey, options?: StyleOp
     const hover: CSSObject = getHoverStyles(options?.hover, {
       backgroundColor: varAlpha(
         theme.vars.palette.common[`${colorKey}Channel`],
-        theme.vars.opacity.filled.commonHoverBg
+        theme.vars.opacity.filled.commonHoverBg,
       ),
     });
 
@@ -220,7 +219,7 @@ export function softStyles(theme: Theme, colorKey: ColorKey, options?: StyleOpti
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!colorKey) {
     console.warn(
-      '[softStyles] Missing colorKey. Please provide a valid color such as "primary", "black", or "default".'
+      '[softStyles] Missing colorKey. Please provide a valid color such as "primary", "black", or "default".',
     );
     return {};
   }
@@ -239,10 +238,7 @@ export function softStyles(theme: Theme, colorKey: ColorKey, options?: StyleOpti
     };
 
     const hover: CSSObject = getHoverStyles(options?.hover, {
-      backgroundColor: varAlpha(
-        theme.vars.palette.grey['500Channel'],
-        theme.vars.opacity.soft.hoverBg
-      ),
+      backgroundColor: varAlpha(theme.vars.palette.grey['500Channel'], theme.vars.opacity.soft.hoverBg),
     });
 
     return { ...base, ...hover };
@@ -266,19 +262,13 @@ export function softStyles(theme: Theme, colorKey: ColorKey, options?: StyleOpti
     base: {
       boxShadow: 'none',
       color: theme.vars.palette[colorKey].dark,
-      backgroundColor: varAlpha(
-        theme.vars.palette[colorKey].mainChannel,
-        theme.vars.opacity.soft.bg
-      ),
+      backgroundColor: varAlpha(theme.vars.palette[colorKey].mainChannel, theme.vars.opacity.soft.bg),
       ...theme.applyStyles('dark', {
         color: theme.vars.palette[colorKey].light,
       }),
     },
     hover: getHoverStyles(options?.hover, {
-      backgroundColor: varAlpha(
-        theme.vars.palette[colorKey].mainChannel,
-        theme.vars.opacity.soft.hoverBg
-      ),
+      backgroundColor: varAlpha(theme.vars.palette[colorKey].mainChannel, theme.vars.opacity.soft.hoverBg),
     }),
   };
 

@@ -103,7 +103,7 @@ export const createMockOption = (overrides: Partial<IOption> = {}): IOption => (
 // ============================================================================
 
 export const createMockOptionTypeDisplayFlags = (
-  overrides: Partial<IOptionTypeDisplayFlags> = {}
+  overrides: Partial<IOptionTypeDisplayFlags> = {},
 ): IOptionTypeDisplayFlags => ({
   is3p: false,
   omit_section_if_no_available_options: false,
@@ -197,7 +197,7 @@ export const createMockProduct = (overrides: Partial<IProduct> = {}): IProduct =
 // ============================================================================
 
 export const createMockProductInstanceDisplayFlagsPos = (
-  overrides: Partial<IProductInstanceDisplayFlagsPos> = {}
+  overrides: Partial<IProductInstanceDisplayFlagsPos> = {},
 ): IProductInstanceDisplayFlagsPos => ({
   hide: false,
   name: '',
@@ -206,7 +206,7 @@ export const createMockProductInstanceDisplayFlagsPos = (
 });
 
 export const createMockProductInstanceDisplayFlagsMenu = (
-  overrides: Partial<IProductInstanceDisplayFlagsMenu> = {}
+  overrides: Partial<IProductInstanceDisplayFlagsMenu> = {},
 ): IProductInstanceDisplayFlagsMenu => ({
   ordinal: 0,
   hide: false,
@@ -218,7 +218,7 @@ export const createMockProductInstanceDisplayFlagsMenu = (
 });
 
 export const createMockProductInstanceDisplayFlagsOrder = (
-  overrides: Partial<IProductInstanceDisplayFlagsOrder> = {}
+  overrides: Partial<IProductInstanceDisplayFlagsOrder> = {},
 ): IProductInstanceDisplayFlagsOrder => ({
   ordinal: 0,
   hide: false,
@@ -230,7 +230,7 @@ export const createMockProductInstanceDisplayFlagsOrder = (
 });
 
 export const createMockProductInstanceDisplayFlags = (
-  overrides: Partial<IProductInstanceDisplayFlags> = {}
+  overrides: Partial<IProductInstanceDisplayFlags> = {},
 ): IProductInstanceDisplayFlags => ({
   pos: createMockProductInstanceDisplayFlagsPos(overrides.pos),
   menu: createMockProductInstanceDisplayFlagsMenu(overrides.menu),
@@ -258,7 +258,9 @@ export const createMockProductInstance = (overrides: Partial<IProductInstance> =
 // Category Helper
 // ============================================================================
 
-export const createMockCategoryDisplayFlags = (overrides: Partial<CategoryDisplayFlags> = {}): CategoryDisplayFlags => ({
+export const createMockCategoryDisplayFlags = (
+  overrides: Partial<CategoryDisplayFlags> = {},
+): CategoryDisplayFlags => ({
   nesting: CategoryDisplay.FLAT,
   call_line_name: '',
   call_line_display: CALL_LINE_DISPLAY.SHORTCODE,
@@ -266,7 +268,7 @@ export const createMockCategoryDisplayFlags = (overrides: Partial<CategoryDispla
 });
 
 export const createMockCategory = (
-  overrides: Partial<CatalogCategoryEntry['category']> = {}
+  overrides: Partial<CatalogCategoryEntry['category']> = {},
 ): CatalogCategoryEntry['category'] => ({
   id: 'cat1',
   name: 'Test Category',
@@ -306,9 +308,9 @@ export const createMockCatalog = (opts: CreateMockCatalogOptions = {}): ICatalog
     opts.options ?? [],
     opts.products ?? [],
     opts.productInstances ?? [],
-    ReduceArrayToMapByKey(opts.productInstanceFunctions ?? [], "id"),
-    ReduceArrayToMapByKey(opts.orderInstanceFunctions ?? [], "id"),
-    opts.apiVersion ?? { major: 1, minor: 0, patch: 0 }
+    ReduceArrayToMapByKey(opts.productInstanceFunctions ?? [], 'id'),
+    ReduceArrayToMapByKey(opts.orderInstanceFunctions ?? [], 'id'),
+    opts.apiVersion ?? { major: 1, minor: 0, patch: 0 },
   );
 };
 
@@ -320,34 +322,41 @@ export const createMockCatalogSelectorsFromArrays = (opts: CreateMockCatalogOpti
   return ICatalogSelectorWrapper(createMockCatalog(opts));
 };
 
-
 // ============================================================================
 // Order Instance Function Helpers
 // ============================================================================
-export const createMockAbstractOrderExpressionConstLiteral = (overrides: IConstLiteralExpression = { discriminator: ConstLiteralDiscriminator.NUMBER, value: 0 }): AbstractOrderExpressionConstLiteral => ({
+export const createMockAbstractOrderExpressionConstLiteral = (
+  overrides: IConstLiteralExpression = { discriminator: ConstLiteralDiscriminator.NUMBER, value: 0 },
+): AbstractOrderExpressionConstLiteral => ({
   discriminator: OrderInstanceFunctionType.ConstLiteral,
-  expr: overrides
+  expr: overrides,
 });
 
-export const createMockAbstractOrderExpressionIfElse = (overrides: DeepPartial<IIfElseExpression<AbstractOrderExpression>> = {}): AbstractOrderExpressionIfElseExpression => ({
+export const createMockAbstractOrderExpressionIfElse = (
+  overrides: DeepPartial<IIfElseExpression<AbstractOrderExpression>> = {},
+): AbstractOrderExpressionIfElseExpression => ({
   discriminator: OrderInstanceFunctionType.IfElse,
   expr: {
     false_branch: createMockAbstractOrderExpression(overrides.false_branch),
     true_branch: createMockAbstractOrderExpression(overrides.true_branch),
     test: createMockAbstractOrderExpression(overrides.test),
-  }
+  },
 });
 
-export const createMockAbstractOrderExpressionLogical = (overrides: DeepPartial<ILogicalExpression<AbstractOrderExpression>> = {}): AbstractOrderExpressionLogicalExpression => ({
+export const createMockAbstractOrderExpressionLogical = (
+  overrides: DeepPartial<ILogicalExpression<AbstractOrderExpression>> = {},
+): AbstractOrderExpressionLogicalExpression => ({
   discriminator: OrderInstanceFunctionType.Logical,
   expr: {
     operandA: createMockAbstractOrderExpression(overrides.operandA),
     operandB: createMockAbstractOrderExpression(overrides.operandB),
     operator: overrides.operator ?? LogicalFunctionOperator.AND,
-  }
+  },
 });
 
-export const createMockAbstractOrderExpression = (overrides: DeepPartial<AbstractOrderExpression> = {}): AbstractOrderExpression => {
+export const createMockAbstractOrderExpression = (
+  overrides: DeepPartial<AbstractOrderExpression> = {},
+): AbstractOrderExpression => {
   switch (overrides.discriminator ?? OrderInstanceFunctionType.ConstLiteral) {
     case OrderInstanceFunctionType.IfElse:
       return createMockAbstractOrderExpressionIfElse(overrides.expr as IIfElseExpression<AbstractOrderExpression>);
@@ -357,9 +366,11 @@ export const createMockAbstractOrderExpression = (overrides: DeepPartial<Abstrac
     default:
       return createMockAbstractOrderExpressionConstLiteral(overrides.expr as IConstLiteralExpression);
   }
-}
+};
 
-export const createMockOrderInstanceFunction = (overrides: DeepPartial<OrderInstanceFunction> = {}): OrderInstanceFunction => ({
+export const createMockOrderInstanceFunction = (
+  overrides: DeepPartial<OrderInstanceFunction> = {},
+): OrderInstanceFunction => ({
   id: 'of1',
   name: 'Test Order Instance Function',
   ...overrides,

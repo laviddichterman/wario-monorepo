@@ -22,11 +22,7 @@ import type { CustomShadows } from './core/custom-shadows';
 export type ThemeColorScheme = SupportedColorScheme;
 export type ThemeCssVariables = Pick<
   CssVarsThemeOptions,
-  | 'cssVarPrefix'
-  | 'rootSelector'
-  | 'colorSchemeSelector'
-  | 'disableCssColorScheme'
-  | 'shouldSkipGeneratingVar'
+  'cssVarPrefix' | 'rootSelector' | 'colorSchemeSelector' | 'disableCssColorScheme' | 'shouldSkipGeneratingVar'
 >;
 
 type ColorSchemeOptionsExtended = ColorSystemOptions & {

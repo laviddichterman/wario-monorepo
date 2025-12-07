@@ -7,14 +7,15 @@ import type { CatalogObject } from 'square';
 
 import type { ICatalog, IOptionType, IProduct, KeyValue, PrinterGroup } from '@wcp/wario-shared';
 
-import {
-  GetNonSquareExternalIds,
-  GetSquareExternalIds,
-  GetSquareIdIndexFromExternalIds,
-} from '../square-wario-bridge';
+import { GetNonSquareExternalIds, GetSquareExternalIds, GetSquareIdIndexFromExternalIds } from '../square-wario-bridge';
 import type { SquareService } from '../square/square.service';
 
-import type { UpdateModifierOptionProps, UpdateModifierTypeProps, UpdatePrinterGroupProps, UpdateProductInstanceProps } from './catalog.types';
+import type {
+  UpdateModifierOptionProps,
+  UpdateModifierTypeProps,
+  UpdatePrinterGroupProps,
+  UpdateProductInstanceProps,
+} from './catalog.types';
 
 // ============================================================================
 // Dependencies Interface
@@ -30,10 +31,18 @@ export interface SquareSyncDeps {
 
   // Callbacks to other services/operations
   batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<unknown>;
-  batchUpdateModifierType: (batches: UpdateModifierTypeProps[], suppress: boolean, updateRelated: boolean) => Promise<unknown>;
+  batchUpdateModifierType: (
+    batches: UpdateModifierTypeProps[],
+    suppress: boolean,
+    updateRelated: boolean,
+  ) => Promise<unknown>;
   batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<unknown>;
   batchUpdateProductInstance: (batches: UpdateProductInstanceProps[], suppress: boolean) => Promise<unknown>;
-  updateProductsWithConstraint: (match: FilterQuery<IProduct>, update: Partial<IProduct>, force: boolean) => Promise<unknown>;
+  updateProductsWithConstraint: (
+    match: FilterQuery<IProduct>,
+    update: Partial<IProduct>,
+    force: boolean,
+  ) => Promise<unknown>;
 
   // Sync Hooks
   syncModifierTypes: () => Promise<unknown>;
@@ -47,10 +56,7 @@ export interface SquareSyncDeps {
 // Sync Operations
 // ============================================================================
 
-export const batchDeleteCatalogObjectsFromExternalIds = async (
-  deps: SquareSyncDeps,
-  externalIds: KeyValue[]
-) => {
+export const batchDeleteCatalogObjectsFromExternalIds = async (deps: SquareSyncDeps, externalIds: KeyValue[]) => {
   const squareKV = GetSquareExternalIds(externalIds);
   if (squareKV.length > 0) {
     deps.logger.debug(`Removing from square... ${squareKV.map((x) => `${x.key}: ${x.value}`).join(', ')}`);
@@ -82,9 +88,7 @@ export const checkAllPrinterGroupsSquareIdsAndFixIfNeeded = async (deps: SquareS
           missingSquareCatalogObjectBatches.push({
             id: x.id,
             printerGroup: {
-              externalIDs: x.externalIDs.filter(
-                (kv) => missingIDs.findIndex((idKV) => idKV.value === kv.value) === -1,
-              ),
+              externalIDs: x.externalIDs.filter((kv) => missingIDs.findIndex((idKV) => idKV.value === kv.value) === -1),
             },
           });
         }
@@ -127,7 +131,6 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
           missingSquareCatalogObjectBatches.push({
             id: x.modifierType.id,
             modifierType: {
-
               externalIDs: GetNonSquareExternalIds(x.modifierType.externalIDs),
             },
           });
@@ -167,7 +170,6 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
     .map((x) => ({ id: x.modifierType.id, modifierType: {} }));
 
   if (batches.length > 0) {
-
     const result = (await deps.batchUpdateModifierType(batches, false, false)) as (IOptionType | null)[];
     return result.filter((x): x is IOptionType => x !== null).map((x) => x.id);
   }
@@ -206,7 +208,6 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
                 displayFlags: p.product.displayFlags,
               },
               productInstance: {
-
                 externalIDs: GetNonSquareExternalIds(deps.catalog.productInstances[piid].externalIDs),
               },
             })),

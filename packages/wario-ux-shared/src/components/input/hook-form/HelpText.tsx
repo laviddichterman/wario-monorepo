@@ -11,13 +11,7 @@ export type HelperTextProps = FormHelperTextProps & {
   helperText?: React.ReactNode;
 };
 
-export function HelperText({
-  sx,
-  helperText,
-  errorMessage,
-  disableGutters = false,
-  ...other
-}: HelperTextProps) {
+export function HelperText({ sx, helperText, errorMessage, disableGutters = false, ...other }: HelperTextProps) {
   const message = errorMessage ?? helperText;
 
   if (!message) {
@@ -25,11 +19,7 @@ export function HelperText({
   }
 
   return (
-    <FormHelperText
-      error={!!errorMessage}
-      sx={[{ mx: disableGutters ? 0 : 1.5 }, ...spreadSx(sx)]}
-      {...other}
-    >
+    <FormHelperText error={!!errorMessage} sx={[{ mx: disableGutters ? 0 : 1.5 }, ...spreadSx(sx)]} {...other}>
       {errorMessage || helperText}
     </FormHelperText>
   );

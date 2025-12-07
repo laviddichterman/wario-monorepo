@@ -86,8 +86,7 @@ const cssVars: CSSObject = {
   '--details-background': '#111111',
   '--root-background': '#2c2c2e',
   '--container-background': '#1c1c1e',
-  '--font-stack-monospace':
-    '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace',
+  '--font-stack-monospace': '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace',
   '--font-stack-sans':
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"',
 };

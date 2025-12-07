@@ -33,10 +33,7 @@ export type UseBackToTopReturn = {
   setIsVisible: Dispatch<SetStateAction<boolean>>;
 };
 
-export function useBackToTop(
-  defaultValue: string | number,
-  isDebounce?: boolean
-): UseBackToTopReturn {
+export function useBackToTop(defaultValue: string | number, isDebounce?: boolean): UseBackToTopReturn {
   const [isVisible, setIsVisible] = useState<boolean>(false);
 
   const parseValue = parseValueInput(defaultValue);
@@ -46,9 +43,7 @@ export function useBackToTop(
     const windowScrollY = Math.round(window.scrollY);
     const documentOffsetHeight = document.body.offsetHeight;
 
-    const scrollProgress = Math.round(
-      (windowScrollY / (documentOffsetHeight - windowInnerHeight)) * 100
-    );
+    const scrollProgress = Math.round((windowScrollY / (documentOffsetHeight - windowInnerHeight)) * 100);
 
     if (parseValue.type === 'percentage') {
       setIsVisible(scrollProgress >= parseValue.value);

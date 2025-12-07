@@ -1,9 +1,8 @@
-
 // Returns [ category_map, product_map ] list;
 // category_map entries are mapping of catagory_id to { category, children (id list), product (id list) }
 // product_map is mapping from productId to { product, instances (list of instance objects)}
 
-import { ReduceArrayToMapByKey } from "../common";
+import { ReduceArrayToMapByKey } from '../common';
 import type {
   ICatalog,
   ICatalogCategories,
@@ -16,19 +15,25 @@ import type {
   IProductInstance,
   RecordOrderInstanceFunctions,
   RecordProductInstanceFunctions,
-  SEMVER
-} from "../derived-types";
-import type { ICatalogSelectors } from "../types";
+  SEMVER,
+} from '../derived-types';
+import type { ICatalogSelectors } from '../types';
 
 // orphan_products is list of orphan product ids
-const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], product_instances: IProductInstance[]): [ICatalogCategories, ICatalogProducts] => {
-  const category_map: ICatalogCategories = categories.reduce((acc, cat) => ({ ...acc, [cat.id]: { category: cat, children: [], products: [] } }), {});
+const CatalogMapGenerator = (
+  categories: ICategory[],
+  products: IProduct[],
+  product_instances: IProductInstance[],
+): [ICatalogCategories, ICatalogProducts] => {
+  const category_map: ICatalogCategories = categories.reduce(
+    (acc, cat) => ({ ...acc, [cat.id]: { category: cat, children: [], products: [] } }),
+    {},
+  );
   categories.forEach((curr) => {
     if (curr.parent_id) {
       if (Object.hasOwn(category_map, curr.parent_id)) {
         category_map[curr.parent_id].children.push(curr.id);
-      }
-      else {
+      } else {
         console.error(`Missing category ID ${curr.parent_id} specified by ${JSON.stringify(curr)}`);
       }
     }
@@ -37,9 +42,8 @@ const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], prod
     if (p.category_ids.length !== 0) {
       p.category_ids.forEach((cid) => {
         if (Object.hasOwn(category_map, cid)) {
-          category_map[cid].products.push(p.id)
-        }
-        else {
+          category_map[cid].products.push(p.id);
+        } else {
           console.error(`Category ID ${cid} referenced by Product ${p.id} not found!`);
         }
       });
@@ -48,17 +52,19 @@ const CatalogMapGenerator = (categories: ICategory[], products: IProduct[], prod
   }, {});
   product_instances.forEach((curr) => {
     product_map[curr.productId].instances.push(curr.id);
-  })
+  });
   return [category_map, product_map];
 };
 
 const ModifierTypeMapGenerator = (modifier_types: IOptionType[], options: IOption[]) => {
-  const modifier_types_map = modifier_types.reduce<ICatalogModifiers>((acc, m) => ({ ...acc, [m.id]: { options: [], modifierType: m } }), {});
-  options.forEach(o => {
+  const modifier_types_map = modifier_types.reduce<ICatalogModifiers>(
+    (acc, m) => ({ ...acc, [m.id]: { options: [], modifierType: m } }),
+    {},
+  );
+  options.forEach((o) => {
     if (Object.hasOwn(modifier_types_map, o.modifierTypeId)) {
       modifier_types_map[o.modifierTypeId].options.push(o.id);
-    }
-    else {
+    } else {
       console.error(`Modifier Type ID ${o.modifierTypeId} referenced by ModifierOption ${o.id} not found!`);
     }
   });
@@ -73,7 +79,8 @@ export const CatalogGenerator = (
   product_instances: IProductInstance[],
   productInstanceFunctions: RecordProductInstanceFunctions,
   orderInstanceFunctions: RecordOrderInstanceFunctions,
-  api: SEMVER): ICatalog => {
+  api: SEMVER,
+): ICatalog => {
   const modifier_types_map = ModifierTypeMapGenerator(modifier_types, options);
   const [category_map, product_map] = CatalogMapGenerator(categories, products, product_instances);
   return {
@@ -87,7 +94,7 @@ export const CatalogGenerator = (
     api,
     version: Date.now().toString(36).toUpperCase(),
   };
-}
+};
 
 export const ICatalogSelectorWrapper = (catalog: ICatalog): ICatalogSelectors => ({
   categories: () => Object.keys(catalog.categories),
@@ -103,5 +110,5 @@ export const ICatalogSelectorWrapper = (catalog: ICatalog): ICatalogSelectors =>
   productInstanceFunction: (id) => catalog.productInstanceFunctions[id],
   productInstanceFunctions: () => Object.keys(catalog.productInstanceFunctions),
   orderInstanceFunction: (id) => catalog.orderInstanceFunctions[id],
-  orderInstanceFunctions: () => Object.keys(catalog.orderInstanceFunctions)
-})
+  orderInstanceFunctions: () => Object.keys(catalog.orderInstanceFunctions),
+});

@@ -111,7 +111,6 @@ export const fromModifierTypeEntity = (entity: IOptionType): ModifierTypeFormSta
   is3p: entity.displayFlags.is3p,
 });
 
-
 /**
  * Hook to manage ModifierType form state.
  * Returns the form state and a type-safe field updater.

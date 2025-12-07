@@ -5,7 +5,7 @@ import type { KeyValueConfigDto } from '../../dtos/key-value-store.dto';
 
 @Controller('api/v1/config/kvstore')
 export class KeyValueStoreController {
-  constructor(private readonly dataProvider: DataProviderService) { }
+  constructor(private readonly dataProvider: DataProviderService) {}
 
   @Get()
   getKvStore() {

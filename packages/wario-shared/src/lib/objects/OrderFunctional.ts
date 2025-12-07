@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { snakeCase, startCase } from "es-toolkit/compat";
+import { snakeCase, startCase } from 'es-toolkit/compat';
 
 import type {
   AbstractOrderExpression,
@@ -8,7 +8,7 @@ import type {
   IIfElseExpression,
   ILogicalExpression,
   OrderInstanceFunction,
-  WOrderInstancePartial
+  WOrderInstancePartial,
 } from '../derived-types';
 import {
   ConstLiteralDiscriminator,
@@ -19,13 +19,16 @@ import {
 } from '../enums';
 import type { ICatalogModifierSelectors } from '../types';
 
-import { LogicalFunctionOperatorToHumanString } from "./WFunctional";
+import { LogicalFunctionOperatorToHumanString } from './WFunctional';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class OrderFunctional {
-
   // TODO: this can be made generic with the product instance version
-  static ProcessIfElseStatement(order: WOrderInstancePartial, stmt: IIfElseExpression<AbstractOrderExpression>, catSelectors: ICatalogModifierSelectors) {
+  static ProcessIfElseStatement(
+    order: WOrderInstancePartial,
+    stmt: IIfElseExpression<AbstractOrderExpression>,
+    catSelectors: ICatalogModifierSelectors,
+  ) {
     const branch_test = OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.test, catSelectors);
     if (branch_test) {
       return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.true_branch, catSelectors);
@@ -38,38 +41,62 @@ export class OrderFunctional {
   }
 
   // TODO: this can be made generic with the product instance version
-  static ProcessLogicalOperatorStatement(order: WOrderInstancePartial, stmt: ILogicalExpression<AbstractOrderExpression>, catSelectors: ICatalogModifierSelectors): boolean {
+  static ProcessLogicalOperatorStatement(
+    order: WOrderInstancePartial,
+    stmt: ILogicalExpression<AbstractOrderExpression>,
+    catSelectors: ICatalogModifierSelectors,
+  ): boolean {
     switch (stmt.operator) {
       case LogicalFunctionOperator.AND:
-        return Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors)) &&
-          Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors));
+        return (
+          Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors)) &&
+          Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors))
+        );
       case LogicalFunctionOperator.OR:
-        return Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors)) ||
-          Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors));
+        return (
+          Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors)) ||
+          Boolean(OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors))
+        );
       case LogicalFunctionOperator.NOT:
         return !OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors);
       case LogicalFunctionOperator.EQ:
-        return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) ===
-          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors);
+        return (
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) ===
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors)
+        );
       case LogicalFunctionOperator.NE:
-        return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) !==
-          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors);
+        return (
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) !==
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors)
+        );
       case LogicalFunctionOperator.GT:
-        return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) >
-          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors);
+        return (
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) >
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors)
+        );
       case LogicalFunctionOperator.GE:
-        return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) >=
-          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors);
+        return (
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) >=
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors)
+        );
       case LogicalFunctionOperator.LT:
-        return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) <
-          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors);
+        return (
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) <
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors)
+        );
       case LogicalFunctionOperator.LE:
-        return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) <=
-          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors);
+        return (
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandA, catSelectors) <=
+          OrderFunctional.ProcessAbstractOrderExpressionStatement(order, stmt.operandB!, catSelectors)
+        );
     }
   }
 
-  static ProcessAbstractOrderExpressionStatement(order: WOrderInstancePartial, stmt: AbstractOrderExpression, catSelectors: ICatalogModifierSelectors): string | number | boolean | OptionPlacement {
+  static ProcessAbstractOrderExpressionStatement(
+    order: WOrderInstancePartial,
+    stmt: AbstractOrderExpression,
+    catSelectors: ICatalogModifierSelectors,
+  ): string | number | boolean | OptionPlacement {
     switch (stmt.discriminator) {
       case OrderInstanceFunctionType.ConstLiteral:
         return OrderFunctional.ProcessConstLiteralStatement(stmt.expr);
@@ -80,20 +107,29 @@ export class OrderFunctional {
     }
   }
 
-  static ProcessOrderInstanceFunction(order: WOrderInstancePartial, func: OrderInstanceFunction, catSelectors: ICatalogModifierSelectors) {
+  static ProcessOrderInstanceFunction(
+    order: WOrderInstancePartial,
+    func: OrderInstanceFunction,
+    catSelectors: ICatalogModifierSelectors,
+  ) {
     return OrderFunctional.ProcessAbstractOrderExpressionStatement(order, func.expression, catSelectors);
   }
 
-  static AbstractOrderExpressionStatementToString(stmt: AbstractOrderExpression, catSelectors: ICatalogModifierSelectors): string {
+  static AbstractOrderExpressionStatementToString(
+    stmt: AbstractOrderExpression,
+    catSelectors: ICatalogModifierSelectors,
+  ): string {
     function logical(expr: ILogicalExpression<AbstractOrderExpression>) {
       const operandAString = OrderFunctional.AbstractOrderExpressionStatementToString(expr.operandA, catSelectors);
-      return expr.operator === LogicalFunctionOperator.NOT || !expr.operandB ? `NOT (${operandAString})` : `(${operandAString} ${expr.operator} ${OrderFunctional.AbstractOrderExpressionStatementToString(expr.operandB, catSelectors)})`;
+      return expr.operator === LogicalFunctionOperator.NOT || !expr.operandB
+        ? `NOT (${operandAString})`
+        : `(${operandAString} ${expr.operator} ${OrderFunctional.AbstractOrderExpressionStatementToString(expr.operandB, catSelectors)})`;
     }
     switch (stmt.discriminator) {
       case OrderInstanceFunctionType.ConstLiteral:
         switch (stmt.expr.discriminator) {
           case ConstLiteralDiscriminator.BOOLEAN:
-            return stmt.expr.value ? "True" : "False";
+            return stmt.expr.value ? 'True' : 'False';
           case ConstLiteralDiscriminator.NUMBER:
             return stmt.expr.value.toString();
           case ConstLiteralDiscriminator.STRING:
@@ -110,28 +146,37 @@ export class OrderFunctional {
     }
   }
 
-  static AbstractOrderExpressionStatementToHumanReadableString(stmt: AbstractOrderExpression, catSelectors: ICatalogModifierSelectors): string {
+  static AbstractOrderExpressionStatementToHumanReadableString(
+    stmt: AbstractOrderExpression,
+    catSelectors: ICatalogModifierSelectors,
+  ): string {
     function logical(expr: ILogicalExpression<AbstractOrderExpression>) {
-      const operandAString = OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(expr.operandA, catSelectors);
+      const operandAString = OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(
+        expr.operandA,
+        catSelectors,
+      );
       if (expr.operator === LogicalFunctionOperator.NOT || !expr.operandB) {
         return `not ${operandAString}`;
       }
-      const operandBString = OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(expr.operandB, catSelectors);
+      const operandBString = OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(
+        expr.operandB,
+        catSelectors,
+      );
       return `${operandAString} ${LogicalFunctionOperatorToHumanString(expr.operator)} ${operandBString}`;
     }
     switch (stmt.discriminator) {
       case OrderInstanceFunctionType.ConstLiteral:
         switch (stmt.expr.discriminator) {
           case ConstLiteralDiscriminator.BOOLEAN:
-            return stmt.expr.value ? "True" : "False";
+            return stmt.expr.value ? 'True' : 'False';
           case ConstLiteralDiscriminator.NUMBER:
             return stmt.expr.value.toString();
           case ConstLiteralDiscriminator.STRING:
             return stmt.expr.value;
           case ConstLiteralDiscriminator.MODIFIER_PLACEMENT:
-            return startCase(snakeCase((OptionPlacement[stmt.expr.value])));
+            return startCase(snakeCase(OptionPlacement[stmt.expr.value]));
           case ConstLiteralDiscriminator.MODIFIER_QUALIFIER:
-            return startCase(snakeCase((OptionQualifier[stmt.expr.value])));
+            return startCase(snakeCase(OptionQualifier[stmt.expr.value]));
         }
       case OrderInstanceFunctionType.IfElse:
         return `if ${OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(stmt.expr.test, catSelectors)} then ${OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(stmt.expr.true_branch, catSelectors)}, otherwise ${OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(stmt.expr.false_branch, catSelectors)}`;

@@ -34,4 +34,4 @@ import { StoreCreditController } from './store-credit/store-credit.controller';
     SeatingResourceController,
   ],
 })
-export class ControllersModule { }
+export class ControllersModule {}

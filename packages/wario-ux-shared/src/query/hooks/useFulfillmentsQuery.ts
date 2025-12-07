@@ -14,7 +14,7 @@ import { QUERY_KEYS } from '../types';
  * Data is populated via Socket.io events, not HTTP requests
  */
 export function useFulfillmentsQuery(
-  options?: Omit<UseQueryOptions<FulfillmentConfig[] | null>, 'queryKey' | 'queryFn'>
+  options?: Omit<UseQueryOptions<FulfillmentConfig[] | null>, 'queryKey' | 'queryFn'>,
 ) {
   return useQuery<FulfillmentConfig[] | null>({
     queryKey: QUERY_KEYS.fulfillments,
@@ -28,9 +28,9 @@ export function useFulfillmentsQuery(
   });
 }
 
-/** 
+/**
  * Gets all fulfillments as a non-null array
- * 
+ *
  */
 export function useFulfillments() {
   const { data: fulfillments } = useFulfillmentsQuery();
@@ -45,13 +45,10 @@ export function useFulfillmentById(fulfillmentId: string | null) {
   const { data: fulfillments } = useFulfillmentsQuery();
 
   // Simple derived value - returns the fulfillment or null
-  const fulfillment = fulfillments && fulfillmentId
-    ? fulfillments.find((f) => f.id === fulfillmentId) ?? null
-    : null;
+  const fulfillment = fulfillments && fulfillmentId ? (fulfillments.find((f) => f.id === fulfillmentId) ?? null) : null;
 
   return fulfillment;
 }
-
 
 export function useValueFromFulfillmentById<K extends keyof FulfillmentConfig>(fulfillmentId: string | null, key: K) {
   const fulfillment = useFulfillmentById(fulfillmentId);
@@ -61,10 +58,14 @@ export function useValueFromFulfillmentById<K extends keyof FulfillmentConfig>(f
 }
 
 export const useFulfillmentDisplayName = (fId: string | null) => useValueFromFulfillmentById(fId, 'displayName');
-export const useFulfillmentMainCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'orderBaseCategoryId');
-export const useFulfillmentSupplementalCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'orderSupplementaryCategoryId');
-export const useFulfillmentMenuCategoryId = (fId: string | null) => useValueFromFulfillmentById(fId, 'menuBaseCategoryId');
-export const useFulfillmentServiceFeeSetting = (fId: string | null) => useValueFromFulfillmentById(fId, 'serviceCharge');
+export const useFulfillmentMainCategoryId = (fId: string | null) =>
+  useValueFromFulfillmentById(fId, 'orderBaseCategoryId');
+export const useFulfillmentSupplementalCategoryId = (fId: string | null) =>
+  useValueFromFulfillmentById(fId, 'orderSupplementaryCategoryId');
+export const useFulfillmentMenuCategoryId = (fId: string | null) =>
+  useValueFromFulfillmentById(fId, 'menuBaseCategoryId');
+export const useFulfillmentServiceFeeSetting = (fId: string | null) =>
+  useValueFromFulfillmentById(fId, 'serviceCharge');
 export const useFulfillmentAllowTipping = (fId: string | null) => useValueFromFulfillmentById(fId, 'allowTipping');
 export const useFulfillmentMinDuration = (fId: string | null) => useValueFromFulfillmentById(fId, 'minDuration');
 export const useFulfillmentServiceTerms = (fId: string | null) => useValueFromFulfillmentById(fId, 'terms');

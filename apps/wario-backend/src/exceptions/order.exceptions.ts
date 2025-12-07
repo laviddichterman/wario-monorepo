@@ -19,11 +19,13 @@ export class OrderNotFoundException extends NotFoundException {
   constructor(orderId: string) {
     super({
       success: false,
-      error: [{
-        category: 'INVALID_REQUEST_ERROR',
-        code: 'ORDER_NOT_FOUND',
-        detail: `Order ${orderId} not found`,
-      }] satisfies WError[],
+      error: [
+        {
+          category: 'INVALID_REQUEST_ERROR',
+          code: 'ORDER_NOT_FOUND',
+          detail: `Order ${orderId} not found`,
+        },
+      ] satisfies WError[],
     });
   }
 }
@@ -35,11 +37,13 @@ export class OrderLockedException extends ConflictException {
   constructor(orderId: string) {
     super({
       success: false,
-      error: [{
-        category: 'INVALID_REQUEST_ERROR',
-        code: 'ORDER_LOCKED',
-        detail: `Order ${orderId} is already locked`,
-      }] satisfies WError[],
+      error: [
+        {
+          category: 'INVALID_REQUEST_ERROR',
+          code: 'ORDER_LOCKED',
+          detail: `Order ${orderId} is already locked`,
+        },
+      ] satisfies WError[],
     });
   }
 }
@@ -51,11 +55,13 @@ export class InvalidOrderStateException extends UnprocessableEntityException {
   constructor(orderId: string, currentStatus: string, requiredStatus: string) {
     super({
       success: false,
-      error: [{
-        category: 'INVALID_REQUEST_ERROR',
-        code: 'INVALID_ORDER_STATE',
-        detail: `Order ${orderId} is in status '${currentStatus}' but requires '${requiredStatus}'`,
-      }] satisfies WError[],
+      error: [
+        {
+          category: 'INVALID_REQUEST_ERROR',
+          code: 'INVALID_ORDER_STATE',
+          detail: `Order ${orderId} is in status '${currentStatus}' but requires '${requiredStatus}'`,
+        },
+      ] satisfies WError[],
     });
   }
 }
@@ -79,11 +85,13 @@ export class OrderProcessingException extends InternalServerErrorException {
   constructor(detail: string, originalError?: unknown) {
     super({
       success: false,
-      error: [{
-        category: 'API_ERROR',
-        code: 'ORDER_PROCESSING_ERROR',
-        detail,
-      }] satisfies WError[],
+      error: [
+        {
+          category: 'API_ERROR',
+          code: 'ORDER_PROCESSING_ERROR',
+          detail,
+        },
+      ] satisfies WError[],
       originalError,
     });
   }

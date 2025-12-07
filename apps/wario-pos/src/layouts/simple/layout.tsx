@@ -26,13 +26,7 @@ export type SimpleLayoutProps = LayoutBaseProps & {
   };
 };
 
-export function SimpleLayout({
-  sx,
-  cssVars,
-  children,
-  slotProps,
-  layoutQuery = 'md',
-}: SimpleLayoutProps) {
+export function SimpleLayout({ sx, cssVars, children, slotProps, layoutQuery = 'md' }: SimpleLayoutProps) {
   const renderHeader = () => {
     const headerSlotProps: HeaderSectionProps['slotProps'] = { container: { maxWidth: false } };
 

@@ -23,7 +23,6 @@ const CatalogPrinterGroupsPage = lazy(() => import('@/pages/dashboard/catalog/pr
 const CatalogModifiersPage = lazy(() => import('@/pages/dashboard/catalog/modifiers'));
 const CatalogProductFunctionsPage = lazy(() => import('@/pages/dashboard/catalog/product-functions'));
 
-
 // User
 // const UserProfilePage = lazy(() => import('@/pages/dashboard/user/profile'));
 // const UserCardsPage = lazy(() => import('@/pages/dashboard/user/cards'));
@@ -36,7 +35,6 @@ const CatalogProductFunctionsPage = lazy(() => import('@/pages/dashboard/catalog
 // const CalendarPage = lazy(() => import('@/pages/dashboard/calendar'));
 // Test render page by role
 // const PermissionDeniedPage = lazy(() => import('@/pages/dashboard/permission'));
-
 
 // ----------------------------------------------------------------------
 
@@ -102,7 +100,6 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'printer-groups', element: <CatalogPrinterGroupsPage /> },
           { path: 'modifiers', element: <CatalogModifiersPage /> },
           { path: 'product-functions', element: <CatalogProductFunctionsPage /> },
-
         ],
       },
     ],

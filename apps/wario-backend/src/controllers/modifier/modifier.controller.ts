@@ -17,7 +17,7 @@ export class ModifierController {
   constructor(
     @Inject(CatalogProviderService) private catalogProvider: CatalogProviderService,
     @Inject(SocketIoService) private socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post('type')
   @Scopes('write:catalog')

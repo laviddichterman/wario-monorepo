@@ -21,7 +21,7 @@ export const RootStyle = styled('div')(({ theme }) => ({
 export const FullScreenPulsingContainer = (props: { children: ReactNode }) => {
   return (
     <>
-      <RootStyle >
+      <RootStyle>
         <m.div
           animate={{
             scale: [1, 0.9, 0.9, 1, 1],
@@ -79,4 +79,4 @@ export const FullScreenPulsingContainer = (props: { children: ReactNode }) => {
       </RootStyle>
     </>
   );
-}
+};

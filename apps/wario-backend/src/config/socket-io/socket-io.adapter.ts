@@ -28,7 +28,6 @@ export class SocketIoAdapter extends IoAdapter {
       },
     };
 
-
     return super.createIOServer(port, optionsWithCors);
   }
 }

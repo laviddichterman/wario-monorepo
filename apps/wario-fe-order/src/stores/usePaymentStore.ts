@@ -2,10 +2,7 @@ import type * as Square from '@square/web-sdk';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type {
-  TipSelection,
-  ValidateAndLockCreditResponseValid,
-} from '@wcp/wario-shared';
+import type { TipSelection, ValidateAndLockCreditResponseValid } from '@wcp/wario-shared';
 
 // Types
 export interface StoreCreditValidation {
@@ -13,7 +10,6 @@ export interface StoreCreditValidation {
   validation: ValidateAndLockCreditResponseValid;
   createdAt: number;
 }
-
 
 export interface PaymentState {
   storeCreditValidations: StoreCreditValidation[];
@@ -75,7 +71,7 @@ export const usePaymentStore = create<PaymentStore>()(
             storeCreditValidations: [],
           },
           false,
-          'clearCreditCode'
+          'clearCreditCode',
         );
       },
 
@@ -86,12 +82,10 @@ export const usePaymentStore = create<PaymentStore>()(
       setStoreCreditValidation: (code, validation) => {
         set(
           {
-            storeCreditValidations: [
-              { code, validation, createdAt: Date.now() },
-            ]
+            storeCreditValidations: [{ code, validation, createdAt: Date.now() }],
           },
           false,
-          'setStoreCreditValidation'
+          'setStoreCreditValidation',
         );
       },
 
@@ -110,7 +104,7 @@ export const usePaymentStore = create<PaymentStore>()(
             acknowledgeInstructionsDialogue: acknowledge,
           },
           false,
-          'setAcknowledgeInstructionsDialogue'
+          'setAcknowledgeInstructionsDialogue',
         );
       },
 
@@ -120,7 +114,7 @@ export const usePaymentStore = create<PaymentStore>()(
             squareTokenErrors: [],
           },
           false,
-          'resetSubmitState'
+          'resetSubmitState',
         );
       },
 
@@ -128,15 +122,14 @@ export const usePaymentStore = create<PaymentStore>()(
         set(initialState, false, 'reset');
       },
     }),
-    { name: 'payment-store' }
-  )
+    { name: 'payment-store' },
+  ),
 );
 
 // Selectors
 export const selectStoreCreditValidations = (state: PaymentStore) => state.storeCreditValidations;
 export const selectSelectedTip = (state: PaymentStore) => state.selectedTip;
-export const selectAcknowledgeInstructionsDialogue = (state: PaymentStore) =>
-  state.acknowledgeInstructionsDialogue;
+export const selectAcknowledgeInstructionsDialogue = (state: PaymentStore) => state.acknowledgeInstructionsDialogue;
 export const selectSpecialInstructions = (state: PaymentStore) => state.specialInstructions;
 export const selectStoreCreditInput = (state: PaymentStore) => state.storeCreditInput;
 export const selectSquareTokenErrors = (state: PaymentStore) => state.squareTokenErrors;
@@ -144,4 +137,3 @@ export const selectSquareTokenErrors = (state: PaymentStore) => state.squareToke
 // Computed selectors
 export const selectTotalStoreCreditsApplied = (state: PaymentStore) =>
   state.storeCreditValidations.reduce((acc, v) => acc + v.validation.amount.amount, 0);
-

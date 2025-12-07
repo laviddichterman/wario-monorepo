@@ -52,10 +52,6 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     SocketIoService,
     CatalogProviderService,
 
-
-
-
-
     ErrorNotificationService,
     OrderCalendarService,
     OrderManagerService,
@@ -70,5 +66,4 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     DatabaseManagerService,
   ],
 })
-export class ConfigModule { }
-
+export class ConfigModule {}

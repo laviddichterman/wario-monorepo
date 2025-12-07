@@ -8,10 +8,25 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import {
-  type CatalogCategoryEntry, type CatalogModifierEntry, type CatalogProductEntry, FilterProductUsingCatalog,
-  GetMenuHideDisplayFlag, GetOrderHideDisplayFlag, type ICatalog, type ICatalogSelectors, type ICategory,
-  IgnoreHideDisplayFlags, type IOption, type IOptionType, type IProduct, type IProductInstance, type IProductInstanceFunction, IsModifierTypeVisible,
-  type MetadataModifierMap, type ProductModifierEntry, WCPProductGenerateMetadata
+  type CatalogCategoryEntry,
+  type CatalogModifierEntry,
+  type CatalogProductEntry,
+  FilterProductUsingCatalog,
+  GetMenuHideDisplayFlag,
+  GetOrderHideDisplayFlag,
+  type ICatalog,
+  type ICatalogSelectors,
+  type ICategory,
+  IgnoreHideDisplayFlags,
+  type IOption,
+  type IOptionType,
+  type IProduct,
+  type IProductInstance,
+  type IProductInstanceFunction,
+  IsModifierTypeVisible,
+  type MetadataModifierMap,
+  type ProductModifierEntry,
+  WCPProductGenerateMetadata,
 } from '@wcp/wario-shared';
 
 import type { ProductCategoryFilter } from '@/common/shared';
@@ -23,9 +38,7 @@ import { QUERY_KEYS } from '../types';
  * Data is populated via Socket.io events, not HTTP requests
  * Uses infinite staleTime since data is push-based from socket
  */
-export function useCatalogQuery(
-  options?: Omit<UseQueryOptions<ICatalog | null>, 'queryKey' | 'queryFn'>
-) {
+export function useCatalogQuery(options?: Omit<UseQueryOptions<ICatalog | null>, 'queryKey' | 'queryFn'>) {
   return useQuery<ICatalog | null>({
     queryKey: QUERY_KEYS.catalog,
     queryFn: () => {
@@ -70,7 +83,7 @@ export function useValueFromCategoryById<K extends keyof ICategory>(id: string, 
 
 export function useCategoryNameFromCategoryById(categoryId: string) {
   const category = useValueFromCategoryEntryById(categoryId, 'category');
-  return category?.description || category?.name || "";
+  return category?.description || category?.name || '';
 }
 
 /**
@@ -78,7 +91,7 @@ export function useCategoryNameFromCategoryById(categoryId: string) {
  * Replaces SelectCategoryExistsAndIsAllowedForFulfillment
  */
 export function useDoesCategoryDisableFulfillment(categoryId: string, fulfillmentId: string) {
-  const serviceDisable = useValueFromCategoryById(categoryId, "serviceDisable");
+  const serviceDisable = useValueFromCategoryById(categoryId, 'serviceDisable');
   return serviceDisable && serviceDisable.indexOf(fulfillmentId) === -1;
 }
 
@@ -186,7 +199,6 @@ export function useProductInstanceIds() {
   return catalog ? Object.keys(catalog.productInstances) : [];
 }
 
-
 /**
  * Hook to get a specific product instance by ID
  */
@@ -239,7 +251,6 @@ export function useValueFromProductInstanceFunctionById<K extends keyof IProduct
   return value;
 }
 
-
 /**
  * Hook to access catalog selectors
  * Provides selector functions similar to SelectCatalogSelectors from Redux
@@ -284,10 +295,15 @@ export function useBaseProductByProductId(productClassId: string) {
 
 export function useBaseProductNameByProductId(productClassId: string) {
   const baseProduct = useBaseProductByProductId(productClassId);
-  return baseProduct?.displayName || "UNDEFINED";
+  return baseProduct?.displayName || 'UNDEFINED';
 }
 
-export function useProductMetadata(productId: string, modifiers: ProductModifierEntry[], service_time: Date | number, fulfillmentId: string) {
+export function useProductMetadata(
+  productId: string,
+  modifiers: ProductModifierEntry[],
+  service_time: Date | number,
+  fulfillmentId: string,
+) {
   const catalogSelectors = useCatalogSelectors();
   const metadata = useMemo(() => {
     if (!catalogSelectors) return null;
@@ -298,26 +314,50 @@ export function useProductMetadata(productId: string, modifiers: ProductModifier
 
 export function useProductsNotPermanentlyDisabled() {
   const products = useProductEntries();
-  return products.filter((x) => (!x.product.disabled || x.product.disabled.start <= x.product.disabled.end));
+  return products.filter((x) => !x.product.disabled || x.product.disabled.start <= x.product.disabled.end);
 }
 
 export function useProductIdsNotPermanentlyDisabled() {
   const products = useProductsNotPermanentlyDisabled();
-  return products.map(x => x.product.id);
+  return products.map((x) => x.product.id);
 }
 
-function filteredProducts(category: CatalogCategoryEntry, filter: ProductCategoryFilter, catalogSelectors: ICatalogSelectors, order_time: Date | number, fulfillmentId: string) {
-  const categoryProductInstances = category.products.reduce<IProductInstance[]>((acc: IProductInstance[], productId) => {
-    const product = catalogSelectors.productEntry(productId) as CatalogProductEntry;
-    if (!product.product.disabled || product.product.disabled.start <= product.product.disabled.end) {
-      return [...acc, ...product.instances.reduce<IProductInstance[]>((accB, pIId) => {
-        const pi = catalogSelectors.productInstance(pIId) as IProductInstance;
-        const passesFilter = FilterProductUsingCatalog(productId, pi.modifiers, pi.displayFlags, catalogSelectors, filter === 'Menu' ? GetMenuHideDisplayFlag : (filter === "Order" ? GetOrderHideDisplayFlag : IgnoreHideDisplayFlags), order_time, fulfillmentId);
-        return passesFilter ? [...accB, pi] : accB;
-      }, [])];
-    }
-    return acc;
-  }, []);
+function filteredProducts(
+  category: CatalogCategoryEntry,
+  filter: ProductCategoryFilter,
+  catalogSelectors: ICatalogSelectors,
+  order_time: Date | number,
+  fulfillmentId: string,
+) {
+  const categoryProductInstances = category.products.reduce<IProductInstance[]>(
+    (acc: IProductInstance[], productId) => {
+      const product = catalogSelectors.productEntry(productId) as CatalogProductEntry;
+      if (!product.product.disabled || product.product.disabled.start <= product.product.disabled.end) {
+        return [
+          ...acc,
+          ...product.instances.reduce<IProductInstance[]>((accB, pIId) => {
+            const pi = catalogSelectors.productInstance(pIId) as IProductInstance;
+            const passesFilter = FilterProductUsingCatalog(
+              productId,
+              pi.modifiers,
+              pi.displayFlags,
+              catalogSelectors,
+              filter === 'Menu'
+                ? GetMenuHideDisplayFlag
+                : filter === 'Order'
+                  ? GetOrderHideDisplayFlag
+                  : IgnoreHideDisplayFlags,
+              order_time,
+              fulfillmentId,
+            );
+            return passesFilter ? [...accB, pi] : accB;
+          }, []),
+        ];
+      }
+      return acc;
+    },
+    [],
+  );
   return categoryProductInstances;
 }
 
@@ -325,7 +365,12 @@ function filteredProducts(category: CatalogCategoryEntry, filter: ProductCategor
  * Selects product instance IDs that pass relevant filters and are immediate children of the given categoryID
  * Returns values in context order (Menu | Order)
  */
-export function useProductInstancesInCategory(categoryId: string, filter: ProductCategoryFilter, order_time: Date | number, fulfillmentId: string,) {
+export function useProductInstancesInCategory(
+  categoryId: string,
+  filter: ProductCategoryFilter,
+  order_time: Date | number,
+  fulfillmentId: string,
+) {
   const category = useCategoryById(categoryId);
   const catalogSelectors = useCatalogSelectors();
   const { data: catalog } = useCatalogQuery();
@@ -336,32 +381,44 @@ export function useProductInstancesInCategory(categoryId: string, filter: Produc
   const categoryProductInstances = filteredProducts(category, filter, catalogSelectors, order_time, fulfillmentId);
   switch (filter) {
     case 'Menu':
-      categoryProductInstances.sort((a, b) => (a.displayFlags.menu.ordinal - b.displayFlags.menu.ordinal)); break;
+      categoryProductInstances.sort((a, b) => a.displayFlags.menu.ordinal - b.displayFlags.menu.ordinal);
+      break;
     case 'Order':
-      categoryProductInstances.sort((a, b) => (a.displayFlags.order.ordinal - b.displayFlags.order.ordinal)); break;
+      categoryProductInstances.sort((a, b) => a.displayFlags.order.ordinal - b.displayFlags.order.ordinal);
+      break;
     default:
       break;
   }
-  return categoryProductInstances.map(x => x.id);
+  return categoryProductInstances.map((x) => x.id);
 }
 
-function selectPopulatedSubcategoryIdsInCategory(catalogSelectors: ICatalogSelectors, categoryId: string, filter: ProductCategoryFilter, order_time: Date | number, fulfillmentId: string) {
+function selectPopulatedSubcategoryIdsInCategory(
+  catalogSelectors: ICatalogSelectors,
+  categoryId: string,
+  filter: ProductCategoryFilter,
+  order_time: Date | number,
+  fulfillmentId: string,
+) {
   const categoryEntry = catalogSelectors.category(categoryId);
   if (!categoryEntry || categoryEntry.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
     return [];
   }
   const subcats = categoryEntry.children.reduce((acc: CatalogCategoryEntry[], subcatId) => {
     const subcategory = catalogSelectors.category(subcatId);
-    const instances = subcategory ? filteredProducts(subcategory, filter, catalogSelectors, order_time, fulfillmentId) : [];
-    if (instances.length > 0 || selectPopulatedSubcategoryIdsInCategory(catalogSelectors, subcatId, filter, order_time, fulfillmentId).length > 0) {
+    const instances = subcategory
+      ? filteredProducts(subcategory, filter, catalogSelectors, order_time, fulfillmentId)
+      : [];
+    if (
+      instances.length > 0 ||
+      selectPopulatedSubcategoryIdsInCategory(catalogSelectors, subcatId, filter, order_time, fulfillmentId).length > 0
+    ) {
       return [...acc, subcategory as CatalogCategoryEntry];
-    }
-    else {
+    } else {
       return acc;
     }
   }, []);
   subcats.sort((a, b) => a.category.ordinal - b.category.ordinal);
-  return subcats.map(x => x.category.id);
+  return subcats.map((x) => x.category.id);
 }
 
 /**
@@ -369,7 +426,12 @@ function selectPopulatedSubcategoryIdsInCategory(catalogSelectors: ICatalogSelec
  * with the passed context (product availability, time of order, fulfillment, display (menu/order))
  * Returns values in context order (Menu | Order)
  */
-export function usePopulatedSubcategoryIdsInCategory(categoryId: string, filter: ProductCategoryFilter, order_time: Date | number, fulfillmentId: string) {
+export function usePopulatedSubcategoryIdsInCategory(
+  categoryId: string,
+  filter: ProductCategoryFilter,
+  order_time: Date | number,
+  fulfillmentId: string,
+) {
   const catalogSelectors = useCatalogSelectors();
   if (!catalogSelectors) {
     return [];
@@ -377,24 +439,27 @@ export function usePopulatedSubcategoryIdsInCategory(categoryId: string, filter:
   return selectPopulatedSubcategoryIdsInCategory(catalogSelectors, categoryId, filter, order_time, fulfillmentId);
 }
 
-// end added for wario-fe-menu  
-
+// end added for wario-fe-menu
 
 /**
  * Filters a MetadataModifierMap to only include selectable modifiers that are visible
  * @param mMap Modifier map from WCPProductGenerateMetadata
- * @returns 
+ * @returns
  */
 export function useFilterSelectableModifiers(mMap: MetadataModifierMap) {
   const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
-  const mods = useMemo(() => Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-    const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
-    return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: v } : acc;
-  }, {}), [mMap, modifierTypeSelector]);
+  const mods = useMemo(
+    () =>
+      Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
+        const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
+        return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: v } : acc;
+      }, {}),
+    [mMap, modifierTypeSelector],
+  );
   return mods;
 }
 
-// /** 
+// /**
 //  * Same as @useFilterSelectableModifiers but also sorts the modifiers by ordinal
 //  */
 // export function useFilterAndSortSelectableModifiers(mMap: MetadataModifierMap) {

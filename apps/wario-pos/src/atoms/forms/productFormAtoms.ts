@@ -127,7 +127,6 @@ export const fromProductEntity = (entity: UncommittedIProduct & { baseProductId?
   modifiers: entity.modifiers || [],
 });
 
-
 export const useProductForm = () => {
   const form = useAtomValue(productFormAtom);
   const isValid = useAtomValue(productFormIsValidAtom);

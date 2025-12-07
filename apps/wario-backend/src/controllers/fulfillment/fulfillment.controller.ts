@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
@@ -12,7 +22,7 @@ export class FulfillmentController {
     private readonly dataProvider: DataProviderService,
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @Scopes('write:config')
@@ -30,10 +40,7 @@ export class FulfillmentController {
 
   @Patch(':fid')
   @Scopes('write:config')
-  async patchFulfillment(
-    @Param('fid') fulfillmentId: string,
-    @Body() body: UpdateFulfillmentDto,
-  ) {
+  async patchFulfillment(@Param('fid') fulfillmentId: string, @Body() body: UpdateFulfillmentDto) {
     try {
       // TODO: FIX!
       // Note: UpdateFulfillmentDto is partial, but the code constructs a full object.

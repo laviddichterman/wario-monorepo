@@ -195,9 +195,7 @@ describe('OrderPaymentService', () => {
     });
 
     it('should handle no authorized payments', async () => {
-      const payments = [
-        createMockCreditPayment({ status: TenderBaseStatus.COMPLETED, processorId: 'completed-1' }),
-      ];
+      const payments = [createMockCreditPayment({ status: TenderBaseStatus.COMPLETED, processorId: 'completed-1' })];
 
       const result = await service.CancelSquarePayments(payments);
 
@@ -206,9 +204,7 @@ describe('OrderPaymentService', () => {
     });
 
     it('should return failure result when Square API fails', async () => {
-      const payments = [
-        createMockCreditPayment({ status: TenderBaseStatus.AUTHORIZED, processorId: 'auth-1' }),
-      ];
+      const payments = [createMockCreditPayment({ status: TenderBaseStatus.AUTHORIZED, processorId: 'auth-1' })];
 
       (mockSquareSvc.CancelPayment as jest.Mock).mockResolvedValue({
         success: false,

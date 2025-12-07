@@ -57,7 +57,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -65,7 +65,7 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-  
+
   await app.listen(4001);
 }
 bootstrap();
@@ -179,22 +179,26 @@ Complete catalog structure:
 Orders, payments, and discounts:
 
 #### Seating
+
 - `SeatingResourceDto` - Seating resource
 - `WSeatingInfoDto` - Seating information
 - `DineInInfoDto` - Dine-in information
 
 #### Fulfillment
+
 - `ThirdPartyInfoDto` - Third party order info
 - `FulfillmentTimeDto` - Fulfillment timing
 - `FulfillmentDataDto` - Complete fulfillment data
 
 #### Customer & Cart
+
 - `CustomerInfoDataDto` - Customer information
 - `WCPProductV2Dto` - Product reference
 - `CoreCartEntryDto` - Cart entry
 - `MetricsDto` - Order metrics/tracking
 
 #### Payments
+
 - `TenderBaseProposedDto` - Base proposed tender
 - `TenderBaseAllocatedDto` - Base allocated tender
 - `StoreCreditPaymentDataDto` - Store credit payment data
@@ -209,6 +213,7 @@ Orders, payments, and discounts:
 - `CreditPaymentAllocatedDto` - Allocated credit payment
 
 #### Discounts
+
 - `OrderManualPercentDiscountDataDto` - Manual percentage discount data
 - `OrderManualPercentDiscountDto` - Manual percentage discount
 - `OrderManualAmountDiscountDataDto` - Manual amount discount data
@@ -217,6 +222,7 @@ Orders, payments, and discounts:
 - `OrderLineDiscountCodeAmountDto` - Discount code
 
 #### Order
+
 - `OrderTaxDto` - Tax information
 - `IssueStoreCreditRequestDto` - Store credit issuance request
 - `WOrderInstancePartialDto` - Partial order instance
@@ -229,6 +235,7 @@ Orders, payments, and discounts:
 Function expressions for business logic:
 
 #### Const Literals
+
 - `ConstStringLiteralExpressionDto`
 - `ConstNumberLiteralExpressionDto`
 - `ConstBooleanLiteralExpressionDto`
@@ -236,6 +243,7 @@ Function expressions for business logic:
 - `ConstModifierQualifierLiteralExpressionDto`
 
 #### Expressions
+
 - `ProductMetadataExpressionDto` - Product metadata expression
 - `IModifierPlacementExpressionDto` - Modifier placement expression
 - `IHasAnyOfModifierExpressionDto` - Has modifier check
@@ -243,6 +251,7 @@ Function expressions for business logic:
 - `ILogicalExpressionDto<T>` - Logical expression
 
 #### Product Functions
+
 - `AbstractExpressionConstLiteralDto`
 - `AbstractExpressionProductMetadataDto`
 - `AbstractExpressionModifierPlacementExpressionDto`
@@ -250,6 +259,7 @@ Function expressions for business logic:
 - `IProductInstanceFunctionDto` - Product instance function
 
 #### Order Functions
+
 - `AbstractOrderExpressionConstLiteralDto`
 - `OrderInstanceFunctionDto` - Order instance function
 
@@ -317,7 +327,7 @@ describe('IMoneyDto', () => {
       amount: 1299,
       currency: 'USD',
     });
-    
+
     const errors = await validate(dto);
     expect(errors.length).toBe(0);
   });
@@ -327,7 +337,7 @@ describe('IMoneyDto', () => {
       amount: 1299,
       currency: 'INVALID',
     });
-    
+
     const errors = await validate(dto);
     expect(errors.length).toBeGreaterThan(0);
   });

@@ -1,9 +1,8 @@
-
 /**
  * OrderValidationService Unit Tests
  *
  * Tests for cart rebuilding and product availability validation.
- * 
+ *
  * Note: RebuildOrderState delegates to wario-shared's RebuildAndSortCart,
  * which is extensively tested in packages/wario-shared. These tests verify
  * the service correctly integrates with CatalogProviderService.
@@ -24,10 +23,7 @@ describe('OrderValidationService', () => {
     mockCatalogService = mockCatalogProviderService();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        OrderValidationService,
-        { provide: CatalogProviderService, useValue: mockCatalogService },
-      ],
+      providers: [OrderValidationService, { provide: CatalogProviderService, useValue: mockCatalogService }],
     }).compile();
 
     service = module.get<OrderValidationService>(OrderValidationService);

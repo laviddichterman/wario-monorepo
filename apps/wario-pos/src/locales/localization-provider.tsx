@@ -19,7 +19,7 @@ export function LocalizationProvider({ children }: Props) {
 
   useEffect(() => {
     setDefaultOptions({ locale: currentLang.adapterLocale });
-  }, [currentLang])
+  }, [currentLang]);
 
   return (
     <Provider dateAdapter={DateAdapter} adapterLocale={currentLang.adapterLocale}>

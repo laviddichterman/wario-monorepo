@@ -1,6 +1,6 @@
-import { TextField, type TextFieldProps } from "@mui/material";
+import { TextField, type TextFieldProps } from '@mui/material';
 
-import { type ValSetVal } from "@wcp/wario-ux-shared/common";
+import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 
 export type StringPropertyComponentProps = {
   sx?: TextFieldProps['sx'];
@@ -18,6 +18,9 @@ export function StringPropertyComponent(props: StringPropertyComponentProps) {
       fullWidth
       disabled={props.disabled}
       value={props.value}
-      onChange={(e) => { props.setValue(e.target.value); }}
-    />)
+      onChange={(e) => {
+        props.setValue(e.target.value);
+      }}
+    />
+  );
 }

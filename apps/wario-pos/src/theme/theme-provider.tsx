@@ -7,7 +7,7 @@ import { useSettingsContext } from '@/components/settings';
 import { useTranslate } from '@/locales';
 
 import { createTheme } from './create-theme';
-import type { } from './extend-theme-types';
+import type {} from './extend-theme-types';
 import type { ThemeOptions } from './types';
 import { Rtl } from './with-settings/right-to-left';
 

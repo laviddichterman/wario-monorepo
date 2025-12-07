@@ -8,6 +8,6 @@ interface RouterLinkProps extends Omit<LinkProps, 'to'> {
   href: string;
 }
 
-export const RouterLink = forwardRef<HTMLAnchorElement, RouterLinkProps>(
-  ({ href, ...other }, ref) => <Link ref={ref} to={href} {...other} />
-);
+export const RouterLink = forwardRef<HTMLAnchorElement, RouterLinkProps>(({ href, ...other }, ref) => (
+  <Link ref={ref} to={href} {...other} />
+));

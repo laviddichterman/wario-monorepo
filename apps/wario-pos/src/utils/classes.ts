@@ -22,10 +22,7 @@ export type StateProps = {
  * Output: 'item__base active__class open__class'
  */
 
-export function mergeClasses(
-  className?: string | (string | undefined)[] | null,
-  state?: StateProps
-): string {
+export function mergeClasses(className?: string | (string | undefined)[] | null, state?: StateProps): string {
   const classList = className ? (Array.isArray(className) ? className : [className]) : [];
 
   const dynamicStateClassesArray = Object.entries(state || {})

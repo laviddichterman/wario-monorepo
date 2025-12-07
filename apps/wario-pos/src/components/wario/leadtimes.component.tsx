@@ -28,24 +28,32 @@ export const LeadTimesComp = () => {
       const isDirty = Object.hasOwn(dirty, id) && dirty[id] && Object.hasOwn(localLeadTime, id);
       return {
         ...acc,
-        [fulfillment.id]: isDirty ?
-          localLeadTime[fulfillment.id] : (fulfillment.leadTime)
-      }
-    }, {})
-    setDirty(fulfillments.reduce((acc: Record<string, boolean>, fulfillment) => ({
-      ...acc,
-      [fulfillment.id]: newLocalLeadTime[fulfillment.id] !== fulfillment.leadTime
-    }), {}));
+        [fulfillment.id]: isDirty ? localLeadTime[fulfillment.id] : fulfillment.leadTime,
+      };
+    }, {});
+    setDirty(
+      fulfillments.reduce(
+        (acc: Record<string, boolean>, fulfillment) => ({
+          ...acc,
+          [fulfillment.id]: newLocalLeadTime[fulfillment.id] !== fulfillment.leadTime,
+        }),
+        {},
+      ),
+    );
     setLocalLeadTime(newLocalLeadTime);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fulfillments, setDirty, setLocalLeadTime]);
 
-  const leadtimesToUpdate: Record<string, number> = useMemo(() => Object.entries(localLeadTime).reduce((acc, [key, value]) => dirty[key] ? ({ ...acc, [key]: value }) : acc, {}), [dirty, localLeadTime]);
+  const leadtimesToUpdate: Record<string, number> = useMemo(
+    () =>
+      Object.entries(localLeadTime).reduce((acc, [key, value]) => (dirty[key] ? { ...acc, [key]: value } : acc), {}),
+    [dirty, localLeadTime],
+  );
 
   const onChangeLeadTimes = (fId: string, leadTime: number) => {
     if (localLeadTime[fId] !== leadTime) {
       setLocalLeadTime({ ...localLeadTime, [fId]: leadTime });
-      setDirty({ ...dirty, [fId]: fulfillments.find(x => x.id === fId)?.leadTime !== leadTime });
+      setDirty({ ...dirty, [fId]: fulfillments.find((x) => x.id === fId)?.leadTime !== leadTime });
     }
   };
 
@@ -53,24 +61,26 @@ export const LeadTimesComp = () => {
     if (!isProcessing) {
       setIsProcessing(true);
       try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:order_config" } });
+        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order_config' } });
         const response = await fetch(`${HOST_API}/api/v1/config/timing/leadtime`, {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(leadtimesToUpdate)
+          body: JSON.stringify(leadtimesToUpdate),
         });
         if (response.status === 201) {
           enqueueSnackbar(
             `
-              Updated lead time(s): ${Object.entries(leadtimesToUpdate).map(([key, value]) =>
-              `${fulfillments.find(x => x.id === key)?.displayName ?? key}: ${value.toString()} minutes`
-            ).join(', ')
-
-            }
-            `)
+              Updated lead time(s): ${Object.entries(leadtimesToUpdate)
+                .map(
+                  ([key, value]) =>
+                    `${fulfillments.find((x) => x.id === key)?.displayName ?? key}: ${value.toString()} minutes`,
+                )
+                .join(', ')}
+            `,
+          );
 
           setDirty(fulfillments.reduce((acc, fulfillment) => ({ ...acc, [fulfillment.id]: false }), {}));
         }
@@ -92,16 +102,18 @@ export const LeadTimesComp = () => {
             alignItems={'center'}
             size={{
               xs: 8,
-              md: 10
-            }}>
+              md: 10,
+            }}
+          >
             {Object.values(fulfillments).map((fulfillment) => {
               return (
                 <Grid
                   key={fulfillment.id}
                   size={{
                     xs: fulfillments.length % 2 === 0 ? 6 : 12,
-                    md: fulfillments.length % 2 === 0 ? 6 : (fulfillments.length % 3 === 0 ? 4 : 12)
-                  }}>
+                    md: fulfillments.length % 2 === 0 ? 6 : fulfillments.length % 3 === 0 ? 4 : 12,
+                  }}
+                >
                   <IntNumericPropertyComponent
                     sx={{ ml: 3, mb: 2, mr: 1 }}
                     min={1}
@@ -109,20 +121,28 @@ export const LeadTimesComp = () => {
                     disabled={isProcessing}
                     label={fulfillment.displayName}
                     value={dirty[fulfillment.id] ? localLeadTime[fulfillment.id] : fulfillment.leadTime}
-                    setValue={(e: number) => { onChangeLeadTimes(fulfillment.id, e); }}
+                    setValue={(e: number) => {
+                      onChangeLeadTimes(fulfillment.id, e);
+                    }}
                   />
                 </Grid>
               );
-            }
-            )}
+            })}
           </Grid>
           <Grid
             sx={{ py: 2 }}
             size={{
               xs: 4,
-              md: 2
-            }}>
-            <Button sx={{ mx: 3, px: 1, py: 2 }} disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0} onClick={() => void onSubmit()}>Push Changes</Button>
+              md: 2,
+            }}
+          >
+            <Button
+              sx={{ mx: 3, px: 1, py: 2 }}
+              disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0}
+              onClick={() => void onSubmit()}
+            >
+              Push Changes
+            </Button>
           </Grid>
         </Grid>
       </Card>

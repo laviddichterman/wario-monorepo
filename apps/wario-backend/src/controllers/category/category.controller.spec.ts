@@ -10,11 +10,7 @@
 
 import { Test, type TestingModule } from '@nestjs/testing';
 
-import {
-  createMockCategory,
-  mockCatalogProviderService,
-  mockSocketIoService,
-} from '../../../test/utils';
+import { createMockCategory, mockCatalogProviderService, mockSocketIoService } from '../../../test/utils';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { SocketIoService } from '../../config/socket-io/socket-io.service';
 import { CategoryNotFoundException } from '../../exceptions';
@@ -85,9 +81,9 @@ describe('CategoryController', () => {
     it('should throw CategoryNotFoundException when category not found', async () => {
       mockCatalogService.UpdateCategory.mockResolvedValue(null);
 
-      await expect(
-        controller.patchCategory('nonexistent', { name: 'Test' }),
-      ).rejects.toThrow(CategoryNotFoundException);
+      await expect(controller.patchCategory('nonexistent', { name: 'Test' })).rejects.toThrow(
+        CategoryNotFoundException,
+      );
     });
   });
 
@@ -119,9 +115,7 @@ describe('CategoryController', () => {
     it('should throw CategoryNotFoundException when category not found', async () => {
       mockCatalogService.DeleteCategory.mockResolvedValue(null);
 
-      await expect(
-        controller.deleteCategory('nonexistent', {}),
-      ).rejects.toThrow(CategoryNotFoundException);
+      await expect(controller.deleteCategory('nonexistent', {})).rejects.toThrow(CategoryNotFoundException);
     });
   });
 });

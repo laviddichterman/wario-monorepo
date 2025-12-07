@@ -19,8 +19,7 @@ export default defineConfig({
         position: 'tl',
         initialIsOpen: false,
       },
-    },
-    ),
+    }),
   ],
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
@@ -56,7 +55,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'src': fileURLToPath(new URL('./src', import.meta.url))
-    }
+      src: fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
 });

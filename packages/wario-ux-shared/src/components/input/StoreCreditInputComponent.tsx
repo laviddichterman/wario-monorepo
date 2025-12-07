@@ -12,25 +12,23 @@ interface CustomInputProps {
   name?: string;
 }
 
-const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomInputProps>(
-  function TextMaskCustom(props, ref) {
-    const { onChange, name = '', ...other } = props;
-    return (
-      <IMaskInput
-        {...other}
-        mask="***-**-***-CCCCCCCC"
-        definitions={{
-          'C': /[A-Z0-9]/,
-        }}
-        inputRef={ref}
-        onAccept={(value: string) => {
-          onChange({ target: { name, value } });
-        }}
-        overwrite
-      />
-    );
-  },
-);
+const TextMaskCustom = React.forwardRef<HTMLInputElement, CustomInputProps>(function TextMaskCustom(props, ref) {
+  const { onChange, name = '', ...other } = props;
+  return (
+    <IMaskInput
+      {...other}
+      mask="***-**-***-CCCCCCCC"
+      definitions={{
+        C: /[A-Z0-9]/,
+      }}
+      inputRef={ref}
+      onAccept={(value: string) => {
+        onChange({ target: { name, value } });
+      }}
+      overwrite
+    />
+  );
+});
 
 export interface StoreCreditInputComponentProps {
   name: string;
@@ -46,8 +44,8 @@ export function StoreCreditInputComponent({
   onChange,
   id = uniqueId('sci-'),
   value,
-  ...others }: StoreCreditInputComponentProps & Omit<InputBaseComponentProps, 'onChange' | 'name' | 'id'>) {
-
+  ...others
+}: StoreCreditInputComponentProps & Omit<InputBaseComponentProps, 'onChange' | 'name' | 'id'>) {
   return (
     <FormControl variant="standard">
       <InputLabel htmlFor={id}>{label}</InputLabel>
@@ -63,4 +61,3 @@ export function StoreCreditInputComponent({
     </FormControl>
   );
 }
-

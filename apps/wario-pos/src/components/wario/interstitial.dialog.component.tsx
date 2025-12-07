@@ -16,7 +16,7 @@ interface InterstitialDialogProps {
     cb: VoidFunction;
   }[];
   open: boolean;
-};
+}
 
 export default function InterstitialDialog(props: InterstitialDialogProps) {
   const { onClose, dialogTitle, options, open } = props;
@@ -30,7 +30,7 @@ export default function InterstitialDialog(props: InterstitialDialogProps) {
     <>
       {options.map((option) => (
         <DialogContainer
-          maxWidth={"xl"}
+          maxWidth={'xl'}
           key={option.title}
           title={option.title}
           onClose={option.onClose}
@@ -42,10 +42,15 @@ export default function InterstitialDialog(props: InterstitialDialogProps) {
         onClose={onClose}
         open={open}
         title={dialogTitle}
-        innerComponent={(
+        innerComponent={
           <List>
             {options.map((option) => (
-              <ListItemButton onClick={(e) => { handleListItemClick(e, option.cb); }} key={option.title}>
+              <ListItemButton
+                onClick={(e) => {
+                  handleListItemClick(e, option.cb);
+                }}
+                key={option.title}
+              >
                 <ListItemAvatar>
                   <Avatar>
                     <AddIcon />
@@ -55,7 +60,7 @@ export default function InterstitialDialog(props: InterstitialDialogProps) {
               </ListItemButton>
             ))}
           </List>
-        )}
+        }
       />
     </>
   );

@@ -20,25 +20,19 @@ export function SignOutButton({ onClose, sx, ...other }: Props) {
       logoutParams: {
         returnTo: window.location.origin,
       },
-    }).then(() => {
-      onClose?.();
-    }).catch((error: unknown) => {
-      console.error(error);
-      toast.error('Unable to logout!');
     })
+      .then(() => {
+        onClose?.();
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        toast.error('Unable to logout!');
+      });
   }, [onClose, signOutAuth0]);
 
   return (
-    <Button
-      fullWidth
-      variant="soft"
-      size="large"
-      color="error"
-      onClick={handleLogoutAuth0}
-      sx={sx}
-      {...other}
-    >
+    <Button fullWidth variant="soft" size="large" color="error" onClick={handleLogoutAuth0} sx={sx} {...other}>
       Logout
     </Button>
   );
-};
+}

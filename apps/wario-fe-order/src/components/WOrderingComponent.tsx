@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 
 import Box from '@mui/material/Box';
@@ -24,29 +23,29 @@ const WShopForProductsContainer = lazy(() => import('@/components/step/WShopForP
 
 const STAGES = [
   {
-    stepperTitle: "Timing",
-    content: <WFulfillmentStageComponent />
+    stepperTitle: 'Timing',
+    content: <WFulfillmentStageComponent />,
   },
   {
-    stepperTitle: "Add pizza!",
-    content: <WShopForProductsContainer productSet='PRIMARY' />
+    stepperTitle: 'Add pizza!',
+    content: <WShopForProductsContainer productSet="PRIMARY" />,
   },
   {
-    stepperTitle: "Add other stuff!",
-    content: <WShopForProductsContainer productSet='SECONDARY' />
+    stepperTitle: 'Add other stuff!',
+    content: <WShopForProductsContainer productSet="SECONDARY" />,
   },
   {
-    stepperTitle: "Tell us about yourself",
-    content: <WCustomerInformationStage />
+    stepperTitle: 'Tell us about yourself',
+    content: <WCustomerInformationStage />,
   },
   {
-    stepperTitle: "Review order",
-    content: <WReviewOrderStage />
+    stepperTitle: 'Review order',
+    content: <WReviewOrderStage />,
   },
   {
-    stepperTitle: "Check out",
-    content: <WCheckoutStage />
-  }
+    stepperTitle: 'Check out',
+    content: <WCheckoutStage />,
+  },
 ];
 
 export default function WOrderingComponent() {
@@ -58,18 +57,20 @@ export default function WOrderingComponent() {
 
   return (
     <LocalizationProvider dateAdapter={DateAdapter}>
-      {useStepper ?
-        <Stepper sx={{ px: 1, pt: 2, mx: 'auto' }} activeStep={stage} >
+      {useStepper ? (
+        <Stepper sx={{ px: 1, pt: 2, mx: 'auto' }} activeStep={stage}>
           {STAGES.map((stg, i) => (
             <Step key={i} id={`WARIO_step_${i.toString()}`} completed={stage.valueOf() > i || isSubmitOrderSuccess}>
-              <StepLabel><StepperTitle>{stg.stepperTitle}</StepperTitle></StepLabel>
-            </Step>))}
-        </Stepper> : <></>
-      }
-      <Box sx={{ mx: 'auto', pt: 1 }}>
-        {STAGES[stage].content}
-      </Box>
+              <StepLabel>
+                <StepperTitle>{stg.stepperTitle}</StepperTitle>
+              </StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+      ) : (
+        <></>
+      )}
+      <Box sx={{ mx: 'auto', pt: 1 }}>{STAGES[stage].content}</Box>
     </LocalizationProvider>
   );
 }
-

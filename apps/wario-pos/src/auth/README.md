@@ -5,12 +5,14 @@ This directory contains Auth0 authentication and authorization implementation wi
 ## Overview
 
 The authentication system uses Auth0 with support for:
+
 - **Scopes**: OAuth 2.0 scopes (e.g., `read:orders`, `write:orders`)
 - **Permissions**: RBAC permissions (e.g., `admin`, `manager`, `staff`)
 
 ## Components
 
 ### AuthProvider
+
 Located in `context/auth0/auth-provider.tsx`
 
 Wraps the application with Auth0 authentication and exposes auth state via context.
@@ -21,10 +23,11 @@ import { CONFIG } from '@/config';
 
 <AuthProvider scope={CONFIG.auth0.scope || 'openid profile email'}>
   <App />
-</AuthProvider>
+</AuthProvider>;
 ```
 
 ### useAuthContext Hook
+
 Located in `hooks/useAuthContext.ts`
 
 Access authentication state and check permissions:
@@ -33,14 +36,7 @@ Access authentication state and check permissions:
 import { useAuthContext } from '@/hooks/useAuthContext';
 
 function MyComponent() {
-  const { 
-    user,
-    authenticated,
-    scopes,
-    permissions,
-    hasScopes,
-    hasPermissions 
-  } = useAuthContext();
+  const { user, authenticated, scopes, permissions, hasScopes, hasPermissions } = useAuthContext();
 
   // Check if user has specific scopes
   const canReadOrders = hasScopes(['read:orders']);
@@ -62,6 +58,7 @@ function MyComponent() {
 ## Guards
 
 ### AuthGuard
+
 Located in `guard/auth-guard.tsx`
 
 Protects routes that require authentication:
@@ -71,24 +68,25 @@ import { AuthGuard } from '@/auth/guard';
 
 <AuthGuard>
   <ProtectedPage />
-</AuthGuard>
+</AuthGuard>;
 ```
 
 ### RoleBasedGuard
+
 Located in `guard/role-based-guard.tsx`
 
 Protects components/routes based on Auth0 scopes or permissions.
 
 #### Props
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `scopes` | `string[]` | `[]` | Required Auth0 scopes |
-| `permissions` | `string[]` | `[]` | Required Auth0 permissions (RBAC) |
-| `requireAll` | `boolean` | `true` | If true, user must have ALL scopes/permissions. If false, ANY match is sufficient |
-| `hasContent` | `boolean` | `false` | If true, shows permission denied message. If false, renders nothing |
-| `sx` | `SxProps<Theme>` | - | MUI sx props for error container |
-| `children` | `ReactNode` | - | Protected content |
+| Prop          | Type             | Default | Description                                                                       |
+| ------------- | ---------------- | ------- | --------------------------------------------------------------------------------- |
+| `scopes`      | `string[]`       | `[]`    | Required Auth0 scopes                                                             |
+| `permissions` | `string[]`       | `[]`    | Required Auth0 permissions (RBAC)                                                 |
+| `requireAll`  | `boolean`        | `true`  | If true, user must have ALL scopes/permissions. If false, ANY match is sufficient |
+| `hasContent`  | `boolean`        | `false` | If true, shows permission denied message. If false, renders nothing               |
+| `sx`          | `SxProps<Theme>` | -       | MUI sx props for error container                                                  |
+| `children`    | `ReactNode`      | -       | Protected content                                                                 |
 
 #### Usage Examples
 
@@ -126,10 +124,7 @@ import { RoleBasedGuard } from '@/auth/guard';
 
 ```tsx
 // User must have the scope AND the permission
-<RoleBasedGuard 
-  scopes={['write:orders']} 
-  permissions={['manager']}
->
+<RoleBasedGuard scopes={['write:orders']} permissions={['manager']}>
   <CreateOrder />
 </RoleBasedGuard>
 ```
@@ -138,10 +133,7 @@ import { RoleBasedGuard } from '@/auth/guard';
 
 ```tsx
 // Shows error message when access is denied
-<RoleBasedGuard 
-  scopes={['admin:settings']} 
-  hasContent
->
+<RoleBasedGuard scopes={['admin:settings']} hasContent>
   <SettingsPage />
 </RoleBasedGuard>
 ```
@@ -234,8 +226,12 @@ const mockAuthContext = {
   authenticated: true,
   scopes: ['read:orders', 'write:orders'],
   permissions: ['manager'],
-  hasScopes: jest.fn((required, all) => { /* mock logic */ }),
-  hasPermissions: jest.fn((required, all) => { /* mock logic */ }),
+  hasScopes: jest.fn((required, all) => {
+    /* mock logic */
+  }),
+  hasPermissions: jest.fn((required, all) => {
+    /* mock logic */
+  }),
   // ... other props
 };
 ```
@@ -243,16 +239,19 @@ const mockAuthContext = {
 ## Troubleshooting
 
 **Scopes not appearing in token:**
+
 - Verify scopes are requested in `auth0.scope` config
 - Check Auth0 API settings allow these scopes
 - Ensure `audience` is set correctly
 
 **Permissions not appearing:**
+
 - Enable RBAC in Auth0 API settings
 - Check "Add Permissions in the Access Token" is enabled
 - Verify user has assigned roles with permissions
 
 **"Permission denied" always shows:**
+
 - Check the user actually has the required scopes/permissions
 - Verify Auth0 configuration
 - Check browser console for access token claims (dev only)

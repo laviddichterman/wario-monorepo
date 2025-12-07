@@ -2,12 +2,7 @@ import { z } from 'zod';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type {
-  DeliveryInfoDto,
-  DineInInfoDto,
-  FulfillmentData,
-  NullablePartial,
-} from '@wcp/wario-shared';
+import type { DeliveryInfoDto, DineInInfoDto, FulfillmentData, NullablePartial } from '@wcp/wario-shared';
 import { WDateUtils } from '@wcp/wario-shared';
 
 // Schemas
@@ -34,8 +29,7 @@ export type DeliveryInfoFormData = Omit<DeliveryInfoDto, 'validation'> & { fulfi
 
 export type DeliveryValidationStatus = 'IDLE' | 'PENDING' | 'VALID' | 'INVALID' | 'OUTSIDE_RANGE';
 
-export interface FulfillmentState
-  extends NullablePartial<Omit<FulfillmentData, 'status' | 'thirdPartyInfo'>> {
+export interface FulfillmentState extends NullablePartial<Omit<FulfillmentData, 'status' | 'thirdPartyInfo'>> {
   hasSelectedTimeExpired: boolean;
   hasSelectedDateExpired: boolean;
   hasAgreedToTerms: boolean;
@@ -93,7 +87,7 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
               serviceDateTime: null,
             },
             false,
-            'setService'
+            'setService',
           );
         }
       },
@@ -112,7 +106,7 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
             };
           },
           false,
-          'setDate'
+          'setDate',
         );
       },
 
@@ -130,7 +124,7 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
             };
           },
           false,
-          'setTime'
+          'setTime',
         );
       },
 
@@ -162,12 +156,11 @@ export const useFulfillmentStore = create<FulfillmentStore>()(
         set(initialState, false, 'reset');
       },
     }),
-    { name: 'fulfillment-store' }
-  )
+    { name: 'fulfillment-store' },
+  ),
 );
 
 // Selectors
-
 
 export const selectSelectedService = (state: FulfillmentStore) => state.selectedService;
 export const selectSelectedDate = (state: FulfillmentStore) => state.selectedDate;
@@ -175,12 +168,9 @@ export const selectSelectedTime = (state: FulfillmentStore) => state.selectedTim
 export const selectDineInInfo = (state: FulfillmentStore) => state.dineInInfo;
 export const selectDeliveryInfo = (state: FulfillmentStore) => state.deliveryInfo;
 export const selectHasAgreedToTerms = (state: FulfillmentStore) => state.hasAgreedToTerms;
-export const selectDeliveryValidationStatus = (state: FulfillmentStore) =>
-  state.deliveryValidationStatus;
-export const selectHasSelectedTimeExpired = (state: FulfillmentStore) =>
-  state.hasSelectedTimeExpired;
-export const selectHasSelectedDateExpired = (state: FulfillmentStore) =>
-  state.hasSelectedDateExpired;
+export const selectDeliveryValidationStatus = (state: FulfillmentStore) => state.deliveryValidationStatus;
+export const selectHasSelectedTimeExpired = (state: FulfillmentStore) => state.hasSelectedTimeExpired;
+export const selectHasSelectedDateExpired = (state: FulfillmentStore) => state.hasSelectedDateExpired;
 
 /**
  * Returns the cached service date/time.

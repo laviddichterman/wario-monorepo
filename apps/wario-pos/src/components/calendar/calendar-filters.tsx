@@ -35,29 +35,21 @@ type Props = {
   filters: UseSetStateReturn<ICalendarFilters>;
 };
 
-export function CalendarFilters({
-  open,
-  events,
-  onClose,
-  filters,
-  canReset,
-  dateError,
-  onClickEvent,
-}: Props) {
+export function CalendarFilters({ open, events, onClose, filters, canReset, dateError, onClickEvent }: Props) {
   const { state: currentFilters, setState: updateFilters, resetState: resetFilters } = filters;
 
   const handleFilterStartDate = useCallback(
     (newValue: IDatePickerControl) => {
       updateFilters({ startDate: newValue });
     },
-    [updateFilters]
+    [updateFilters],
   );
 
   const handleFilterEndDate = useCallback(
     (newValue: IDatePickerControl) => {
       updateFilters({ endDate: newValue });
     },
-    [updateFilters]
+    [updateFilters],
   );
 
   const renderHead = () => (
@@ -76,7 +68,11 @@ export function CalendarFilters({
         </Typography>
 
         <Tooltip title="Reset">
-          <IconButton onClick={() => { resetFilters(); }}>
+          <IconButton
+            onClick={() => {
+              resetFilters();
+            }}
+          >
             <Badge color="error" variant="dot" invisible={!canReset}>
               <Iconify icon="solar:restart-bold" />
             </Badge>
@@ -136,10 +132,10 @@ export function CalendarFilters({
         {orderBy(events, ['end'], ['desc']).map((event) => (
           <li key={event.id}>
             <ListItemButton
-              onClick={() => { onClickEvent(event.id); }}
-              sx={[
-                (theme) => ({ py: 1.5, borderBottom: `dashed 1px ${theme.vars.palette.divider}` }),
-              ]}
+              onClick={() => {
+                onClickEvent(event.id);
+              }}
+              sx={[(theme) => ({ py: 1.5, borderBottom: `dashed 1px ${theme.vars.palette.divider}` })]}
             >
               <Box
                 sx={{
@@ -149,16 +145,12 @@ export function CalendarFilters({
                   height: 0,
                   position: 'absolute',
                   borderRight: '10px solid transparent',
-                  borderTop: `10px solid`// ${event.color}`,
+                  borderTop: `10px solid`, // ${event.color}`,
                 }}
               />
 
               <ListItemText
-                primary={
-                  event.allDay
-                    ? fDate(event.start)
-                    : `${fDateTime(event.start)} - ${fDateTime(event.end)}`
-                }
+                primary={event.allDay ? fDate(event.start) : `${fDateTime(event.start)} - ${fDateTime(event.end)}`}
                 secondary={event.title}
                 slotProps={{
                   primary: {

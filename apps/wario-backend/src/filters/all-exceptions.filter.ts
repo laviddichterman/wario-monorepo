@@ -119,11 +119,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const message = this.extractMessage(exceptionResponse);
       return {
         status,
-        errors: [{
-          category: this.getCategoryForStatus(status),
-          code: this.getCodeForStatus(status),
-          detail: message,
-        }],
+        errors: [
+          {
+            category: this.getCategoryForStatus(status),
+            code: this.getCodeForStatus(status),
+            detail: message,
+          },
+        ],
         stack: exception.stack,
       };
     }
@@ -132,11 +134,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     if (exception instanceof Error) {
       return {
         status: HttpStatus.INTERNAL_SERVER_ERROR,
-        errors: [{
-          category: 'API_ERROR',
-          code: 'INTERNAL_SERVER_ERROR',
-          detail: exception.message || 'An unexpected error occurred',
-        }],
+        errors: [
+          {
+            category: 'API_ERROR',
+            code: 'INTERNAL_SERVER_ERROR',
+            detail: exception.message || 'An unexpected error occurred',
+          },
+        ],
         stack: exception.stack,
       };
     }
@@ -144,11 +148,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Handle unknown errors
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
-      errors: [{
-        category: 'API_ERROR',
-        code: 'INTERNAL_SERVER_ERROR',
-        detail: 'An unexpected error occurred',
-      }],
+      errors: [
+        {
+          category: 'API_ERROR',
+          code: 'INTERNAL_SERVER_ERROR',
+          detail: 'An unexpected error occurred',
+        },
+      ],
     };
   }
 

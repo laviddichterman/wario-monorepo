@@ -73,11 +73,7 @@ export const varBgKenburns = (direction: Direction, options?: TargetAndTransitio
 
 // ----------------------------------------------------------------------
 
-export const varBgPan = (
-  direction: Direction,
-  colors: string[],
-  options?: TargetAndTransition
-): Variants => {
+export const varBgPan = (direction: Direction, colors: string[], options?: TargetAndTransition): Variants => {
   const gradient = (deg: number) => `linear-gradient(${deg.toString()}deg, ${colors.join(', ')})`;
 
   const transition: Transition = {

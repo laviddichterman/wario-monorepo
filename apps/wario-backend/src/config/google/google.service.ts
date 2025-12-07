@@ -95,7 +95,7 @@ export class GoogleService implements OnModuleInit {
       this.logger.warn('CANT DO IT BRO');
     }
     this.logger.info('Finished Bootstrap of GoogleProvider');
-  };
+  }
 
   get AccessToken() {
     return this.accessToken;

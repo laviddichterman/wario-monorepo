@@ -4,7 +4,7 @@ import { IsArray, ValidateNested } from 'class-validator';
 
 import { IOptionDto, IOptionTypeDto } from '@wcp/wario-shared';
 
-export class CreateOptionDto extends OmitType(IOptionDto, ['id', 'modifierTypeId'] as const) { }
+export class CreateOptionDto extends OmitType(IOptionDto, ['id', 'modifierTypeId'] as const) {}
 
 export class CreateModifierTypeDto extends OmitType(IOptionTypeDto, ['id'] as const) {
   @IsArray()
@@ -13,6 +13,6 @@ export class CreateModifierTypeDto extends OmitType(IOptionTypeDto, ['id'] as co
   options!: CreateOptionDto[];
 }
 
-export class UpdateModifierTypeDto extends PartialType(IOptionTypeDto) { }
+export class UpdateModifierTypeDto extends PartialType(IOptionTypeDto) {}
 
-export class UpdateOptionDto extends PartialType(CreateOptionDto) { }
+export class UpdateOptionDto extends PartialType(CreateOptionDto) {}

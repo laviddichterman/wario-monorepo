@@ -7,6 +7,7 @@
   "author": "Dave Lichterman / Lavid Industries LLC <dave@windycitypie.com>",
   "scripts": {
     "backend:build": "pnpm --filter ./apps/wario-backend build",
+    "backend:dev": "pnpm --filter ./apps/wario-backend start:debug",
     "backend:lint": "pnpm --filter ./apps/wario-backend lint",
     "backend:start": "pnpm --filter ./apps/wario-backend start",
     "backend:test": "pnpm --filter ./apps/wario-backend test",
@@ -43,6 +44,8 @@
     "faq:preview": "pnpm -r --filter \"./apps/wario-fe-faq\" run preview",
     "faq:start": "pnpm -r --filter \"./apps/wario-fe-faq\" run start",
     "faq:typecheck": "pnpm -r --filter \"./apps/wario-fe-faq\" run typecheck",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,js,jsx,json,css,scss,md}\" \"packages/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,jsx,json,css,scss,md}\" \"packages/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "lint": "pnpm -r --filter \"./{apps,packages}/*\" run lint",
     "menu:build": "pnpm -r --filter \"./apps/wario-fe-menu\" run build",
     "menu:clean": "pnpm -r --filter \"./apps/wario-fe-menu\" run clean",

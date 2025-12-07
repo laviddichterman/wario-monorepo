@@ -12,9 +12,7 @@ import { QUERY_KEYS } from '../types';
  * Hook to query server time data
  * Data is populated via Socket.io events, not HTTP requests
  */
-export function useServerTimeQuery(
-  options?: Omit<UseQueryOptions<ServerTimeData | null>, 'queryKey' | 'queryFn'>
-) {
+export function useServerTimeQuery(options?: Omit<UseQueryOptions<ServerTimeData | null>, 'queryKey' | 'queryFn'>) {
   return useQuery<ServerTimeData | null>({
     queryKey: QUERY_KEYS.serverTime,
     queryFn: () => {

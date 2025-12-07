@@ -15,10 +15,10 @@ export interface IdempotencyKeyRequest {
 
 /**
  * Parameter decorator that extracts the validated idempotency key from the execution context.
- * 
+ *
  * The idempotency key is validated and attached to the request by the OrderLockInterceptor.
  * This key is used to ensure exactly-once semantics for order mutations.
- * 
+ *
  * @example
  * ```typescript
  * @Put(':oId/cancel')
@@ -32,9 +32,7 @@ export interface IdempotencyKeyRequest {
  * }
  * ```
  */
-export const IdempotencyKey = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): string | undefined => {
-    const request = ctx.switchToHttp().getRequest<IdempotencyKeyRequest>();
-    return request[IDEMPOTENCY_KEY];
-  },
-);
+export const IdempotencyKey = createParamDecorator((_data: unknown, ctx: ExecutionContext): string | undefined => {
+  const request = ctx.switchToHttp().getRequest<IdempotencyKeyRequest>();
+  return request[IDEMPOTENCY_KEY];
+});

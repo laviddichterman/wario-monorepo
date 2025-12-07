@@ -16,8 +16,6 @@ import { scrollProgressClasses } from '@/components/animate/scroll-progress/use-
 
 // ----------------------------------------------------------------------
 
-
-
 type BaseProps = MotionProps & React.ComponentProps<'svg'> & React.ComponentProps<'div'>;
 
 export interface ScrollProgressProps extends BaseProps {
@@ -113,9 +111,7 @@ export function ScrollProgress({
 
   return (
     <PortalWrapper>
-      <Box {...slotProps?.wrapper}>
-        {variant === 'circular' ? renderCircular() : renderLinear()}
-      </Box>
+      <Box {...slotProps?.wrapper}>{variant === 'circular' ? renderCircular() : renderLinear()}</Box>
     </PortalWrapper>
   );
 }

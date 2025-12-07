@@ -33,7 +33,7 @@ export function NavSectionVertical({
   return (
     <Nav
       className={mergeClasses([navSectionClasses.vertical, className])}
-      sx={[{ ...cssVars }, ...spreadSx(sx),]}
+      sx={[{ ...cssVars }, ...spreadSx(sx)]}
       {...other}
     >
       <NavUl sx={{ flex: '1 1 auto', gap: 'var(--nav-item-gap)' }}>
@@ -55,14 +55,7 @@ export function NavSectionVertical({
 
 // ----------------------------------------------------------------------
 
-function Group({
-  items,
-  render,
-  subheader,
-  slotProps,
-  checkPermissions,
-  enabledRootRedirect,
-}: NavGroupProps) {
+function Group({ items, render, subheader, slotProps, checkPermissions, enabledRootRedirect }: NavGroupProps) {
   const groupOpen = useBoolean(true);
 
   const renderContent = () => (

@@ -19,10 +19,7 @@ import { WarioQueryProvider } from '@wcp/wario-ux-shared/query';
 
 function App() {
   return (
-    <WarioQueryProvider 
-      hostAPI="https://wario.windycitypie.com" 
-      namespace="nsPOS"
-    >
+    <WarioQueryProvider hostAPI="https://wario.windycitypie.com" namespace="nsPOS">
       <YourApp />
     </WarioQueryProvider>
   );
@@ -85,10 +82,10 @@ function TimeDisplay() {
 All queries use stable query keys exported from `types.ts`:
 
 ```typescript
-QUERY_KEYS.catalog        // ['catalog']
-QUERY_KEYS.fulfillments   // ['fulfillments']
-QUERY_KEYS.settings       // ['settings']
-QUERY_KEYS.serverTime     // ['serverTime']
+QUERY_KEYS.catalog; // ['catalog']
+QUERY_KEYS.fulfillments; // ['fulfillments']
+QUERY_KEYS.settings; // ['settings']
+QUERY_KEYS.serverTime; // ['serverTime']
 ```
 
 Use these for manual cache updates:
@@ -128,7 +125,7 @@ const queryClient = new QueryClient({
   <SocketProvider hostAPI={hostAPI} namespace={namespace}>
     <App />
   </SocketProvider>
-</QueryClientProvider>
+</QueryClientProvider>;
 ```
 
 ### Manual Connection Control
@@ -144,7 +141,7 @@ import { WarioQueryProvider } from '@wcp/wario-ux-shared/query';
 // Manually connect later
 function LoginButton() {
   const { connect, status } = useSocket();
-  
+
   return (
     <button onClick={connect} disabled={status === 'CONNECTED'}>
       Connect

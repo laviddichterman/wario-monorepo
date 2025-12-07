@@ -5,14 +5,7 @@ import * as crypto from 'crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import {
-  format,
-  formatISO,
-  formatRFC3339,
-  Interval,
-  isSameDay,
-  isSameMinute,
-} from 'date-fns';
+import { format, formatISO, formatRFC3339, Interval, isSameDay, isSameMinute } from 'date-fns';
 import { FilterQuery, Model } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Order, Order as SquareOrder } from 'square';
@@ -60,7 +53,6 @@ import { CreateOrderFromCart } from '../square-wario-bridge';
 import { SquareError, SquareService } from '../square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
 
-
 const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
   return isSameMinute(interval.start, interval.end)
     ? format(interval.start, WDateUtils.DisplayTimeFormat)
@@ -84,7 +76,7 @@ export class OrderManagerService {
     @Inject(PrinterService) private printerService: PrinterService,
     @InjectPinoLogger(OrderManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Sends orders that are ready for fulfillment.
@@ -103,8 +95,8 @@ export class OrderManagerService {
     const timeConstraint = isEndRangeSameDay
       ? endOfRangeAsQuery
       : {
-        $or: [{ 'fulfillment.selectedDate': WDateUtils.formatISODate(now) }, endOfRangeAsQuery],
-      };
+          $or: [{ 'fulfillment.selectedDate': WDateUtils.formatISODate(now) }, endOfRangeAsQuery],
+        };
     const idempotencyKey = crypto.randomBytes(22).toString('hex');
     await this.orderModel
       .updateMany(
@@ -118,7 +110,9 @@ export class OrderManagerService {
       )
       .then(async (updateResult) => {
         if (updateResult.modifiedCount > 0) {
-          this.logger.info(`Locked ${String(updateResult.modifiedCount)} orders with service before ${formatISO(endOfRange)}`);
+          this.logger.info(
+            `Locked ${String(updateResult.modifiedCount)} orders with service before ${formatISO(endOfRange)}`,
+          );
           await this.orderModel
             .find({
               locked: idempotencyKey,
@@ -341,10 +335,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-              success: false;
-              result: null;
-              error: SquareError[];
-            };
+                success: false;
+                result: null;
+                error: SquareError[];
+              };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit
@@ -418,11 +412,7 @@ export class OrderManagerService {
           fulfillmentConfig.id,
         );
 
-        const printResult = await this.printerService.SendCancelTicket(
-          lockedOrder,
-          rebuiltCart,
-          fulfillmentConfig,
-        );
+        const printResult = await this.printerService.SendCancelTicket(lockedOrder, rebuiltCart, fulfillmentConfig);
 
         if (printResult.success) {
           SQORDER_MSG.push(...printResult.squareOrderIds);
@@ -736,7 +726,12 @@ export class OrderManagerService {
 
     // send email if we're supposed to
     if (!is3pOrder && emailCustomer) {
-      await this.orderNotificationService.CreateExternalEmailForOrderReschedule(fulfillmentConfig, fulfillmentDto, lockedOrder.customerInfo, '');
+      await this.orderNotificationService.CreateExternalEmailForOrderReschedule(
+        fulfillmentConfig,
+        fulfillmentDto,
+        lockedOrder.customerInfo,
+        '',
+      );
     }
 
     // adjust calendar event
@@ -791,10 +786,7 @@ export class OrderManagerService {
       })
       .catch((err: unknown) => {
         const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error(
-          { err },
-          'Unable to commit update to order to release lock and update fulfillment time',
-        );
+        this.logger.error({ err }, 'Unable to commit update to order to release lock and update fulfillment time');
         return {
           status: 500,
           success: false,
@@ -855,8 +847,8 @@ export class OrderManagerService {
         discounts: lockedOrder.discounts,
         config: {
           SERVICE_CHARGE: 0,
-          AUTOGRAT_THRESHOLD: (this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number),
-          TAX_RATE: (this.dataProvider.Settings.config.TAX_RATE as number),
+          AUTOGRAT_THRESHOLD: this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number,
+          TAX_RATE: this.dataProvider.Settings.config.TAX_RATE as number,
           CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
         },
       }),
@@ -938,9 +930,11 @@ export class OrderManagerService {
       });
   };
 
-  GetOrders = async (query: FilterQuery<WOrderInstance>):
-    Promise<ResponseWithStatusCode<(ResponseSuccess<WOrderInstance[]> | ResponseFailure)>> => {
-    return await this.orderModel.find(query)
+  GetOrders = async (
+    query: FilterQuery<WOrderInstance>,
+  ): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
+    return await this.orderModel
+      .find(query)
       .then((orders) => {
         return {
           status: 200,
@@ -1024,12 +1018,9 @@ export class OrderManagerService {
    * The order must already be locked before calling this method.
    * @param lockedOrder The order that has been atomically locked
    */
-  public SendLockedOrder = async (
-    lockedOrder: WOrderInstance,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
+  public SendLockedOrder = async (lockedOrder: WOrderInstance): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     return this.printerService.SendLockedOrder(lockedOrder, true);
   };
-
 
   CancelOrder = async (
     orderId: string,
@@ -1083,16 +1074,33 @@ export class OrderManagerService {
 
     // 1. get the fulfillment and other needed constants from the DataProvider, generate a reference ID, quick computations
     if (!Object.hasOwn(this.dataProvider.Fulfillments, createOrderRequest.fulfillment.selectedService)) {
-      return { status: 404, success: false, error: [{ category: 'INVALID_REQUEST_ERROR', code: 'NOT_FOUND', detail: "Fulfillment specified does not exist." }] };
+      return {
+        status: 404,
+        success: false,
+        error: [
+          { category: 'INVALID_REQUEST_ERROR', code: 'NOT_FOUND', detail: 'Fulfillment specified does not exist.' },
+        ],
+      };
     }
     const fulfillmentConfig = this.dataProvider.Fulfillments[createOrderRequest.fulfillment.selectedService];
     const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
     const referenceId = requestTime.toString(36).toUpperCase();
     const dateTimeInterval = DateTimeIntervalBuilder(createOrderRequest.fulfillment, fulfillmentConfig.maxDuration);
-    const customerName = [createOrderRequest.customerInfo.givenName, createOrderRequest.customerInfo.familyName].join(" ");
-    const service_title = this.orderNotificationService.ServiceTitleBuilder(fulfillmentConfig.displayName, createOrderRequest.fulfillment, customerName, dateTimeInterval);
+    const customerName = [createOrderRequest.customerInfo.givenName, createOrderRequest.customerInfo.familyName].join(
+      ' ',
+    );
+    const service_title = this.orderNotificationService.ServiceTitleBuilder(
+      fulfillmentConfig.displayName,
+      createOrderRequest.fulfillment,
+      customerName,
+      dateTimeInterval,
+    );
     // 2. Rebuild the order from the menu/catalog
-    const { noLongerAvailable, rebuiltCart } = this.orderValidationService.RebuildOrderState(createOrderRequest.cart, dateTimeInterval.start, fulfillmentConfig.id);
+    const { noLongerAvailable, rebuiltCart } = this.orderValidationService.RebuildOrderState(
+      createOrderRequest.cart,
+      dateTimeInterval.start,
+      fulfillmentConfig.id,
+    );
     if (noLongerAvailable.length > 0) {
       this.logger.warn(
         { missing: noLongerAvailable.map((x) => x.product.m.name) },
@@ -1101,11 +1109,24 @@ export class OrderManagerService {
       return {
         status: 410,
         success: false,
-        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'GONE', detail: 'Unable to rebuild order from current catalog data' }]
+        error: [
+          {
+            category: 'INVALID_REQUEST_ERROR',
+            code: 'GONE',
+            detail: 'Unable to rebuild order from current catalog data',
+          },
+        ],
       };
     }
 
-    const shorthandEventTitle = EventTitleStringBuilder(this.catalogService.CatalogSelectors, fulfillmentConfig, customerName, createOrderRequest.fulfillment, rebuiltCart, createOrderRequest.specialInstructions ?? "");
+    const shorthandEventTitle = EventTitleStringBuilder(
+      this.catalogService.CatalogSelectors,
+      fulfillmentConfig,
+      customerName,
+      createOrderRequest.fulfillment,
+      rebuiltCart,
+      createOrderRequest.specialInstructions ?? '',
+    );
 
     // 3. let's setup the order object reference
     const orderInstance: WOrderInstancePartial = {
@@ -1121,55 +1142,72 @@ export class OrderManagerService {
       },
       metrics: {
         ...(createOrderRequest.metrics! as Metrics),
-        ipAddress
+        ipAddress,
       },
       tip: createOrderRequest.tip,
-      specialInstructions: createOrderRequest.specialInstructions
-    }
+      specialInstructions: createOrderRequest.specialInstructions,
+    };
 
     // 3. recompute the totals to ensure everything matches up, and to get some needed computations that we don't want to pass over the wire and blindly trust
     const recomputedTotals = RecomputeTotals({
-      cart: rebuiltCart, payments: createOrderRequest.proposedPayments, discounts: createOrderRequest.proposedDiscounts,
-      fulfillment: fulfillmentConfig, order: orderInstance, config: {
+      cart: rebuiltCart,
+      payments: createOrderRequest.proposedPayments,
+      discounts: createOrderRequest.proposedDiscounts,
+      fulfillment: fulfillmentConfig,
+      order: orderInstance,
+      config: {
         SERVICE_CHARGE: 0,
-        AUTOGRAT_THRESHOLD: this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number ?? 0,
-        TAX_RATE: this.dataProvider.Settings.config.TAX_RATE as number ?? .1035,
-        CATALOG_SELECTORS: this.catalogService.CatalogSelectors
-      }
+        AUTOGRAT_THRESHOLD: (this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number) ?? 0,
+        TAX_RATE: (this.dataProvider.Settings.config.TAX_RATE as number) ?? 0.1035,
+        CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
+      },
     });
     if (recomputedTotals.balanceAfterPayments.amount > 0) {
       const errorDetail = `Proposed payments yield balance of ${MoneyToDisplayString(recomputedTotals.balanceAfterPayments, true)}.`;
-      this.logger.error(errorDetail)
+      this.logger.error(errorDetail);
       return {
         status: 500,
         success: false,
-        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'INSUFFICIENT_FUNDS', detail: errorDetail }]
+        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'INSUFFICIENT_FUNDS', detail: errorDetail }],
       };
     }
 
     if (recomputedTotals.tipAmount.amount < recomputedTotals.tipMinimum.amount) {
       const errorDetail = `Computed tip below minimum of ${MoneyToDisplayString(recomputedTotals.tipMinimum, true)} vs sent: ${MoneyToDisplayString(recomputedTotals.tipAmount, true)}`;
-      this.logger.error(errorDetail)
+      this.logger.error(errorDetail);
       return {
         status: 500,
         success: false,
-        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'INSUFFICIENT_FUNDS', detail: errorDetail }]
+        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'INSUFFICIENT_FUNDS', detail: errorDetail }],
       };
     }
 
     // 4. check the availability of the requested service date/time
-    const cartLeadTime = DetermineCartBasedLeadTime(createOrderRequest.cart, this.catalogService.CatalogSelectors.productEntry);
-    const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation([this.dataProvider.Fulfillments[createOrderRequest.fulfillment.selectedService]], createOrderRequest.fulfillment.selectedDate, cartLeadTime);
-    const optionsForSelectedDate = WDateUtils.GetOptionsForDate(availabilityMap, createOrderRequest.fulfillment.selectedDate, formatISO(requestTime))
-    const foundTimeOptionIndex = optionsForSelectedDate.findIndex(x => x.value === createOrderRequest.fulfillment.selectedTime);
+    const cartLeadTime = DetermineCartBasedLeadTime(
+      createOrderRequest.cart,
+      this.catalogService.CatalogSelectors.productEntry,
+    );
+    const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation(
+      [this.dataProvider.Fulfillments[createOrderRequest.fulfillment.selectedService]],
+      createOrderRequest.fulfillment.selectedDate,
+      cartLeadTime,
+    );
+    const optionsForSelectedDate = WDateUtils.GetOptionsForDate(
+      availabilityMap,
+      createOrderRequest.fulfillment.selectedDate,
+      formatISO(requestTime),
+    );
+    const foundTimeOptionIndex = optionsForSelectedDate.findIndex(
+      (x) => x.value === createOrderRequest.fulfillment.selectedTime,
+    );
     if (foundTimeOptionIndex === -1 || optionsForSelectedDate[foundTimeOptionIndex].disabled) {
       const display_time = DateTimeIntervalToDisplayServiceInterval(dateTimeInterval);
       const errorDetail = `Requested fulfillment (${fulfillmentConfig.displayName}) at ${display_time} is no longer valid. ${optionsForSelectedDate.length > 0 ? `Next available time for date selected is ${WDateUtils.MinutesToPrintTime(optionsForSelectedDate[0].value)}. Please submit the order again.` : 'No times left for selected date.'}`;
-      this.logger.error(errorDetail)
+      this.logger.error(errorDetail);
       return {
         status: 410,
         success: false,
-        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'GONE', detail: errorDetail }]
+        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'GONE', detail: errorDetail }],
       };
     }
 
@@ -1177,27 +1215,40 @@ export class OrderManagerService {
     const errors: WError[] = [];
     let squareOrder: SquareOrder | null = null;
     let squareOrderVersion = 0;
-    const discounts: OrderLineDiscount[] = []
+    const discounts: OrderLineDiscount[] = [];
     const sentPayments: OrderPaymentAllocated[] = [];
     const storeCreditResponses: ValidateLockAndSpendSuccess[] = [];
     try {
       // Payment part A: attempt to process discounts
-      await Promise.all(recomputedTotals.discountApplied.map(async (proposedDiscount) => {
-        // unsure if we want to validate the credit even if for some reason the amount allocated is 0
-        if (proposedDiscount.t === DiscountMethod.CreditCodeAmount /* && proposedDiscount.discount.amount.amount > 0 */) {
-          const response = await this.storeCreditService.ValidateLockAndSpend({ code: proposedDiscount.discount.code, amount: proposedDiscount.discount.amount, lock: proposedDiscount.discount.lock, updatedBy: STORE_NAME })
-          if (!response.success) {
-            errors.push({ category: 'INVALID_REQUEST_ERROR', code: 'INSUFFICIENT_FUNDS', detail: "Unable to debit store credit." });
-            throw errors;
+      await Promise.all(
+        recomputedTotals.discountApplied.map(async (proposedDiscount) => {
+          // unsure if we want to validate the credit even if for some reason the amount allocated is 0
+          if (
+            proposedDiscount.t === DiscountMethod.CreditCodeAmount /* && proposedDiscount.discount.amount.amount > 0 */
+          ) {
+            const response = await this.storeCreditService.ValidateLockAndSpend({
+              code: proposedDiscount.discount.code,
+              amount: proposedDiscount.discount.amount,
+              lock: proposedDiscount.discount.lock,
+              updatedBy: STORE_NAME,
+            });
+            if (!response.success) {
+              errors.push({
+                category: 'INVALID_REQUEST_ERROR',
+                code: 'INSUFFICIENT_FUNDS',
+                detail: 'Unable to debit store credit.',
+              });
+              throw errors;
+            }
+            storeCreditResponses.push(response);
           }
-          storeCreditResponses.push(response);
-        }
-        discounts.push({
-          ...proposedDiscount,
-          // perhaps status should be APPROVED until the order is actually closed out
-          status: TenderBaseStatus.COMPLETED,
-        });
-      }));
+          discounts.push({
+            ...proposedDiscount,
+            // perhaps status should be APPROVED until the order is actually closed out
+            status: TenderBaseStatus.COMPLETED,
+          });
+        }),
+      );
 
       // Payment Part B: make an order
       const squareOrderResponse = await this.squareService.CreateOrder(
@@ -1210,20 +1261,20 @@ export class OrderManagerService {
           recomputedTotals.hasBankersRoundingTaxSkew,
           shorthandEventTitle,
           null,
-          this.catalogService
-        ));
+          this.catalogService,
+        ),
+      );
       if (!squareOrderResponse.success) {
         this.logger.error({ err: squareOrderResponse.error }, 'Failed to create order');
-        squareOrderResponse.error.map(e => errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" }))
+        squareOrderResponse.error.map((e) =>
+          errors.push({ category: e.category, code: e.code, detail: e.detail ?? '' }),
+        );
         throw errors;
       }
 
       squareOrder = squareOrderResponse.result.order!;
       squareOrderVersion = squareOrder.version!;
-      this.logger.info(
-        { referenceId, squareOrderId: squareOrder.id },
-        'Created Square Order',
-      );
+      this.logger.info({ referenceId, squareOrderId: squareOrder.id }, 'Created Square Order');
 
       // Payment Part C: process payments with payment processor IN ORDER
       // because it needs to be in order, we can't use Promise.all or map
@@ -1238,13 +1289,15 @@ export class OrderManagerService {
               tipAmount: payment.tipAmount,
               referenceId: referenceId,
               squareOrderId: squareOrder.id!,
-              autocomplete: false
+              autocomplete: false,
             });
             squareOrderVersion += 1;
             if (!squarePaymentResponse.success) {
               const errorDetail = `Failed to process payment: ${JSON.stringify(squarePaymentResponse)}`;
               this.logger.error(errorDetail);
-              squarePaymentResponse.error.forEach(e => (errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" })));
+              squarePaymentResponse.error.forEach((e) =>
+                errors.push({ category: e.category, code: e.code, detail: e.detail ?? '' }),
+              );
               throw errors;
             }
             this.logger.info(
@@ -1259,27 +1312,38 @@ export class OrderManagerService {
             break;
           }
           case PaymentMethod.StoreCredit: {
-            const response = await this.storeCreditService.ValidateLockAndSpend({ code: payment.payment.code, amount: payment.amount, lock: payment.payment.lock, updatedBy: STORE_NAME })
+            const response = await this.storeCreditService.ValidateLockAndSpend({
+              code: payment.payment.code,
+              amount: payment.amount,
+              lock: payment.payment.lock,
+              updatedBy: STORE_NAME,
+            });
             if (!response.success) {
-              errors.push({ category: 'INVALID_REQUEST_ERROR', code: 'INSUFFICIENT_FUNDS', detail: "Unable to debit store credit." });
+              errors.push({
+                category: 'INVALID_REQUEST_ERROR',
+                code: 'INSUFFICIENT_FUNDS',
+                detail: 'Unable to debit store credit.',
+              });
               throw errors;
             }
             storeCreditResponses.push(response);
             const squareMoneyCreditPaymentResponse = await this.squareService.CreatePayment({
               locationId: this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
-              sourceId: "EXTERNAL",
+              sourceId: 'EXTERNAL',
               storeCreditPayment: payment,
               amount: payment.amount,
               tipAmount: payment.tipAmount,
               referenceId: payment.payment.code,
               squareOrderId: squareOrder.id!,
-              autocomplete: false
+              autocomplete: false,
             });
             squareOrderVersion += 1;
             if (!squareMoneyCreditPaymentResponse.success) {
               const errorDetail = `Failed to process payment: ${JSON.stringify(squareMoneyCreditPaymentResponse)}`;
               this.logger.error(errorDetail);
-              squareMoneyCreditPaymentResponse.error.forEach(e => (errors.push({ category: e.category, code: e.code, detail: e.detail ?? "" })));
+              squareMoneyCreditPaymentResponse.error.forEach((e) =>
+                errors.push({ category: e.category, code: e.code, detail: e.detail ?? '' }),
+              );
               throw errors;
             }
             this.logger.info(
@@ -1304,41 +1368,46 @@ export class OrderManagerService {
         refunds: [],
         taxes: [{ amount: recomputedTotals.taxAmount }],
         status: WOrderStatus.OPEN,
-        locked: null
+        locked: null,
       };
       // 6. create calendar event
       try {
-        const calendarEventId = await this.orderCalendarService.CreateCalendarEvent(this.orderNotificationService.GenerateOrderEventJson(
-          shorthandEventTitle,
-          completedOrderInstance,
-          rebuiltCart,
-          dateTimeInterval,
-          recomputedTotals));
+        const calendarEventId = await this.orderCalendarService.CreateCalendarEvent(
+          this.orderNotificationService.GenerateOrderEventJson(
+            shorthandEventTitle,
+            completedOrderInstance,
+            rebuiltCart,
+            dateTimeInterval,
+            recomputedTotals,
+          ),
+        );
 
-        const savedOrder = (await new this.orderModel({
-          ...completedOrderInstance,
-          metadata: [
-            { key: 'SQORDER', value: squareOrder.id! },
-            ...(calendarEventId ? [{ key: 'GCALEVENT', value: calendarEventId }] : [])
-          ]
-        }).save()).toObject();
+        const savedOrder = (
+          await new this.orderModel({
+            ...completedOrderInstance,
+            metadata: [
+              { key: 'SQORDER', value: squareOrder.id! },
+              ...(calendarEventId ? [{ key: 'GCALEVENT', value: calendarEventId }] : []),
+            ],
+          }).save()
+        ).toObject();
         this.logger.info({ savedOrder }, 'Successfully saved OrderInstance to database');
 
         // send email to customer
         const _createExternalEmailInfo = this.orderNotificationService.CreateExternalEmail(
           savedOrder,
           service_title,
-          rebuiltCart);
+          rebuiltCart,
+        );
 
         //this.socketIoProvider.EmitOrder(savedOrder);
 
         // success!
         return { status: 200, success: true, result: savedOrder };
-
       } catch (error: unknown) {
         const errorDetail = `Caught error while saving calendary entry: ${JSON.stringify(error)}`;
         this.logger.error({ err: error }, 'Caught error while saving calendary entry');
-        errors.push({ category: "INTERNAL_SERVER_ERROR", code: "INTERNAL_SERVER_ERROR", detail: errorDetail });
+        errors.push({ category: 'INTERNAL_SERVER_ERROR', code: 'INTERNAL_SERVER_ERROR', detail: errorDetail });
         throw errors;
       }
     } catch {
@@ -1352,7 +1421,8 @@ export class OrderManagerService {
           this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
           squareOrder.id!,
           squareOrderVersion,
-          "CANCELED");
+          'CANCELED',
+        );
       }
       await this.orderPaymentService.RefundSquarePayments(sentPayments, 'Refunding failed order');
       await this.orderPaymentService.CancelSquarePayments(sentPayments);
@@ -1363,5 +1433,5 @@ export class OrderManagerService {
     }
     this.logger.error({ errors }, 'Got error when unwinding the order after failure');
     return { status: 400, success: false, error: errors };
-  }
+  };
 }

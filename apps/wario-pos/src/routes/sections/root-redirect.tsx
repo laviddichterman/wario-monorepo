@@ -1,6 +1,6 @@
-import { Navigate } from "react-router";
+import { Navigate } from 'react-router';
 
-import { CONFIG } from "@/config";
+import { CONFIG } from '@/config';
 
 export const RootRedirect = () => {
   // Check if we're in an OAuth callback (Auth0 redirect)

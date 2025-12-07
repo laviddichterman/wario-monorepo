@@ -164,13 +164,7 @@ const MuiChip: Components<Theme>['MuiChip'] = {
   // ▼▼▼▼▼▼▼▼ 🎨 STYLE ▼▼▼▼▼▼▼▼
   styleOverrides: {
     root: {
-      variants: [
-        ...filledVariants,
-        ...outlinedVariants,
-        ...softVariants,
-        ...sizeVariants,
-        ...disabledVariants,
-      ],
+      variants: [...filledVariants, ...outlinedVariants, ...softVariants, ...sizeVariants, ...disabledVariants],
     },
     label: ({ theme }) => ({
       fontWeight: theme.typography.fontWeightMedium,

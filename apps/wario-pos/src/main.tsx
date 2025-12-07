@@ -24,7 +24,6 @@ const router = createBrowserRouter([
   },
 ]);
 
-
 const root = createRoot(document.getElementById('root') as HTMLElement);
 
 root.render(
@@ -32,6 +31,5 @@ root.render(
     <WarioQueryProvider hostAPI={HOST_API} namespace={SOCKETIO.ns} showDevtools={import.meta.env.DEV}>
       <RouterProvider router={router} />
     </WarioQueryProvider>
-  </StrictMode>
+  </StrictMode>,
 );
-

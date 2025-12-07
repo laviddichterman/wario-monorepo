@@ -30,10 +30,12 @@ export default function FulfillmentPartySizeSelector() {
         disabled={serviceTime === null}
         className="guest-count"
         options={[...Array<number>(maxGuests - 1)].map((_, i) => i + 1)}
-        getOptionLabel={o => String(o)}
+        getOptionLabel={(o) => String(o)}
         // @ts-expect-error needed to keep the component controlled. We get "MUI: A component is changing the uncontrolled value state of Autocomplete to be controlled." if switching to || undefined
         value={dineInInfo?.partySize ?? null}
-        onChange={(_, v) => { if (v) setDineInInfo({ partySize: v }); }}
+        onChange={(_, v) => {
+          if (v) setDineInInfo({ partySize: v });
+        }}
         renderInput={(params) => <TextField {...params} label="Party Size" />}
       />
     </Grid>

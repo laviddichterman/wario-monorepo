@@ -16,9 +16,7 @@ type Props = {
   sx?: SxProps<Theme>;
 };
 
-
 export function CatalogPrinterGroupView(_props: Props) {
-
   return (
     <>
       <DashboardContent>

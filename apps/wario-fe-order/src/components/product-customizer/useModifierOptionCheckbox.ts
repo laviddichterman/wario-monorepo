@@ -1,6 +1,12 @@
 import { useMemo } from 'react';
 
-import { type CatalogModifierEntry, type ICatalogSelectors, type IOption, type IOptionState, OptionPlacement } from '@wcp/wario-shared';
+import {
+  type CatalogModifierEntry,
+  type ICatalogSelectors,
+  type IOption,
+  type IOptionState,
+  OptionPlacement,
+} from '@wcp/wario-shared';
 import { useCatalogSelectors, useModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { selectOptionState, useCustomizerStore } from '@/stores/useCustomizerStore';
@@ -10,7 +16,11 @@ import { UpdateModifierOptionStateCheckbox } from './WProductCustomizerLogic';
 
 export function useModifierOptionCheckbox(option: IOption) {
   const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
-  const optionState = useCustomizerStore((s) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, option.modifierTypeId, option.id) : undefined);
+  const optionState = useCustomizerStore((s) =>
+    s.selectedProduct
+      ? selectOptionState(s.selectedProduct.m.modifier_map, option.modifierTypeId, option.id)
+      : undefined,
+  );
   const modifierTypeEntry = useModifierEntryById(option.modifierTypeId) as CatalogModifierEntry;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const isWhole = useMemo(() => optionState!.placement === OptionPlacement.WHOLE, [optionState]);
@@ -25,21 +35,31 @@ export function useModifierOptionCheckbox(option: IOption) {
 
   const onUpdateOption = (newState: IOptionState) => {
     if (selectedProduct && serviceDateTime && fulfillmentId) {
-      updateCustomizerProduct(UpdateModifierOptionStateCheckbox(modifierTypeEntry, option, newState, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId));
+      updateCustomizerProduct(
+        UpdateModifierOptionStateCheckbox(
+          modifierTypeEntry,
+          option,
+          newState,
+          selectedProduct,
+          catalogSelectors,
+          serviceDateTime,
+          fulfillmentId,
+        ),
+      );
     }
   };
   const onClickWhole = () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     onUpdateOption({ placement: +!isWhole * OptionPlacement.WHOLE, qualifier: optionState!.qualifier });
-  }
+  };
   const onClickLeft = () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     onUpdateOption({ placement: +!isLeft * OptionPlacement.LEFT, qualifier: optionState!.qualifier });
-  }
+  };
   const onClickRight = () => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     onUpdateOption({ placement: +!isRight * OptionPlacement.RIGHT, qualifier: optionState!.qualifier });
-  }
+  };
   return {
     onClickWhole,
     onClickLeft,
@@ -48,6 +68,6 @@ export function useModifierOptionCheckbox(option: IOption) {
     isWhole,
     isLeft,
     isRight,
-    optionState
-  }
+    optionState,
+  };
 }

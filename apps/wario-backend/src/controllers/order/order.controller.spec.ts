@@ -86,9 +86,7 @@ describe('OrderController', () => {
         error: [{ category: 'INVALID_REQUEST_ERROR', code: 'NOT_FOUND', detail: '' }],
       });
 
-      await expect(controller.getOrder('nonexistent')).rejects.toThrow(
-        OrderNotFoundException,
-      );
+      await expect(controller.getOrder('nonexistent')).rejects.toThrow(OrderNotFoundException);
     });
   });
 
@@ -122,9 +120,7 @@ describe('OrderController', () => {
 
       await controller.getOrders('', 'OPEN');
 
-      expect(mockOrderManager.GetOrders).toHaveBeenCalledWith(
-        expect.objectContaining({ status: WOrderStatus.OPEN }),
-      );
+      expect(mockOrderManager.GetOrders).toHaveBeenCalledWith(expect.objectContaining({ status: WOrderStatus.OPEN }));
     });
   });
 
@@ -157,9 +153,7 @@ describe('OrderController', () => {
 
       const mockBody = {} as Parameters<typeof controller.postOrder>[0];
 
-      await expect(controller.postOrder(mockBody, '127.0.0.1')).rejects.toThrow(
-        HttpException,
-      );
+      await expect(controller.postOrder(mockBody, '127.0.0.1')).rejects.toThrow(HttpException);
     });
 
     it('should pass IP address to CreateOrder', async () => {
@@ -173,10 +167,7 @@ describe('OrderController', () => {
       const mockBody = {} as Parameters<typeof controller.postOrder>[0];
       await controller.postOrder(mockBody, '192.168.1.100');
 
-      expect(mockOrderManager.CreateOrder).toHaveBeenCalledWith(
-        mockBody,
-        '192.168.1.100',
-      );
+      expect(mockOrderManager.CreateOrder).toHaveBeenCalledWith(mockBody, '192.168.1.100');
     });
   });
 
@@ -200,18 +191,11 @@ describe('OrderController', () => {
       });
 
       expect(result.status).toBe(200);
-      expect(mockOrderManager.CancelLockedOrder).toHaveBeenCalledWith(
-        lockedOrder,
-        'Customer request',
-        true,
-        true,
-      );
+      expect(mockOrderManager.CancelLockedOrder).toHaveBeenCalledWith(lockedOrder, 'Customer request', true, true);
     });
 
     it('should throw BadRequestException when lock not acquired', async () => {
-      await expect(
-        controller.putCancelOrder(undefined, { reason: 'test' }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.putCancelOrder(undefined, { reason: 'test' })).rejects.toThrow(BadRequestException);
     });
 
     it('should throw HttpException on cancellation failure', async () => {
@@ -222,9 +206,7 @@ describe('OrderController', () => {
         error: [{ category: 'API_ERROR', code: 'INTERNAL_SERVER_ERROR', detail: '' }],
       });
 
-      await expect(
-        controller.putCancelOrder(lockedOrder, { reason: 'test' }),
-      ).rejects.toThrow(HttpException);
+      await expect(controller.putCancelOrder(lockedOrder, { reason: 'test' })).rejects.toThrow(HttpException);
     });
   });
 
@@ -248,9 +230,7 @@ describe('OrderController', () => {
     });
 
     it('should throw BadRequestException when lock not acquired', async () => {
-      await expect(controller.putConfirmOrder(undefined)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.putConfirmOrder(undefined)).rejects.toThrow(BadRequestException);
     });
   });
 

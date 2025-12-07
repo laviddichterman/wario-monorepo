@@ -1,9 +1,9 @@
-import defaultConfig from "../../eslint.config.mjs";
+import defaultConfig from '../../eslint.config.mjs';
 
 export default [
   ...defaultConfig,
   {
     files: ['tests/**/*.ts'],
-    languageOptions: { globals: { jest: true } }
-  }
-]
+    languageOptions: { globals: { jest: true } },
+  },
+];

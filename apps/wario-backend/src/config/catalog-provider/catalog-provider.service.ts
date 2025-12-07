@@ -1,4 +1,3 @@
-
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
@@ -28,10 +27,7 @@ import {
 import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { MigrationFlagsService } from '../migration-flags.service';
-import {
-  GenerateSquareReverseMapping,
-  ICatalogContext,
-} from '../square-wario-bridge';
+import { GenerateSquareReverseMapping, ICatalogContext } from '../square-wario-bridge';
 import { SquareService } from '../square/square.service';
 
 import * as CategoryFns from './catalog-category.functions';
@@ -165,14 +161,15 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       syncOptions: () => this.SyncOptions(),
       syncProductInstances: () => this.SyncProductInstances(),
       syncProducts: () => this.SyncProducts(),
-      recomputeCatalog: () => { this.RecomputeCatalog(); },
+      recomputeCatalog: () => {
+        this.RecomputeCatalog();
+      },
     };
   }
 
   BatchDeleteCatalogObjectsFromExternalIds = async (externalIds: KeyValue[]) => {
     return SquareSyncFns.batchDeleteCatalogObjectsFromExternalIds(this.squareSyncDeps, externalIds);
   };
-
 
   // ============================================================================
   // Category Orchestration Methods
@@ -262,12 +259,15 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       syncModifierTypes: () => this.SyncModifierTypes(),
       syncOptions: () => this.SyncOptions(),
       syncProductInstances: () => this.SyncProductInstances(),
-      recomputeCatalog: () => { this.RecomputeCatalog(); },
+      recomputeCatalog: () => {
+        this.RecomputeCatalog();
+      },
       batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
       updateProductsReferencingModifierTypeId: (ids) => this.UpdateProductsReferencingModifierTypeId(ids),
       updateProductInstancesForOptionChanges: (ids) => this.UpdateProductInstancesForOptionChanges(ids),
       removeModifierTypeFromProducts: (id) => this.RemoveModifierTypeFromProducts(id),
-      removeModifierOptionFromProductInstances: (mtId, moId) => this.RemoveModifierOptionFromProductInstances(mtId, moId),
+      removeModifierOptionFromProductInstances: (mtId, moId) =>
+        this.RemoveModifierOptionFromProductInstances(mtId, moId),
       deleteProductInstanceFunction: (id, suppress) => this.DeleteProductInstanceFunction(id, suppress), // Assuming this exists or using function
     };
   }
@@ -296,10 +296,12 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ModifierFns.deleteModifierOption(this.modifierDeps, mo_id, suppress_catalog_recomputation);
   };
 
-  ValidateOption = (modifierType: Pick<IOptionType, 'max_selected'>, modifierOption: Partial<ModifierFns.UncommitedOption>) => {
+  ValidateOption = (
+    modifierType: Pick<IOptionType, 'max_selected'>,
+    modifierOption: Partial<ModifierFns.UncommitedOption>,
+  ) => {
     return ModifierFns.validateOption(modifierType, modifierOption);
   };
-
 
   // ============================================================================
   // Product Orchestration Methods
@@ -323,7 +325,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
       syncProducts: () => this.SyncProducts(),
       syncProductInstances: () => this.SyncProductInstances(),
-      recomputeCatalog: () => { this.RecomputeCatalog(); },
+      recomputeCatalog: () => {
+        this.RecomputeCatalog();
+      },
       batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
     };
   }
@@ -373,7 +377,6 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ProductFns.deleteProductInstance(this.productDeps, pi_id, suppress_catalog_recomputation);
   };
 
-
   // ============================================================================
   // Function Orchestration Methods
   // ============================================================================
@@ -385,10 +388,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return doc;
   };
 
-  UpdateProductInstanceFunction = async (
-    pif_id: string,
-    updates: Partial<Omit<IProductInstanceFunction, 'id'>>
-  ) => {
+  UpdateProductInstanceFunction = async (pif_id: string, updates: Partial<Omit<IProductInstanceFunction, 'id'>>) => {
     const doc = await FunctionFns.updateProductInstanceFunction(this.functionDeps, pif_id, updates);
     if (!doc) return null;
     await this.SyncProductInstanceFunctions();
@@ -399,7 +399,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   DeleteProductInstanceFunction = async (pif_id: string, suppressRecompute = false) => {
     const { deleted, optionsModified, productsModified } = await FunctionFns.deleteProductInstanceFunction(
       this.functionDeps,
-      pif_id
+      pif_id,
     );
 
     if (!deleted) return null;
@@ -419,10 +419,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return doc;
   };
 
-  UpdateOrderInstanceFunction = async (
-    id: string,
-    updates: Partial<Omit<OrderInstanceFunction, 'id'>>
-  ) => {
+  UpdateOrderInstanceFunction = async (id: string, updates: Partial<Omit<OrderInstanceFunction, 'id'>>) => {
     const doc = await FunctionFns.updateOrderInstanceFunction(this.functionDeps, id, updates);
     if (!doc) return null;
     await this.SyncOrderInstanceFunctions();
@@ -577,13 +574,17 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     const shouldSuppressSquareSync = this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
     if (shouldSuppressSquareSync) {
       if (!this.squareService.isInitialized) {
-        this.logger.warn('Square service not yet initialized, skipping Square Catalog Sync. Will sync on next catalog update.');
+        this.logger.warn(
+          'Square service not yet initialized, skipping Square Catalog Sync. Will sync on next catalog update.',
+        );
       } else {
         this.logger.warn('Suppressing Square Catalog Sync at launch. Catalog skew may result.');
       }
     } else {
       await SquareSyncFns.checkAllPrinterGroupsSquareIdsAndFixIfNeeded(this.squareSyncDeps);
-      const modifierTypeIdsUpdated = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
+      const modifierTypeIdsUpdated = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(
+        this.squareSyncDeps,
+      );
       this.RecomputeCatalog();
       await SquareSyncFns.checkAllProductsHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
       if (modifierTypeIdsUpdated.length > 0) {
@@ -601,8 +602,16 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
     }
 
-    this.logger.info({ catalog: this.Catalog.api, productCount: this.products.length, modifierTypeCount: this.modifier_types.length, categoryCount: Object.keys(this.categories).length }, 'Finished Bootstrap of CatalogProvider');
-  };
+    this.logger.info(
+      {
+        catalog: this.Catalog.api,
+        productCount: this.products.length,
+        modifierTypeCount: this.modifier_types.length,
+        categoryCount: Object.keys(this.categories).length,
+      },
+      'Finished Bootstrap of CatalogProvider',
+    );
+  }
 
   UpdateProductsReferencingModifierTypeId = async (mtids: string[]) => {
     // find all products that have this modifier type enabled
@@ -680,7 +689,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       )
       .exec();
     if (product_instance_options_delete.modifiedCount > 0) {
-      this.logger.debug(`Removed ${product_instance_options_delete.modifiedCount.toString()} Options from Product Instances.`);
+      this.logger.debug(
+        `Removed ${product_instance_options_delete.modifiedCount.toString()} Options from Product Instances.`,
+      );
       // TODO: run query for any modifiers.options.length === 0
       await this.SyncProductInstances();
     }
@@ -703,7 +714,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     }
     const category_update = await this.wCategoryModel.updateMany({}, { $pull: { serviceDisable: id } }).exec();
     if (category_update.modifiedCount > 0) {
-      this.logger.debug(`Removed serviceDisable fulfillment ID from ${category_update.modifiedCount.toString()} categories.`);
+      this.logger.debug(
+        `Removed serviceDisable fulfillment ID from ${category_update.modifiedCount.toString()} categories.`,
+      );
       await this.SyncCategories();
     }
     if (products_update.modifiedCount > 0 || category_update.modifiedCount > 0) {

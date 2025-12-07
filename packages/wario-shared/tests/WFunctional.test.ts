@@ -1,9 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import type {
-  IAbstractExpression,
-  ProductModifierEntry,
-} from '../src/lib/derived-types';
+import type { IAbstractExpression, ProductModifierEntry } from '../src/lib/derived-types';
 import {
   ConstLiteralDiscriminator,
   LogicalFunctionOperator,
@@ -21,7 +18,12 @@ import {
 } from '../src/lib/objects/WFunctional';
 import type { WCPProduct } from '../src/lib/types';
 
-import { createMockCatalogSelectorsFromArrays, createMockOption, createMockOptionMetadata, createMockOptionType } from './mocks';
+import {
+  createMockCatalogSelectorsFromArrays,
+  createMockOption,
+  createMockOptionMetadata,
+  createMockOptionType,
+} from './mocks';
 
 describe('LogicalFunctionOperatorToHumanString', () => {
   it('should return "and" for AND operator', () => {
@@ -254,9 +256,7 @@ describe('WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement', (
   });
 
   it('should return false when modifier type has no selected options', () => {
-    const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [] },
-    ];
+    const modifiers: ProductModifierEntry[] = [{ modifierTypeId: 'mt1', options: [] }];
     const stmt = { mtid: 'mt1' };
     expect(WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement(modifiers, stmt)).toBe(false);
   });
@@ -265,9 +265,7 @@ describe('WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement', (
     const modifiers: ProductModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
-        options: [
-          { optionId: 'opt1', placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR },
-        ],
+        options: [{ optionId: 'opt1', placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR }],
       },
     ];
     const stmt = { mtid: 'mt1' };
@@ -278,9 +276,7 @@ describe('WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement', (
     const modifiers: ProductModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
-        options: [
-          { optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-        ],
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
       },
     ];
     const stmt = { mtid: 'mt1' };
@@ -296,9 +292,7 @@ describe('WFunctional.ProcessModifierPlacementExtractionOperatorStatement', () =
   });
 
   it('should return NONE when option is not found in modifier', () => {
-    const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [] },
-    ];
+    const modifiers: ProductModifierEntry[] = [{ modifierTypeId: 'mt1', options: [] }];
     const stmt = { mtid: 'mt1', moid: 'opt1' };
     expect(WFunctional.ProcessModifierPlacementExtractionOperatorStatement(modifiers, stmt)).toBe(OptionPlacement.NONE);
   });
@@ -307,9 +301,7 @@ describe('WFunctional.ProcessModifierPlacementExtractionOperatorStatement', () =
     const modifiers: ProductModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
-        options: [
-          { optionId: 'opt1', placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR },
-        ],
+        options: [{ optionId: 'opt1', placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR }],
       },
     ];
     const stmt = { mtid: 'mt1', moid: 'opt1' };
@@ -337,8 +329,16 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
     ];
     const mockSelectors = createMockCatalogSelectorsFromArrays({
       options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }) }),
-        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 3, bake_factor: 1, can_split: true }) }),
+        createMockOption({
+          id: 'opt1',
+          modifierTypeId: 'mt1',
+          metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }),
+        }),
+        createMockOption({
+          id: 'opt2',
+          modifierTypeId: 'mt1',
+          metadata: createMockOptionMetadata({ flavor_factor: 3, bake_factor: 1, can_split: true }),
+        }),
       ],
       modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
@@ -350,14 +350,16 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
     const modifiers: ProductModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
-        options: [
-          { optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-        ],
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
       },
     ];
     const mockSelectors = createMockCatalogSelectorsFromArrays({
       options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }) }),
+        createMockOption({
+          id: 'opt1',
+          modifierTypeId: 'mt1',
+          metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }),
+        }),
       ],
       modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
@@ -369,14 +371,16 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
     const modifiers: ProductModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
-        options: [
-          { optionId: 'opt1', placement: OptionPlacement.RIGHT, qualifier: OptionQualifier.REGULAR },
-        ],
+        options: [{ optionId: 'opt1', placement: OptionPlacement.RIGHT, qualifier: OptionQualifier.REGULAR }],
       },
     ];
     const mockSelectors = createMockCatalogSelectorsFromArrays({
       options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 3, can_split: true }) }),
+        createMockOption({
+          id: 'opt1',
+          modifierTypeId: 'mt1',
+          metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 3, can_split: true }),
+        }),
       ],
       modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
@@ -420,9 +424,15 @@ describe('FindModifierPlacementExpressionsForMTID', () => {
     const expr: IAbstractExpression = {
       discriminator: ProductInstanceFunctionType.IfElse,
       expr: {
-        test: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
+        test: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
         true_branch: matchingExpr,
-        false_branch: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: false } },
+        false_branch: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: false },
+        },
       },
     };
     const result = FindModifierPlacementExpressionsForMTID(expr, 'mt1');
@@ -496,9 +506,18 @@ describe('WFunctional.ProcessAbstractExpressionStatement', () => {
     const expr: IAbstractExpression = {
       discriminator: ProductInstanceFunctionType.IfElse,
       expr: {
-        test: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        true_branch: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'yes' } },
-        false_branch: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'no' } },
+        test: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        true_branch: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'yes' },
+        },
+        false_branch: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'no' },
+        },
       },
     };
     expect(WFunctional.ProcessAbstractExpressionStatement(emptyModifiers, expr, mockSelectors)).toBe('yes');
@@ -509,8 +528,14 @@ describe('WFunctional.ProcessAbstractExpressionStatement', () => {
       discriminator: ProductInstanceFunctionType.Logical,
       expr: {
         operator: LogicalFunctionOperator.AND,
-        operandA: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        operandB: { discriminator: ProductInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
+        operandA: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        operandB: {
+          discriminator: ProductInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
       },
     };
     expect(WFunctional.ProcessAbstractExpressionStatement(emptyModifiers, expr, mockSelectors)).toBe(true);
@@ -563,7 +588,10 @@ describe('WFunctional.ProcessProductInstanceFunction', () => {
 });
 
 describe('WFunctional.AbstractExpressionStatementToString', () => {
-  const mockSelectors = createMockCatalogSelectorsFromArrays({ modifierTypes: [createMockOptionType({ id: "mt1", name: "Toppings" })], options: [createMockOption({ id: "opt1", displayName: "Extra Cheese" })] });
+  const mockSelectors = createMockCatalogSelectorsFromArrays({
+    modifierTypes: [createMockOptionType({ id: 'mt1', name: 'Toppings' })],
+    options: [createMockOption({ id: 'opt1', displayName: 'Extra Cheese' })],
+  });
   it('should convert boolean literal to string', () => {
     const expr: IAbstractExpression = {
       discriminator: ProductInstanceFunctionType.ConstLiteral,

@@ -37,4 +37,6 @@ export class DeletePrinterGroupReassignRequestDto {
   printerGroup!: string;
 }
 
-export type DeletePrinterGroupRequestDto = DeletePrinterGroupNoReassignRequestDto | DeletePrinterGroupReassignRequestDto;
+export type DeletePrinterGroupRequestDto =
+  | DeletePrinterGroupNoReassignRequestDto
+  | DeletePrinterGroupReassignRequestDto;

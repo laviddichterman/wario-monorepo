@@ -3,21 +3,42 @@ import React, { useEffect, useState } from 'react';
 import { type TextFieldProps, type TextFieldVariants } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 
-import { type DistributiveOmit, type InputNumberValue, type NumberTransformPropsAllowEmpty, type NumberTransformPropsNoEmpty, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
+import {
+  type DistributiveOmit,
+  type InputNumberValue,
+  type NumberTransformPropsAllowEmpty,
+  type NumberTransformPropsNoEmpty,
+  transformValueOnBlur,
+  transformValueOnChange,
+} from '@wcp/wario-shared';
 
 import { normalizeSlotProps } from '@/common/SxSpreadUtils';
 
-export type CheckedNumericInputProps<Variant extends TextFieldVariants = TextFieldVariants> = DistributiveOmit<TextFieldProps<Variant>, 'value' | 'onChange' | 'onBlur'> & {
+export type CheckedNumericInputProps<Variant extends TextFieldVariants = TextFieldVariants> = DistributiveOmit<
+  TextFieldProps<Variant>,
+  'value' | 'onChange' | 'onBlur'
+> & {
   value: InputNumberValue;
   step?: number;
   inputMode: 'numeric' | 'decimal' | 'text';
   pattern?: string;
-} & ({
-  onChange: (value: number | "") => void;
-  numberProps: NumberTransformPropsAllowEmpty;
-} | { onChange: (value: number) => void; numberProps: NumberTransformPropsNoEmpty; });
+} & (
+    | {
+        onChange: (value: number | '') => void;
+        numberProps: NumberTransformPropsAllowEmpty;
+      }
+    | { onChange: (value: number) => void; numberProps: NumberTransformPropsNoEmpty }
+  );
 
-export function CheckedNumericInput<Variant extends TextFieldVariants = TextFieldVariants>({ onChange, step, pattern, inputMode, value, numberProps, ...other }: CheckedNumericInputProps<Variant>) {
+export function CheckedNumericInput<Variant extends TextFieldVariants = TextFieldVariants>({
+  onChange,
+  step,
+  pattern,
+  inputMode,
+  value,
+  numberProps,
+  ...other
+}: CheckedNumericInputProps<Variant>) {
   const [inputText, setInputText] = useState(numberProps.formatFunction(value));
   const [dirty, setDirty] = useState(false);
   // Keep local input text in sync with value prop changes
@@ -46,12 +67,17 @@ export function CheckedNumericInput<Variant extends TextFieldVariants = TextFiel
         onChange(new_val.value);
         setDirty(false);
       }}
-
       slotProps={{
         ...other.slotProps,
         input: { ...normalizeSlotProps(other.slotProps?.input), pattern: pattern, inputMode },
-        htmlInput: { step: step, pattern: pattern, min: numberProps.min, max: numberProps.max, ...normalizeSlotProps(other.slotProps?.htmlInput) }
+        htmlInput: {
+          step: step,
+          pattern: pattern,
+          min: numberProps.min,
+          max: numberProps.max,
+          ...normalizeSlotProps(other.slotProps?.htmlInput),
+        },
       }}
     />
-  )
+  );
 }

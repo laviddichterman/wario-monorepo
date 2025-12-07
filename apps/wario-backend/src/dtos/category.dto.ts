@@ -3,7 +3,7 @@ import { IsBoolean, IsOptional } from 'class-validator';
 
 import { ICategoryDto } from '@wcp/wario-shared';
 
-export class UpdateCategoryDto extends PartialType(ICategoryDto) { }
+export class UpdateCategoryDto extends PartialType(ICategoryDto) {}
 
 export class DeleteCategoryDto {
   @IsOptional()

@@ -85,9 +85,7 @@ export class DataProviderService implements OnModuleInit {
       this.logger.debug({ keyValueStore: found_key_value_store }, 'Found KeyValueSchema in database');
       for (const setting of found_key_value_store.settings) {
         if (Object.hasOwn(this.keyvalueconfig, setting.key)) {
-          this.logger.error(
-            `Clobbering key: ${setting.key} containing ${this.keyvalueconfig[setting.key]}`,
-          );
+          this.logger.error(`Clobbering key: ${setting.key} containing ${this.keyvalueconfig[setting.key]}`);
         }
         this.keyvalueconfig[setting.key] = setting.value;
       }

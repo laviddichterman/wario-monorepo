@@ -14,8 +14,8 @@ export function MoneyInput({ numberProps, ...props }: MoneyInputProps) {
       numberProps={{
         formatFunction: (v) => formatDecimal(v, 2),
         parseFunction: parseDecimal,
-        ...numberProps
+        ...numberProps,
       }}
     />
-  )
+  );
 }

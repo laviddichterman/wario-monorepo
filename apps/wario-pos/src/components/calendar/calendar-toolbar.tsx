@@ -42,7 +42,7 @@ export function CalendarToolbar({
   onChangeView,
   onOpenFilters,
   onDateNavigation,
-  filterProps
+  filterProps,
 }: CalendarToolbarProps) {
   const mobileActions = usePopover();
 
@@ -54,10 +54,7 @@ export function CalendarToolbar({
       size="small"
       aria-label="calendar view"
       value={view}
-      onChange={(
-        _event: React.MouseEvent<HTMLElement>,
-        newAlignment: UseCalendarReturn['view'] | null
-      ) => {
+      onChange={(_event: React.MouseEvent<HTMLElement>, newAlignment: UseCalendarReturn['view'] | null) => {
         if (newAlignment !== null) {
           onChangeView?.(newAlignment);
         }
@@ -136,16 +133,8 @@ export function CalendarToolbar({
 
   const renderTodayFiltersAndResults = () => (
     <Box sx={{ gap: 1, display: 'flex', alignItems: 'center' }}>
-      <CalendarFiltersResult {...filterProps}
-
-        sx={{ mb: { xs: 3, md: 5 } }}
-      />
-      <Button
-        size="small"
-        color="error"
-        variant="contained"
-        onClick={() => onDateNavigation?.('today')}
-      >
+      <CalendarFiltersResult {...filterProps} sx={{ mb: { xs: 3, md: 5 } }} />
+      <Button size="small" color="error" variant="contained" onClick={() => onDateNavigation?.('today')}>
         Today
       </Button>
 
@@ -172,9 +161,7 @@ export function CalendarToolbar({
   );
 
   return (
-    <Box
-      sx={{ pr: 2, pl: 2.5, py: 2.5, display: 'flex', alignItems: 'center', position: 'relative' }}
-    >
+    <Box sx={{ pr: 2, pl: 2.5, py: 2.5, display: 'flex', alignItems: 'center', position: 'relative' }}>
       {renderDesktopMenuItems()}
       {renderMobileMenuItems()}
       {renderDateNavigation()}

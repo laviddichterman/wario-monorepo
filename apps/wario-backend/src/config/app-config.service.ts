@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
  */
 @Injectable()
 export class AppConfigService {
-  constructor(private configService: ConfigService) { }
+  constructor(private configService: ConfigService) {}
 
   // ============ Database Configuration ============
 
@@ -72,7 +72,7 @@ export class AppConfigService {
   get corsOrigins(): (string | RegExp)[] {
     const envOrigins = this.configService.get<string>('CORS_ORIGINS');
     if (envOrigins) {
-      return envOrigins.split(',').map(origin => origin.trim());
+      return envOrigins.split(',').map((origin) => origin.trim());
     }
 
     // Default development origins

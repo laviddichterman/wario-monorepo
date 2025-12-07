@@ -1,4 +1,5 @@
 {
+  "prettier.requireConfig": true,
   "typescript.preferences.autoImportSpecifierExcludeRegexes": [
     "^@mui/[^/]+$"
   ],
@@ -19,7 +20,7 @@
     "jsonc"
   ],
   "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+    "editor.defaultFormatter": "vscode.json-language-features",
   },
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -29,5 +30,12 @@
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+  "javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+  "files.trimFinalNewlines": false,
+  "[json]": {
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
   }
 }

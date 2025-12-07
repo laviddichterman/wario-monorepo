@@ -1,22 +1,29 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState } from 'react';
 
-import { AddBox, DeleteOutline, Edit } from "@mui/icons-material";
+import { AddBox, DeleteOutline, Edit } from '@mui/icons-material';
 import { IconButton, Tooltip } from '@mui/material';
-import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams } from "@mui/x-data-grid-premium";
+import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams } from '@mui/x-data-grid-premium';
 
-import { WFunctional } from "@wcp/wario-shared";
-import { type ICatalogSelectors } from "@wcp/wario-shared";
-import { DialogContainer } from "@wcp/wario-ux-shared/containers";
-import { useCatalogSelectors, useProductInstanceFunctionById, useProductInstanceFunctionIds, useValueFromProductInstanceFunctionById } from "@wcp/wario-ux-shared/query";
+import { WFunctional } from '@wcp/wario-shared';
+import { type ICatalogSelectors } from '@wcp/wario-shared';
+import { DialogContainer } from '@wcp/wario-ux-shared/containers';
+import {
+  useCatalogSelectors,
+  useProductInstanceFunctionById,
+  useProductInstanceFunctionIds,
+  useValueFromProductInstanceFunctionById,
+} from '@wcp/wario-ux-shared/query';
 
-import { TableWrapperComponent } from "../../table_wrapper.component";
+import { TableWrapperComponent } from '../../table_wrapper.component';
 
-interface RowType { id: string };
+interface RowType {
+  id: string;
+}
 
 const FunctionName = (params: GridRenderCellParams<RowType>) => {
   const pifName = useValueFromProductInstanceFunctionById(params.row.id, 'name');
-  return <>{pifName ?? ""}</>;
-}
+  return <>{pifName ?? ''}</>;
+};
 
 const FunctionAsString = (params: GridRenderCellParams<RowType>) => {
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
@@ -25,13 +32,11 @@ const FunctionAsString = (params: GridRenderCellParams<RowType>) => {
     return <>CORRUPT DATA</>;
   }
   return <>{WFunctional.AbstractExpressionStatementToString(pif.expression, catalogSelectors)}</>;
-}
-
-
+};
 
 const ProductInstanceFunctionTableContainer = () => {
   const productInstanceFunctions = useProductInstanceFunctionIds();
-  const pifRows = useMemo(() => productInstanceFunctions.map(id => ({ id })), [productInstanceFunctions]);
+  const pifRows = useMemo(() => productInstanceFunctions.map((id) => ({ id })), [productInstanceFunctions]);
   const [isProductInstanceFunctionAddOpen, setIsProductInstanceFunctionAddOpen] = useState(false);
   const [isProductInstanceFunctionDeleteOpen, setIsProductInstanceFunctionDeleteOpen] = useState(false);
   const [isProductInstanceFunctionEditOpen, setIsProductInstanceFunctionEditOpen] = useState(false);
@@ -49,81 +54,115 @@ const ProductInstanceFunctionTableContainer = () => {
   return (
     <>
       <TableWrapperComponent
-        sx={{ minWidth: "750px" }}
+        sx={{ minWidth: '750px' }}
         disableRowSelectionOnClick
         disableToolbar={false}
         title="Product Instance Functions"
-        toolbarActions={[{
-          size: 1,
-          elt:
-            <Tooltip key="AddNew" title="Add Product Function"><IconButton onClick={() => { setIsProductInstanceFunctionAddOpen(true); }}><AddBox /></IconButton></Tooltip>
-        }]}
+        toolbarActions={[
+          {
+            size: 1,
+            elt: (
+              <Tooltip key="AddNew" title="Add Product Function">
+                <IconButton
+                  onClick={() => {
+                    setIsProductInstanceFunctionAddOpen(true);
+                  }}
+                >
+                  <AddBox />
+                </IconButton>
+              </Tooltip>
+            ),
+          },
+        ]}
         rows={pifRows}
         getRowId={(row: RowType) => row.id}
         columns={[
           {
-            headerName: "Actions",
+            headerName: 'Actions',
             field: 'actions',
             type: 'actions',
             getActions: (params: GridRowParams<RowType>) => {
               return [
                 <GridActionsCellItem
-                  icon={<Tooltip title="Edit Product Function"><Edit /></Tooltip>}
+                  icon={
+                    <Tooltip title="Edit Product Function">
+                      <Edit />
+                    </Tooltip>
+                  }
                   label="Edit Product Function"
                   onClick={editProductFunction(params.row.id)}
                   key="EditPF"
                 />,
                 <GridActionsCellItem
-                  icon={<Tooltip title="Delete Product Function"><DeleteOutline /></Tooltip>}
+                  icon={
+                    <Tooltip title="Delete Product Function">
+                      <DeleteOutline />
+                    </Tooltip>
+                  }
                   label="Delete Product Function"
                   onClick={deleteProductFunction(params.row.id)}
                   key="DelPF"
-                />
-              ]
-            }
+                />,
+              ];
+            },
           },
-          { headerName: "Name", field: "name", flex: 1, renderCell: (params) => <FunctionName {...params} /> },
-          { headerName: "Function", field: "expression", renderCell: (params) => <FunctionAsString {...params} />, flex: 3 },
+          { headerName: 'Name', field: 'name', flex: 1, renderCell: (params) => <FunctionName {...params} /> },
+          {
+            headerName: 'Function',
+            field: 'expression',
+            renderCell: (params) => <FunctionAsString {...params} />,
+            flex: 3,
+          },
         ]}
       />
       <DialogContainer
-        maxWidth={"xl"}
-        title={"Add Product Instance Function"}
-        onClose={() => { setIsProductInstanceFunctionAddOpen(false); }}
+        maxWidth={'xl'}
+        title={'Add Product Instance Function'}
+        onClose={() => {
+          setIsProductInstanceFunctionAddOpen(false);
+        }}
         open={isProductInstanceFunctionAddOpen}
         innerComponent={
           <ProductInstanceFunctionAddContainer
-            onCloseCallback={() => { setIsProductInstanceFunctionAddOpen(false); }}
+            onCloseCallback={() => {
+              setIsProductInstanceFunctionAddOpen(false);
+            }}
           />
         }
       />
       <DialogContainer
-        maxWidth={"xl"}
-        title={"Edit Product Instance Function"}
-        onClose={() => { setIsProductInstanceFunctionEditOpen(false); }}
+        maxWidth={'xl'}
+        title={'Edit Product Instance Function'}
+        onClose={() => {
+          setIsProductInstanceFunctionEditOpen(false);
+        }}
         open={isProductInstanceFunctionEditOpen}
         innerComponent={
-          pifIdToEdit !== null &&
-          <ProductInstanceFunctionEditContainer
-            onCloseCallback={() => { setIsProductInstanceFunctionEditOpen(false); }}
-            pifId={pifIdToEdit}
-          />
+          pifIdToEdit !== null && (
+            <ProductInstanceFunctionEditContainer
+              onCloseCallback={() => {
+                setIsProductInstanceFunctionEditOpen(false);
+              }}
+              pifId={pifIdToEdit}
+            />
+          )
         }
       />
       <DialogContainer
-        title={"Delete Product Instance Function"}
+        title={'Delete Product Instance Function'}
         onClose={() => {
           setIsProductInstanceFunctionDeleteOpen(false);
         }}
         open={isProductInstanceFunctionDeleteOpen}
         innerComponent={
-          pifIdToEdit !== null &&
-          <ProductInstanceFunctionDeleteContainer
-            onCloseCallback={() => {
-              setIsProductInstanceFunctionDeleteOpen(false);
-            }}
-            pifId={pifIdToEdit}
-          />
+          pifIdToEdit !== null && (
+            <ProductInstanceFunctionDeleteContainer
+              onCloseCallback={() => {
+                setIsProductInstanceFunctionDeleteOpen(false);
+              }}
+              pifId={pifIdToEdit}
+            />
+          )
         }
       />
     </>
@@ -132,7 +171,6 @@ const ProductInstanceFunctionTableContainer = () => {
 
 export default ProductInstanceFunctionTableContainer;
 
-const ProductInstanceFunctionDeleteContainer = React.lazy(() => import("./product_instance_function.delete.container"));
-const ProductInstanceFunctionEditContainer = React.lazy(() => import("./product_instance_function.edit.container"));
-const ProductInstanceFunctionAddContainer = React.lazy(() => import("./product_instance_function.add.container"));
-
+const ProductInstanceFunctionDeleteContainer = React.lazy(() => import('./product_instance_function.delete.container'));
+const ProductInstanceFunctionEditContainer = React.lazy(() => import('./product_instance_function.edit.container'));
+const ProductInstanceFunctionAddContainer = React.lazy(() => import('./product_instance_function.add.container'));

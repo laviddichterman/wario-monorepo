@@ -59,7 +59,7 @@ export function useServerTime(): TimeSyncState {
       const totalTicksBetweenLocalTime = currentLocalTime - prev.pageLoadTimeLocal;
       const computedTicksElapsedBetweenCalls = Math.max(
         TIME_POLLING_INTERVAL,
-        ticksBetweenLocalTimeThisAndPreviousCall
+        ticksBetweenLocalTimeThisAndPreviousCall,
       );
       const computedTicksSinceLoad = prev.roughTicksSinceLoad + computedTicksElapsedBetweenCalls;
       const ticks = Math.max(computedTicksSinceLoad, totalTicksBetweenLocalTime);
@@ -98,13 +98,13 @@ export function useServerTime(): TimeSyncState {
  * Hook for getting a date-fns adapter that uses server time instead of local time.
  * Consumes useServerTimeQuery internally and manages time sync via a ref,
  * so the adapter class is stable and doesn't cause rerenders when server time updates.
- * 
+ *
  * @returns Stable AdapterDateFns class that reads current server time on each date() call
- * 
+ *
  * Usage:
  * ```tsx
  * const DateAdapter = useDateFnsAdapter();
- * 
+ *
  * <LocalizationProvider dateAdapter={DateAdapter}>
  *   <DatePicker />
  * </LocalizationProvider>
@@ -118,9 +118,7 @@ export const useDateFnsAdapter = () => {
 
   return useMemo(() => {
     return class ServerTimeAdapter extends AdapterDateFns {
-      public date = <T extends string | null | undefined>(
-        value?: T
-      ): DateBuilderReturnType<T> => {
+      public date = <T extends string | null | undefined>(value?: T): DateBuilderReturnType<T> => {
         type R = DateBuilderReturnType<T>;
         if (typeof value === 'undefined') {
           // Read from ref - always gets latest value without causing rerender
@@ -137,4 +135,3 @@ export const useDateFnsAdapter = () => {
 };
 
 export const useCurrentTime = () => useServerTime().currentTime;
-

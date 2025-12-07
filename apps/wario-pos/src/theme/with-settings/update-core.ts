@@ -21,16 +21,8 @@ import { primaryColorPresets } from './color-presets';
  * @returns Updated theme options with applied settings.
  */
 
-export function applySettingsToTheme(
-  theme: ThemeOptions,
-  settingsState?: SettingsState
-): ThemeOptions {
-  const {
-    direction,
-    fontFamily,
-    contrast = 'default',
-    primaryColor = 'default',
-  } = settingsState ?? {};
+export function applySettingsToTheme(theme: ThemeOptions, settingsState?: SettingsState): ThemeOptions {
+  const { direction, fontFamily, contrast = 'default', primaryColor = 'default' } = settingsState ?? {};
 
   const isDefaultContrast = contrast === 'default';
   const isDefaultPrimaryColor = primaryColor === 'default';

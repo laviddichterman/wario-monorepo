@@ -16,10 +16,7 @@ export const LocationsConsidering3pFlag = (
   squareLocationAlternate: string,
   squareLocation: string,
   squareLocation3p: string | undefined,
-): string[] => [
-    squareLocationAlternate,
-    ...(is3p && squareLocation3p ? [squareLocation3p] : [squareLocation]),
-  ];
+): string[] => [squareLocationAlternate, ...(is3p && squareLocation3p ? [squareLocation3p] : [squareLocation])];
 
 export type UpdateProductInstanceProps = {
   piid: string;
@@ -57,4 +54,3 @@ export function isUpdateProductInstance(
 ): instance is UpdateIProductUpdateIProductInstance {
   return 'id' in instance;
 }
-

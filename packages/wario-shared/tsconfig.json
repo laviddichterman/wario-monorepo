@@ -2,22 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "allowJs": true,
-    "lib": [
-      "ESNext",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "declaration": true,
     "outDir": "dist",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": [
-    "src",
-    "tests",
-    "testing",
-    "jest.config.cjs",
-    "jest-environment.cjs",
-    "tsup.config.ts"
-  ]
+  "include": ["src", "tests", "testing", "jest.config.cjs", "jest-environment.cjs", "tsup.config.ts"]
 }

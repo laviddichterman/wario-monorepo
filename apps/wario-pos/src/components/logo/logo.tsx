@@ -17,15 +17,7 @@ export type LogoProps = LinkProps & {
   disabled?: boolean;
 };
 
-export function Logo({
-  sx,
-  disabled,
-  className,
-  href = '/',
-  ...other
-}: LogoProps) {
-
-
+export function Logo({ sx, disabled, className, href = '/', ...other }: LogoProps) {
   return (
     <LogoRoot
       component={RouterLink}

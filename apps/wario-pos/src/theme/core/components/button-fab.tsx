@@ -107,8 +107,7 @@ const outlinedVariants = [
   },
   {
     props: (props) =>
-      isVariant(VARIANTS.outlined, props.variant) &&
-      (props.color === 'default' || props.color === 'inherit'),
+      isVariant(VARIANTS.outlined, props.variant) && (props.color === 'default' || props.color === 'inherit'),
     style: ({ theme }) => ({
       borderColor: theme.vars.palette.shared.buttonOutlined,
       '&:hover': {
@@ -196,13 +195,7 @@ const MuiFab: Components<Theme>['MuiFab'] = {
   styleOverrides: {
     root: {
       '&:hover': { boxShadow: 'none' },
-      variants: [
-        ...filledVariants,
-        ...outlinedVariants,
-        ...softVariants,
-        ...sizeVariants,
-        ...disabledVariants,
-      ],
+      variants: [...filledVariants, ...outlinedVariants, ...softVariants, ...sizeVariants, ...disabledVariants],
     },
   },
 };

@@ -1,7 +1,3 @@
- 
- 
- 
- 
 /**
  * SquareService Unit Tests
  *

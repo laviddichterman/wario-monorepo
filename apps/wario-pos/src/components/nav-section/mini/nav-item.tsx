@@ -110,17 +110,12 @@ type StyledState = Pick<NavItemProps, 'open' | 'active' | 'disabled'> & {
   variant: 'rootItem' | 'subItem';
 };
 
-const shouldForwardProp = (prop: string) =>
-  !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
+const shouldForwardProp = (prop: string) => !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
 
 /**
  * @slot root
  */
-const ItemRoot = styled(ButtonBase, { shouldForwardProp })<StyledState>(({
-  active,
-  open,
-  theme,
-}) => {
+const ItemRoot = styled(ButtonBase, { shouldForwardProp })<StyledState>(({ active, open, theme }) => {
   const rootItemStyles: CSSObject = {
     textAlign: 'center',
     flexDirection: 'column',

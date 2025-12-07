@@ -1,4 +1,4 @@
-import { type PinoLogger } from "nestjs-pino";
+import { type PinoLogger } from 'nestjs-pino';
 
 export async function ExponentialBackoffWaitFunction(retry: number, max_retry: number, logger: PinoLogger) {
   const waittime = 2 ** (retry + 1) * 10 + 1000 * Math.random();

@@ -1,5 +1,14 @@
-
-import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
 import { CreateSeatingResourceDto, UpdateSeatingResourceDto } from 'src/dtos/seating-resource.dto';
 
@@ -11,7 +20,7 @@ export class SeatingResourceController {
   constructor(
     private readonly dataProvider: DataProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @HttpCode(201)

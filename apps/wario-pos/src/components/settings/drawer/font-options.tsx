@@ -20,14 +20,7 @@ export type FontFamilyOptionsProps = BoxProps & {
   onChangeOption: (newOption: string) => void;
 };
 
-export function FontFamilyOptions({
-  sx,
-  icon,
-  value,
-  options,
-  onChangeOption,
-  ...other
-}: FontFamilyOptionsProps) {
+export function FontFamilyOptions({ sx, icon, value, options, onChangeOption, ...other }: FontFamilyOptionsProps) {
   return (
     <Box
       sx={[
@@ -47,7 +40,9 @@ export function FontFamilyOptions({
           <OptionButton
             key={option}
             selected={selected}
-            onClick={() => { onChangeOption(option); }}
+            onClick={() => {
+              onChangeOption(option);
+            }}
             sx={(theme) => ({
               py: 2,
               gap: 0.75,
@@ -73,13 +68,7 @@ export type FontSizeOptionsProps = SliderProps & {
   onChangeOption: (newOption: number) => void;
 };
 
-export function FontSizeOptions({
-  sx,
-  value,
-  options,
-  onChangeOption,
-  ...other
-}: FontSizeOptionsProps) {
+export function FontSizeOptions({ sx, value, options, onChangeOption, ...other }: FontSizeOptionsProps) {
   return (
     <Slider
       marks
@@ -91,7 +80,9 @@ export function FontSizeOptions({
       value={value}
       min={options[0]}
       max={options[1]}
-      onChange={(_event: Event, newOption: number | number[]) => { onChangeOption(newOption as number); }}
+      onChange={(_event: Event, newOption: number | number[]) => {
+        onChangeOption(newOption as number);
+      }}
       sx={[
         (theme) => ({
           [`& .${sliderClasses.rail}`]: {

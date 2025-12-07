@@ -104,14 +104,11 @@ export const CalendarRoot = styled('div')(({ theme }) => {
         borderRadius: 'inherit',
         border: `solid 1px ${varAlpha('currentColor', 0.16)}`,
         transition: theme.transitions.create(['background-color']),
-        backgroundColor: varAlpha(
-          theme.vars.palette.common.whiteChannel,
-          'calc(1 - var(--custom-event-bg-opacity))'
-        ),
+        backgroundColor: varAlpha(theme.vars.palette.common.whiteChannel, 'calc(1 - var(--custom-event-bg-opacity))'),
         '&:hover': {
           backgroundColor: varAlpha(
             theme.vars.palette.common.whiteChannel,
-            'calc(1 - var(--custom-event-bg-opacity) * 1.5)'
+            'calc(1 - var(--custom-event-bg-opacity) * 1.5)',
           ),
         },
       },

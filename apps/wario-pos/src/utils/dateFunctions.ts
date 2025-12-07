@@ -288,15 +288,10 @@ export type DurationProps = {
   milliseconds?: number;
 };
 
-export function fAdd(currentTime: Date | number, {
-  years = 0,
-  months = 0,
-  days = 0,
-  hours = 0,
-  minutes = 0,
-  seconds = 0,
-  milliseconds = 0,
-}: DurationProps): string {
+export function fAdd(
+  currentTime: Date | number,
+  { years = 0, months = 0, days = 0, hours = 0, minutes = 0, seconds = 0, milliseconds = 0 }: DurationProps,
+): string {
   const result = add(currentTime, {
     years,
     months,
@@ -322,15 +317,10 @@ export function fAdd(currentTime: Date | number, {
  * @example
  * fSub({ months: 1 }) // '2025-07-05T12:34:56+00:00'
  */
-export function fSub(currentTime: Date | number, {
-  years = 0,
-  months = 0,
-  days = 0,
-  hours = 0,
-  minutes = 0,
-  seconds = 0,
-  milliseconds = 0,
-}: DurationProps): string {
+export function fSub(
+  currentTime: Date | number,
+  { years = 0, months = 0, days = 0, hours = 0, minutes = 0, seconds = 0, milliseconds = 0 }: DurationProps,
+): string {
   const result = sub(currentTime, {
     years,
     months,

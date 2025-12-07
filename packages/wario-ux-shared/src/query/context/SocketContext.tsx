@@ -34,12 +34,7 @@ interface SocketProviderProps {
  * Socket.io provider that manages WebSocket connection and syncs with TanStack Query
  * Replaces Redux SocketIoMiddleware with modern React Query integration
  */
-export function SocketProvider({
-  hostAPI,
-  namespace,
-  children,
-  autoConnect = true,
-}: SocketProviderProps) {
+export function SocketProvider({ hostAPI, namespace, children, autoConnect = true }: SocketProviderProps) {
   const [status, setStatus] = useState<SocketStatus>('NONE');
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();

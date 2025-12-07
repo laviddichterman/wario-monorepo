@@ -27,16 +27,7 @@ type NavMobileProps = NavSectionProps & {
   };
 };
 
-export function NavMobile({
-  sx,
-  data,
-  open,
-  slots,
-  onClose,
-  className,
-  checkPermissions,
-  ...other
-}: NavMobileProps) {
+export function NavMobile({ sx, data, open, slots, onClose, className, checkPermissions, ...other }: NavMobileProps) {
   const pathname = usePathname();
 
   useEffect(() => {
@@ -59,7 +50,7 @@ export function NavMobile({
               bgcolor: 'var(--layout-nav-bg)',
               width: 'var(--layout-nav-mobile-width)',
             },
-            ...spreadSx(sx)
+            ...spreadSx(sx),
           ],
         },
       }}

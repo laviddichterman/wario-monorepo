@@ -1,12 +1,12 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useSnackbar } from 'notistack';
+import { useEffect, useState } from 'react';
 
-import { type KeyValue } from "@wcp/wario-shared";
+import { type KeyValue } from '@wcp/wario-shared';
 
-import { HOST_API } from "@/config";
+import { HOST_API } from '@/config';
 
-import KeyValuesContainer from "./keyvalues.container";
+import KeyValuesContainer from './keyvalues.container';
 
 export const KeyValuesComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -17,16 +17,16 @@ export const KeyValuesComponent = () => {
 
   useEffect(() => {
     const getToken = async () => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: "read:settings" } });
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:settings' } });
       const response = await fetch(`${HOST_API}/api/v1/config/kvstore`, {
-        method: "GET",
+        method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        }
+          'Content-Type': 'application/json',
+        },
       });
-      setKEYVALUES(await response.json() as Record<string, string>);
-    }
+      setKEYVALUES((await response.json()) as Record<string, string>);
+    };
     if (!isLoading && isAuthenticated) {
       void getToken();
     }
@@ -39,32 +39,37 @@ export const KeyValuesComponent = () => {
     if (!isProcessing) {
       setIsProcessing(true);
       try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:settings" } });
+        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:settings' } });
         const response = await fetch(`${HOST_API}/api/v1/config/kvstore`, {
-          method: "POST",
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify(values.reduce((acc: Record<string, string>, x) => ({ ...acc, [x.key]: x.value }), {}))
+          body: JSON.stringify(values.reduce((acc: Record<string, string>, x) => ({ ...acc, [x.key]: x.value }), {})),
         });
         if (response.status === 201) {
-          enqueueSnackbar(`Updated Key Value Store.`)
-          setKEYVALUES(await response.json() as Record<string, string>);
+          enqueueSnackbar(`Updated Key Value Store.`);
+          setKEYVALUES((await response.json()) as Record<string, string>);
         }
         setIsProcessing(false);
       } catch (error) {
-        enqueueSnackbar(`Unable to update Key Value Store. Got error: ${JSON.stringify(error)}.`, { variant: "error" });
+        enqueueSnackbar(`Unable to update Key Value Store. Got error: ${JSON.stringify(error)}.`, { variant: 'error' });
         setIsProcessing(false);
       }
     }
   };
-  return KEYVALUES !== null ? <KeyValuesContainer
-    canAdd
-    canEdit
-    canRemove
-    isProcessing={isProcessing}
-    title="Key Value Store"
-    onSubmit={(values) => void onSubmit(values)}
-    values={Object.entries(KEYVALUES).map(([key, value]) => ({ key, value }))} /> : <></>
+  return KEYVALUES !== null ? (
+    <KeyValuesContainer
+      canAdd
+      canEdit
+      canRemove
+      isProcessing={isProcessing}
+      title="Key Value Store"
+      onSubmit={(values) => void onSubmit(values)}
+      values={Object.entries(KEYVALUES).map(([key, value]) => ({ key, value }))}
+    />
+  ) : (
+    <></>
+  );
 };

@@ -25,14 +25,7 @@ type RHFCheckboxProps = Omit<FormControlLabelProps, 'control' | 'name'> & {
   };
 };
 
-export function RHFCheckbox({
-  sx,
-  name,
-  label,
-  slotProps,
-  helperText,
-  ...other
-}: RHFCheckboxProps) {
+export function RHFCheckbox({ sx, name, label, slotProps, helperText, ...other }: RHFCheckboxProps) {
   const { control } = useFormContext();
 
   return (
@@ -61,11 +54,7 @@ export function RHFCheckbox({
             sx={[{ mx: 0 }, ...spreadSx(sx)]}
             {...other}
           />
-          <HelperText
-            {...slotProps?.helperText}
-            errorMessage={error?.message}
-            helperText={helperText}
-          />
+          <HelperText {...slotProps?.helperText} errorMessage={error?.message} helperText={helperText} />
         </Box>
       )}
     />
@@ -98,8 +87,6 @@ export function RHFCheckbox({
 //   );
 // }
 
-
-
 // ----------------------------------------------------------------------
 
 type RHFMultiCheckboxProps = FormGroupProps & {
@@ -115,20 +102,11 @@ type RHFMultiCheckboxProps = FormGroupProps & {
   };
 };
 
-export function RHFMultiCheckbox({
-  name,
-  label,
-  options,
-  slotProps,
-  helperText,
-  ...other
-}: RHFMultiCheckboxProps) {
+export function RHFMultiCheckbox({ name, label, options, slotProps, helperText, ...other }: RHFMultiCheckboxProps) {
   const { control } = useFormContext();
 
   const getSelected = (selectedItems: string[], item: string) =>
-    selectedItems.includes(item)
-      ? selectedItems.filter((value) => value !== item)
-      : [...selectedItems, item];
+    selectedItems.includes(item) ? selectedItems.filter((value) => value !== item) : [...selectedItems, item];
 
   return (
     <Controller
@@ -140,10 +118,7 @@ export function RHFMultiCheckbox({
             <FormLabel
               component="legend"
               {...slotProps?.formLabel}
-              sx={[
-                { mb: 1, typography: 'body2' },
-                ...spreadSx(slotProps?.formLabel?.sx)
-              ]}
+              sx={[{ mb: 1, typography: 'body2' }, ...spreadSx(slotProps?.formLabel?.sx)]}
             >
               {label}
             </FormLabel>
@@ -157,8 +132,10 @@ export function RHFMultiCheckbox({
                   <Checkbox
                     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     checked={field.value.includes(option.value)}
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-                    onChange={() => { field.onChange(getSelected(field.value, option.value)); }}
+                    onChange={() => {
+                      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+                      field.onChange(getSelected(field.value, option.value));
+                    }}
                     {...slotProps?.checkbox}
                     slotProps={{
                       ...slotProps?.checkbox?.slotProps,
@@ -176,18 +153,12 @@ export function RHFMultiCheckbox({
             ))}
           </FormGroup>
 
-          <HelperText
-            {...slotProps?.helperText}
-            disableGutters
-            errorMessage={error?.message}
-            helperText={helperText}
-          />
+          <HelperText {...slotProps?.helperText} disableGutters errorMessage={error?.message} helperText={helperText} />
         </FormControl>
       )}
     />
   );
 }
-
 
 // interface RHFMultiCheckboxProps extends Omit<FormControlLabelProps, 'disabled' | 'name' | 'control' | 'label'> {
 //   name: string;

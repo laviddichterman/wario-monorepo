@@ -59,8 +59,6 @@ export function NavVertical({
 
   const renderNavMini = () => (
     <>
-
-
       <NavSectionMini
         data={data}
         cssVars={cssVars}
@@ -107,22 +105,20 @@ export function NavVertical({
 
 const NavRoot = styled('div', {
   shouldForwardProp: (prop: string) => !['isNavMini', 'layoutQuery', 'sx'].includes(prop),
-})<Pick<NavVerticalProps, 'isNavMini' | 'layoutQuery'>>(
-  ({ isNavMini, layoutQuery = 'md', theme }) => ({
-    top: 0,
-    left: 0,
-    height: '100%',
-    display: 'none',
-    position: 'fixed',
-    flexDirection: 'column',
-    zIndex: 'var(--layout-nav-zIndex)',
-    backgroundColor: 'var(--layout-nav-bg)',
-    width: isNavMini ? 'var(--layout-nav-mini-width)' : 'var(--layout-nav-vertical-width)',
-    borderRight: `1px solid var(--layout-nav-border-color, ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)})`,
-    transition: theme.transitions.create(['width'], {
-      easing: 'var(--layout-transition-easing)',
-      duration: 'var(--layout-transition-duration)',
-    }),
-    [theme.breakpoints.up(layoutQuery)]: { display: 'flex' },
-  })
-);
+})<Pick<NavVerticalProps, 'isNavMini' | 'layoutQuery'>>(({ isNavMini, layoutQuery = 'md', theme }) => ({
+  top: 0,
+  left: 0,
+  height: '100%',
+  display: 'none',
+  position: 'fixed',
+  flexDirection: 'column',
+  zIndex: 'var(--layout-nav-zIndex)',
+  backgroundColor: 'var(--layout-nav-bg)',
+  width: isNavMini ? 'var(--layout-nav-mini-width)' : 'var(--layout-nav-vertical-width)',
+  borderRight: `1px solid var(--layout-nav-border-color, ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)})`,
+  transition: theme.transitions.create(['width'], {
+    easing: 'var(--layout-transition-easing)',
+    duration: 'var(--layout-transition-duration)',
+  }),
+  [theme.breakpoints.up(layoutQuery)]: { display: 'flex' },
+}));

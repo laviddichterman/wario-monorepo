@@ -1,11 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 
-import type {
-  DeliveryAddressValidateRequest,
-  DeliveryAddressValidateResponse,
-  DeliveryInfo,
-} from '@wcp/wario-shared';
+import type { DeliveryAddressValidateRequest, DeliveryAddressValidateResponse, DeliveryInfo } from '@wcp/wario-shared';
 
 import { handleAxiosError } from '@/common/axios';
 
@@ -17,16 +13,16 @@ export interface ValidateDeliveryAddressMutationOptions {
 
 /**
  * Creates a mutation hook for validating delivery addresses
- * 
+ *
  * @param options - The options for the mutation hook
  * @param options.axiosInstance - The axios instance to use for the mutation
- * 
+ *
  * @returns A mutation hook for validating delivery addresses
- * 
+ *
  * @example
  * ```tsx
  * const validateAddress = useValidateDeliveryAddressMutation({ axiosInstance });
- * 
+ *
  * const handleValidate = () => {
  *   validateAddress.mutate(formData, {
  *     onSuccess: (data) => {
@@ -38,9 +34,7 @@ export interface ValidateDeliveryAddressMutationOptions {
  * };
  * ```
  */
-export function useValidateDeliveryAddressMutation({
-  axiosInstance,
-}: ValidateDeliveryAddressMutationOptions) {
+export function useValidateDeliveryAddressMutation({ axiosInstance }: ValidateDeliveryAddressMutationOptions) {
   return useMutation<DeliveryAddressValidateResponse, Error, DeliveryInfoFormData>({
     mutationKey: ['deliveryAddress', 'validate'],
     mutationFn: async (formData: DeliveryInfoFormData) => {
@@ -53,10 +47,9 @@ export function useValidateDeliveryAddressMutation({
           zipcode: formData.zipcode,
         };
 
-        const response: AxiosResponse<DeliveryAddressValidateResponse> = await axiosInstance.get(
-          '/api/v1/addresses',
-          { params: request }
-        );
+        const response: AxiosResponse<DeliveryAddressValidateResponse> = await axiosInstance.get('/api/v1/addresses', {
+          params: request,
+        });
         return response.data;
       } catch (error) {
         throw handleAxiosError(error, (err) => new Error(JSON.stringify(err)));

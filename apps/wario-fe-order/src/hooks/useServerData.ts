@@ -1,7 +1,7 @@
 /**
  * Hooks for accessing server data via TanStack Query
  * These replace Redux selectors that accessed s.ws.*
- * 
+ *
  * Many hooks are re-exported from @wcp/wario-ux-shared/query
  * App-specific hooks that combine server data with local state are defined here
  */
@@ -10,10 +10,7 @@ import { useMemo } from 'react';
 
 import type { MetadataModifierMap } from '@wcp/wario-shared';
 import { IsModifierTypeVisible, WDateUtils } from '@wcp/wario-shared';
-import {
-  useCatalogSelectors,
-  useFulfillmentOperatingHours
-} from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useFulfillmentOperatingHours } from '@wcp/wario-ux-shared/query';
 
 /**
  * Hook to check if a fulfillment has operating hours
@@ -41,9 +38,10 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
       const modifierEntry = catalogSelectors.modifierEntry(k);
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierEntry can be undefined at runtime
       if (!modifierEntry) return acc;
-      const omit_section_if_no_available_options = modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
+      const omit_section_if_no_available_options =
+        modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
       const hidden = modifierEntry.modifierType.displayFlags.hidden;
-      return (!hidden && (!omit_section_if_no_available_options || v.has_selectable)) ? { ...acc, [k]: v } : acc;
+      return !hidden && (!omit_section_if_no_available_options || v.has_selectable) ? { ...acc, [k]: v } : acc;
     }, {});
   }, [catalogSelectors, mMap]);
 }

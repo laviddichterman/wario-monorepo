@@ -1,11 +1,11 @@
 /**
  * This file contains types that are NOT derived from DTOs.
  * These include:
- * - Utility types and helpers  
+ * - Utility types and helpers
  * - Complex composed types
  * - Function-specific types
  * - Types that don't require validation
- * 
+ *
  * Types that ARE derived from DTOs belong in derived-types.ts
  */
 
@@ -86,7 +86,7 @@ export type ICatalogSelectors = ICatalogModifierSelectors & {
 };
 
 // =============================================================================
-// Product Metadata & Customization Types  
+// Product Metadata & Customization Types
 // =============================================================================
 
 export type OptionEnableState =
@@ -185,16 +185,14 @@ export interface ValidateLockAndSpendSuccess {
   success: true;
   entry: unknown[];
   index: number;
-};
+}
 
-export type ValidateAndLockCreditResponse =
-  | ValidateAndLockCreditResponseValid
-  | { readonly valid: false };
+export type ValidateAndLockCreditResponse = ValidateAndLockCreditResponseValid | { readonly valid: false };
 
 export interface SpendCreditResponseSuccess {
   readonly success: true;
   readonly balance: IMoney;
-};
+}
 export type SpendCreditResponse = SpendCreditResponseSuccess | { success: false };
 
 export interface PurchaseStoreCreditResponseSuccess {
@@ -204,10 +202,10 @@ export interface PurchaseStoreCreditResponseSuccess {
   amount: IMoney;
   last4: string;
   receiptUrl: string;
-};
+}
 
 // =============================================================================
-// Cart & Ordering Helper Types  
+// Cart & Ordering Helper Types
 // =============================================================================
 
 export interface ItemWithQuantity<T> {
@@ -231,14 +229,17 @@ export type UnresolvedPayment =
   | Omit<StoreCreditPayment, 'amount' | 'tipAmount'>
   | Omit<CreditPayment, 'amount' | 'tipAmount'>
   | (Omit<CashPayment, 'amount' | 'tipAmount' | 'payment'> & {
-    payment: Omit<CashPayment['payment'], 'change'>;
-  });
+      payment: Omit<CashPayment['payment'], 'change'>;
+    });
 
 export type UnresolvedDiscount =
-  | (Omit<OrderLineDiscountCodeAmount, "discount"> & { discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'> })
-  | (Omit<OrderManualPercentDiscount, "discount"> & { discount: Omit<OrderManualPercentDiscount['discount'], 'amount'> })
-  | (Omit<OrderManualAmountDiscount, "discount"> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
-
+  | (Omit<OrderLineDiscountCodeAmount, 'discount'> & {
+      discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'>;
+    })
+  | (Omit<OrderManualPercentDiscount, 'discount'> & {
+      discount: Omit<OrderManualPercentDiscount['discount'], 'amount'>;
+    })
+  | (Omit<OrderManualAmountDiscount, 'discount'> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
 
 // =============================================================================
 // API Response Wrappers

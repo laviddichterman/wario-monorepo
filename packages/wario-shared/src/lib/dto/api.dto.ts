@@ -1,11 +1,29 @@
-import { Type } from "class-transformer";
-import { IsArray, IsBoolean, IsEmail, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from "class-validator";
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
-import { IProductDisplayFlagsDto, IProductInstanceDisplayFlagsDto, IProductModifierDto, PrepTimingDto, ProductModifierEntryDto, UncommittedIProductInstanceDto } from "../..";
-import { PaymentMethod, StoreCreditType } from "../enums";
+import {
+  IProductDisplayFlagsDto,
+  IProductInstanceDisplayFlagsDto,
+  IProductModifierDto,
+  PrepTimingDto,
+  ProductModifierEntryDto,
+  UncommittedIProductInstanceDto,
+} from '../..';
+import { PaymentMethod, StoreCreditType } from '../enums';
 
-import { EncryptStringLockDto, IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from "./common.dto";
-import { UncommittedIProductDto } from "./product.dto";
+import { EncryptStringLockDto, IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from './common.dto';
+import { UncommittedIProductDto } from './product.dto';
 
 // =============================================================================
 // Store Credit Request DTOs
@@ -63,7 +81,6 @@ export class IssueStoreCreditRequestDto {
   // look at this method  s@IsDateString()
   expiration!: string | null;
 }
-
 
 /**
  * Base DTO for purchasing store credit.
@@ -123,7 +140,6 @@ export class PurchaseStoreCreditRequestNoEmailDto extends PurchaseStoreCreditReq
 export type PurchaseStoreCreditRequestDto =
   | PurchaseStoreCreditRequestSendEmailDto
   | PurchaseStoreCreditRequestNoEmailDto;
-
 
 // =============================================================================
 // Payment & Tender Base DTOs
@@ -262,7 +278,6 @@ export class UpdateIProductUpdateIProductInstanceDto extends PartialUncommittedP
   @IsNotEmpty()
   id!: string;
 }
-
 
 export class UpdateProductBatchRequestDto {
   @ValidateNested()

@@ -48,9 +48,7 @@ export const createMockMoneyBackend = (amount = 0, currency = CURRENCY.USD): IMo
 
 export type CreateMockCustomerInfoOptions = Partial<CustomerInfoData>;
 
-export const createMockCustomerInfo = (
-  overrides: CreateMockCustomerInfoOptions = {},
-): CustomerInfoData => ({
+export const createMockCustomerInfo = (overrides: CreateMockCustomerInfoOptions = {}): CustomerInfoData => ({
   givenName: 'John',
   familyName: 'Doe',
   mobileNum: '+15551234567',
@@ -65,9 +63,7 @@ export const createMockCustomerInfo = (
 
 export type CreateMockFulfillmentOptions = Partial<FulfillmentData>;
 
-export const createMockFulfillmentData = (
-  overrides: CreateMockFulfillmentOptions = {},
-): FulfillmentData => {
+export const createMockFulfillmentData = (overrides: CreateMockFulfillmentOptions = {}): FulfillmentData => {
   const now = new Date();
   return {
     status: WFulfillmentStatus.PROPOSED,
@@ -89,9 +85,7 @@ export interface CreateMockCartEntryOptions {
   modifiers?: WCPProductV2Dto['modifiers'];
 }
 
-export const createMockCartEntry = (
-  overrides: CreateMockCartEntryOptions = {},
-): CoreCartEntry<WCPProductV2Dto> => ({
+export const createMockCartEntry = (overrides: CreateMockCartEntryOptions = {}): CoreCartEntry<WCPProductV2Dto> => ({
   quantity: overrides.quantity ?? 1,
   categoryId: overrides.categoryId ?? 'cat1',
   product: {
@@ -100,9 +94,8 @@ export const createMockCartEntry = (
   },
 });
 
-export const createMockCart = (
-  entries: CreateMockCartEntryOptions[] = [{}],
-): CoreCartEntry<WCPProductV2Dto>[] => entries.map(createMockCartEntry);
+export const createMockCart = (entries: CreateMockCartEntryOptions[] = [{}]): CoreCartEntry<WCPProductV2Dto>[] =>
+  entries.map(createMockCartEntry);
 
 // ============================================================================
 // Metrics
@@ -136,9 +129,7 @@ export interface CreateMockPaymentOptions {
   status?: TenderBaseStatus.AUTHORIZED | TenderBaseStatus.COMPLETED | TenderBaseStatus.CANCELED;
 }
 
-export const createMockCreditPayment = (
-  overrides: CreateMockPaymentOptions = {},
-): CreditPaymentAllocated => ({
+export const createMockCreditPayment = (overrides: CreateMockPaymentOptions = {}): CreditPaymentAllocated => ({
   t: PaymentMethod.CreditCard,
   amount: typeof overrides.amount === 'object' ? overrides.amount : createMockMoneyBackend(overrides.amount ?? 1000),
   tipAmount: createMockMoneyBackend(overrides.tipAmount ?? 150),
@@ -153,9 +144,7 @@ export const createMockCreditPayment = (
   },
 });
 
-export const createMockCashPayment = (
-  overrides: CreateMockPaymentOptions = {},
-): CashPaymentAllocated => ({
+export const createMockCashPayment = (overrides: CreateMockPaymentOptions = {}): CashPaymentAllocated => ({
   t: PaymentMethod.Cash,
   amount: typeof overrides.amount === 'object' ? overrides.amount : createMockMoneyBackend(overrides.amount ?? 1000),
   tipAmount: createMockMoneyBackend(overrides.tipAmount ?? 0),
@@ -163,7 +152,9 @@ export const createMockCashPayment = (
   status: overrides.status ?? TenderBaseStatus.COMPLETED,
   processorId: overrides.processorId ?? `cash-${String(Date.now())}`,
   payment: {
-    amountTendered: createMockMoneyBackend(typeof overrides.amount === 'number' ? overrides.amount + 500 : (overrides.amount?.amount ?? 1000) + 500),
+    amountTendered: createMockMoneyBackend(
+      typeof overrides.amount === 'number' ? overrides.amount + 500 : (overrides.amount?.amount ?? 1000) + 500,
+    ),
     change: createMockMoneyBackend(500),
   },
 });
@@ -202,9 +193,7 @@ export interface CreateMockDiscountOptions {
   reason?: string;
 }
 
-export const createMockManualDiscount = (
-  overrides: CreateMockDiscountOptions = {},
-): OrderManualAmountDiscount => ({
+export const createMockManualDiscount = (overrides: CreateMockDiscountOptions = {}): OrderManualAmountDiscount => ({
   t: DiscountMethod.ManualAmount,
   createdAt: Date.now(),
   status: TenderBaseStatus.COMPLETED,
@@ -263,9 +252,7 @@ export interface CreateMockWOrderInstanceOptions {
 
 let orderIdCounter = 0;
 
-export const createMockWOrderInstance = (
-  overrides: CreateMockWOrderInstanceOptions = {},
-): WOrderInstance => {
+export const createMockWOrderInstance = (overrides: CreateMockWOrderInstanceOptions = {}): WOrderInstance => {
   const {
     customerInfo: customerOverrides,
     fulfillment: fulfillmentOverrides,
@@ -301,9 +288,7 @@ export const createMockWOrderInstance = (
 /**
  * Creates an order in CONFIRMED status with a completed payment.
  */
-export const createMockConfirmedOrder = (
-  overrides: CreateMockWOrderInstanceOptions = {},
-): WOrderInstance =>
+export const createMockConfirmedOrder = (overrides: CreateMockWOrderInstanceOptions = {}): WOrderInstance =>
   createMockWOrderInstance({
     status: WOrderStatus.CONFIRMED,
     payments: [createMockCreditPayment()],
@@ -317,9 +302,7 @@ export const createMockConfirmedOrder = (
 /**
  * Creates an order in COMPLETED status.
  */
-export const createMockCompletedOrder = (
-  overrides: CreateMockWOrderInstanceOptions = {},
-): WOrderInstance =>
+export const createMockCompletedOrder = (overrides: CreateMockWOrderInstanceOptions = {}): WOrderInstance =>
   createMockWOrderInstance({
     status: WOrderStatus.COMPLETED,
     payments: [createMockCreditPayment()],
@@ -342,9 +325,7 @@ export const createMockCancelledOrder = (
   return createMockWOrderInstance({
     status: WOrderStatus.CANCELED,
     payments: [payment],
-    refunds: withRefund
-      ? [{ ...payment, processorId: `refund-${payment.processorId}` }]
-      : [],
+    refunds: withRefund ? [{ ...payment, processorId: `refund-${payment.processorId}` }] : [],
     fulfillment: {
       status: WFulfillmentStatus.CANCELED,
       ...overrides.fulfillment,

@@ -13,18 +13,7 @@ import { ImageImg, ImageOverlay, ImagePlaceholder, ImageRoot } from './styles';
 
 // ----------------------------------------------------------------------
 
-type PredefinedAspectRatio =
-  | '2/3'
-  | '3/2'
-  | '4/3'
-  | '3/4'
-  | '6/4'
-  | '4/6'
-  | '16/9'
-  | '9/16'
-  | '21/9'
-  | '9/21'
-  | '1/1';
+type PredefinedAspectRatio = '2/3' | '3/2' | '4/3' | '3/4' | '6/4' | '4/6' | '16/9' | '9/16' | '21/9' | '9/21' | '1/1';
 
 type AspectRatioType = PredefinedAspectRatio;
 
@@ -83,7 +72,9 @@ export function Image({
       });
     }, delayTime);
 
-    return () => { clearTimeout(timer); };
+    return () => {
+      clearTimeout(timer);
+    };
   }, [delayTime, onLoad]);
 
   const finalEffect = {
@@ -95,22 +86,11 @@ export function Image({
   const showPlaceholder = !visibleByDefault && !isLoaded && !disablePlaceholder;
 
   const renderComponents = {
-    overlay: () =>
-      slotProps?.overlay && (
-        <ImageOverlay className={imageClasses.overlay} {...slotProps.overlay} />
-      ),
+    overlay: () => slotProps?.overlay && <ImageOverlay className={imageClasses.overlay} {...slotProps.overlay} />,
     placeholder: () =>
-      showPlaceholder && (
-        <ImagePlaceholder className={imageClasses.placeholder} {...slotProps?.placeholder} />
-      ),
+      showPlaceholder && <ImagePlaceholder className={imageClasses.placeholder} {...slotProps?.placeholder} />,
     image: () => (
-      <ImageImg
-        src={src}
-        alt={alt}
-        onLoad={handleImageLoad}
-        className={imageClasses.img}
-        {...slotProps?.img}
-      />
+      <ImageImg src={src} alt={alt} onLoad={handleImageLoad} className={imageClasses.img} {...slotProps?.img} />
     ),
   };
 

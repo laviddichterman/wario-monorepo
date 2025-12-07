@@ -110,17 +110,12 @@ type StyledState = Pick<NavItemProps, 'open' | 'active' | 'disabled'> & {
   variant: 'rootItem' | 'subItem';
 };
 
-const shouldForwardProp = (prop: string) =>
-  !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
+const shouldForwardProp = (prop: string) => !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
 
 /**
  * @slot root
  */
-const ItemRoot = styled(ButtonBase, { shouldForwardProp })<StyledState>(({
-  active,
-  open,
-  theme,
-}) => {
+const ItemRoot = styled(ButtonBase, { shouldForwardProp })<StyledState>(({ active, open, theme }) => {
   const rootItemStyles: CSSObject = {
     padding: 'var(--nav-item-root-padding)',
     minHeight: 'var(--nav-item-root-height)',
@@ -185,9 +180,7 @@ const ItemTitle = styled('span', { shouldForwardProp })<StyledState>(({ theme })
   ...theme.typography.body2,
   whiteSpace: 'nowrap',
   fontWeight: theme.typography.fontWeightMedium,
-  variants: [
-    { props: { active: true }, style: { fontWeight: theme.typography.fontWeightSemiBold } },
-  ],
+  variants: [{ props: { active: true }, style: { fontWeight: theme.typography.fontWeightSemiBold } }],
 }));
 
 /**

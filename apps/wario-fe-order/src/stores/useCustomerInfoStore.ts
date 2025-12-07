@@ -13,14 +13,8 @@ const LIBPHONE_METADATA = PHONE_METADATA as unknown as MetadataJson;
 export type CustomerInfoRHF = CustomerInfoData & { mobileNumRaw: string };
 
 export const customerInfoSchema = z.object({
-  givenName: z
-    .string()
-    .min(1, 'Please enter your given name.')
-    .min(2, 'Please enter the full name.'),
-  familyName: z
-    .string()
-    .min(1, 'Please enter your family name.')
-    .min(2, 'Please enter the full name.'),
+  givenName: z.string().min(1, 'Please enter your given name.').min(2, 'Please enter the full name.'),
+  familyName: z.string().min(1, 'Please enter your family name.').min(2, 'Please enter the full name.'),
   mobileNum: z.string(),
   mobileNumRaw: z
     .string()
@@ -36,7 +30,7 @@ export const customerInfoSchema = z.object({
       {
         message:
           "Please enter a valid US mobile phone number. If you don't have one please, send us an email so we can provide alternate instructions.",
-      }
+      },
     ),
   email: ZodEmailSchema,
   referral: z.string(),
@@ -78,7 +72,7 @@ export const useCustomerInfoStore = create<CustomerInfoStore>()(
               mobileNum: parsedNumber.formatNational(),
             },
             false,
-            'setCustomerInfo'
+            'setCustomerInfo',
           );
         } catch {
           // Invalid phone number, don't update
@@ -89,8 +83,8 @@ export const useCustomerInfoStore = create<CustomerInfoStore>()(
         set(initialState, false, 'reset');
       },
     }),
-    { name: 'customer-info-store' }
-  )
+    { name: 'customer-info-store' },
+  ),
 );
 
 // Selectors

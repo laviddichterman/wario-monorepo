@@ -35,7 +35,6 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
   const { user } = useAuthContext();
   const { open, anchorEl, onClose, onOpen } = usePopover();
 
-
   const renderMenuActions = () => (
     <CustomPopover
       open={open}
@@ -100,12 +99,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
       <Divider sx={{ borderStyle: 'dashed' }} />
 
       <Box sx={{ p: 1 }}>
-        <SignOutButton
-          size="medium"
-          variant="text"
-          onClose={onClose}
-          sx={{ display: 'block', textAlign: 'left' }}
-        />
+        <SignOutButton size="medium" variant="text" onClose={onClose} sx={{ display: 'block', textAlign: 'left' }} />
       </Box>
     </CustomPopover>
   );
@@ -114,8 +108,8 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
     <>
       <AccountButton
         onClick={onOpen}
-        photoURL={typeof user.picture === 'string' ? user.picture : ""}
-        displayName={typeof user.display_name === 'string' ? user.display_name : ""}
+        photoURL={typeof user.picture === 'string' ? user.picture : ''}
+        displayName={typeof user.display_name === 'string' ? user.display_name : ''}
         sx={sx}
         {...other}
       />

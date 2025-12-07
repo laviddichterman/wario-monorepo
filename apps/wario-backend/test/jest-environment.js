@@ -5,9 +5,9 @@ const NodeEnvironment = require('jest-environment-node').default;
 // but throws SecurityError without --localstorage-file flag
 const localStorageMock = {
   getItem: () => null,
-  setItem: () => { },
-  removeItem: () => { },
-  clear: () => { },
+  setItem: () => {},
+  removeItem: () => {},
+  clear: () => {},
   length: 0,
   key: () => null,
 };

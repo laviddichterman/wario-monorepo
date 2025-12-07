@@ -26,14 +26,8 @@ const colorVariants = [
     props: (props) => props.color === colorKey,
     style: ({ theme }) => ({
       '&:hover': {
-        borderColor: varAlpha(
-          theme.vars.palette[colorKey].mainChannel,
-          theme.vars.opacity.outlined.border
-        ),
-        backgroundColor: varAlpha(
-          theme.vars.palette[colorKey].mainChannel,
-          theme.vars.palette.action.hoverOpacity
-        ),
+        borderColor: varAlpha(theme.vars.palette[colorKey].mainChannel, theme.vars.opacity.outlined.border),
+        backgroundColor: varAlpha(theme.vars.palette[colorKey].mainChannel, theme.vars.palette.action.hoverOpacity),
       },
     }),
   })) satisfies ToggleButtonVariants),

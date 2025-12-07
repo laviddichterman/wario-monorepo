@@ -13,7 +13,7 @@ import { AuthContext } from '../auth-context';
 
 // ----------------------------------------------------------------------
 type AccessTokenClaims = {
-  scope?: string;        // e.g., "read:orders write:orders"
+  scope?: string; // e.g., "read:orders write:orders"
   permissions?: string[]; // RBAC enabled: ["read:orders", "write:orders"]
   [k: string]: unknown;
 };
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: Props) {
       authorizationParams={{
         redirect_uri: callbackUrl,
         scope: scope,
-        audience: audience
+        audience: audience,
       }}
       onRedirectCallback={onRedirectCallback}
       cacheLocation="localstorage"
@@ -114,7 +114,7 @@ function AuthProviderContainer({ children }: Props) {
       if (!tokenClaims) return false;
       return hasScopes(tokenClaims, Array.isArray(requiredScopes) ? requiredScopes : [requiredScopes], !requireAll);
     },
-    [tokenClaims]
+    [tokenClaims],
   );
 
   const checkHasPermissions = useCallback(
@@ -128,7 +128,7 @@ function AuthProviderContainer({ children }: Props) {
       }
       return perms.some((perm) => granted.has(perm));
     },
-    [tokenClaims]
+    [tokenClaims],
   );
 
   const checkAuthenticated = isAuthenticated ? 'authenticated' : 'unauthenticated';
@@ -138,10 +138,10 @@ function AuthProviderContainer({ children }: Props) {
     () => ({
       user: user
         ? Object.assign(user, {
-          id: user.sub,
-          accessToken,
-          display_name: user.name,
-        })
+            id: user.sub,
+            accessToken,
+            display_name: user.name,
+          })
         : { id: 'unknown', email: 'unknown', name: 'unknown', display_name: 'unknown' },
       loading: status === 'loading',
       authenticated: status === 'authenticated',
@@ -151,7 +151,7 @@ function AuthProviderContainer({ children }: Props) {
       hasScopes: checkHasScopes,
       hasPermissions: checkHasPermissions,
     }),
-    [accessToken, checkHasPermissions, checkHasScopes, status, user, userPermissions, userScopes]
+    [accessToken, checkHasPermissions, checkHasScopes, status, user, userPermissions, userScopes],
   );
 
   return <AuthContext.Provider value={memoizedValue}>{children}</AuthContext.Provider>;

@@ -10,9 +10,7 @@ import { common, grey } from './palette';
 // ----------------------------------------------------------------------
 
 function updateShadowColor(shadow: string, colorChannel: string): string {
-  return shadow.replace(/rgba\(\d+,\d+,\d+,(.*?)\)/g, (_, alpha: string) =>
-    varAlpha(colorChannel, parseFloat(alpha))
-  );
+  return shadow.replace(/rgba\(\d+,\d+,\d+,(.*?)\)/g, (_, alpha: string) => varAlpha(colorChannel, parseFloat(alpha)));
 }
 
 function createShadows(colorChannel: string): Shadows {

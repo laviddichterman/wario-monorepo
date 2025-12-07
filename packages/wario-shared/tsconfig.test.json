@@ -2,13 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "isolatedModules": true,
-    "types": [
-      "jest",
-      "node"
-    ]
+    "types": ["jest", "node"]
   },
-  "include": [
-    "tests/**/*.ts",
-    "src/**/*.ts"
-  ]
+  "include": ["tests/**/*.ts", "src/**/*.ts"]
 }

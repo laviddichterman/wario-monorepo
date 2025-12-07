@@ -16,10 +16,7 @@ describe('AppConfigService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AppConfigService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [AppConfigService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     service = module.get<AppConfigService>(AppConfigService);

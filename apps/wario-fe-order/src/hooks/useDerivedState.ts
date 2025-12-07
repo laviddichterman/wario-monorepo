@@ -1,15 +1,39 @@
-import { formatISO } from "date-fns/formatISO";
-import { useMemo } from "react";
+import { formatISO } from 'date-fns/formatISO';
+import { useMemo } from 'react';
 
-import { type CatalogModifierEntry, ComputeCategoryTreeIdList, ComputeProductCategoryMatchCount, CURRENCY, DetermineCartBasedLeadTime, type FulfillmentConfig, GetNextAvailableServiceDate, GroupAndOrderCart, type IProductInstance, IsModifierTypeVisible, type MetadataModifierMap, type ProductModifierEntry, SortAndFilterModifierOptions, WDateUtils } from "@wcp/wario-shared";
-import { useAutoGratutityThreshold, useCatalogSelectors, useDefaultFulfillmentId, useFulfillmentById, useFulfillmentMainCategoryId, useProductInstanceById, useProductMetadata, useServerTime, useValueFromFulfillmentById, useValueFromProductEntryById } from "@wcp/wario-ux-shared/query";
+import {
+  type CatalogModifierEntry,
+  ComputeCategoryTreeIdList,
+  ComputeProductCategoryMatchCount,
+  CURRENCY,
+  DetermineCartBasedLeadTime,
+  type FulfillmentConfig,
+  GetNextAvailableServiceDate,
+  GroupAndOrderCart,
+  type IProductInstance,
+  IsModifierTypeVisible,
+  type MetadataModifierMap,
+  type ProductModifierEntry,
+  SortAndFilterModifierOptions,
+  WDateUtils,
+} from '@wcp/wario-shared';
+import {
+  useAutoGratutityThreshold,
+  useCatalogSelectors,
+  useDefaultFulfillmentId,
+  useFulfillmentById,
+  useFulfillmentMainCategoryId,
+  useProductInstanceById,
+  useProductMetadata,
+  useServerTime,
+  useValueFromFulfillmentById,
+  useValueFromProductEntryById,
+} from '@wcp/wario-ux-shared/query';
 
-import { selectCart, selectCartEntry, useCartStore } from "@/stores/useCartStore";
-import { selectCartId, useCustomizerStore } from "@/stores/useCustomizerStore";
-import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from "@/stores/useFulfillmentStore";
-import { usePaymentStore } from "@/stores/usePaymentStore";
-
-
+import { selectCart, selectCartEntry, useCartStore } from '@/stores/useCartStore';
+import { selectCartId, useCustomizerStore } from '@/stores/useCustomizerStore';
+import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
+import { usePaymentStore } from '@/stores/usePaymentStore';
 
 export function useSelectedFulfillment() {
   const selectedFulfillmentId = useFulfillmentStore(selectSelectedService) as string;
@@ -76,19 +100,23 @@ export function useIsAutogratuityEnabledByFulfillmentId(fulfillmentId: string) {
   const mainProductCategoryCount = useMainProductCategoryCount(fulfillmentId);
   const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
   const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
-  const specialInstructions = usePaymentStore(s => s.specialInstructions);
+  const specialInstructions = usePaymentStore((s) => s.specialInstructions);
   return useMemo(() => {
-    return deliveryInfo !== null || dineInInfo !== null || mainProductCategoryCount >= autoGratutityThreshold || (specialInstructions && specialInstructions.length > 20);
+    return (
+      deliveryInfo !== null ||
+      dineInInfo !== null ||
+      mainProductCategoryCount >= autoGratutityThreshold ||
+      (specialInstructions && specialInstructions.length > 20)
+    );
   }, [deliveryInfo, dineInInfo, mainProductCategoryCount, autoGratutityThreshold, specialInstructions]);
 }
 
-
 /**
-* Selects/Computes the product metadata for a potentially custom product (product class ID and selected modifiers) using the currently populated fulfillment info
-*/
+ * Selects/Computes the product metadata for a potentially custom product (product class ID and selected modifiers) using the currently populated fulfillment info
+ */
 export function useProductMetadataWithCurrentFulfillmentData(productId: string, modifiers: ProductModifierEntry[]) {
   const selectedService = useFulfillmentStore(selectSelectedService) as string;
-  const serviceDate = useFulfillmentStore(selectServiceDateTime) as Date
+  const serviceDate = useFulfillmentStore(selectServiceDateTime) as Date;
   const metadata = useProductMetadata(productId, modifiers, serviceDate, selectedService);
   return metadata;
 }
@@ -105,22 +133,27 @@ export function useVisibleModifierOptions(productId: string, modifiers: ProductM
   }, [metadata, mtId, catalogSelectors, serviceDateTime]);
 }
 
-
 export function useSortedVisibleModifiers(productId: string, modifiers: ProductModifierEntry[]) {
   const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
   const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers);
-  const productType = useValueFromProductEntryById(productId, "product");
+  const productType = useValueFromProductEntryById(productId, 'product');
   const catalogSelectors = useCatalogSelectors();
 
   return useMemo(() => {
     if (!productType || !metadata || !catalogSelectors) return [];
-    return productType.modifiers
-      .filter(x => x.serviceDisable.indexOf(fulfillmentId) === -1)
-      .map(x => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- entry can be undefined at runtime
-      .filter(x => x.entry && IsModifierTypeVisible(x.entry.modifierType, x.md.has_selectable))
-      .sort((a, b) => (a.entry as CatalogModifierEntry).modifierType.ordinal - (b.entry as CatalogModifierEntry).modifierType.ordinal)
-      .map(x => x.pm)
+    return (
+      productType.modifiers
+        .filter((x) => x.serviceDisable.indexOf(fulfillmentId) === -1)
+        .map((x) => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- entry can be undefined at runtime
+        .filter((x) => x.entry && IsModifierTypeVisible(x.entry.modifierType, x.md.has_selectable))
+        .sort(
+          (a, b) =>
+            (a.entry as CatalogModifierEntry).modifierType.ordinal -
+            (b.entry as CatalogModifierEntry).modifierType.ordinal,
+        )
+        .map((x) => x.pm)
+    );
   }, [productType, fulfillmentId, metadata, catalogSelectors]);
 }
 
@@ -144,8 +177,10 @@ export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSe
     const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierTypeEntry can be undefined at runtime
     if (!modifierTypeEntry) return false;
-    return !modifierTypeEntry.modifierType.displayFlags.hidden &&
-      (!modifierTypeEntry.modifierType.displayFlags.omit_section_if_no_available_options || hasSelectable);
+    return (
+      !modifierTypeEntry.modifierType.displayFlags.hidden &&
+      (!modifierTypeEntry.modifierType.displayFlags.omit_section_if_no_available_options || hasSelectable)
+    );
   }, [modifierTypeId, hasSelectable, catalogSelectors]);
 }
 
@@ -154,7 +189,7 @@ export function useSelectedServiceTimeDisplayString() {
   const selectedService = useFulfillmentStore((s) => s.selectedService);
   const minDuration = useValueFromFulfillmentById(selectedService as string, 'minDuration');
   return useMemo(() => {
-    if (minDuration === null || selectedService === null || selectedTime === null) return "";
+    if (minDuration === null || selectedService === null || selectedTime === null) return '';
     return minDuration === 0
       ? WDateUtils.MinutesToPrintTime(selectedTime)
       : `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}`;
@@ -168,7 +203,7 @@ export function useComputeServiceFee() {
 
 export function useSelectedCartEntry() {
   const selectedCartEntryId = useCustomizerStore(selectCartId);
-  const selectedCartEntry = useCartStore(s => selectCartEntry(s, selectedCartEntryId));
+  const selectedCartEntry = useCartStore((s) => selectCartEntry(s, selectedCartEntryId));
   return selectedCartEntry;
 }
 
@@ -176,7 +211,12 @@ export function useCartBasedLeadTime() {
   const cart = useCartStore(selectCart);
   const catalogSelectors = useCatalogSelectors();
   return useMemo(() => {
-    return catalogSelectors ? DetermineCartBasedLeadTime(cart.map(x => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })), catalogSelectors.productEntry) : 0;
+    return catalogSelectors
+      ? DetermineCartBasedLeadTime(
+          cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
+          catalogSelectors.productEntry,
+        )
+      : 0;
   }, [cart, catalogSelectors]);
 }
 
@@ -184,7 +224,11 @@ export function useComputeAvailabilityForFulfillmentDateAndCart(selectedDate: st
   const cartBasedLeadTime = useCartBasedLeadTime();
   const fulfillment = useFulfillmentById(fulfillmentId);
   return useMemo(() => {
-    return WDateUtils.GetInfoMapForAvailabilityComputation(fulfillment ? [fulfillment] : [], selectedDate, cartBasedLeadTime);
+    return WDateUtils.GetInfoMapForAvailabilityComputation(
+      fulfillment ? [fulfillment] : [],
+      selectedDate,
+      cartBasedLeadTime,
+    );
   }, [fulfillment, selectedDate, cartBasedLeadTime]);
 }
 

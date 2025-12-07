@@ -6,8 +6,6 @@ import checker from 'vite-plugin-checker';
 import dts from 'vite-plugin-dts';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 
-
-
 export default defineConfig({
   plugins: [
     react(),
@@ -26,15 +24,15 @@ export default defineConfig({
     }),
     viteStaticCopy({
       targets: [
-        { src: 'src/generated/phone-metadata.custom.json', dest: '.' } // => dist/phone-metadata.custom.json
-      ]
-    })
+        { src: 'src/generated/phone-metadata.custom.json', dest: '.' }, // => dist/phone-metadata.custom.json
+      ],
+    }),
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'src': fileURLToPath(new URL('./src', import.meta.url))
-    }
+      src: fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
   build: {
     target: 'es2022',
@@ -69,8 +67,9 @@ export default defineConfig({
         '@tanstack/react-query',
         '@mui/x-date-pickers',
         'socket.io-client',
-        '@wcp/wario-shared'],
-      output: { preserveModules: true, preserveModulesRoot: 'src' }
-    }
-  }
+        '@wcp/wario-shared',
+      ],
+      output: { preserveModules: true, preserveModulesRoot: 'src' },
+    },
+  },
 });

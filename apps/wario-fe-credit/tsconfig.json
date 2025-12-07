@@ -3,26 +3,11 @@
   "compilerOptions": {
     "baseUrl": ".", // enable paths below
     "paths": {
-      "@/*": [
-        "src/*"
-      ], // e.g. import { X } from "@/utils/x"
-      "src/*": [
-        "src/*"
-      ] // e.g. import { X } from "src/utils/x"
+      "@/*": ["src/*"], // e.g. import { X } from "@/utils/x"
+      "src/*": ["src/*"] // e.g. import { X } from "src/utils/x"
     },
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "types": [
-      "vite/client",
-      "node"
-    ]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "node"]
   },
-  "include": [
-    "src",
-    "vite.config.ts",
-    "vitest.config.ts"
-  ]
+  "include": ["src", "vite.config.ts", "vitest.config.ts"]
 }

@@ -43,7 +43,7 @@ export function useCartSubtotal(): IMoney {
       amount: cart.reduce((acc, entry) => acc + entry.product.m.price.amount * entry.quantity, 0),
       currency: CURRENCY.USD,
     }),
-    [cart]
+    [cart],
   );
 }
 
@@ -67,9 +67,7 @@ export function useDiscountsApplied(): OrderLineDiscount[] {
   const storeCreditValidations = usePaymentStore(selectStoreCreditValidations);
 
   return useMemo(() => {
-    const discountCredits = storeCreditValidations.filter(
-      (x) => x.validation.credit_type === StoreCreditType.DISCOUNT
-    );
+    const discountCredits = storeCreditValidations.filter((x) => x.validation.credit_type === StoreCreditType.DISCOUNT);
     return ComputeDiscountsApplied(
       subtotalPreDiscount,
       discountCredits.map((x) => ({
@@ -81,7 +79,7 @@ export function useDiscountsApplied(): OrderLineDiscount[] {
           code: x.code,
           lock: x.validation.lock,
         },
-      }))
+      })),
     );
   }, [subtotalPreDiscount, storeCreditValidations]);
 }
@@ -117,11 +115,7 @@ export function useSubtotalAfterDiscount(): IMoney {
   const gratuityServiceCharge = useGratuityServiceCharge();
 
   return useMemo(() => {
-    return ComputeSubtotalAfterDiscountAndGratuity(
-      subtotalPreDiscount,
-      discountsAmount,
-      gratuityServiceCharge
-    );
+    return ComputeSubtotalAfterDiscountAndGratuity(subtotalPreDiscount, discountsAmount, gratuityServiceCharge);
   }, [subtotalPreDiscount, discountsAmount, gratuityServiceCharge]);
 }
 
@@ -183,9 +177,7 @@ export function usePaymentsApplied(): OrderPayment[] {
   const storeCreditValidations = usePaymentStore(selectStoreCreditValidations);
 
   return useMemo(() => {
-    const moneyCredits = storeCreditValidations.filter(
-      (x) => x.validation.credit_type === StoreCreditType.MONEY
-    );
+    const moneyCredits = storeCreditValidations.filter((x) => x.validation.credit_type === StoreCreditType.MONEY);
     return ComputePaymentsApplied(
       total,
       tipAmount,
@@ -198,7 +190,7 @@ export function usePaymentsApplied(): OrderPayment[] {
           code: x.code,
           lock: x.validation.lock,
         },
-      }))
+      })),
     );
   }, [total, tipAmount, storeCreditValidations]);
 }
@@ -247,33 +239,36 @@ export function useOrderTotals() {
   const paymentAmounts = usePaymentAmountsApplied();
   const balance = useBalanceAfterPayments();
 
-  return useMemo(() => ({
-    cartSubtotal,
-    serviceFee,
-    subtotalPreDiscount,
-    discountsApplied,
-    discountsAmount,
-    subtotalAfterDiscount,
-    taxAmount,
-    tipBasis,
-    tipValue,
-    total,
-    paymentsApplied,
-    paymentAmounts,
-    balance,
-  }), [
-    cartSubtotal,
-    serviceFee,
-    subtotalPreDiscount,
-    discountsApplied,
-    discountsAmount,
-    subtotalAfterDiscount,
-    taxAmount,
-    tipBasis,
-    tipValue,
-    total,
-    paymentsApplied,
-    paymentAmounts,
-    balance,
-  ]);
+  return useMemo(
+    () => ({
+      cartSubtotal,
+      serviceFee,
+      subtotalPreDiscount,
+      discountsApplied,
+      discountsAmount,
+      subtotalAfterDiscount,
+      taxAmount,
+      tipBasis,
+      tipValue,
+      total,
+      paymentsApplied,
+      paymentAmounts,
+      balance,
+    }),
+    [
+      cartSubtotal,
+      serviceFee,
+      subtotalPreDiscount,
+      discountsApplied,
+      discountsAmount,
+      subtotalAfterDiscount,
+      taxAmount,
+      tipBasis,
+      tipValue,
+      total,
+      paymentsApplied,
+      paymentAmounts,
+      balance,
+    ],
+  );
 }

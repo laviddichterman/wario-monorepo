@@ -56,10 +56,7 @@ export type NavItemDataProps = Pick<NavItemStateProps, 'disabled'> & {
   children?: NavItemDataProps[];
 };
 
-export type NavItemProps = ButtonBaseProps &
-  NavItemDataProps &
-  NavItemStateProps &
-  NavItemOptionsProps;
+export type NavItemProps = ButtonBaseProps & NavItemDataProps & NavItemStateProps & NavItemOptionsProps;
 
 /**
  * List

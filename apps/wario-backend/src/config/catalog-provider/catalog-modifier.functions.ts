@@ -1,4 +1,3 @@
-
 import { chunk } from 'es-toolkit/compat';
 import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
@@ -80,7 +79,10 @@ const getLocationsConsidering3pFlag = (deps: ModifierDeps, is3p: boolean) =>
     deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P,
   );
 
-export const validateOption = (modifierType: Pick<IOptionType, 'max_selected'>, modifierOption: Partial<UncommitedOption>) => {
+export const validateOption = (
+  modifierType: Pick<IOptionType, 'max_selected'>,
+  modifierOption: Partial<UncommitedOption>,
+) => {
   if (modifierType.max_selected === 1) {
     return !modifierOption.metadata || (!modifierOption.metadata.allowOTS && !modifierOption.metadata.can_split);
   }
@@ -91,7 +93,11 @@ export const validateOption = (modifierType: Pick<IOptionType, 'max_selected'>, 
 // Operations
 // ============================================================================
 
-export const createModifierType = async (deps: ModifierDeps, modifierType: Omit<IOptionType, 'id'>, options: UncommitedOption[]) => {
+export const createModifierType = async (
+  deps: ModifierDeps,
+  modifierType: Omit<IOptionType, 'id'>,
+  options: UncommitedOption[],
+) => {
   // validate options
   options.forEach((opt) => {
     if (!validateOption(modifierType, opt)) {
@@ -222,7 +228,10 @@ export const batchUpdateModifierType = async (
         ...opt,
         externalIDs: [
           ...opt.externalIDs,
-          ...IdMappingsToExternalIds(mappings, `${('000' + String(batchId)).slice(-3)}S${('000' + String(i)).slice(-3)}S`),
+          ...IdMappingsToExternalIds(
+            mappings,
+            `${('000' + String(batchId)).slice(-3)}S${('000' + String(i)).slice(-3)}S`,
+          ),
         ],
       })),
     };
@@ -239,9 +248,8 @@ export const batchUpdateModifierType = async (
   const updatedModifierTypes = await Promise.all(
     updatedWarioObjects.map(async (b) => {
       return (
-        (
-          await deps.wOptionTypeModel.findByIdAndUpdate(b.modifierType.id, b.modifierType, { new: true })
-        )?.toObject() ?? null
+        (await deps.wOptionTypeModel.findByIdAndUpdate(b.modifierType.id, b.modifierType, { new: true }))?.toObject() ??
+        null
       );
     }),
   );
@@ -499,7 +507,11 @@ export const updateModifierOption = async (deps: ModifierDeps, props: UpdateModi
   return (await batchUpdateModifierOption(deps, [props]))[0];
 };
 
-export const deleteModifierOption = async (deps: ModifierDeps, mo_id: string, suppress_catalog_recomputation: boolean = false) => {
+export const deleteModifierOption = async (
+  deps: ModifierDeps,
+  mo_id: string,
+  suppress_catalog_recomputation: boolean = false,
+) => {
   deps.logger.debug({ mo_id }, 'Removing Modifier Option');
   const doc = await deps.wOptionModel.findByIdAndDelete(mo_id).exec();
   if (!doc) {

@@ -27,8 +27,7 @@ export class ErrorNotificationService {
     private readonly dataProvider: DataProviderService,
     @InjectPinoLogger(ErrorNotificationService.name)
     private readonly logger: PinoLogger,
-  ) { }
-
+  ) {}
 
   /**
    * Send an email notification for critical errors.
@@ -38,11 +37,7 @@ export class ErrorNotificationService {
    * @param errors - Array of WError objects describing the error
    * @param statusCode - HTTP status code of the error
    */
-  async sendCriticalErrorEmail(
-    context: ErrorContext,
-    errors: WError[],
-    statusCode: number,
-  ): Promise<void> {
+  async sendCriticalErrorEmail(context: ErrorContext, errors: WError[], statusCode: number): Promise<void> {
     try {
       const emailAddress = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
       if (!emailAddress) {
@@ -64,10 +59,7 @@ export class ErrorNotificationService {
       this.logger.info(`Sent error notification email for ${context.method} ${context.path}`);
     } catch (emailError: unknown) {
       // Log but don't throw - we don't want email failures to affect the response
-      this.logger.error(
-        { err: emailError },
-        'Failed to send error notification email',
-      );
+      this.logger.error({ err: emailError }, 'Failed to send error notification email');
     }
   }
 
@@ -83,15 +75,10 @@ export class ErrorNotificationService {
     }
 
     const criticalPaths = ['/order', '/store-credit', '/payment'];
-    return criticalPaths.some(criticalPath => path.includes(criticalPath));
+    return criticalPaths.some((criticalPath) => path.includes(criticalPath));
   }
 
-  private buildErrorEmailHtml(
-    context: ErrorContext,
-    errors: WError[],
-    statusCode: number,
-    timestamp: string,
-  ): string {
+  private buildErrorEmailHtml(context: ErrorContext, errors: WError[], statusCode: number, timestamp: string): string {
     return `
       <html>
         <body style="font-family: Arial, sans-serif; padding: 20px;">
@@ -116,12 +103,16 @@ export class ErrorNotificationService {
               <td style="padding: 8px; border: 1px solid #ddd;"><strong>Path</strong></td>
               <td style="padding: 8px; border: 1px solid #ddd;">${context.path}</td>
             </tr>
-            ${context.ip ? `
+            ${
+              context.ip
+                ? `
             <tr>
               <td style="padding: 8px; border: 1px solid #ddd;"><strong>Client IP</strong></td>
               <td style="padding: 8px; border: 1px solid #ddd;">${context.ip}</td>
             </tr>
-            ` : ''}
+            `
+                : ''
+            }
           </table>
 
           <h2>Errors</h2>
@@ -129,19 +120,27 @@ export class ErrorNotificationService {
 ${JSON.stringify(errors, null, 2)}
           </pre>
 
-          ${context.body ? `
+          ${
+            context.body
+              ? `
           <h2>Request Body</h2>
           <pre style="background: #f5f5f5; padding: 15px; overflow-x: auto;">
 ${JSON.stringify(context.body, null, 2)}
           </pre>
-          ` : ''}
+          `
+              : ''
+          }
 
-          ${context.params && Object.keys(context.params).length > 0 ? `
+          ${
+            context.params && Object.keys(context.params).length > 0
+              ? `
           <h2>URL Parameters</h2>
           <pre style="background: #f5f5f5; padding: 15px; overflow-x: auto;">
 ${JSON.stringify(context.params, null, 2)}
           </pre>
-          ` : ''}
+          `
+              : ''
+          }
         </body>
       </html>
     `;

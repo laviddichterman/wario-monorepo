@@ -39,42 +39,38 @@
 ### Key Changes to RoleBasedGuard API
 
 **Before:**
+
 ```tsx
-<RoleBasedGuard 
-  currentRole="admin" 
-  allowedRoles={['admin', 'manager']}
->
+<RoleBasedGuard currentRole="admin" allowedRoles={['admin', 'manager']}>
   <AdminPanel />
 </RoleBasedGuard>
 ```
 
 **After:**
+
 ```tsx
-<RoleBasedGuard 
-  permissions={['admin', 'manager']} 
-  requireAll={false}
-  hasContent
->
+<RoleBasedGuard permissions={['admin', 'manager']} requireAll={false} hasContent>
   <AdminPanel />
 </RoleBasedGuard>
 ```
 
 **New capabilities:**
+
 ```tsx
 // Scope-based
 <RoleBasedGuard scopes={['read:orders', 'write:orders']}>
   <OrderManagement />
 </RoleBasedGuard>
 
-// Permission-based  
+// Permission-based
 <RoleBasedGuard permissions={['admin']}>
   <AdminSettings />
 </RoleBasedGuard>
 
 // Combined
-<RoleBasedGuard 
-  scopes={['write:orders']} 
-  permissions={['manager']} 
+<RoleBasedGuard
+  scopes={['write:orders']}
+  permissions={['manager']}
   requireAll={false}
 >
   <CreateOrder />
@@ -96,6 +92,7 @@ When a user authenticates, Auth0 returns an access token with claims like:
 ```
 
 The AuthProvider decodes this JWT and extracts:
+
 - **Scopes**: Split from the `scope` string
 - **Permissions**: Directly from the `permissions` array (if RBAC enabled)
 
@@ -103,18 +100,19 @@ The AuthProvider decodes this JWT and extracts:
 
 ```typescript
 // Check if user has ALL required scopes
-hasScopes(['read:orders', 'write:orders'], true)  // AND logic
+hasScopes(['read:orders', 'write:orders'], true); // AND logic
 
 // Check if user has ANY required scope
-hasScopes(['read:orders', 'write:orders'], false)  // OR logic
+hasScopes(['read:orders', 'write:orders'], false); // OR logic
 
 // Same for permissions
-hasPermissions(['admin', 'manager'], false)  // User needs admin OR manager
+hasPermissions(['admin', 'manager'], false); // User needs admin OR manager
 ```
 
 ### 3. Guard Usage
 
 The `RoleBasedGuard` component:
+
 1. Gets auth context via `useAuthContext()`
 2. Checks if user is authenticated
 3. Validates required scopes (if specified)
@@ -126,15 +124,18 @@ The `RoleBasedGuard` component:
 ### 1. Auth0 Setup
 
 #### Request Scopes
+
 In `config.ts`:
+
 ```typescript
 auth0: {
   // ...
-  scope: 'openid profile email read:orders write:orders admin:settings'
+  scope: 'openid profile email read:orders write:orders admin:settings';
 }
 ```
 
 #### Enable RBAC (Optional)
+
 1. Auth0 Dashboard → APIs → Your API → Settings
 2. Enable "Enable RBAC"
 3. Enable "Add Permissions in the Access Token"
@@ -162,7 +163,7 @@ import { AuthGuard, RoleBasedGuard } from '@/auth/guard';
   <RoleBasedGuard permissions={['admin']} hasContent>
     <AdminDashboard />
   </RoleBasedGuard>
-</AuthGuard>
+</AuthGuard>;
 ```
 
 ### Conditional Rendering
@@ -196,10 +197,7 @@ function MyComponent() {
 
 ```tsx
 // If user lacks permission, shows "Permission denied" message
-<RoleBasedGuard 
-  scopes={['analytics:read']} 
-  hasContent
->
+<RoleBasedGuard scopes={['analytics:read']} hasContent>
   <AnalyticsWidget />
 </RoleBasedGuard>
 ```
@@ -207,14 +205,16 @@ function MyComponent() {
 ## Testing the Implementation
 
 1. **View the examples page:**
+
    ```tsx
    import { RBACExamples } from '@/auth/examples';
-   
+
    // Add to your app routes
-   <Route path="/rbac-examples" element={<RBACExamples />} />
+   <Route path="/rbac-examples" element={<RBACExamples />} />;
    ```
 
 2. **Check your scopes and permissions:**
+
    ```tsx
    const { scopes, permissions } = useAuthContext();
    console.log('My scopes:', scopes);
@@ -231,16 +231,19 @@ function MyComponent() {
 If you have existing code using the old `RoleBasedGuard`:
 
 **Old API:**
+
 ```tsx
 <RoleBasedGuard currentRole={user.role} allowedRoles="admin">
 ```
 
 **New API (equivalent):**
+
 ```tsx
 <RoleBasedGuard permissions={['admin']}>
 ```
 
 **For multiple roles (ANY match):**
+
 ```tsx
 // Old
 <RoleBasedGuard currentRole={user.role} allowedRoles={['admin', 'manager']}>

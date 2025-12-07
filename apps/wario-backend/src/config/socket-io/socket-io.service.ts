@@ -4,7 +4,13 @@ import { format } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import type { Namespace, Server, Socket } from 'socket.io';
 
-import { type FulfillmentConfig, type ICatalog, type IWSettings, type SeatingResource, WDateUtils } from '@wcp/wario-shared';
+import {
+  type FulfillmentConfig,
+  type ICatalog,
+  type IWSettings,
+  type SeatingResource,
+  WDateUtils,
+} from '@wcp/wario-shared';
 
 import { AppConfigService } from '../app-config.service';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
@@ -26,7 +32,7 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     @Inject(DataProviderService) private dataProvider: DataProviderService,
     @InjectPinoLogger(SocketIoService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   handleConnection(client: Socket) {
     ++this.clientCount;

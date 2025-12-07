@@ -101,7 +101,7 @@ export const productInstanceFormIsValidAtom = atom((get) => {
  * Param can be the instance ID (string) or an index if IDs aren't available yet.
  */
 export const productInstanceFormFamily = atomFamily((_param: string | number) =>
-  atom<ProductInstanceFormState | null>(null)
+  atom<ProductInstanceFormState | null>(null),
 );
 
 /** Family for 'Copy' toggle state in Copy Container */
@@ -109,7 +109,6 @@ export const productInstanceCopyFlagFamily = atomFamily((_param: string | number
 
 /** Family for 'Expanded' accordion state in Copy Container */
 export const productInstanceExpandedFamily = atomFamily((_param: string | number) => atom(false));
-
 
 // ===================================
 // Converters
@@ -175,7 +174,6 @@ export const fromProductInstanceEntity = (entity: UncommittedIProductInstance): 
   orderAdornment: entity.displayFlags?.order?.adornment ?? '',
   orderSuppressExhaustiveModifierList: entity.displayFlags?.order?.suppress_exhaustive_modifier_list ?? false,
 });
-
 
 export const useProductInstanceForm = () => {
   const form = useAtomValue(productInstanceFormAtom);

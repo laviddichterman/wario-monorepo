@@ -24,5 +24,4 @@ import { PrinterGroupModel } from './WPrinterGroupSchema';
   ],
   exports: [MongooseModule],
 })
-export class CatalogModule { }
-
+export class CatalogModule {}

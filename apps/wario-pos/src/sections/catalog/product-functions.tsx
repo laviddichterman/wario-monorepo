@@ -16,7 +16,6 @@ type Props = {
   sx?: SxProps<Theme>;
 };
 
-
 export function CatalogProductFunctionView(_props: Props) {
   return (
     <>

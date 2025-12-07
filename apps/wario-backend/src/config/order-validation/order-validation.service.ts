@@ -17,9 +17,7 @@ import { CatalogProviderService } from '../catalog-provider/catalog-provider.ser
  */
 @Injectable()
 export class OrderValidationService {
-  constructor(
-    private catalogProviderService: CatalogProviderService,
-  ) { }
+  constructor(private catalogProviderService: CatalogProviderService) {}
 
   /**
    * Rebuilds the order cart from catalog data and validates product availability.

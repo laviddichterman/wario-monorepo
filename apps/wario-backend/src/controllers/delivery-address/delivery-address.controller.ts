@@ -12,12 +12,10 @@ const client = new Client({});
 @Controller('api/v1/addresses')
 @Public()
 export class DeliveryAddressController {
-  constructor(private readonly dataProvider: DataProviderService) { }
+  constructor(private readonly dataProvider: DataProviderService) {}
 
   @Get()
-  async validateAddress(
-    @Body() body: DeliveryAddressValidateRequest,
-  ) {
+  async validateAddress(@Body() body: DeliveryAddressValidateRequest) {
     const GOOGLE_GEOCODE_KEY = this.dataProvider.KeyValueConfig.GOOGLE_GEOCODE_KEY;
     const serviceArea = this.dataProvider.Fulfillments[body.fulfillmentId].serviceArea;
     if (!serviceArea) {
@@ -46,9 +44,7 @@ export class DeliveryAddressController {
   }
 
   @Get('validate')
-  async validateAddressAlt(
-    @Body() body: DeliveryAddressValidateRequest,
-  ) {
+  async validateAddressAlt(@Body() body: DeliveryAddressValidateRequest) {
     return this.validateAddress(body);
   }
 }

@@ -30,13 +30,13 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
   const modifierMap = useCustomizerStore((s) => s.selectedProduct?.m.modifier_map);
   const modifierTypeId = options[0].modifierTypeId;
   const selectedOptionId = useCustomizerStore((s) => {
-    const modEntry = s.selectedProduct?.p.modifiers.find(x => x.modifierTypeId === modifierTypeId);
+    const modEntry = s.selectedProduct?.p.modifiers.find((x) => x.modifierTypeId === modifierTypeId);
     return modEntry?.options.length === 1 ? modEntry.options[0].optionId : null;
   });
 
-  const getOptionState = useMemo(() =>
-    (moId: string) => modifierMap ? selectOptionState(modifierMap, modifierTypeId, moId) : undefined,
-    [modifierMap, modifierTypeId]
+  const getOptionState = useMemo(
+    () => (moId: string) => (modifierMap ? selectOptionState(modifierMap, modifierTypeId, moId) : undefined),
+    [modifierMap, modifierTypeId],
   );
 
   if (!serviceDateTime || !selectedProduct || !fulfillmentId) {
@@ -45,15 +45,24 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
-      modifierTypeId, e.target.value, selectedProduct, catalogSelectors, serviceDateTime, fulfillmentId));
-  }
+    updateCustomizerProduct(
+      UpdateModifierOptionStateToggleOrRadio(
+        modifierTypeId,
+        e.target.value,
+        selectedProduct,
+        catalogSelectors,
+        serviceDateTime,
+        fulfillmentId,
+      ),
+    );
+  };
   return (
     <RadioGroup
       sx={{ width: '100%' }}
       onChange={onChange}
       value={selectedOptionId}
-      aria-labelledby={`modifier_control_${modifierTypeId}`}>
+      aria-labelledby={`modifier_control_${modifierTypeId}`}
+    >
       <Grid container>
         {options.map((opt, i) => {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -65,20 +74,24 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
                 xs: 12,
                 sm: 6,
                 md: 4,
-                lg: 3
-              }}>
-              <ModifierOptionTooltip product={selectedProduct.p} option={opt} enableState={optionState.enable_whole} >
+                lg: 3,
+              }}
+            >
+              <ModifierOptionTooltip product={selectedProduct.p} option={opt} enableState={optionState.enable_whole}>
                 <CustomizerFormControlLabel
                   value={opt.id}
-                  control={<Radio
-                    checkedIcon={<Circle />}
-                    icon={<CircleOutlined />}
-                    disableRipple
-                    disableFocusRipple
-                    disableTouchRipple
-                    disabled={optionState.enable_whole.enable !== DISABLE_REASON.ENABLED}
-                  />}
-                  label={opt.displayName} />
+                  control={
+                    <Radio
+                      checkedIcon={<Circle />}
+                      icon={<CircleOutlined />}
+                      disableRipple
+                      disableFocusRipple
+                      disableTouchRipple
+                      disabled={optionState.enable_whole.enable !== DISABLE_REASON.ENABLED}
+                    />
+                  }
+                  label={opt.displayName}
+                />
               </ModifierOptionTooltip>
             </Grid>
           );

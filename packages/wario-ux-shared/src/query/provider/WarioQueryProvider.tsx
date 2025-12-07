@@ -33,7 +33,7 @@ interface WarioQueryProviderProps {
 /**
  * Combined provider for TanStack Query + Socket.io
  * Replaces Redux Provider + SocketIoMiddleware setup
- * 
+ *
  * Usage:
  * ```tsx
  * <WarioQueryProvider hostAPI="https://api.example.com" namespace="nsPOS">
@@ -46,7 +46,7 @@ export function WarioQueryProvider({
   namespace,
   children,
   autoConnect = true,
-  showDevtools = false
+  showDevtools = false,
 }: WarioQueryProviderProps) {
   // Create query client once and memoize it
   const queryClient = useMemo(() => createWarioQueryClient(), []);

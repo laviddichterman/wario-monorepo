@@ -2,7 +2,7 @@
  * This file contains TypeScript types derived from DTO classes.
  * These types are generated from the DTO classes to eliminate duplication
  * and ensure that DTOs are the single source of truth.
- * 
+ *
  * IMPORTANT: This file should ONLY contain types derived directly from DTOs.
  * Complex types, utility types, and types not based on DTOs belong in types.ts.
  */
@@ -116,7 +116,11 @@ import type {
   WOrderInstanceDto,
   WOrderInstancePartialDto,
 } from './dto/order.dto';
-import type { DeletePrinterGroupNoReassignRequestDto, DeletePrinterGroupReassignRequestDto, PrinterGroupDto } from './dto/printer-group.dto';
+import type {
+  DeletePrinterGroupNoReassignRequestDto,
+  DeletePrinterGroupReassignRequestDto,
+  PrinterGroupDto,
+} from './dto/printer-group.dto';
 import type {
   IProductDisplayFlagsDto,
   IProductDto,
@@ -132,10 +136,7 @@ import type {
   UncommittedIProductDto,
   UncommittedIProductInstanceDto,
 } from './dto/product.dto';
-import type {
-  SeatingResourceDto,
-  WSeatingInfoDto,
-} from './dto/seating.dto';
+import type { SeatingResourceDto, WSeatingInfoDto } from './dto/seating.dto';
 import type { DistributiveOmit } from './utility-types';
 
 // =============================================================================
@@ -271,9 +272,12 @@ export type ProductMetadataExpression = Omit<ProductMetadataExpressionDto, never
 
 export type AbstractExpressionConstLiteral = Omit<AbstractExpressionConstLiteralDto, never>;
 export type AbstractExpressionProductMetadata = Omit<AbstractExpressionProductMetadataDto, never>;
-export type AbstractExpressionIfElseExpression = Omit<AbstractExpressionIfElseExpressionDto, never>
+export type AbstractExpressionIfElseExpression = Omit<AbstractExpressionIfElseExpressionDto, never>;
 export type AbstractExpressionLogicalExpression = Omit<AbstractExpressionLogicalExpressionDto, never>;
-export type AbstractExpressionModifierPlacementExpression = Omit<AbstractExpressionModifierPlacementExpressionDto, never>;
+export type AbstractExpressionModifierPlacementExpression = Omit<
+  AbstractExpressionModifierPlacementExpressionDto,
+  never
+>;
 export type AbstractExpressionHasAnyOfModifierExpression = Omit<AbstractExpressionHasAnyOfModifierExpressionDto, never>;
 
 /**
@@ -385,9 +389,7 @@ export type PurchaseStoreCreditRequestNoEmail = Omit<PurchaseStoreCreditRequestN
  * Discriminated union type for store credit purchase requests.
  * Derived from PurchaseStoreCreditRequestDto.
  */
-export type PurchaseStoreCreditRequest =
-  | PurchaseStoreCreditRequestSendEmail
-  | PurchaseStoreCreditRequestNoEmail;
+export type PurchaseStoreCreditRequest = PurchaseStoreCreditRequestSendEmail | PurchaseStoreCreditRequestNoEmail;
 
 // =============================================================================
 // API Response Wrapper Types (from api.dto.ts)
@@ -406,6 +408,6 @@ export type CreateProductBatchRequest = Omit<CreateProductBatchRequestDto, never
 export type UpdateIProductRequest = Omit<UpdateIProductRequestDto, never>;
 export type UpdateIProductUpdateIProductInstance = Omit<UpdateIProductUpdateIProductInstanceDto, never>;
 export type UpdateProductBatchRequest = Omit<UpdateProductBatchRequestDto, never>;
-export type UpsertProductBatchRequest = (CreateProductBatchRequest | UpdateProductBatchRequest);
+export type UpsertProductBatchRequest = CreateProductBatchRequest | UpdateProductBatchRequest;
 
 // end UpsertProductBatch types

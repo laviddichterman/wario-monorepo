@@ -35,7 +35,7 @@ export class DatabaseManagerService implements OnModuleInit {
     @InjectConnection() private connection: Connection,
     @InjectPinoLogger(DatabaseManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   async onModuleInit() {
     await this.Bootstrap();
@@ -49,7 +49,7 @@ export class DatabaseManagerService implements OnModuleInit {
   };
 
   private UPGRADE_MIGRATION_FUNCTIONS: IMigrationFunctionObject = {
-    '0.5.18': [{ major: 0, minor: 5, patch: 19 }, async () => { }],
+    '0.5.18': [{ major: 0, minor: 5, patch: 19 }, async () => {}],
     '0.5.19': [
       { major: 0, minor: 5, patch: 20 },
       async () => {
@@ -72,9 +72,9 @@ export class DatabaseManagerService implements OnModuleInit {
         this.migrationFlags.requireSquareRebuild = true;
       },
     ],
-    '0.5.39': [{ major: 0, minor: 5, patch: 40 }, async () => { }],
-    '0.5.40': [{ major: 0, minor: 5, patch: 41 }, async () => { }],
-    '0.5.41': [{ major: 0, minor: 5, patch: 42 }, async () => { }],
+    '0.5.39': [{ major: 0, minor: 5, patch: 40 }, async () => {}],
+    '0.5.40': [{ major: 0, minor: 5, patch: 41 }, async () => {}],
+    '0.5.41': [{ major: 0, minor: 5, patch: 42 }, async () => {}],
     '0.5.42': [
       { major: 0, minor: 5, patch: 43 },
       async () => {
@@ -169,7 +169,7 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.5.57': [{ major: 0, minor: 5, patch: 58 }, async () => { }],
+    '0.5.57': [{ major: 0, minor: 5, patch: 58 }, async () => {}],
     '0.5.58': [
       { major: 0, minor: 5, patch: 59 },
       async () => {
@@ -297,7 +297,7 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.5.61': [{ major: 0, minor: 5, patch: 62 }, async () => { }],
+    '0.5.61': [{ major: 0, minor: 5, patch: 62 }, async () => {}],
     '0.5.62': [
       { major: 0, minor: 5, patch: 63 },
       async () => {
@@ -415,12 +415,12 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.5.69': [{ major: 0, minor: 5, patch: 84 }, async () => { }],
-    '0.5.84': [{ major: 0, minor: 5, patch: 85 }, async () => { }],
-    '0.5.85': [{ major: 0, minor: 5, patch: 86 }, async () => { }],
-    '0.5.86': [{ major: 0, minor: 5, patch: 87 }, async () => { }],
-    '0.5.87': [{ major: 0, minor: 5, patch: 88 }, async () => { }],
-    '0.5.88': [{ major: 0, minor: 5, patch: 89 }, async () => { }],
+    '0.5.69': [{ major: 0, minor: 5, patch: 84 }, async () => {}],
+    '0.5.84': [{ major: 0, minor: 5, patch: 85 }, async () => {}],
+    '0.5.85': [{ major: 0, minor: 5, patch: 86 }, async () => {}],
+    '0.5.86': [{ major: 0, minor: 5, patch: 87 }, async () => {}],
+    '0.5.87': [{ major: 0, minor: 5, patch: 88 }, async () => {}],
+    '0.5.88': [{ major: 0, minor: 5, patch: 89 }, async () => {}],
     '0.5.89': [
       { major: 0, minor: 6, patch: 0 },
       async () => {
@@ -448,7 +448,10 @@ export class DatabaseManagerService implements OnModuleInit {
               return await prod
                 .save()
                 .then((doc) => {
-                  this.logger.info({ productId: doc.id as string, availability: doc.availability }, 'Updated ProductModel with availability');
+                  this.logger.info(
+                    { productId: doc.id as string, availability: doc.availability },
+                    'Updated ProductModel with availability',
+                  );
                   return doc;
                 })
                 .catch((err: unknown) => {
@@ -483,7 +486,10 @@ export class DatabaseManagerService implements OnModuleInit {
               return await opt
                 .save()
                 .then((doc) => {
-                  this.logger.info({ optionId: doc.id as string, availability: doc.availability }, 'Updated WOptionModel with availability');
+                  this.logger.info(
+                    { optionId: doc.id as string, availability: doc.availability },
+                    'Updated WOptionModel with availability',
+                  );
                   return doc;
                 })
                 .catch((err: unknown) => {
@@ -495,12 +501,12 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.6.0': [{ major: 0, minor: 6, patch: 1 }, async () => { }],
-    '0.6.1': [{ major: 0, minor: 6, patch: 2 }, async () => { }],
-    '0.6.2': [{ major: 0, minor: 6, patch: 3 }, async () => { }],
-    '0.6.3': [{ major: 0, minor: 6, patch: 4 }, async () => { }],
-    '0.6.4': [{ major: 0, minor: 6, patch: 5 }, async () => { }],
-    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => { }],
+    '0.6.0': [{ major: 0, minor: 6, patch: 1 }, async () => {}],
+    '0.6.1': [{ major: 0, minor: 6, patch: 2 }, async () => {}],
+    '0.6.2': [{ major: 0, minor: 6, patch: 3 }, async () => {}],
+    '0.6.3': [{ major: 0, minor: 6, patch: 4 }, async () => {}],
+    '0.6.4': [{ major: 0, minor: 6, patch: 5 }, async () => {}],
+    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => {}],
     '0.6.6': [
       { major: 0, minor: 6, patch: 7 },
       async () => {
@@ -539,12 +545,18 @@ export class DatabaseManagerService implements OnModuleInit {
                 return await prod
                   .save()
                   .then((doc) => {
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.logger.info({ productInstanceId: doc.id as string, posFields: doc.displayFlags!.pos }, 'Updated ProductInstanceModel with POS scoped fields');
+                    this.logger.info(
+                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      { productInstanceId: doc.id as string, posFields: doc.displayFlags!.pos },
+                      'Updated ProductInstanceModel with POS scoped fields',
+                    );
                     return doc;
                   })
                   .catch((err: unknown) => {
-                    this.logger.error({ err, productInstanceId: prod.id as string }, 'Failed to update ProductInstanceModel');
+                    this.logger.error(
+                      { err, productInstanceId: prod.id as string },
+                      'Failed to update ProductInstanceModel',
+                    );
                     throw err;
                   });
               }
@@ -555,8 +567,8 @@ export class DatabaseManagerService implements OnModuleInit {
         }
       },
     ],
-    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => { }],
-    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => { }],
+    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => {}],
+    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => {}],
   };
 
   Bootstrap = async () => {

@@ -15,17 +15,14 @@
 export {
   // Order/Expression helpers
   createMockAbstractOrderExpression,
-
   createMockAbstractOrderExpressionConstLiteral,
   createMockAbstractOrderExpressionIfElse,
-
   createMockAbstractOrderExpressionLogical,
   // Catalog generators
   createMockCatalog,
 
   // Types
   type CreateMockCatalogOptions,
-
   createMockCatalogSelectorsFromArrays,
   // Category
   createMockCategory,
@@ -35,7 +32,6 @@ export {
   // Primitive helpers
   createMockMoney,
   createMockOption,
-
   createMockOptionDisplayFlags,
   createMockOptionMetadata,
   createMockOptionType,
@@ -49,7 +45,6 @@ export {
   // Product Instance
   createMockProductInstance,
   createMockProductInstanceDisplayFlags,
-
   createMockProductInstanceDisplayFlagsMenu,
   createMockProductInstanceDisplayFlagsOrder,
   createMockProductInstanceDisplayFlagsPos,

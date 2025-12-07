@@ -32,16 +32,19 @@ Successfully created comprehensive DTO (Data Transfer Object) classes for the wa
 ## Architecture Decisions
 
 ### 1. Naming Convention
+
 - All DTO classes end with `Dto` suffix (e.g., `IMoneyDto`, `IProductDto`)
 - Matches interface names from types.ts but with Dto suffix
 - Makes it clear when using DTOs vs plain types
 
 ### 2. Structure
+
 - Organized into logical files by domain (common, product, order, etc.)
 - Each file contains related DTOs
 - Follows the same structure as existing types.ts
 
 ### 3. Validation Strategy
+
 - Required fields use strict validators (@IsString, @IsNumber, @IsNotEmpty)
 - Optional fields use @IsOptional decorator
 - Enums use @IsEnum with actual enum reference
@@ -49,6 +52,7 @@ Successfully created comprehensive DTO (Data Transfer Object) classes for the wa
 - Arrays use array validators with { each: true } option
 
 ### 4. Type Safety
+
 - All DTOs are classes (not interfaces) for runtime validation
 - Use `!` assertion for required properties (since decorators handle validation)
 - Preserve readonly modifiers where appropriate (payments, discounts)
@@ -56,6 +60,7 @@ Successfully created comprehensive DTO (Data Transfer Object) classes for the wa
 ## Integration with Existing Code
 
 ### Current State (Maintained)
+
 ```typescript
 // types.ts - UNCHANGED
 export interface IMoney {
@@ -65,6 +70,7 @@ export interface IMoney {
 ```
 
 ### New DTOs (Added)
+
 ```typescript
 // dto/common.dto.ts - NEW
 export class IMoneyDto {
@@ -77,6 +83,7 @@ export class IMoneyDto {
 ```
 
 ### Future Migration Path (Planned)
+
 ```typescript
 // types.ts - FUTURE
 import type { IMoneyDto } from './dto/common.dto';
@@ -86,6 +93,7 @@ export type IMoney = InstanceType<typeof IMoneyDto>;
 ## Usage Examples
 
 ### NestJS Controller
+
 ```typescript
 import { Controller, Post, Body } from '@nestjs/common';
 import { CreateOrderRequestV2Dto } from '@wcp/wario-shared';
@@ -101,6 +109,7 @@ export class OrdersController {
 ```
 
 ### Manual Validation
+
 ```typescript
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -111,6 +120,7 @@ const errors = await validate(money);
 ```
 
 ### Type Conversion
+
 ```typescript
 import { classToPlain, plainToClass } from 'class-transformer';
 
@@ -124,6 +134,7 @@ const plain = classToPlain(dto);
 ## Dependencies
 
 Already present in package.json:
+
 - `class-validator`: ^0.14.1 ✅
 - `class-transformer`: ^0.5.1 ✅
 - `reflect-metadata`: ^0.2.2 ✅
@@ -153,6 +164,7 @@ packages/wario-shared/src/lib/dto/
 ## Documentation
 
 Created comprehensive documentation:
+
 - **DTO_GUIDE.md** - Complete guide for using DTOs in NestJS
   - Usage examples
   - All DTO classes listed and categorized
@@ -163,16 +175,19 @@ Created comprehensive documentation:
 ## Next Steps
 
 ### Immediate
+
 1. ✅ DTOs are ready to use in wario-backend
 2. ✅ All DTOs exported from package root
 3. ✅ Documentation complete
 
 ### Future (As Mentioned in Requirements)
+
 1. Refactor types.ts to derive types from DTOs
 2. Remove duplicate type definitions
 3. Use DTOs as single source of truth
 
 ### Example Future Refactor
+
 ```typescript
 // Before (now)
 export interface IMoney {
@@ -211,6 +226,7 @@ Not applicable - DTOs are package-level, environment-agnostic.
 > Does this change require a changeset for package versioning?
 
 Yes, when ready to publish. This is a minor version bump (new feature):
+
 ```bash
 pnpm changeset
 # Select minor for wario-shared

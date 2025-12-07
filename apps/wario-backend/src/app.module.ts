@@ -22,7 +22,6 @@ import { QueryModule } from './models/query/query.module';
 import { SettingsModule } from './models/settings/settings.module';
 import { TasksModule } from './tasks/tasks.module';
 
-
 @Module({
   imports: [
     NestConfigModule.forRoot({ isGlobal: true }),
@@ -30,9 +29,10 @@ import { TasksModule } from './tasks/tasks.module';
     LoggerModule.forRoot({
       pinoHttp: {
         // Use pino-pretty for development, JSON for production
-        transport: process.env.NODE_ENV !== 'production'
-          ? { target: 'pino-pretty', options: { colorize: true, singleLine: true } }
-          : undefined,
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? { target: 'pino-pretty', options: { colorize: true, singleLine: true } }
+            : undefined,
         // Redact sensitive headers
         redact: ['req.headers.authorization', 'req.headers.cookie'],
         // Auto-log requests and responses
@@ -91,5 +91,4 @@ import { TasksModule } from './tasks/tasks.module';
     },
   ],
 })
-export class AppModule { }
-
+export class AppModule {}

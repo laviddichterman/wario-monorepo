@@ -48,9 +48,7 @@ export function mockOrderManagerService(
 /**
  * Creates a mock SquareService with optional overrides.
  */
-export function mockSquareService(
-  overrides: Partial<SquareService> = {},
-): jest.Mocked<SquareService> {
+export function mockSquareService(overrides: Partial<SquareService> = {}): jest.Mocked<SquareService> {
   return createMock<SquareService>(overrides);
 }
 
@@ -66,9 +64,7 @@ export function mockDataProviderService(
 /**
  * Creates a mock SocketIoService with optional overrides.
  */
-export function mockSocketIoService(
-  overrides: Partial<SocketIoService> = {},
-): jest.Mocked<SocketIoService> {
+export function mockSocketIoService(overrides: Partial<SocketIoService> = {}): jest.Mocked<SocketIoService> {
   return createMock<SocketIoService>({
     EmitFulfillments: jest.fn(),
     EmitSettings: jest.fn(),
@@ -82,9 +78,7 @@ export function mockSocketIoService(
 /**
  * Creates a mock GoogleService with optional overrides.
  */
-export function mockGoogleService(
-  overrides: Partial<GoogleService> = {},
-): jest.Mocked<GoogleService> {
+export function mockGoogleService(overrides: Partial<GoogleService> = {}): jest.Mocked<GoogleService> {
   return createMock<GoogleService>(overrides);
 }
 

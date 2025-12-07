@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect } from 'react';
 import ScopedCssBaseline from '@mui/material/ScopedCssBaseline';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-import { themeOptions } from "@wcp/wario-fe-ux-shared";
+import { themeOptions } from '@wcp/wario-fe-ux-shared';
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import { MotionLazy } from '@wcp/wario-ux-shared/containers';
@@ -62,7 +62,7 @@ const App = () => {
     if (isSocketDataLoaded) {
       scrollToIdOffsetAfterDelay('WARIO_order', 100, -100);
     }
-  }, [isSocketDataLoaded])
+  }, [isSocketDataLoaded]);
 
   // console.log({ isSocketDataLoaded, currentTime });
 
@@ -70,14 +70,15 @@ const App = () => {
     <ScopedCssBaseline>
       <ThemeProvider theme={theme}>
         <SnackbarProvider style={{ zIndex: 999999 }} anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}>
-          {!isSocketDataLoaded ?
+          {!isSocketDataLoaded ? (
             <MotionLazy>
               <LoadingScreen />
-            </MotionLazy> :
+            </MotionLazy>
+          ) : (
             <div id="WARIO_order">
               <WOrderingComponent />
             </div>
-          }
+          )}
         </SnackbarProvider>
       </ThemeProvider>
     </ScopedCssBaseline>

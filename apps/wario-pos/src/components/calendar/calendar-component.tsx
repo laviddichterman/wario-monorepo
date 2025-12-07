@@ -39,10 +39,18 @@ export type CalendarProps = {
     onClose: () => void;
   }>;
   updateEvent: (event: Partial<ICalendarEvent>) => void;
-  businessHours?: BusinessHoursInput
+  businessHours?: BusinessHoursInput;
 };
 
-export function CalendarComponent({ events, eventsLoading, initialDate, initialView, CalendarForm, eventById, businessHours }: CalendarProps) {
+export function CalendarComponent({
+  events,
+  eventsLoading,
+  initialDate,
+  initialView,
+  CalendarForm,
+  eventById,
+  businessHours,
+}: CalendarProps) {
   const theme = useTheme();
   // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
   const openFilters = useBoolean();
@@ -75,9 +83,7 @@ export function CalendarComponent({ events, eventsLoading, initialDate, initialV
   } = useCalendar({ defaultDesktopView: initialView, defaultMobileView: initialView });
   const { currentLang } = useTranslate();
 
-
-  const canReset =
-    (!!currentFilters.startDate && !!currentFilters.endDate);
+  const canReset = !!currentFilters.startDate && !!currentFilters.endDate;
 
   const dataFiltered = applyFilter({
     inputData: events,
@@ -112,14 +118,9 @@ export function CalendarComponent({ events, eventsLoading, initialDate, initialV
         },
       }}
     >
-      <DialogTitle sx={{ minHeight: 76 }}>
-        {openForm && <> {eventById(selectedEventId)?.title}  event</>}
-      </DialogTitle>
+      <DialogTitle sx={{ minHeight: 76 }}>{openForm && <> {eventById(selectedEventId)?.title} event</>}</DialogTitle>
 
-      <CalendarForm
-        currentEvent={eventById(selectedEventId) ?? null}
-        onClose={onCloseForm}
-      />
+      <CalendarForm currentEvent={eventById(selectedEventId) ?? null} onClose={onCloseForm} />
     </Dialog>
   );
 

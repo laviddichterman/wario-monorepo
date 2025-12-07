@@ -1,14 +1,7 @@
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 
-import type {
-  IMoney,
-  IOption,
-  IOptionType,
-  IRecurringInterval,
-  IWInterval,
-  KeyValue,
-} from '@wcp/wario-shared';
+import type { IMoney, IOption, IOptionType, IRecurringInterval, IWInterval, KeyValue } from '@wcp/wario-shared';
 
 /**
  * Form state for a single modifier option in the copy flow.
@@ -72,7 +65,7 @@ export const modifierOptionFormIsValidAtom = atom((get) => {
   if (form.bakeFactor < 0) return false;
 
   // Note: Availability validation might be complex, simplified for now to always true unless we add specific check
-  // Original component checked "availabilityIsValid" local state. 
+  // Original component checked "availabilityIsValid" local state.
   // We might need to handle that or assume the custom component handles it via separate atom or internal state.
   // For now, simple checks.
 
@@ -101,9 +94,7 @@ export const fromModifierOptionEntity = (option: IOption): ModifierOptionFormSta
 });
 
 /** Convert form state to API request body */
-export const toModifierOptionApiBody = (
-  form: ModifierOptionFormState,
-): Omit<IOption, 'modifierTypeId' | 'id'> => ({
+export const toModifierOptionApiBody = (form: ModifierOptionFormState): Omit<IOption, 'modifierTypeId' | 'id'> => ({
   displayName: form.displayName,
   description: form.description,
   shortcode: form.shortcode,
@@ -135,9 +126,7 @@ export const toModifierOptionApiBody = (
  * AtomFamily for modifier option form state, indexed by position.
  * Each option in the copy list gets its own atom.
  */
-export const modifierOptionFormFamily = atomFamily((_index: number) =>
-  atom<ModifierOptionFormState | null>(null),
-);
+export const modifierOptionFormFamily = atomFamily((_index: number) => atom<ModifierOptionFormState | null>(null));
 
 /** Copy flag for each option (whether to include in the copy) */
 export const modifierOptionCopyFlagFamily = atomFamily((_index: number) => atom(true));
@@ -159,7 +148,6 @@ export const modifierOptionCopyCountAtom = atom(0);
  * Stores the modifier type being copied (read-only reference for child components).
  */
 export const modifierTypeCopySourceAtom = atom<IOptionType | null>(null);
-
 
 export const useModifierOptionForm = () => {
   const form = useAtomValue(modifierOptionFormAtom);

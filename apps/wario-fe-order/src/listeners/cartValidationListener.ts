@@ -1,6 +1,6 @@
 /**
  * Cart Validation Listener
- * 
+ *
  * Monitors changes to catalog, fulfillment selections, server time, and cart to ensure:
  * 1. Selected date/time remains available - if not, updates to closest available or clears selection
  * 2. Cart items remain available for selected service/time - moves unavailable items to deadCart
@@ -42,10 +42,7 @@ interface ValidationContext {
 /**
  * Gets the current validation context from all stores and queries
  */
-function getValidationContext(
-  queryClient: QueryClient,
-  isOrderSubmitted: boolean
-): ValidationContext {
+function getValidationContext(queryClient: QueryClient, isOrderSubmitted: boolean): ValidationContext {
   const catalog = queryClient.getQueryData<ICatalog>(QUERY_KEYS.catalog) ?? null;
   const fulfillments = queryClient.getQueryData<FulfillmentConfig[]>(QUERY_KEYS.fulfillments) ?? null;
   const serverTimeData = queryClient.getQueryData<{ time: string }>(QUERY_KEYS.serverTime);
@@ -95,16 +92,8 @@ function createCatalogSelectors(catalog: ICatalog | null): ICatalogSelectors | n
  * Validates and updates selected time if it's no longer available
  */
 function validateSelectedTime(ctx: ValidationContext): void {
-  const {
-    catalog,
-    fulfillments,
-    currentTime,
-    selectedService,
-    selectedDate,
-    selectedTime,
-    cart,
-    isOrderSubmitted,
-  } = ctx;
+  const { catalog, fulfillments, currentTime, selectedService, selectedDate, selectedTime, cart, isOrderSubmitted } =
+    ctx;
 
   // Skip if order already submitted or insufficient data
   if (isOrderSubmitted || !catalog || !fulfillments || currentTime === 0) {
@@ -112,11 +101,7 @@ function validateSelectedTime(ctx: ValidationContext): void {
   }
 
   // Skip if no date/time/service selected
-  if (
-    selectedDate === null ||
-    selectedTime === null ||
-    selectedService === null
-  ) {
+  if (selectedDate === null || selectedTime === null || selectedService === null) {
     return;
   }
 
@@ -136,20 +121,16 @@ function validateSelectedTime(ctx: ValidationContext): void {
       ...x,
       product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId },
     })),
-    (id: string) => catalogSelectors.productEntry(id)
+    (id: string) => catalogSelectors.productEntry(id),
   );
 
   // Get available time options for selected date and service
   const infoMap = WDateUtils.GetInfoMapForAvailabilityComputation(
     [selectedFulfillment],
     selectedDate,
-    cartBasedLeadTime
+    cartBasedLeadTime,
   );
-  const availableOptions = WDateUtils.GetOptionsForDate(
-    infoMap,
-    selectedDate,
-    formatISO(currentTime)
-  );
+  const availableOptions = WDateUtils.GetOptionsForDate(infoMap, selectedDate, formatISO(currentTime));
 
   // Check if currently selected time is still available
   const isTimeStillAvailable = availableOptions.some((opt) => opt.value === selectedTime);
@@ -159,8 +140,7 @@ function validateSelectedTime(ctx: ValidationContext): void {
       // Find closest available time
       const earlierOptions = availableOptions.filter((x) => x.value < selectedTime);
       const laterOptions = availableOptions.filter((x) => x.value > selectedTime);
-      const closestEarlierOption =
-        earlierOptions.length > 0 ? earlierOptions[earlierOptions.length - 1] : null;
+      const closestEarlierOption = earlierOptions.length > 0 ? earlierOptions[earlierOptions.length - 1] : null;
       const closestLaterOption = laterOptions.length > 0 ? laterOptions[0] : null;
 
       const newOption =
@@ -168,13 +148,13 @@ function validateSelectedTime(ctx: ValidationContext): void {
           ? selectedTime - closestEarlierOption.value <= closestLaterOption.value - selectedTime
             ? closestEarlierOption
             : closestLaterOption
-          : closestEarlierOption ?? closestLaterOption;
+          : (closestEarlierOption ?? closestLaterOption);
 
       if (newOption) {
         useFulfillmentStore.getState().setTime(newOption.value);
         enqueueSnackbar(
           `Previously selected time of ${WDateUtils.MinutesToPrintTime(selectedTime)} is no longer available for your order. Updated to closest available time of ${WDateUtils.MinutesToPrintTime(newOption.value)}.`,
-          { variant: 'warning' }
+          { variant: 'warning' },
         );
         useMetricsStore.getState().incrementTimeBumps();
         useFulfillmentStore.getState().setSelectedTimeExpired();
@@ -196,16 +176,7 @@ function validateSelectedTime(ctx: ValidationContext): void {
  * Validates cart items and manages deadCart
  */
 function validateCartItems(ctx: ValidationContext): void {
-  const {
-    catalog,
-    currentTime,
-    selectedService,
-    selectedDate,
-    selectedTime,
-    cart,
-    deadCart,
-    isOrderSubmitted,
-  } = ctx;
+  const { catalog, currentTime, selectedService, selectedDate, selectedTime, cart, deadCart, isOrderSubmitted } = ctx;
 
   // Skip if order already submitted or insufficient data
   if (isOrderSubmitted || !catalog || currentTime === 0) {
@@ -236,12 +207,11 @@ function validateCartItems(ctx: ValidationContext): void {
       catalogSelectors,
       menuTime,
       service,
-      true
+      true,
     );
 
     const categoryEntry = catalogSelectors.category(entry.categoryId);
-    const isCategoryAllowed =
-      categoryEntry && categoryEntry.category.serviceDisable.indexOf(service) === -1;
+    const isCategoryAllowed = categoryEntry && categoryEntry.category.serviceDisable.indexOf(service) === -1;
 
     if (!isAvailable || !isCategoryAllowed) {
       toKill.push(entry);
@@ -258,12 +228,11 @@ function validateCartItems(ctx: ValidationContext): void {
       catalogSelectors,
       menuTime,
       service,
-      true
+      true,
     );
 
     const categoryEntry = catalogSelectors.category(entry.categoryId);
-    const isCategoryAllowed =
-      categoryEntry && categoryEntry.category.serviceDisable.indexOf(service) === -1;
+    const isCategoryAllowed = categoryEntry && categoryEntry.category.serviceDisable.indexOf(service) === -1;
 
     return isAvailable && isCategoryAllowed;
   });
@@ -276,14 +245,13 @@ function validateCartItems(ctx: ValidationContext): void {
       toKill.forEach((x) =>
         enqueueSnackbar(`${x.product.m.name} as configured is no longer available.`, {
           variant: 'warning',
-        })
+        }),
       );
     } else {
       const productNames = toKill.map((x) => x.product.m.name);
       const formattedList = productNames.reduceRight(
-        (acc, prod, i) =>
-          i === 0 ? acc : i === productNames.length - 1 ? `${acc}, and ${prod}` : `${acc}, ${prod}`,
-        ''
+        (acc, prod, i) => (i === 0 ? acc : i === productNames.length - 1 ? `${acc}, and ${prod}` : `${acc}, ${prod}`),
+        '',
       );
       enqueueSnackbar(`The ${formattedList} as configured are no longer available.`, {
         variant: 'warning',
@@ -306,7 +274,7 @@ function validateCartItems(ctx: ValidationContext): void {
           x.product.p.modifiers,
           catalogSelectors,
           menuTime,
-          service
+          service,
         );
         return {
           entry: x,
@@ -324,7 +292,7 @@ function validateCartItems(ctx: ValidationContext): void {
             ...x.entry.product,
             m: x.newMetadata,
           },
-        }))
+        })),
       );
     }
   }
@@ -334,20 +302,18 @@ function validateCartItems(ctx: ValidationContext): void {
       toRevive.forEach((x) =>
         enqueueSnackbar(
           `${x.product.m.name} as configured is once again available and has been returned to your order.`,
-          { variant: 'warning' }
-        )
+          { variant: 'warning' },
+        ),
       );
     } else {
       const productNames = toRevive.map((x) => x.product.m.name);
       const formattedList = productNames.reduceRight(
-        (acc, prod, i) =>
-          i === 0 ? acc : i === productNames.length - 1 ? `${acc}, and ${prod}` : `${acc}, ${prod}`,
-        ''
+        (acc, prod, i) => (i === 0 ? acc : i === productNames.length - 1 ? `${acc}, and ${prod}` : `${acc}, ${prod}`),
+        '',
       );
-      enqueueSnackbar(
-        `The ${formattedList} as configured are once again available and returned to your order.`,
-        { variant: 'warning' }
-      );
+      enqueueSnackbar(`The ${formattedList} as configured are once again available and returned to your order.`, {
+        variant: 'warning',
+      });
     }
     cartStore.reviveAllCartEntries(
       toRevive.map((x) => ({
@@ -359,10 +325,10 @@ function validateCartItems(ctx: ValidationContext): void {
             x.product.p.modifiers,
             catalogSelectors,
             menuTime,
-            service
+            service,
           ),
         },
-      }))
+      })),
     );
   }
 }
@@ -380,10 +346,7 @@ function runValidation(queryClient: QueryClient, isOrderSubmitted: boolean): voi
  * Sets up cart validation listener
  * Returns cleanup function to unsubscribe
  */
-export function setupCartValidationListener(
-  queryClient: QueryClient,
-  getIsOrderSubmitted: () => boolean
-): () => void {
+export function setupCartValidationListener(queryClient: QueryClient, getIsOrderSubmitted: () => boolean): () => void {
   let validationTimeout: NodeJS.Timeout | null = null;
 
   // Debounced validation to avoid excessive processing

@@ -12,6 +12,7 @@ import { selectOptionState, useCustomizerStore } from '@/stores/useCustomizerSto
 import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 
 import { ModifierOptionTooltip } from '../ModifierOptionTooltip';
+
 import { UpdateModifierOptionStateToggleOrRadio } from './WProductCustomizerLogic';
 
 interface IModifierOptionToggle {
@@ -25,22 +26,40 @@ export function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUncheck
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime);
   const fulfillmentId = useFulfillmentStore(selectSelectedService);
-  const optionUncheckedState = useCustomizerStore((s) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, toggleOptionUnchecked.modifierTypeId, toggleOptionUnchecked.id) : undefined);
-  const optionCheckedState = useCustomizerStore((s) => s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id) : undefined);
-  const optionValue = useMemo(() => optionCheckedState?.placement === OptionPlacement.WHOLE, [optionCheckedState?.placement]);
+  const optionUncheckedState = useCustomizerStore((s) =>
+    s.selectedProduct
+      ? selectOptionState(
+          s.selectedProduct.m.modifier_map,
+          toggleOptionUnchecked.modifierTypeId,
+          toggleOptionUnchecked.id,
+        )
+      : undefined,
+  );
+  const optionCheckedState = useCustomizerStore((s) =>
+    s.selectedProduct
+      ? selectOptionState(s.selectedProduct.m.modifier_map, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id)
+      : undefined,
+  );
+  const optionValue = useMemo(
+    () => optionCheckedState?.placement === OptionPlacement.WHOLE,
+    [optionCheckedState?.placement],
+  );
   if (!optionUncheckedState || !optionCheckedState || !serviceDateTime || !selectedProduct || !fulfillmentId) {
     return null;
   }
   const toggleOption = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
-    updateCustomizerProduct(UpdateModifierOptionStateToggleOrRadio(
-      toggleOptionChecked.modifierTypeId,
-      e.target.checked ? toggleOptionChecked.id : toggleOptionUnchecked.id,
-      selectedProduct,
-      catalogSelectors,
-      serviceDateTime,
-      fulfillmentId));
-  }
+    updateCustomizerProduct(
+      UpdateModifierOptionStateToggleOrRadio(
+        toggleOptionChecked.modifierTypeId,
+        e.target.checked ? toggleOptionChecked.id : toggleOptionUnchecked.id,
+        selectedProduct,
+        catalogSelectors,
+        serviceDateTime,
+        fulfillmentId,
+      ),
+    );
+  };
   return (
     <ModifierOptionTooltip
       product={selectedProduct.p}
@@ -48,16 +67,23 @@ export function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUncheck
       enableState={optionValue ? optionUncheckedState.enable_whole : optionUncheckedState.enable_whole}
     >
       <CustomizerFormControlLabel
-        control={<Checkbox
-          checkedIcon={<Circle />}
-          icon={<CircleOutlined />}
-          disableRipple
-          disableFocusRipple
-          disableTouchRipple
-          disabled={(optionValue ? optionUncheckedState.enable_whole : optionUncheckedState.enable_whole).enable !== DISABLE_REASON.ENABLED}
-          value={optionValue}
-          onChange={toggleOption} />}
-        label={toggleOptionChecked.displayName} />
+        control={
+          <Checkbox
+            checkedIcon={<Circle />}
+            icon={<CircleOutlined />}
+            disableRipple
+            disableFocusRipple
+            disableTouchRipple
+            disabled={
+              (optionValue ? optionUncheckedState.enable_whole : optionUncheckedState.enable_whole).enable !==
+              DISABLE_REASON.ENABLED
+            }
+            value={optionValue}
+            onChange={toggleOption}
+          />
+        }
+        label={toggleOptionChecked.displayName}
+      />
     </ModifierOptionTooltip>
   );
 }

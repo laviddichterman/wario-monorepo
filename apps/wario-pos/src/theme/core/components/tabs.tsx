@@ -93,9 +93,7 @@ const tabsVariants = {
   list: [
     {
       props: (props) =>
-        props.indicatorColor !== 'custom' &&
-        props.variant !== 'fullWidth' &&
-        props.orientation !== 'vertical',
+        props.indicatorColor !== 'custom' && props.variant !== 'fullWidth' && props.orientation !== 'vertical',
       style: ({ theme }) => ({
         gap: theme.spacing(5),
         [theme.breakpoints.down('sm')]: { gap: theme.spacing(3) },

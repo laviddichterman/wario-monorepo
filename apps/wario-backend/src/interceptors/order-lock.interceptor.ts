@@ -11,15 +11,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
 import type { Observable } from 'rxjs';
 
-import {
-  IDEMPOTENCY_KEY,
-  type IdempotencyKeyRequest,
-} from '../decorators/idempotency-key.decorator';
+import { IDEMPOTENCY_KEY, type IdempotencyKeyRequest } from '../decorators/idempotency-key.decorator';
 import { LOCK_ORDER_KEY } from '../decorators/lock-order.decorator';
-import {
-  LOCKED_ORDER_KEY,
-  type LockedOrderRequest,
-} from '../decorators/locked-order.decorator';
+import { LOCKED_ORDER_KEY, type LockedOrderRequest } from '../decorators/locked-order.decorator';
 import type { WOrderInstance } from '../models/orders/WOrderInstance';
 
 /**
@@ -42,7 +36,7 @@ export class OrderLockInterceptor implements NestInterceptor {
   constructor(
     private reflector: Reflector,
     @InjectModel('WOrderInstance') private orderModel: Model<WOrderInstance>,
-  ) { }
+  ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<unknown>> {
     const requiresLock = this.reflector.get<boolean>(LOCK_ORDER_KEY, context.getHandler());

@@ -54,5 +54,4 @@ export class ICategoryDto extends UncommittedCategoryDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
-
 }

@@ -30,14 +30,7 @@ export type RHFAutocompleteProps = AutocompleteBaseProps & {
   };
 };
 
-export function RHFAutocomplete({
-  name,
-  label,
-  slotProps,
-  helperText,
-  placeholder,
-  ...other
-}: RHFAutocompleteProps) {
+export function RHFAutocomplete({ name, label, slotProps, helperText, placeholder, ...other }: RHFAutocompleteProps) {
   const { control, setValue } = useFormContext();
 
   const { textField, ...otherSlotProps } = slotProps ?? {};
@@ -50,7 +43,9 @@ export function RHFAutocomplete({
         <Autocomplete
           {...field}
           id={`${name}-rhf-autocomplete`}
-          onChange={(_event, newValue) => { setValue(name, newValue, { shouldValidate: true }); }}
+          onChange={(_event, newValue) => {
+            setValue(name, newValue, { shouldValidate: true });
+          }}
           renderInput={(params) => (
             <TextField
               {...params}

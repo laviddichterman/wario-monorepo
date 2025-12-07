@@ -42,11 +42,7 @@ export type UseCookiesReturn<T> = {
   setField: (name: keyof T, updateValue: T[keyof T]) => void;
 };
 
-export function useCookies<T>(
-  key: string,
-  initialState?: T,
-  options?: UseCookiesOptions
-): UseCookiesReturn<T> {
+export function useCookies<T>(key: string, initialState?: T, options?: UseCookiesOptions): UseCookiesReturn<T> {
   const { initializeWithValue = true, ...cookieOptions } = options ?? {};
   const isObjectState = initialState && typeof initialState === 'object';
 
@@ -81,7 +77,7 @@ export function useCookies<T>(
         setState(newState as T);
       }
     },
-    [cookieOptions, isObjectState, key]
+    [cookieOptions, isObjectState, key],
   );
 
   const updateField = useCallback(
@@ -90,7 +86,7 @@ export function useCookies<T>(
         updateState({ [fieldName]: updateValue } as Partial<T>);
       }
     },
-    [isObjectState, updateState]
+    [isObjectState, updateState],
   );
 
   const resetState = useCallback(
@@ -98,7 +94,7 @@ export function useCookies<T>(
       setState(defaultState ?? initialState);
       removeCookie(key);
     },
-    [initialState, key]
+    [initialState, key],
   );
 
   const memoizedValue = useMemo(
@@ -108,7 +104,7 @@ export function useCookies<T>(
       setField: updateField,
       resetState,
     }),
-    [resetState, updateField, updateState, state]
+    [resetState, updateField, updateState, state],
   );
 
   return memoizedValue;

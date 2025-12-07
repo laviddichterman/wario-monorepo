@@ -13,7 +13,7 @@ export class CategoryController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @Scopes('write:catalog')

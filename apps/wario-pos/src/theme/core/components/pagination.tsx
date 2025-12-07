@@ -49,7 +49,7 @@ const outlinedVariants = [
         '&:hover': {
           backgroundColor: varAlpha(
             'currentColor',
-            `calc(${theme.vars.palette.action.selectedOpacity.toString()} * 2)`
+            `calc(${theme.vars.palette.action.selectedOpacity.toString()} * 2)`,
           ),
         },
       },

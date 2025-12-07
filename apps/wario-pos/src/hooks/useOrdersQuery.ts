@@ -3,19 +3,26 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useMemo } from 'react';
 
-import { type CoreCartEntry, CreateProductWithMetadataFromV2, EventTitleStringBuilder, GroupAndOrderCart, RebuildAndSortCart, WDateUtils, type WOrderInstance } from '@wcp/wario-shared';
+import {
+  type CoreCartEntry,
+  CreateProductWithMetadataFromV2,
+  EventTitleStringBuilder,
+  GroupAndOrderCart,
+  RebuildAndSortCart,
+  WDateUtils,
+  type WOrderInstance,
+} from '@wcp/wario-shared';
 import { useCatalogSelectors, useFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import axiosInstance from '@/utils/axios';
-import { uuidv4 } from "@/utils/uuidv4";
-
+import { uuidv4 } from '@/utils/uuidv4';
 
 // Fetch orders function
 const fetchOrders = async (token: string, date: string | null): Promise<Record<string, WOrderInstance>> => {
   const params = date ? { date } : {};
   const response = await axiosInstance.get<Record<string, WOrderInstance>>('/api/v1/order', {
     headers: { Authorization: `Bearer ${token}` },
-    params
+    params,
   });
   return response.data;
 };
@@ -48,14 +55,18 @@ export function useConfirmOrderMutation() {
   const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
-    mutationFn: async ({ orderId, additionalMessage }: { orderId: string, additionalMessage?: string }) => {
+    mutationFn: async ({ orderId, additionalMessage }: { orderId: string; additionalMessage?: string }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
-      await axiosInstance.put(`/api/v1/order/${orderId}/confirm`, { additionalMessage }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Idempotency-Key': uuidv4()
-        }
-      });
+      await axiosInstance.put(
+        `/api/v1/order/${orderId}/confirm`,
+        { additionalMessage },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': uuidv4(),
+          },
+        },
+      );
     },
     onSuccess: async () => {
       enqueueSnackbar('Order confirmed successfully', { variant: 'success' });
@@ -64,7 +75,7 @@ export function useConfirmOrderMutation() {
     onError: (error) => {
       enqueueSnackbar('Failed to confirm order', { variant: 'error' });
       console.error(error);
-    }
+    },
   });
 }
 
@@ -74,14 +85,26 @@ export function useCancelOrderMutation() {
   const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
-    mutationFn: async ({ orderId, reason, emailCustomer }: { orderId: string, reason: string, emailCustomer?: boolean }) => {
+    mutationFn: async ({
+      orderId,
+      reason,
+      emailCustomer,
+    }: {
+      orderId: string;
+      reason: string;
+      emailCustomer?: boolean;
+    }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
-      await axiosInstance.put(`/api/v1/order/${orderId}/cancel`, { reason, emailCustomer }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Idempotency-Key': uuidv4()
-        }
-      });
+      await axiosInstance.put(
+        `/api/v1/order/${orderId}/cancel`,
+        { reason, emailCustomer },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': uuidv4(),
+          },
+        },
+      );
     },
     onSuccess: async () => {
       enqueueSnackbar('Order canceled successfully', { variant: 'success' });
@@ -90,7 +113,7 @@ export function useCancelOrderMutation() {
     onError: (error) => {
       enqueueSnackbar('Failed to cancel order', { variant: 'error' });
       console.error(error);
-    }
+    },
   });
 }
 
@@ -100,14 +123,18 @@ export function useRescheduleOrderMutation() {
   const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
-    mutationFn: async ({ orderId, newDate, newTime }: { orderId: string, newDate: string, newTime: number }) => {
+    mutationFn: async ({ orderId, newDate, newTime }: { orderId: string; newDate: string; newTime: number }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
-      await axiosInstance.put(`/api/v1/order/${orderId}/reschedule`, { newDate, newTime }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Idempotency-Key': uuidv4()
-        }
-      });
+      await axiosInstance.put(
+        `/api/v1/order/${orderId}/reschedule`,
+        { newDate, newTime },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': uuidv4(),
+          },
+        },
+      );
     },
     onSuccess: async () => {
       enqueueSnackbar('Order rescheduled successfully', { variant: 'success' });
@@ -116,7 +143,7 @@ export function useRescheduleOrderMutation() {
     onError: (error) => {
       enqueueSnackbar('Failed to reschedule order', { variant: 'error' });
       console.error(error);
-    }
+    },
   });
 }
 
@@ -126,14 +153,26 @@ export function useMoveOrderMutation() {
   const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
-    mutationFn: async ({ orderId, destination, additionalMessage }: { orderId: string, destination: string, additionalMessage: string }) => {
+    mutationFn: async ({
+      orderId,
+      destination,
+      additionalMessage,
+    }: {
+      orderId: string;
+      destination: string;
+      additionalMessage: string;
+    }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
-      await axiosInstance.put(`/api/v1/order/${orderId}/move`, { destination, additionalMessage }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Idempotency-Key': uuidv4()
-        }
-      });
+      await axiosInstance.put(
+        `/api/v1/order/${orderId}/move`,
+        { destination, additionalMessage },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': uuidv4(),
+          },
+        },
+      );
     },
     onSuccess: async () => {
       enqueueSnackbar('Order moved successfully', { variant: 'success' });
@@ -142,7 +181,7 @@ export function useMoveOrderMutation() {
     onError: (error) => {
       enqueueSnackbar('Failed to move order', { variant: 'error' });
       console.error(error);
-    }
+    },
   });
 }
 
@@ -154,12 +193,16 @@ export function useForceSendOrderMutation() {
   return useMutation({
     mutationFn: async ({ orderId }: { orderId: string }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
-      await axiosInstance.put(`/api/v1/order/${orderId}/send`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Idempotency-Key': uuidv4()
-        }
-      });
+      await axiosInstance.put(
+        `/api/v1/order/${orderId}/send`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': uuidv4(),
+          },
+        },
+      );
     },
     onSuccess: async () => {
       enqueueSnackbar('Order sent successfully', { variant: 'success' });
@@ -168,7 +211,7 @@ export function useForceSendOrderMutation() {
     onError: (error) => {
       enqueueSnackbar('Failed to send order', { variant: 'error' });
       console.error(error);
-    }
+    },
   });
 }
 
@@ -180,9 +223,13 @@ export function useUnlockOrdersMutation() {
   return useMutation({
     mutationFn: async () => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
-      await axiosInstance.put('/api/v1/order/unlock', {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await axiosInstance.put(
+        '/api/v1/order/unlock',
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
     },
     onSuccess: async () => {
       enqueueSnackbar('Orders unlocked successfully', { variant: 'success' });
@@ -191,7 +238,7 @@ export function useUnlockOrdersMutation() {
     onError: (error) => {
       enqueueSnackbar('Failed to unlock orders', { variant: 'error' });
       console.error(error);
-    }
+    },
   });
 }
 
@@ -202,7 +249,15 @@ export function useGroupedAndSortedCart(order: WOrderInstance | null) {
       return [];
     }
     const serviceTime = WDateUtils.ComputeServiceDateTime(order.fulfillment);
-    const coreCart = (order.cart as CoreCartEntry[]).map(x => ({ ...x, product: CreateProductWithMetadataFromV2(x.product, catalogSelectors, serviceTime, order.fulfillment.selectedService) }));
+    const coreCart = (order.cart as CoreCartEntry[]).map((x) => ({
+      ...x,
+      product: CreateProductWithMetadataFromV2(
+        x.product,
+        catalogSelectors,
+        serviceTime,
+        order.fulfillment.selectedService,
+      ),
+    }));
     return GroupAndOrderCart(coreCart, catalogSelectors.category);
   }, [order, catalogSelectors]);
 }
@@ -220,9 +275,9 @@ export function useEventTitleStringForOrder(order: WOrderInstance | null) {
         `${order.customerInfo.givenName} ${order.customerInfo.familyName}`,
         order.fulfillment,
         cart,
-        order.specialInstructions ?? ""
+        order.specialInstructions ?? '',
       );
     }
-    return "";
+    return '';
   }, [catalogSelectors, order, fulfillment]);
 }

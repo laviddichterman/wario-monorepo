@@ -1,76 +1,83 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+import { zodResolver } from '@hookform/resolvers/zod';
 import type * as Square from '@square/web-sdk';
 import { useEffect, useState } from 'react';
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
 import { CreditCard, PaymentForm } from 'react-square-web-payments-sdk';
-import { z } from "zod";
+import { z } from 'zod';
 
 import { Box, FormLabel, Grid, Link, Typography } from '@mui/material';
 import { styled } from '@mui/system';
 
 import {
-  CURRENCY, type DistributiveOmit, type IMoney,
-  MoneyToDisplayString, type PurchaseStoreCreditRequest,
-  type PurchaseStoreCreditResponse, type ResponseFailure, RoundToTwoDecimalPlaces
+  CURRENCY,
+  type DistributiveOmit,
+  type IMoney,
+  MoneyToDisplayString,
+  type PurchaseStoreCreditRequest,
+  type PurchaseStoreCreditResponse,
+  type ResponseFailure,
+  RoundToTwoDecimalPlaces,
 } from '@wcp/wario-shared';
-import { handleAxiosError, ZodEmailSchema } from "@wcp/wario-ux-shared/common";
-import {
-  FormProvider, MoneyInput, RHFCheckbox,
-  RHFMailTextField, RHFTextField,
-} from '@wcp/wario-ux-shared/components';
+import { handleAxiosError, ZodEmailSchema } from '@wcp/wario-ux-shared/common';
+import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField } from '@wcp/wario-ux-shared/components';
 import { useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, SquareButtonCSS } from '@wcp/wario-ux-shared/styled';
 
 import axiosInstance from '@/utils/axios';
 
-import { IS_PRODUCTION } from "@/config";
+import { IS_PRODUCTION } from '@/config';
 
 const Title = styled(Typography)({
   fontWeight: 500,
   fontSize: 19,
-  textTransform: 'uppercase'
-})
+  textTransform: 'uppercase',
+});
 
-type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount' | 'nonce'>
+type CreditPurchaseInfo = DistributiveOmit<PurchaseStoreCreditRequest, 'amount' | 'nonce'>;
 
 const creditPurchaseInfoSchemaBase = {
   // amount: z.number().min(2, "Minimum purchase amount is $2.00").max(200000, "Maximum purchase amount is $2000.00"),
-  senderName: z.string().trim().min(1, "Please enter your name.").min(2, "Please enter your full name."),
+  senderName: z.string().trim().min(1, 'Please enter your name.').min(2, 'Please enter your full name.'),
   senderEmail: ZodEmailSchema,
-  recipientNameFirst: z.string().trim().min(1, "Please enter the recipient's given name.").min(2, "Please enter the recipient's full name."),
-  recipientNameLast: z.string().trim().min(1, "Please enter the recipient's family name.").min(2, "Please enter the recipient's full family name.")
-}
+  recipientNameFirst: z
+    .string()
+    .trim()
+    .min(1, "Please enter the recipient's given name.")
+    .min(2, "Please enter the recipient's full name."),
+  recipientNameLast: z
+    .string()
+    .trim()
+    .min(1, "Please enter the recipient's family name.")
+    .min(2, "Please enter the recipient's full family name."),
+};
 
-const creditPurchaseInfoSchema = z.discriminatedUnion("sendEmailToRecipient", [
+const creditPurchaseInfoSchema = z.discriminatedUnion('sendEmailToRecipient', [
   z.object({
     ...creditPurchaseInfoSchemaBase,
     sendEmailToRecipient: z.literal(true),
     recipientEmail: ZodEmailSchema,
-    recipientMessage: z.string().max(500, "Message is too long."),
+    recipientMessage: z.string().max(500, 'Message is too long.'),
   }),
   z.object({
     ...creditPurchaseInfoSchemaBase,
-    sendEmailToRecipient: z.literal(false)
-  })
+    sendEmailToRecipient: z.literal(false),
+  }),
 ]);
-
 
 function useCPForm() {
   const useFormApi = useForm<CreditPurchaseInfo>({
-
     //  seems to be a bug here where this cannot be set?
     defaultValues: {
-      senderName: "",
-      senderEmail: "",
-      recipientNameFirst: "",
-      recipientNameLast: "",
-      recipientEmail: "",
+      senderName: '',
+      senderEmail: '',
+      recipientNameFirst: '',
+      recipientNameLast: '',
+      recipientEmail: '',
       sendEmailToRecipient: true,
-      recipientMessage: ""
+      recipientMessage: '',
     },
     resolver: zodResolver(creditPurchaseInfoSchema),
-    mode: "onBlur",
-
+    mode: 'onBlur',
   });
 
   return useFormApi;
@@ -83,7 +90,11 @@ export default function WStoreCreditPurchase() {
   const squareLocationId = useSquareLocationId() as string;
 
   const cPForm = useCPForm();
-  const { getValues, watch, formState: { isValid, errors } } = cPForm;
+  const {
+    getValues,
+    watch,
+    formState: { isValid, errors },
+  } = cPForm;
   const sendEmailToRecipientState = watch('sendEmailToRecipient');
   const senderName = watch('senderName');
   const recipientNameFirst = watch('recipientNameFirst');
@@ -96,8 +107,10 @@ export default function WStoreCreditPurchase() {
     if (isValid) {
       setDisplayPaymentForm(true);
     }
-  }, [isValid])
-  const cardTokenizeResponseReceived = (props: Square.TokenResult /*, verifiedBuyer?: Square.VerifyBuyerResponseDetails */) => {
+  }, [isValid]);
+  const cardTokenizeResponseReceived = (
+    props: Square.TokenResult /*, verifiedBuyer?: Square.VerifyBuyerResponseDetails */,
+  ) => {
     const formValues = { ...getValues() };
     if (purchaseStatus !== 'PROCESSING') {
       setPurchaseStatus('PROCESSING');
@@ -107,12 +120,14 @@ export default function WStoreCreditPurchase() {
           nonce: props.token,
           amount: creditAmount,
         };
-        axiosInstance.post<PurchaseStoreCreditResponse>('api/v1/payments/storecredit/purchase', typedBody)
+        axiosInstance
+          .post<PurchaseStoreCreditResponse>('api/v1/payments/storecredit/purchase', typedBody)
           .then((response) => {
             console.log('Received purchase response: ', JSON.stringify(response.data));
             setPurchaseResponse(response.data);
             setPurchaseStatus('SUCCESS');
-          }).catch((err: unknown) => {
+          })
+          .catch((err: unknown) => {
             console.error(`Purchase failed, got error ${JSON.stringify(err)}`);
             handleAxiosError<ResponseFailure>(
               err,
@@ -121,29 +136,28 @@ export default function WStoreCreditPurchase() {
               },
               (error) => {
                 setPurchaseStatus('INVALID_DATA');
-                setPaymentErrors(error.error.map(((x: { detail: string }) => x.detail)));
-              })
+                setPaymentErrors(error.error.map((x: { detail: string }) => x.detail));
+              },
+            );
           });
-      } else if (props.status === "Error") {
-        setPaymentErrors(props.errors.map(x => x.message))
+      } else if (props.status === 'Error') {
+        setPaymentErrors(props.errors.map((x) => x.message));
         setPurchaseStatus('FAILED_UNKNOWN');
       }
     }
-  }
+  };
 
   const createPaymentRequest: () => Square.PaymentRequestOptions = () => {
     return {
-      countryCode: "US",
+      countryCode: 'US',
       currencyCode: creditAmount.currency,
-      total: { label: "Total", amount: RoundToTwoDecimalPlaces(creditAmount.amount / 100).toFixed(2) }
-    }
-  }
+      total: { label: 'Total', amount: RoundToTwoDecimalPlaces(creditAmount.amount / 100).toFixed(2) },
+    };
+  };
   return (
     <Box sx={{ mx: 'auto', pt: 1 }}>
       <PaymentForm
-        overrides={
-          !IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined
-        }
+        overrides={!IS_PRODUCTION ? { scriptSrc: 'https://sandbox.web.squarecdn.com/v1/square.js' } : undefined}
         applicationId={squareApplicationId}
         locationId={squareLocationId}
         cardTokenizeResponseReceived={cardTokenizeResponseReceived}
@@ -151,17 +165,19 @@ export default function WStoreCreditPurchase() {
       >
         {/* <>{isValid.toString()}</>
         <>{JSON.stringify(errors)}</> */}
-        {purchaseStatus !== 'SUCCESS' &&
-          <FormProvider<CreditPurchaseInfo> methods={cPForm} >
+        {purchaseStatus !== 'SUCCESS' && (
+          <FormProvider<CreditPurchaseInfo> methods={cPForm}>
             <Grid container justifyContent="center">
               <Grid sx={{ p: 1 }} size={12}>
-                <Typography variant='h4'>
-                  Spread pizza,<br />electronically!
+                <Typography variant="h4">
+                  Spread pizza,
+                  <br />
+                  electronically!
                 </Typography>
               </Grid>
 
               <Grid sx={{ pl: 2, pt: 4, pb: 4 }} size={4}>
-                <FormLabel sx={{ verticalAlign: 'center', alignContent: 'left' }} htmlFor='creditAmount'>
+                <FormLabel sx={{ verticalAlign: 'center', alignContent: 'left' }} htmlFor="creditAmount">
                   <Title>Amount</Title>
                 </FormLabel>
               </Grid>
@@ -175,14 +191,15 @@ export default function WStoreCreditPurchase() {
                     allowEmpty: false,
                     defaultValue: creditAmount.amount / 100,
                     min: 2,
-                    max: 2000
+                    max: 2000,
                   }}
                   inputMode="decimal"
                   step={1}
                   value={creditAmount.amount / 100}
-                  onChange={(e: number) => { setCreditAmount({ ...creditAmount, amount: e * 100 }); }}
+                  onChange={(e: number) => {
+                    setCreditAmount({ ...creditAmount, amount: e * 100 });
+                  }}
                 />
-
               </Grid>
               <Grid sx={{ p: 1 }} container size={12}>
                 <Grid size={12}>
@@ -200,8 +217,12 @@ export default function WStoreCreditPurchase() {
                 <Grid sx={{ p: 1 }} size={12}>
                   <RHFMailTextField
                     name="senderEmail"
-                    autoComplete={"email"}
-                    label={!errors.senderName && senderName !== "" ? `${senderName}'s e-mail address` : "Sender's e-mail address"}
+                    autoComplete={'email'}
+                    label={
+                      !errors.senderName && senderName !== ''
+                        ? `${senderName}'s e-mail address`
+                        : "Sender's e-mail address"
+                    }
                     fullWidth
                     disabled={purchaseStatus === 'PROCESSING'}
                   />
@@ -224,7 +245,11 @@ export default function WStoreCreditPurchase() {
                   <RHFTextField
                     name="recipientNameLast"
                     autoComplete="family-name"
-                    label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s family name` : "Recipient's family name"}
+                    label={
+                      !errors.recipientNameFirst && recipientNameFirst !== ''
+                        ? `${recipientNameFirst}'s family name`
+                        : "Recipient's family name"
+                    }
                     fullWidth
                     disabled={purchaseStatus === 'PROCESSING'}
                   />
@@ -233,82 +258,98 @@ export default function WStoreCreditPurchase() {
                   <RHFCheckbox
                     disabled={purchaseStatus === 'PROCESSING'}
                     name="sendEmailToRecipient"
-                    label={`Please inform ${!errors.recipientNameFirst && recipientNameFirst !== "" ? recipientNameFirst : 'the recipient'} via e-mail for me!`}
+                    label={`Please inform ${!errors.recipientNameFirst && recipientNameFirst !== '' ? recipientNameFirst : 'the recipient'} via e-mail for me!`}
                   />
                 </Grid>
-                {sendEmailToRecipientState &&
+                {sendEmailToRecipientState && (
                   <>
                     <Grid sx={{ p: 1 }} size={12}>
                       <RHFMailTextField
                         name="recipientEmail"
                         autoComplete="off"
-                        label={!errors.recipientNameFirst && recipientNameFirst !== "" ? `${recipientNameFirst}'s e-mail address` : "Recipient's e-mail address"}
+                        label={
+                          !errors.recipientNameFirst && recipientNameFirst !== ''
+                            ? `${recipientNameFirst}'s e-mail address`
+                            : "Recipient's e-mail address"
+                        }
                         fullWidth
                         disabled={purchaseStatus === 'PROCESSING'}
                       />
                     </Grid>
                     <Grid sx={{ p: 1 }} size={12}>
-                      <RHFTextField
-                        name="recipientMessage"
-                        multiline
-                        label="Additional message (optional)"
-                      />
+                      <RHFTextField name="recipientMessage" multiline label="Additional message (optional)" />
                     </Grid>
                   </>
-                }
+                )}
               </Grid>
               <Grid sx={{ p: 2 }} size={12}>
-                {displayPaymentForm &&
+                {displayPaymentForm && (
                   <>
                     <CreditCard
                       // @ts-expect-error remove once verified this isn't needed https://github.com/weareseeed/react-square-web-payments-sdk/pull/74/commits/d16cce8ba6ab50de35d632352f2cb01c9217ad05
-                      focus={""}
-                      buttonProps={{ isLoading: purchaseStatus === 'PROCESSING' || !isValid, css: SquareButtonCSS }} />
+                      focus={''}
+                      buttonProps={{ isLoading: purchaseStatus === 'PROCESSING' || !isValid, css: SquareButtonCSS }}
+                    />
                     {/* <ApplePay /> */}
-                  </>}
+                  </>
+                )}
                 {paymentErrors.length > 0 &&
                   paymentErrors.map((e, i) => <ErrorResponseOutput key={i}>{e}</ErrorResponseOutput>)}
               </Grid>
             </Grid>
           </FormProvider>
-        }
+        )}
         {/* <>{JSON.stringify(getValues())} </>
         <>{JSON.stringify(errors)} </> */}
-        {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success &&
+        {purchaseStatus === 'SUCCESS' && purchaseResponse !== null && purchaseResponse.success && (
           <Grid container>
             <Grid size={12}>
-              <Typography variant="h3">Payment of {MoneyToDisplayString(purchaseResponse.result.amount, true)} received
-                from card ending in: {purchaseResponse.result.last4}!</Typography>
-              <Typography variant="body2">Here's your <Link href={purchaseResponse.result.receiptUrl} target="_blank">receipt</Link>.</Typography>
+              <Typography variant="h3">
+                Payment of {MoneyToDisplayString(purchaseResponse.result.amount, true)} received from card ending in:{' '}
+                {purchaseResponse.result.last4}!
+              </Typography>
+              <Typography variant="body2">
+                Here's your{' '}
+                <Link href={purchaseResponse.result.receiptUrl} target="_blank">
+                  receipt
+                </Link>
+                .
+              </Typography>
             </Grid>
             <Grid size={12}>
-              <Typography variant='h6'>Store credit details:</Typography>
+              <Typography variant="h6">Store credit details:</Typography>
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                md: 4
-              }}>
+                md: 4,
+              }}
+            >
               <Typography variant="h4">Credit Amount:</Typography>
               <span>{MoneyToDisplayString(purchaseResponse.result.amount, true)}</span>
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                md: 4
-              }}>
+                md: 4,
+              }}
+            >
               <Typography variant="h4">Recipient:</Typography>
-              <span>{getValues('recipientNameFirst')} {getValues('recipientNameLast')}</span>
+              <span>
+                {getValues('recipientNameFirst')} {getValues('recipientNameLast')}
+              </span>
             </Grid>
             <Grid
               size={{
                 xs: 12,
-                md: 4
-              }}>
+                md: 4,
+              }}
+            >
               <Typography variant="h4">Credit Code:</Typography>
               <span>{purchaseResponse.result.code}</span>
             </Grid>
-          </Grid>}
+          </Grid>
+        )}
       </PaymentForm>
     </Box>
   );

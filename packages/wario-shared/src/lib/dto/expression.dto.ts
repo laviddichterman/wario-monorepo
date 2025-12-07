@@ -1,7 +1,16 @@
 import { Type } from 'class-transformer';
 import { IsEnum, IsNotEmpty, IsNumber, IsString, ValidateNested } from 'class-validator';
 
-import { ConstLiteralDiscriminator, LogicalFunctionOperator, MetadataField, OptionPlacement, OptionQualifier, OrderInstanceFunctionType, PRODUCT_LOCATION, ProductInstanceFunctionType } from '../enums';
+import {
+  ConstLiteralDiscriminator,
+  LogicalFunctionOperator,
+  MetadataField,
+  OptionPlacement,
+  OptionQualifier,
+  OrderInstanceFunctionType,
+  PRODUCT_LOCATION,
+  ProductInstanceFunctionType,
+} from '../enums';
 
 // Const Literal Expressions
 export class ConstStringLiteralExpressionDto {

@@ -56,7 +56,7 @@ export const useMetricsStore = create<MetricsStore>()(
         set(
           (state) => (state.timeToFirstProduct === 0 ? { timeToFirstProduct: ticks } : state),
           false,
-          'setTimeToFirstProductIfUnset'
+          'setTimeToFirstProductIfUnset',
         );
       },
 
@@ -68,7 +68,7 @@ export const useMetricsStore = create<MetricsStore>()(
             return { timeToStage: newTimeToStage };
           },
           false,
-          'setTimeToStage'
+          'setTimeToStage',
         );
       },
 
@@ -88,8 +88,8 @@ export const useMetricsStore = create<MetricsStore>()(
         set({ useragent: `${useragent} FEV: ${__APP_VERSION__}` }, false, 'setUserAgent');
       },
     }),
-    { name: 'metrics-store' }
-  )
+    { name: 'metrics-store' },
+  ),
 );
 
 // Selectors
@@ -102,4 +102,3 @@ export const selectTimeToStage = (state: MetricsStore) => state.timeToStage;
 export const selectNumTimeBumps = (state: MetricsStore) => state.numTimeBumps;
 export const selectNumTipAdjusts = (state: MetricsStore) => state.numTipAdjusts;
 export const selectNumTipFixed = (state: MetricsStore) => state.numTipFixed;
-

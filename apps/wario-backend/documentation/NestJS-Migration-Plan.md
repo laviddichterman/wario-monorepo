@@ -5,6 +5,7 @@
 This document outlines the migration strategy for transitioning `wcp-order-backend` (Express.js + Socket.IO) to `wario-backend` (NestJS). The migration prioritizes **zero-disruption compatibility** with existing client applications while establishing a foundation for future modernization.
 
 **Migration Philosophy**:
+
 - **Reuse code verbatim** where possible (models, business logic, utilities)
 - **Use NestJS CLI** to scaffold structure
 - **Maintain identical API contracts** (REST endpoints, Socket.IO events, MongoDB schemas)
@@ -21,6 +22,7 @@ This document outlines the migration strategy for transitioning `wcp-order-backe
 **Status**: wario-backend already scaffolded with basic NestJS structure
 
 **Verified**:
+
 - ✓ NestJS CLI installed
 - ✓ Basic project structure created
 - ✓ TypeScript configured
@@ -58,6 +60,7 @@ pnpm add -D @types/nodemailer@^7.0.4 @types/qrcode@^1.5.5 @types/json-bigint@^1.
 ```
 
 **Note**: Some packages will be replaced or removed:
+
 - ❌ `express-validator` → ✅ `class-validator` (already in NestJS)
 - ❌ `express-oauth2-jwt-bearer` → ✅ `@nestjs/passport` + `passport-jwt`
 - ❌ `express-idempotency` → ✅ Order locking via MongoDB (see Phase 8.4)
@@ -88,7 +91,7 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Port configuration
   const PORT = process.env.PORT || 4001;
   await app.listen(PORT);
@@ -115,15 +118,15 @@ mkdir -p config controllers models/{orders,catalog/{products,options,category},s
 
 **Directory Mapping**:
 
-| wcp-order-backend | wario-backend | Notes |
-|-------------------|---------------|-------|
-| `src/config/` | `src/config/` | Providers → NestJS Services |
-| `src/controllers/` | `src/controllers/` | Express Controllers → NestJS Controllers |
-| `src/models/` | `src/models/` | **Copy verbatim** (Mongoose schemas) |
-| `src/middleware/` | `src/middleware/` or guards/interceptors | Map to NestJS equivalents |
-| `src/types/` | `src/types/` | **Copy verbatim** (TypeScript interfaces) |
-| `src/utils.ts` | `src/utils/` | **Copy verbatim** (utility functions) |
-| `src/logging.ts` | Use NestJS Logger | Replace with built-in |
+| wcp-order-backend  | wario-backend                            | Notes                                     |
+| ------------------ | ---------------------------------------- | ----------------------------------------- |
+| `src/config/`      | `src/config/`                            | Providers → NestJS Services               |
+| `src/controllers/` | `src/controllers/`                       | Express Controllers → NestJS Controllers  |
+| `src/models/`      | `src/models/`                            | **Copy verbatim** (Mongoose schemas)      |
+| `src/middleware/`  | `src/middleware/` or guards/interceptors | Map to NestJS equivalents                 |
+| `src/types/`       | `src/types/`                             | **Copy verbatim** (TypeScript interfaces) |
+| `src/utils.ts`     | `src/utils/`                             | **Copy verbatim** (utility functions)     |
+| `src/logging.ts`   | Use NestJS Logger                        | Replace with built-in                     |
 
 ---
 
@@ -145,7 +148,7 @@ import { MongooseModule } from '@nestjs/mongoose';
         const DBUSER = process.env.DBUSER || undefined;
         const DBPASS = process.env.DBPASS || undefined;
         const DBENDPOINT = process.env.DBENDPOINT || '127.0.0.1:27017';
-        
+
         return {
           uri: `mongodb://${DBENDPOINT}/${DBTABLE}`,
           user: DBUSER,
@@ -201,12 +204,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WOrderInstanceModel } from './WOrderInstance';
 
 @Module({
-  imports: [
-    MongooseModule.forFeature([
-      { name: 'WOrderInstance', schema: WOrderInstanceModel.schema }
-    ])
-  ],
-  exports: [MongooseModule]
+  imports: [MongooseModule.forFeature([{ name: 'WOrderInstance', schema: WOrderInstanceModel.schema }])],
+  exports: [MongooseModule],
 })
 export class OrdersModule {}
 ```
@@ -236,28 +235,29 @@ cp ../wcp-order-backend/src/custom.d.ts src/
 
 For each provider in `wcp-order-backend/src/config/`:
 
-| Provider | Action | Notes |
-|----------|--------|-------|
-| `database_manager.ts` | Convert to `@Injectable()` | Bootstrap via `OnModuleInit` |
-| `dataprovider.ts` | Convert to `@Injectable()` | In-memory state management |
-| `catalog_provider.ts` | Convert to `@Injectable()` | In-memory catalog cache |
-| `socketio_provider.ts` | Convert to `@WebSocketGateway()` | See Phase 5 |
-| `order_manager.ts` | Convert to `@Injectable()` | Business logic service |
-| `google.ts` | Convert to `@Injectable()` | External API wrapper |
-| `square.ts` | Convert to `@Injectable()` | External API wrapper |
-| `store_credit_provider.ts` | Convert to `@Injectable()` | Payment service |
-| `authorization.ts` | Convert to Guards | See Phase 6 |
+| Provider                   | Action                           | Notes                        |
+| -------------------------- | -------------------------------- | ---------------------------- |
+| `database_manager.ts`      | Convert to `@Injectable()`       | Bootstrap via `OnModuleInit` |
+| `dataprovider.ts`          | Convert to `@Injectable()`       | In-memory state management   |
+| `catalog_provider.ts`      | Convert to `@Injectable()`       | In-memory catalog cache      |
+| `socketio_provider.ts`     | Convert to `@WebSocketGateway()` | See Phase 5                  |
+| `order_manager.ts`         | Convert to `@Injectable()`       | Business logic service       |
+| `google.ts`                | Convert to `@Injectable()`       | External API wrapper         |
+| `square.ts`                | Convert to `@Injectable()`       | External API wrapper         |
+| `store_credit_provider.ts` | Convert to `@Injectable()`       | Payment service              |
+| `authorization.ts`         | Convert to Guards                | See Phase 6                  |
 
 ### 3.3 Migration Pattern for Services
 
 **Example**: Migrating `DataProvider` to NestJS service
 
 **Original** (`wcp-order-backend/src/config/dataprovider.ts`):
+
 ```typescript
 export class DataProvider implements WProvider {
   public Fulfillments: Record<string, FulfillmentConfig> = {};
   public Settings: IWSettings = ...;
-  
+
   Bootstrap = async (app: WApp) => {
     // Load data from MongoDB
   }
@@ -267,6 +267,7 @@ export const DataProviderInstance = new DataProvider();
 ```
 
 **Migrated** (`wario-backend/src/config/data-provider.service.ts`):
+
 ```typescript
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -276,18 +277,18 @@ import { Model } from 'mongoose';
 export class DataProviderService implements OnModuleInit {
   public Fulfillments: Record<string, FulfillmentConfig> = {};
   public Settings: IWSettings = ...;
-  
+
   constructor(
     @InjectModel('FulfillmentSchema') private fulfillmentModel: Model<FulfillmentConfig>,
     @InjectModel('WSettingsSchema') private settingsModel: Model<IWSettings>,
   ) {}
-  
+
   async onModuleInit() {
     // Bootstrap logic (formerly Bootstrap method)
     await this.loadFulfillments();
     await this.loadSettings();
   }
-  
+
   // Copy rest of methods verbatim from DataProvider
   async loadFulfillments() { ... }
   async syncFulfillments() { ... }
@@ -296,6 +297,7 @@ export class DataProviderService implements OnModuleInit {
 ```
 
 **Key Changes**:
+
 1. Add `@Injectable()` decorator
 2. Implement `OnModuleInit` for bootstrap logic
 3. Use `@InjectModel()` for Mongoose models
@@ -316,6 +318,7 @@ nest generate service config/database-manager
 ```
 
 `src/config/config.module.ts`:
+
 ```typescript
 import { Module, Global } from '@nestjs/common';
 import { DataProviderService } from './data-provider.service';
@@ -373,6 +376,7 @@ Then manually apply NestJS patterns (Injectable, constructor injection, lifecycl
 > **Critical Migration Step**: Bluebird must be completely removed as it can interfere with NestJS's async handling.
 
 **Bluebird Usage in wcp-order-backend**:
+
 - `Promise.map()` - Used in `database_manager.ts` for parallel migrations
 - `Promise.mapSeries()` - Used for sequential async operations
 - Other Bluebird utilities
@@ -410,21 +414,20 @@ for (const item of items) {
 // Before (Bluebird)
 const { users, orders } = await Promise.props({
   users: fetchUsers(),
-  orders: fetchOrders()
+  orders: fetchOrders(),
 });
 
 // After (Native)
-const [users, orders] = await Promise.all([
-  fetchUsers(),
-  fetchOrders()
-]);
+const [users, orders] = await Promise.all([fetchUsers(), fetchOrders()]);
 ```
 
 **Files Requiring Bluebird Removal**:
+
 - `src/config/database_manager.ts` - Migration functions
 - Any service using `Promise.map` or `Promise.mapSeries`
 
 **Migration Checklist**:
+
 - [ ] Search codebase for `import.*bluebird`
 - [ ] Replace `Promise.map()` with `Promise.all()`
 - [ ] Replace `Promise.mapSeries()` with `for...of` loops
@@ -443,20 +446,21 @@ Each Express controller becomes a NestJS controller with identical routes.
 **NestJS Controller Pattern**:
 
 **Original Express** (`wcp-order-backend/src/controllers/OrderController.ts`):
+
 ```typescript
 export class OrderController implements IExpressController {
   public path = "/api/v1/order";
   public router = Router({ mergeParams: true });
-  
+
   constructor() {
     this.initializeRoutes();
   }
-  
+
   private initializeRoutes() {
     this.router.post(`${this.path}`, expressValidationMiddleware(...), this.postOrder);
     this.router.get(`${this.path}/:oId`, CheckJWT, ScopeReadOrders, ..., this.getOrder);
   }
-  
+
   private postOrder = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const reqBody: CreateOrderRequestV2 = req.body;
@@ -470,6 +474,7 @@ export class OrderController implements IExpressController {
 ```
 
 **Migrated NestJS** (`wario-backend/src/controllers/order.controller.ts`):
+
 ```typescript
 import { Controller, Post, Get, Put, Body, Param, Req, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
@@ -481,14 +486,14 @@ import { CreateOrderRequestV2 } from '@wcp/wario-shared';
 @Controller('api/v1/order')
 export class OrderController {
   constructor(private readonly orderManager: OrderManagerService) {}
-  
+
   @Post()
   async postOrder(@Body() reqBody: CreateOrderRequestV2, @Req() req) {
     const ipAddress = req.headers['x-real-ip'] ?? req.headers['x-forwarded-for'] ?? req.socket.remoteAddress ?? '';
     const response = await this.orderManager.CreateOrder(reqBody, ipAddress);
     return response; // NestJS auto-serializes to JSON with proper status
   }
-  
+
   @Get(':oId')
   @UseGuards(JwtAuthGuard, ScopesGuard)
   @Scopes('read:orders')
@@ -499,12 +504,13 @@ export class OrderController {
     }
     return response;
   }
-  
+
   // ... other methods
 }
 ```
 
 **Key Changes**:
+
 1. Use NestJS decorators: `@Controller()`, `@Post()`, `@Get()`, `@Put()`, etc.
 2. Constructor injection for services (e.g., `OrderManagerService`)
 3. Use `@UseGuards()` for authentication/authorization (replaces middleware)
@@ -544,25 +550,26 @@ For each controller:
 
 **File Mapping**:
 
-| wcp-order-backend | wario-backend |
-|-------------------|---------------|
-| `OrderController.ts` | `order.controller.ts` |
-| `ProductController.ts` | `product.controller.ts` |
-| `ModifierController.ts` | `modifier.controller.ts` |
-| `CategoryController.ts` | `category.controller.ts` |
-| `FulfillmentController.ts` | `fulfillment.controller.ts` |
-| `SettingsController.ts` | `settings.controller.ts` |
-| `StoreCreditController.ts` | `store-credit.controller.ts` |
-| `AccountingController.ts` | `accounting.controller.ts` |
-| `DeliveryAddressController.ts` | `delivery-address.controller.ts` |
-| `KeyValueStoreController.ts` | `key-value-store.controller.ts` |
-| `ProductInstanceFunctionController.ts` | `product-instance-function.controller.ts` |
-| `PrinterGroupController.ts` | `printer-group.controller.ts` |
-| `SeatingResourceController.ts` | `seating-resource.controller.ts` (if exists) |
+| wcp-order-backend                      | wario-backend                                |
+| -------------------------------------- | -------------------------------------------- |
+| `OrderController.ts`                   | `order.controller.ts`                        |
+| `ProductController.ts`                 | `product.controller.ts`                      |
+| `ModifierController.ts`                | `modifier.controller.ts`                     |
+| `CategoryController.ts`                | `category.controller.ts`                     |
+| `FulfillmentController.ts`             | `fulfillment.controller.ts`                  |
+| `SettingsController.ts`                | `settings.controller.ts`                     |
+| `StoreCreditController.ts`             | `store-credit.controller.ts`                 |
+| `AccountingController.ts`              | `accounting.controller.ts`                   |
+| `DeliveryAddressController.ts`         | `delivery-address.controller.ts`             |
+| `KeyValueStoreController.ts`           | `key-value-store.controller.ts`              |
+| `ProductInstanceFunctionController.ts` | `product-instance-function.controller.ts`    |
+| `PrinterGroupController.ts`            | `printer-group.controller.ts`                |
+| `SeatingResourceController.ts`         | `seating-resource.controller.ts` (if exists) |
 
 ### 4.4 Create Controllers Module
 
 `src/controllers/controllers.module.ts`:
+
 ```typescript
 import { Module } from '@nestjs/common';
 import { OrderController } from './order.controller';
@@ -611,7 +618,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Enable CORS for Socket.IO
   app.enableCors({
     origin: [
@@ -627,9 +634,9 @@ async function bootstrap() {
     ],
     credentials: true,
   });
-  
+
   app.useWebSocketAdapter(new IoAdapter(app));
-  
+
   await app.listen(process.env.PORT || 4001);
 }
 bootstrap();
@@ -644,13 +651,9 @@ nest generate gateway socket-io/read-only --no-spec
 **Migrate** `SocketIoProvider` to Gateway:
 
 `src/socket-io/read-only.gateway.ts`:
+
 ```typescript
-import {
-  WebSocketGateway,
-  WebSocketServer,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-} from '@nestjs/websockets';
+import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import { Server, Socket, Namespace } from 'socket.io';
 import { format } from 'date-fns';
 import { WDateUtils } from '@wcp/wario-shared';
@@ -677,21 +680,21 @@ import { CatalogProviderService } from '../config/catalog-provider.service';
 export class ReadOnlyGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Namespace;
-  
+
   private clientCount = 0;
-  
+
   constructor(
     private readonly dataProvider: DataProviderService,
     private readonly catalogProvider: CatalogProviderService,
   ) {}
-  
+
   handleConnection(socket: Socket) {
     ++this.clientCount;
     const connectTime = Date.now();
-    
+
     // Log connection (copy from original)
     console.log(`CONNECTION: Client connected. Num Connected: ${this.clientCount}`);
-    
+
     // Emit initial state (copy exact events from original)
     socket.emit('WCP_SERVER_TIME', {
       time: format(connectTime, WDateUtils.ISODateTimeNoOffset),
@@ -702,41 +705,41 @@ export class ReadOnlyGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.emitCatalogTo(socket);
     this.emitSeatingResourcesTo(socket);
   }
-  
+
   handleDisconnect(socket: Socket) {
     --this.clientCount;
     console.log(`DISCONNECT. Num Connected: ${this.clientCount}`);
   }
-  
+
   // Copy methods from SocketIoProvider verbatim
   emitFulfillmentsTo(dest: Socket | Namespace) {
     return dest.emit('WCP_FULFILLMENTS', this.dataProvider.Fulfillments);
   }
-  
+
   emitFulfillments() {
     return this.emitFulfillmentsTo(this.server);
   }
-  
+
   emitSettingsTo(dest: Socket | Namespace) {
     return dest.emit('WCP_SETTINGS', this.dataProvider.Settings);
   }
-  
+
   emitSettings() {
     return this.emitSettingsTo(this.server);
   }
-  
+
   emitCatalogTo(dest: Socket | Namespace) {
     return dest.emit('WCP_CATALOG', this.catalogProvider.Catalog);
   }
-  
+
   emitCatalog() {
     return this.emitCatalogTo(this.server);
   }
-  
+
   emitSeatingResourcesTo(dest: Socket | Namespace) {
     return dest.emit('WCP_SEATING_RESOURCES', this.dataProvider.SeatingResources);
   }
-  
+
   emitSeatingResources() {
     return this.emitSeatingResourcesTo(this.server);
   }
@@ -756,10 +759,10 @@ export class CatalogProviderService {
     @Inject(forwardRef(() => ReadOnlyGateway))
     private readonly socketGateway: ReadOnlyGateway,
   ) {}
-  
+
   async createProduct(...) {
     // ... create product logic
-    
+
     // Broadcast update
     this.socketGateway.emitCatalog();
   }
@@ -782,6 +785,7 @@ npm install -D @types/passport-jwt
 ### 6.2 Create JWT Strategy
 
 `src/auth/jwt.strategy.ts`:
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
@@ -804,7 +808,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       algorithms: ['RS256'],
     });
   }
-  
+
   async validate(payload: any) {
     return { userId: payload.sub, permissions: payload.permissions };
   }
@@ -814,6 +818,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 ### 6.3 Create Auth Guards
 
 **JWT Guard** (`src/guards/jwt-auth.guard.ts`):
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -823,6 +828,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {}
 ```
 
 **Scopes Guard** (`src/guards/scopes.guard.ts`):
+
 ```typescript
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -830,17 +836,17 @@ import { Reflector } from '@nestjs/core';
 @Injectable()
 export class ScopesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
-  
+
   canActivate(context: ExecutionContext): boolean {
     const requiredScopes = this.reflector.get<string[]>('scopes', context.getHandler());
     if (!requiredScopes) {
       return true;
     }
-    
+
     const request = context.switchToHttp().getRequest();
     const user = request.user;
-    
-    return requiredScopes.every(scope => user.permissions?.includes(scope));
+
+    return requiredScopes.every((scope) => user.permissions?.includes(scope));
   }
 }
 ```
@@ -848,6 +854,7 @@ export class ScopesGuard implements CanActivate {
 ### 6.4 Create Scopes Decorator
 
 `src/decorators/scopes.decorator.ts`:
+
 ```typescript
 import { SetMetadata } from '@nestjs/common';
 
@@ -861,6 +868,7 @@ nest generate module auth
 ```
 
 `src/auth/auth.module.ts`:
+
 ```typescript
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
@@ -896,7 +904,7 @@ export class OrderController {
   async getOrder(@Param('oId') oId: string) {
     // ...
   }
-  
+
   @Put(':oId/cancel')
   @UseGuards(JwtAuthGuard, ScopesGuard)
   @Scopes('cancel:orders')
@@ -907,6 +915,7 @@ export class OrderController {
 ```
 
 **Scope Mapping** (from wcp-order-backend authorization.ts):
+
 - `read:orders`
 - `write:orders`
 - `cancel:orders`
@@ -931,28 +940,41 @@ NestJS uses `class-validator` + `class-transformer` via DTOs.
 **Example**: Order Creation DTO
 
 `src/dto/create-order.dto.ts`:
+
 ```typescript
-import { IsArray, IsEmail, IsEnum, IsInt, IsMongoId, IsNotEmpty, IsOptional, IsString, Min, Max, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Min,
+  Max,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { 
-  CreateOrderRequestV2, 
-  WFulfillmentStatus, 
-  DiscountMethod, 
-  TenderBaseStatus, 
+import {
+  CreateOrderRequestV2,
+  WFulfillmentStatus,
+  DiscountMethod,
+  TenderBaseStatus,
   PaymentMethod,
-  CURRENCY 
+  CURRENCY,
 } from '@wcp/wario-shared';
 
 class FulfillmentDto {
   @IsEnum(WFulfillmentStatus)
   status: WFulfillmentStatus;
-  
+
   @IsMongoId()
   selectedService: string;
-  
+
   @IsString()
   selectedDate: string;
-  
+
   @IsInt()
   @Min(0)
   @Max(1440)
@@ -963,18 +985,18 @@ class CustomerInfoDto {
   @IsNotEmpty()
   @IsString()
   givenName: string;
-  
+
   @IsNotEmpty()
   @IsString()
   familyName: string;
-  
+
   @IsNotEmpty()
   @IsString()
   mobileNum: string;
-  
+
   @IsEmail()
   email: string;
-  
+
   @IsOptional()
   @IsString()
   referral?: string;
@@ -986,27 +1008,27 @@ export class CreateOrderDto implements CreateOrderRequestV2 {
   @ValidateNested()
   @Type(() => FulfillmentDto)
   fulfillment: FulfillmentDto;
-  
+
   @ValidateNested()
   @Type(() => CustomerInfoDto)
   customerInfo: CustomerInfoDto;
-  
+
   @IsArray()
   cart: any[]; // TODO: define CartEntryDto
-  
+
   @IsArray()
   proposedDiscounts: any[];
-  
+
   @IsArray()
   proposedPayments: any[];
-  
+
   @ValidateNested()
   tip: any;
-  
+
   @IsOptional()
   @IsString()
   specialInstructions?: string;
-  
+
   @IsOptional()
   metrics?: any;
 }
@@ -1021,13 +1043,15 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
-  
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   // ... rest of setup
 }
 ```
@@ -1046,6 +1070,7 @@ async postOrder(@Body() createOrderDto: CreateOrderDto, @Req() req) {
 ### 7.5 DTO Creation Strategy
 
 **Priority Order**:
+
 1. **Phase 1**: Create DTOs for order creation (most critical)
 2. **Phase 2**: Create DTOs for catalog mutations (products, modifiers, categories)
 3. **Phase 3**: Create DTOs for configuration endpoints
@@ -1071,7 +1096,7 @@ import { Logger } from '@nestjs/common';
 @Injectable()
 export class OrderManagerService {
   private readonly logger = new Logger(OrderManagerService.name);
-  
+
   async createOrder(...) {
     this.logger.log('Creating order...');
     // ...
@@ -1086,24 +1111,24 @@ export class OrderManagerService {
 Create a custom validation decorator for idempotency-key header:
 
 `src/decorators/idempotency-key.decorator.ts`:
+
 ```typescript
 import { createParamDecorator, ExecutionContext, BadRequestException } from '@nestjs/common';
 
-export const IdempotencyKey = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    const key = request.headers['idempotency-key'];
-    
-    if (!key) {
-      throw new BadRequestException('idempotency-key header is required');
-    }
-    
-    return key;
-  },
-);
+export const IdempotencyKey = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+  const request = ctx.switchToHttp().getRequest();
+  const key = request.headers['idempotency-key'];
+
+  if (!key) {
+    throw new BadRequestException('idempotency-key header is required');
+  }
+
+  return key;
+});
 ```
 
 **Usage**:
+
 ```typescript
 @Put(':oId/cancel')
 async cancelOrder(
@@ -1120,6 +1145,7 @@ async cancelOrder(
 NestJS has built-in exception filters. Create custom filter for wcp-order-backend error patterns:
 
 `src/filters/http-exception.filter.ts`:
+
 ```typescript
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
 import { Response } from 'express';
@@ -1130,7 +1156,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
-    
+
     response.status(status).json({
       statusCode: status,
       message: exception.message,
@@ -1140,6 +1166,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 ```
 
 Apply globally in `main.ts`:
+
 ```typescript
 app.useGlobalFilters(new HttpExceptionFilter());
 ```
@@ -1182,6 +1209,7 @@ private LockAndActOnOrder = async (
 ```
 
 **Key Points**:
+
 - Uses MongoDB's atomic `findOneAndUpdate` to prevent race conditions
 - If order is already locked, returns 404 (prevents duplicate operations)
 - After successful operation, lock is released (set to `null`)
@@ -1194,6 +1222,7 @@ private LockAndActOnOrder = async (
 Create a custom decorator and interceptor that mimics the current behavior:
 
 `src/decorators/lock-order.decorator.ts`:
+
 ```typescript
 import { SetMetadata } from '@nestjs/common';
 
@@ -1202,6 +1231,7 @@ export const LockOrder = () => SetMetadata(LOCK_ORDER_KEY, true);
 ```
 
 `src/interceptors/order-lock.interceptor.ts`:
+
 ```typescript
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, NotFoundException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -1217,37 +1247,35 @@ export class OrderLockInterceptor implements NestInterceptor {
     private reflector: Reflector,
     @InjectModel('WOrderInstance') private orderModel: Model<WOrderInstance>,
   ) {}
-  
+
   async intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const requiresLock = this.reflector.get<boolean>(LOCK_ORDER_KEY, context.getHandler());
-    
+
     if (!requiresLock) {
       return next.handle();
     }
-    
+
     const request = context.switchToHttp().getRequest();
     const idempotencyKey = request.headers['idempotency-key'];
     const orderId = request.params.oId;
-    
+
     if (!idempotencyKey) {
       throw new BadRequestException('idempotency-key header required');
     }
-    
+
     // Attempt to lock the order
-    const order = await this.orderModel.findOneAndUpdate(
-      { _id: orderId, locked: null },
-      { locked: idempotencyKey },
-      { new: true }
-    ).exec();
-    
+    const order = await this.orderModel
+      .findOneAndUpdate({ _id: orderId, locked: null }, { locked: idempotencyKey }, { new: true })
+      .exec();
+
     if (!order) {
       throw new NotFoundException('Order not found or already locked');
     }
-    
+
     // Attach order and idempotency key to request for use in controller
     request.lockedOrder = order.toObject();
     request.idempotencyKey = idempotencyKey;
-    
+
     return next.handle();
   }
 }
@@ -1267,18 +1295,14 @@ export class OrderController {
   @Scopes('cancel:orders')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async cancelOrder(
-    @Param('oId') oId: string,
-    @Req() req,
-    @Body() body: CancelOrderDto
-  ) {
+  async cancelOrder(@Param('oId') oId: string, @Req() req, @Body() body: CancelOrderDto) {
     // req.lockedOrder is the locked order
     // req.idempotencyKey is the idempotency key
     return this.orderManager.CancelLockedOrder(
       req.lockedOrder,
       body.reason,
       body.emailCustomer,
-      body.refundToOriginalPayment
+      body.refundToOriginalPayment,
     );
   }
 }
@@ -1289,6 +1313,7 @@ export class OrderController {
 Alternatively, create a guard that handles locking:
 
 `src/guards/order-lock.guard.ts`:
+
 ```typescript
 import { Injectable, CanActivate, ExecutionContext, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -1297,32 +1322,28 @@ import { WOrderInstance } from '../models/orders/WOrderInstance';
 
 @Injectable()
 export class OrderLockGuard implements CanActivate {
-  constructor(
-    @InjectModel('WOrderInstance') private orderModel: Model<WOrderInstance>,
-  ) {}
-  
+  constructor(@InjectModel('WOrderInstance') private orderModel: Model<WOrderInstance>) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const idempotencyKey = request.headers['idempotency-key'];
     const orderId = request.params.oId;
-    
+
     if (!idempotencyKey || !orderId) {
       return false;
     }
-    
-    const order = await this.orderModel.findOneAndUpdate(
-      { _id: orderId, locked: null },
-      { locked: idempotencyKey },
-      { new: true }
-    ).exec();
-    
+
+    const order = await this.orderModel
+      .findOneAndUpdate({ _id: orderId, locked: null }, { locked: idempotencyKey }, { new: true })
+      .exec();
+
     if (!order) {
       throw new NotFoundException('Order not found or already locked');
     }
-    
+
     request.lockedOrder = order.toObject();
     request.idempotencyKey = idempotencyKey;
-    
+
     return true;
   }
 }
@@ -1352,11 +1373,11 @@ All order mutation methods must release the lock after completion:
 async cancelLockedOrder(lockedOrder: WOrderInstance, ...): Promise<CrudOrderResponse> {
   try {
     // ... perform cancellation logic
-    
+
     // Release lock and update order
     return await this.orderModel.findOneAndUpdate(
       { locked: lockedOrder.locked, _id: lockedOrder.id },
-      { 
+      {
         locked: null,  // Release lock
         status: WOrderStatus.CANCELED,
         // ... other updates
@@ -1377,25 +1398,26 @@ async cancelLockedOrder(lockedOrder: WOrderInstance, ...): Promise<CrudOrderResp
 #### Testing Idempotency
 
 **Test Case 1: Concurrent Requests**
+
 ```typescript
 it('should prevent duplicate cancellations with same idempotency key', async () => {
   const idempotencyKey = 'test-key-123';
   const orderId = 'some-order-id';
-  
+
   // First request should succeed
   const response1 = request(app.getHttpServer())
     .put(`/api/v1/order/${orderId}/cancel`)
     .set('idempotency-key', idempotencyKey)
     .send({ reason: 'test', emailCustomer: false });
-  
+
   // Second request with same key should fail (order already locked)
   const response2 = request(app.getHttpServer())
     .put(`/api/v1/order/${orderId}/cancel`)
     .set('idempotency-key', idempotencyKey)
     .send({ reason: 'test', emailCustomer: false });
-  
+
   const [res1, res2] = await Promise.all([response1, response2]);
-  
+
   expect(res1.status).toBe(200);
   expect(res2.status).toBe(404); // Already locked
 });
@@ -1412,6 +1434,7 @@ it('should prevent duplicate cancellations with same idempotency key', async () 
 **Recommendation**: Skip comprehensive unit tests during migration, focus on integration tests.
 
 **Rationale**:
+
 - Business logic is unchanged (copied verbatim)
 - Integration tests provide better confidence for API compatibility
 
@@ -1422,6 +1445,7 @@ Test each controller endpoint to verify identical behavior.
 **Example**: Order Controller Tests
 
 `test/order.e2e-spec.ts`:
+
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
@@ -1430,20 +1454,20 @@ import { AppModule } from '../src/app.module';
 
 describe('OrderController (e2e)', () => {
   let app: INestApplication;
-  
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
-    
+
     app = moduleFixture.createNestApplication();
     await app.init();
   });
-  
+
   afterAll(async () => {
     await app.close();
   });
-  
+
   it('POST /api/v1/order - should create order', () => {
     return request(app.getHttpServer())
       .post('/api/v1/order')
@@ -1455,18 +1479,19 @@ describe('OrderController (e2e)', () => {
       })
       .expect(200);
   });
-  
+
   it('GET /api/v1/order/:oId - should require authentication', () => {
     return request(app.getHttpServer())
       .get('/api/v1/order/507f1f77bcf86cd799439011')
       .expect(401);
   });
-  
+
   // ... more tests
 });
 ```
 
 **Test Coverage**:
+
 - ✅ All REST endpoints (13 controllers)
 - ✅ Authentication/authorization guards
 - ✅ Validation (DTO errors)
@@ -1475,23 +1500,24 @@ describe('OrderController (e2e)', () => {
 ### 9.3 Socket.IO Tests
 
 `test/socket-io.e2e-spec.ts`:
+
 ```typescript
 import { io, Socket } from 'socket.io-client';
 
 describe('Socket.IO Gateway (e2e)', () => {
   let socket: Socket;
-  
+
   beforeAll((done) => {
     socket = io('http://localhost:4001/nsRO', {
       transports: ['websocket'],
     });
     socket.on('connect', done);
   });
-  
+
   afterAll(() => {
     socket.close();
   });
-  
+
   it('should emit WCP_SERVER_TIME on connection', (done) => {
     socket.on('WCP_SERVER_TIME', (data) => {
       expect(data).toHaveProperty('time');
@@ -1499,7 +1525,7 @@ describe('Socket.IO Gateway (e2e)', () => {
       done();
     });
   });
-  
+
   it('should emit WCP_CATALOG on connection', (done) => {
     socket.on('WCP_CATALOG', (data) => {
       expect(data).toHaveProperty('categories');
@@ -1508,7 +1534,7 @@ describe('Socket.IO Gateway (e2e)', () => {
       done();
     });
   });
-  
+
   // ... test all events
 });
 ```
@@ -1558,6 +1584,7 @@ diff /path/to/wcp-order-backend/.env /path/to/wario-backend/.env
 ### 10.3 Migration Checklist
 
 **Pre-Migration**:
+
 - [ ] All integration tests passing
 - [ ] Manual testing completed
 - [ ] Performance benchmarks acceptable
@@ -1565,6 +1592,7 @@ diff /path/to/wcp-order-backend/.env /path/to/wario-backend/.env
 - [ ] Rollback plan documented
 
 **During Migration**:
+
 - [ ] Deploy wario-backend to production
 - [ ] Verify health checks
 - [ ] Test one endpoint from production
@@ -1572,6 +1600,7 @@ diff /path/to/wcp-order-backend/.env /path/to/wario-backend/.env
 - [ ] Monitor error rates, latency, WebSocket connections
 
 **Post-Migration**:
+
 - [ ] 100% traffic on wario-backend
 - [ ] wcp-order-backend kept on standby for 48 hours
 - [ ] Monitor for issues
@@ -1632,17 +1661,20 @@ diff /path/to/wcp-order-backend/.env /path/to/wario-backend/.env
 ### Testing Priorities
 
 **P0 (Must Test)**:
+
 - Order creation (payment flow)
 - Order retrieval (authenticated)
 - Socket.IO catalog broadcast
 - JWT authentication
 
 **P1 (Should Test)**:
+
 - All catalog mutations (products, modifiers, categories)
 - Store credit validation/spending
 - Delivery address validation
 
 **P2 (Nice to Test)**:
+
 - Accounting reports
 - Printer group routing
 - Product instance functions
@@ -1683,6 +1715,7 @@ diff /path/to/wcp-order-backend/.env /path/to/wario-backend/.env
 11. **Phase 10**: Deploy with rollback plan
 
 **Success Criteria**:
+
 - ✅ All REST endpoints respond identically
 - ✅ Socket.IO events match exactly
 - ✅ MongoDB schemas unchanged

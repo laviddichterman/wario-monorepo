@@ -22,16 +22,13 @@ export type ConfigValue = {
   };
 };
 
-
-
 export const HOST_API = import.meta.env.VITE_HOST_API_KEY || '';
 
 export const SOCKETIO = {
   ns: import.meta.env.VITE_SOCKETIO_NS,
-}
+};
 
 LicenseInfo.setLicenseKey(import.meta.env.VITE_MUI_KEY);
-
 
 // ----------------------------------------------------------------------
 
@@ -57,8 +54,6 @@ export const CONFIG: ConfigValue = {
     domain: import.meta.env.VITE_AUTH0_DOMAIN,
     callbackUrl: window.location.origin,
     scope: import.meta.env.VITE_AUTH0_SCOPE,
-    audience: import.meta.env.VITE_AUTH0_AUDIENCE
+    audience: import.meta.env.VITE_AUTH0_AUDIENCE,
   },
 };
-
-

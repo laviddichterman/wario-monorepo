@@ -5,4 +5,4 @@ import { TasksService } from './tasks.service';
 @Module({
   providers: [TasksService],
 })
-export class TasksModule { }
+export class TasksModule {}

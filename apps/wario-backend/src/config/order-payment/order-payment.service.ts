@@ -18,7 +18,6 @@ import { CreateOrderStoreCreditForRefund } from '../square-wario-bridge';
 import { SquareError, SquareService } from '../square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
 
-
 @Injectable()
 export class OrderPaymentService {
   constructor(
@@ -27,7 +26,7 @@ export class OrderPaymentService {
     private dataProvider: DataProviderService,
     @InjectPinoLogger(OrderPaymentService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Issues a store credit refund for an order cancellation.
@@ -40,18 +39,18 @@ export class OrderPaymentService {
   ): Promise<
     | ({ success: true } & { [k: string]: unknown })
     | {
-      success: false;
-      result: null;
-      error: SquareError[];
-    }
+        success: false;
+        result: null;
+        error: SquareError[];
+      }
   > => {
     let undoPaymentResponse:
       | ({ success: true } & { [k: string]: unknown })
       | {
-        success: false;
-        result: null;
-        error: SquareError[];
-      };
+          success: false;
+          result: null;
+          error: SquareError[];
+        };
     // refund to store credit
     const create_order_store_credit = await this.squareService.CreateOrder(
       CreateOrderStoreCreditForRefund(
@@ -87,16 +86,16 @@ export class OrderPaymentService {
           issue_credit_response.status === 200
             ? { success: true, result: issue_credit_response, error: [] }
             : {
-              success: false,
-              result: null,
-              error: [
-                {
-                  category: 'API_ERROR',
-                  code: 'INTERNAL_SERVER_ERROR',
-                  detail: 'Failed issuing store credit',
-                },
-              ],
-            };
+                success: false,
+                result: null,
+                error: [
+                  {
+                    category: 'API_ERROR',
+                    code: 'INTERNAL_SERVER_ERROR',
+                    detail: 'Failed issuing store credit',
+                  },
+                ],
+              };
       }
     }
     return undoPaymentResponse;

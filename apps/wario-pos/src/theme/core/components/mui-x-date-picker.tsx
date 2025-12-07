@@ -164,9 +164,9 @@ const inputComponents: Components<Theme> = {
             props: (props) => !props.isFieldFocused && !props.isFieldValueEmpty,
             style: {
               [`& .${inputLabelClasses.root}[data-shrink="false"] + .${pickersInputBaseClasses.root} > .${pickersSectionListClasses.root}`]:
-              {
-                opacity: 0,
-              },
+                {
+                  opacity: 0,
+                },
             },
           },
         ],

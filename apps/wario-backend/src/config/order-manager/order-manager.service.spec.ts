@@ -11,12 +11,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { type PinoLogger } from 'nestjs-pino';
 
-import {
-  createMock,
-  createMockModel,
-  createMockWOrderInstance,
-  resetOrderIdCounter,
-} from '../../../test/utils';
+import { createMock, createMockModel, createMockWOrderInstance, resetOrderIdCounter } from '../../../test/utils';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { GoogleService } from '../google/google.service';
@@ -72,9 +67,7 @@ describe('OrderManagerService', () => {
     it('should return order when found', async () => {
       const mockOrder = createMockWOrderInstance({ id: 'order-123' });
       mockOrderModel.findById.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve({ toObject: () => mockOrder }))
-        ),
+        then: jest.fn().mockImplementation((onResolve) => Promise.resolve(onResolve({ toObject: () => mockOrder }))),
       });
 
       const result = await service.GetOrder('order-123');
@@ -88,9 +81,7 @@ describe('OrderManagerService', () => {
 
     it('should return 404 when order not found', async () => {
       mockOrderModel.findById.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve(null))
-        ),
+        then: jest.fn().mockImplementation((onResolve) => Promise.resolve(onResolve(null))),
       });
 
       const result = await service.GetOrder('nonexistent-order');
@@ -105,9 +96,7 @@ describe('OrderManagerService', () => {
     it('should return 500 on database error', async () => {
       mockOrderModel.findById.mockReturnValue({
         then: jest.fn().mockReturnValue(Promise.reject(new Error('Database error'))),
-        catch: jest.fn().mockImplementation((onReject) =>
-          Promise.resolve(onReject(new Error('Database error')))
-        ),
+        catch: jest.fn().mockImplementation((onReject) => Promise.resolve(onReject(new Error('Database error')))),
       });
 
       const result = await service.GetOrder('order-123');
@@ -123,14 +112,13 @@ describe('OrderManagerService', () => {
 
   describe('GetOrders', () => {
     it('should return all matching orders', async () => {
-      const mockOrders = [
-        createMockWOrderInstance({ id: 'order-1' }),
-        createMockWOrderInstance({ id: 'order-2' }),
-      ];
+      const mockOrders = [createMockWOrderInstance({ id: 'order-1' }), createMockWOrderInstance({ id: 'order-2' })];
       mockOrderModel.find.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve(mockOrders.map((o) => ({ toObject: () => o }))))
-        ),
+        then: jest
+          .fn()
+          .mockImplementation((onResolve) =>
+            Promise.resolve(onResolve(mockOrders.map((o) => ({ toObject: () => o })))),
+          ),
       });
 
       const result = await service.GetOrders({});
@@ -144,9 +132,7 @@ describe('OrderManagerService', () => {
 
     it('should return empty array when no orders match', async () => {
       mockOrderModel.find.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve([]))
-        ),
+        then: jest.fn().mockImplementation((onResolve) => Promise.resolve(onResolve([]))),
       });
 
       const result = await service.GetOrders({ status: 'NONEXISTENT' });
@@ -160,9 +146,7 @@ describe('OrderManagerService', () => {
 
     it('should handle query filters', async () => {
       mockOrderModel.find.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve([]))
-        ),
+        then: jest.fn().mockImplementation((onResolve) => Promise.resolve(onResolve([]))),
       });
 
       await service.GetOrders({ status: 'OPEN', 'fulfillment.selectedDate': '2024-01-15' });
@@ -176,9 +160,7 @@ describe('OrderManagerService', () => {
     it('should return 500 on database error', async () => {
       mockOrderModel.find.mockReturnValue({
         then: jest.fn().mockReturnValue(Promise.reject(new Error('Database error'))),
-        catch: jest.fn().mockImplementation((onReject) =>
-          Promise.resolve(onReject(new Error('Database error')))
-        ),
+        catch: jest.fn().mockImplementation((onReject) => Promise.resolve(onReject(new Error('Database error')))),
       });
 
       const result = await service.GetOrders({});
@@ -195,9 +177,7 @@ describe('OrderManagerService', () => {
   describe('ObliterateLocks', () => {
     it('should unlock all locked orders', async () => {
       mockOrderModel.updateMany.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve({ modifiedCount: 5 }))
-        ),
+        then: jest.fn().mockImplementation((onResolve) => Promise.resolve(onResolve({ modifiedCount: 5 }))),
       });
 
       const result = await service.ObliterateLocks();
@@ -207,17 +187,12 @@ describe('OrderManagerService', () => {
       if (result.success) {
         expect(result.result).toBe('Unlocked 5 orders.');
       }
-      expect(mockOrderModel.updateMany).toHaveBeenCalledWith(
-        { locked: { $ne: null } },
-        { locked: null },
-      );
+      expect(mockOrderModel.updateMany).toHaveBeenCalledWith({ locked: { $ne: null } }, { locked: null });
     });
 
     it('should return success even when no orders are locked', async () => {
       mockOrderModel.updateMany.mockReturnValue({
-        then: jest.fn().mockImplementation((onResolve) =>
-          Promise.resolve(onResolve({ modifiedCount: 0 }))
-        ),
+        then: jest.fn().mockImplementation((onResolve) => Promise.resolve(onResolve({ modifiedCount: 0 }))),
       });
 
       const result = await service.ObliterateLocks();
@@ -232,9 +207,7 @@ describe('OrderManagerService', () => {
     it('should return 500 on database error', async () => {
       mockOrderModel.updateMany.mockReturnValue({
         then: jest.fn().mockReturnValue(Promise.reject(new Error('Database error'))),
-        catch: jest.fn().mockImplementation((onReject) =>
-          Promise.resolve(onReject(new Error('Database error')))
-        ),
+        catch: jest.fn().mockImplementation((onReject) => Promise.resolve(onReject(new Error('Database error')))),
       });
 
       const result = await service.ObliterateLocks();

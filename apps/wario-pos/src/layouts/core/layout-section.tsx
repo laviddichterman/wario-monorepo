@@ -36,12 +36,7 @@ export function LayoutSection({
     <>
       {inputGlobalStyles}
 
-      <LayoutRoot
-        id="root__layout"
-        className={mergeClasses([layoutClasses.root, className])}
-        sx={sx}
-        {...other}
-      >
+      <LayoutRoot id="root__layout" className={mergeClasses([layoutClasses.root, className])} sx={sx} {...other}>
         {sidebarSection ? (
           <>
             {sidebarSection}

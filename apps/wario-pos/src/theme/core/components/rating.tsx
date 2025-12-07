@@ -58,10 +58,7 @@ const MuiRating: Components<Theme>['MuiRating'] = {
       variants: [...sizeVariants],
     },
     iconEmpty: ({ theme }) => ({
-      color: varAlpha(
-        theme.vars.palette.grey['500Channel'],
-        theme.vars.palette.action.disabledOpacity
-      ),
+      color: varAlpha(theme.vars.palette.grey['500Channel'], theme.vars.palette.action.disabledOpacity),
     }),
   },
 };

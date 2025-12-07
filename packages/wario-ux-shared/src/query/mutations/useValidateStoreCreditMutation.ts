@@ -11,11 +11,11 @@ export interface ValidateStoreCreditMutationOptions {
 
 /**
  * Creates a mutation hook for validating store credit codes
- * 
+ *
  * @example
  * ```tsx
  * const validateCredit = useValidateStoreCreditMutation({ axiosInstance });
- * 
+ *
  * const handleValidate = () => {
  *   validateCredit.mutate(creditCode, {
  *     onSuccess: (data) => {
@@ -34,7 +34,7 @@ export function useValidateStoreCreditMutation({ axiosInstance }: ValidateStoreC
       try {
         const response: AxiosResponse<ValidateAndLockCreditResponse> = await axiosInstance.get(
           '/api/v1/payments/storecredit/validate',
-          { params: { code } }
+          { params: { code } },
         );
         return response.data;
       } catch (error) {

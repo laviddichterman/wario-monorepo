@@ -1,6 +1,6 @@
-import type { WOrderInstance } from "@wcp/wario-shared";
+import type { WOrderInstance } from '@wcp/wario-shared';
 import { ServiceInfoTableComponent } from '@wcp/wario-ux-shared/components';
-import { useFulfillmentDisplayName, useFulfillmentMinDuration } from "@wcp/wario-ux-shared/query";
+import { useFulfillmentDisplayName, useFulfillmentMinDuration } from '@wcp/wario-ux-shared/query';
 
 export type WOrderServiceInfoTableContainerProps = {
   order: WOrderInstance;
@@ -9,6 +9,14 @@ export type WOrderServiceInfoTableContainerProps = {
 export const WOrderServiceInfoTableContainer = ({ order }: WOrderServiceInfoTableContainerProps) => {
   const displayName = useFulfillmentDisplayName(order.fulfillment.selectedService);
   const minDuration = useFulfillmentMinDuration(order.fulfillment.selectedService) || 0;
-  return displayName && <ServiceInfoTableComponent customerInfo={order.customerInfo} fulfillment={order.fulfillment} fulfillmentConfig={{ displayName, minDuration }} specialInstructions={order.specialInstructions ?? ""} />
-
-}
+  return (
+    displayName && (
+      <ServiceInfoTableComponent
+        customerInfo={order.customerInfo}
+        fulfillment={order.fulfillment}
+        fulfillmentConfig={{ displayName, minDuration }}
+        specialInstructions={order.specialInstructions ?? ''}
+      />
+    )
+  );
+};

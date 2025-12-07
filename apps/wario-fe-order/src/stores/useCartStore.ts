@@ -1,7 +1,16 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { CartEntry, CatalogModifierEntry, CatalogProductEntry, CoreCartEntry, Selector, WCPProduct, WCPProductV2Dto, WProduct } from '@wcp/wario-shared';
+import type {
+  CartEntry,
+  CatalogModifierEntry,
+  CatalogProductEntry,
+  CoreCartEntry,
+  Selector,
+  WCPProduct,
+  WCPProductV2Dto,
+  WProduct,
+} from '@wcp/wario-shared';
 import { ComputeCartSubTotal, WProductCompare, WProductEquals } from '@wcp/wario-shared';
 
 export interface CartState {
@@ -50,7 +59,7 @@ export const useCartStore = create<CartStore>()(
             };
           },
           false,
-          'addToCart'
+          'addToCart',
         );
       },
 
@@ -60,31 +69,27 @@ export const useCartStore = create<CartStore>()(
             cart: state.cart.filter((entry) => entry.id !== id),
           }),
           false,
-          'removeFromCart'
+          'removeFromCart',
         );
       },
 
       updateCartQuantity: (id, newQuantity) => {
         set(
           (state) => ({
-            cart: state.cart.map((entry) =>
-              entry.id === id ? { ...entry, quantity: newQuantity } : entry
-            ),
+            cart: state.cart.map((entry) => (entry.id === id ? { ...entry, quantity: newQuantity } : entry)),
           }),
           false,
-          'updateCartQuantity'
+          'updateCartQuantity',
         );
       },
 
       updateCartProduct: (id, product) => {
         set(
           (state) => ({
-            cart: state.cart.map((entry) =>
-              entry.id === id ? { ...entry, product } : entry
-            ),
+            cart: state.cart.map((entry) => (entry.id === id ? { ...entry, product } : entry)),
           }),
           false,
-          'updateCartProduct'
+          'updateCartProduct',
         );
       },
 
@@ -100,31 +105,27 @@ export const useCartStore = create<CartStore>()(
             };
           },
           false,
-          'updateManyCartProducts'
+          'updateManyCartProducts',
         );
       },
 
       lockCartEntry: (id) => {
         set(
           (state) => ({
-            cart: state.cart.map((entry) =>
-              entry.id === id ? { ...entry, isLocked: true } : entry
-            ),
+            cart: state.cart.map((entry) => (entry.id === id ? { ...entry, isLocked: true } : entry)),
           }),
           false,
-          'lockCartEntry'
+          'lockCartEntry',
         );
       },
 
       unlockCartEntry: (id) => {
         set(
           (state) => ({
-            cart: state.cart.map((entry) =>
-              entry.id === id ? { ...entry, isLocked: false } : entry
-            ),
+            cart: state.cart.map((entry) => (entry.id === id ? { ...entry, isLocked: false } : entry)),
           }),
           false,
-          'unlockCartEntry'
+          'unlockCartEntry',
         );
       },
 
@@ -138,7 +139,7 @@ export const useCartStore = create<CartStore>()(
             };
           },
           false,
-          'killAllCartEntries'
+          'killAllCartEntries',
         );
       },
 
@@ -152,12 +153,12 @@ export const useCartStore = create<CartStore>()(
             };
           },
           false,
-          'reviveAllCartEntries'
+          'reviveAllCartEntries',
         );
       },
     }),
-    { name: 'cart-store' }
-  )
+    { name: 'cart-store' },
+  ),
 );
 
 // Selectors
@@ -165,7 +166,7 @@ export const selectCart = (state: CartStore) => state.cart;
 export const selectDeadCart = (state: CartStore) => state.deadCart;
 export const selectCartSubtotal = (state: CartStore) => ComputeCartSubTotal(state.cart);
 export const selectCartEntry = (state: CartStore, id: string | null) =>
-  id ? state.cart.find((entry) => entry.id === id) ?? null : null;
+  id ? (state.cart.find((entry) => entry.id === id) ?? null) : null;
 
 /**
  * Looks through the cart for a duplicate product
@@ -183,7 +184,7 @@ export const findDuplicateInCart = (
   productEntrySelector: Selector<CatalogProductEntry>,
   categoryId: string,
   product: WCPProduct,
-  skipId: string | null = null
+  skipId: string | null = null,
 ): CartEntry | null => {
   for (const entry of cart) {
     if (categoryId === entry.categoryId) {
@@ -193,7 +194,7 @@ export const findDuplicateInCart = (
           WProductCompare(entry.product.p, product, {
             modifierEntry: catalogModifierEntrySelector,
             productEntry: productEntrySelector,
-          })
+          }),
         )
       ) {
         return entry;

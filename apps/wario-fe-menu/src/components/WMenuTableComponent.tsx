@@ -7,15 +7,23 @@ import type { GridEventListener, GridFilterModel, GridRowId } from '@mui/x-data-
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium';
 import { useKeepGroupedColumnsHidden } from '@mui/x-data-grid-premium/hooks';
 
-import { type ICatalogSelectors, type IProductInstance, WCPProductGenerateMetadata, type WProduct } from '@wcp/wario-shared';
+import {
+  type ICatalogSelectors,
+  type IProductInstance,
+  WCPProductGenerateMetadata,
+  type WProduct,
+} from '@wcp/wario-shared';
 import { useCatalogSelectors, useDefaultFulfillmentId } from '@wcp/wario-ux-shared/query';
 import { Separator, WarioToggleButton } from '@wcp/wario-ux-shared/styled';
 
-import { useCurrentTimeForDefaultFulfillment, useProductInstanceIdsInCategoryForNextAvailableTime } from '@/hooks/useQuery';
-
+import {
+  useCurrentTimeForDefaultFulfillment,
+  useProductInstanceIdsInCategoryForNextAvailableTime,
+} from '@/hooks/useQuery';
 
 export interface ToolbarAction {
-  size: number; elt: React.ReactNode;
+  size: number;
+  elt: React.ReactNode;
 }
 export interface CustomToolbarProps {
   showQuickFilter?: boolean;
@@ -23,7 +31,6 @@ export interface CustomToolbarProps {
   title: React.ReactNode;
   actions: ToolbarAction[];
 }
-
 
 // function CustomToolbar({ showQuickFilter, quickFilterProps, title, actions = [] }: CustomToolbarProps) {
 //   const actionSizeSum = actions.reduce((acc, x) => acc + x.size, 0);
@@ -62,8 +69,10 @@ type RowType = {
   price: number;
   metadata: Record<string, string>;
   id: string;
+};
+interface WMenuDisplayProps {
+  categoryId: string;
 }
-interface WMenuDisplayProps { categoryId: string; }
 // interface DGEmbeddedMetadata { size: number; ordinal: number; key: string };
 // const DataGridMetadataPrefix = /DG_(S(?<size>\d)_)?(O(?<ordinal>-?\d)_)?(?<name>.*)/;
 
@@ -89,44 +98,50 @@ interface WMenuDisplayProps { categoryId: string; }
 //   return { ...acc, products: [...acc.products, curr] } as HierarchicalProductStructure;
 // }
 
-
 function useProductDataForTableRows(categoryId: string): RowType[] {
   const productInstanceIds = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
   const service_time = useCurrentTimeForDefaultFulfillment();
   const fulfillmentId = useDefaultFulfillmentId() as string;
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
-  return productInstanceIds.map(productInstanceId => {
-    const productInstance = catalogSelectors.productInstance(productInstanceId) as IProductInstance;
-    return { p: productInstance, m: WCPProductGenerateMetadata(productInstance.productId, productInstance.modifiers, catalogSelectors, service_time, fulfillmentId) } satisfies WProduct;
-  }).map((x) => {
-    return {
-      id: x.p.id,
-      categories: (x.p.externalIDs.find(ext => ext.key === "Categories")?.value ?? "").split(','),
-      name: x.m.name,
-      price: x.m.price,
-      metadata: x.p.externalIDs.reduce((acc, kv) => kv.value.length ? { ...acc, [kv.key]: kv.value } : acc, {})
-    }
-  }).map(x => {
-    return {
-      id: x.id,
-      category: x.categories.join(" > "),
-      subcategory0: x.categories[0],
-      subcategory1: x.categories.length > 1 ? x.categories[1] : "",
-      subcategory2: x.categories.length > 2 ? x.categories[2] : "",
-      subcategory3: x.categories.length > 3 ? x.categories[3] : "",
-      name: x.name,
-      price: x.price.amount,
-      metadata: x.metadata
-    }
-  }) satisfies RowType[];
+  return productInstanceIds
+    .map((productInstanceId) => {
+      const productInstance = catalogSelectors.productInstance(productInstanceId) as IProductInstance;
+      return {
+        p: productInstance,
+        m: WCPProductGenerateMetadata(
+          productInstance.productId,
+          productInstance.modifiers,
+          catalogSelectors,
+          service_time,
+          fulfillmentId,
+        ),
+      } satisfies WProduct;
+    })
+    .map((x) => {
+      return {
+        id: x.p.id,
+        categories: (x.p.externalIDs.find((ext) => ext.key === 'Categories')?.value ?? '').split(','),
+        name: x.m.name,
+        price: x.m.price,
+        metadata: x.p.externalIDs.reduce((acc, kv) => (kv.value.length ? { ...acc, [kv.key]: kv.value } : acc), {}),
+      };
+    })
+    .map((x) => {
+      return {
+        id: x.id,
+        category: x.categories.join(' > '),
+        subcategory0: x.categories[0],
+        subcategory1: x.categories.length > 1 ? x.categories[1] : '',
+        subcategory2: x.categories.length > 2 ? x.categories[2] : '',
+        subcategory3: x.categories.length > 3 ? x.categories[3] : '',
+        name: x.name,
+        price: x.price.amount,
+        metadata: x.metadata,
+      };
+    }) satisfies RowType[];
 }
 
-
-const BreadcrumbArrow = () =>
-  <Box sx={{ alignSelf: 'center' }}>
-    &rarr;
-  </Box>
-
+const BreadcrumbArrow = () => <Box sx={{ alignSelf: 'center' }}>&rarr;</Box>;
 
 function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const apiRef = useGridApiRef();
@@ -136,66 +151,99 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   const [selectedFilterModel3, setSelectedFilterModel3] = useState<number>(0);
   const rowNodeSelector = useCallback((rowId: GridRowId) => gridRowNodeSelector(apiRef, rowId), [apiRef]);
 
-
   const getFilteredRowsCount = useCallback(
     (filterModel: GridFilterModel) => {
-      const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current?.getFilterState(filterModel) || { filteredRowsLookup: {} };
+      const { filteredRowsLookup }: { filteredRowsLookup: Record<GridRowId, boolean> } = apiRef.current?.getFilterState(
+        filterModel,
+      ) || { filteredRowsLookup: {} };
       const rowIds = apiRef.current?.getAllRowIds() || [];
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-boolean-literal-compare
-      return rowIds.filter(rowId => filteredRowsLookup[rowId] !== false).length;
-    }, [apiRef]);
+      return rowIds.filter((rowId) => filteredRowsLookup[rowId] !== false).length;
+    },
+    [apiRef],
+  );
   // return a list of predefined filters for each subcategory0
-  const predefinedFiltersForLevel0: { label: string; filterModel: GridFilterModel }[] = useMemo(
-    () => {
-      const uniqueStatuses = new Set(productRows.map(x => x.subcategory0));
-      return [{
+  const predefinedFiltersForLevel0: { label: string; filterModel: GridFilterModel }[] = useMemo(() => {
+    const uniqueStatuses = new Set(productRows.map((x) => x.subcategory0));
+    return [
+      {
         label: 'All',
         filterModel: { items: [] },
-      }, ...Array.from(uniqueStatuses).map((status) => ({
+      },
+      ...Array.from(uniqueStatuses).map((status) => ({
         label: status,
         filterModel: { items: [{ id: 0, field: 'subcategory0', operator: 'equals', value: status }] },
-      }))];
-    }, [productRows]);
+      })),
+    ];
+  }, [productRows]);
 
   // return a list of predefined filters for each subcategory1
-  const predefinedFiltersForLevel1: { label: string; filterModel: GridFilterModel }[] = useMemo(
-    () => {
-      const uniqueStatuses = new Set(productRows.map(x => x.subcategory1));
-      return [{
+  const predefinedFiltersForLevel1: { label: string; filterModel: GridFilterModel }[] = useMemo(() => {
+    const uniqueStatuses = new Set(productRows.map((x) => x.subcategory1));
+    return [
+      {
         label: `All ${predefinedFiltersForLevel0[selectedFilterModel0].label}`,
-        filterModel: { items: selectedFilterModel0 !== 0 ? predefinedFiltersForLevel0[selectedFilterModel0].filterModel.items : [] },
-      }, ...Array.from(uniqueStatuses).filter(x => x !== "").map((status) => ({
-        label: status,
-        filterModel: { items: [...(selectedFilterModel0 !== 0 ? predefinedFiltersForLevel0[selectedFilterModel0].filterModel.items : []), { id: 1, field: 'subcategory1', operator: 'equals', value: status }] },
-      }))];
-    }, [productRows, predefinedFiltersForLevel0, selectedFilterModel0]);
+        filterModel: {
+          items: selectedFilterModel0 !== 0 ? predefinedFiltersForLevel0[selectedFilterModel0].filterModel.items : [],
+        },
+      },
+      ...Array.from(uniqueStatuses)
+        .filter((x) => x !== '')
+        .map((status) => ({
+          label: status,
+          filterModel: {
+            items: [
+              ...(selectedFilterModel0 !== 0 ? predefinedFiltersForLevel0[selectedFilterModel0].filterModel.items : []),
+              { id: 1, field: 'subcategory1', operator: 'equals', value: status },
+            ],
+          },
+        })),
+    ];
+  }, [productRows, predefinedFiltersForLevel0, selectedFilterModel0]);
 
   // return a list of predefined filters for each subcategory2
-  const predefinedFiltersForLevel2: { label: string; filterModel: GridFilterModel }[] = useMemo(
-    () => {
-      const uniqueStatuses = new Set(productRows.map(x => x.subcategory2));
-      return [{
+  const predefinedFiltersForLevel2: { label: string; filterModel: GridFilterModel }[] = useMemo(() => {
+    const uniqueStatuses = new Set(productRows.map((x) => x.subcategory2));
+    return [
+      {
         label: `All ${predefinedFiltersForLevel1[selectedFilterModel1].label}`,
         filterModel: { items: [...predefinedFiltersForLevel1[selectedFilterModel1].filterModel.items] },
-      }, ...Array.from(uniqueStatuses).filter(x => x !== "").map((status) => ({
-        label: status,
-        filterModel: { items: [...predefinedFiltersForLevel1[selectedFilterModel1].filterModel.items, { id: 2, field: 'subcategory2', operator: 'equals', value: status }] },
-      }))];
-    }, [productRows, predefinedFiltersForLevel1, selectedFilterModel1]);
+      },
+      ...Array.from(uniqueStatuses)
+        .filter((x) => x !== '')
+        .map((status) => ({
+          label: status,
+          filterModel: {
+            items: [
+              ...predefinedFiltersForLevel1[selectedFilterModel1].filterModel.items,
+              { id: 2, field: 'subcategory2', operator: 'equals', value: status },
+            ],
+          },
+        })),
+    ];
+  }, [productRows, predefinedFiltersForLevel1, selectedFilterModel1]);
 
   // return a list of predefined filters for each subcategory3
-  const predefinedFiltersForLevel3: { label: string; filterModel: GridFilterModel }[] = useMemo(
-    () => {
-      const uniqueStatuses = new Set(productRows.map(x => x.subcategory3));
-      return [{
+  const predefinedFiltersForLevel3: { label: string; filterModel: GridFilterModel }[] = useMemo(() => {
+    const uniqueStatuses = new Set(productRows.map((x) => x.subcategory3));
+    return [
+      {
         label: `All ${predefinedFiltersForLevel2[selectedFilterModel2].label}`,
         filterModel: { items: [...predefinedFiltersForLevel2[selectedFilterModel2].filterModel.items] },
-      }, ...Array.from(uniqueStatuses).filter(x => x !== "").map((status) => ({
-        label: status,
-        filterModel: { items: [...predefinedFiltersForLevel2[selectedFilterModel2].filterModel.items, { id: 2, field: 'subcategory3', operator: 'equals', value: status }] },
-      }))];
-    }, [productRows, predefinedFiltersForLevel2, selectedFilterModel2]);
-
+      },
+      ...Array.from(uniqueStatuses)
+        .filter((x) => x !== '')
+        .map((status) => ({
+          label: status,
+          filterModel: {
+            items: [
+              ...predefinedFiltersForLevel2[selectedFilterModel2].filterModel.items,
+              { id: 2, field: 'subcategory3', operator: 'equals', value: status },
+            ],
+          },
+        })),
+    ];
+  }, [productRows, predefinedFiltersForLevel2, selectedFilterModel2]);
 
   const onRowClick = React.useCallback<GridEventListener<'rowClick'>>(
     (params) => {
@@ -207,11 +255,22 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     },
     [apiRef, rowNodeSelector],
   );
-  const [predefinedFiltersRowCountLevel0, setPredefinedFiltersRowCountLevel0] = useState<{ index: number; count: number; }[]>([]);
-  const [predefinedFiltersRowCountLevel1, setPredefinedFiltersRowCountLevel1] = useState<{ index: number; count: number; }[]>([]);
-  const [predefinedFiltersRowCountLevel2, setPredefinedFiltersRowCountLevel2] = useState<{ index: number; count: number; }[]>([]);
-  const [predefinedFiltersRowCountLevel3, setPredefinedFiltersRowCountLevel3] = useState<{ index: number; count: number; }[]>([]);
-  const isBreadcrumb = useMemo(() => selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1, [selectedFilterModel0, predefinedFiltersRowCountLevel1]);
+  const [predefinedFiltersRowCountLevel0, setPredefinedFiltersRowCountLevel0] = useState<
+    { index: number; count: number }[]
+  >([]);
+  const [predefinedFiltersRowCountLevel1, setPredefinedFiltersRowCountLevel1] = useState<
+    { index: number; count: number }[]
+  >([]);
+  const [predefinedFiltersRowCountLevel2, setPredefinedFiltersRowCountLevel2] = useState<
+    { index: number; count: number }[]
+  >([]);
+  const [predefinedFiltersRowCountLevel3, setPredefinedFiltersRowCountLevel3] = useState<
+    { index: number; count: number }[]
+  >([]);
+  const isBreadcrumb = useMemo(
+    () => selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1,
+    [selectedFilterModel0, predefinedFiltersRowCountLevel1],
+  );
 
   // Calculate the row count for predefined filters level 0
   useEffect(() => {
@@ -269,51 +328,99 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
     );
   }, [apiRef, productRows, predefinedFiltersForLevel3, getFilteredRowsCount]);
 
-  const handleSelectFilterModelLevel0 = useCallback((index: number) => {
-    // this implements a toggle behavior
-    // if (index === selectedFilterModel0) {
-    //   setSelectedFilterModel0(0);
-    //   apiRef.current.setFilterModel({ items: [] });
-    //   return;
-    // }
-    setSelectedFilterModel0(index);
-    setSelectedFilterModel1(0);
-    setSelectedFilterModel2(0);
-    setSelectedFilterModel3(0);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel0[index].filterModel);
-  }, [apiRef, setSelectedFilterModel0, predefinedFiltersForLevel0]);
+  const handleSelectFilterModelLevel0 = useCallback(
+    (index: number) => {
+      // this implements a toggle behavior
+      // if (index === selectedFilterModel0) {
+      //   setSelectedFilterModel0(0);
+      //   apiRef.current.setFilterModel({ items: [] });
+      //   return;
+      // }
+      setSelectedFilterModel0(index);
+      setSelectedFilterModel1(0);
+      setSelectedFilterModel2(0);
+      setSelectedFilterModel3(0);
+      apiRef.current?.setFilterModel(predefinedFiltersForLevel0[index].filterModel);
+    },
+    [apiRef, setSelectedFilterModel0, predefinedFiltersForLevel0],
+  );
 
-  const handleSelectFilterModelLevel1 = useCallback((index: number) => {
-    setSelectedFilterModel1(index);
-    setSelectedFilterModel2(0);
-    setSelectedFilterModel3(0);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel1[index].filterModel);
-  }, [apiRef, setSelectedFilterModel1, predefinedFiltersForLevel1]);
+  const handleSelectFilterModelLevel1 = useCallback(
+    (index: number) => {
+      setSelectedFilterModel1(index);
+      setSelectedFilterModel2(0);
+      setSelectedFilterModel3(0);
+      apiRef.current?.setFilterModel(predefinedFiltersForLevel1[index].filterModel);
+    },
+    [apiRef, setSelectedFilterModel1, predefinedFiltersForLevel1],
+  );
 
-  const handleSelectFilterModelLevel2 = useCallback((index: number) => {
-    setSelectedFilterModel2(index);
-    setSelectedFilterModel3(0);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel2[index].filterModel);
-  }, [apiRef, setSelectedFilterModel2, predefinedFiltersForLevel2]);
+  const handleSelectFilterModelLevel2 = useCallback(
+    (index: number) => {
+      setSelectedFilterModel2(index);
+      setSelectedFilterModel3(0);
+      apiRef.current?.setFilterModel(predefinedFiltersForLevel2[index].filterModel);
+    },
+    [apiRef, setSelectedFilterModel2, predefinedFiltersForLevel2],
+  );
 
-  const handleSelectFilterModelLevel3 = useCallback((index: number) => {
-    setSelectedFilterModel3(index);
-    apiRef.current?.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
-  }, [apiRef, setSelectedFilterModel3, predefinedFiltersForLevel3]);
+  const handleSelectFilterModelLevel3 = useCallback(
+    (index: number) => {
+      setSelectedFilterModel3(index);
+      apiRef.current?.setFilterModel(predefinedFiltersForLevel3[index].filterModel);
+    },
+    [apiRef, setSelectedFilterModel3, predefinedFiltersForLevel3],
+  );
 
-  const level0Buttons = useMemo(() => predefinedFiltersRowCountLevel0.length > 2 ?
-    // level 0 is special cased to always show "All" and the selected filter
-    predefinedFiltersRowCountLevel0.filter(({ index }) => (index === 0 || index === selectedFilterModel0 || selectedFilterModel0 === 0)) : [],
-    [predefinedFiltersRowCountLevel0, selectedFilterModel0]);
-  const level1Buttons = useMemo(() => predefinedFiltersRowCountLevel1.length > 1 && selectedFilterModel0 !== 0 ?
-    predefinedFiltersRowCountLevel1.filter(({ index }) => (predefinedFiltersRowCountLevel2.length < 2 || selectedFilterModel1 === 0 || index === selectedFilterModel1)) : [],
-    [predefinedFiltersRowCountLevel1, selectedFilterModel0, predefinedFiltersRowCountLevel2.length, selectedFilterModel1]);
-  const level2Buttons = useMemo(() => predefinedFiltersRowCountLevel2.length > 1 && selectedFilterModel1 !== 0 ?
-    predefinedFiltersRowCountLevel2.filter(({ index }) => (predefinedFiltersRowCountLevel3.length < 2 || selectedFilterModel2 === 0 || index === selectedFilterModel2)) : [],
-    [predefinedFiltersRowCountLevel2, selectedFilterModel1, predefinedFiltersRowCountLevel3.length, selectedFilterModel2]);
-  const level3Buttons = useMemo(() => predefinedFiltersRowCountLevel3.length > 1 && selectedFilterModel2 !== 0 ?
-    predefinedFiltersRowCountLevel3 : [],
-    [selectedFilterModel2, predefinedFiltersRowCountLevel3]);
+  const level0Buttons = useMemo(
+    () =>
+      predefinedFiltersRowCountLevel0.length > 2
+        ? // level 0 is special cased to always show "All" and the selected filter
+          predefinedFiltersRowCountLevel0.filter(
+            ({ index }) => index === 0 || index === selectedFilterModel0 || selectedFilterModel0 === 0,
+          )
+        : [],
+    [predefinedFiltersRowCountLevel0, selectedFilterModel0],
+  );
+  const level1Buttons = useMemo(
+    () =>
+      predefinedFiltersRowCountLevel1.length > 1 && selectedFilterModel0 !== 0
+        ? predefinedFiltersRowCountLevel1.filter(
+            ({ index }) =>
+              predefinedFiltersRowCountLevel2.length < 2 ||
+              selectedFilterModel1 === 0 ||
+              index === selectedFilterModel1,
+          )
+        : [],
+    [
+      predefinedFiltersRowCountLevel1,
+      selectedFilterModel0,
+      predefinedFiltersRowCountLevel2.length,
+      selectedFilterModel1,
+    ],
+  );
+  const level2Buttons = useMemo(
+    () =>
+      predefinedFiltersRowCountLevel2.length > 1 && selectedFilterModel1 !== 0
+        ? predefinedFiltersRowCountLevel2.filter(
+            ({ index }) =>
+              predefinedFiltersRowCountLevel3.length < 2 ||
+              selectedFilterModel2 === 0 ||
+              index === selectedFilterModel2,
+          )
+        : [],
+    [
+      predefinedFiltersRowCountLevel2,
+      selectedFilterModel1,
+      predefinedFiltersRowCountLevel3.length,
+      selectedFilterModel2,
+    ],
+  );
+  const level3Buttons = useMemo(
+    () =>
+      predefinedFiltersRowCountLevel3.length > 1 && selectedFilterModel2 !== 0 ? predefinedFiltersRowCountLevel3 : [],
+    [selectedFilterModel2, predefinedFiltersRowCountLevel3],
+  );
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: {
@@ -326,8 +433,8 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
           subcategory1: false,
           subcategory2: false,
           subcategory3: false,
-        }
-      }
+        },
+      },
     },
   });
   return (
@@ -338,135 +445,156 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
             return (
               <>
                 <WarioToggleButton
-                  sx={{ px: "9px", }}
+                  sx={{ px: '9px' }}
                   key={predefinedFiltersForLevel0[index].label}
-                  onClick={() => { handleSelectFilterModelLevel0(index); }}
+                  onClick={() => {
+                    handleSelectFilterModelLevel0(index);
+                  }}
                   // selectedFilterModel1 === 0 check means no level 1 filter is selected, so we should still highlight this in the breadcrumb case
                   selected={selectedFilterModel0 === index && selectedFilterModel1 === 0}
-                  value={index} >
+                  value={index}
+                >
                   {`${predefinedFiltersForLevel0[index].label} (${count.toString()})`}
                 </WarioToggleButton>
                 {isBreadcrumb && index === 0 && <BreadcrumbArrow />}
               </>
             );
-          })
-          }
-          {isBreadcrumb && selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1 &&
+          })}
+          {isBreadcrumb && selectedFilterModel0 !== 0 && predefinedFiltersRowCountLevel1.length > 1 && (
             <>
-              {selectedFilterModel1 !== 0 && level1Buttons.length === 1 &&
+              {selectedFilterModel1 !== 0 && level1Buttons.length === 1 && (
                 <>
                   <BreadcrumbArrow />
                   <WarioToggleButton
-                    sx={{ px: "9px", }}
+                    sx={{ px: '9px' }}
                     key={predefinedFiltersForLevel1[selectedFilterModel1].label}
-                    onClick={() => { handleSelectFilterModelLevel1(selectedFilterModel1); }}
+                    onClick={() => {
+                      handleSelectFilterModelLevel1(selectedFilterModel1);
+                    }}
                     selected={selectedFilterModel2 === 0}
-                    value={selectedFilterModel1} >
+                    value={selectedFilterModel1}
+                  >
                     {`${predefinedFiltersForLevel1[selectedFilterModel1].label} (${level1Buttons[0].count.toString()})`}
                   </WarioToggleButton>
-                  {selectedFilterModel2 !== 0 && level2Buttons.length === 1 &&
+                  {selectedFilterModel2 !== 0 && level2Buttons.length === 1 && (
                     <>
                       <BreadcrumbArrow />
                       <WarioToggleButton
-                        sx={{ px: "9px", }}
+                        sx={{ px: '9px' }}
                         key={predefinedFiltersForLevel2[selectedFilterModel2].label}
-                        onClick={() => { handleSelectFilterModelLevel2(selectedFilterModel2); }}
+                        onClick={() => {
+                          handleSelectFilterModelLevel2(selectedFilterModel2);
+                        }}
                         selected={selectedFilterModel3 === 0}
-                        value={selectedFilterModel2} >
+                        value={selectedFilterModel2}
+                      >
                         {`${predefinedFiltersForLevel2[selectedFilterModel2].label} (${level2Buttons[0].count.toString()})`}
                       </WarioToggleButton>
-                      {selectedFilterModel3 !== 0 && level3Buttons.length === 1 &&
+                      {selectedFilterModel3 !== 0 && level3Buttons.length === 1 && (
                         <>
                           <BreadcrumbArrow />
                           <WarioToggleButton
-                            sx={{ px: "9px", }}
+                            sx={{ px: '9px' }}
                             key={predefinedFiltersForLevel3[selectedFilterModel3].label}
-                            onClick={() => { handleSelectFilterModelLevel3(selectedFilterModel3); }}
+                            onClick={() => {
+                              handleSelectFilterModelLevel3(selectedFilterModel3);
+                            }}
                             selected={true}
-                            value={selectedFilterModel3} >
+                            value={selectedFilterModel3}
+                          >
                             {`${predefinedFiltersForLevel3[selectedFilterModel3].label} (${level3Buttons[0].count.toString()})`}
                           </WarioToggleButton>
                         </>
-                      }
+                      )}
                     </>
-                  }
+                  )}
                 </>
-              }
+              )}
             </>
-          }
-
+          )}
         </Stack>
       }
-      {selectedFilterModel0 !== 0 && level1Buttons.length > 1 &&
+      {selectedFilterModel0 !== 0 && level1Buttons.length > 1 && (
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
             {level1Buttons.map(({ count, index }) => {
               return (
                 <WarioToggleButton
-                  sx={{ px: "9px", }}
+                  sx={{ px: '9px' }}
                   key={predefinedFiltersForLevel1[index].label}
-                  onClick={() => { handleSelectFilterModelLevel1(index); }}
+                  onClick={() => {
+                    handleSelectFilterModelLevel1(index);
+                  }}
                   selected={selectedFilterModel1 === index}
-                  value={index} >
+                  value={index}
+                >
                   {`${predefinedFiltersForLevel1[index].label} (${count.toString()})`}
                 </WarioToggleButton>
               );
-            })}</Stack>
+            })}
+          </Stack>
         </>
-      }
+      )}
 
-      {selectedFilterModel1 !== 0 && level2Buttons.length > 1 &&
+      {selectedFilterModel1 !== 0 && level2Buttons.length > 1 && (
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
             {level2Buttons.map(({ count, index }) => {
               return (
                 <WarioToggleButton
-                  sx={{ px: "9px", }}
+                  sx={{ px: '9px' }}
                   key={predefinedFiltersForLevel2[index].label}
-                  onClick={() => { handleSelectFilterModelLevel2(index); }}
+                  onClick={() => {
+                    handleSelectFilterModelLevel2(index);
+                  }}
                   selected={selectedFilterModel2 === index}
-                  value={index} >
+                  value={index}
+                >
                   {`${predefinedFiltersForLevel2[index].label} (${count.toString()})`}
                 </WarioToggleButton>
               );
-            })}</Stack>
+            })}
+          </Stack>
         </>
-      }
-      {selectedFilterModel2 !== 0 && level3Buttons.length > 1 &&
+      )}
+      {selectedFilterModel2 !== 0 && level3Buttons.length > 1 && (
         <>
           <Separator />
           <Stack direction="row" gap={1} m={1} flexWrap="wrap">
             {level3Buttons.map(({ count, index }) => {
               return (
                 <WarioToggleButton
-                  sx={{ px: "9px", }}
+                  sx={{ px: '9px' }}
                   key={predefinedFiltersForLevel3[index].label}
-                  onClick={() => { handleSelectFilterModelLevel3(index); }}
+                  onClick={() => {
+                    handleSelectFilterModelLevel3(index);
+                  }}
                   selected={selectedFilterModel3 === index}
-                  value={index} >
+                  value={index}
+                >
                   {`${predefinedFiltersForLevel3[index].label} (${count.toString()})`}
                 </WarioToggleButton>
               );
-            })}</Stack>
+            })}
+          </Stack>
         </>
-      }
+      )}
       <Box sx={{ height: 520, width: '100%' }}>
         <DataGridPremium
           slotProps={{
             toolbar: {
               printOptions: { disableToolbarButton: true },
               csvOptions: { disableToolbarButton: true },
-              excelOptions: { disableToolbarButton: true }
+              excelOptions: { disableToolbarButton: true },
             },
           }}
           sx={{
             [`& .${gridClasses.cell}:focus, & .${gridClasses.cell}:focus-within`]: {
               outline: 'none',
             },
-            [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]:
-            {
+            [`& .${gridClasses.columnHeader}:focus, & .${gridClasses.columnHeader}:focus-within`]: {
               outline: 'none',
             },
           }}
@@ -481,16 +609,21 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
           disableColumnSorting={true}
           // autoHeight
           columns={[
-            { headerName: "Category", field: "category", flex: 4 },
-            { headerName: "subcategory0", field: "subcategory0", filterOperators: getGridStringOperators() },
-            { headerName: "subcategory1", field: "subcategory1", filterOperators: getGridStringOperators() },
-            { headerName: "subcategory2", field: "subcategory2", filterOperators: getGridStringOperators() },
-            { headerName: "subcategory3", field: "subcategory3", filterOperators: getGridStringOperators() },
-            { headerName: "Name", field: "name", flex: 10, aggregable: false },
+            { headerName: 'Category', field: 'category', flex: 4 },
+            { headerName: 'subcategory0', field: 'subcategory0', filterOperators: getGridStringOperators() },
+            { headerName: 'subcategory1', field: 'subcategory1', filterOperators: getGridStringOperators() },
+            { headerName: 'subcategory2', field: 'subcategory2', filterOperators: getGridStringOperators() },
+            { headerName: 'subcategory3', field: 'subcategory3', filterOperators: getGridStringOperators() },
+            { headerName: 'Name', field: 'name', flex: 10, aggregable: false },
             //...dynamicColumns,
-            { headerName: "Price", field: "price", flex: 2, type: 'number', valueFormatter: (value, _row) => value / 100 },
+            {
+              headerName: 'Price',
+              field: 'price',
+              flex: 2,
+              type: 'number',
+              valueFormatter: (value, _row) => value / 100,
+            },
           ]}
-
           rows={productRows}
         />
       </Box>

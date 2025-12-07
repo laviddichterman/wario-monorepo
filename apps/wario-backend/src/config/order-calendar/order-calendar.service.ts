@@ -13,7 +13,7 @@ export class OrderCalendarService {
     @Inject(GoogleService) private googleService: GoogleService,
     @InjectPinoLogger(OrderCalendarService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Creates a calendar event for an order.

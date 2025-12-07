@@ -1,17 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
-import type {
-  IProductInstanceDisplayFlags,
-  IProductModifier,
-  ProductModifierEntry,
-} from '../src/lib/derived-types';
-import {
-  CategoryDisplay,
-  CURRENCY,
-  OptionPlacement,
-  OptionQualifier,
-  PriceDisplay,
-} from '../src/lib/enums';
+import type { IProductInstanceDisplayFlags, IProductModifier, ProductModifierEntry } from '../src/lib/derived-types';
+import { CategoryDisplay, CURRENCY, OptionPlacement, OptionQualifier, PriceDisplay } from '../src/lib/enums';
 import {
   CheckRequiredModifiersAreAvailable,
   DoesProductExistInCatalog,
@@ -45,32 +35,48 @@ import {
 describe('Display Flag Getters', () => {
   describe('GetMenuHideDisplayFlag', () => {
     it('should return true when menu.hide is false', () => {
-      const displayFlags = createMockProductInstanceDisplayFlags({ menu: createMockProductInstanceDisplayFlagsMenu({ hide: false }) });
+      const displayFlags = createMockProductInstanceDisplayFlags({
+        menu: createMockProductInstanceDisplayFlagsMenu({ hide: false }),
+      });
       expect(GetMenuHideDisplayFlag(displayFlags)).toBe(true);
     });
 
     it('should return false when menu.hide is true', () => {
-      const displayFlags = createMockProductInstanceDisplayFlags({ menu: createMockProductInstanceDisplayFlagsMenu({ hide: true }) });
+      const displayFlags = createMockProductInstanceDisplayFlags({
+        menu: createMockProductInstanceDisplayFlagsMenu({ hide: true }),
+      });
       expect(GetMenuHideDisplayFlag(displayFlags)).toBe(false);
     });
   });
 
   describe('GetOrderHideDisplayFlag', () => {
     it('should return true when order.hide is false', () => {
-      const displayFlags = createMockProductInstanceDisplayFlags({ order: createMockProductInstanceDisplayFlagsOrder({ hide: false }) });
+      const displayFlags = createMockProductInstanceDisplayFlags({
+        order: createMockProductInstanceDisplayFlagsOrder({ hide: false }),
+      });
       expect(GetOrderHideDisplayFlag(displayFlags)).toBe(true);
     });
 
     it('should return false when order.hide is true', () => {
-      const displayFlags = createMockProductInstanceDisplayFlags({ order: createMockProductInstanceDisplayFlagsOrder({ hide: true }) });
+      const displayFlags = createMockProductInstanceDisplayFlags({
+        order: createMockProductInstanceDisplayFlagsOrder({ hide: true }),
+      });
       expect(GetOrderHideDisplayFlag(displayFlags)).toBe(false);
     });
   });
 
   describe('IgnoreHideDisplayFlags', () => {
     it('should always return true regardless of flags', () => {
-      expect(IgnoreHideDisplayFlags(createMockProductInstanceDisplayFlags({ menu: createMockProductInstanceDisplayFlagsMenu({ hide: true }) }))).toBe(true);
-      expect(IgnoreHideDisplayFlags(createMockProductInstanceDisplayFlags({ order: createMockProductInstanceDisplayFlagsOrder({ hide: true }) }))).toBe(true);
+      expect(
+        IgnoreHideDisplayFlags(
+          createMockProductInstanceDisplayFlags({ menu: createMockProductInstanceDisplayFlagsMenu({ hide: true }) }),
+        ),
+      ).toBe(true);
+      expect(
+        IgnoreHideDisplayFlags(
+          createMockProductInstanceDisplayFlags({ order: createMockProductInstanceDisplayFlagsOrder({ hide: true }) }),
+        ),
+      ).toBe(true);
     });
   });
 });
@@ -92,9 +98,12 @@ describe('CheckRequiredModifiersAreAvailable', () => {
     const product = createMockProduct({ modifiers: [productModifier] });
     const option = createMockOption({ id: 'opt1' });
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
-    const optionSelector = (id: string) => id === 'opt1' ? option : undefined;
+    const optionSelector = (id: string) => (id === 'opt1' ? option : undefined);
 
     expect(CheckRequiredModifiersAreAvailable(product, modifiers, optionSelector, orderTime, fulfillmentId)).toBe(true);
   });
@@ -104,22 +113,32 @@ describe('CheckRequiredModifiersAreAvailable', () => {
     const product = createMockProduct({ modifiers: [productModifier] });
     const option = createMockOption({ id: 'opt1' });
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
-    const optionSelector = (id: string) => id === 'opt1' ? option : undefined;
+    const optionSelector = (id: string) => (id === 'opt1' ? option : undefined);
 
-    expect(CheckRequiredModifiersAreAvailable(product, modifiers, optionSelector, orderTime, fulfillmentId)).toBe(false);
+    expect(CheckRequiredModifiersAreAvailable(product, modifiers, optionSelector, orderTime, fulfillmentId)).toBe(
+      false,
+    );
   });
 
   it('should return false when modifier option is not found', () => {
     const productModifier: IProductModifier = { mtid: 'mt1', enable: null, serviceDisable: [] };
     const product = createMockProduct({ modifiers: [productModifier] });
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
     const optionSelector = () => undefined;
 
-    expect(CheckRequiredModifiersAreAvailable(product, modifiers, optionSelector, orderTime, fulfillmentId)).toBe(false);
+    expect(CheckRequiredModifiersAreAvailable(product, modifiers, optionSelector, orderTime, fulfillmentId)).toBe(
+      false,
+    );
   });
 });
 
@@ -193,7 +212,9 @@ describe('FilterProductUsingCatalog', () => {
     const catalogs = createMockCatalogSelectorsFromArrays();
     const displayFlags = createMockProductInstance().displayFlags;
 
-    expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(false);
+    expect(
+      FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId),
+    ).toBe(false);
   });
 
   it('should return false when product is disabled for fulfillment', () => {
@@ -202,7 +223,9 @@ describe('FilterProductUsingCatalog', () => {
     const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
     const displayFlags = createMockProductInstance().displayFlags;
 
-    expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(false);
+    expect(
+      FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId),
+    ).toBe(false);
   });
 
   it('should return false when hide flag is true', () => {
@@ -210,11 +233,25 @@ describe('FilterProductUsingCatalog', () => {
     const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
     const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
     const displayFlags: IProductInstanceDisplayFlags = createMockProductInstanceDisplayFlags({
-      menu: createMockProductInstanceDisplayFlagsMenu({ show_modifier_options: true, adornment: '', suppress_exhaustive_modifier_list: false, price_display: PriceDisplay.ALWAYS, hide: true }),
-      order: createMockProductInstanceDisplayFlagsOrder({ hide: false, skip_customization: false, adornment: '', suppress_exhaustive_modifier_list: false, price_display: PriceDisplay.ALWAYS }),
+      menu: createMockProductInstanceDisplayFlagsMenu({
+        show_modifier_options: true,
+        adornment: '',
+        suppress_exhaustive_modifier_list: false,
+        price_display: PriceDisplay.ALWAYS,
+        hide: true,
+      }),
+      order: createMockProductInstanceDisplayFlagsOrder({
+        hide: false,
+        skip_customization: false,
+        adornment: '',
+        suppress_exhaustive_modifier_list: false,
+        price_display: PriceDisplay.ALWAYS,
+      }),
     });
 
-    expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, GetMenuHideDisplayFlag, orderTime, fulfillmentId)).toBe(false);
+    expect(
+      FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, GetMenuHideDisplayFlag, orderTime, fulfillmentId),
+    ).toBe(false);
   });
 
   it('should return true when product is enabled and visible', () => {
@@ -223,7 +260,9 @@ describe('FilterProductUsingCatalog', () => {
     const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
     const displayFlags = createMockProductInstance().displayFlags;
 
-    expect(FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(true);
+    expect(
+      FilterProductUsingCatalog('prod1', [], displayFlags, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId),
+    ).toBe(true);
   });
 });
 
@@ -236,7 +275,9 @@ describe('FilterProductInstanceUsingCatalog', () => {
     const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
     const catalogs = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance] });
 
-    expect(FilterProductInstanceUsingCatalog(productInstance, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId)).toBe(true);
+    expect(
+      FilterProductInstanceUsingCatalog(productInstance, catalogs, IgnoreHideDisplayFlags, orderTime, fulfillmentId),
+    ).toBe(true);
   });
 });
 
@@ -261,7 +302,11 @@ describe('DoesProductExistInCatalog', () => {
     });
     const product = createMockProduct({ id: 'prod1', category_ids: ['cat1'] });
     const productInstance = createMockProductInstance({ id: 'pi1', productId: 'prod1' });
-    const catalog = createMockCatalogSelectorsFromArrays({ products: [product], productInstances: [productInstance], categories: [category] });
+    const catalog = createMockCatalogSelectorsFromArrays({
+      products: [product],
+      productInstances: [productInstance],
+      categories: [category],
+    });
 
     expect(DoesProductExistInCatalog('prod1', [], fulfillmentId, catalog)).toBe(false);
   });
@@ -292,11 +337,14 @@ describe('DoesProductExistInCatalog', () => {
       productInstances: [productInstance],
       categories: [category],
       modifierTypes: [modifierType],
-      options: [option]
+      options: [option],
     });
 
     const modifiers: ProductModifierEntry[] = [
-      { modifierTypeId: 'mt1', options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }] },
+      {
+        modifierTypeId: 'mt1',
+        options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      },
     ];
 
     expect(DoesProductExistInCatalog('prod1', modifiers, fulfillmentId, catalog)).toBe(true);
@@ -339,7 +387,7 @@ describe('SelectProductInstancesInCategory', () => {
     const catalog = createMockCatalogSelectorsFromArrays({
       categories: [category],
       products: [product1, product2],
-      productInstances: [pi1, pi2, pi3]
+      productInstances: [pi1, pi2, pi3],
     });
     const categoryEntry = catalog.category('cat1');
     if (!categoryEntry) throw new Error('Category not found');
@@ -361,7 +409,7 @@ describe('SortProductModifierEntries', () => {
     const catalog = createMockCatalogSelectorsFromArrays({ modifierTypes: [mt1, mt2, mt3] });
 
     const sorted = SortProductModifierEntries(modifiers, catalog.modifierEntry);
-    expect(sorted.map(m => m.modifierTypeId)).toEqual(['mt1', 'mt2', 'mt3']);
+    expect(sorted.map((m) => m.modifierTypeId)).toEqual(['mt1', 'mt2', 'mt3']);
   });
 });
 
@@ -379,7 +427,7 @@ describe('SortProductModifierOptions', () => {
     const catalog = createMockCatalogSelectorsFromArrays({ modifierTypes: [mt1], options: [opt1, opt2, opt3] });
 
     const sorted = SortProductModifierOptions(options, catalog.option);
-    expect(sorted.map(o => o.optionId)).toEqual(['opt1', 'opt2', 'opt3']);
+    expect(sorted.map((o) => o.optionId)).toEqual(['opt1', 'opt2', 'opt3']);
   });
 });
 

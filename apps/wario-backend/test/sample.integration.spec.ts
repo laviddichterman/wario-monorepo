@@ -25,9 +25,6 @@ describe('Sample Integration Test (e2e)', () => {
   });
 
   it('/ (GET) - Public Route', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+    return request(app.getHttpServer()).get('/').expect(200).expect('Hello World!');
   });
 });

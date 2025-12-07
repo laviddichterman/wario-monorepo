@@ -17,10 +17,7 @@ export function SettingsProvider({
   defaultSettings,
   storageKey = SETTINGS_STORAGE_KEY,
 }: SettingsProviderProps) {
-  const { state, setState, resetState, setField } = useLocalStorage<SettingsState>(
-    storageKey,
-    defaultSettings
-  );
+  const { state, setState, resetState, setField } = useLocalStorage<SettingsState>(storageKey, defaultSettings);
 
   const [openDrawer, setOpenDrawer] = useState(false);
 
@@ -65,7 +62,7 @@ export function SettingsProvider({
       setState,
       setField,
     }),
-    [canReset, onReset, openDrawer, onCloseDrawer, onToggleDrawer, state, setField, setState]
+    [canReset, onReset, openDrawer, onCloseDrawer, onToggleDrawer, state, setField, setState],
   );
 
   return <SettingsContext value={memoizedValue}>{children}</SettingsContext>;

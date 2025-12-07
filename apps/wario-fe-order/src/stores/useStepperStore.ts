@@ -7,8 +7,6 @@ import { STEPPER_STAGE_ENUM } from '@/config';
 
 import { useMetricsStore } from './useMetricsStore';
 
-
-
 interface StepperState {
   stage: STEPPER_STAGE_ENUM;
 }
@@ -47,8 +45,8 @@ export const useStepperStore = create<StepperStore>()(
         scrollToIdOffsetAfterDelay('WARIO_order', 500);
       },
     }),
-    { name: 'stepper-store' }
-  )
+    { name: 'stepper-store' },
+  ),
 );
 
 // Selectors

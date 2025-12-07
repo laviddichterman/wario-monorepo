@@ -1,4 +1,3 @@
-
 import { CatalogProductFunctionView } from '@/sections/catalog/product-functions';
 
 import { CONFIG } from '@/config';

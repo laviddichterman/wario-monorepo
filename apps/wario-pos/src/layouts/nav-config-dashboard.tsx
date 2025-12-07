@@ -7,9 +7,7 @@ import { CONFIG } from '@/config';
 
 // ----------------------------------------------------------------------
 
-const icon = (name: string) => (
-  <SvgColor src={`${CONFIG.assetsDir}/assets/icons/navbar/${name}.svg`} />
-);
+const icon = (name: string) => <SvgColor src={`${CONFIG.assetsDir}/assets/icons/navbar/${name}.svg`} />;
 
 const ICONS = {
   job: icon('ic-job'),

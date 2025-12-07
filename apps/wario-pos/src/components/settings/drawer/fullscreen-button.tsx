@@ -24,13 +24,7 @@ export function FullScreenButton() {
   return (
     <Tooltip title={fullscreen ? 'Exit' : 'Fullscreen'}>
       <IconButton onClick={handleToggleFullscreen} color={fullscreen ? 'primary' : 'default'}>
-        <Iconify
-          icon={
-            fullscreen
-              ? 'solar:quit-full-screen-square-outline'
-              : 'solar:full-screen-square-outline'
-          }
-        />
+        <Iconify icon={fullscreen ? 'solar:quit-full-screen-square-outline' : 'solar:full-screen-square-outline'} />
       </IconButton>
     </Tooltip>
   );

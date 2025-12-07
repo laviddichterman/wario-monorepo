@@ -17,7 +17,7 @@ import { remToPx } from '@/utils/font';
 
 export function textGradient(color?: string): CSSObject {
   return {
-    background: `linear-gradient(${color ?? ""})`,
+    background: `linear-gradient(${color ?? ''})`,
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',

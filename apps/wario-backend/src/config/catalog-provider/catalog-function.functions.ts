@@ -6,7 +6,12 @@
 import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 
-import { type IOption, type IProduct, type IProductInstanceFunction, type OrderInstanceFunction } from '@wcp/wario-shared';
+import {
+  type IOption,
+  type IProduct,
+  type IProductInstanceFunction,
+  type OrderInstanceFunction,
+} from '@wcp/wario-shared';
 
 import { toPartialUpdateQuery } from 'src/utils/partial-update';
 
@@ -40,7 +45,6 @@ export async function updateProductInstanceFunction(
   pifId: string,
   productInstanceFunction: Partial<Omit<IProductInstanceFunction, 'id'>>,
 ): Promise<IProductInstanceFunction | null> {
-
   const updated = await deps.wProductInstanceFunctionModel
     .findByIdAndUpdate(pifId, toPartialUpdateQuery(productInstanceFunction), { new: true })
     .exec();
@@ -68,9 +72,7 @@ export async function deleteProductInstanceFunction(
   }
 
   // Remove references from options
-  const optionsUpdate = await deps.wOptionModel
-    .updateMany({ enable: pifId }, { $set: { enable: null } })
-    .exec();
+  const optionsUpdate = await deps.wOptionModel.updateMany({ enable: pifId }, { $set: { enable: null } }).exec();
   if (optionsUpdate.modifiedCount > 0) {
     deps.logger.debug(`Removed ${doc.id as string} from ${optionsUpdate.modifiedCount.toString()} Modifier Options.`);
   }
@@ -111,7 +113,7 @@ export async function updateOrderInstanceFunction(
   const updated = await deps.wOrderInstanceFunctionModel.findByIdAndUpdate(
     id,
     toPartialUpdateQuery(orderInstanceFunction),
-    { new: true }
+    { new: true },
   );
   if (!updated) {
     return null;

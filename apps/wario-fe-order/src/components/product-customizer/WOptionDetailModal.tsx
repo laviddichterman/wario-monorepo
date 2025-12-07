@@ -1,5 +1,3 @@
-
-
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,14 +18,13 @@ interface IOptionDetailModal {
 export function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
   const setAdvancedModifierOption = useCustomizerStore((s) => s.setAdvancedModifierOption);
   const option = useOptionById(mtid_moid[1]) as IOption;
-  const { onClickWhole, onClickLeft, onClickRight, onUpdateOption,
-    isWhole, isLeft, isRight,
-    optionState } = useModifierOptionCheckbox(option);
+  const { onClickWhole, onClickLeft, onClickRight, onUpdateOption, isWhole, isLeft, isRight, optionState } =
+    useModifierOptionCheckbox(option);
   const intitialOptionState = useCustomizerStore((s) => s.advancedModifierInitialState);
 
   const onConfirmCallback = () => {
     setAdvancedModifierOption(null);
-  }
+  };
   const onCancelCallback = () => {
     // set the modifier option state to what it was before we opened this modal
     onUpdateOption(intitialOptionState);
@@ -49,7 +46,10 @@ export function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
                 <Checkbox
                   disabled={!optionState?.enable_left}
                   checked={isLeft}
-                  onChange={() => { onClickLeft(); }} />
+                  onChange={() => {
+                    onClickLeft();
+                  }}
+                />
               }
               label={null}
             />
@@ -60,7 +60,10 @@ export function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
                 <Checkbox
                   disabled={!optionState?.enable_whole}
                   checked={isWhole}
-                  onChange={() => { onClickWhole(); }} />
+                  onChange={() => {
+                    onClickWhole();
+                  }}
+                />
               }
               label={null}
             />
@@ -71,22 +74,20 @@ export function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
                 <Checkbox
                   disabled={!optionState?.enable_right}
                   checked={isRight}
-                  onChange={() => { onClickRight(); }} />
+                  onChange={() => {
+                    onClickRight();
+                  }}
+                />
               }
               label={null}
             />
           </Grid>
           <Grid container justifyContent="flex-end" size={12}>
             <Grid>
-              <Button onClick={onCancelCallback}>
-                Cancel
-              </Button>
+              <Button onClick={onCancelCallback}>Cancel</Button>
             </Grid>
             <Grid>
-              <Button
-                onClick={onConfirmCallback}>
-                Confirm
-              </Button>
+              <Button onClick={onConfirmCallback}>Confirm</Button>
             </Grid>
           </Grid>
         </Grid>

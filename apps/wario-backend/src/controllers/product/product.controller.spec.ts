@@ -93,9 +93,7 @@ describe('ProductController', () => {
         product: asUncommittedProduct(createMockProduct()),
         instances: [],
       };
-      await expect(
-        controller.postProductClass(body),
-      ).rejects.toThrow(CatalogOperationException);
+      await expect(controller.postProductClass(body)).rejects.toThrow(CatalogOperationException);
     });
   });
 
@@ -108,7 +106,10 @@ describe('ProductController', () => {
       const mockProduct = createMockProduct({ id: 'prod-123' });
       (mockCatalogService.UpdateProduct as jest.Mock).mockResolvedValue(mockProduct);
 
-      const result = await controller.patchProductClass('prod-123', {} as Parameters<typeof controller.patchProductClass>[1]);
+      const result = await controller.patchProductClass(
+        'prod-123',
+        {} as Parameters<typeof controller.patchProductClass>[1],
+      );
 
       expect(result).toEqual(mockProduct);
       expect(mockCatalogService.UpdateProduct).toHaveBeenCalledWith('prod-123', expect.anything());
@@ -142,9 +143,7 @@ describe('ProductController', () => {
     it('should throw ProductNotFoundException when product not found', async () => {
       (mockCatalogService.DeleteProduct as jest.Mock).mockResolvedValue(null);
 
-      await expect(controller.deleteProductClass('nonexistent')).rejects.toThrow(
-        ProductNotFoundException,
-      );
+      await expect(controller.deleteProductClass('nonexistent')).rejects.toThrow(ProductNotFoundException);
     });
   });
 
@@ -174,10 +173,7 @@ describe('ProductController', () => {
       (mockCatalogService.CreateProductInstance as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        controller.postProductInstance(
-          'nonexistent',
-          {} as Parameters<typeof controller.postProductInstance>[1],
-        ),
+        controller.postProductInstance('nonexistent', {} as Parameters<typeof controller.postProductInstance>[1]),
       ).rejects.toThrow(ProductNotFoundException);
     });
   });
@@ -200,9 +196,7 @@ describe('ProductController', () => {
     it('should throw ProductInstanceNotFoundException when instance not found', async () => {
       (mockCatalogService.DeleteProductInstance as jest.Mock).mockResolvedValue(null);
 
-      await expect(controller.deleteProductInstance('nonexistent')).rejects.toThrow(
-        ProductInstanceNotFoundException,
-      );
+      await expect(controller.deleteProductInstance('nonexistent')).rejects.toThrow(ProductInstanceNotFoundException);
     });
   });
 });

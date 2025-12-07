@@ -1,6 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { DEFAULT_LOCALE, fCurrency, fCurrencyNoUnit, formatDecimal, type InputNumberValue, parseDecimal, parseInteger, transformValueOnBlur, transformValueOnChange } from '../src/lib/numbers';
+import {
+  DEFAULT_LOCALE,
+  fCurrency,
+  fCurrencyNoUnit,
+  formatDecimal,
+  type InputNumberValue,
+  parseDecimal,
+  parseInteger,
+  transformValueOnBlur,
+  transformValueOnChange,
+} from '../src/lib/numbers';
 import { RoundToTwoDecimalPlaces } from '../src/lib/numbers';
 describe('fCurrency', () => {
   // Test cases for various input values with the default locale (en-US, USD)
@@ -129,12 +139,6 @@ describe('RoundToTwoDecimalPlaces', () => {
     expect(RoundToTwoDecimalPlaces(0.005)).toBe(0.01);
     expect(RoundToTwoDecimalPlaces(0.0049)).toBe(0);
   });
-
-
-
-
-
-
 });
 
 describe('fCurrencyNoUnit', () => {
@@ -194,7 +198,6 @@ describe('fCurrencyNoUnit', () => {
     expect(fCurrencyNoUnit(1234.567, DEFAULT_LOCALE, options)).toBe('1235');
   });
 });
-
 
 // The clampOptional function is not exported, so these tests test it indirectly
 // through the public `transformValueOnBlur` function.
@@ -300,8 +303,6 @@ describe('clampOptional (via transformValueOnBlur)', () => {
       const result = transformValueOnBlur(props, '0');
       expect(result.value).toBe(0);
     });
-
-
   });
 });
 
@@ -518,7 +519,6 @@ describe('transformValueOnBlur', () => {
   });
 });
 
-
 describe('transformValueOnChange', () => {
   const parseFunction = (v: any) => {
     if (v === null || v === undefined || v === '' || typeof v !== 'string') return null;
@@ -562,7 +562,7 @@ describe('transformValueOnChange', () => {
       ...props,
       min: 10,
       max: 100,
-      formatFunction: (v: number | string | null | undefined) => `formatted: ${(v ?? "").toString()}`,
+      formatFunction: (v: number | string | null | undefined) => `formatted: ${(v ?? '').toString()}`,
     };
     const result = transformValueOnChange(propsWithBounds, '5');
     // The value should be 5, not clamped to 10. The inputText is raw.
@@ -627,6 +627,4 @@ describe('formatDecimal', () => {
   it('should handle string with commas', () => {
     expect(formatDecimal('1,234.56', 2)).toBe('1234.56');
   });
-
-
 });

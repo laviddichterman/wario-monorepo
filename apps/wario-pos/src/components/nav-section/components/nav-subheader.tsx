@@ -19,10 +19,7 @@ export const NavSubheader = styled(({ open, children, className, ...other }: Nav
     {...other}
     className={mergeClasses([navSectionClasses.subheader, className])}
   >
-    <Iconify
-      width={16}
-      icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'}
-    />
+    <Iconify width={16} icon={open ? 'eva:arrow-ios-downward-fill' : 'eva:arrow-ios-forward-fill'} />
     {children}
   </ListSubheader>
 ))(({ theme }) => ({

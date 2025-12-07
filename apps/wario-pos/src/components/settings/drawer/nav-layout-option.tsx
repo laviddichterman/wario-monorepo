@@ -20,13 +20,7 @@ export type NavLayoutOptionProps = BoxProps & {
   onChangeOption: (newOption: SettingsState['navLayout']) => void;
 };
 
-export function NavLayoutOptions({
-  sx,
-  value,
-  options,
-  onChangeOption,
-  ...other
-}: NavLayoutOptionProps) {
+export function NavLayoutOptions({ sx, value, options, onChangeOption, ...other }: NavLayoutOptionProps) {
   return (
     <Box
       sx={[
@@ -46,7 +40,9 @@ export function NavLayoutOptions({
           <OptionButton
             key={option.value}
             selected={selected}
-            onClick={() => { onChangeOption(option.value); }}
+            onClick={() => {
+              onChangeOption(option.value);
+            }}
             sx={[
               (theme) => ({
                 height: 64,
@@ -74,13 +70,7 @@ export type NavColorOptionProps = BoxProps & {
   onChangeOption: (newOption: SettingsState['navColor']) => void;
 };
 
-export function NavColorOptions({
-  sx,
-  value,
-  options,
-  onChangeOption,
-  ...other
-}: NavColorOptionProps) {
+export function NavColorOptions({ sx, value, options, onChangeOption, ...other }: NavColorOptionProps) {
   return (
     <Box
       sx={[
@@ -100,7 +90,9 @@ export function NavColorOptions({
           <OptionButton
             key={option.value}
             selected={selected}
-            onClick={() => { onChangeOption(option.value); }}
+            onClick={() => {
+              onChangeOption(option.value);
+            }}
             sx={{ gap: 1.5, height: 56 }}
           >
             {option.icon}

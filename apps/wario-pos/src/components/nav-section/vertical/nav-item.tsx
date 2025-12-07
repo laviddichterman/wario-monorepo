@@ -77,11 +77,7 @@ export function NavItem({
 
           {caption && (
             <Tooltip title={caption} placement="top-start">
-              <ItemCaptionText
-                {...ownerState}
-                className={navSectionClasses.item.caption}
-                sx={slotProps?.caption}
-              >
+              <ItemCaptionText {...ownerState} className={navSectionClasses.item.caption} sx={slotProps?.caption}>
                 {caption}
               </ItemCaptionText>
             </Tooltip>
@@ -113,17 +109,12 @@ type StyledState = Pick<NavItemProps, 'open' | 'active' | 'disabled'> & {
   variant: 'rootItem' | 'subItem';
 };
 
-const shouldForwardProp = (prop: string) =>
-  !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
+const shouldForwardProp = (prop: string) => !['open', 'active', 'disabled', 'variant', 'sx'].includes(prop);
 
 /**
  * @slot root
  */
-const ItemRoot = styled(ButtonBase, { shouldForwardProp })<StyledState>(({
-  active,
-  open,
-  theme,
-}) => {
+const ItemRoot = styled(ButtonBase, { shouldForwardProp })<StyledState>(({ active, open, theme }) => {
   const bulletSvg = `"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 14 14'%3E%3Cpath d='M1 1v4a8 8 0 0 0 8 8h4' stroke='%23efefef' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"`;
 
   const bulletStyles: CSSObject = {
@@ -214,9 +205,7 @@ const ItemTitle = styled('span', { shouldForwardProp })<StyledState>(({ theme })
   ...navItemStyles.title(theme),
   ...theme.typography.body2,
   fontWeight: theme.typography.fontWeightMedium,
-  variants: [
-    { props: { active: true }, style: { fontWeight: theme.typography.fontWeightSemiBold } },
-  ],
+  variants: [{ props: { active: true }, style: { fontWeight: theme.typography.fontWeightSemiBold } }],
 }));
 
 /**

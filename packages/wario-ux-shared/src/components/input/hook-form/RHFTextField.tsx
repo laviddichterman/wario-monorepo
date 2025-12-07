@@ -3,8 +3,13 @@ import { Controller, useFormContext } from 'react-hook-form';
 import type { TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 
-import { formatDecimal, type InputNumberValue, parseDecimal, transformValueOnBlur, transformValueOnChange } from '@wcp/wario-shared';
-
+import {
+  formatDecimal,
+  type InputNumberValue,
+  parseDecimal,
+  transformValueOnBlur,
+  transformValueOnChange,
+} from '@wcp/wario-shared';
 
 // ----------------------------------------------------------------------
 
@@ -12,13 +17,7 @@ export type RHFTextFieldProps = TextFieldProps & {
   name: string;
 };
 
-export function RHFTextField({
-  name,
-  helperText,
-  slotProps,
-  type = 'text',
-  ...other
-}: RHFTextFieldProps) {
+export function RHFTextField({ name, helperText, slotProps, type = 'text', ...other }: RHFTextFieldProps) {
   const { control } = useFormContext();
 
   const isNumberType = type === 'number';
@@ -35,7 +34,14 @@ export function RHFTextField({
           value={isNumberType ? formatDecimal(field.value as InputNumberValue) : field.value}
           onChange={(event) => {
             const transformedValue = isNumberType
-              ? transformValueOnChange({ allowEmpty: true, formatFunction: (v: InputNumberValue) => formatDecimal(v), parseFunction: parseDecimal }, event.target.value)
+              ? transformValueOnChange(
+                  {
+                    allowEmpty: true,
+                    formatFunction: (v: InputNumberValue) => formatDecimal(v),
+                    parseFunction: parseDecimal,
+                  },
+                  event.target.value,
+                )
               : event.target.value;
 
             field.onChange(transformedValue);
@@ -44,9 +50,15 @@ export function RHFTextField({
             // IMPORTANT: trigger the field's onBlur first to ensure react-hook-form processes the blur event
             field.onBlur();
             const transformedValue = isNumberType
-              ? transformValueOnBlur({ allowEmpty: true, formatFunction: (v: InputNumberValue) => formatDecimal(v), parseFunction: parseDecimal }, event.target.value)
+              ? transformValueOnBlur(
+                  {
+                    allowEmpty: true,
+                    formatFunction: (v: InputNumberValue) => formatDecimal(v),
+                    parseFunction: parseDecimal,
+                  },
+                  event.target.value,
+                )
               : event.target.value;
-
 
             field.onChange(transformedValue);
           }}

@@ -24,10 +24,7 @@ type AvatarGroupVariants = ComponentsVariants<Theme>['MuiAvatarGroup'];
 const baseColors = ['default', 'inherit'] as const;
 const allColors = [...baseColors, ...colorKeys.palette] as const;
 
-export function getAvatarColor(
-  inputValue?: string,
-  fallback: AvatarExtendColor['color'] = 'default'
-): string {
+export function getAvatarColor(inputValue?: string, fallback: AvatarExtendColor['color'] = 'default'): string {
   if (!inputValue?.trim()) {
     return fallback;
   }
@@ -87,15 +84,13 @@ const colorVariants = [
     }),
   },
   {
-    props: (props) =>
-      props.color === 'inherit' || (!!props.alt && getAvatarColor(props.alt) === 'inherit'),
+    props: (props) => props.color === 'inherit' || (!!props.alt && getAvatarColor(props.alt) === 'inherit'),
     style: ({ theme }) => ({
       ...theme.mixins.filledStyles(theme, 'inherit'),
     }),
   },
   ...(colorKeys.palette.map((colorKey) => ({
-    props: (props) =>
-      props.color === colorKey || (!!props.alt && getAvatarColor(props.alt) === colorKey),
+    props: (props) => props.color === colorKey || (!!props.alt && getAvatarColor(props.alt) === colorKey),
     style: ({ theme }) => ({
       color: theme.vars.palette[colorKey].contrastText,
       backgroundColor: theme.vars.palette[colorKey].main,

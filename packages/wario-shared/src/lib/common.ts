@@ -12,17 +12,55 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { addMinutes, getTime, isSameDay, startOfDay } from "date-fns";
-import { RRule } from "rrule";
+import { addMinutes, getTime, isSameDay, startOfDay } from 'date-fns';
+import { RRule } from 'rrule';
 
-import type { CatalogCategoryEntry, CatalogModifierEntry, CatalogProductEntry, CoreCartEntry, DineInInfo, FulfillmentConfig, FulfillmentData, FulfillmentTime, IMoney, IOption, IOptionInstance, IProductInstance, IRecurringInterval, IWInterval, OrderLineDiscount, OrderPayment, ProductModifierEntry, TipSelection, WOrderInstancePartial } from "./derived-types";
-import { CALL_LINE_DISPLAY, CURRENCY, DISABLE_REASON, DiscountMethod, OptionPlacement, OptionQualifier, PaymentMethod, PRODUCT_LOCATION, } from "./enums";
-import { RoundToTwoDecimalPlaces } from "./numbers";
-import { OrderFunctional } from "./objects/OrderFunctional";
-import { CreateProductWithMetadataFromV2 } from "./objects/WCPProduct";
-import WDateUtils from "./objects/WDateUtils";
-import type { CategorizedRebuiltCart, ICatalogSelectors, MetadataModifierMapEntry, UnresolvedDiscount, UnresolvedPayment, WNormalizedInterval, WProduct, WProductMetadata } from "./types";
-import { type Selector } from "./utility-types";
+import type {
+  CatalogCategoryEntry,
+  CatalogModifierEntry,
+  CatalogProductEntry,
+  CoreCartEntry,
+  DineInInfo,
+  FulfillmentConfig,
+  FulfillmentData,
+  FulfillmentTime,
+  IMoney,
+  IOption,
+  IOptionInstance,
+  IProductInstance,
+  IRecurringInterval,
+  IWInterval,
+  OrderLineDiscount,
+  OrderPayment,
+  ProductModifierEntry,
+  TipSelection,
+  WOrderInstancePartial,
+} from './derived-types';
+import {
+  CALL_LINE_DISPLAY,
+  CURRENCY,
+  DISABLE_REASON,
+  DiscountMethod,
+  OptionPlacement,
+  OptionQualifier,
+  PaymentMethod,
+  PRODUCT_LOCATION,
+} from './enums';
+import { RoundToTwoDecimalPlaces } from './numbers';
+import { OrderFunctional } from './objects/OrderFunctional';
+import { CreateProductWithMetadataFromV2 } from './objects/WCPProduct';
+import WDateUtils from './objects/WDateUtils';
+import type {
+  CategorizedRebuiltCart,
+  ICatalogSelectors,
+  MetadataModifierMapEntry,
+  UnresolvedDiscount,
+  UnresolvedPayment,
+  WNormalizedInterval,
+  WProduct,
+  WProductMetadata,
+} from './types';
+import { type Selector } from './utility-types';
 
 export const CREDIT_REGEX = /[A-Za-z0-9]{3}-[A-Za-z0-9]{2}-[A-Za-z0-9]{3}-[A-Z0-9]{8}$/;
 
@@ -39,8 +77,8 @@ export const PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX = /(\{[A-Za-z0-9]+\})/g;
  * @returns Record<string, T> - object map where each key is the stringified property value and each value is the original object
  */
 export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
-  return Object.fromEntries(xs.map(x => [x[key], x])) as Record<string, T>;
-};
+  return Object.fromEntries(xs.map((x) => [x[key], x])) as Record<string, T>;
+}
 
 export interface RecomputeTotalsResult {
   mainCategoryProductCount: number;
@@ -72,28 +110,47 @@ export interface RecomputeTotalsResult {
  * @param fulfillmentId - id of the fulfillment used when building product metadata
  * @returns CategorizedRebuiltCart - map of categoryId -> array of rebuilt cart entries
  */
-export const RebuildAndSortCart = (cart: CoreCartEntry[], catalogSelectors: ICatalogSelectors, service_time: Date | number, fulfillmentId: string): CategorizedRebuiltCart => {
-  return cart.reduce(
-    (acc: CategorizedRebuiltCart, entry) => {
-      const product = CreateProductWithMetadataFromV2(entry.product, catalogSelectors, service_time, fulfillmentId);
-      const rebuiltEntry: CoreCartEntry<WProduct> = { product, categoryId: entry.categoryId, quantity: entry.quantity };
-      return { ...acc, [entry.categoryId]: Object.hasOwn(acc, entry.categoryId) ? [...acc[entry.categoryId], rebuiltEntry] : [rebuiltEntry] }
-    }, {});
-}
+export const RebuildAndSortCart = (
+  cart: CoreCartEntry[],
+  catalogSelectors: ICatalogSelectors,
+  service_time: Date | number,
+  fulfillmentId: string,
+): CategorizedRebuiltCart => {
+  return cart.reduce((acc: CategorizedRebuiltCart, entry) => {
+    const product = CreateProductWithMetadataFromV2(entry.product, catalogSelectors, service_time, fulfillmentId);
+    const rebuiltEntry: CoreCartEntry<WProduct> = { product, categoryId: entry.categoryId, quantity: entry.quantity };
+    return {
+      ...acc,
+      [entry.categoryId]: Object.hasOwn(acc, entry.categoryId)
+        ? [...acc[entry.categoryId], rebuiltEntry]
+        : [rebuiltEntry],
+    };
+  }, {});
+};
 
 /**
  * Groups and orders cart entries by their category using Category's ordinal.
- * @param cart 
- * @param getCategoryEntryById 
- * @returns 
+ * @param cart
+ * @param getCategoryEntryById
+ * @returns
  */
-export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(cart: T[], getCategoryEntryById: Selector<CatalogCategoryEntry>) => {
-  return Object.entries(cart.reduce((cartMap: Record<string, T[]>, entry: T) =>
-    Object.hasOwn(cartMap, entry.categoryId) ?
-      { ...cartMap, [entry.categoryId]: [...cartMap[entry.categoryId], entry] } :
-      { ...cartMap, [entry.categoryId]: [entry] },
-    {})).sort(([keyA, _], [keyB, __]) => (getCategoryEntryById(keyA)?.category.ordinal ?? 0) - (getCategoryEntryById(keyB)?.category.ordinal ?? 0));
-}
+export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(
+  cart: T[],
+  getCategoryEntryById: Selector<CatalogCategoryEntry>,
+) => {
+  return Object.entries(
+    cart.reduce(
+      (cartMap: Record<string, T[]>, entry: T) =>
+        Object.hasOwn(cartMap, entry.categoryId)
+          ? { ...cartMap, [entry.categoryId]: [...cartMap[entry.categoryId], entry] }
+          : { ...cartMap, [entry.categoryId]: [entry] },
+      {},
+    ),
+  ).sort(
+    ([keyA, _], [keyB, __]) =>
+      (getCategoryEntryById(keyA)?.category.ordinal ?? 0) - (getCategoryEntryById(keyB)?.category.ordinal ?? 0),
+  );
+};
 
 /**
  * CartByPrinterGroup
@@ -107,19 +164,21 @@ export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(cart: T[], 
  */
 // TODO: this could get generified to take WCPProductV2Dto or WCPProduct or WProduct
 type MapPrinterGroupToCartEntry = Record<string, CoreCartEntry<WProduct>[]>;
-export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelector: ICatalogSelectors['productEntry']): MapPrinterGroupToCartEntry =>
+export const CartByPrinterGroup = (
+  cart: CoreCartEntry<WProduct>[],
+  productSelector: ICatalogSelectors['productEntry'],
+): MapPrinterGroupToCartEntry =>
   cart
     .flat()
-    .map(x => ({ entry: x, printerGroupId: productSelector(x.product.p.productId)?.product.printerGroup ?? null }))
-    .filter(x => x.printerGroupId !== null)
-    .reduce((acc: MapPrinterGroupToCartEntry, x) =>
-    ({
-      ...acc,
-      [x.printerGroupId!]: Object.hasOwn(acc, x.printerGroupId!) ?
-        [...acc[x.printerGroupId!], x.entry] :
-        [x.entry]
-    }), {});
-
+    .map((x) => ({ entry: x, printerGroupId: productSelector(x.product.p.productId)?.product.printerGroup ?? null }))
+    .filter((x) => x.printerGroupId !== null)
+    .reduce(
+      (acc: MapPrinterGroupToCartEntry, x) => ({
+        ...acc,
+        [x.printerGroupId!]: Object.hasOwn(acc, x.printerGroupId!) ? [...acc[x.printerGroupId!], x.entry] : [x.entry],
+      }),
+      {},
+    );
 
 /**
  * DetermineCartBasedLeadTime
@@ -132,28 +191,48 @@ export const CartByPrinterGroup = (cart: CoreCartEntry<WProduct>[], productSelec
  * @returns number - estimated lead time in minutes
  */
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
-export const DetermineCartBasedLeadTime = (cart: CoreCartEntry[], productSelector: Selector<CatalogProductEntry>): number => {
-  const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number; }>>((acc, cartLine) => {
+export const DetermineCartBasedLeadTime = (
+  cart: CoreCartEntry[],
+  productSelector: Selector<CatalogProductEntry>,
+): number => {
+  const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number }>>((acc, cartLine) => {
     const product = productSelector(cartLine.product.pid);
-    return product?.product.timing ? {
-      ...acc,
-      // so we take the max of the base times at a station, then we sum the quantity times
-      [product.product.timing.prepStationId]: Object.hasOwn(acc, product.product.timing.prepStationId) ? {
-        base: Math.max(acc[product.product.timing.prepStationId].base, product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime),
-        quant: acc[product.product.timing.prepStationId].quant + (product.product.timing.additionalUnitPrepTime * cartLine.quantity)
-      } : {
-        base: product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
-        quant: (product.product.timing.additionalUnitPrepTime * cartLine.quantity)
-      }
-    } : acc;
+    return product?.product.timing
+      ? {
+          ...acc,
+          // so we take the max of the base times at a station, then we sum the quantity times
+          [product.product.timing.prepStationId]: Object.hasOwn(acc, product.product.timing.prepStationId)
+            ? {
+                base: Math.max(
+                  acc[product.product.timing.prepStationId].base,
+                  product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
+                ),
+                quant:
+                  acc[product.product.timing.prepStationId].quant +
+                  product.product.timing.additionalUnitPrepTime * cartLine.quantity,
+              }
+            : {
+                base: product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
+                quant: product.product.timing.additionalUnitPrepTime * cartLine.quantity,
+              },
+        }
+      : acc;
   }, {});
   return Object.values(leadTimeMap).reduce((acc, entry) => Math.max(acc, entry.base + entry.quant), 0);
-}
+};
 
-export const GetPlacementFromMIDOID = (modifiers: ProductModifierEntry[], mtid: string, oid: string): IOptionInstance => {
-  const NOT_FOUND: IOptionInstance = { optionId: oid, placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR };
-  const modifierEntry = modifiers.find(x => x.modifierTypeId === mtid);
-  return modifierEntry !== undefined ? (modifierEntry.options.find((x) => x.optionId === oid) || NOT_FOUND) : NOT_FOUND;
+export const GetPlacementFromMIDOID = (
+  modifiers: ProductModifierEntry[],
+  mtid: string,
+  oid: string,
+): IOptionInstance => {
+  const NOT_FOUND: IOptionInstance = {
+    optionId: oid,
+    placement: OptionPlacement.NONE,
+    qualifier: OptionQualifier.REGULAR,
+  };
+  const modifierEntry = modifiers.find((x) => x.modifierTypeId === mtid);
+  return modifierEntry !== undefined ? modifierEntry.options.find((x) => x.optionId === oid) || NOT_FOUND : NOT_FOUND;
 };
 
 /**
@@ -203,10 +282,17 @@ export const BLANKET_DISABLED_INTERVAL: IWInterval = { start: 1, end: 0 };
  *   then validates the selected fulfillment time against the availability interval.
  * - parse errors of rrule result in that availability being treated as unavailable (logged to console).
  */
-export function DisableDataCheck(disable_data: IWInterval | null, availabilities: IRecurringInterval[], order_time: Date | number | string): ({ enable: DISABLE_REASON.ENABLED } |
-{ enable: DISABLE_REASON.DISABLED_BLANKET } |
-{ enable: DISABLE_REASON.DISABLED_TIME, interval: IWInterval }) |
-{ enable: DISABLE_REASON.DISABLED_AVAILABILITY, availability: IRecurringInterval[] } {
+export function DisableDataCheck(
+  disable_data: IWInterval | null,
+  availabilities: IRecurringInterval[],
+  order_time: Date | number | string,
+):
+  | (
+      | { enable: DISABLE_REASON.ENABLED }
+      | { enable: DISABLE_REASON.DISABLED_BLANKET }
+      | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
+    )
+  | { enable: DISABLE_REASON.DISABLED_AVAILABILITY; availability: IRecurringInterval[] } {
   const orderTimeAsNumber = getTime(order_time);
   if (disable_data) {
     if (disable_data.start > disable_data.end) {
@@ -218,10 +304,12 @@ export function DisableDataCheck(disable_data: IWInterval | null, availabilities
   }
   if (availabilities.length > 0) {
     for (const availability of availabilities) {
-      if (availability.rrule === "") {
+      if (availability.rrule === '') {
         // we check for if we're INSIDE the availability interval here since we'll return that we're not otherwise later
-        if ((availability.interval.start === -1 || orderTimeAsNumber >= availability.interval.start) &&
-          (availability.interval.end === -1 || orderTimeAsNumber <= availability.interval.end)) {
+        if (
+          (availability.interval.start === -1 || orderTimeAsNumber >= availability.interval.start) &&
+          (availability.interval.end === -1 || orderTimeAsNumber <= availability.interval.end)
+        ) {
           return { enable: DISABLE_REASON.ENABLED };
         }
       } else {
@@ -234,17 +322,21 @@ export function DisableDataCheck(disable_data: IWInterval | null, availabilities
             // the order day is part of the recurrence rule
             // now determine if it's in the interval
             const fulfillmentTime = WDateUtils.ComputeFulfillmentTime(order_time);
-            if (fulfillmentTime.selectedTime >= availability.interval.start && fulfillmentTime.selectedTime <= availability.interval.end) {
+            if (
+              fulfillmentTime.selectedTime >= availability.interval.start &&
+              fulfillmentTime.selectedTime <= availability.interval.end
+            ) {
               return { enable: DISABLE_REASON.ENABLED };
             }
           }
-        }
-        catch (error) {
-          console.error(`Unable to parse recurrence rule from ${availability.rrule}. Returning unavailable for this rule. Error: ${JSON.stringify(error)}`);
+        } catch (error) {
+          console.error(
+            `Unable to parse recurrence rule from ${availability.rrule}. Returning unavailable for this rule. Error: ${JSON.stringify(error)}`,
+          );
         }
       }
     }
-    return { enable: DISABLE_REASON.DISABLED_AVAILABILITY, availability: availabilities }
+    return { enable: DISABLE_REASON.DISABLED_AVAILABILITY, availability: availabilities };
   }
   return { enable: DISABLE_REASON.ENABLED };
 }
@@ -261,10 +353,12 @@ export function DisableDataCheck(disable_data: IWInterval | null, availabilities
  */
 export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEntry, moid: string) => {
   const optionMapEntry = mmEntry.options[moid];
-  return optionMapEntry.enable_left.enable === DISABLE_REASON.ENABLED ||
+  return (
+    optionMapEntry.enable_left.enable === DISABLE_REASON.ENABLED ||
     optionMapEntry.enable_right.enable === DISABLE_REASON.ENABLED ||
-    optionMapEntry.enable_whole.enable === DISABLE_REASON.ENABLED;
-}
+    optionMapEntry.enable_whole.enable === DISABLE_REASON.ENABLED
+  );
+};
 
 /**
  * SortAndFilterModifierOptions
@@ -276,28 +370,34 @@ export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEnt
  * - resolves option entries via modifierOptionSelector
  * - sorts options by their ordinal
  * - filters options based on DisableDataCheck and modifier display flags.omit_options_if_not_available
- * 
- * @todo determine if we actually need to call DisableDataCheck per placement or if we can optimize that away 
+ *
+ * @todo determine if we actually need to call DisableDataCheck per placement or if we can optimize that away
  * since FilterUnselectableModifierOption checks the metadata which is derived from the same logic
  * namely the line in WCPProduct: const is_enabled = enable_modifier_type.enable === DISABLE_REASON.ENABLED ? DisableDataCheck(option_object.disabled, option_object.availability, service_time) : enable_modifier_type;
- * 
+ *
  * @param metadata - WProductMetadata for the product
  * @param modifierType - CatalogModifierEntry describing the modifier type
  * @param modifierOptionSelector - selector to resolve IOption objects for modifier options
  * @param serviceDateTime - service date/time to use for availability checks (Date | number)
  * @returns IOption[] - ordered list of available modifier options
  */
-export const SortAndFilterModifierOptions = (metadata: WProductMetadata, modifierType: CatalogModifierEntry, modifierOptionSelector: Selector<IOption>, serviceDateTime: Date | number) => {
+export const SortAndFilterModifierOptions = (
+  metadata: WProductMetadata,
+  modifierType: CatalogModifierEntry,
+  modifierOptionSelector: Selector<IOption>,
+  serviceDateTime: Date | number,
+) => {
   const filterUnavailable = modifierType.modifierType.displayFlags.omit_options_if_not_available;
   const mmEntry = metadata.modifier_map[modifierType.modifierType.id];
-  return modifierType.options.map(o => modifierOptionSelector(o)!)
+  return modifierType.options
+    .map((o) => modifierOptionSelector(o)!)
     .sort((a, b) => a.ordinal - b.ordinal)
     .filter((o) => {
       const disableInfo = DisableDataCheck(o.disabled, o.availability, serviceDateTime).enable;
-      const isUnavailableButStillVisible = (!filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id));
+      const isUnavailableButStillVisible = !filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id);
       return disableInfo === DISABLE_REASON.ENABLED && isUnavailableButStillVisible;
-    })
-}
+    });
+};
 
 /**
  * ComputeServiceTimeDisplayString
@@ -310,16 +410,19 @@ export const SortAndFilterModifierOptions = (metadata: WProductMetadata, modifie
  * @returns string - formatted display string (e.g. "10:00 AM to 10:15 AM" or "10:00 AM")
  */
 export const ComputeServiceTimeDisplayString = (minDuration: number, selectedTime: number) =>
-  minDuration !== 0 ? `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}` : WDateUtils.MinutesToPrintTime(selectedTime);
+  minDuration !== 0
+    ? `${WDateUtils.MinutesToPrintTime(selectedTime)} to ${WDateUtils.MinutesToPrintTime(selectedTime + minDuration)}`
+    : WDateUtils.MinutesToPrintTime(selectedTime);
 
 export const GenerateShortCode = function (productInstanceSelector: Selector<IProductInstance>, p: WProduct) {
   if (p.m.is_split && p.m.pi[PRODUCT_LOCATION.LEFT] !== p.m.pi[PRODUCT_LOCATION.RIGHT]) {
-    return `${productInstanceSelector(p.m.pi[PRODUCT_LOCATION.LEFT])?.shortcode ?? "UNDEFINED"}|${productInstanceSelector(p.m.pi[PRODUCT_LOCATION.RIGHT])?.shortcode ?? "UNDEFINED"}`;
+    return `${productInstanceSelector(p.m.pi[PRODUCT_LOCATION.LEFT])?.shortcode ?? 'UNDEFINED'}|${productInstanceSelector(p.m.pi[PRODUCT_LOCATION.RIGHT])?.shortcode ?? 'UNDEFINED'}`;
   }
-  return productInstanceSelector(p.m.pi[PRODUCT_LOCATION.LEFT])?.shortcode ?? "UNDEFINED";
-}
+  return productInstanceSelector(p.m.pi[PRODUCT_LOCATION.LEFT])?.shortcode ?? 'UNDEFINED';
+};
 
-export const GenerateDineInGuestCountString = (dineInInfo: DineInInfo | null) => dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize.toString()})` : "";
+export const GenerateDineInGuestCountString = (dineInInfo: DineInInfo | null) =>
+  dineInInfo && dineInInfo.partySize > 0 ? ` (${dineInInfo.partySize.toString()})` : '';
 
 /**
  * EventTitleSectionBuilder
@@ -334,36 +437,45 @@ export const GenerateDineInGuestCountString = (dineInInfo: DineInInfo | null) =>
  * @param cart - array of CoreCartEntry<WProduct> for a single category
  * @returns string - formatted section string (may be empty)
  */
-const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'productInstance' | 'category'>, cart: CoreCartEntry<WProduct>[]) => {
+const EventTitleSectionBuilder = (
+  catalogSelectors: Pick<ICatalogSelectors, 'productInstance' | 'category'>,
+  cart: CoreCartEntry<WProduct>[],
+) => {
   if (cart.length === 0) {
-    return ''
+    return '';
   }
   const category = catalogSelectors.category(cart[0].categoryId)?.category;
   if (!category) {
-    return ''
+    return '';
   }
-  const callLineName = category.display_flags.call_line_name || "";
-  const callLineNameWithSpaceIfNeeded = callLineName.length > 0 ? `${callLineName} ` : "";
+  const callLineName = category.display_flags.call_line_name || '';
+  const callLineNameWithSpaceIfNeeded = callLineName.length > 0 ? `${callLineName} ` : '';
   const callLineDisplay = category.display_flags.call_line_display;
   switch (callLineDisplay) {
     case CALL_LINE_DISPLAY.SHORTCODE: {
-      const { total, shortcodes } = cart.reduce((acc: { total: number; shortcodes: string[] }, entry) => ({
-        total: acc.total + entry.quantity,
-        shortcodes: [...acc.shortcodes, ...Array<string>(entry.quantity).fill(GenerateShortCode(catalogSelectors.productInstance, entry.product))]
-      }), { total: 0, shortcodes: [] });
-      return `${callLineNameWithSpaceIfNeeded} ${total.toString(10)}x ${shortcodes.join(" ")}`;
+      const { total, shortcodes } = cart.reduce(
+        (acc: { total: number; shortcodes: string[] }, entry) => ({
+          total: acc.total + entry.quantity,
+          shortcodes: [
+            ...acc.shortcodes,
+            ...Array<string>(entry.quantity).fill(GenerateShortCode(catalogSelectors.productInstance, entry.product)),
+          ],
+        }),
+        { total: 0, shortcodes: [] },
+      );
+      return `${callLineNameWithSpaceIfNeeded} ${total.toString(10)}x ${shortcodes.join(' ')}`;
     }
     case CALL_LINE_DISPLAY.SHORTNAME: {
-      const shortnames: string[] = cart.map(item => `${item.quantity.toString()}x${item.product.m.shortname}`);
-      return `${callLineNameWithSpaceIfNeeded}${shortnames.join(" ")}`;
+      const shortnames: string[] = cart.map((item) => `${item.quantity.toString()}x${item.product.m.shortname}`);
+      return `${callLineNameWithSpaceIfNeeded}${shortnames.join(' ')}`;
     }
     case CALL_LINE_DISPLAY.QUANTITY: {
-      // would be nice to have a 
+      // would be nice to have a
       const total = cart.reduce((total, entry) => total + entry.quantity, 0);
       return `${total.toString(10)}${callLineName || 'x'}`;
     }
   }
-}
+};
 
 /**
  * EventTitleStringBuilder
@@ -385,45 +497,66 @@ const EventTitleSectionBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'pro
  * @param special_instructions - freeform special instructions string
  * @returns string - assembled event title
  */
-export const EventTitleStringBuilder = (catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productInstance'>, fulfillmentConfig: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'shortcode'>, customer: string, fulfillmentDto: FulfillmentData, cart: CategorizedRebuiltCart, special_instructions: string) => {
+export const EventTitleStringBuilder = (
+  catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productInstance'>,
+  fulfillmentConfig: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'shortcode'>,
+  customer: string,
+  fulfillmentDto: FulfillmentData,
+  cart: CategorizedRebuiltCart,
+  special_instructions: string,
+) => {
   const has_special_instructions = special_instructions && special_instructions.length > 0;
   const mainCategoryTree = ComputeCategoryTreeIdList(fulfillmentConfig.orderBaseCategoryId, catalogSelectors.category);
-  const mainCategorySection = mainCategoryTree.map(x => EventTitleSectionBuilder(catalogSelectors, cart[x] ?? [])).filter(x => x.length > 0).join(" ");
-  const fulfillmentShortcode = fulfillmentDto.thirdPartyInfo?.source ? fulfillmentDto.thirdPartyInfo.source.slice(0, 2).toUpperCase() : fulfillmentConfig.shortcode
-  const supplementalSections = Object.entries(cart).filter(([cid, _]) => mainCategoryTree.findIndex(x => x === cid) === -1)
-    .sort(([cIdA, _], [cIdB, __]) => catalogSelectors.category(cIdA)!.category.ordinal - catalogSelectors.category(cIdB)!.category.ordinal)
+  const mainCategorySection = mainCategoryTree
+    .map((x) => EventTitleSectionBuilder(catalogSelectors, cart[x] ?? []))
+    .filter((x) => x.length > 0)
+    .join(' ');
+  const fulfillmentShortcode = fulfillmentDto.thirdPartyInfo?.source
+    ? fulfillmentDto.thirdPartyInfo.source.slice(0, 2).toUpperCase()
+    : fulfillmentConfig.shortcode;
+  const supplementalSections = Object.entries(cart)
+    .filter(([cid, _]) => mainCategoryTree.findIndex((x) => x === cid) === -1)
+    .sort(
+      ([cIdA, _], [cIdB, __]) =>
+        catalogSelectors.category(cIdA)!.category.ordinal - catalogSelectors.category(cIdB)!.category.ordinal,
+    )
     .map(([_, catCart]) => EventTitleSectionBuilder(catalogSelectors, catCart))
     .join(' ');
-  return `${fulfillmentShortcode} ${mainCategorySection ? `${mainCategorySection} ` : ''}${customer}${GenerateDineInGuestCountString(fulfillmentDto.dineInInfo ?? null)} ${supplementalSections}${has_special_instructions ? " *" : ""}`;
+  return `${fulfillmentShortcode} ${mainCategorySection ? `${mainCategorySection} ` : ''}${customer}${GenerateDineInGuestCountString(fulfillmentDto.dineInInfo ?? null)} ${supplementalSections}${has_special_instructions ? ' *' : ''}`;
 };
 
 export function MoneyToDisplayString(money: IMoney, showCurrencyUnit: boolean) {
-  return `${showCurrencyUnit ? '$' : ""}${(money.amount / 100).toFixed(2)}`;
+  return `${showCurrencyUnit ? '$' : ''}${(money.amount / 100).toFixed(2)}`;
 }
 
 /**
  * Sums the total of products in a cart that match a list of Category IDs
  * @param catIds
- * @param cart 
+ * @param cart
  * @returns the number products in the category ID list
  */
 export function ComputeProductCategoryMatchCount(catIds: string[], cart: CoreCartEntry<unknown>[]) {
-  return cart.reduce((acc, e) => acc + (catIds.indexOf(e.categoryId) !== -1 ? e.quantity : 0), 0)
+  return cart.reduce((acc, e) => acc + (catIds.indexOf(e.categoryId) !== -1 ? e.quantity : 0), 0);
 }
 
 /**
  * Returns the full list of category IDs including the passed root category node ID
- * @param rootId 
- * @param categorySelector 
+ * @param rootId
+ * @param categorySelector
  * @returns child category list sorted by ordinal (only sorted at the end)
  */
 export const ComputeCategoryTreeIdList = (rootId: string, categorySelector: Selector<CatalogCategoryEntry>) => {
-  const ComputeCategoryTreeIdListInternal: (cId: string) => { id: string; ordinal: number; }[] = (cId) => {
+  const ComputeCategoryTreeIdListInternal: (cId: string) => { id: string; ordinal: number }[] = (cId) => {
     const category = categorySelector(cId)!;
-    return [{ id: cId, ordinal: category.category.ordinal }, ...(category.children.flatMap(x => ComputeCategoryTreeIdListInternal(x)))];
-  }
-  return ComputeCategoryTreeIdListInternal(rootId).sort((a, b) => a.ordinal - b.ordinal).map(x => x.id);
-}
+    return [
+      { id: cId, ordinal: category.category.ordinal },
+      ...category.children.flatMap((x) => ComputeCategoryTreeIdListInternal(x)),
+    ];
+  };
+  return ComputeCategoryTreeIdListInternal(rootId)
+    .sort((a, b) => a.ordinal - b.ordinal)
+    .map((x) => x.id);
+};
 
 /**
  * ComputeCartSubTotal
@@ -434,7 +567,10 @@ export const ComputeCategoryTreeIdList = (rootId: string, categorySelector: Sele
  * @returns IMoney - subtotal amount in cents (or smallest currency unit) with currency USD
  */
 export function ComputeCartSubTotal(cart: CoreCartEntry<WProduct>[]): IMoney {
-  return { amount: cart.reduce((acc, entry) => acc + (entry.product.m.price.amount * entry.quantity), 0), currency: CURRENCY.USD };
+  return {
+    amount: cart.reduce((acc, entry) => acc + entry.product.m.price.amount * entry.quantity, 0),
+    currency: CURRENCY.USD,
+  };
 }
 
 /**
@@ -452,68 +588,80 @@ export function ComputeCartSubTotal(cart: CoreCartEntry<WProduct>[]): IMoney {
  * @param creditValidations - array of UnresolvedDiscount describing discounts/credits to attempt to apply
  * @returns OrderLineDiscount[] - resolved discounts that were applied with amounts normalized to USD
  */
-type DiscountAccumulator = { remaining: number; credits: OrderLineDiscount[]; };
-export const ComputeDiscountsApplied = (subtotalPreCredits: IMoney, creditValidations: UnresolvedDiscount[]): OrderLineDiscount[] => {
-  const validations = creditValidations.reduce((acc: DiscountAccumulator, credit) => {
-    const amountToApply = credit.t === DiscountMethod.CreditCodeAmount || credit.t === DiscountMethod.ManualAmount ?
-      Math.min(acc.remaining, credit.discount.balance.amount) :
-      Math.round(RoundToTwoDecimalPlaces(acc.remaining * credit.discount.percentage));
-    if (amountToApply === 0) {
-      return acc;
-    }
-    switch (credit.t) {
-      case DiscountMethod.CreditCodeAmount: {
-        return {
-          remaining: acc.remaining - amountToApply,
-          credits: [...acc.credits,
-          {
-            createdAt: credit.createdAt,
-            status: credit.status,
-            t: credit.t,
-            discount: {
-              ...credit.discount,
-              amount: { currency: CURRENCY.USD, amount: amountToApply }
-            }
-          }]
-        };
+type DiscountAccumulator = { remaining: number; credits: OrderLineDiscount[] };
+export const ComputeDiscountsApplied = (
+  subtotalPreCredits: IMoney,
+  creditValidations: UnresolvedDiscount[],
+): OrderLineDiscount[] => {
+  const validations = creditValidations.reduce(
+    (acc: DiscountAccumulator, credit) => {
+      const amountToApply =
+        credit.t === DiscountMethod.CreditCodeAmount || credit.t === DiscountMethod.ManualAmount
+          ? Math.min(acc.remaining, credit.discount.balance.amount)
+          : Math.round(RoundToTwoDecimalPlaces(acc.remaining * credit.discount.percentage));
+      if (amountToApply === 0) {
+        return acc;
       }
-      case DiscountMethod.ManualAmount: {
-        return {
-          remaining: acc.remaining - amountToApply,
-          credits: [...acc.credits,
-          {
-            createdAt: credit.createdAt,
-            status: credit.status,
-            t: credit.t,
-            discount: {
-              ...credit.discount,
-              amount: { currency: CURRENCY.USD, amount: amountToApply }
-            }
-          }]
-        };
+      switch (credit.t) {
+        case DiscountMethod.CreditCodeAmount: {
+          return {
+            remaining: acc.remaining - amountToApply,
+            credits: [
+              ...acc.credits,
+              {
+                createdAt: credit.createdAt,
+                status: credit.status,
+                t: credit.t,
+                discount: {
+                  ...credit.discount,
+                  amount: { currency: CURRENCY.USD, amount: amountToApply },
+                },
+              },
+            ],
+          };
+        }
+        case DiscountMethod.ManualAmount: {
+          return {
+            remaining: acc.remaining - amountToApply,
+            credits: [
+              ...acc.credits,
+              {
+                createdAt: credit.createdAt,
+                status: credit.status,
+                t: credit.t,
+                discount: {
+                  ...credit.discount,
+                  amount: { currency: CURRENCY.USD, amount: amountToApply },
+                },
+              },
+            ],
+          };
+        }
+        case DiscountMethod.ManualPercentage: {
+          return {
+            remaining: acc.remaining - amountToApply,
+            credits: [
+              ...acc.credits,
+              {
+                createdAt: credit.createdAt,
+                status: credit.status,
+                t: credit.t,
+                discount: {
+                  ...credit.discount,
+                  amount: { currency: CURRENCY.USD, amount: amountToApply },
+                },
+              },
+            ],
+          };
+        }
       }
-      case DiscountMethod.ManualPercentage: {
-        return {
-          remaining: acc.remaining - amountToApply,
-          credits: [...acc.credits,
-          {
-            createdAt: credit.createdAt,
-            status: credit.status,
-            t: credit.t,
-            discount: {
-              ...credit.discount,
-              amount: { currency: CURRENCY.USD, amount: amountToApply }
-            }
-          }]
-        };
-      }
-    }
-  }, { remaining: subtotalPreCredits.amount, credits: [] } satisfies DiscountAccumulator);
+    },
+    { remaining: subtotalPreCredits.amount, credits: [] } satisfies DiscountAccumulator,
+  );
   return validations.credits;
-}
+};
 
-
-type PaymentAccumulator = { remaining: number; remainingTip: number; payments: OrderPayment[]; };
+type PaymentAccumulator = { remaining: number; remainingTip: number; payments: OrderPayment[] };
 /**
  * ComputePaymentsApplied
  *
@@ -530,63 +678,85 @@ type PaymentAccumulator = { remaining: number; remainingTip: number; payments: O
  * @param paymentsToValidate - UnresolvedPayment[] payments in priority order to validate/apply
  * @returns OrderPayment[] - resolved payments applied with explicit amount and tipAmount fields and any change information
  */
-export const ComputePaymentsApplied = (total: IMoney, tips: IMoney, paymentsToValidate: UnresolvedPayment[]): OrderPayment[] => {
-  const validations: PaymentAccumulator = paymentsToValidate.reduce((acc: PaymentAccumulator, payment: UnresolvedPayment) => {
-    // we don't short circuit when remaining === 0 && remainingTip === 0 because we want to hold on to potential payments in case we need to authorize more
-    switch (payment.t) {
-      case PaymentMethod.StoreCredit: {
-        const amountToApply = Math.min(acc.remaining, payment.payment.balance.amount);
-        // apply tip as a percentage of the balance due paid
-        const tipToApply = acc.remaining > 0 ? Math.round(RoundToTwoDecimalPlaces(acc.remainingTip * amountToApply / acc.remaining)) : 0
-        return <PaymentAccumulator>{
-          remaining: acc.remaining - amountToApply,
-          remainingTip: acc.remainingTip - tipToApply,
-          payments: [...acc.payments,
-          {
-            ...payment,
-            amount: { currency: total.currency, amount: amountToApply },
-            tipAmount: { currency: tips.currency, amount: tipToApply },
-          }]
-        };
+export const ComputePaymentsApplied = (
+  total: IMoney,
+  tips: IMoney,
+  paymentsToValidate: UnresolvedPayment[],
+): OrderPayment[] => {
+  const validations: PaymentAccumulator = paymentsToValidate.reduce(
+    (acc: PaymentAccumulator, payment: UnresolvedPayment) => {
+      // we don't short circuit when remaining === 0 && remainingTip === 0 because we want to hold on to potential payments in case we need to authorize more
+      switch (payment.t) {
+        case PaymentMethod.StoreCredit: {
+          const amountToApply = Math.min(acc.remaining, payment.payment.balance.amount);
+          // apply tip as a percentage of the balance due paid
+          const tipToApply =
+            acc.remaining > 0
+              ? Math.round(RoundToTwoDecimalPlaces((acc.remainingTip * amountToApply) / acc.remaining))
+              : 0;
+          return <PaymentAccumulator>{
+            remaining: acc.remaining - amountToApply,
+            remainingTip: acc.remainingTip - tipToApply,
+            payments: [
+              ...acc.payments,
+              {
+                ...payment,
+                amount: { currency: total.currency, amount: amountToApply },
+                tipAmount: { currency: tips.currency, amount: tipToApply },
+              },
+            ],
+          };
+        }
+        case PaymentMethod.CreditCard: {
+          // TODO: need to know if we can modify the tip or amount, but assume we can?
+          // otherwise we need to track max authorization amounts, which we probably do.
+          // this doesn't really give any option for splitting payments between two cards which we will eventually need
+          // or we'll need to split the order itself, which is logic we haven't considered yet
+          return <PaymentAccumulator>{
+            remaining: 0,
+            remainingTip: 0,
+            payments: [
+              ...acc.payments,
+              {
+                ...payment,
+                amount: { currency: total.currency, amount: acc.remaining },
+                tipAmount: { currency: tips.currency, amount: acc.remainingTip },
+              },
+            ],
+          };
+        }
+        case PaymentMethod.Cash: {
+          const amountToApply = Math.min(acc.remaining, payment.payment.amountTendered.amount);
+          const tipToApply =
+            acc.remaining > 0
+              ? Math.round(RoundToTwoDecimalPlaces((acc.remainingTip * amountToApply) / acc.remaining))
+              : 0;
+          return <PaymentAccumulator>{
+            remaining: acc.remaining - amountToApply,
+            remainingTip: acc.remainingTip - tipToApply,
+            payments: [
+              ...acc.payments,
+              {
+                ...payment,
+                amount: { currency: total.currency, amount: amountToApply },
+                tipAmount: { currency: tips.currency, amount: tipToApply },
+                payment: {
+                  ...payment.payment,
+                  change: {
+                    currency: payment.payment.amountTendered.currency,
+                    amount: payment.payment.amountTendered.amount - amountToApply,
+                  },
+                },
+              },
+            ],
+          };
+        }
       }
-      case PaymentMethod.CreditCard: {
-        // TODO: need to know if we can modify the tip or amount, but assume we can?
-        // otherwise we need to track max authorization amounts, which we probably do.
-        // this doesn't really give any option for splitting payments between two cards which we will eventually need
-        // or we'll need to split the order itself, which is logic we haven't considered yet
-        return <PaymentAccumulator>{
-          remaining: 0,
-          remainingTip: 0,
-          payments: [...acc.payments,
-          {
-            ...payment,
-            amount: { currency: total.currency, amount: acc.remaining },
-            tipAmount: { currency: tips.currency, amount: acc.remainingTip },
-          }]
-        };
-      }
-      case PaymentMethod.Cash: {
-        const amountToApply = Math.min(acc.remaining, payment.payment.amountTendered.amount);
-        const tipToApply = acc.remaining > 0 ? Math.round(RoundToTwoDecimalPlaces(acc.remainingTip * amountToApply / acc.remaining)) : 0
-        return <PaymentAccumulator>{
-          remaining: acc.remaining - amountToApply,
-          remainingTip: acc.remainingTip - tipToApply,
-          payments: [...acc.payments,
-          {
-            ...payment,
-            amount: { currency: total.currency, amount: amountToApply },
-            tipAmount: { currency: tips.currency, amount: tipToApply },
-            payment: {
-              ...payment.payment,
-              change: { currency: payment.payment.amountTendered.currency, amount: payment.payment.amountTendered.amount - amountToApply }
-            }
-          }]
-        };
-      }
-    }
-  }, { remaining: total.amount, remainingTip: tips.amount, payments: [] satisfies OrderPayment[] });
+    },
+    { remaining: total.amount, remainingTip: tips.amount, payments: [] satisfies OrderPayment[] },
+  );
   return validations.payments;
-}
+};
 
 /**
  * ComputeGratuityServiceCharge
@@ -598,7 +768,10 @@ export const ComputePaymentsApplied = (total: IMoney, tips: IMoney, paymentsToVa
  * @returns IMoney - computed service charge, rounded to integer currency units
  */
 export function ComputeGratuityServiceCharge(serviceChargePercentage: number, basis: IMoney): IMoney {
-  return { currency: basis.currency, amount: Math.round(RoundToTwoDecimalPlaces(serviceChargePercentage * basis.amount)) };
+  return {
+    currency: basis.currency,
+    amount: Math.round(RoundToTwoDecimalPlaces(serviceChargePercentage * basis.amount)),
+  };
 }
 
 /**
@@ -616,7 +789,10 @@ export function ComputeHasBankersRoundingSkew(subtotalAfterDiscount: IMoney, tax
 }
 
 export function ComputeTaxAmount(subtotalAfterDiscount: IMoney, taxRate: number): IMoney {
-  return { amount: Math.round(RoundToTwoDecimalPlaces(subtotalAfterDiscount.amount * taxRate)), currency: subtotalAfterDiscount.currency };
+  return {
+    amount: Math.round(RoundToTwoDecimalPlaces(subtotalAfterDiscount.amount * taxRate)),
+    currency: subtotalAfterDiscount.currency,
+  };
 }
 
 export function ComputeTipBasis(subtotalPreDiscount: IMoney, taxAmount: IMoney): IMoney {
@@ -624,22 +800,45 @@ export function ComputeTipBasis(subtotalPreDiscount: IMoney, taxAmount: IMoney):
 }
 
 export function ComputeTipValue(tip: TipSelection | null, basis: IMoney): IMoney {
-  return { currency: basis.currency, amount: tip !== null ? (tip.isPercentage ? Math.round(RoundToTwoDecimalPlaces(tip.value * basis.amount)) : tip.value.amount) : 0 };
+  return {
+    currency: basis.currency,
+    amount:
+      tip !== null
+        ? tip.isPercentage
+          ? Math.round(RoundToTwoDecimalPlaces(tip.value * basis.amount))
+          : tip.value.amount
+        : 0,
+  };
 }
 
 export function ComputeSubtotalPreDiscount(cartTotal: IMoney, serviceFees: IMoney): IMoney {
   return { currency: cartTotal.currency, amount: cartTotal.amount + serviceFees.amount };
 }
 
-export function ComputeSubtotalAfterDiscountAndGratuity(subtotalPreDiscount: IMoney, discountApplied: IMoney, gratuityServiceCharge: IMoney): IMoney {
-  return { currency: subtotalPreDiscount.currency, amount: subtotalPreDiscount.amount + gratuityServiceCharge.amount - discountApplied.amount };
+export function ComputeSubtotalAfterDiscountAndGratuity(
+  subtotalPreDiscount: IMoney,
+  discountApplied: IMoney,
+  gratuityServiceCharge: IMoney,
+): IMoney {
+  return {
+    currency: subtotalPreDiscount.currency,
+    amount: subtotalPreDiscount.amount + gratuityServiceCharge.amount - discountApplied.amount,
+  };
 }
 
 export function ComputeTotal(subtotalAfterDiscountAndGratuity: IMoney, taxAmount: IMoney, tipAmount: IMoney): IMoney {
-  return { currency: subtotalAfterDiscountAndGratuity.currency, amount: subtotalAfterDiscountAndGratuity.amount + taxAmount.amount + tipAmount.amount };
+  return {
+    currency: subtotalAfterDiscountAndGratuity.currency,
+    amount: subtotalAfterDiscountAndGratuity.amount + taxAmount.amount + tipAmount.amount,
+  };
 }
 
-export function ComputeAutogratuityEnabled(allowTipping: boolean, mainProductCount: number, threshold: number, isDelivery: boolean): boolean {
+export function ComputeAutogratuityEnabled(
+  allowTipping: boolean,
+  mainProductCount: number,
+  threshold: number,
+  isDelivery: boolean,
+): boolean {
   return allowTipping && (mainProductCount >= threshold || isDelivery);
 }
 
@@ -717,28 +916,59 @@ export interface RecomputeTotalsResult {
  *   - fulfillment: minimal FulfillmentConfig slice (orderBaseCategoryId, serviceCharge, allowTipping)
  * @returns RecomputeTotalsResult - full set of recomputed monetary and order summary fields
  */
-export const RecomputeTotals = function ({ config, cart, payments, discounts, fulfillment, order }: RecomputeTotalsArgs): RecomputeTotalsResult {
-  const mainCategoryTree = ComputeCategoryTreeIdList(fulfillment.orderBaseCategoryId, config.CATALOG_SELECTORS.category);
+export const RecomputeTotals = function ({
+  config,
+  cart,
+  payments,
+  discounts,
+  fulfillment,
+  order,
+}: RecomputeTotalsArgs): RecomputeTotalsResult {
+  const mainCategoryTree = ComputeCategoryTreeIdList(
+    fulfillment.orderBaseCategoryId,
+    config.CATALOG_SELECTORS.category,
+  );
   const mainCategoryProductCount = ComputeProductCategoryMatchCount(mainCategoryTree, order.cart);
-  const cartSubtotal = { currency: CURRENCY.USD, amount: Object.values(cart).reduce((acc, c) => acc + ComputeCartSubTotal(c).amount, 0) };
-  const serviceChargeFunction = fulfillment.serviceCharge !== null ? config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge) : null;
+  const cartSubtotal = {
+    currency: CURRENCY.USD,
+    amount: Object.values(cart).reduce((acc, c) => acc + ComputeCartSubTotal(c).amount, 0),
+  };
+  const serviceChargeFunction =
+    fulfillment.serviceCharge !== null
+      ? config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge)
+      : null;
   const serviceFee = {
     currency: CURRENCY.USD,
-    amount: serviceChargeFunction ? OrderFunctional.ProcessOrderInstanceFunction(order, serviceChargeFunction, config.CATALOG_SELECTORS) as number : 0
+    amount: serviceChargeFunction
+      ? (OrderFunctional.ProcessOrderInstanceFunction(order, serviceChargeFunction, config.CATALOG_SELECTORS) as number)
+      : 0,
   };
   const subtotalPreDiscount = ComputeSubtotalPreDiscount(cartSubtotal, serviceFee);
   const discountApplied = ComputeDiscountsApplied(subtotalPreDiscount, discounts);
-  const amountDiscounted = { amount: discountApplied.reduce((acc, x) => acc + x.discount.amount.amount, 0), currency: CURRENCY.USD };
+  const amountDiscounted = {
+    amount: discountApplied.reduce((acc, x) => acc + x.discount.amount.amount, 0),
+    currency: CURRENCY.USD,
+  };
   const serviceChargeAmount = ComputeGratuityServiceCharge(config.SERVICE_CHARGE, subtotalPreDiscount);
-  const subtotalAfterDiscount = ComputeSubtotalAfterDiscountAndGratuity(subtotalPreDiscount, amountDiscounted, serviceChargeAmount);
+  const subtotalAfterDiscount = ComputeSubtotalAfterDiscountAndGratuity(
+    subtotalPreDiscount,
+    amountDiscounted,
+    serviceChargeAmount,
+  );
   const taxAmount = ComputeTaxAmount(subtotalAfterDiscount, config.TAX_RATE);
   const hasBankersRoundingTaxSkew = ComputeHasBankersRoundingSkew(subtotalAfterDiscount, config.TAX_RATE);
   const tipBasis = ComputeTipBasis(subtotalPreDiscount, taxAmount);
-  const tipMinimum = fulfillment.allowTipping && mainCategoryProductCount >= config.AUTOGRAT_THRESHOLD ? ComputeTipValue({ isPercentage: true, isSuggestion: true, value: .2 }, tipBasis) : { currency: CURRENCY.USD, amount: 0 };
+  const tipMinimum =
+    fulfillment.allowTipping && mainCategoryProductCount >= config.AUTOGRAT_THRESHOLD
+      ? ComputeTipValue({ isPercentage: true, isSuggestion: true, value: 0.2 }, tipBasis)
+      : { currency: CURRENCY.USD, amount: 0 };
   const tipAmount = ComputeTipValue(order.tip, tipBasis);
   const total = ComputeTotal(subtotalAfterDiscount, taxAmount, tipAmount);
   const paymentsApplied = ComputePaymentsApplied(total, tipAmount, payments);
-  const amountPaid = { amount: RoundToTwoDecimalPlaces(paymentsApplied.reduce((acc, x) => acc + x.amount.amount, 0)), currency: CURRENCY.USD };
+  const amountPaid = {
+    amount: RoundToTwoDecimalPlaces(paymentsApplied.reduce((acc, x) => acc + x.amount.amount, 0)),
+    currency: CURRENCY.USD,
+  };
   const balanceAfterPayments = ComputeBalance(total, amountPaid);
   return {
     mainCategoryProductCount,
@@ -755,6 +985,6 @@ export const RecomputeTotals = function ({ config, cart, payments, discounts, fu
     total,
     paymentsApplied,
     balanceAfterPayments,
-    hasBankersRoundingTaxSkew
+    hasBankersRoundingTaxSkew,
   };
-}
+};

@@ -17,10 +17,10 @@ export interface LockedOrderRequest {
 
 /**
  * Parameter decorator that extracts the locked order from the execution context.
- * 
+ *
  * The order is attached to the request by the OrderLockInterceptor after
  * successfully acquiring an atomic lock on the order document.
- * 
+ *
  * @example
  * ```typescript
  * @Put(':oId/cancel')
@@ -34,9 +34,7 @@ export interface LockedOrderRequest {
  * }
  * ```
  */
-export const LockedOrder = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): WOrderInstance | undefined => {
-    const request = ctx.switchToHttp().getRequest<LockedOrderRequest>();
-    return request[LOCKED_ORDER_KEY];
-  },
-);
+export const LockedOrder = createParamDecorator((_data: unknown, ctx: ExecutionContext): WOrderInstance | undefined => {
+  const request = ctx.switchToHttp().getRequest<LockedOrderRequest>();
+  return request[LOCKED_ORDER_KEY];
+});

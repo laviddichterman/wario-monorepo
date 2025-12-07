@@ -13,7 +13,7 @@ import { fallbackLng, i18nOptions, i18nResourceLoader, storageConfig } from './l
 const i18nextLng = getStorage(
   storageConfig.localStorage.key,
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  storageConfig.localStorage.autoDetection ? undefined : fallbackLng
+  storageConfig.localStorage.autoDetection ? undefined : fallbackLng,
 ) as LangCode;
 
 /**
@@ -23,7 +23,6 @@ const initOptions: InitOptions = {
   ...i18nOptions(i18nextLng),
   detection: { caches: ['localStorage'] },
 };
-
 
 void i18next.use(LanguageDetector).use(initReactI18next).use(i18nResourceLoader).init(initOptions);
 

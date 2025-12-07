@@ -1,16 +1,16 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import { Grid, TextField } from "@mui/material";
+import { Grid, TextField } from '@mui/material';
 
-import { useMoveOrderMutation } from "@/hooks/useOrdersQuery";
+import { useMoveOrderMutation } from '@/hooks/useOrdersQuery';
 
-import { ElementActionComponent, type ElementActionComponentProps } from "../menu/element.action.component";
+import { ElementActionComponent, type ElementActionComponentProps } from '../menu/element.action.component';
 
 type WOrderMoveComponentProps = { orderId: string; onCloseCallback: ElementActionComponentProps['onCloseCallback'] };
 const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
   const moveMutation = useMoveOrderMutation();
-  const [destination, setDestination] = useState<string>("");
-  const [additionalMessage, setAdditionalMessage] = useState("");
+  const [destination, setDestination] = useState<string>('');
+  const [additionalMessage, setAdditionalMessage] = useState('');
 
   const submitToWario = (e: React.MouseEvent<HTMLButtonElement>) => {
     moveMutation.mutate(
@@ -20,10 +20,10 @@ const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
           if (props.onCloseCallback) {
             props.onCloseCallback(e);
           }
-        }
-      }
+        },
+      },
     );
-  }
+  };
 
   return (
     <ElementActionComponent
@@ -40,7 +40,9 @@ const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
               label="Destination"
               type="text"
               value={destination}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setDestination(e.target.value); }}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setDestination(e.target.value);
+              }}
             />
           </Grid>
           <Grid size={12}>
@@ -51,11 +53,12 @@ const WOrderMoveComponent = (props: WOrderMoveComponentProps) => {
               label="Additional message to expo"
               type="text"
               value={additionalMessage}
-              onChange={(e) => { setAdditionalMessage(e.target.value); }}
+              onChange={(e) => {
+                setAdditionalMessage(e.target.value);
+              }}
             />
           </Grid>
         </>
-
       }
     />
   );

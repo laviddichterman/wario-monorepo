@@ -18,7 +18,7 @@ async function fetchPrinterGroups(token: string): Promise<PrinterGroup[]> {
   const response = await axiosInstance.get<PrinterGroup[]>('/api/v1/menu/printergroup', {
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
@@ -48,7 +48,7 @@ export function usePrinterGroupsQuery() {
  */
 export function usePrinterGroupById(id: string | null) {
   const { data } = usePrinterGroupsQuery();
-  return id ? data?.find((pg) => pg.id === id) ?? null : null;
+  return id ? (data?.find((pg) => pg.id === id) ?? null) : null;
 }
 
 /**
@@ -58,10 +58,17 @@ export function usePrinterGroupById(id: string | null) {
 export function usePrinterGroupsMap() {
   const query = usePrinterGroupsQuery();
 
-  const printerGroupsMap = useMemo(() => query.data?.reduce((acc, pg) => {
-    acc[pg.id] = pg;
-    return acc;
-  }, {} as Record<string, PrinterGroup>) ?? {}, [query.data]);
+  const printerGroupsMap = useMemo(
+    () =>
+      query.data?.reduce(
+        (acc, pg) => {
+          acc[pg.id] = pg;
+          return acc;
+        },
+        {} as Record<string, PrinterGroup>,
+      ) ?? {},
+    [query.data],
+  );
 
   return printerGroupsMap;
 }
@@ -103,7 +110,7 @@ export function useAddPrinterGroupMutation() {
       const response = await axiosInstance.post<PrinterGroup>('/api/v1/menu/printergroup', data, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
 
@@ -133,9 +140,9 @@ export function useEditPrinterGroupMutation() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
-        }
+        },
       );
 
       return response.data;
@@ -161,7 +168,7 @@ export function useDeletePrinterGroupMutation() {
       const response = await axiosInstance.delete<PrinterGroup>(`/api/v1/menu/printergroup/${data.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         data: {
           reassign: data.reassign,

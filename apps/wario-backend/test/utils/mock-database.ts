@@ -51,9 +51,11 @@ export function createMockModel<T = unknown>() {
 
     // Instance creation
     create: jest.fn().mockImplementation((doc: T) => Promise.resolve({ _id: 'mock-id', ...doc })),
-    insertMany: jest.fn().mockImplementation((docs: T[]) =>
-      Promise.resolve(docs.map((doc: T, i: number) => ({ _id: `mock-id-${i.toString()}`, ...doc }))),
-    ),
+    insertMany: jest
+      .fn()
+      .mockImplementation((docs: T[]) =>
+        Promise.resolve(docs.map((doc: T, i: number) => ({ _id: `mock-id-${i.toString()}`, ...doc }))),
+      ),
 
     // Constructor for new Model(doc)
     new: jest.fn().mockImplementation((doc: T) => ({

@@ -1,9 +1,4 @@
-import type {
-  CalendarApi,
-  DateSelectArg,
-  EventClickArg,
-  ViewApi,
-} from '@fullcalendar/core';
+import type { CalendarApi, DateSelectArg, EventClickArg, ViewApi } from '@fullcalendar/core';
 import type FullCalendar from '@fullcalendar/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -106,7 +101,7 @@ export function useCalendar({
       calendarApi.changeView(newView);
       setView(newView);
     },
-    [getCalendarApi, smUp]
+    [getCalendarApi, smUp],
   );
 
   const onDateNavigation = useCallback(
@@ -132,7 +127,7 @@ export function useCalendar({
 
       setTitle(calendarApi.view.title);
     },
-    [getCalendarApi]
+    [getCalendarApi],
   );
 
   const onSelectRange = useCallback(
@@ -144,7 +139,7 @@ export function useCalendar({
       onOpenForm();
       setSelectedRange({ start: arg.start, end: arg.end });
     },
-    [getCalendarApi, onOpenForm]
+    [getCalendarApi, onOpenForm],
   );
 
   const onClickEvent = useCallback(
@@ -154,7 +149,7 @@ export function useCalendar({
       onOpenForm();
       setSelectedEventId(event.id);
     },
-    [onOpenForm]
+    [onOpenForm],
   );
 
   const onClickEventInFilters = useCallback(
@@ -164,7 +159,7 @@ export function useCalendar({
         setSelectedEventId(eventId);
       }
     },
-    [onOpenForm]
+    [onOpenForm],
   );
 
   return {

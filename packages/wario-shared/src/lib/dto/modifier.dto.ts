@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
 
 import { DISPLAY_AS, MODIFIER_CLASS, OptionPlacement, OptionQualifier } from '../enums';
 
@@ -92,10 +102,10 @@ export class UncommittedOptionTypeDto {
 }
 /**
  * @description
- * IOptionTypeDto is also known as a modifier type. It represents a group of modifier options that are somehow related. 
- * An example could be selecting the size of something, or selecting which toppings you want on a pizza. 
+ * IOptionTypeDto is also known as a modifier type. It represents a group of modifier options that are somehow related.
+ * An example could be selecting the size of something, or selecting which toppings you want on a pizza.
  * The is the type of the modifier type in the catalog.
- * 
+ *
  * @property {string} id - The unique identifier of the modifier type.
  * @property {string} name - The name of the modifier type, this is the name that will be used in the catalog.
  * @property {string} displayName - The display name of the modifier type, this is the name that will be shown to the customer.
@@ -109,13 +119,12 @@ export class IOptionTypeDto extends UncommittedOptionTypeDto {
   @IsString()
   @IsNotEmpty()
   id!: string;
-
 }
 
 /**
  * @description
  * IOptionMetadataDto is a metadata object that is used to store additional information about a modifier option.
- * 
+ *
  * @property {number} flavor_factor - The flavor factor of the modifier option. This is used as a limiter defined at the IProduct level.
  * @property {number} bake_factor - The bake factor of the modifier option. Essentially the weight of the option. This is used as a limiter defined at the IProduct level.
  * @property {boolean} can_split - Whether the modifier option can be split. This is used to determine if the modifier option can be split in half. Useful for pizzas.
@@ -216,15 +225,15 @@ export class UncommittedOptionDto {
  * @property {string} description - The description of the modifier option. Not really used at the moment, but could be used for a tooltip.
  * @property {string} shortcode - The shortcode of the modifier option. This is used to build the shortname of a product.
  * @property {IMoneyDto} price - The price of the modifier option.
- * @property {KeyValueDto[]} externalIDs - The external IDs of the modifier option. 
+ * @property {KeyValueDto[]} externalIDs - The external IDs of the modifier option.
  * This is used for integration with other systems and storing metadata about the modifier option.
- * @property {IWIntervalDto} disabled - The disabled interval of the modifier option. 
+ * @property {IWIntervalDto} disabled - The disabled interval of the modifier option.
  * Specifies the time period during which the modifier option is disabled. @see {@link IWIntervalDto}.
  * @property {IRecurringIntervalDto[]} availability - The availability intervals of the modifier option. @see {@link IRecurringIntervalDto}
- * @property {number} ordinal - The ordinal of the modifier option. 
+ * @property {number} ordinal - The ordinal of the modifier option.
  * This is used to determine the order of the modifier option relative to the other modifier options displayed in a modifier type.
  * @property {IOptionMetadataDto} metadata - The metadata of the modifier option. @see {@link IOptionMetadataDto}
- * @property {string | null} enable - The enable function ID that is used to determine if the modifier option should be enabled. 
+ * @property {string | null} enable - The enable function ID that is used to determine if the modifier option should be enabled.
  * @see {@link IProductInstanceFunctionDto}
  * @property {IOptionDisplayFlagsDto} displayFlags - The display flags of the modifier option. @see {@link IOptionDisplayFlagsDto}
  */
@@ -236,7 +245,6 @@ export class IOptionDto extends UncommittedOptionDto {
   @IsString()
   @IsNotEmpty()
   modifierTypeId!: string;
-
 }
 /**
  * @description

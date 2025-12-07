@@ -23,7 +23,7 @@ export function AccountButton({ photoURL, displayName, sx, ...other }: AccountBu
       whileHover={varHover(1.04)}
       transition={transitionTap()}
       aria-label="Account button"
-      sx={[{ p: 0 }, ...spreadSx(sx),]}
+      sx={[{ p: 0 }, ...spreadSx(sx)]}
       {...other}
     >
       <AnimateBorder

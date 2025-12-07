@@ -103,14 +103,48 @@
         "port": 9229,
         "restart": true,
         "protocol": "inspector",
-        "cwd": "${workspaceFolder:wario-backend}"
+        "cwd": "${workspaceFolder:wario-backend}",
+        "preLaunchTask": "backend:dev"
       },
       {
-        "name": "Chrome: wario-pos (http://localhost:5173)",
-        "type": "pwa-chrome",
+        "name": "Chrome: wario-pos (http://localhost:3003)",
+        "type": "chrome",
         "request": "launch",
-        "url": "http://localhost:5173",
-        "webRoot": "${workspaceFolder:wario-pos}/src"
+        "url": "http://localhost:3003",
+        "webRoot": "${workspaceFolder:wario-pos}/src",
+        "preLaunchTask": "pos:dev"
+      },
+      {
+        "name": "Chrome: wario-fe-order (http://localhost:3000)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder:wario-fe-order}/src",
+        "preLaunchTask": "order:dev"
+      },
+      {
+        "name": "Chrome: wario-fe-credit (http://localhost:3001)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3001",
+        "webRoot": "${workspaceFolder:wario-fe-credit}/src",
+        "preLaunchTask": "credit:dev"
+      },
+      {
+        "name": "Chrome: wario-fe-menu (http://localhost:3002)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3002",
+        "webRoot": "${workspaceFolder:wario-fe-menu}/src",
+        "preLaunchTask": "menu:dev"
+      },
+      {
+        "name": "Chrome: wario-fe-faq (http://localhost:3004)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3004",
+        "webRoot": "${workspaceFolder:wario-fe-faq}/src",
+        "preLaunchTask": "faq:dev"
       }
     ],
     "compounds": [
@@ -118,7 +152,17 @@
         "name": "Run POS + Backend (attach)",
         "configurations": [
           "Backend: Nest debug (inspect 9229)",
-          "Chrome: wario-pos (http://localhost:5173)"
+          "Chrome: wario-pos (http://localhost:3003)"
+        ]
+      },
+      {
+        "name": "Run All Frontends",
+        "configurations": [
+          "Chrome: wario-pos (http://localhost:3003)",
+          "Chrome: wario-fe-order (http://localhost:3000)",
+          "Chrome: wario-fe-credit (http://localhost:3001)",
+          "Chrome: wario-fe-menu (http://localhost:3002)",
+          "Chrome: wario-fe-faq (http://localhost:3004)"
         ]
       }
     ]
@@ -127,39 +171,124 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "dev:pos",
+        "label": "pos:dev",
         "type": "shell",
         "command": "pnpm --filter @wcp/wario-pos dev",
+        "isBackground": true,
         "options": {
           "cwd": "${workspaceFolder:root}"
         },
-        "problemMatcher": []
+        "problemMatcher": {
+          "owner": "vite",
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Vite.*dev server running.*$",
+            "endsPattern": "^.*Local:.*http://localhost:\\d+/.*$"
+          }
+        }
       },
       {
-        "label": "dev:menu",
+        "label": "menu:dev",
         "type": "shell",
         "command": "pnpm --filter @wcp/wario-fe-menu dev",
+        "isBackground": true,
         "options": {
           "cwd": "${workspaceFolder:root}"
         },
-        "problemMatcher": []
+        "problemMatcher": {
+          "owner": "vite",
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Vite.*dev server running.*$",
+            "endsPattern": "^.*Local:.*http://localhost:\\d+/.*$"
+          }
+        }
       },
       {
-        "label": "dev:backend:debug",
+        "label": "order:dev",
+        "type": "shell",
+        "command": "pnpm --filter @wcp/wario-fe-order dev",
+        "isBackground": true,
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        },
+        "problemMatcher": {
+          "owner": "vite",
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Vite.*dev server running.*$",
+            "endsPattern": "^.*Local:.*http://localhost:\\d+/.*$"
+          }
+        }
+      },
+      {
+        "label": "credit:dev",
+        "type": "shell",
+        "command": "pnpm --filter @wcp/wario-fe-credit dev",
+        "isBackground": true,
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        },
+        "problemMatcher": {
+          "owner": "vite",
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Vite.*dev server running.*$",
+            "endsPattern": "^.*Local:.*http://localhost:\\d+/.*$"
+          }
+        }
+      },
+      {
+        "label": "faq:dev",
+        "type": "shell",
+        "command": "pnpm --filter @wcp/wario-fe-faq dev",
+        "isBackground": true,
+        "options": {
+          "cwd": "${workspaceFolder:root}"
+        },
+        "problemMatcher": {
+          "owner": "vite",
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Vite.*dev server running.*$",
+            "endsPattern": "^.*Local:.*http://localhost:\\d+/.*$"
+          }
+        }
+      },
+      {
+        "label": "backend:dev",
         "type": "shell",
         "command": "pnpm --filter @wcp/wario-backend run start:debug",
+        "isBackground": true,
         "options": {
           "cwd": "${workspaceFolder:root}"
         },
-        "problemMatcher": []
-      },
-      {
-        "label": "dev:all (pos+backend)",
-        "dependsOn": [
-          "dev:backend:debug",
-          "dev:pos"
-        ],
-        "dependsOrder": "parallel"
+        "problemMatcher": {
+          "owner": "nestjs",
+          "pattern": {
+            "regexp": "^$"
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^.*Starting Nest application.*$",
+            "endsPattern": "^.*Nest application successfully started.*$"
+          }
+        }
       },
       {
         "label": "lint:all",

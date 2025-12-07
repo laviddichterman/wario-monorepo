@@ -69,12 +69,7 @@ export const settingIcons = {
         <mask id="path-2-inside-1_1153_603" fill="white">
           <path d="M0 0H32V64H0V0Z" />
         </mask>
-        <path
-          d="M31 0V64H33V0H31Z"
-          fill="currentColor"
-          fillOpacity="0.08"
-          mask="url(#path-2-inside-1_1153_603)"
-        />
+        <path d="M31 0V64H33V0H31Z" fill="currentColor" fillOpacity="0.08" mask="url(#path-2-inside-1_1153_603)" />
         <circle opacity="0.8" cx="11" cy="11" r="5" fill="currentColor" />
         <rect opacity="0.48" x="6" y="20" width="20" height="4" rx="2" fill="currentColor" />
         <rect opacity="0.24" x="6" y="28" width="14" height="4" rx="2" fill="currentColor" />
@@ -96,12 +91,7 @@ export const settingIcons = {
         <mask id="path-2-inside-1_1153_596" fill="white">
           <path d="M0 0H86V22H0V0Z" />
         </mask>
-        <path
-          d="M86 21H0V23H86V21Z"
-          fill="currentColor"
-          fillOpacity="0.08"
-          mask="url(#path-2-inside-1_1153_596)"
-        />
+        <path d="M86 21H0V23H86V21Z" fill="currentColor" fillOpacity="0.08" mask="url(#path-2-inside-1_1153_596)" />
         <circle opacity="0.8" cx="11" cy="11" r="5" fill="currentColor" />
         <rect opacity="0.48" x="20" y="9" width="16" height="4" rx="2" fill="currentColor" />
         <rect opacity="0.24" x="40" y="9" width="10" height="4" rx="2" fill="currentColor" />
@@ -123,12 +113,7 @@ export const settingIcons = {
         <mask id="path-2-inside-1_1153_589" fill="white">
           <path d="M0 0H22V64H0V0Z" />
         </mask>
-        <path
-          d="M21 0V64H23V0H21Z"
-          fill="currentColor"
-          fillOpacity="0.08"
-          mask="url(#path-2-inside-1_1153_589)"
-        />
+        <path d="M21 0V64H23V0H21Z" fill="currentColor" fillOpacity="0.08" mask="url(#path-2-inside-1_1153_589)" />
         <circle opacity="0.8" cx="11" cy="11" r="5" fill="currentColor" />
         <rect opacity="0.48" x="6" y="20" width="10" height="4" rx="2" fill="currentColor" />
         <rect opacity="0.24" x="6" y="28" width="10" height="4" rx="2" fill="currentColor" />

@@ -1,22 +1,15 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-import type { } from '@mui/lab/themeAugmentation';
-import type { } from '@mui/material/themeCssVarsAugmentation';
-import type { } from '@mui/x-data-grid-premium/themeAugmentation';
-import type { } from '@mui/x-data-grid/themeAugmentation';
-import type { } from '@mui/x-date-pickers/themeAugmentation';
+import type {} from '@mui/lab/themeAugmentation';
+import type {} from '@mui/material/themeCssVarsAugmentation';
+import type {} from '@mui/x-data-grid-premium/themeAugmentation';
+import type {} from '@mui/x-data-grid/themeAugmentation';
+import type {} from '@mui/x-date-pickers/themeAugmentation';
 
 import type { AvatarExtendColor, AvatarGroupExtendVariant } from './core/components/avatar';
 import type { BadgeExtendVariant } from './core/components/badge';
-import type {
-  ButtonExtendColor,
-  ButtonExtendSize,
-  ButtonExtendVariant,
-} from './core/components/button';
+import type { ButtonExtendColor, ButtonExtendSize, ButtonExtendVariant } from './core/components/button';
 import type { FabExtendColor, FabExtendVariant } from './core/components/button-fab';
-import type {
-  ButtonGroupExtendColor,
-  ButtonGroupExtendVariant,
-} from './core/components/button-group';
+import type { ButtonGroupExtendColor, ButtonGroupExtendVariant } from './core/components/button-group';
 import type { IconButtonExtendColor } from './core/components/button-icon';
 import type { ChipExtendColor, ChipExtendVariant } from './core/components/chip';
 import type { PaginationExtendColor, PaginationExtendVariant } from './core/components/pagination';
@@ -48,38 +41,38 @@ declare module '@mui/material/styles' {
    * @from {@link file://./core/palette.ts}
    */
   // primary, secondary, info, success, warning, error
-  interface PaletteColor extends PaletteColorExtend { }
-  interface SimplePaletteColorOptions extends Partial<PaletteColorExtend> { }
+  interface PaletteColor extends PaletteColorExtend {}
+  interface SimplePaletteColorOptions extends Partial<PaletteColorExtend> {}
 
   // text, background, common, grey
-  interface Color extends GreyExtend { }
-  interface TypeText extends TypeTextExtend { }
-  interface CommonColors extends CommonColorsExtend { }
-  interface TypeBackground extends TypeBackgroundExtend { }
+  interface Color extends GreyExtend {}
+  interface TypeText extends TypeTextExtend {}
+  interface CommonColors extends CommonColorsExtend {}
+  interface TypeBackground extends TypeBackgroundExtend {}
 
   // extend palette
-  interface Palette extends PaletteExtend { }
-  interface PaletteOptions extends DeepPartial<PaletteExtend> { }
+  interface Palette extends PaletteExtend {}
+  interface PaletteOptions extends DeepPartial<PaletteExtend> {}
 
   /**
    * ➤➤ Typography (https://mui.com/customization/typography/)
    * @from {@link file://./core/typography.ts}
    */
-  interface TypographyVariants extends TypographyVariantsExtend { }
-  interface TypographyVariantsOptions extends Partial<TypographyVariantsExtend> { }
+  interface TypographyVariants extends TypographyVariantsExtend {}
+  interface TypographyVariantsOptions extends Partial<TypographyVariantsExtend> {}
 
   /**
    * ➤➤ Mixins
    * @from {@link file://./core/mixins.ts}
    */
-  interface Mixins extends MixinsExtend { }
-  interface MixinsOptions extends Partial<MixinsExtend> { }
+  interface Mixins extends MixinsExtend {}
+  interface MixinsOptions extends Partial<MixinsExtend> {}
 
   /**
    * ➤➤ Opacity
    * @from {@link file://./core/opacity.ts}
    */
-  interface Opacity extends OpacityExtend { }
+  interface Opacity extends OpacityExtend {}
 
   /**
    * Register the new variant in the `Theme` interface.
@@ -108,10 +101,10 @@ declare module '@mui/material/styles' {
  * @from {@link file://./core/components/avatar.tsx}
  */
 declare module '@mui/material/Avatar' {
-  interface AvatarOwnProps extends AvatarExtendColor { }
+  interface AvatarOwnProps extends AvatarExtendColor {}
 }
 declare module '@mui/material/AvatarGroup' {
-  interface AvatarGroupPropsVariantOverrides extends AvatarGroupExtendVariant { }
+  interface AvatarGroupPropsVariantOverrides extends AvatarGroupExtendVariant {}
 }
 
 /**
@@ -119,7 +112,7 @@ declare module '@mui/material/AvatarGroup' {
  * @from {@link file://./core/components/badge.tsx}
  */
 declare module '@mui/material/Badge' {
-  interface BadgePropsVariantOverrides extends BadgeExtendVariant { }
+  interface BadgePropsVariantOverrides extends BadgeExtendVariant {}
 }
 
 /**
@@ -127,9 +120,9 @@ declare module '@mui/material/Badge' {
  * @from {@link file://./core/components/button.tsx}
  */
 declare module '@mui/material/Button' {
-  interface ButtonPropsVariantOverrides extends ButtonExtendVariant { }
-  interface ButtonPropsColorOverrides extends ButtonExtendColor { }
-  interface ButtonPropsSizeOverrides extends ButtonExtendSize { }
+  interface ButtonPropsVariantOverrides extends ButtonExtendVariant {}
+  interface ButtonPropsColorOverrides extends ButtonExtendColor {}
+  interface ButtonPropsSizeOverrides extends ButtonExtendSize {}
 }
 
 /**
@@ -137,7 +130,7 @@ declare module '@mui/material/Button' {
  * @from {@link file://./core/components/button-icon.tsx}
  */
 declare module '@mui/material/IconButton' {
-  interface IconButtonPropsColorOverrides extends IconButtonExtendColor { }
+  interface IconButtonPropsColorOverrides extends IconButtonExtendColor {}
 }
 
 /**
@@ -145,8 +138,8 @@ declare module '@mui/material/IconButton' {
  * @from {@link file://./core/components/button-group.tsx}
  */
 declare module '@mui/material/ButtonGroup' {
-  interface ButtonGroupPropsVariantOverrides extends ButtonGroupExtendVariant { }
-  interface ButtonGroupPropsColorOverrides extends ButtonGroupExtendColor { }
+  interface ButtonGroupPropsVariantOverrides extends ButtonGroupExtendVariant {}
+  interface ButtonGroupPropsColorOverrides extends ButtonGroupExtendColor {}
 }
 
 /**
@@ -154,8 +147,8 @@ declare module '@mui/material/ButtonGroup' {
  * @from {@link file://./core/components/button-fab.tsx}
  */
 declare module '@mui/material/Fab' {
-  interface FabPropsVariantOverrides extends FabExtendVariant { }
-  interface FabPropsColorOverrides extends FabExtendColor { }
+  interface FabPropsVariantOverrides extends FabExtendVariant {}
+  interface FabPropsColorOverrides extends FabExtendColor {}
 }
 
 /**
@@ -163,8 +156,8 @@ declare module '@mui/material/Fab' {
  * @from {@link file://./core/components/chip.tsx}
  */
 declare module '@mui/material/Chip' {
-  interface ChipPropsVariantOverrides extends ChipExtendVariant { }
-  interface ChipPropsColorOverrides extends ChipExtendColor { }
+  interface ChipPropsVariantOverrides extends ChipExtendVariant {}
+  interface ChipPropsColorOverrides extends ChipExtendColor {}
 }
 
 /**
@@ -172,12 +165,12 @@ declare module '@mui/material/Chip' {
  * @from {@link file://./core/components/pagination.tsx}
  */
 declare module '@mui/material/Pagination' {
-  interface PaginationPropsVariantOverrides extends PaginationExtendVariant { }
-  interface PaginationPropsColorOverrides extends PaginationExtendColor { }
+  interface PaginationPropsVariantOverrides extends PaginationExtendVariant {}
+  interface PaginationPropsColorOverrides extends PaginationExtendColor {}
 }
 declare module '@mui/material/PaginationItem' {
-  interface PaginationItemPropsVariantOverrides extends PaginationExtendVariant { }
-  interface PaginationItemPropsColorOverrides extends PaginationExtendColor { }
+  interface PaginationItemPropsVariantOverrides extends PaginationExtendVariant {}
+  interface PaginationItemPropsColorOverrides extends PaginationExtendColor {}
 }
 
 /**
@@ -185,7 +178,7 @@ declare module '@mui/material/PaginationItem' {
  * @from {@link file://./core/components/slider.tsx}
  */
 declare module '@mui/material/Slider' {
-  interface SliderPropsColorOverrides extends SliderExtendColor { }
+  interface SliderPropsColorOverrides extends SliderExtendColor {}
 }
 
 /**
@@ -193,7 +186,7 @@ declare module '@mui/material/Slider' {
  * @from {@link file://./core/components/rating.tsx}
  */
 declare module '@mui/material/Rating' {
-  interface RatingPropsSizeOverrides extends RatingExtendSize { }
+  interface RatingPropsSizeOverrides extends RatingExtendSize {}
 }
 
 /**
@@ -201,5 +194,5 @@ declare module '@mui/material/Rating' {
  * @from {@link file://./core/components/tabs.tsx}
  */
 declare module '@mui/material/Tabs' {
-  interface TabsPropsIndicatorColorOverrides extends TabsExtendIndicatorColor { }
+  interface TabsPropsIndicatorColorOverrides extends TabsExtendIndicatorColor {}
 }

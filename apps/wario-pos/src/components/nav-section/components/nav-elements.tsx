@@ -15,10 +15,8 @@ type NavLiProps = React.ComponentProps<'li'> & {
 };
 
 export const NavLi = styled(
-  (props: NavLiProps) => (
-    <li {...props} className={mergeClasses([navSectionClasses.li, props.className])} />
-  ),
-  { shouldForwardProp: (prop: string) => !['disabled', 'sx'].includes(prop) }
+  (props: NavLiProps) => <li {...props} className={mergeClasses([navSectionClasses.li, props.className])} />,
+  { shouldForwardProp: (prop: string) => !['disabled', 'sx'].includes(prop) },
 )(() => ({
   display: 'inline-block',
   variants: [{ props: { disabled: true }, style: { cursor: 'not-allowed' } }],

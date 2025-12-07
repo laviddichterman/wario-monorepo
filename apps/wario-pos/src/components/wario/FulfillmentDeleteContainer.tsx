@@ -1,12 +1,12 @@
 import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 
-import { type FulfillmentConfig } from "@wcp/wario-shared";
+import { type FulfillmentConfig } from '@wcp/wario-shared';
 
-import { HOST_API } from "@/config";
+import { HOST_API } from '@/config';
 
-import ElementDeleteComponent from "./menu/element.delete.component";
+import ElementDeleteComponent from './menu/element.delete.component';
 
 export interface FulfillmentQuickActionProps {
   fulfillment: FulfillmentConfig;
@@ -22,21 +22,24 @@ const FulfillmentDeleteContainer = ({ fulfillment, onCloseCallback }: Fulfillmen
     if (!isProcessing) {
       setIsProcessing(true);
       try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "delete:catalog" } });
+        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
         const response = await fetch(`${HOST_API}/api/v1/config/fulfillment/${fulfillment.id}`, {
-          method: "DELETE",
+          method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          }
+            'Content-Type': 'application/json',
+          },
         });
         if (response.status === 200) {
-          enqueueSnackbar(`Deleted fulfillment: ${fulfillment.displayName}.`)
+          enqueueSnackbar(`Deleted fulfillment: ${fulfillment.displayName}.`);
           onCloseCallback();
         }
         setIsProcessing(false);
       } catch (error) {
-        enqueueSnackbar(`Unable to delete fulfillment ${fulfillment.displayName}. Got error: ${JSON.stringify(error)}.`, { variant: "error" });
+        enqueueSnackbar(
+          `Unable to delete fulfillment ${fulfillment.displayName}. Got error: ${JSON.stringify(error)}.`,
+          { variant: 'error' },
+        );
         console.error(error);
         setIsProcessing(false);
       }

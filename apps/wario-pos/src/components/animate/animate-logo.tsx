@@ -33,14 +33,7 @@ export function AnimateLogoZoom({ logo, slotProps, sx, ...other }: AnimateLogoPr
         }}
       >
         {logo ?? (
-          <Logo
-            disabled
-            {...slotProps?.logo}
-            sx={[
-              { width: 64, height: 64 },
-              ...spreadSx(slotProps?.logo?.sx),
-            ]}
-          />
+          <Logo disabled {...slotProps?.logo} sx={[{ width: 64, height: 64 }, ...spreadSx(slotProps?.logo?.sx)]} />
         )}
       </m.span>
 
@@ -96,19 +89,10 @@ export function AnimateLogoRotate({ logo, sx, slotProps, ...other }: AnimateLogo
   return (
     <LogoRotateRoot sx={sx} {...other}>
       {logo ?? (
-        <Logo
-          {...slotProps?.logo}
-          sx={[
-            { zIndex: 9, width: 40, height: 40 },
-            ...spreadSx(slotProps?.logo?.sx),
-          ]}
-        />
+        <Logo {...slotProps?.logo} sx={[{ zIndex: 9, width: 40, height: 40 }, ...spreadSx(slotProps?.logo?.sx)]} />
       )}
 
-      <LogoRotateBackground
-        animate={{ rotate: 360 }}
-        transition={{ duration: 10, ease: 'linear', repeat: Infinity }}
-      />
+      <LogoRotateBackground animate={{ rotate: 360 }} transition={{ duration: 10, ease: 'linear', repeat: Infinity }} />
     </LogoRotateRoot>
   );
 }

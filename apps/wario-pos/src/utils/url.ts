@@ -62,7 +62,7 @@ export function isEqualPath(
   currentUrl: string,
   options: EqualPathOptions = {
     deep: true,
-  }
+  },
 ): boolean {
   const parseUrl = (url: string) => {
     try {
@@ -179,11 +179,7 @@ export function safeReturnUrl(value: string | null, fallback?: string | null): s
  * isActiveLink('/dashboard/user', '#section');                      // false (hash link)
  * isActiveLink('/dashboard/user', 'https://example.com');           // false (external link)
  */
-export function isActiveLink(
-  currentPathname: string,
-  targetPath: string,
-  deep: boolean = true
-): boolean {
+export function isActiveLink(currentPathname: string, targetPath: string, deep: boolean = true): boolean {
   if (!currentPathname || !targetPath) {
     console.warn('isActiveLink: pathname or itemPath is empty!');
     return false;

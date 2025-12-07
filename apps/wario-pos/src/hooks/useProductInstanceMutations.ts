@@ -42,16 +42,12 @@ export function useAddProductInstanceMutation() {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
       const body: UncommittedIProductInstance = toProductInstanceApiBody(form);
 
-      const response = await axiosInstance.post<IProductInstance>(
-        `/api/v1/menu/product/${productId}`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       return response.data;
     },
@@ -95,15 +91,12 @@ export function useDeleteProductInstanceMutation() {
     mutationFn: async ({ productId, instanceId }: DeleteProductInstanceRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
 
-      const response = await axiosInstance.delete<IProductInstance>(
-        `/api/v1/menu/product/${productId}/${instanceId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await axiosInstance.delete<IProductInstance>(`/api/v1/menu/product/${productId}/${instanceId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      );
+      });
 
       return response.data;
     },

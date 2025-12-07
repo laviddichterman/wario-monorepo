@@ -37,11 +37,8 @@ const railVariants = [
   ...(ORIENTATIONS.flatMap((orientation) =>
     SIZES.map((size) => ({
       props: (props) => props.orientation === orientation && props.size === size,
-      style:
-        orientation === 'horizontal'
-          ? { height: DIMENSIONS[size].rail }
-          : { width: DIMENSIONS[size].rail },
-    }))
+      style: orientation === 'horizontal' ? { height: DIMENSIONS[size].rail } : { width: DIMENSIONS[size].rail },
+    })),
   ) satisfies SliderVariants),
 ] satisfies SliderVariants;
 
@@ -49,11 +46,8 @@ const trackVariants = [
   ...(ORIENTATIONS.flatMap((orientation) =>
     SIZES.map((size) => ({
       props: (props) => props.orientation === orientation && props.size === size,
-      style:
-        orientation === 'horizontal'
-          ? { height: DIMENSIONS[size].rail }
-          : { width: DIMENSIONS[size].rail },
-    }))
+      style: orientation === 'horizontal' ? { height: DIMENSIONS[size].rail } : { width: DIMENSIONS[size].rail },
+    })),
   ) satisfies SliderVariants),
 ] satisfies SliderVariants;
 
@@ -65,7 +59,7 @@ const markVariants = [
         orientation === 'horizontal'
           ? { width: 1, height: DIMENSIONS[size].mark }
           : { height: 1, width: DIMENSIONS[size].mark },
-    }))
+    })),
   ) satisfies SliderVariants),
 ] satisfies SliderVariants;
 

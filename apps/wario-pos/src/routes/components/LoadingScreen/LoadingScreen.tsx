@@ -26,13 +26,13 @@ export function LoadingScreen({ portal, slots, slotsProps, sx, ...other }: Loadi
   return (
     <PortalWrapper>
       <LoadingContent sx={sx} {...other}>
-        {slots?.progress ??
-          <LinearProgress color="inherit"
-            sx={[
-              { width: 1, maxWidth: 360 },
-              ...spreadSx(slotsProps?.progress?.sx)]}
+        {slots?.progress ?? (
+          <LinearProgress
+            color="inherit"
+            sx={[{ width: 1, maxWidth: 360 }, ...spreadSx(slotsProps?.progress?.sx)]}
             {...slotsProps?.progress}
-          />}
+          />
+        )}
       </LoadingContent>
     </PortalWrapper>
   );

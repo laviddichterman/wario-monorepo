@@ -9,12 +9,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { DisableDataCheck } from '../src/lib/common';
 import type { ProductModifierEntry } from '../src/lib/derived-types';
-import {
-  DISABLE_REASON,
-  MODIFIER_MATCH,
-  OptionPlacement,
-  OptionQualifier,
-} from '../src/lib/enums';
+import { DISABLE_REASON, MODIFIER_MATCH, OptionPlacement, OptionQualifier } from '../src/lib/enums';
 import {
   ComputePotentialPrices,
   CreateWCPProduct,
@@ -153,42 +148,26 @@ describe('Category Visibility', () => {
 
   it('should return true for enabled categories', () => {
     expect(
-      IsThisCategoryVisibleForFulfillment(
-        MOCK_CATALOG_SELECTORS.category,
-        PIZZA_CATEGORY.id,
-        fulfillmentPickup
-      )
+      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, PIZZA_CATEGORY.id, fulfillmentPickup),
     ).toBe(true);
   });
 
   it('should return false for service-disabled categories', () => {
     expect(
-      IsThisCategoryVisibleForFulfillment(
-        MOCK_CATALOG_SELECTORS.category,
-        DISABLED_CATEGORY.id,
-        fulfillmentPickup
-      )
+      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, DISABLED_CATEGORY.id, fulfillmentPickup),
     ).toBe(false);
   });
 
   it('should return true for service-disabled category with different fulfillment', () => {
     expect(
-      IsThisCategoryVisibleForFulfillment(
-        MOCK_CATALOG_SELECTORS.category,
-        DISABLED_CATEGORY.id,
-        fulfillmentDelivery
-      )
+      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, DISABLED_CATEGORY.id, fulfillmentDelivery),
     ).toBe(true);
   });
 
   it('should check parent category visibility for nested categories', () => {
     // NESTED_CHILD_CATEGORY is a child of PIZZA_CATEGORY, which is visible
     expect(
-      IsThisCategoryVisibleForFulfillment(
-        MOCK_CATALOG_SELECTORS.category,
-        NESTED_CHILD_CATEGORY.id,
-        fulfillmentPickup
-      )
+      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, NESTED_CHILD_CATEGORY.id, fulfillmentPickup),
     ).toBe(true);
   });
 });
@@ -207,7 +186,7 @@ describe('WCPProductGenerateMetadata', () => {
       MODIFIERS_PLAIN_CHEESE,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata).toBeDefined();
@@ -221,7 +200,7 @@ describe('WCPProductGenerateMetadata', () => {
       MODIFIERS_PEPPERONI,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata).toBeDefined();
@@ -236,7 +215,7 @@ describe('WCPProductGenerateMetadata', () => {
       MODIFIERS_SPLIT_PIZZA,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata).toBeDefined();
@@ -250,7 +229,7 @@ describe('WCPProductGenerateMetadata', () => {
       MODIFIERS_INCOMPLETE,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata).toBeDefined();
@@ -263,7 +242,7 @@ describe('WCPProductGenerateMetadata', () => {
       MODIFIERS_PEPPERONI,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     // Pepperoni has flavor_factor: 2, bake_factor: 1
@@ -279,7 +258,7 @@ describe('WCPProductGenerateMetadata', () => {
       MODIFIERS_COMPLEX_PIZZA,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata).toBeDefined();
@@ -324,7 +303,7 @@ describe('WProductCompare', () => {
     expect(result.mirror).toBe(true);
   });
 
-  // TODO: this is woefully incomplete. Need to test complex products with multiple modifiers. Need to test 
+  // TODO: this is woefully incomplete. Need to test complex products with multiple modifiers. Need to test
 });
 
 // ============================================================================
@@ -343,7 +322,7 @@ describe('DisableDataCheck', () => {
     const result = DisableDataCheck(
       OPTION_TOPPING_DISABLED.disabled,
       OPTION_TOPPING_DISABLED.availability,
-      currentTime
+      currentTime,
     );
     expect(result.enable).toBe(DISABLE_REASON.DISABLED_BLANKET);
   });
@@ -356,15 +335,14 @@ describe('DisableDataCheck', () => {
     const result = DisableDataCheck(
       OPTION_TOPPING_TIME_LIMITED.disabled,
       OPTION_TOPPING_TIME_LIMITED.availability,
-      mondayAt3pm
+      mondayAt3pm,
     );
 
     // Should be disabled since 3pm is outside 11am-2pm window
     // If this fails, it indicates the availability check logic may have issues
-    expect(
-      result.enable === DISABLE_REASON.DISABLED_AVAILABILITY ||
-      result.enable === DISABLE_REASON.ENABLED
-    ).toBe(true);
+    expect(result.enable === DISABLE_REASON.DISABLED_AVAILABILITY || result.enable === DISABLE_REASON.ENABLED).toBe(
+      true,
+    );
   });
 });
 
@@ -378,7 +356,7 @@ describe('Product Instance Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_PEPPERONI,
         FUNC_HAS_ANY_TOPPINGS,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(true);
@@ -388,7 +366,7 @@ describe('Product Instance Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_PLAIN_CHEESE,
         FUNC_HAS_ANY_TOPPINGS,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(false);
@@ -401,7 +379,7 @@ describe('Product Instance Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_COMPLEX_PIZZA,
         FUNC_CRUST_ENABLES_SAUCE,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(true);
@@ -411,18 +389,22 @@ describe('Product Instance Functions', () => {
       const modifiersWithStuffedCrust: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.CRUST_MT,
-          options: [{ optionId: MOCK_IDS.CRUST_STUFFED, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.CRUST_STUFFED, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
       ];
 
       const result = WFunctional.ProcessProductInstanceFunction(
         modifiersWithStuffedCrust,
         FUNC_CRUST_ENABLES_SAUCE,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(false);
@@ -435,7 +417,7 @@ describe('Product Instance Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_PLAIN_CHEESE,
         FUNC_FLAVOR_CHECK,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(true);
@@ -457,7 +439,7 @@ describe('Product Orderability', () => {
       MOCK_CATALOG_SELECTORS,
       IgnoreHideDisplayFlags,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(result).toBe(true);
@@ -468,19 +450,14 @@ describe('Product Orderability', () => {
       BASIC_PIZZA_PRODUCT.id,
       MODIFIERS_PEPPERONI,
       fulfillment,
-      MOCK_CATALOG_SELECTORS
+      MOCK_CATALOG_SELECTORS,
     );
 
     expect(result).toBe(true);
   });
 
   it('should return false for products in disabled categories', () => {
-    const result = DoesProductExistInCatalog(
-      DISABLED_PRODUCT.id,
-      [],
-      fulfillment,
-      MOCK_CATALOG_SELECTORS
-    );
+    const result = DoesProductExistInCatalog(DISABLED_PRODUCT.id, [], fulfillment, MOCK_CATALOG_SELECTORS);
 
     // Should be false because the category is disabled for pickup
     expect(result).toBe(false);
@@ -493,7 +470,7 @@ describe('Product Orderability', () => {
       MOCK_CATALOG_SELECTORS,
       serviceTime,
       fulfillment,
-      true // filterIncomplete
+      true, // filterIncomplete
     );
 
     expect(result).toBe(false);
@@ -506,7 +483,7 @@ describe('Product Orderability', () => {
       MOCK_CATALOG_SELECTORS,
       serviceTime,
       fulfillment,
-      false // filterIncomplete
+      false, // filterIncomplete
     );
 
     expect(result).toBe(true);
@@ -519,7 +496,7 @@ describe('Product Orderability', () => {
       MOCK_CATALOG_SELECTORS,
       serviceTime,
       fulfillment,
-      true
+      true,
     );
 
     expect(result).toBe(true);
@@ -540,7 +517,7 @@ describe('CheckRequiredModifiersAreAvailable', () => {
       MODIFIERS_PEPPERONI,
       MOCK_CATALOG_SELECTORS.option,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(result).toBe(true);
@@ -550,7 +527,9 @@ describe('CheckRequiredModifiersAreAvailable', () => {
     const invalidModifiers: ProductModifierEntry[] = [
       {
         modifierTypeId: MOCK_IDS.SIZE_MT,
-        options: [{ optionId: 'nonexistent_option', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+        options: [
+          { optionId: 'nonexistent_option', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+        ],
       },
     ];
 
@@ -559,7 +538,7 @@ describe('CheckRequiredModifiersAreAvailable', () => {
       invalidModifiers,
       MOCK_CATALOG_SELECTORS.option,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(result).toBe(false);
@@ -571,7 +550,13 @@ describe('CheckRequiredModifiersAreAvailable', () => {
       ...MODIFIERS_COMPLEX_PIZZA,
       {
         modifierTypeId: MOCK_IDS.REMOVAL_MT,
-        options: [{ optionId: MOCK_IDS.REMOVAL_NO_CHEESE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+        options: [
+          {
+            optionId: MOCK_IDS.REMOVAL_NO_CHEESE,
+            placement: OptionPlacement.WHOLE,
+            qualifier: OptionQualifier.REGULAR,
+          },
+        ],
       },
     ];
 
@@ -580,7 +565,7 @@ describe('CheckRequiredModifiersAreAvailable', () => {
       modifiersWithRemoval,
       MOCK_CATALOG_SELECTORS.option,
       serviceTime,
-      MOCK_IDS.FULFILLMENT_DELIVERY // Removals disabled for delivery
+      MOCK_IDS.FULFILLMENT_DELIVERY, // Removals disabled for delivery
     );
 
     expect(result).toBe(false);
@@ -602,7 +587,7 @@ describe('ComputePotentialPrices', () => {
       MODIFIERS_INCOMPLETE, // Missing required SIZE
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata.incomplete).toBe(true);
@@ -621,7 +606,7 @@ describe('ComputePotentialPrices', () => {
       MODIFIERS_INCOMPLETE,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     const prices = ComputePotentialPrices(metadata, MOCK_CATALOG_SELECTORS);
@@ -646,7 +631,7 @@ describe('Split Products', () => {
       MODIFIERS_SPLIT_PIZZA,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata.is_split).toBe(true);
@@ -658,7 +643,7 @@ describe('Split Products', () => {
       MODIFIERS_SPLIT_PIZZA,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     // LEFT has pepperoni (flavor_factor: 2)
@@ -673,7 +658,7 @@ describe('Split Products', () => {
       MODIFIERS_SPLIT_PIZZA,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata.exhaustive_modifiers.left.length).toBeGreaterThan(0);
@@ -695,7 +680,7 @@ describe('Option Qualifiers', () => {
       MODIFIERS_WITH_QUALIFIERS,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     expect(metadata).toBeDefined();
@@ -708,7 +693,7 @@ describe('Option Qualifiers', () => {
       MODIFIERS_WITH_QUALIFIERS,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     const toppingsMap = metadata.modifier_map[MOCK_IDS.TOPPINGS_MT];
@@ -726,7 +711,7 @@ describe('Option Qualifiers', () => {
       MODIFIERS_WITH_QUALIFIERS,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     // MODIFIERS_WITH_QUALIFIERS has olives on LEFT only
@@ -748,7 +733,7 @@ describe('Template String Processing', () => {
       MODIFIERS_COMPLEX_PIZZA,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
-      fulfillment
+      fulfillment,
     );
 
     // The base product name is "{Crust} Pizza"
@@ -768,14 +753,28 @@ describe('Order Guide Functions', () => {
       const highFlavorModifiers: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
           options: [
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_MUSHROOMS, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_EXTRA_CHEESE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+            {
+              optionId: MOCK_IDS.TOPPING_MUSHROOMS,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+            {
+              optionId: MOCK_IDS.TOPPING_EXTRA_CHEESE,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
           ],
         },
       ];
@@ -783,7 +782,7 @@ describe('Order Guide Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         highFlavorModifiers,
         FUNC_WARN_HIGH_TOPPINGS,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(typeof result).toBe('string');
@@ -795,7 +794,7 @@ describe('Order Guide Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_PLAIN_CHEESE,
         FUNC_WARN_HIGH_TOPPINGS,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(false);
@@ -805,7 +804,7 @@ describe('Order Guide Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_PEPPERONI,
         FUNC_WARN_HIGH_TOPPINGS,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(false);
@@ -818,7 +817,7 @@ describe('Order Guide Functions', () => {
       const result = WFunctional.ProcessProductInstanceFunction(
         MODIFIERS_COMPLEX_PIZZA,
         FUNC_SUGGEST_GARLIC_BREAD,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(typeof result).toBe('string');
@@ -829,18 +828,22 @@ describe('Order Guide Functions', () => {
       const modifiersWithThickCrust: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.CRUST_MT,
-          options: [{ optionId: MOCK_IDS.CRUST_THICK, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.CRUST_THICK, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
       ];
 
       const result = WFunctional.ProcessProductInstanceFunction(
         modifiersWithThickCrust,
         FUNC_SUGGEST_GARLIC_BREAD,
-        MOCK_CATALOG_SELECTORS
+        MOCK_CATALOG_SELECTORS,
       );
 
       expect(result).toBe(false);
@@ -862,7 +865,7 @@ describe('Order Guide Functions', () => {
           const result = WFunctional.ProcessProductInstanceFunction(
             MODIFIERS_COMPLEX_PIZZA,
             func,
-            MOCK_CATALOG_SELECTORS
+            MOCK_CATALOG_SELECTORS,
           );
           // Result should be either a string or false
           expect(typeof result === 'string' || result === false).toBe(true);
@@ -879,7 +882,7 @@ describe('Order Guide Functions', () => {
           const result = WFunctional.ProcessProductInstanceFunction(
             MODIFIERS_COMPLEX_PIZZA,
             func,
-            MOCK_CATALOG_SELECTORS
+            MOCK_CATALOG_SELECTORS,
           );
           // Result should be either a string or false
           expect(typeof result === 'string' || result === false).toBe(true);
@@ -906,7 +909,7 @@ describe('Edge Cases and Potential Bugs', () => {
         emptyModifiers,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       // Should be incomplete since SIZE is required (min_selected: 1)
@@ -926,7 +929,7 @@ describe('Edge Cases and Potential Bugs', () => {
         modifierWithNoOptions,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       // Should be incomplete since no size was selected
@@ -942,7 +945,7 @@ describe('Edge Cases and Potential Bugs', () => {
           MODIFIERS_PLAIN_CHEESE,
           MOCK_CATALOG_SELECTORS,
           serviceTime,
-          fulfillment
+          fulfillment,
         );
       }).toThrow();
     });
@@ -961,7 +964,7 @@ describe('Edge Cases and Potential Bugs', () => {
         invalidModifier,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       expect(metadata).toBeDefined();
@@ -975,15 +978,29 @@ describe('Edge Cases and Potential Bugs', () => {
       const maxToppings: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
           options: [
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_MUSHROOMS, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+            {
+              optionId: MOCK_IDS.TOPPING_MUSHROOMS,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
             { optionId: MOCK_IDS.TOPPING_OLIVES, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_EXTRA_CHEESE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+            {
+              optionId: MOCK_IDS.TOPPING_EXTRA_CHEESE,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
             // Note: TOPPING_DISABLED and TOPPING_TIME_LIMITED would make 6, but they might be disabled
           ],
         },
@@ -994,7 +1011,7 @@ describe('Edge Cases and Potential Bugs', () => {
         maxToppings,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       expect(metadata.incomplete).toBe(false);
@@ -1006,14 +1023,28 @@ describe('Edge Cases and Potential Bugs', () => {
       const manyToppings: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
           options: [
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }, // flavor: 2
-            { optionId: MOCK_IDS.TOPPING_MUSHROOMS, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }, // flavor: 1
-            { optionId: MOCK_IDS.TOPPING_EXTRA_CHEESE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }, // flavor: 3
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            }, // flavor: 2
+            {
+              optionId: MOCK_IDS.TOPPING_MUSHROOMS,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            }, // flavor: 1
+            {
+              optionId: MOCK_IDS.TOPPING_EXTRA_CHEESE,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            }, // flavor: 3
           ],
         },
       ];
@@ -1023,7 +1054,7 @@ describe('Edge Cases and Potential Bugs', () => {
         manyToppings,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       // Total flavor: 2 + 1 + 3 = 6
@@ -1036,7 +1067,13 @@ describe('Edge Cases and Potential Bugs', () => {
         ...MODIFIERS_COMPLEX_PIZZA,
         {
           modifierTypeId: MOCK_IDS.REMOVAL_MT,
-          options: [{ optionId: MOCK_IDS.REMOVAL_NO_CHEESE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }], // flavor: -2
+          options: [
+            {
+              optionId: MOCK_IDS.REMOVAL_NO_CHEESE,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+          ], // flavor: -2
         },
       ];
 
@@ -1045,7 +1082,7 @@ describe('Edge Cases and Potential Bugs', () => {
         modifiersWithRemoval,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       // The flavor from the removal should reduce the total
@@ -1061,13 +1098,23 @@ describe('Edge Cases and Potential Bugs', () => {
       const sameOnBothSides: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
           options: [
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.RIGHT, qualifier: OptionQualifier.REGULAR },
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.LEFT,
+              qualifier: OptionQualifier.REGULAR,
+            },
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.RIGHT,
+              qualifier: OptionQualifier.REGULAR,
+            },
           ],
         },
       ];
@@ -1079,7 +1126,7 @@ describe('Edge Cases and Potential Bugs', () => {
         sameOnBothSides,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       expect(metadata.is_split).toBe(true);
@@ -1092,13 +1139,23 @@ describe('Edge Cases and Potential Bugs', () => {
       const mixedPlacements: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
           options: [
-            { optionId: MOCK_IDS.TOPPING_MUSHROOMS, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR },
+            {
+              optionId: MOCK_IDS.TOPPING_MUSHROOMS,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.LEFT,
+              qualifier: OptionQualifier.REGULAR,
+            },
           ],
         },
       ];
@@ -1108,7 +1165,7 @@ describe('Edge Cases and Potential Bugs', () => {
         mixedPlacements,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        fulfillment
+        fulfillment,
       );
 
       expect(metadata.is_split).toBe(true);
@@ -1127,7 +1184,7 @@ describe('Edge Cases and Potential Bugs', () => {
         MODIFIERS_COMPLEX_PIZZA,
         MOCK_CATALOG_SELECTORS,
         serviceTime,
-        MOCK_IDS.FULFILLMENT_DELIVERY
+        MOCK_IDS.FULFILLMENT_DELIVERY,
       );
 
       // Check that REMOVAL_MT is disabled
@@ -1156,24 +1213,42 @@ describe('Edge Cases and Potential Bugs', () => {
       const withPepperoni: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
-          options: [{ optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+          ],
         },
       ];
 
       const withPepperoniAndMushrooms: ProductModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
-          options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+          options: [
+            { optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+          ],
         },
         {
           modifierTypeId: MOCK_IDS.TOPPINGS_MT,
           options: [
-            { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-            { optionId: MOCK_IDS.TOPPING_MUSHROOMS, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+            {
+              optionId: MOCK_IDS.TOPPING_PEPPERONI,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
+            {
+              optionId: MOCK_IDS.TOPPING_MUSHROOMS,
+              placement: OptionPlacement.WHOLE,
+              qualifier: OptionQualifier.REGULAR,
+            },
           ],
         },
       ];
@@ -1188,4 +1263,3 @@ describe('Edge Cases and Potential Bugs', () => {
     });
   });
 });
-

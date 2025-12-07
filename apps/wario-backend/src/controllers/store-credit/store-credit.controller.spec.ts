@@ -1,4 +1,3 @@
-
 /**
  * StoreCreditController Unit Tests
  *
@@ -16,10 +15,7 @@ import { CURRENCY, StoreCreditType } from '@wcp/wario-shared';
 
 import { mockStoreCreditProviderService } from '../../../test/utils';
 import { StoreCreditProviderService } from '../../config/store-credit-provider/store-credit-provider.service';
-import {
-  InsufficientCreditException,
-  StoreCreditNotFoundException,
-} from '../../exceptions';
+import { InsufficientCreditException, StoreCreditNotFoundException } from '../../exceptions';
 
 import { StoreCreditController } from './store-credit.controller';
 
@@ -32,9 +28,7 @@ describe('StoreCreditController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [StoreCreditController],
-      providers: [
-        { provide: StoreCreditProviderService, useValue: mockStoreCreditService },
-      ],
+      providers: [{ provide: StoreCreditProviderService, useValue: mockStoreCreditService }],
     }).compile();
 
     controller = module.get<StoreCreditController>(StoreCreditController);
@@ -65,9 +59,7 @@ describe('StoreCreditController', () => {
         valid: false,
       });
 
-      await expect(controller.getValidateCredit('INVALID')).rejects.toThrow(
-        StoreCreditNotFoundException,
-      );
+      await expect(controller.getValidateCredit('INVALID')).rejects.toThrow(StoreCreditNotFoundException);
     });
 
     it('should throw StoreCreditNotFoundException when balance is zero', async () => {
@@ -78,9 +70,7 @@ describe('StoreCreditController', () => {
         lock: { iv: 'test', enc: 'test', auth: 'test' },
       });
 
-      await expect(controller.getValidateCredit('EMPTY')).rejects.toThrow(
-        StoreCreditNotFoundException,
-      );
+      await expect(controller.getValidateCredit('EMPTY')).rejects.toThrow(StoreCreditNotFoundException);
     });
   });
 
@@ -120,9 +110,7 @@ describe('StoreCreditController', () => {
         lock: { iv: 'test', enc: 'test', auth: 'test' },
       };
 
-      await expect(controller.postSpendCredit(body)).rejects.toThrow(
-        InsufficientCreditException,
-      );
+      await expect(controller.postSpendCredit(body)).rejects.toThrow(InsufficientCreditException);
     });
   });
 
@@ -182,9 +170,7 @@ describe('StoreCreditController', () => {
         recipientMessage: '',
       };
 
-      await expect(
-        controller.postPurchaseCredit(body),
-      ).rejects.toThrow(HttpException);
+      await expect(controller.postPurchaseCredit(body)).rejects.toThrow(HttpException);
     });
   });
 

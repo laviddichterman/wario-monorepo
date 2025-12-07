@@ -9,27 +9,35 @@ interface FulfillmentServiceSelectorProps {
   onServiceChange: (value: string) => void;
 }
 
-export default function FulfillmentServiceSelector({ options, selectedService, onServiceChange }: FulfillmentServiceSelectorProps) {
+export default function FulfillmentServiceSelector({
+  options,
+  selectedService,
+  onServiceChange,
+}: FulfillmentServiceSelectorProps) {
   return (
     <Grid
       sx={{ pl: 3, pb: 5 }}
       size={{
         xs: 12,
-        xl: 4
-      }}>
+        xl: 4,
+      }}
+    >
       <span>Requested Service:</span>
       <RadioGroup
         row
-        onChange={(_e, value: string) => { onServiceChange(value); }}
-        value={selectedService}>
+        onChange={(_e, value: string) => {
+          onServiceChange(value);
+        }}
+        value={selectedService}
+      >
         {options.map((option) => (
           <FormControlLabel
             key={option.value}
             value={option.value}
             control={<Radio />}
             label={option.label}
-          // passing the disabled prop gives react fragment warning
-          // disabled={option.disabled}
+            // passing the disabled prop gives react fragment warning
+            // disabled={option.disabled}
           />
         ))}
       </RadioGroup>

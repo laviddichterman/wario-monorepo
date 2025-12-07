@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
-import {
-  m,
-  useAnimationFrame,
-  useMotionTemplate,
-  useMotionValue,
-  useTransform,
-} from 'motion/react';
+import { m, useAnimationFrame, useMotionTemplate, useMotionValue, useTransform } from 'motion/react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 
 import type { BoxProps } from '@mui/material/Box';
@@ -48,14 +42,7 @@ type AnimateBorderProps = BoxProps & {
   };
 };
 
-export function AnimateBorder({
-  sx,
-  children,
-  duration,
-  slotProps,
-  className,
-  ...other
-}: AnimateBorderProps) {
+export function AnimateBorder({ sx, children, duration, slotProps, className, ...other }: AnimateBorderProps) {
   const theme = useTheme();
 
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -84,9 +71,7 @@ export function AnimateBorder({
   }, []);
 
   const outlineColor =
-    typeof slotProps?.outlineColor === 'function'
-      ? slotProps.outlineColor(theme)
-      : slotProps?.outlineColor;
+    typeof slotProps?.outlineColor === 'function' ? slotProps.outlineColor(theme) : slotProps?.outlineColor;
 
   const borderProps = {
     duration,
@@ -104,7 +89,7 @@ export function AnimateBorder({
         {
           ...theme.mixins.borderGradient({ padding: slotProps?.primaryBorder?.width }),
         },
-        ...(spreadSx(slotProps?.primaryBorder?.sx)),
+        ...spreadSx(slotProps?.primaryBorder?.sx),
       ]}
     />
   );
@@ -122,7 +107,7 @@ export function AnimateBorder({
             borderRadius: secondaryBorderStyles.borderRadius,
             transform: 'scale(-1, -1)',
           },
-          ...(spreadSx(slotProps.secondaryBorder.sx)),
+          ...spreadSx(slotProps.secondaryBorder.sx),
         ]}
       />
     );
@@ -148,7 +133,7 @@ export function AnimateBorder({
             minHeight: 'unset',
           }),
         },
-        ...(spreadSx(sx)),
+        ...spreadSx(sx),
       ]}
       {...other}
     >
@@ -197,19 +182,16 @@ const MovingBorder = forwardRef<HTMLSpanElement, MovingBorderProps>((props, ref)
     }
   };
 
-  useAnimationFrame((time) => { if (!isHidden) updateAnimationFrame(time); });
+  useAnimationFrame((time) => {
+    if (!isHidden) updateAnimationFrame(time);
+  });
 
   const x = useTransform(progress, (val) => calculateTransform(val).x);
   const y = useTransform(progress, (val) => calculateTransform(val).y);
   const transform = useMotionTemplate`translateX(${x}px) translateY(${y}px) translateX(-50%) translateY(-50%)`;
 
   return (
-    <Box
-      component="span"
-      ref={ref}
-      sx={[{ textAlign: 'initial' }, ...spreadSx(sx)]}
-      {...other}
-    >
+    <Box component="span" ref={ref} sx={[{ textAlign: 'initial' }, ...spreadSx(sx)]} {...other}>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"

@@ -1,4 +1,3 @@
-
 import { DateTimeIntervalBuilder, WOrderStatus } from '@wcp/wario-shared';
 import { useServerTime } from '@wcp/wario-ux-shared/query';
 
@@ -11,7 +10,7 @@ import { WOrderComponentCard } from '@/components/wario/orders/WOrderComponentCa
 export type OrderCalendarProps = {
   initialView?: ICalendarView;
   handleConfirmOrder: (id: string) => void;
-}
+};
 
 export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendarProps) {
   const currentTime = useServerTime();
@@ -19,8 +18,8 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
   const { data: ordersMap = {} } = useOrdersQuery(null);
 
   const ordersAsEvents: ICalendarEvent[] = Object.values(ordersMap)
-    .filter(order => order.status !== WOrderStatus.CANCELED)
-    .map(order => {
+    .filter((order) => order.status !== WOrderStatus.CANCELED)
+    .map((order) => {
       // Default maxDuration to 30 since getFulfillmentById is missing
       const maxDuration = 30;
       const dateTimeInterval = DateTimeIntervalBuilder(order.fulfillment, maxDuration);
@@ -33,7 +32,7 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
       };
     });
 
-  const getEventById = (id: string) => ordersAsEvents.find(x => x.id === id);
+  const getEventById = (id: string) => ordersAsEvents.find((x) => x.id === id);
 
   return (
     <CalendarComponent
@@ -44,9 +43,16 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
       eventById={getEventById}
       updateEvent={() => undefined}
       CalendarForm={({ currentEvent, onClose }) => {
-        return currentEvent && <WOrderComponentCard orderId={currentEvent.id} handleConfirmOrder={handleConfirmOrder} onCloseCallback={onClose} />;
+        return (
+          currentEvent && (
+            <WOrderComponentCard
+              orderId={currentEvent.id}
+              handleConfirmOrder={handleConfirmOrder}
+              onCloseCallback={onClose}
+            />
+          )
+        );
       }}
     />
-
   );
 }

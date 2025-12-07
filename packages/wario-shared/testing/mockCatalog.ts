@@ -1,16 +1,16 @@
 /**
  * Comprehensive Mock Catalog for Testing
- * 
+ *
  * This file provides a complete, interconnected mock catalog that exercises
  * all major code paths in the wario-shared catalog codebase, targeting 95%+ coverage.
- * 
+ *
  * @example
  * ```typescript
- * import { 
- *   MOCK_CATALOG, 
+ * import {
+ *   MOCK_CATALOG,
  *   getMockCatalogSelectors,
  *   BASIC_PIZZA_PRODUCT,
- *   TOPPINGS_MODIFIER_TYPE 
+ *   TOPPINGS_MODIFIER_TYPE
  * } from '@wcp/wario-shared/testing';
  * ```
  */
@@ -1011,10 +1011,7 @@ export const FUNC_ORDER_QUANTITY_CHECK: OrderInstanceFunction = {
   },
 };
 
-export const ALL_ORDER_INSTANCE_FUNCTIONS: OrderInstanceFunction[] = [
-  FUNC_ORDER_SIZE_CHECK,
-  FUNC_ORDER_QUANTITY_CHECK,
-];
+export const ALL_ORDER_INSTANCE_FUNCTIONS: OrderInstanceFunction[] = [FUNC_ORDER_SIZE_CHECK, FUNC_ORDER_QUANTITY_CHECK];
 
 // ============================================================================
 // Products
@@ -1110,9 +1107,7 @@ export const DISABLED_PRODUCT: IProduct = {
   disabled: null,
   availability: [],
   externalIDs: [],
-  modifiers: [
-    { mtid: MOCK_IDS.SIZE_MT, enable: null, serviceDisable: [] },
-  ],
+  modifiers: [{ mtid: MOCK_IDS.SIZE_MT, enable: null, serviceDisable: [] }],
   baseProductId: MOCK_IDS.PI_DISABLED_BASE,
   category_ids: [MOCK_IDS.DISABLED_CATEGORY],
   printerGroup: null,
@@ -1182,7 +1177,9 @@ export const PI_PEPPERONI: IProductInstance = {
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.TOPPINGS_MT,
-      options: [{ optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      options: [
+        { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+      ],
     },
   ],
   externalIDs: [],
@@ -1211,7 +1208,9 @@ export const PI_COMPLEX_THIN_CRUST: IProductInstance = {
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.CRUST_MT,
-      options: [{ optionId: MOCK_IDS.CRUST_THIN, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      options: [
+        { optionId: MOCK_IDS.CRUST_THIN, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+      ],
     },
   ],
   externalIDs: [],
@@ -1228,7 +1227,9 @@ export const PI_COMPLEX_STUFFED: IProductInstance = {
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.CRUST_MT,
-      options: [{ optionId: MOCK_IDS.CRUST_STUFFED, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+      options: [
+        { optionId: MOCK_IDS.CRUST_STUFFED, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+      ],
     },
   ],
   externalIDs: [],
@@ -1257,7 +1258,9 @@ export const PI_SPLIT_HALF_PEPPERONI: IProductInstance = {
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.TOPPINGS_MT,
-      options: [{ optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR }],
+      options: [
+        { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR },
+      ],
     },
   ],
   externalIDs: [],
@@ -1311,7 +1314,9 @@ export const MODIFIERS_PEPPERONI: ProductModifierEntry[] = [
   },
   {
     modifierTypeId: MOCK_IDS.TOPPINGS_MT,
-    options: [{ optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+    options: [
+      { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+    ],
   },
 ];
 
@@ -1364,7 +1369,9 @@ export const MODIFIERS_COMPLEX_PIZZA: ProductModifierEntry[] = [
   },
   {
     modifierTypeId: MOCK_IDS.SAUCE_MT,
-    options: [{ optionId: MOCK_IDS.SAUCE_MARINARA, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+    options: [
+      { optionId: MOCK_IDS.SAUCE_MARINARA, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+    ],
   },
   {
     modifierTypeId: MOCK_IDS.TOPPINGS_MT,
@@ -1381,7 +1388,9 @@ export const MODIFIERS_COMPLEX_PIZZA: ProductModifierEntry[] = [
 export const MODIFIERS_INCOMPLETE: ProductModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.TOPPINGS_MT,
-    options: [{ optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
+    options: [
+      { optionId: MOCK_IDS.TOPPING_PEPPERONI, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
+    ],
   },
 ];
 
@@ -1396,7 +1405,7 @@ const productInstanceFunctionsToRecord = (funcs: IProductInstanceFunction[]): Re
   funcs.reduce<RecordProductInstanceFunctions>((acc, f) => ({ ...acc, [f.id]: f }), {});
 
 /**
- * Convert array of order instance functions to record  
+ * Convert array of order instance functions to record
  */
 const orderInstanceFunctionsToRecord = (funcs: OrderInstanceFunction[]): RecordOrderInstanceFunctions =>
   funcs.reduce<RecordOrderInstanceFunctions>((acc, f) => ({ ...acc, [f.id]: f }), {});
@@ -1412,7 +1421,7 @@ export const MOCK_CATALOG: ICatalog = CatalogGenerator(
   ALL_PRODUCT_INSTANCES,
   productInstanceFunctionsToRecord(ALL_PRODUCT_INSTANCE_FUNCTIONS),
   orderInstanceFunctionsToRecord(ALL_ORDER_INSTANCE_FUNCTIONS),
-  { major: 1, minor: 0, patch: 0 }
+  { major: 1, minor: 0, patch: 0 },
 );
 
 /**
@@ -1433,15 +1442,17 @@ export const MOCK_CATALOG_SELECTORS: ICatalogSelectors = getMockCatalogSelectors
  * Create a custom catalog with specific entities.
  * Useful for testing edge cases.
  */
-export const createCustomMockCatalog = (overrides: {
-  categories?: ICategory[];
-  modifierTypes?: IOptionType[];
-  options?: IOption[];
-  products?: IProduct[];
-  productInstances?: IProductInstance[];
-  productInstanceFunctions?: IProductInstanceFunction[];
-  orderInstanceFunctions?: OrderInstanceFunction[];
-} = {}): ICatalog => {
+export const createCustomMockCatalog = (
+  overrides: {
+    categories?: ICategory[];
+    modifierTypes?: IOptionType[];
+    options?: IOption[];
+    products?: IProduct[];
+    productInstances?: IProductInstance[];
+    productInstanceFunctions?: IProductInstanceFunction[];
+    orderInstanceFunctions?: OrderInstanceFunction[];
+  } = {},
+): ICatalog => {
   return CatalogGenerator(
     overrides.categories ?? ALL_CATEGORIES,
     overrides.modifierTypes ?? ALL_MODIFIER_TYPES,
@@ -1450,7 +1461,7 @@ export const createCustomMockCatalog = (overrides: {
     overrides.productInstances ?? ALL_PRODUCT_INSTANCES,
     productInstanceFunctionsToRecord(overrides.productInstanceFunctions ?? ALL_PRODUCT_INSTANCE_FUNCTIONS),
     orderInstanceFunctionsToRecord(overrides.orderInstanceFunctions ?? ALL_ORDER_INSTANCE_FUNCTIONS),
-    { major: 1, minor: 0, patch: 0 }
+    { major: 1, minor: 0, patch: 0 },
   );
 };
 
@@ -1480,8 +1491,7 @@ export const getMockProductEntry = (productId: string): CatalogProductEntry | un
 /**
  * Helper to get an option by ID from the mock catalog
  */
-export const getMockOption = (optionId: string): IOption | undefined =>
-  MOCK_CATALOG_SELECTORS.option(optionId);
+export const getMockOption = (optionId: string): IOption | undefined => MOCK_CATALOG_SELECTORS.option(optionId);
 
 /**
  * Helper to get a product instance by ID from the mock catalog
@@ -1492,5 +1502,4 @@ export const getMockProductInstance = (productInstanceId: string): IProductInsta
 /**
  * Create a default service time for testing (current time)
  */
-export const createMockServiceTime = (offsetMinutes = 0): number =>
-  Date.now() + offsetMinutes * 60 * 1000;
+export const createMockServiceTime = (offsetMinutes = 0): number => Date.now() + offsetMinutes * 60 * 1000;

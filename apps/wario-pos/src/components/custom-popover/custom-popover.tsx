@@ -10,14 +10,7 @@ import { calculateAnchorOrigin } from './utils';
 
 // ----------------------------------------------------------------------
 
-export function CustomPopover({
-  open,
-  onClose,
-  children,
-  anchorEl,
-  slotProps,
-  ...other
-}: CustomPopoverProps) {
+export function CustomPopover({ open, onClose, children, anchorEl, slotProps, ...other }: CustomPopoverProps) {
   const { arrow: arrowProps, paper: paperProps, ...otherSlotProps } = slotProps ?? {};
 
   const arrowSize = arrowProps?.size ?? 14;
@@ -46,17 +39,12 @@ export function CustomPopover({
             },
             ...spreadSx(paperProps?.sx),
           ],
-        }
+        },
       }}
       {...other}
     >
       {!arrowProps?.hide && (
-        <Arrow
-          size={arrowSize}
-          offset={arrowOffset}
-          placement={arrowPlacement}
-          sx={arrowProps?.sx}
-        />
+        <Arrow size={arrowSize} offset={arrowOffset} placement={arrowPlacement} sx={arrowProps?.sx} />
       )}
       {children}
     </Popover>

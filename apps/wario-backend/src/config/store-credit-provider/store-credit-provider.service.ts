@@ -40,7 +40,7 @@ export class StoreCreditProviderService {
     @Inject(DataProviderService) private readonly dataProviderService: DataProviderService,
     @InjectPinoLogger(StoreCreditProviderService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   GenerateCreditCode = () => {
     const reference_id = Date.now().toString(36).toUpperCase();
@@ -241,11 +241,11 @@ export class StoreCreditProviderService {
     const valid = expiration === null || !isValid(expiration) || !isBefore(expiration, startOfDay(Date.now()));
     return valid
       ? {
-        valid: true,
-        credit_type: StoreCreditType[entry[2] as keyof typeof StoreCreditType],
-        lock: { enc: lock.enc, iv: ivAsString, auth: authAsString },
-        amount: { amount: balance, currency: CURRENCY.USD },
-      }
+          valid: true,
+          credit_type: StoreCreditType[entry[2] as keyof typeof StoreCreditType],
+          lock: { enc: lock.enc, iv: ivAsString, auth: authAsString },
+          amount: { amount: balance, currency: CURRENCY.USD },
+        }
       : { valid: false };
   };
 
@@ -265,17 +265,20 @@ export class StoreCreditProviderService {
       if (entry[7] == code) {
         const credit_balance = Math.round(Number(entry[3]) * 100);
         if (amount.amount > credit_balance) {
-          this.logger.error({ code: entry[7] as string, amount, credit_balance }, "Attempt to redeem more credit than balance available. Someone is attempting to hack the system.");
+          this.logger.error(
+            { code: entry[7] as string, amount, credit_balance },
+            'Attempt to redeem more credit than balance available. Someone is attempting to hack the system.',
+          );
           return { success: false };
         }
-        if ((entry[10] != lock.enc || entry[11] != lock.iv || entry[12] != lock.auth)) {
+        if (entry[10] != lock.enc || entry[11] != lock.iv || entry[12] != lock.auth) {
           this.logger.error({ code: entry[7] as string, lock }, 'Cheater detected: store credit lock mismatch');
           return { success: false };
         }
         if (entry[8]) {
           const expiration = startOfDay(parseISO(String(entry[8])));
           if (isBefore(expiration, beginningOfToday)) {
-            this.logger.error({ code: entry[7] as string, expiration }, "Attempt to use expired credit");
+            this.logger.error({ code: entry[7] as string, expiration }, 'Attempt to use expired credit');
             return { success: false };
           }
         }

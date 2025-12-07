@@ -63,10 +63,7 @@ export function AnimateText({
 
   const animationControls = useAnimation();
 
-  const textArray = useMemo(
-    () => (Array.isArray(textContent) ? textContent : [textContent]),
-    [textContent]
-  );
+  const textArray = useMemo(() => (Array.isArray(textContent) ? textContent : [textContent]), [textContent]);
 
   const isInView = useInView(textRef, { once, amount });
 
@@ -92,7 +89,9 @@ export function AnimateText({
       void animationControls.start('initial');
     }
 
-    return () => { clearTimeout(timeout); };
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [animationControls, isInView, repeatDelayMs]);
 
   return (

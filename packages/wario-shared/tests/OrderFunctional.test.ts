@@ -1,9 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import type {
-  AbstractOrderExpression,
-  WOrderInstancePartial,
-} from '../src/lib/derived-types';
+import type { AbstractOrderExpression, WOrderInstancePartial } from '../src/lib/derived-types';
 import {
   ConstLiteralDiscriminator,
   LogicalFunctionOperator,
@@ -16,9 +13,10 @@ import { OrderFunctional } from '../src/lib/objects/OrderFunctional';
 import { createMockCatalogSelectorsFromArrays } from './mocks';
 
 // Helper function to create a mock order
-const createMockOrder = (): WOrderInstancePartial => ({
-  cart: [],
-} as unknown as WOrderInstancePartial);
+const createMockOrder = (): WOrderInstancePartial =>
+  ({
+    cart: [],
+  }) as unknown as WOrderInstancePartial;
 
 describe('OrderFunctional.ProcessConstLiteralStatement', () => {
   it('should return the value for a boolean literal', () => {
@@ -226,9 +224,18 @@ describe('OrderFunctional.ProcessAbstractOrderExpressionStatement', () => {
     const expr: AbstractOrderExpression = {
       discriminator: OrderInstanceFunctionType.IfElse,
       expr: {
-        test: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        true_branch: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'yes' } },
-        false_branch: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'no' } },
+        test: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        true_branch: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'yes' },
+        },
+        false_branch: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'no' },
+        },
       },
     };
     expect(OrderFunctional.ProcessAbstractOrderExpressionStatement(mockOrder, expr, mockSelectors)).toBe('yes');
@@ -239,8 +246,14 @@ describe('OrderFunctional.ProcessAbstractOrderExpressionStatement', () => {
       discriminator: OrderInstanceFunctionType.Logical,
       expr: {
         operator: LogicalFunctionOperator.AND,
-        operandA: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        operandB: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
+        operandA: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        operandB: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
       },
     };
     expect(OrderFunctional.ProcessAbstractOrderExpressionStatement(mockOrder, expr, mockSelectors)).toBe(true);
@@ -319,9 +332,18 @@ describe('OrderFunctional.AbstractOrderExpressionStatementToString', () => {
     const expr: AbstractOrderExpression = {
       discriminator: OrderInstanceFunctionType.IfElse,
       expr: {
-        test: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        true_branch: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'yes' } },
-        false_branch: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'no' } },
+        test: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        true_branch: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'yes' },
+        },
+        false_branch: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.STRING, value: 'no' },
+        },
       },
     };
     const result = OrderFunctional.AbstractOrderExpressionStatementToString(expr, mockSelectors);
@@ -334,7 +356,10 @@ describe('OrderFunctional.AbstractOrderExpressionStatementToString', () => {
       discriminator: OrderInstanceFunctionType.Logical,
       expr: {
         operator: LogicalFunctionOperator.NOT,
-        operandA: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
+        operandA: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
       },
     };
     const result = OrderFunctional.AbstractOrderExpressionStatementToString(expr, mockSelectors);
@@ -346,8 +371,14 @@ describe('OrderFunctional.AbstractOrderExpressionStatementToString', () => {
       discriminator: OrderInstanceFunctionType.Logical,
       expr: {
         operator: LogicalFunctionOperator.AND,
-        operandA: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        operandB: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: false } },
+        operandA: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        operandB: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: false },
+        },
       },
     };
     const result = OrderFunctional.AbstractOrderExpressionStatementToString(expr, mockSelectors);
@@ -388,7 +419,10 @@ describe('OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString'
       discriminator: OrderInstanceFunctionType.Logical,
       expr: {
         operator: LogicalFunctionOperator.NOT,
-        operandA: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
+        operandA: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
       },
     };
     const result = OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(expr, mockSelectors);
@@ -400,8 +434,14 @@ describe('OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString'
       discriminator: OrderInstanceFunctionType.Logical,
       expr: {
         operator: LogicalFunctionOperator.AND,
-        operandA: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true } },
-        operandB: { discriminator: OrderInstanceFunctionType.ConstLiteral, expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: false } },
+        operandA: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: true },
+        },
+        operandB: {
+          discriminator: OrderInstanceFunctionType.ConstLiteral,
+          expr: { discriminator: ConstLiteralDiscriminator.BOOLEAN, value: false },
+        },
       },
     };
     const result = OrderFunctional.AbstractOrderExpressionStatementToHumanReadableString(expr, mockSelectors);

@@ -52,8 +52,6 @@ export interface ICatalogContext {
   logger?: PinoLogger;
 }
 
-
-
 // * add note to payment or whatever so the SQ receipt makes some sense, see https://squareup.com/receipt/preview/jXnAjUa3wdk6al0EofHUg8PUZzFZY
 // this all needs to be stored as part of the square configuration for the merchant. it should be bootstrapped and managed via the catalog sync process
 export const SQUARE_TAX_RATE_CATALOG_ID = IS_PRODUCTION ? 'TMG7E3E5E45OXHJTBOHG2PMS' : 'LOFKVY5UC3SLKPT2WANSBPZQ';
@@ -450,13 +448,13 @@ const WProductModifiersToSquareModifiers = (
         acc.push(
           squareModifierId === null
             ? {
-              basePriceMoney: IMoneyToBigIntMoney(catalogOption.price),
-              name: catalogOption.displayName,
-            }
+                basePriceMoney: IMoneyToBigIntMoney(catalogOption.price),
+                name: catalogOption.displayName,
+              }
             : {
-              catalogObjectId: squareModifierId,
-              quantity: '1',
-            },
+                catalogObjectId: squareModifierId,
+                quantity: '1',
+              },
         );
       }
     });
@@ -497,13 +495,13 @@ export const CreateOrderFromCart = (
         quantity: x.quantity.toString(10),
         ...(squareItemVariationId === null
           ? {
-            name: x.product.m.name,
-            variationName: x.product.m.name,
-            basePriceMoney: IMoneyToBigIntMoney(catalogProduct.product.price),
-          }
+              name: x.product.m.name,
+              variationName: x.product.m.name,
+              basePriceMoney: IMoneyToBigIntMoney(catalogProduct.product.price),
+            }
           : {
-            catalogObjectId: squareItemVariationId,
-          }),
+              catalogObjectId: squareItemVariationId,
+            }),
         itemType: 'ITEM',
         modifiers: WProductModifiersToSquareModifiers(x.product, catalogContext),
       };
@@ -690,14 +688,14 @@ export const ProductInstanceToSquareCatalogObject = (
         maxSelectedModifiers: 1,
         ...(selectedOptionsForModifierType.length > 0
           ? {
-            modifierOverrides: selectedOptionsForModifierType.map((optionInstance) => ({
-              modifierId: GetSquareIdFromExternalIds(
-                catalogSelectors.option(optionInstance.optionId)!.externalIDs,
-                OptionInstanceToSquareIdSpecifier(optionInstance, logger),
-              )!,
-              onByDefault: true,
-            })),
-          }
+              modifierOverrides: selectedOptionsForModifierType.map((optionInstance) => ({
+                modifierId: GetSquareIdFromExternalIds(
+                  catalogSelectors.option(optionInstance.optionId)!.externalIDs,
+                  OptionInstanceToSquareIdSpecifier(optionInstance, logger),
+                )!,
+                onByDefault: true,
+              })),
+            }
           : {}),
       });
     } else {
@@ -743,9 +741,9 @@ export const ProductInstanceToSquareCatalogObject = (
     itemData: {
       ...(printerGroup
         ? {
-          categories: [...otherCategories, { id: newPrinterGroupCategory! }],
-          reportingCategory: { id: newPrinterGroupCategory! },
-        }
+            categories: [...otherCategories, { id: newPrinterGroupCategory! }],
+            reportingCategory: { id: newPrinterGroupCategory! },
+          }
         : { categories: otherCategories }),
       abbreviation: productInstance.shortcode.slice(0, 24),
       availableElectronically: true,
@@ -805,93 +803,93 @@ export const ModifierOptionPlacementsAndQualifiersToSquareCatalogObjects = (
   const baseOrdinal = option.ordinal * 6;
   const modifierLite: CatalogObject[] = option.metadata.allowLite
     ? [
-      {
-        id: squareIdLite,
-        type: 'MODIFIER',
-        presentAtAllLocations: false,
-        presentAtLocationIds: locationIds,
-        ...(versionLite !== null ? { version: versionLite } : {}),
-        modifierData: {
-          name: `LITE ${option.displayName}`,
-          // todo kitchenName: `LITE ${option.shortcode}`,
-          ordinal: baseOrdinal + 4,
-          modifierListId: modifierListId,
-          priceMoney: IMoneyToBigIntMoney(option.price),
+        {
+          id: squareIdLite,
+          type: 'MODIFIER',
+          presentAtAllLocations: false,
+          presentAtLocationIds: locationIds,
+          ...(versionLite !== null ? { version: versionLite } : {}),
+          modifierData: {
+            name: `LITE ${option.displayName}`,
+            // todo kitchenName: `LITE ${option.shortcode}`,
+            ordinal: baseOrdinal + 4,
+            modifierListId: modifierListId,
+            priceMoney: IMoneyToBigIntMoney(option.price),
+          },
         },
-      },
-    ]
+      ]
     : [];
   const modifierHeavy: CatalogObject[] = option.metadata.allowHeavy
     ? [
-      {
-        id: squareIdHeavy,
-        type: 'MODIFIER',
-        presentAtAllLocations: false,
-        presentAtLocationIds: locationIds,
-        ...(versionHeavy !== null ? { version: versionHeavy } : {}),
-        modifierData: {
-          name: `HEAVY ${option.displayName}`,
-          // todo kitchenName: `HEAVY ${option.shortcode}`,
-          ordinal: baseOrdinal + 5,
-          modifierListId: modifierListId,
-          priceMoney: IMoneyToBigIntMoney({
-            currency: option.price.currency,
-            amount: option.price.amount * 2,
-          }),
+        {
+          id: squareIdHeavy,
+          type: 'MODIFIER',
+          presentAtAllLocations: false,
+          presentAtLocationIds: locationIds,
+          ...(versionHeavy !== null ? { version: versionHeavy } : {}),
+          modifierData: {
+            name: `HEAVY ${option.displayName}`,
+            // todo kitchenName: `HEAVY ${option.shortcode}`,
+            ordinal: baseOrdinal + 5,
+            modifierListId: modifierListId,
+            priceMoney: IMoneyToBigIntMoney({
+              currency: option.price.currency,
+              amount: option.price.amount * 2,
+            }),
+          },
         },
-      },
-    ]
+      ]
     : [];
   const modifierOts: CatalogObject[] = option.metadata.allowOTS
     ? [
-      {
-        id: squareIdOts,
-        type: 'MODIFIER',
-        presentAtAllLocations: false,
-        presentAtLocationIds: locationIds,
-        ...(versionOts !== null ? { version: versionOts } : {}),
-        modifierData: {
-          name: `OTS ${option.displayName}`,
-          // todo kitchenName: `OTS ${option.shortcode}`,
-          ordinal: baseOrdinal + 6,
-          modifierListId: modifierListId,
-          priceMoney: IMoneyToBigIntMoney(option.price),
+        {
+          id: squareIdOts,
+          type: 'MODIFIER',
+          presentAtAllLocations: false,
+          presentAtLocationIds: locationIds,
+          ...(versionOts !== null ? { version: versionOts } : {}),
+          modifierData: {
+            name: `OTS ${option.displayName}`,
+            // todo kitchenName: `OTS ${option.shortcode}`,
+            ordinal: baseOrdinal + 6,
+            modifierListId: modifierListId,
+            priceMoney: IMoneyToBigIntMoney(option.price),
+          },
         },
-      },
-    ]
+      ]
     : [];
   const modifiersSplit: CatalogObject[] = option.metadata.can_split
     ? [
-      {
-        id: squareIdLeft,
-        type: 'MODIFIER',
+        {
+          id: squareIdLeft,
+          type: 'MODIFIER',
 
-        presentAtAllLocations: false,
-        presentAtLocationIds: locationIds,
-        ...(versionLeft !== null ? { version: versionLeft } : {}),
-        modifierData: {
-          name: `L) ${option.displayName}`,
-          // todo kitchenName: `L) ${option.shortcode}`,
-          ordinal: baseOrdinal + 1,
-          modifierListId: modifierListId,
-          priceMoney: IMoneyToBigIntMoney(option.price),
+          presentAtAllLocations: false,
+          presentAtLocationIds: locationIds,
+          ...(versionLeft !== null ? { version: versionLeft } : {}),
+          modifierData: {
+            name: `L) ${option.displayName}`,
+            // todo kitchenName: `L) ${option.shortcode}`,
+            ordinal: baseOrdinal + 1,
+            modifierListId: modifierListId,
+            priceMoney: IMoneyToBigIntMoney(option.price),
+          },
         },
-      },
-      {
-        id: squareIdRight,
-        type: 'MODIFIER',
-        presentAtAllLocations: false,
-        presentAtLocationIds: locationIds,
-        ...(versionRight !== null ? { version: versionRight } : {}),
-        modifierData: {
-          name: `R) ${option.displayName}`,
-          // todo kitchenName: `R) ${option.shortcode}`,
-          ordinal: baseOrdinal + 3,
-          modifierListId: modifierListId,
-          priceMoney: IMoneyToBigIntMoney(option.price),
+        {
+          id: squareIdRight,
+          type: 'MODIFIER',
+          presentAtAllLocations: false,
+          presentAtLocationIds: locationIds,
+          ...(versionRight !== null ? { version: versionRight } : {}),
+          modifierData: {
+            name: `R) ${option.displayName}`,
+            // todo kitchenName: `R) ${option.shortcode}`,
+            ordinal: baseOrdinal + 3,
+            modifierListId: modifierListId,
+            priceMoney: IMoneyToBigIntMoney(option.price),
+          },
         },
-      },
-    ]
+      ]
     : [];
   const modifierWhole: CatalogObject = {
     id: squareIdWhole,
@@ -929,7 +927,7 @@ export const ModifierTypeToSquareCatalogObject = (
   const displayName = modifierType.displayName.length > 0 ? modifierType.displayName : modifierType.name;
   const squareName = modifierType.displayFlags.is3p
     ? displayName
-    : `${('0000' + (modifierType.ordinal * 100)).slice(-4)}| ${displayName}`;
+    : `${('0000' + modifierType.ordinal * 100).slice(-4)}| ${displayName}`;
   return {
     id: modifierListId,
     ...(version !== null ? { version } : {}),

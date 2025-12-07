@@ -27,14 +27,18 @@ export function DashboardFooter({ sx, ...other }: FooterProps) {
       {...other}
     >
       <Container>
-
         <Stack>
-          <Typography variant="caption" component="p">WARIO Version: <VersionInfo /></Typography>
+          <Typography variant="caption" component="p">
+            WARIO Version: <VersionInfo />
+          </Typography>
         </Stack>
 
-        <Stack><Typography variant="caption" component="p">
-          © {new Date().getFullYear()}&nbsp;made by&nbsp;Lavid Industries LLC,<br />released under the GNU General Public License v3
-        </Typography>
+        <Stack>
+          <Typography variant="caption" component="p">
+            © {new Date().getFullYear()}&nbsp;made by&nbsp;Lavid Industries LLC,
+            <br />
+            released under the GNU General Public License v3
+          </Typography>
         </Stack>
       </Container>
     </FooterRoot>

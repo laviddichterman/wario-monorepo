@@ -1,15 +1,21 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import type { Polygon } from 'geojson';
-import { useSnackbar } from "notistack";
-import { useState } from "react";
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 
-import { type FulfillmentConfig } from "@wcp/wario-shared";
+import { type FulfillmentConfig } from '@wcp/wario-shared';
 
-import { HOST_API } from "../../config";
+import { HOST_API } from '../../config';
 
-import FulfillmentComponent from "./FulfillmentComponent";
+import FulfillmentComponent from './FulfillmentComponent';
 
-const FulfillmentEditContainer = ({ fulfillment, onCloseCallback }: { fulfillment: FulfillmentConfig; onCloseCallback: VoidFunction }) => {
+const FulfillmentEditContainer = ({
+  fulfillment,
+  onCloseCallback,
+}: {
+  fulfillment: FulfillmentConfig;
+  onCloseCallback: VoidFunction;
+}) => {
   const { enqueueSnackbar } = useSnackbar();
 
   const [ordinal, setOrdinal] = useState(fulfillment.ordinal);
@@ -18,16 +24,18 @@ const FulfillmentEditContainer = ({ fulfillment, onCloseCallback }: { fulfillmen
   const [exposeFulfillment, setExposeFulfillment] = useState(fulfillment.exposeFulfillment);
   const [service, setService] = useState(fulfillment.service);
   const [terms, setTerms] = useState<string[]>(fulfillment.terms);
-  const [fulfillmentDescription, setFulfillmentDescription] = useState(fulfillment.messages.DESCRIPTION ?? "");
+  const [fulfillmentDescription, setFulfillmentDescription] = useState(fulfillment.messages.DESCRIPTION ?? '');
   const [confirmationMessage, setConfirmationMessage] = useState(fulfillment.messages.CONFIRMATION);
   const [instructions, setInstructions] = useState(fulfillment.messages.INSTRUCTIONS);
   const [menuCategoryId, setMenuCategoryId] = useState<string | null>(fulfillment.menuBaseCategoryId);
   const [orderCategoryId, setOrderCategoryId] = useState<string | null>(fulfillment.orderBaseCategoryId);
-  const [orderSupplementaryCategoryId, setOrderSupplementaryCategoryId] = useState<string | null>(fulfillment.orderSupplementaryCategoryId);
+  const [orderSupplementaryCategoryId, setOrderSupplementaryCategoryId] = useState<string | null>(
+    fulfillment.orderSupplementaryCategoryId,
+  );
   const [requirePrepayment, setRequirePrepayment] = useState(fulfillment.requirePrepayment);
   const [allowPrepayment, setAllowPrepayment] = useState(fulfillment.allowPrepayment);
   const [allowTipping, setAllowTipping] = useState(fulfillment.allowTipping);
-  const [autograt, setAutograt] = useState<{ function: string, percentage: number } | null>(fulfillment.autograt);
+  const [autograt, setAutograt] = useState<{ function: string; percentage: number } | null>(fulfillment.autograt);
   const [serviceChargeFunctionId, setServiceChargeFunctionId] = useState<string | null>(fulfillment.serviceCharge);
   const [leadTime, setLeadTime] = useState(fulfillment.leadTime);
   const [leadTimeOffset, setLeadTimeOffset] = useState(fulfillment.leadTimeOffset);
@@ -45,11 +53,17 @@ const FulfillmentEditContainer = ({ fulfillment, onCloseCallback }: { fulfillmen
   const { getAccessTokenSilently } = useAuth0();
 
   const editFulfillment = async () => {
-    if (!isProcessing && menuCategoryId !== null && orderCategoryId !== null && displayName.length > 0 && shortcode.length > 0) {
+    if (
+      !isProcessing &&
+      menuCategoryId !== null &&
+      orderCategoryId !== null &&
+      displayName.length > 0 &&
+      shortcode.length > 0
+    ) {
       setIsProcessing(true);
       try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: "write:catalog" } });
-        const body: Omit<FulfillmentConfig, "id"> = {
+        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+        const body: Omit<FulfillmentConfig, 'id'> = {
           displayName,
           exposeFulfillment,
           shortcode,
@@ -86,25 +100,25 @@ const FulfillmentEditContainer = ({ fulfillment, onCloseCallback }: { fulfillmen
           maxDuration,
           timeStep,
           maxGuests: maxGuests ?? undefined,
-          serviceArea: serviceArea ?? undefined
-
+          serviceArea: serviceArea ?? undefined,
         };
         const response = await fetch(`${HOST_API}/api/v1/config/fulfillment/${fulfillment.id}`, {
-          method: "PATCH",
+          method: 'PATCH',
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(body),
         });
         if (response.status === 200) {
-          enqueueSnackbar(`Updated fulfillment ${displayName}.`)
+          enqueueSnackbar(`Updated fulfillment ${displayName}.`);
           onCloseCallback();
         }
         setIsProcessing(false);
-
       } catch (error) {
-        enqueueSnackbar(`Unable to update fulfillment ${displayName}. Got error: ${JSON.stringify(error)}.`, { variant: "error" });
+        enqueueSnackbar(`Unable to update fulfillment ${displayName}. Got error: ${JSON.stringify(error)}.`, {
+          variant: 'error',
+        });
         console.error(error);
         setIsProcessing(false);
       }

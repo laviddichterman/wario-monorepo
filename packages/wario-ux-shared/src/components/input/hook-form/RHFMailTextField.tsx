@@ -8,7 +8,6 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { type TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 
-
 // ----------------------------------------------------------------------
 type IProps = {
   name: string;
@@ -19,7 +18,7 @@ type Props = IProps & TextFieldProps;
 export function RHFMailTextField({ name, error, ...other }: Props) {
   const { control } = useFormContext();
   const getSuggestion = useCallback((value: string) => {
-    let sug = ""
+    let sug = '';
     const cb = (suggestion: MailcheckModule.ISuggestion) => {
       sug = suggestion.full;
     };
@@ -36,12 +35,12 @@ export function RHFMailTextField({ name, error, ...other }: Props) {
           <TextField
             {...field}
             fullWidth
-            value={field.value as string || ""}
+            value={(field.value as string) || ''}
             error={!!fsError || error}
-            helperText={fsError?.message || (suggestion ? `Did you mean ${suggestion}?` : " ")}
+            helperText={fsError?.message || (suggestion ? `Did you mean ${suggestion}?` : ' ')}
             {...other}
           />
-        )
+        );
       }}
     />
   );

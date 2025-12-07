@@ -59,7 +59,6 @@ export interface PrinterMessage {
  */
 @Injectable()
 export class PrinterService {
-
   constructor(
     @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
@@ -68,7 +67,7 @@ export class PrinterService {
     private catalogProviderService: CatalogProviderService,
     @InjectPinoLogger(PrinterService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Gets the alternate Square location used for printing.
@@ -216,18 +215,12 @@ export class PrinterService {
         })
         .filter((m): m is PrinterMessage => m !== null);
 
-      const messageOrder = CreateOrderForMessages(
-        this.PrinterLocation,
-        order.id,
-        eventTitle,
-        messages,
-        {
-          displayName: `MOVE ${eventTitle}`,
-          emailAddress: order.customerInfo.email,
-          phoneNumber: order.customerInfo.mobileNum,
-          pickupAt: promisedTime.start,
-        },
-      );
+      const messageOrder = CreateOrderForMessages(this.PrinterLocation, order.id, eventTitle, messages, {
+        displayName: `MOVE ${eventTitle}`,
+        emailAddress: order.customerInfo.email,
+        phoneNumber: order.customerInfo.mobileNum,
+        pickupAt: promisedTime.start,
+      });
 
       const squareOrderIds: string[] = [];
       const response = await this.squareService.SendMessageOrder(messageOrder);
@@ -269,18 +262,12 @@ export class PrinterService {
     displayName: string,
   ): Promise<PrintResult> {
     try {
-      const messageOrder = CreateOrderForMessages(
-        this.PrinterLocation,
-        referenceId,
-        ticketName,
-        messages,
-        {
-          displayName,
-          emailAddress: this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
-          phoneNumber: '',
-          pickupAt: new Date(),
-        },
-      );
+      const messageOrder = CreateOrderForMessages(this.PrinterLocation, referenceId, ticketName, messages, {
+        displayName,
+        emailAddress: this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
+        phoneNumber: '',
+        pickupAt: new Date(),
+      });
 
       const squareOrderIds: string[] = [];
       const response = await this.squareService.SendMessageOrder(messageOrder);
@@ -343,10 +330,7 @@ export class PrinterService {
     }
 
     try {
-      const batchOrders = await this.squareService.BatchRetrieveOrders(
-        this.PrinterLocation,
-        squareOrderIds,
-      );
+      const batchOrders = await this.squareService.BatchRetrieveOrders(this.PrinterLocation, squareOrderIds);
 
       if (!batchOrders.success || !batchOrders.result.orders) {
         this.logger.warn({ squareOrderIds }, 'Failed to retrieve print orders for cancellation');
@@ -399,7 +383,6 @@ export class PrinterService {
     fulfillmentConfig: FulfillmentConfig,
   ): Promise<PrintResult> {
     try {
-
       const oldPromisedTime = WDateUtils.ComputeServiceDateTime(order.fulfillment as FulfillmentData);
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
@@ -416,34 +399,29 @@ export class PrinterService {
 
       const messages: PrinterMessage[] = Object.entries(
         CartByPrinterGroup(flatCart, this.catalogProviderService.CatalogSelectors.productEntry),
-      ).map(([pgId, entries]) => {
-        const pg = this.catalogProviderService.PrinterGroups[pgId];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!pg) return null;
+      )
+        .map(([pgId, entries]) => {
+          const pg = this.catalogProviderService.PrinterGroups[pgId];
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (!pg) return null;
 
-        const squareId = GetSquareIdFromExternalIds(pg.externalIDs, 'ITEM_VARIATION');
-        if (!squareId) return null;
+          const squareId = GetSquareIdFromExternalIds(pg.externalIDs, 'ITEM_VARIATION');
+          if (!squareId) return null;
 
-        return {
-          squareItemVariationId: squareId,
-          message: entries.map((x) => `CANCEL ${String(x.quantity)}x:${x.product.m.name}`),
-        };
-      })
+          return {
+            squareItemVariationId: squareId,
+            message: entries.map((x) => `CANCEL ${String(x.quantity)}x:${x.product.m.name}`),
+          };
+        })
         .filter((m): m is PrinterMessage => m !== null);
 
-      const messageOrder = CreateOrderForMessages(
-        this.PrinterLocation,
-        order.id,
-        eventTitle,
-        messages,
-        {
-          displayName: `CANCEL ${eventTitle}`,
-          emailAddress: order.customerInfo.email,
-          phoneNumber: order.customerInfo.mobileNum,
-          pickupAt: oldPromisedTime,
-          note: `CANCEL ${eventTitle}`,
-        },
-      );
+      const messageOrder = CreateOrderForMessages(this.PrinterLocation, order.id, eventTitle, messages, {
+        displayName: `CANCEL ${eventTitle}`,
+        emailAddress: order.customerInfo.email,
+        phoneNumber: order.customerInfo.mobileNum,
+        pickupAt: oldPromisedTime,
+        note: `CANCEL ${eventTitle}`,
+      });
 
       const squareOrderIds: string[] = [];
       const response = await this.squareService.SendMessageOrder(messageOrder);
@@ -468,14 +446,14 @@ export class PrinterService {
     }
   }
   /**
- * Sends a time change ticket to printers.
- *
- * @param order - The WARIO order
- * @param rebuiltCart - The cart rebuilt with current catalog data
- * @param fulfillmentConfig - The fulfillment configuration
- * @param oldPromisedTime - The previous promised time
- * @returns Print result with Square order IDs
- */
+   * Sends a time change ticket to printers.
+   *
+   * @param order - The WARIO order
+   * @param rebuiltCart - The cart rebuilt with current catalog data
+   * @param fulfillmentConfig - The fulfillment configuration
+   * @param oldPromisedTime - The previous promised time
+   * @returns Print result with Square order IDs
+   */
   async SendTimeChangeTicket(
     order: WOrderInstance,
     rebuiltCart: CategorizedRebuiltCart,
@@ -498,34 +476,29 @@ export class PrinterService {
 
       const messages: PrinterMessage[] = Object.entries(
         CartByPrinterGroup(flatCart, this.catalogProviderService.CatalogSelectors.productEntry),
-      ).map(([pgId, entries]) => {
-        const pg = this.catalogProviderService.PrinterGroups[pgId];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!pg) return null;
+      )
+        .map(([pgId, entries]) => {
+          const pg = this.catalogProviderService.PrinterGroups[pgId];
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          if (!pg) return null;
 
-        const squareId = GetSquareIdFromExternalIds(pg.externalIDs, 'ITEM_VARIATION');
-        if (!squareId) return null;
+          const squareId = GetSquareIdFromExternalIds(pg.externalIDs, 'ITEM_VARIATION');
+          if (!squareId) return null;
 
-        return {
-          squareItemVariationId: squareId,
-          message: entries.map((x) => `TIME CHANGE ${x.quantity.toString()}x:${x.product.m.name}`),
-        };
-      })
+          return {
+            squareItemVariationId: squareId,
+            message: entries.map((x) => `TIME CHANGE ${x.quantity.toString()}x:${x.product.m.name}`),
+          };
+        })
         .filter((m): m is PrinterMessage => m !== null);
 
-      const messageOrder = CreateOrderForMessages(
-        this.PrinterLocation,
-        order.id,
-        eventTitle,
-        messages,
-        {
-          displayName: `TIME CHANGE ${eventTitle}`,
-          emailAddress: order.customerInfo.email,
-          phoneNumber: order.customerInfo.mobileNum,
-          pickupAt: oldPromisedTime,
-          note: `TIME CHANGE ${eventTitle}`,
-        },
-      );
+      const messageOrder = CreateOrderForMessages(this.PrinterLocation, order.id, eventTitle, messages, {
+        displayName: `TIME CHANGE ${eventTitle}`,
+        emailAddress: order.customerInfo.email,
+        phoneNumber: order.customerInfo.mobileNum,
+        pickupAt: oldPromisedTime,
+        note: `TIME CHANGE ${eventTitle}`,
+      });
 
       const squareOrderIds: string[] = [];
       const response = await this.squareService.SendMessageOrder(messageOrder);
@@ -600,10 +573,7 @@ export class PrinterService {
               this.logger.debug({ squareOrderId: squareOrder.id }, 'Marked print order as completed');
             }
           } catch (err1: unknown) {
-            this.logger.error(
-              { err: err1, squareOrderId: squareOrder.id },
-              'Skipping print order completion',
-            );
+            this.logger.error({ err: err1, squareOrderId: squareOrder.id }, 'Skipping print order completion');
           }
         }
       }
@@ -641,12 +611,7 @@ export class PrinterService {
         lockedOrder.specialInstructions ?? '',
       );
 
-      const printResult = await this.SendPrintOrders(
-        lockedOrder,
-        rebuiltCart,
-        eventTitle,
-        fulfillmentConfig,
-      );
+      const printResult = await this.SendPrintOrders(lockedOrder, rebuiltCart, eventTitle, fulfillmentConfig);
 
       const SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value.split(',') ?? [];
       if (printResult.success) {

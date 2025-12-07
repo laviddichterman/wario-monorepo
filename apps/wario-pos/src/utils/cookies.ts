@@ -62,18 +62,10 @@ export function setCookie(key: string, value: unknown, options?: CookieOptions):
     return;
   }
 
-  const {
-    daysUntilExpiration = 0,
-    sameSite = 'Strict',
-    secure = false,
-    path = '/',
-    domain,
-  } = options ?? {};
+  const { daysUntilExpiration = 0, sameSite = 'Strict', secure = false, path = '/', domain } = options ?? {};
 
   try {
-    const serializedValue = encodeURIComponent(
-      typeof value === 'string' ? value : JSON.stringify(value)
-    );
+    const serializedValue = encodeURIComponent(typeof value === 'string' ? value : JSON.stringify(value));
 
     const cookieParts = [
       `${key}=${serializedValue}`,

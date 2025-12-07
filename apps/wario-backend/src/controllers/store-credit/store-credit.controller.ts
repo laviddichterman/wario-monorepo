@@ -17,9 +17,7 @@ import { InsufficientCreditException, StoreCreditNotFoundException } from '../..
 
 @Controller('api/v1/payments/storecredit')
 export class StoreCreditController {
-  constructor(
-    private readonly storeCreditProvider: StoreCreditProviderService,
-  ) { }
+  constructor(private readonly storeCreditProvider: StoreCreditProviderService) {}
 
   @Get('validate')
   @Public()
@@ -76,4 +74,3 @@ export class StoreCreditController {
     }
   }
 }
-

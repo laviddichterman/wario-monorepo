@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Delete, HttpCode, NotFoundException, Param, Patch, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  NotFoundException,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
 import { IAbstractExpression } from '@wcp/wario-shared';
 import { WFunctional } from '@wcp/wario-shared';
@@ -13,7 +23,7 @@ export class ProductInstanceFunctionController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @HttpCode(201)

@@ -49,21 +49,8 @@ Create a new orders controller that uses DTOs:
 
 ```typescript
 // apps/wario-backend/src/orders/orders.controller.ts
-import { 
-  Body, 
-  Controller, 
-  Get, 
-  Param, 
-  Post, 
-  Put, 
-  HttpCode, 
-  HttpStatus 
-} from '@nestjs/common';
-import { 
-  CreateOrderRequestV2Dto, 
-  WOrderInstanceDto,
-  CrudOrderResponse 
-} from '@wcp/wario-shared';
+import { Body, Controller, Get, Param, Post, Put, HttpCode, HttpStatus } from '@nestjs/common';
+import { CreateOrderRequestV2Dto, WOrderInstanceDto, CrudOrderResponse } from '@wcp/wario-shared';
 import { OrdersService } from './orders.service';
 
 @Controller('orders')
@@ -72,9 +59,7 @@ export class OrdersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createOrder(
-    @Body() createOrderDto: CreateOrderRequestV2Dto,
-  ): Promise<CrudOrderResponse> {
+  async createOrder(@Body() createOrderDto: CreateOrderRequestV2Dto): Promise<CrudOrderResponse> {
     // The DTO is automatically validated and transformed
     return this.ordersService.create(createOrderDto);
   }
@@ -101,12 +86,12 @@ export class OrdersController {
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
-import { 
-  CreateOrderRequestV2Dto, 
+import {
+  CreateOrderRequestV2Dto,
   WOrderInstanceDto,
   CrudOrderResponse,
   WOrderStatus,
-  TenderBaseStatus
+  TenderBaseStatus,
 } from '@wcp/wario-shared';
 
 @Injectable()
@@ -121,7 +106,7 @@ export class OrdersService {
         id: this.generateId(),
         status: WOrderStatus.OPEN,
         discounts: [],
-        payments: createOrderDto.proposedPayments.map(p => ({
+        payments: createOrderDto.proposedPayments.map((p) => ({
           ...p,
           status: TenderBaseStatus.AUTHORIZED,
           processorId: this.generateProcessorId(),
@@ -137,7 +122,7 @@ export class OrdersService {
       if (errors.length > 0) {
         return {
           success: false,
-          error: errors.map(e => ({
+          error: errors.map((e) => ({
             category: 'validation',
             code: 'INVALID_ORDER',
             detail: Object.values(e.constraints || {}).join(', '),
@@ -155,11 +140,13 @@ export class OrdersService {
     } catch (error) {
       return {
         success: false,
-        error: [{
-          category: 'server',
-          code: 'INTERNAL_ERROR',
-          detail: error.message,
-        }],
+        error: [
+          {
+            category: 'server',
+            code: 'INTERNAL_ERROR',
+            detail: error.message,
+          },
+        ],
       };
     }
   }
@@ -174,7 +161,7 @@ export class OrdersService {
 
   async update(id: string, updateDto: Partial<WOrderInstanceDto>): Promise<CrudOrderResponse> {
     const existing = await this.findOne(id);
-    
+
     const updated = plainToClass(WOrderInstanceDto, {
       ...existing,
       ...updateDto,
@@ -184,7 +171,7 @@ export class OrdersService {
     if (errors.length > 0) {
       return {
         success: false,
-        error: errors.map(e => ({
+        error: errors.map((e) => ({
           category: 'validation',
           code: 'INVALID_UPDATE',
           detail: Object.values(e.constraints || {}).join(', '),
@@ -215,13 +202,13 @@ export class OrdersService {
 ```typescript
 // apps/wario-backend/src/catalog/catalog.controller.ts
 import { Controller, Get, Post, Body } from '@nestjs/common';
-import { 
-  ICatalogDto, 
-  IProductDto, 
+import {
+  ICatalogDto,
+  IProductDto,
   IProductInstanceDto,
   IOptionDto,
   IOptionTypeDto,
-  ICategoryDto
+  ICategoryDto,
 } from '@wcp/wario-shared';
 import { CatalogService } from './catalog.service';
 
@@ -266,11 +253,7 @@ export class CatalogController {
 ```typescript
 // apps/wario-backend/src/fulfillment/fulfillment.controller.ts
 import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
-import { 
-  FulfillmentConfigDto,
-  PostBlockedOffToFulfillmentsRequestDto,
-  SetLeadTimesRequest
-} from '@wcp/wario-shared';
+import { FulfillmentConfigDto, PostBlockedOffToFulfillmentsRequestDto, SetLeadTimesRequest } from '@wcp/wario-shared';
 import { FulfillmentService } from './fulfillment.service';
 
 @Controller('fulfillment')
@@ -310,12 +293,12 @@ Create custom validators for business logic:
 
 ```typescript
 // apps/wario-backend/src/validators/is-valid-product-price.validator.ts
-import { 
-  registerDecorator, 
-  ValidationOptions, 
-  ValidatorConstraint, 
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
   ValidatorConstraintInterface,
-  ValidationArguments 
+  ValidationArguments,
 } from 'class-validator';
 import { IMoneyDto } from '@wcp/wario-shared';
 
@@ -356,12 +339,7 @@ export class CreateProductDto extends IProductDto {
 
 ```typescript
 // apps/wario-backend/src/filters/validation-exception.filter.ts
-import { 
-  ExceptionFilter, 
-  Catch, 
-  ArgumentsHost, 
-  BadRequestException 
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, BadRequestException } from '@nestjs/common';
 import { Response } from 'express';
 import { WErrorDto } from '@wcp/wario-shared';
 
@@ -374,16 +352,18 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     const exceptionResponse = exception.getResponse();
 
     const errors: WErrorDto[] = Array.isArray(exceptionResponse['message'])
-      ? exceptionResponse['message'].map(msg => ({
+      ? exceptionResponse['message'].map((msg) => ({
           category: 'validation',
           code: 'INVALID_INPUT',
           detail: msg,
         }))
-      : [{
-          category: 'validation',
-          code: 'INVALID_INPUT',
-          detail: exceptionResponse['message'] || 'Validation failed',
-        }];
+      : [
+          {
+            category: 'validation',
+            code: 'INVALID_INPUT',
+            detail: exceptionResponse['message'] || 'Validation failed',
+          },
+        ];
 
     response.status(status).json({
       success: false,
@@ -403,14 +383,14 @@ app.useGlobalFilters(new ValidationExceptionFilter());
 import { Test, TestingModule } from '@nestjs/testing';
 import { plainToClass } from 'class-transformer';
 import { validate } from 'class-validator';
-import { 
-  CreateOrderRequestV2Dto, 
+import {
+  CreateOrderRequestV2Dto,
   CustomerInfoDataDto,
   FulfillmentDataDto,
   WFulfillmentStatus,
   PaymentMethod,
   CreditPaymentProposedDto,
-  TenderBaseStatus
+  TenderBaseStatus,
 } from '@wcp/wario-shared';
 import { OrdersController } from './orders.controller';
 import { OrdersService } from './orders.service';
@@ -447,14 +427,16 @@ describe('OrdersController', () => {
         },
         cart: [],
         tip: { value: 15, isSuggestion: false, isPercentage: true },
-        proposedPayments: [{
-          t: PaymentMethod.CreditCard,
-          amount: { amount: 2500, currency: 'USD' },
-          tipAmount: { amount: 375, currency: 'USD' },
-          createdAt: Date.now(),
-          status: TenderBaseStatus.PROPOSED,
-          payment: { sourceId: 'tok_123' },
-        }],
+        proposedPayments: [
+          {
+            t: PaymentMethod.CreditCard,
+            amount: { amount: 2500, currency: 'USD' },
+            tipAmount: { amount: 375, currency: 'USD' },
+            createdAt: Date.now(),
+            status: TenderBaseStatus.PROPOSED,
+            payment: { sourceId: 'tok_123' },
+          },
+        ],
         proposedDiscounts: [],
       });
 
@@ -514,6 +496,7 @@ export class OrderType extends WOrderInstanceDto {
 ## Common Patterns
 
 ### Pattern 1: Partial Updates
+
 ```typescript
 import { PartialType } from '@nestjs/mapped-types';
 import { IProductDto } from '@wcp/wario-shared';
@@ -522,6 +505,7 @@ export class UpdateProductDto extends PartialType(IProductDto) {}
 ```
 
 ### Pattern 2: Omit Fields
+
 ```typescript
 import { OmitType } from '@nestjs/mapped-types';
 import { IProductDto } from '@wcp/wario-shared';
@@ -530,33 +514,36 @@ export class CreateProductDto extends OmitType(IProductDto, ['id'] as const) {}
 ```
 
 ### Pattern 3: Pick Fields
+
 ```typescript
 import { PickType } from '@nestjs/mapped-types';
 import { CustomerInfoDataDto } from '@wcp/wario-shared';
 
-export class UpdateCustomerDto extends PickType(CustomerInfoDataDto, [
-  'givenName',
-  'familyName',
-  'email',
-] as const) {}
+export class UpdateCustomerDto extends PickType(CustomerInfoDataDto, ['givenName', 'familyName', 'email'] as const) {}
 ```
 
 ## Troubleshooting
 
 ### Issue: "Cannot find module 'reflect-metadata'"
+
 **Solution:** Import at the top of main.ts:
+
 ```typescript
 import 'reflect-metadata';
 ```
 
 ### Issue: Validation not working
+
 **Solution:** Ensure ValidationPipe is registered globally:
+
 ```typescript
 app.useGlobalPipes(new ValidationPipe({ transform: true }));
 ```
 
 ### Issue: Nested objects not validating
+
 **Solution:** Use both @ValidateNested() and @Type():
+
 ```typescript
 @ValidateNested()
 @Type(() => IMoneyDto)
@@ -564,7 +551,9 @@ price!: IMoneyDto;
 ```
 
 ### Issue: Arrays not transforming
+
 **Solution:** Use Type decorator with array syntax:
+
 ```typescript
 @ValidateNested({ each: true })
 @Type(() => IProductDto)

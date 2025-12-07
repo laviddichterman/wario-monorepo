@@ -42,9 +42,7 @@ export function AnimateCountUp({
 
   const inView = useInView(countRef, { once, amount });
 
-  const rounded = useTransform(startCount, (latest) =>
-    latest.toFixed(isFloat(latest) ? toFixed : 0)
-  );
+  const rounded = useTransform(startCount, (latest) => latest.toFixed(isFloat(latest) ? toFixed : 0));
 
   useEffect(() => {
     if (inView) {

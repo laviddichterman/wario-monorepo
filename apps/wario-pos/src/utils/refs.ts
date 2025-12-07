@@ -15,7 +15,7 @@ export function mergeRefs<T>(refs: (React.Ref<T> | undefined | null)[]): React.R
       }
       // Handle object refs with 'current' property
       else if ('current' in ref) {
-        (ref).current = value;
+        ref.current = value;
       }
     }
   };

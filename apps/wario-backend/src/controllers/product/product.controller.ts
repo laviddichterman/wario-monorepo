@@ -1,21 +1,30 @@
 import { Body, Controller, Delete, HttpCode, Param, ParseArrayPipe, Patch, Post } from '@nestjs/common';
 
-import { CreateProductBatchRequestDto, PartialUncommittedProductInstanceDto, UncommittedIProductInstance, UncommittedIProductInstanceDto, UpdateIProductRequestDto, UpdateProductBatchRequestDto } from '@wcp/wario-shared';
+import {
+  CreateProductBatchRequestDto,
+  PartialUncommittedProductInstanceDto,
+  UncommittedIProductInstance,
+  UncommittedIProductInstanceDto,
+  UpdateIProductRequestDto,
+  UpdateProductBatchRequestDto,
+} from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { SocketIoService } from '../../config/socket-io/socket-io.service';
+import { BatchDeleteProductClassDto } from '../../dtos/product.dto';
 import {
-  BatchDeleteProductClassDto,
-} from '../../dtos/product.dto';
-import { CatalogOperationException, ProductInstanceNotFoundException, ProductNotFoundException } from '../../exceptions';
+  CatalogOperationException,
+  ProductInstanceNotFoundException,
+  ProductNotFoundException,
+} from '../../exceptions';
 
 @Controller('api/v1/menu/product')
 export class ProductController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @Scopes('write:catalog')
@@ -23,7 +32,10 @@ export class ProductController {
   async postProductClass(@Body() body: CreateProductBatchRequestDto) {
     const createProductResult = await this.catalogProvider.CreateProduct(body.product, body.instances);
     if (!createProductResult) {
-      throw new CatalogOperationException('create product', 'Unable to satisfy prerequisites to create Product and instances');
+      throw new CatalogOperationException(
+        'create product',
+        'Unable to satisfy prerequisites to create Product and instances',
+      );
     }
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return createProductResult;
@@ -38,7 +50,10 @@ export class ProductController {
   ) {
     const createBatchesResult = await this.catalogProvider.BatchUpsertProduct(body);
     if (!createBatchesResult) {
-      throw new CatalogOperationException('batch create products', 'Unable to satisfy prerequisites to create Product(s) and instance(s)');
+      throw new CatalogOperationException(
+        'batch create products',
+        'Unable to satisfy prerequisites to create Product(s) and instance(s)',
+      );
     }
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return createBatchesResult;
@@ -72,7 +87,10 @@ export class ProductController {
   async batchDeleteProductClasses(@Body() body: BatchDeleteProductClassDto) {
     const doc = await this.catalogProvider.BatchDeleteProduct(body.pids);
     if (!doc) {
-      throw new CatalogOperationException('batch delete products', `Unable to delete Products: ${body.pids.join(', ')}`);
+      throw new CatalogOperationException(
+        'batch delete products',
+        `Unable to delete Products: ${body.pids.join(', ')}`,
+      );
     }
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
@@ -81,10 +99,7 @@ export class ProductController {
   @Post(':pid')
   @Scopes('write:catalog')
   @HttpCode(201)
-  async postProductInstance(
-    @Param('pid') productId: string,
-    @Body() body: UncommittedIProductInstanceDto,
-  ) {
+  async postProductInstance(@Param('pid') productId: string, @Body() body: UncommittedIProductInstanceDto) {
     const doc = await this.catalogProvider.CreateProductInstance({
       productId: productId,
       ...(body as UncommittedIProductInstance),
@@ -130,4 +145,3 @@ export class ProductController {
     return doc;
   }
 }
-

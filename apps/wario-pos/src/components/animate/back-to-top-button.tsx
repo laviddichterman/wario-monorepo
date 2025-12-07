@@ -17,13 +17,7 @@ type BackToTopProps = FabProps & {
   renderButton?: (isVisible?: boolean) => React.ReactElement;
 };
 
-export function BackToTopButton({
-  sx,
-  isDebounce,
-  renderButton,
-  scrollThreshold = '90%',
-  ...other
-}: BackToTopProps) {
+export function BackToTopButton({ sx, isDebounce, renderButton, scrollThreshold = '90%', ...other }: BackToTopProps) {
   const { onBackToTop, isVisible } = useBackToTop(scrollThreshold, isDebounce);
 
   if (renderButton) {

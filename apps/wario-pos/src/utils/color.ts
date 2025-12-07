@@ -148,7 +148,7 @@ export function varAlpha(color: string, opacity: string | number = 1): string {
         '- Hex: "#00B8D9"',
         '- RGB: "rgb(0, 184, 217)"',
         '- RGBA: "rgba(0, 184, 217, 1)"',
-      ].join('\n')
+      ].join('\n'),
     );
   }
 

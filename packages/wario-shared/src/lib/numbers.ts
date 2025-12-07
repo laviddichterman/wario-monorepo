@@ -1,4 +1,3 @@
-
 /**
  * RoundToTwoDecimalPlaces
  *
@@ -29,7 +28,11 @@ function buildFormatter(locale: Locale, options?: Intl.NumberFormatOptions) {
   });
 }
 
-export function fNumber(inputValue: InputNumberValue, locale: Locale = DEFAULT_LOCALE, options?: Intl.NumberFormatOptions) {
+export function fNumber(
+  inputValue: InputNumberValue,
+  locale: Locale = DEFAULT_LOCALE,
+  options?: Intl.NumberFormatOptions,
+) {
   const number = processInputNumber(inputValue);
   if (number === null) return '';
 
@@ -37,35 +40,50 @@ export function fNumber(inputValue: InputNumberValue, locale: Locale = DEFAULT_L
   return fm;
 }
 
-export function fCurrency(inputValue: InputNumberValue, locale: Locale = DEFAULT_LOCALE, options?: Intl.NumberFormatOptions) {
+export function fCurrency(
+  inputValue: InputNumberValue,
+  locale: Locale = DEFAULT_LOCALE,
+  options?: Intl.NumberFormatOptions,
+) {
   const number = processInputNumber(inputValue);
   if (number === null) return '';
 
-  const fm = buildFormatter(locale, { ...options, style: 'currency', currency: locale.currency, useGrouping: false }).format(number);
+  const fm = buildFormatter(locale, {
+    ...options,
+    style: 'currency',
+    currency: locale.currency,
+    useGrouping: false,
+  }).format(number);
   return fm;
 }
 
-
-export function fCurrencyNoUnit(inputValue: InputNumberValue, locale: Locale = DEFAULT_LOCALE, options?: Intl.NumberFormatOptions) {
+export function fCurrencyNoUnit(
+  inputValue: InputNumberValue,
+  locale: Locale = DEFAULT_LOCALE,
+  options?: Intl.NumberFormatOptions,
+) {
   const number = processInputNumber(inputValue);
   if (number === null) return '';
 
-  return buildFormatter(locale,
-    {
-      ...options,
-      style: 'currency',
-      currency: locale.currency,
-      currencyDisplay: 'code',
-      useGrouping: false
-    })
+  return buildFormatter(locale, {
+    ...options,
+    style: 'currency',
+    currency: locale.currency,
+    currencyDisplay: 'code',
+    useGrouping: false,
+  })
     .formatToParts(number)
-    .filter(part => part.type !== 'currency')
-    .map(part => part.value)
-    .map(value => value.trim())
-    .join('')
+    .filter((part) => part.type !== 'currency')
+    .map((part) => part.value)
+    .map((value) => value.trim())
+    .join('');
 }
 
-export function fPercent(inputValue: InputNumberValue, locale: Locale = DEFAULT_LOCALE, options?: Intl.NumberFormatOptions) {
+export function fPercent(
+  inputValue: InputNumberValue,
+  locale: Locale = DEFAULT_LOCALE,
+  options?: Intl.NumberFormatOptions,
+) {
   const number = processInputNumber(inputValue);
   if (number === null) return '';
 
@@ -82,9 +100,7 @@ export function fPercent(inputValue: InputNumberValue, locale: Locale = DEFAULT_
 
 /* ================== Public types (simplified) ================== */
 
-export type NumericParseFunction = (
-  v: InputNumberValue
-) => number | null;
+export type NumericParseFunction = (v: InputNumberValue) => number | null;
 
 export interface NumberTransformPropsBase {
   /** If provided, the committed value will be clamped >= min */
@@ -108,14 +124,12 @@ export type NumberTransformPropsNoEmpty = NumberTransformPropsBase & {
   defaultValue: number;
 };
 
-export type NumberTransformProps =
-  | NumberTransformPropsAllowEmpty
-  | NumberTransformPropsNoEmpty;
+export type NumberTransformProps = NumberTransformPropsAllowEmpty | NumberTransformPropsNoEmpty;
 
 /* Result types */
-export type ChangeResult = { inputText: string; value: number | "" };
+export type ChangeResult = { inputText: string; value: number | '' };
 export type ChangeResultNoEmpty = { inputText: string; value?: number };
-export type BlurResultAllowEmpty = { inputText: string; value: number | "" };
+export type BlurResultAllowEmpty = { inputText: string; value: number | '' };
 export type BlurResultNoEmpty = { inputText: string; value: number };
 
 /* ================== Helpers ================== */
@@ -130,17 +144,17 @@ function clampOptional(n: number, min?: number, max?: number): number {
 /** Loose decimal parser (unified: number | null). */
 export const parseDecimal: NumericParseFunction = (v) => {
   if (v === null || v === undefined) return null;
-  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
 
   let s = v.trim();
   // allow “still typing” sentinels
-  if (s === "" || s === "." || s === "-" || s === "+") return null;
+  if (s === '' || s === '.' || s === '-' || s === '+') return null;
 
   // strip common decorations
-  s = s.replace(/[, ]+/g, "").replace(/^\$/, "");
+  s = s.replace(/[, ]+/g, '').replace(/^\$/, '');
 
   // basic structure checks
-  if (s.split(".").length > 2) return null;
+  if (s.split('.').length > 2) return null;
   if (!/^[+-]?\d+(\.\d+)?$/.test(s)) return null;
 
   const n = Number(s);
@@ -175,7 +189,7 @@ export const parseDecimal: NumericParseFunction = (v) => {
 export const parseInteger: NumericParseFunction = (v) => {
   if (v === null || v === undefined) return null;
 
-  if (typeof v === "number") {
+  if (typeof v === 'number') {
     if (!Number.isFinite(v)) return null;
     const rounded = Math.round(v);
     return Number.isSafeInteger(rounded) ? rounded : null;
@@ -183,13 +197,13 @@ export const parseInteger: NumericParseFunction = (v) => {
 
   let s = v.trim();
   // Normalize Unicode minus (U+2212) to ASCII '-'
-  s = s.replace(/\u2212/g, "-");
+  s = s.replace(/\u2212/g, '-');
 
   // "still typing" sentinels
-  if (s === "" || s === "-" || s === "+" || s === ".") return null;
+  if (s === '' || s === '-' || s === '+' || s === '.') return null;
 
   // Strip grouping/currency you choose to allow
-  s = s.replace(/[, ]+/g, "").replace(/^\$/, "");
+  s = s.replace(/[, ]+/g, '').replace(/^\$/, '');
 
   // Optional sign + digits, with an optional decimal point (no exponent, no extra junk)
   // Accepts "12", "-12", "12.", "12.0", "+4.499", etc.
@@ -203,14 +217,14 @@ export const parseInteger: NumericParseFunction = (v) => {
 };
 
 export function formatDecimal(v: number | string | null | undefined, fractionDigits?: number): string {
-  if (v === null || v === undefined || v === "") return "";
-  const n = typeof v === "number" ? v : parseDecimal(v);
-  if (n === null) return "";
+  if (v === null || v === undefined || v === '') return '';
+  const n = typeof v === 'number' ? v : parseDecimal(v);
+  if (n === null) return '';
   return new Intl.NumberFormat(DEFAULT_LOCALE.code, {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
-    roundingMode: "halfCeil",
-    useGrouping: false
+    roundingMode: 'halfCeil',
+    useGrouping: false,
   }).format(n);
 }
 
@@ -225,12 +239,9 @@ export function formatDecimal(v: number | string | null | undefined, fractionDig
  * @param raw - The raw string value from the input element.
  * @returns An object containing the original `inputText` and the parsed `value`. If parsing fails (returns null/undefined), the value will be an empty string.
  */
-export function transformValueOnChange(
-  props: Omit<NumberTransformProps, "defaultValue">,
-  raw: string
-): ChangeResult {
+export function transformValueOnChange(props: Omit<NumberTransformProps, 'defaultValue'>, raw: string): ChangeResult {
   const parsed = props.parseFunction(raw);
-  return { inputText: raw, value: parsed ?? "" };
+  return { inputText: raw, value: parsed ?? '' };
 }
 
 /**
@@ -245,15 +256,13 @@ export function transformValueOnChange(
  * @returns An object containing the final numeric value (or an empty string if allowed)
  * and the formatted text to display in the input.
  */
-export function transformValueOnBlur(
-  props: NumberTransformProps,
-  raw: string
-): BlurResultAllowEmpty { // aka BlurResultAllowEmpty | BlurResultNoEmpty
+export function transformValueOnBlur(props: NumberTransformProps, raw: string): BlurResultAllowEmpty {
+  // aka BlurResultAllowEmpty | BlurResultNoEmpty
   const parsed = props.parseFunction(raw);
 
   if (props.allowEmpty) {
     if (parsed === null) {
-      return { value: "", inputText: "" };
+      return { value: '', inputText: '' };
     }
     const next = clampOptional(parsed, props.min, props.max);
     const nextInput = props.formatFunction(next);

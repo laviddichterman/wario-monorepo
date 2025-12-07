@@ -35,7 +35,7 @@ export function NavHorizontal({
           display: { xs: 'none', [layoutQuery]: 'flex' },
           borderBottom: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
         }),
-        ...spreadSx(sx)
+        ...spreadSx(sx),
       ]}
     >
       <Divider

@@ -28,10 +28,7 @@ export interface CategoryDeps {
 // Category Operations
 // ============================================================================
 
-export async function createCategory(
-  deps: CategoryDeps,
-  category: Omit<ICategory, 'id'>
-): Promise<ICategory> {
+export async function createCategory(deps: CategoryDeps, category: Omit<ICategory, 'id'>): Promise<ICategory> {
   const doc = new deps.wCategoryModel(category);
   await doc.save();
   return doc.toObject();
@@ -41,7 +38,7 @@ export async function createCategory(
 export async function updateCategory(
   deps: CategoryDeps,
   categoryId: string,
-  category: Partial<Omit<ICategory, 'id'>>
+  category: Partial<Omit<ICategory, 'id'>>,
 ): Promise<ICategory | null> {
   if (!Object.hasOwn(deps.categories, categoryId)) {
     // not found
@@ -64,15 +61,11 @@ export async function updateCategory(
         `In changing ${categoryId}'s parent_id to ${category.parent_id}, found cycle at ${cur}, blanking out ${cur}'s parent_id to prevent cycle.`,
       );
 
-      cycleUpdatePromise = deps.wCategoryModel
-        .findByIdAndUpdate(cur, { parent_id: null }, { new: true })
-        .exec();
+      cycleUpdatePromise = deps.wCategoryModel.findByIdAndUpdate(cur, { parent_id: null }, { new: true }).exec();
     }
   }
 
-  const response = await deps.wCategoryModel
-    .findByIdAndUpdate(categoryId, category, { new: true })
-    .exec();
+  const response = await deps.wCategoryModel.findByIdAndUpdate(categoryId, category, { new: true }).exec();
 
   if (cycleUpdatePromise) {
     await cycleUpdatePromise;
@@ -88,7 +81,7 @@ export async function updateCategory(
 export async function deleteCategory(
   deps: CategoryDeps,
   categoryId: string,
-  deleteContainedProducts: boolean
+  deleteContainedProducts: boolean,
 ): Promise<{ deleted: ICategory | null; productsModified: boolean }> {
   deps.logger.debug(`Removing ${categoryId}`);
 
@@ -133,9 +126,7 @@ export async function deleteCategory(
     }
   } else {
     // Remove category reference from products
-    const productsUpdate = await deps.wProductModel
-      .updateMany({}, { $pull: { category_ids: categoryId } })
-      .exec();
+    const productsUpdate = await deps.wProductModel.updateMany({}, { $pull: { category_ids: categoryId } }).exec();
 
     if (productsUpdate.modifiedCount > 0) {
       deps.logger.debug(`Removed Category ID from ${productsUpdate.modifiedCount.toString()} products.`);

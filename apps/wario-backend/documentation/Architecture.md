@@ -41,6 +41,7 @@ The main application class that orchestrates the entire backend:
 - **Provider Bootstrap**: Sequential initialization of all providers on MongoDB connection
 
 **Middleware Stack**:
+
 1. `express-idempotency` - Prevents duplicate operations
 2. `cors` - CORS configuration for allowed origins
 3. `express.json()` - JSON body parser (5MB limit)
@@ -51,15 +52,15 @@ The main application class that orchestrates the entire backend:
 
 Singleton services bootstrapped on startup:
 
-| Provider | File | Responsibility |
-|----------|------|----------------|
-| **DatabaseManagerInstance** | `config/database_manager.ts` | Schema migrations, version management |
-| **DataProviderInstance** | `config/dataprovider.ts` | Fulfillments, settings, seating resources, key-value config |
-| **GoogleProviderInstance** | `config/google.ts` | Gmail API, Calendar API for email/event management |
-| **SquareProviderInstance** | `config/square.ts` | Square payment processing, catalog sync |
-| **CatalogProviderInstance** | `config/catalog_provider.ts` | In-memory catalog management, product/modifier CRUD |
-| **SocketIoProviderInstance** | `config/socketio_provider.ts` | Socket.IO event broadcasting |
-| **OrderManagerInstance** | `config/order_manager.ts` | Order lifecycle management, payment processing |
+| Provider                     | File                          | Responsibility                                              |
+| ---------------------------- | ----------------------------- | ----------------------------------------------------------- |
+| **DatabaseManagerInstance**  | `config/database_manager.ts`  | Schema migrations, version management                       |
+| **DataProviderInstance**     | `config/dataprovider.ts`      | Fulfillments, settings, seating resources, key-value config |
+| **GoogleProviderInstance**   | `config/google.ts`            | Gmail API, Calendar API for email/event management          |
+| **SquareProviderInstance**   | `config/square.ts`            | Square payment processing, catalog sync                     |
+| **CatalogProviderInstance**  | `config/catalog_provider.ts`  | In-memory catalog management, product/modifier CRUD         |
+| **SocketIoProviderInstance** | `config/socketio_provider.ts` | Socket.IO event broadcasting                                |
+| **OrderManagerInstance**     | `config/order_manager.ts`     | Order lifecycle management, payment processing              |
 
 ---
 
@@ -88,19 +89,20 @@ All endpoints are prefixed with `/api/v1/`
 
 **Purpose**: Order lifecycle management
 
-| Method | Endpoint | Auth | Request Body | Response | Description |
-|--------|----------|------|--------------|----------|-------------|
-| POST | `/api/v1/order` | Public | `CreateOrderRequestV2` | `CrudOrderResponse` | Submit new order |
-| GET | `/api/v1/order/:oId` | JWT + `read:orders` | - | `WOrderInstance` | Get order by ID |
-| GET | `/api/v1/order` | JWT + `read:orders` | Query: `date`, `status` | `WOrderInstance[]` | Query orders |
-| PUT | `/api/v1/order/:oId/cancel` | JWT + `cancel:orders` | `reason`, `emailCustomer`, `refundToOriginalPayment` | `CrudOrderResponse` | Cancel order |
-| PUT | `/api/v1/order/:oId/send` | JWT + `write:orders` | - | `WOrderInstance` | Send order to kitchen |
-| PUT | `/api/v1/order/:oId/confirm` | JWT + `write:orders` | `additionalMessage` | `CrudOrderResponse` | Confirm order |
-| PUT | `/api/v1/order/:oId/move` | JWT + `write:orders` | `destination`, `additionalMessage` | `CrudOrderResponse` | Move order to different station |
-| PUT | `/api/v1/order/:oId/reschedule` | JWT + `write:orders` | `selectedDate`, `selectedTime`, `emailCustomer`, `additionalMessage` | `CrudOrderResponse` | Reschedule order |
-| PUT | `/api/v1/order/unlock` | JWT + `write:orders` | - | `{ok: string}` | Obliterate all order locks |
+| Method | Endpoint                        | Auth                  | Request Body                                                         | Response            | Description                     |
+| ------ | ------------------------------- | --------------------- | -------------------------------------------------------------------- | ------------------- | ------------------------------- |
+| POST   | `/api/v1/order`                 | Public                | `CreateOrderRequestV2`                                               | `CrudOrderResponse` | Submit new order                |
+| GET    | `/api/v1/order/:oId`            | JWT + `read:orders`   | -                                                                    | `WOrderInstance`    | Get order by ID                 |
+| GET    | `/api/v1/order`                 | JWT + `read:orders`   | Query: `date`, `status`                                              | `WOrderInstance[]`  | Query orders                    |
+| PUT    | `/api/v1/order/:oId/cancel`     | JWT + `cancel:orders` | `reason`, `emailCustomer`, `refundToOriginalPayment`                 | `CrudOrderResponse` | Cancel order                    |
+| PUT    | `/api/v1/order/:oId/send`       | JWT + `write:orders`  | -                                                                    | `WOrderInstance`    | Send order to kitchen           |
+| PUT    | `/api/v1/order/:oId/confirm`    | JWT + `write:orders`  | `additionalMessage`                                                  | `CrudOrderResponse` | Confirm order                   |
+| PUT    | `/api/v1/order/:oId/move`       | JWT + `write:orders`  | `destination`, `additionalMessage`                                   | `CrudOrderResponse` | Move order to different station |
+| PUT    | `/api/v1/order/:oId/reschedule` | JWT + `write:orders`  | `selectedDate`, `selectedTime`, `emailCustomer`, `additionalMessage` | `CrudOrderResponse` | Reschedule order                |
+| PUT    | `/api/v1/order/unlock`          | JWT + `write:orders`  | -                                                                    | `{ok: string}`      | Obliterate all order locks      |
 
 **CreateOrderRequestV2 Schema**:
+
 ```typescript
 {
   cart: OrderCartEntry[],
@@ -120,18 +122,19 @@ All endpoints are prefixed with `/api/v1/`
 
 **Purpose**: Product (menu item) management
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/menu/product` | JWT + `write:catalog` | Create product class with instances |
-| POST | `/api/v1/menu/productbatch` | JWT + `write:catalog` | Batch create/upsert products |
-| PATCH | `/api/v1/menu/product/:pid` | JWT + `write:catalog` | Update product class |
-| DELETE | `/api/v1/menu/product/:pid` | JWT + `delete:catalog` | Delete product class |
-| POST | `/api/v1/menu/productbatch/batchDelete` | JWT + `delete:catalog` | Batch delete products |
-| POST | `/api/v1/menu/product/:pid` | JWT + `write:catalog` | Create product instance |
-| PATCH | `/api/v1/menu/product/:pid/:piid` | JWT + `write:catalog` | Update product instance |
-| DELETE | `/api/v1/menu/product/:pid/:piid` | JWT + `delete:catalog` | Delete product instance |
+| Method | Endpoint                                | Auth                   | Description                         |
+| ------ | --------------------------------------- | ---------------------- | ----------------------------------- |
+| POST   | `/api/v1/menu/product`                  | JWT + `write:catalog`  | Create product class with instances |
+| POST   | `/api/v1/menu/productbatch`             | JWT + `write:catalog`  | Batch create/upsert products        |
+| PATCH  | `/api/v1/menu/product/:pid`             | JWT + `write:catalog`  | Update product class                |
+| DELETE | `/api/v1/menu/product/:pid`             | JWT + `delete:catalog` | Delete product class                |
+| POST   | `/api/v1/menu/productbatch/batchDelete` | JWT + `delete:catalog` | Batch delete products               |
+| POST   | `/api/v1/menu/product/:pid`             | JWT + `write:catalog`  | Create product instance             |
+| PATCH  | `/api/v1/menu/product/:pid/:piid`       | JWT + `write:catalog`  | Update product instance             |
+| DELETE | `/api/v1/menu/product/:pid/:piid`       | JWT + `delete:catalog` | Delete product instance             |
 
 **Product Structure**:
+
 - **Product Class** (`IProduct`): Shared attributes (price, modifiers, categories)
 - **Product Instance**: Specific variations (displayName, description, shortcode)
 
@@ -139,16 +142,17 @@ All endpoints are prefixed with `/api/v1/`
 
 **Purpose**: Modifier type and option management
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/menu/option` | JWT + `write:catalog` | Create modifier type with options |
-| PATCH | `/api/v1/menu/option/:mtid` | JWT + `write:catalog` | Update modifier type |
-| DELETE | `/api/v1/menu/option/:mtid` | JWT + `delete:catalog` | Delete modifier type |
-| POST | `/api/v1/menu/option/:mtid` | JWT + `write:catalog` | Create modifier option |
-| PATCH | `/api/v1/menu/option/:mtid/:moid` | JWT + `write:catalog` | Update modifier option |
-| DELETE | `/api/v1/menu/option/:mtid/:moid` | JWT + `delete:catalog` | Delete modifier option |
+| Method | Endpoint                          | Auth                   | Description                       |
+| ------ | --------------------------------- | ---------------------- | --------------------------------- |
+| POST   | `/api/v1/menu/option`             | JWT + `write:catalog`  | Create modifier type with options |
+| PATCH  | `/api/v1/menu/option/:mtid`       | JWT + `write:catalog`  | Update modifier type              |
+| DELETE | `/api/v1/menu/option/:mtid`       | JWT + `delete:catalog` | Delete modifier type              |
+| POST   | `/api/v1/menu/option/:mtid`       | JWT + `write:catalog`  | Create modifier option            |
+| PATCH  | `/api/v1/menu/option/:mtid/:moid` | JWT + `write:catalog`  | Update modifier option            |
+| DELETE | `/api/v1/menu/option/:mtid/:moid` | JWT + `delete:catalog` | Delete modifier option            |
 
 **Modifier Structure**:
+
 - **Modifier Type** (`IOptionType`): Group of options (e.g., "Size", "Toppings")
 - **Modifier Option** (`IOption`): Individual choice within a type
 
@@ -156,23 +160,24 @@ All endpoints are prefixed with `/api/v1/`
 
 **Purpose**: Menu category management
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/menu/category` | JWT + `write:catalog` | Create category |
-| PATCH | `/api/v1/menu/category/:catid` | JWT + `write:catalog` | Update category |
+| Method | Endpoint                       | Auth                   | Description                                            |
+| ------ | ------------------------------ | ---------------------- | ------------------------------------------------------ |
+| POST   | `/api/v1/menu/category`        | JWT + `write:catalog`  | Create category                                        |
+| PATCH  | `/api/v1/menu/category/:catid` | JWT + `write:catalog`  | Update category                                        |
 | DELETE | `/api/v1/menu/category/:catid` | JWT + `delete:catalog` | Delete category (optionally delete contained products) |
 
 #### 5. FulfillmentController (`/api/v1/config/fulfillment`)
 
 **Purpose**: Fulfillment service configuration (delivery, pickup, dine-in)
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/config/fulfillment` | JWT + `write:catalog` | Create fulfillment config |
-| PATCH | `/api/v1/config/fulfillment/:fid` | JWT + `write:catalog` | Update fulfillment config |
+| Method | Endpoint                          | Auth                   | Description               |
+| ------ | --------------------------------- | ---------------------- | ------------------------- |
+| POST   | `/api/v1/config/fulfillment`      | JWT + `write:catalog`  | Create fulfillment config |
+| PATCH  | `/api/v1/config/fulfillment/:fid` | JWT + `write:catalog`  | Update fulfillment config |
 | DELETE | `/api/v1/config/fulfillment/:fid` | JWT + `delete:catalog` | Delete fulfillment config |
 
 **FulfillmentConfig Schema**:
+
 ```typescript
 {
   displayName: string,
@@ -192,25 +197,26 @@ All endpoints are prefixed with `/api/v1/`
 
 **Purpose**: System settings and timing configuration
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/config/timing/blockoff` | JWT + `write:orderconfig` | Add blocked-off time intervals |
+| Method | Endpoint                         | Auth                      | Description                       |
+| ------ | -------------------------------- | ------------------------- | --------------------------------- |
+| POST   | `/api/v1/config/timing/blockoff` | JWT + `write:orderconfig` | Add blocked-off time intervals    |
 | DELETE | `/api/v1/config/timing/blockoff` | JWT + `write:orderconfig` | Remove blocked-off time intervals |
-| POST | `/api/v1/config/timing/leadtime` | JWT + `write:orderconfig` | Set lead times per fulfillment |
-| POST | `/api/v1/config/settings` | JWT + `write:kvstore` | Update global settings |
+| POST   | `/api/v1/config/timing/leadtime` | JWT + `write:orderconfig` | Set lead times per fulfillment    |
+| POST   | `/api/v1/config/settings`        | JWT + `write:kvstore`     | Update global settings            |
 
 #### 7. StoreCreditController (`/api/v1/payments/storecredit`)
 
 **Purpose**: Gift card and store credit management
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/payments/storecredit/validate` | Public | Validate and lock credit code |
-| POST | `/api/v1/payments/storecredit/spend` | Public | Spend credit (requires lock) |
-| POST | `/api/v1/payments/storecredit/purchase` | Public | Purchase gift card via Square |
-| POST | `/api/v1/payments/storecredit/issue` | JWT + `edit:credit` | Issue store credit (refunds, promos) |
+| Method | Endpoint                                | Auth                | Description                          |
+| ------ | --------------------------------------- | ------------------- | ------------------------------------ |
+| GET    | `/api/v1/payments/storecredit/validate` | Public              | Validate and lock credit code        |
+| POST   | `/api/v1/payments/storecredit/spend`    | Public              | Spend credit (requires lock)         |
+| POST   | `/api/v1/payments/storecredit/purchase` | Public              | Purchase gift card via Square        |
+| POST   | `/api/v1/payments/storecredit/issue`    | JWT + `edit:credit` | Issue store credit (refunds, promos) |
 
 **Credit Flow**:
+
 1. Client calls `/validate?code=xxx` → Returns balance + encrypted lock
 2. Client submits order with lock in `proposedDiscounts`
 3. Server validates lock and spends credit atomically
@@ -219,20 +225,21 @@ All endpoints are prefixed with `/api/v1/`
 
 **Purpose**: Reports and analytics
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/payments/tips` | Public | Get tips for date (from Google Calendar) |
-| GET | `/api/v1/payments/report` | Public | Daily sales report by category |
+| Method | Endpoint                  | Auth   | Description                              |
+| ------ | ------------------------- | ------ | ---------------------------------------- |
+| GET    | `/api/v1/payments/tips`   | Public | Get tips for date (from Google Calendar) |
+| GET    | `/api/v1/payments/report` | Public | Daily sales report by category           |
 
 #### 9. DeliveryAddressController (`/api/v1/addresses`)
 
 **Purpose**: Address validation for delivery
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/addresses/validate` | Public | Validate address via Google Geocoding API, check if in delivery area |
+| Method | Endpoint                     | Auth   | Description                                                          |
+| ------ | ---------------------------- | ------ | -------------------------------------------------------------------- |
+| GET    | `/api/v1/addresses/validate` | Public | Validate address via Google Geocoding API, check if in delivery area |
 
 **Other Controllers** (Minor):
+
 - **KeyValueStoreController** (`/api/v1/config/keyvalue`) - Generic key-value storage
 - **ProductInstanceFunctionController** - Conditional logic for product instances
 - **PrinterGroupController** - Kitchen printer routing
@@ -245,6 +252,7 @@ All endpoints are prefixed with `/api/v1/`
 ### Namespace: `nsRO` (Read-Only - Public)
 
 **Connection Flow**:
+
 ```mermaid
 sequenceDiagram
     participant Client
@@ -260,20 +268,21 @@ sequenceDiagram
 
 #### Server-to-Client Events
 
-| Event | Payload | Trigger | Description |
-|-------|---------|---------|-------------|
-| `WCP_SERVER_TIME` | `{time: string, tz: string}` | On connection | Server time in ISO format + timezone |
-| `WCP_FULFILLMENTS` | `Record<string, FulfillmentConfig>` | On connection, catalog updates | Available fulfillment services |
-| `WCP_SETTINGS` | `IWSettings` | On connection, settings updates | Global settings |
-| `WCP_CATALOG` | `ICatalog` | On connection, catalog updates | Complete product catalog |
-| `WCP_SEATING_RESOURCES` | `Record<string, SeatingResource>` | On connection, seating updates | Available tables/seats |
+| Event                   | Payload                             | Trigger                         | Description                          |
+| ----------------------- | ----------------------------------- | ------------------------------- | ------------------------------------ |
+| `WCP_SERVER_TIME`       | `{time: string, tz: string}`        | On connection                   | Server time in ISO format + timezone |
+| `WCP_FULFILLMENTS`      | `Record<string, FulfillmentConfig>` | On connection, catalog updates  | Available fulfillment services       |
+| `WCP_SETTINGS`          | `IWSettings`                        | On connection, settings updates | Global settings                      |
+| `WCP_CATALOG`           | `ICatalog`                          | On connection, catalog updates  | Complete product catalog             |
+| `WCP_SEATING_RESOURCES` | `Record<string, SeatingResource>`   | On connection, seating updates  | Available tables/seats               |
 
 **Catalog Structure** (`ICatalog`):
+
 ```typescript
 interface ICatalog {
-  categories: Record<string, ICategory>,
-  modifiers: Record<string, ModifierEntry>, // {modifierType, options}
-  products: Record<string, ProductEntry>    // {product, instances}
+  categories: Record<string, ICategory>;
+  modifiers: Record<string, ModifierEntry>; // {modifierType, options}
+  products: Record<string, ProductEntry>; // {product, instances}
 }
 ```
 
@@ -286,6 +295,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 **Status**: Defined but **not actively used**. Reserved for future authenticated real-time order updates.
 
 **Intended Use**:
+
 - Real-time order status updates for authenticated POS clients
 - JWT authentication via `@thream/socketio-jwt`
 
@@ -297,6 +307,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 
 **Connection String**: `mongodb://{DBENDPOINT}/{DBTABLE}`  
 **Environment Variables**:
+
 - `DBENDPOINT` - MongoDB host:port (default: `127.0.0.1:27017`)
 - `DBTABLE` - Database name
 - `DBUSER`, `DBPASS` - Credentials (optional)
@@ -313,6 +324,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 - **Current Version**: Tracked in `package.json` (`0.6.9`)
 
 **Example Migration** (0.5.59):
+
 ```typescript
 "0.5.59": [{ major: 0, minor: 5, patch: 60 }, async () => {
   // Add balance field to discounts
@@ -329,6 +341,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 **Model**: `WOrderInstanceModel` (`models/orders/WOrderInstance.ts`)
 
 **Schema** (`WOrderInstanceSchema`):
+
 ```typescript
 {
   status: WOrderStatus, // PROPOSED, OPEN, CONFIRMED, CANCELED
@@ -348,6 +361,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 ```
 
 **Sub-Schemas**:
+
 - `CustomerInfoSchema` (`WCustomerInfo.ts`): Name, email, phone, referral
 - `FulfillmentInfoSchema` (`WFulfillmentInfo.ts`): Service, date/time, status, address (if delivery)
 - `OrderCartEntrySchema` (`WOrderCartEntry.ts`): Category ID, quantity, product w/ modifiers
@@ -359,6 +373,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 **Products**:
 
 - **WProductModel** (`catalog/products/WProductSchema.ts`): Product class
+
   ```typescript
   {
     baseProductId: string, // ref to base product instance
@@ -391,6 +406,7 @@ Currently none. The `nsRO` namespace is **broadcast-only**.
 **Modifiers**:
 
 - **WOptionTypeModel** (`catalog/options/WOptionTypeSchema.ts`): Modifier type
+
   ```typescript
   {
     name: string,
@@ -472,6 +488,7 @@ The backend **heavily relies** on type definitions from the `@wcp/wario-shared` 
 ### Type Import Pattern
 
 All models import types from `@wcp/wario-shared` and use them for:
+
 1. **TypeScript type safety** in business logic
 2. **Mongoose schema definitions** via type annotations
 3. **Validation chain types** for express-validator
@@ -479,25 +496,30 @@ All models import types from `@wcp/wario-shared` and use them for:
 ### Key Imported Types
 
 **Order Types**:
+
 - `WOrderInstance`, `WOrderStatus`, `WFulfillmentStatus`
 - `CreateOrderRequestV2`, `CrudOrderResponse`
 - `OrderTax`, `TipSelection`
 - `TenderBaseStatus`, `PaymentMethod`, `DiscountMethod`
 
 **Catalog Types**:
+
 - `IProduct`, `IProductInstance`, `IProductDisplayFlags`
 - `IOptionType`, `IOption`
 - `ICategory`, `CALL_LINE_DISPLAY`, `CategoryDisplay`
 - `MODIFIER_CLASS`, `DISPLAY_AS`, `OptionPlacement`, `OptionQualifier`
 
 **Fulfillment Types**:
+
 - `FulfillmentConfig`, `FulfillmentType`, `FulfillmentTime`
 
 **Money & Payments**:
+
 - `CURRENCY`, `IMoney` (custom schema: `WMoney`)
 - `StoreCreditType`, `SpendCreditResponse`
 
 **Utility Types**:
+
 - `WDateUtils` - Date/time utilities
 - `SEMVER` - Semantic versioning
 - `KeyValue<K, V>` - Generic key-value pairs
@@ -506,15 +528,20 @@ All models import types from `@wcp/wario-shared` and use them for:
 ### Custom Schema Wrappers
 
 **WMoney** (`models/WMoney.ts`):
+
 ```typescript
 // Mongoose schema for IMoney type
-export const WMoney = new Schema<IMoney>({
-  amount: { type: Number, required: true },
-  currency: { type: String, required: true, enum: Object.values(CURRENCY) }
-}, { _id: false });
+export const WMoney = new Schema<IMoney>(
+  {
+    amount: { type: Number, required: true },
+    currency: { type: String, required: true, enum: Object.values(CURRENCY) },
+  },
+  { _id: false },
+);
 ```
 
 This pattern is repeated for:
+
 - `IntervalSchema` → from `Interval`
 - `PrepTimingSchema` → from `PrepTiming`
 - `RecurringIntervalSchema` → from `RecurringInterval`
@@ -525,9 +552,9 @@ Express-validator chains validate against `wario-shared` types:
 
 ```typescript
 // Example: Ensures body matches CreateOrderRequestV2 structure
-body('fulfillment.status').equals(WFulfillmentStatus.PROPOSED), // from wario-shared
-body('fulfillment.selectedService').isMongoId(),
-body('proposedPayments.*.t').isIn([PaymentMethod.CreditCard, PaymentMethod.StoreCredit]) // from wario-shared
+(body('fulfillment.status').equals(WFulfillmentStatus.PROPOSED), // from wario-shared
+  body('fulfillment.selectedService').isMongoId(),
+  body('proposedPayments.*.t').isIn([PaymentMethod.CreditCard, PaymentMethod.StoreCredit])); // from wario-shared
 ```
 
 ### Type Flow
@@ -558,7 +585,7 @@ sequenceDiagram
     participant CatalogProvider
     participant MongoDB
     participant SocketIO
-    
+
     Client->>Controller: POST /api/v1/menu/product
     Controller->>CatalogProvider: CreateProduct()
     CatalogProvider->>MongoDB: Save product + instances
@@ -571,6 +598,7 @@ sequenceDiagram
 ```
 
 **Pattern**: All catalog mutations:
+
 1. Persist to MongoDB
 2. Update `CatalogProviderInstance.Catalog` in-memory cache
 3. Broadcast via Socket.IO to all connected clients
@@ -585,7 +613,7 @@ sequenceDiagram
     participant SquareProvider
     participant MongoDB
     participant EmailProvider
-    
+
     Client->>OrderController: POST /api/v1/order
     OrderController->>OrderManager: CreateOrder()
     OrderManager->>OrderManager: Validate cart, discounts
@@ -604,6 +632,7 @@ sequenceDiagram
 ### 1. **Provider Singleton Pattern**
 
 All major services are singletons exported as instances:
+
 ```typescript
 export const CatalogProviderInstance = new CatalogProvider();
 export const OrderManagerInstance = new OrderManager();
@@ -612,6 +641,7 @@ export const OrderManagerInstance = new OrderManager();
 ### 2. **In-Memory Caching**
 
 `CatalogProvider` and `DataProvider` maintain in-memory state:
+
 - **Catalog**: All products, modifiers, categories cached at startup
 - **Fulfillments**: Loaded and synced on updates
 - **Settings**: Cached, emitted on changes
@@ -621,6 +651,7 @@ export const OrderManagerInstance = new OrderManager();
 ### 3. **Idempotency for Mutations**
 
 Order mutations use `express-idempotency` + `idempotency-key` header:
+
 - Prevents duplicate charges/cancellations
 - Stores completed operations in MongoDB adapter
 
@@ -632,6 +663,7 @@ Order mutations use `express-idempotency` + `idempotency-key` header:
 ### 5. **Type-Driven Development**
 
 All schemas derive from `@wcp/wario-shared` types, ensuring:
+
 - Frontend and backend use identical types
 - No type drift between systems
 - Shared validation logic
@@ -640,12 +672,12 @@ All schemas derive from `@wcp/wario-shared` types, ensuring:
 
 ## External Integrations
 
-| Service | SDK | Usage |
-|---------|-----|-------|
-| **Square** | `square` npm package | Payment processing, catalog sync |
-| **Google Gmail API** | `googleapis` | Order confirmation emails, error alerts |
-| **Google Calendar API** | `googleapis` | Tip tracking via calendar events |
-| **Google Maps Geocoding** | `@googlemaps/google-maps-services-js` | Address validation for delivery |
+| Service                   | SDK                                   | Usage                                   |
+| ------------------------- | ------------------------------------- | --------------------------------------- |
+| **Square**                | `square` npm package                  | Payment processing, catalog sync        |
+| **Google Gmail API**      | `googleapis`                          | Order confirmation emails, error alerts |
+| **Google Calendar API**   | `googleapis`                          | Tip tracking via calendar events        |
+| **Google Maps Geocoding** | `@googlemaps/google-maps-services-js` | Address validation for delivery         |
 
 ---
 
@@ -683,6 +715,7 @@ GOOGLE_GEOCODE_KEY=...        # Google Maps API key
 ### Live Updates
 
 When catalog/fulfillment/settings change via REST API:
+
 - Server persists to MongoDB
 - Server broadcasts to all connected Socket.IO clients
 - Clients update local state without polling
@@ -718,6 +751,7 @@ For a **zero-disruption migration**, the NestJS implementation must maintain:
 ### Type Safety Advantage
 
 The heavy reliance on `@wcp/wario-shared` types is a **major advantage**:
+
 - NestJS DTOs can directly import and `extends` these types
 - `class-transformer` + `class-validator` can validate against the same types
 - No client code changes needed if types remain the source of truth

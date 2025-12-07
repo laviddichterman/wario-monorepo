@@ -10,7 +10,7 @@ export class SettingsController {
   constructor(
     private readonly dataProvider: DataProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post('timing/blockoff')
   @HttpCode(201)

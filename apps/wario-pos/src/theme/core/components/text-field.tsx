@@ -20,19 +20,13 @@ type InputSizeProps = Pick<FilledInputProps, 'size' | 'hiddenLabel'> & {
 };
 
 type InputBaseVariants = ComponentsVariants<Theme>['MuiInputBase'];
-type PickersInputBaseVariants =
-  | InputBaseVariants
-  | ComponentsVariants<Theme>['MuiPickersInputBase'];
+type PickersInputBaseVariants = InputBaseVariants | ComponentsVariants<Theme>['MuiPickersInputBase'];
 
 type OutlinedInputVariants = ComponentsVariants<Theme>['MuiOutlinedInput'];
-type PickersOutlinedInputVariants =
-  | OutlinedInputVariants
-  | ComponentsVariants<Theme>['MuiPickersOutlinedInput'];
+type PickersOutlinedInputVariants = OutlinedInputVariants | ComponentsVariants<Theme>['MuiPickersOutlinedInput'];
 
 type FilledInputVariants = ComponentsVariants<Theme>['MuiFilledInput'];
-type PickersFilledInputVariants =
-  | FilledInputVariants
-  | ComponentsVariants<Theme>['MuiPickersFilledInput'];
+type PickersFilledInputVariants = FilledInputVariants | ComponentsVariants<Theme>['MuiPickersFilledInput'];
 
 export const INPUT_TYPOGRAPHY = {
   fontSize: { base: 15, responsive: 16 },
@@ -56,10 +50,7 @@ export const INPUT_PADDING: Record<string, Record<string, CSSObject>> = {
   },
 };
 
-export function getInputTypography(
-  theme: Theme,
-  keys: Array<'fontSize' | 'height' | 'lineHeight'>
-): CSSObject {
+export function getInputTypography(theme: Theme, keys: Array<'fontSize' | 'height' | 'lineHeight'>): CSSObject {
   const { fontSize, lineHeight } = INPUT_TYPOGRAPHY;
 
   const baseStyles = {

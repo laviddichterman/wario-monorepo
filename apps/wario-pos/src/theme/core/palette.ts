@@ -1,9 +1,4 @@
-import type {
-  ColorSystemOptions,
-  PaletteColor,
-  PaletteColorChannel,
-  TypeAction,
-} from '@mui/material/styles';
+import type { ColorSystemOptions, PaletteColor, PaletteColorChannel, TypeAction } from '@mui/material/styles';
 
 import { createPaletteChannel, varAlpha } from '@/utils/color';
 

@@ -13,9 +13,7 @@ export type CalculateAnchorOriginProps = {
   transformOrigin: PopoverOrigin;
 };
 
-export function calculateAnchorOrigin(
-  arrow: PopoverArrow['placement']
-): CalculateAnchorOriginProps {
+export function calculateAnchorOrigin(arrow: PopoverArrow['placement']): CalculateAnchorOriginProps {
   let props: CalculateAnchorOriginProps;
 
   switch (arrow) {

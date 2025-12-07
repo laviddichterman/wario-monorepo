@@ -33,13 +33,14 @@ export function OrderDetailsView({ order }: Props) {
         orderNumber={order?.id}
         backHref={paths.dashboard.order.root}
         // onChangeStatus={handleChangeStatus}
-        statusOptions={Object.keys(WOrderStatus).map((key) => ({ value: WOrderStatus[key as keyof typeof WOrderStatus], label: WOrderStatus[key as keyof typeof WOrderStatus] }))}
+        statusOptions={Object.keys(WOrderStatus).map((key) => ({
+          value: WOrderStatus[key as keyof typeof WOrderStatus],
+          label: WOrderStatus[key as keyof typeof WOrderStatus],
+        }))}
       />
 
-
-
       <Grid container spacing={3}>
-        {order && <WOrderComponentCard orderId={order.id} handleConfirmOrder={() => { }} onCloseCallback={() => { }} />}
+        {order && <WOrderComponentCard orderId={order.id} handleConfirmOrder={() => {}} onCloseCallback={() => {}} />}
       </Grid>
     </DashboardContent>
   );

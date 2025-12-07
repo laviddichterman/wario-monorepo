@@ -19,31 +19,28 @@ import { Test, type TestingModule, type TestingModuleBuilder } from '@nestjs/tes
  * ```
  */
 export function createMock<T>(overrides: Partial<Record<keyof T, unknown>> = {}): jest.Mocked<T> {
-  const mock = new Proxy(
-    {} as jest.Mocked<T>,
-    {
-      get: (target, prop) => {
-        // Special handling for Promise-like checks
-        if (prop === 'then') {
-          return undefined;
-        }
-        if (prop === 'constructor' || prop === 'prototype' || prop === Symbol.toStringTag) {
-          return undefined;
-        }
+  const mock = new Proxy({} as jest.Mocked<T>, {
+    get: (target, prop) => {
+      // Special handling for Promise-like checks
+      if (prop === 'then') {
+        return undefined;
+      }
+      if (prop === 'constructor' || prop === 'prototype' || prop === Symbol.toStringTag) {
+        return undefined;
+      }
 
-        if (prop in target) {
-          return target[prop as keyof typeof target];
-        }
-        if (prop in overrides) {
-          return overrides[prop as keyof T];
-        }
-        // Return a jest.fn() for any accessed property
-        const mockFn = jest.fn();
-        (target as Record<string | symbol, unknown>)[prop] = mockFn;
-        return mockFn;
-      },
-    }
-  );
+      if (prop in target) {
+        return target[prop as keyof typeof target];
+      }
+      if (prop in overrides) {
+        return overrides[prop as keyof T];
+      }
+      // Return a jest.fn() for any accessed property
+      const mockFn = jest.fn();
+      (target as Record<string | symbol, unknown>)[prop] = mockFn;
+      return mockFn;
+    },
+  });
   return mock;
 }
 
@@ -80,10 +77,7 @@ export function createMockProvider<T>(
  * ];
  * ```
  */
-export function createValueProvider(
-  token: string | symbol,
-  value: unknown,
-): Provider {
+export function createValueProvider(token: string | symbol, value: unknown): Provider {
   return {
     provide: token,
     useValue: value,
@@ -131,10 +125,7 @@ export function createTestingModuleWithMocks(config: TestModuleConfig): TestingM
  * mockCatalog.GetCategory.mockResolvedValue({ id: '123' });
  * ```
  */
-export function getMockedService<T>(
-  module: TestingModule,
-  token: Type<T> | string | symbol,
-): jest.Mocked<T> {
+export function getMockedService<T>(module: TestingModule, token: Type<T> | string | symbol): jest.Mocked<T> {
   return module.get(token);
 }
 

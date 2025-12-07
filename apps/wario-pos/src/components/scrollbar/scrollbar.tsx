@@ -11,15 +11,7 @@ import type { ScrollbarProps } from './types';
 
 // ----------------------------------------------------------------------
 
-export function Scrollbar({
-  sx,
-  ref,
-  children,
-  className,
-  slotProps,
-  fillContent = true,
-  ...other
-}: ScrollbarProps) {
+export function Scrollbar({ sx, ref, children, className, slotProps, fillContent = true, ...other }: ScrollbarProps) {
   return (
     <ScrollbarRoot
       scrollableNodeProps={{ ref }}

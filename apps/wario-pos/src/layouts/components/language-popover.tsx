@@ -37,7 +37,7 @@ export function LanguagePopover({ data = [], sx, ...other }: LanguagePopoverProp
       void onChangeLang(lang);
       onClose();
     },
-    [onChangeLang, onClose]
+    [onChangeLang, onClose],
   );
 
   const renderMenuList = () => (
@@ -47,7 +47,9 @@ export function LanguagePopover({ data = [], sx, ...other }: LanguagePopoverProp
           <MenuItem
             key={option.value}
             selected={option.value === currentLang.value}
-            onClick={() => { handleChangeLang(option.value as LangCode); }}
+            onClick={() => {
+              handleChangeLang(option.value as LangCode);
+            }}
           >
             <FlagIcon code={option.countryCode} />
             {option.label}

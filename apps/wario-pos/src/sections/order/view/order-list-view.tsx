@@ -14,32 +14,25 @@ import { OrderManagerComponent } from '@/components/wario/orders/OrderManager';
 
 import { DashboardContent } from '@/layouts/dashboard';
 
-
 export function OrderListView() {
   const [isTimingDrawerOpen, setIsTimingDrawerOpen] = useState<boolean>(false);
   const confirmMutation = useConfirmOrderMutation();
   const toggleDrawer = useCallback(
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
-      if (
-        event.type === 'keydown' &&
-        ['Tab', 'Shift'].includes((event as React.KeyboardEvent).key)
-      ) {
+      if (event.type === 'keydown' && ['Tab', 'Shift'].includes((event as React.KeyboardEvent).key)) {
         return;
       }
       setIsTimingDrawerOpen(open);
     },
-    []
+    [],
   );
-
 
   const handleConfirmOrder = (orderId: string) => {
     confirmMutation.mutate(
-      { orderId: orderId, additionalMessage: "" },
+      { orderId: orderId, additionalMessage: '' },
       {
-        onSuccess: () => {
-
-        }
-      }
+        onSuccess: () => {},
+      },
     );
   };
   return (
@@ -57,11 +50,7 @@ export function OrderListView() {
 
         <Grid container spacing={2}>
           <Grid size={12}>
-            <Button
-              variant="outlined"
-              onClick={toggleDrawer(true)}
-              sx={{ textTransform: 'capitalize' }}
-            >
+            <Button variant="outlined" onClick={toggleDrawer(true)} sx={{ textTransform: 'capitalize' }}>
               Manage Order Timing
             </Button>
 
@@ -70,15 +59,17 @@ export function OrderListView() {
                 <Grid
                   size={{
                     xs: 12,
-                    md: 12
-                  }}>
+                    md: 12,
+                  }}
+                >
                   <LeadTimesComp />
                 </Grid>
                 <Grid
                   size={{
                     xs: 12,
-                    md: 12
-                  }}>
+                    md: 12,
+                  }}
+                >
                   <BlockOffComp />
                 </Grid>
               </Grid>
@@ -86,10 +77,9 @@ export function OrderListView() {
             <OrderManagerComponent handleConfirmOrder={handleConfirmOrder} />
           </Grid>
           <Grid size={12}>
-            <OrderCalendar initialView='listWeek' handleConfirmOrder={handleConfirmOrder} />
+            <OrderCalendar initialView="listWeek" handleConfirmOrder={handleConfirmOrder} />
           </Grid>
         </Grid>
-
       </DashboardContent>
     </>
   );

@@ -14,7 +14,7 @@ import { MotionContainer, varBounce } from '@/components/animate';
 
 /**
  * RoleBasedGuard using Auth0 scopes and permissions.
- * 
+ *
  * Use either `scopes` or `permissions` to define access requirements.
  * By default, ALL specified scopes/permissions are required (`requireAll=true`).
  * Set `requireAll=false` to allow access if ANY of the scopes/permissions match.
@@ -45,10 +45,7 @@ export function RoleBasedGuard({
   // If not authenticated, deny access
   if (!authenticated) {
     return hasContent ? (
-      <Container
-        component={MotionContainer}
-        sx={[{ textAlign: 'center' }, ...(spreadSx(sx))]}
-      >
+      <Container component={MotionContainer} sx={[{ textAlign: 'center' }, ...spreadSx(sx)]}>
         <m.div variants={varBounce('in')}>
           <Typography variant="h3" sx={{ mb: 2 }}>
             Authentication required
@@ -56,9 +53,7 @@ export function RoleBasedGuard({
         </m.div>
 
         <m.div variants={varBounce('in')}>
-          <Typography sx={{ color: 'text.secondary' }}>
-            You must be logged in to access this page.
-          </Typography>
+          <Typography sx={{ color: 'text.secondary' }}>You must be logged in to access this page.</Typography>
         </m.div>
       </Container>
     ) : null;
@@ -66,32 +61,27 @@ export function RoleBasedGuard({
 
   // Determine if access is granted
   // User needs to pass BOTH scope and permission checks (if specified)
-  return hasScopes(scopes, requireAll) && hasPermissions(permissions, requireAll) ?
-    (<> {children} </>) :
-    (hasContent ?
-      (<Container
-        component={MotionContainer}
-        sx={[{ textAlign: 'center' }, ...(spreadSx(sx))]}
-      >
-        <m.div variants={varBounce('in')}>
-          <Typography variant="h3" sx={{ mb: 2 }}>
-            Permission denied
-          </Typography>
-        </m.div>
+  return hasScopes(scopes, requireAll) && hasPermissions(permissions, requireAll) ? (
+    <> {children} </>
+  ) : hasContent ? (
+    <Container component={MotionContainer} sx={[{ textAlign: 'center' }, ...spreadSx(sx)]}>
+      <m.div variants={varBounce('in')}>
+        <Typography variant="h3" sx={{ mb: 2 }}>
+          Permission denied
+        </Typography>
+      </m.div>
 
-        <m.div variants={varBounce('in')}>
-          <Typography sx={{ color: 'text.secondary' }}>
-            You do not have permission to access this page.
-          </Typography>
-        </m.div>
+      <m.div variants={varBounce('in')}>
+        <Typography sx={{ color: 'text.secondary' }}>You do not have permission to access this page.</Typography>
+      </m.div>
 
-        <m.div variants={varBounce('in')}>
-          <Typography sx={{ color: 'text.secondary' }}>
-            Required {scopes.length > 0 ? `scopes: ${scopes.join(', ')}` : ''}
-            {scopes.length > 0 && permissions.length > 0 ? ' and ' : ''}
-            {permissions.length > 0 ? `permissions: ${permissions.join(', ')}` : ''}
-          </Typography>
-        </m.div>
-      </Container>
-      ) : null);
+      <m.div variants={varBounce('in')}>
+        <Typography sx={{ color: 'text.secondary' }}>
+          Required {scopes.length > 0 ? `scopes: ${scopes.join(', ')}` : ''}
+          {scopes.length > 0 && permissions.length > 0 ? ' and ' : ''}
+          {permissions.length > 0 ? `permissions: ${permissions.join(', ')}` : ''}
+        </Typography>
+      </m.div>
+    </Container>
+  ) : null;
 }
