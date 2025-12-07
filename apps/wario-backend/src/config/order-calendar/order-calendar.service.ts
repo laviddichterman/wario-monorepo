@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { calendar_v3 } from 'googleapis';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
@@ -10,8 +10,7 @@ import { GoogleService } from '../google/google.service';
 @Injectable()
 export class OrderCalendarService {
   constructor(
-    @Inject(forwardRef(() => GoogleService))
-    private googleService: GoogleService,
+    @Inject(GoogleService) private googleService: GoogleService,
     @InjectPinoLogger(OrderCalendarService.name)
     private readonly logger: PinoLogger,
   ) { }

@@ -1,0 +1,274 @@
+/**
+ * Pure functions for catalog square synchronization operations.
+ */
+import type { FilterQuery } from 'mongoose';
+import type { PinoLogger } from 'nestjs-pino';
+import type { CatalogObject } from 'square';
+
+import type { ICatalog, IOptionType, IProduct, KeyValue, PrinterGroup } from '@wcp/wario-shared';
+
+import {
+  GetNonSquareExternalIds,
+  GetSquareExternalIds,
+  GetSquareIdIndexFromExternalIds,
+} from '../square-wario-bridge';
+import type { SquareService } from '../square/square.service';
+
+import type { UpdateModifierOptionProps, UpdateModifierTypeProps, UpdatePrinterGroupProps, UpdateProductInstanceProps } from './catalog.types';
+
+// ============================================================================
+// Dependencies Interface
+// ============================================================================
+
+export interface SquareSyncDeps {
+  logger: PinoLogger;
+  squareService: SquareService;
+
+  // State
+  printerGroups: Record<string, PrinterGroup>;
+  catalog: ICatalog;
+
+  // Callbacks to other services/operations
+  batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<unknown>;
+  batchUpdateModifierType: (batches: UpdateModifierTypeProps[], suppress: boolean, updateRelated: boolean) => Promise<unknown>;
+  batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<unknown>;
+  batchUpdateProductInstance: (batches: UpdateProductInstanceProps[], suppress: boolean) => Promise<unknown>;
+  updateProductsWithConstraint: (match: FilterQuery<IProduct>, update: Partial<IProduct>, force: boolean) => Promise<unknown>;
+
+  // Sync Hooks
+  syncModifierTypes: () => Promise<unknown>;
+  syncOptions: () => Promise<unknown>;
+  syncProductInstances: () => Promise<unknown>;
+  syncProducts: () => Promise<unknown>;
+  recomputeCatalog: () => void;
+}
+
+// ============================================================================
+// Sync Operations
+// ============================================================================
+
+export const batchDeleteCatalogObjectsFromExternalIds = async (
+  deps: SquareSyncDeps,
+  externalIds: KeyValue[]
+) => {
+  const squareKV = GetSquareExternalIds(externalIds);
+  if (squareKV.length > 0) {
+    deps.logger.debug(`Removing from square... ${squareKV.map((x) => `${x.key}: ${x.value}`).join(', ')}`);
+    return await deps.squareService.BatchDeleteCatalogObjects(squareKV.map((x) => x.value));
+  }
+  return true;
+};
+
+export const checkAllPrinterGroupsSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {
+  const printerGroups = deps.printerGroups;
+  if (Object.keys(printerGroups).length === 0) {
+    deps.logger.warn('PrinterGroups is empty, skipping Square sync check');
+    return null;
+  }
+  const squareCatalogObjectIds = Object.values(printerGroups)
+    .map((printerGroup) => GetSquareExternalIds(printerGroup.externalIDs).map((x) => x.value))
+    .flat();
+
+  if (squareCatalogObjectIds.length > 0) {
+    const catalogObjectResponse = await deps.squareService.BatchRetrieveCatalogObjects(squareCatalogObjectIds, false);
+    if (catalogObjectResponse.success) {
+      const foundObjects = catalogObjectResponse.result.objects as CatalogObject[];
+      const missingSquareCatalogObjectBatches: UpdatePrinterGroupProps[] = [];
+      Object.values(printerGroups).forEach((x) => {
+        const missingIDs = GetSquareExternalIds(x.externalIDs).filter(
+          (kv) => foundObjects.findIndex((o) => o.id === kv.value) === -1,
+        );
+        if (missingIDs.length > 0) {
+          missingSquareCatalogObjectBatches.push({
+            id: x.id,
+            printerGroup: {
+              externalIDs: x.externalIDs.filter(
+                (kv) => missingIDs.findIndex((idKV) => idKV.value === kv.value) === -1,
+              ),
+            },
+          });
+        }
+      });
+      if (missingSquareCatalogObjectBatches.length > 0) {
+        await deps.batchUpdatePrinterGroup(missingSquareCatalogObjectBatches);
+      }
+    }
+  }
+  const batches = Object.values(printerGroups)
+    .filter(
+      (pg) =>
+        GetSquareIdIndexFromExternalIds(pg.externalIDs, 'CATEGORY') === -1 ||
+        GetSquareIdIndexFromExternalIds(pg.externalIDs, 'ITEM') === -1 ||
+        GetSquareIdIndexFromExternalIds(pg.externalIDs, 'ITEM_VARIATION') === -1,
+    )
+    .map((pg) => ({ id: pg.id, printerGroup: {} }));
+  return batches.length > 0 ? await deps.batchUpdatePrinterGroup(batches) : null;
+};
+
+export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {
+  const squareCatalogObjectIds = Object.values(deps.catalog.modifiers)
+    .map((modifierTypeEntry) => GetSquareExternalIds(modifierTypeEntry.modifierType.externalIDs).map((x) => x.value))
+    .flat();
+
+  if (squareCatalogObjectIds.length > 0) {
+    const catalogObjectResponse = await deps.squareService.BatchRetrieveCatalogObjects(squareCatalogObjectIds, false);
+    if (catalogObjectResponse.success) {
+      const foundObjects = catalogObjectResponse.result.objects as CatalogObject[];
+      const missingSquareCatalogObjectBatches: UpdateModifierTypeProps[] = [];
+      const optionUpdates: { id: string; externalIDs: KeyValue[] }[] = [];
+      Object.values(deps.catalog.modifiers)
+        .filter((x) =>
+          GetSquareExternalIds(x.modifierType.externalIDs).reduce(
+            (acc, kv) => acc || foundObjects.findIndex((o) => o.id === kv.value) === -1,
+            false,
+          ),
+        )
+        .forEach((x) => {
+          missingSquareCatalogObjectBatches.push({
+            id: x.modifierType.id,
+            modifierType: {
+
+              externalIDs: GetNonSquareExternalIds(x.modifierType.externalIDs),
+            },
+          });
+          deps.logger.info(`Pruning square catalog IDs from options: ${x.options.join(', ')}`);
+          optionUpdates.push(
+            ...x.options.map((oId) => ({
+              id: oId,
+
+              externalIDs: GetNonSquareExternalIds(deps.catalog.options[oId].externalIDs),
+            })),
+          );
+        });
+      if (missingSquareCatalogObjectBatches.length > 0) {
+        await deps.batchUpdateModifierType(missingSquareCatalogObjectBatches, false, false);
+      }
+      if (optionUpdates.length > 0) {
+        await deps.batchUpdateModifierOption(
+          optionUpdates.map((x) => ({
+            id: x.id,
+            modifierTypeId: deps.catalog.options[x.id].modifierTypeId,
+            modifierOption: { externalIDs: x.externalIDs },
+          })),
+        );
+      }
+    }
+  }
+  const batches = Object.values(deps.catalog.modifiers)
+    .filter(
+      (x) =>
+        GetSquareIdIndexFromExternalIds(x.modifierType.externalIDs, 'MODIFIER_LIST') === -1 ||
+        x.options.reduce(
+          (acc, oId) =>
+            acc || GetSquareIdIndexFromExternalIds(deps.catalog.options[oId].externalIDs, 'MODIFIER') === -1,
+          false,
+        ),
+    )
+    .map((x) => ({ id: x.modifierType.id, modifierType: {} }));
+
+  if (batches.length > 0) {
+
+    const result = (await deps.batchUpdateModifierType(batches, false, false)) as (IOptionType | null)[];
+    return result.filter((x): x is IOptionType => x !== null).map((x) => x.id);
+  }
+  return [];
+};
+
+export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {
+  const squareCatalogObjectIds = Object.values(deps.catalog.products)
+    .map((p) =>
+      p.instances
+        .map((piid) => GetSquareExternalIds(deps.catalog.productInstances[piid].externalIDs).map((x) => x.value))
+        .flat(),
+    )
+    .flat();
+
+  if (squareCatalogObjectIds.length > 0) {
+    const catalogObjectResponse = await deps.squareService.BatchRetrieveCatalogObjects(squareCatalogObjectIds, false);
+    if (catalogObjectResponse.success) {
+      const foundObjects = catalogObjectResponse.result.objects as CatalogObject[];
+      const missingSquareCatalogObjectBatches = Object.values(deps.catalog.products)
+        .map((p) =>
+          p.instances
+            .filter((x) =>
+              GetSquareExternalIds(deps.catalog.productInstances[x].externalIDs).reduce(
+                (acc, kv) => acc || foundObjects.findIndex((o) => o.id === kv.value) === -1,
+                false,
+              ),
+            )
+            .map((piid) => ({
+              piid,
+              product: {
+                modifiers: p.product.modifiers,
+                price: p.product.price,
+                printerGroup: p.product.printerGroup,
+                disabled: p.product.disabled,
+                displayFlags: p.product.displayFlags,
+              },
+              productInstance: {
+
+                externalIDs: GetNonSquareExternalIds(deps.catalog.productInstances[piid].externalIDs),
+              },
+            })),
+        )
+        .flat();
+      if (missingSquareCatalogObjectBatches.length > 0) {
+        await deps.batchUpdateProductInstance(missingSquareCatalogObjectBatches, true);
+        await deps.syncProductInstances();
+        deps.recomputeCatalog();
+      }
+    }
+  }
+
+  const batches = Object.values(deps.catalog.products)
+    .map((p) =>
+      p.instances
+        .filter((piid) => {
+          const pi = deps.catalog.productInstances[piid];
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          return pi && !pi.displayFlags.pos.hide && GetSquareIdIndexFromExternalIds(pi.externalIDs, 'ITEM') === -1;
+        })
+        .map((piid) => ({
+          piid,
+          product: {
+            modifiers: p.product.modifiers,
+            price: p.product.price,
+            printerGroup: p.product.printerGroup,
+            disabled: p.product.disabled,
+            displayFlags: p.product.displayFlags,
+          },
+          productInstance: {},
+        })),
+    )
+    .flat();
+  if (batches.length > 0) {
+    await deps.batchUpdateProductInstance(batches, true);
+    await deps.syncProductInstances();
+    deps.recomputeCatalog();
+  }
+};
+
+export const forceSquareCatalogCompleteUpsert = async (deps: SquareSyncDeps) => {
+  const printerGroupUpdates = Object.values(deps.printerGroups).map((pg) => ({
+    id: pg.id,
+    printerGroup: {},
+  }));
+  await deps.batchUpdatePrinterGroup(printerGroupUpdates);
+  const modifierTypeUpdates = Object.values(deps.catalog.modifiers).map((x) => ({
+    id: x.modifierType.id,
+    modifierType: {},
+  }));
+  await deps.batchUpdateModifierType(modifierTypeUpdates, true, true);
+  void deps.syncModifierTypes();
+  void deps.syncOptions();
+  void deps.syncProductInstances();
+  void deps.syncProducts();
+  deps.recomputeCatalog();
+
+  await deps.updateProductsWithConstraint({}, {}, true);
+  void deps.syncModifierTypes();
+  void deps.syncOptions();
+  void deps.syncProductInstances();
+  void deps.syncProducts();
+  deps.recomputeCatalog();
+};

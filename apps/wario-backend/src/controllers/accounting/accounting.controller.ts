@@ -38,9 +38,10 @@ export class AccountingController {
     const tips_date = startOfDay(parseISO(date));
     const min_date = formatRFC3339(tips_date);
     const max_date = formatRFC3339(addDays(tips_date, 1));
-    const events = await this.googleService.GetEventsForDate(min_date, max_date, 'America/Los_Angeles');
+    const events = await this.googleService.GetEventsForDate(min_date, max_date, 'America/Los_Angeles') || [];
     const tips_array: (number | string)[] = [];
-    events!.map((event) => {
+    events.map((event) => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (event && event.description) {
         const tips_match = event.description.match(tipsregex);
         if (tips_match) {

@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Stream } from 'stream';
 
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { format, isBefore, isValid, parseISO, startOfDay } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import qrcode from 'qrcode';
@@ -34,9 +35,9 @@ const ACTIVE_RANGE = `${ACTIVE_SHEET}!A2:M`;
 @Injectable()
 export class StoreCreditProviderService {
   constructor(
-    private readonly googleService: GoogleService,
-    private readonly squareService: SquareService,
-    private readonly dataProviderService: DataProviderService,
+    @Inject(GoogleService) private readonly googleService: GoogleService,
+    @Inject(SquareService) private readonly squareService: SquareService,
+    @Inject(DataProviderService) private readonly dataProviderService: DataProviderService,
     @InjectPinoLogger(StoreCreditProviderService.name)
     private readonly logger: PinoLogger,
   ) { }
@@ -264,21 +265,17 @@ export class StoreCreditProviderService {
       if (entry[7] == code) {
         const credit_balance = Math.round(Number(entry[3]) * 100);
         if (amount.amount > credit_balance) {
-          this.logger.error(
-            `We have a cheater folks, store credit key ${String(entry[7])}, attempted to use ${MoneyToDisplayString(amount, true)} but had balance ${credit_balance}`,
-          );
+          this.logger.error({ code: entry[7] as string, amount, credit_balance }, "Attempt to redeem more credit than balance available. Someone is attempting to hack the system.");
           return { success: false };
         }
         if ((entry[10] != lock.enc || entry[11] != lock.iv || entry[12] != lock.auth)) {
-          this.logger.error({ code: entry[7], lock }, 'Cheater detected: store credit lock mismatch');
+          this.logger.error({ code: entry[7] as string, lock }, 'Cheater detected: store credit lock mismatch');
           return { success: false };
         }
         if (entry[8]) {
           const expiration = startOfDay(parseISO(String(entry[8])));
           if (isBefore(expiration, beginningOfToday)) {
-            this.logger.error(
-              `We have a cheater folks, store credit key ${String(entry[7])}, attempted to use after expiration of ${String(entry[8])}.`,
-            );
+            this.logger.error({ code: entry[7] as string, expiration }, "Attempt to use expired credit");
             return { success: false };
           }
         }

@@ -3,7 +3,6 @@ import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/
 import { UncommittedCategoryDto } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogCategoryService } from '../../config/catalog-provider/catalog-category.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import { SocketIoService } from '../../config/socket-io/socket-io.service';
 import { DeleteCategoryDto, UpdateCategoryDto } from '../../dtos/category.dto';
@@ -13,7 +12,6 @@ import { CategoryNotFoundException } from '../../exceptions';
 export class CategoryController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
-    private readonly catalogCategoryService: CatalogCategoryService,
     private readonly socketIoService: SocketIoService,
   ) { }
 
@@ -21,7 +19,7 @@ export class CategoryController {
   @Scopes('write:catalog')
   @HttpCode(201)
   async postCategory(@Body() body: UncommittedCategoryDto) {
-    const doc = await this.catalogCategoryService.CreateCategory(body);
+    const doc = await this.catalogProvider.CreateCategory(body);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -30,7 +28,7 @@ export class CategoryController {
   @Scopes('write:catalog')
   async patchCategory(@Param('catid') catid: string, @Body() body: UpdateCategoryDto) {
     // todo: UpdateCategoryDto needs to allow partial updates
-    const doc = await this.catalogCategoryService.UpdateCategory(catid, body);
+    const doc = await this.catalogProvider.UpdateCategory(catid, body);
     if (!doc) {
       throw new CategoryNotFoundException(catid);
     }
@@ -42,7 +40,7 @@ export class CategoryController {
   @Scopes('delete:catalog')
   async deleteCategory(@Param('catid') catid: string, @Body() body: DeleteCategoryDto) {
     const delete_contained_products = body.delete_contained_products ?? false;
-    const doc = await this.catalogCategoryService.DeleteCategory(catid, delete_contained_products);
+    const doc = await this.catalogProvider.DeleteCategory(catid, delete_contained_products);
     if (!doc) {
       throw new CategoryNotFoundException(catid);
     }

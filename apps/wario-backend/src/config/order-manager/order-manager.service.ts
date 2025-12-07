@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable @typescript-eslint/only-throw-error */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import * as crypto from 'crypto';
 
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   format,
@@ -24,6 +27,7 @@ import {
   FulfillmentData,
   FulfillmentTime,
   FulfillmentType,
+  Metrics,
   MoneyToDisplayString,
   OrderLineDiscount,
   OrderPaymentAllocated,
@@ -52,11 +56,9 @@ import { OrderNotificationService } from '../order-notification/order-notificati
 import { OrderPaymentService } from '../order-payment/order-payment.service';
 import { OrderValidationService } from '../order-validation/order-validation.service';
 import { PrinterService } from '../printer/printer.service';
-import { SocketIoService } from '../socket-io/socket-io.service';
 import { CreateOrderFromCart } from '../square-wario-bridge';
 import { SquareError, SquareService } from '../square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
-import { ThirdPartyOrderService } from '../third-party-order/third-party-order.service';
 
 
 const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
@@ -70,30 +72,16 @@ export class OrderManagerService {
   constructor(
     @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
-    @Inject(forwardRef(() => GoogleService))
-    private googleService: GoogleService,
-    @Inject(forwardRef(() => SquareService))
-    private squareService: SquareService,
-    @Inject(forwardRef(() => StoreCreditProviderService))
-    private storeCreditService: StoreCreditProviderService,
-    @Inject(forwardRef(() => CatalogProviderService))
-    private catalogService: CatalogProviderService,
-    @Inject(forwardRef(() => DataProviderService))
-    private dataProvider: DataProviderService,
-    @Inject(forwardRef(() => SocketIoService))
-    private socketIoService: SocketIoService,
-    @Inject(forwardRef(() => OrderNotificationService))
-    private orderNotificationService: OrderNotificationService,
-    @Inject(forwardRef(() => OrderPaymentService))
-    private orderPaymentService: OrderPaymentService,
-    @Inject(forwardRef(() => OrderValidationService))
-    private orderValidationService: OrderValidationService,
-    @Inject(forwardRef(() => OrderCalendarService))
-    private orderCalendarService: OrderCalendarService,
-    @Inject(forwardRef(() => PrinterService))
-    private printerService: PrinterService,
-    @Inject(forwardRef(() => ThirdPartyOrderService))
-    private thirdPartyOrderService: ThirdPartyOrderService,
+    @Inject(GoogleService) private googleService: GoogleService,
+    @Inject(SquareService) private squareService: SquareService,
+    @Inject(StoreCreditProviderService) private storeCreditService: StoreCreditProviderService,
+    @Inject(CatalogProviderService) private catalogService: CatalogProviderService,
+    @Inject(DataProviderService) private dataProvider: DataProviderService,
+    @Inject(OrderNotificationService) private orderNotificationService: OrderNotificationService,
+    @Inject(OrderPaymentService) private orderPaymentService: OrderPaymentService,
+    @Inject(OrderValidationService) private orderValidationService: OrderValidationService,
+    @Inject(OrderCalendarService) private orderCalendarService: OrderCalendarService,
+    @Inject(PrinterService) private printerService: PrinterService,
     @InjectPinoLogger(OrderManagerService.name)
     private readonly logger: PinoLogger,
   ) { }
@@ -791,7 +779,7 @@ export class OrderManagerService {
         },
         { new: true },
       )
-      .then(async (updatedOrder) => {
+      .then((updatedOrder) => {
         // return success/failure
         // this.socketIoService.EmitOrder(updatedOrder!.toObject()); // TODO: Implement EmitOrder in SocketIoService
         return {
@@ -1132,7 +1120,7 @@ export class OrderManagerService {
         status: WFulfillmentStatus.PROPOSED,
       },
       metrics: {
-        ...createOrderRequest.metrics!,
+        ...(createOrderRequest.metrics! as Metrics),
         ipAddress
       },
       tip: createOrderRequest.tip,

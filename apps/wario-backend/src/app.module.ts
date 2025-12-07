@@ -5,6 +5,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule, PinoLogger } from 'nestjs-pino';
 
+import { CatalogModule } from 'src/models/catalog/catalog.module';
+
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -15,7 +17,6 @@ import { ConfigModule } from './config/config.module';
 import { ErrorNotificationService } from './config/error-notification/error-notification.service';
 import { ControllersModule } from './controllers/controllers.module';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
-import { CatalogModule } from './models/catalog/catalog.module';
 import { OrdersModule } from './models/orders/orders.module';
 import { QueryModule } from './models/query/query.module';
 import { SettingsModule } from './models/settings/settings.module';

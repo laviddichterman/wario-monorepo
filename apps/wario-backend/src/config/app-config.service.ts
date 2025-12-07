@@ -81,9 +81,7 @@ export class AppConfigService {
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:3003',
-      'http://localhost:5173', // Vite default
       'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
       /https:\/\/.*\.windycitypie\.com$/,
       /https:\/\/windycitypie\.com$/,
       /https:\/\/.*\.breezytownpizza\.com$/,

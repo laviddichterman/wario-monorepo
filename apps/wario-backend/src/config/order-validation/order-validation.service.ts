@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import {
   CanThisBeOrderedAtThisTimeAndFulfillmentCatalog,
@@ -18,8 +18,7 @@ import { CatalogProviderService } from '../catalog-provider/catalog-provider.ser
 @Injectable()
 export class OrderValidationService {
   constructor(
-    @Inject(forwardRef(() => CatalogProviderService))
-    private catalogService: CatalogProviderService,
+    private catalogProviderService: CatalogProviderService,
   ) { }
 
   /**
@@ -37,7 +36,7 @@ export class OrderValidationService {
     noLongerAvailable: CoreCartEntry<WProduct>[];
     rebuiltCart: CategorizedRebuiltCart;
   } => {
-    const catalogSelectors = this.catalogService.CatalogSelectors;
+    const catalogSelectors = this.catalogProviderService.CatalogSelectors;
     const rebuiltCart = RebuildAndSortCart(cart, catalogSelectors, service_time, fulfillmentId);
     // Check which products are no longer available at this time/fulfillment
     const noLongerAvailable: CoreCartEntry<WProduct>[] = Object.values(rebuiltCart).flatMap((entries) =>

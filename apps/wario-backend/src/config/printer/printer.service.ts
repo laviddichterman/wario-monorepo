@@ -1,5 +1,5 @@
 import { UTCDate } from '@date-fns/utc';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { formatRFC3339, isBefore, subDays } from 'date-fns';
 import { Model } from 'mongoose';
@@ -63,12 +63,9 @@ export class PrinterService {
   constructor(
     @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
-    @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
-    @Inject(forwardRef(() => DataProviderService))
     private dataProvider: DataProviderService,
-    @Inject(forwardRef(() => CatalogProviderService))
-    private catalogService: CatalogProviderService,
+    private catalogProviderService: CatalogProviderService,
     @InjectPinoLogger(PrinterService.name)
     private readonly logger: PinoLogger,
   ) { }
@@ -131,10 +128,10 @@ export class PrinterService {
           note: order.specialInstructions ?? undefined,
         },
         {
-          Catalog: this.catalogService.Catalog,
-          ReverseMappings: this.catalogService.ReverseMappings,
-          PrinterGroups: this.catalogService.PrinterGroups,
-          CatalogSelectors: this.catalogService.CatalogSelectors,
+          Catalog: this.catalogProviderService.Catalog,
+          ReverseMappings: this.catalogProviderService.ReverseMappings,
+          PrinterGroups: this.catalogProviderService.PrinterGroups,
+          CatalogSelectors: this.catalogProviderService.CatalogSelectors,
         },
       );
 
@@ -186,7 +183,7 @@ export class PrinterService {
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
       const eventTitle = EventTitleStringBuilder(
-        this.catalogService.CatalogSelectors,
+        this.catalogProviderService.CatalogSelectors,
         fulfillmentConfig,
         customerName,
         order.fulfillment as FulfillmentData,
@@ -195,7 +192,7 @@ export class PrinterService {
       );
 
       // Find expo printers
-      const expoPrinters = Object.values(this.catalogService.PrinterGroups).filter((x) => x.isExpo);
+      const expoPrinters = Object.values(this.catalogProviderService.PrinterGroups).filter((x) => x.isExpo);
       if (expoPrinters.length === 0) {
         return {
           success: true,
@@ -313,7 +310,7 @@ export class PrinterService {
    * Expo printers display tickets for expediting orders.
    */
   GetExpoPrinters(): { id: string; name: string; squareItemVariationId: string | null }[] {
-    return Object.entries(this.catalogService.PrinterGroups)
+    return Object.entries(this.catalogProviderService.PrinterGroups)
       .filter(([_, pg]) => pg.isExpo)
       .map(([id, pg]) => ({
         id,
@@ -326,7 +323,7 @@ export class PrinterService {
    * Gets all printer groups.
    */
   GetAllPrinters(): { id: string; name: string; isExpo: boolean; squareItemVariationId: string | null }[] {
-    return Object.entries(this.catalogService.PrinterGroups).map(([id, pg]) => ({
+    return Object.entries(this.catalogProviderService.PrinterGroups).map(([id, pg]) => ({
       id,
       name: pg.name,
       isExpo: pg.isExpo,
@@ -407,7 +404,7 @@ export class PrinterService {
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
       const eventTitle = EventTitleStringBuilder(
-        this.catalogService.CatalogSelectors,
+        this.catalogProviderService.CatalogSelectors,
         fulfillmentConfig,
         customerName,
         order.fulfillment as FulfillmentData,
@@ -418,9 +415,10 @@ export class PrinterService {
       const flatCart = Object.values(rebuiltCart).flat();
 
       const messages: PrinterMessage[] = Object.entries(
-        CartByPrinterGroup(flatCart, this.catalogService.CatalogSelectors.productEntry),
+        CartByPrinterGroup(flatCart, this.catalogProviderService.CatalogSelectors.productEntry),
       ).map(([pgId, entries]) => {
-        const pg = this.catalogService.PrinterGroups[pgId];
+        const pg = this.catalogProviderService.PrinterGroups[pgId];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!pg) return null;
 
         const squareId = GetSquareIdFromExternalIds(pg.externalIDs, 'ITEM_VARIATION');
@@ -488,7 +486,7 @@ export class PrinterService {
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
       const eventTitle = EventTitleStringBuilder(
-        this.catalogService.CatalogSelectors,
+        this.catalogProviderService.CatalogSelectors,
         fulfillmentConfig,
         customerName,
         order.fulfillment as FulfillmentData,
@@ -499,9 +497,10 @@ export class PrinterService {
       const flatCart = Object.values(rebuiltCart).flat();
 
       const messages: PrinterMessage[] = Object.entries(
-        CartByPrinterGroup(flatCart, this.catalogService.CatalogSelectors.productEntry),
+        CartByPrinterGroup(flatCart, this.catalogProviderService.CatalogSelectors.productEntry),
       ).map(([pgId, entries]) => {
-        const pg = this.catalogService.PrinterGroups[pgId];
+        const pg = this.catalogProviderService.PrinterGroups[pgId];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!pg) return null;
 
         const squareId = GetSquareIdFromExternalIds(pg.externalIDs, 'ITEM_VARIATION');
@@ -629,12 +628,12 @@ export class PrinterService {
       const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
       const rebuiltCart = RebuildAndSortCart(
         lockedOrder.cart,
-        this.catalogService.CatalogSelectors,
+        this.catalogProviderService.CatalogSelectors,
         promisedTime.start,
         fulfillmentConfig.id,
       );
       const eventTitle = EventTitleStringBuilder(
-        this.catalogService.CatalogSelectors,
+        this.catalogProviderService.CatalogSelectors,
         fulfillmentConfig,
         customerName,
         lockedOrder.fulfillment,
@@ -649,7 +648,7 @@ export class PrinterService {
         fulfillmentConfig,
       );
 
-      const SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value?.split(',') ?? [];
+      const SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value.split(',') ?? [];
       if (printResult.success) {
         SQORDER_PRINT.push(...printResult.squareOrderIds);
       }

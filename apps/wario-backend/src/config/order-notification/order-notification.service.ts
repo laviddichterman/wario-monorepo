@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { format, formatRFC3339, Interval, isSameMinute } from 'date-fns';
 import { calendar_v3 } from 'googleapis';
 
@@ -38,6 +38,7 @@ const BTP_AREA_CODES = IL_AREA_CODES.concat(MI_AREA_CODES);
 const WCP_AREA_CODES = IL_AREA_CODES;
 
 const IsNativeAreaCode = function (phone: string, area_codes: string[]) {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const numeric_phone = phone.match(/\d/g)!.join('');
   const area_code = numeric_phone.slice(0, 3);
   return numeric_phone.length == 10 && area_codes.some((x) => x === area_code);
@@ -52,13 +53,10 @@ const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
 @Injectable()
 export class OrderNotificationService {
   constructor(
-    private readonly appConfig: AppConfigService,
-    @Inject(forwardRef(() => GoogleService))
-    private googleService: GoogleService,
-    @Inject(forwardRef(() => CatalogProviderService))
-    private catalogService: CatalogProviderService,
-    @Inject(forwardRef(() => DataProviderService))
-    private dataProvider: DataProviderService,
+    @Inject(AppConfigService) private readonly appConfig: AppConfigService,
+    @Inject(GoogleService) private googleService: GoogleService,
+    @Inject(CatalogProviderService) private catalogProviderService: CatalogProviderService,
+    @Inject(DataProviderService) private dataProvider: DataProviderService,
   ) { }
 
   // Public methods
@@ -346,7 +344,7 @@ export class OrderNotificationService {
   GenerateCartTextFromFullCart = (
     cart: CategorizedRebuiltCart,
   ): { category_name: string; products: string[] }[] => {
-    const catalogCategories = this.catalogService.Catalog.categories;
+    const catalogCategories = this.catalogProviderService.Catalog.categories;
     return Object.entries(cart)
       .filter(([_, cart]) => cart.length > 0)
       .map(([catid, category_cart]) => {

@@ -67,6 +67,7 @@ export class DatabaseManagerService implements OnModuleInit {
     ],
     '0.5.38': [
       { major: 0, minor: 5, patch: 39 },
+      // eslint-disable-next-line @typescript-eslint/require-await
       async () => {
         this.migrationFlags.requireSquareRebuild = true;
       },

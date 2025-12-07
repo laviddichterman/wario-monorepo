@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Order as SquareOrder } from 'square';
 
@@ -22,11 +22,8 @@ import { StoreCreditProviderService } from '../store-credit-provider/store-credi
 @Injectable()
 export class OrderPaymentService {
   constructor(
-    @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
-    @Inject(forwardRef(() => StoreCreditProviderService))
     private storeCreditService: StoreCreditProviderService,
-    @Inject(forwardRef(() => DataProviderService))
     private dataProvider: DataProviderService,
     @InjectPinoLogger(OrderPaymentService.name)
     private readonly logger: PinoLogger,

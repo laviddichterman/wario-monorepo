@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { UTCDate } from '@date-fns/utc';
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { formatISO, formatRFC3339, subMinutes } from 'date-fns';
 import { Model } from 'mongoose';
@@ -33,11 +33,8 @@ export class ThirdPartyOrderService {
   constructor(
     @InjectModel('WOrderInstance')
     private orderModel: Model<WOrderInstanceDocument>,
-    @Inject(forwardRef(() => SquareService))
     private squareService: SquareService,
-    @Inject(forwardRef(() => CatalogProviderService))
-    private catalogService: CatalogProviderService,
-    @Inject(forwardRef(() => DataProviderService))
+    private catalogProviderService: CatalogProviderService,
     private dataProvider: DataProviderService,
     @InjectPinoLogger(ThirdPartyOrderService.name)
     private readonly logger: PinoLogger,
@@ -119,14 +116,14 @@ export class ThirdPartyOrderService {
         try {
           // Generate the WARIO cart from the square order
           const cart = LineItemsToOrderInstanceCart(squareOrder.lineItems!, {
-            Catalog: this.catalogService.Catalog,
-            ReverseMappings: this.catalogService.ReverseMappings,
-            PrinterGroups: this.catalogService.PrinterGroups,
-            CatalogSelectors: this.catalogService.CatalogSelectors,
+            Catalog: this.catalogProviderService.Catalog,
+            ReverseMappings: this.catalogProviderService.ReverseMappings,
+            PrinterGroups: this.catalogProviderService.PrinterGroups,
+            CatalogSelectors: this.catalogProviderService.CatalogSelectors,
           });
 
           // Determine what available time we have for this order
-          const cartLeadTime = DetermineCartBasedLeadTime(cart, this.catalogService.CatalogSelectors.productEntry);
+          const cartLeadTime = DetermineCartBasedLeadTime(cart, this.catalogProviderService.CatalogSelectors.productEntry);
           const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation(
             [fulfillmentConfig],
             requestedFulfillmentTime.selectedDate,

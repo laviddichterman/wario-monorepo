@@ -1,28 +1,32 @@
 
-import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { FilterQuery, Model } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   CatalogGenerator,
-  ICatalog,
+  DeletePrinterGroupRequest,
+  type ICatalog,
   ICatalogSelectorWrapper,
-  ICategory,
-  IOption,
+  type ICategory,
+  type IOption,
   IOptionType,
   IProduct,
   IProductInstance,
-  IProductInstanceFunction,
-  OrderInstanceFunction,
-  PrinterGroup,
-  RecordOrderInstanceFunctions,
-  RecordProductInstanceFunctions,
+  type IProductInstanceFunction,
+  type KeyValue,
+  type OrderInstanceFunction,
+  type PrinterGroup,
+  type RecordOrderInstanceFunctions,
+  type RecordProductInstanceFunctions,
   ReduceArrayToMapByKey,
   SEMVER,
+  UpsertProductBatchRequest,
 } from '@wcp/wario-shared';
 
 import { AppConfigService } from '../app-config.service';
+import { DataProviderService } from '../data-provider/data-provider.service';
 import { MigrationFlagsService } from '../migration-flags.service';
 import {
   GenerateSquareReverseMapping,
@@ -30,11 +34,12 @@ import {
 } from '../square-wario-bridge';
 import { SquareService } from '../square/square.service';
 
-import { CatalogFunctionService } from './catalog-function.service';
-import { CatalogModifierService } from './catalog-modifier.service';
-import { CatalogPrinterGroupService } from './catalog-printer-group.service';
-import { CatalogProductService } from './catalog-product.service';
-import { CatalogSquareSyncService } from './catalog-square-sync.service';
+import * as CategoryFns from './catalog-category.functions';
+import * as FunctionFns from './catalog-function.functions';
+import * as ModifierFns from './catalog-modifier.functions';
+import * as PrinterGroupFns from './catalog-printer-group.functions';
+import * as ProductFns from './catalog-product.functions';
+import * as SquareSyncFns from './catalog-square-sync.functions';
 
 @Injectable()
 export class CatalogProviderService implements OnModuleInit, ICatalogContext {
@@ -64,19 +69,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private wOrderInstanceFunctionModel: Model<OrderInstanceFunction>,
     @InjectModel('WPrinterGroupSchema')
     private printerGroupModel: Model<PrinterGroup>,
-    private appConfig: AppConfigService,
-    private migrationFlags: MigrationFlagsService,
-    private squareService: SquareService,
-    @Inject(forwardRef(() => CatalogFunctionService))
-    private functionService: CatalogFunctionService,
-    @Inject(forwardRef(() => CatalogPrinterGroupService))
-    private catalogPrinterGroupService: CatalogPrinterGroupService,
-    @Inject(forwardRef(() => CatalogModifierService))
-    private catalogModifierService: CatalogModifierService,
-    @Inject(forwardRef(() => CatalogProductService))
-    private catalogProductService: CatalogProductService,
-    @Inject(forwardRef(() => CatalogSquareSyncService))
-    private catalogSquareSyncService: CatalogSquareSyncService,
+    @Inject(AppConfigService) private appConfig: AppConfigService,
+    @Inject(DataProviderService) private dataProviderService: DataProviderService,
+    @Inject(MigrationFlagsService) private migrationFlags: MigrationFlagsService,
+    @Inject(SquareService) private squareService: SquareService,
     @InjectPinoLogger(CatalogProviderService.name)
     private readonly _logger: PinoLogger,
   ) {
@@ -132,9 +128,315 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ICatalogSelectorWrapper(this.catalog);
   }
 
-  async onModuleInit() {
-    await this.Bootstrap();
+  private get functionDeps(): FunctionFns.FunctionDeps {
+    return {
+      wProductInstanceFunctionModel: this.wProductInstanceFunctionModel,
+      wOrderInstanceFunctionModel: this.wOrderInstanceFunctionModel,
+      wOptionModel: this.wOptionModel,
+      wProductModel: this.wProductModel,
+      logger: this._logger,
+    };
   }
+
+  private get categoryDeps(): CategoryFns.CategoryDeps {
+    return {
+      wCategoryModel: this.wCategoryModel,
+      wProductModel: this.wProductModel,
+      logger: this._logger,
+      fulfillments: this.dataProviderService.Fulfillments,
+      categories: this.categories,
+      catalog: this.catalog,
+      batchDeleteProducts: async (pids, suppress) => this.BatchDeleteProduct(pids, suppress),
+    };
+  }
+
+  private get squareSyncDeps(): SquareSyncFns.SquareSyncDeps {
+    return {
+      logger: this._logger,
+      squareService: this.squareService,
+      printerGroups: this.printerGroups,
+      catalog: this.catalog,
+      batchUpdatePrinterGroup: (b) => PrinterGroupFns.batchUpdatePrinterGroup(this.printerGroupDeps, b),
+      batchUpdateModifierType: (b, s, u) => ModifierFns.batchUpdateModifierType(this.modifierDeps, b, s, u),
+      batchUpdateModifierOption: (b) => ModifierFns.batchUpdateModifierOption(this.modifierDeps, b),
+      batchUpdateProductInstance: (b, s) => ProductFns.batchUpdateProductInstance(this.productDeps, b, s),
+      updateProductsWithConstraint: (q, u, f) => this.UpdateProductsWithConstraint(q, u, f),
+      syncModifierTypes: () => this.SyncModifierTypes(),
+      syncOptions: () => this.SyncOptions(),
+      syncProductInstances: () => this.SyncProductInstances(),
+      syncProducts: () => this.SyncProducts(),
+      recomputeCatalog: () => { this.RecomputeCatalog(); },
+    };
+  }
+
+  BatchDeleteCatalogObjectsFromExternalIds = async (externalIds: KeyValue[]) => {
+    return SquareSyncFns.batchDeleteCatalogObjectsFromExternalIds(this.squareSyncDeps, externalIds);
+  };
+
+
+  // ============================================================================
+  // Category Orchestration Methods
+  // ============================================================================
+
+  CreateCategory = async (category: Omit<ICategory, 'id'>) => {
+    const doc = await CategoryFns.createCategory(this.categoryDeps, category);
+    await this.SyncCategories();
+    this.RecomputeCatalog();
+    return doc;
+  };
+
+  UpdateCategory = async (category_id: string, category: Partial<Omit<ICategory, 'id'>>) => {
+    const doc = await CategoryFns.updateCategory(this.categoryDeps, category_id, category);
+    if (!doc) return null;
+    await this.SyncCategories();
+    this.RecomputeCatalog();
+    return doc;
+  };
+
+  DeleteCategory = async (category_id: string, delete_contained_products: boolean) => {
+    const result = await CategoryFns.deleteCategory(this.categoryDeps, category_id, delete_contained_products);
+    if (!result.deleted) return null;
+
+    if (result.productsModified) {
+      await this.SyncProducts();
+    }
+    await this.SyncCategories();
+    this.RecomputeCatalog();
+    return result.deleted;
+  };
+
+  // ============================================================================
+  // Printer Group Orchestration Methods
+  // ============================================================================
+
+  private get printerGroupDeps(): PrinterGroupFns.PrinterGroupDeps {
+    return {
+      wPrinterGroupModel: this.printerGroupModel,
+      logger: this._logger,
+      squareService: this.squareService,
+      dataProviderService: this.dataProviderService,
+      printerGroups: this.printerGroups,
+      syncPrinterGroups: () => this.SyncPrinterGroups(),
+      batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
+      updateProductsWithConstraint: (q, u, f) => this.UpdateProductsWithConstraint(q, u, f),
+    };
+  }
+
+  CreatePrinterGroup = async (printerGroup: Omit<PrinterGroup, 'id'>) => {
+    return PrinterGroupFns.createPrinterGroup(this.printerGroupDeps, printerGroup);
+  };
+
+  UpdatePrinterGroup = async (props: PrinterGroupFns.UpdatePrinterGroupProps) => {
+    // We already moved UpdatePrinterGroupProps to catalog-printer-group.functions or catalog.types
+    // Since catalog.types is imported locally in functions file, we can just assume type compatibility or re-import
+    return PrinterGroupFns.updatePrinterGroup(this.printerGroupDeps, props);
+  };
+
+  DeletePrinterGroup = async (request: DeletePrinterGroupRequest & { id: string }) => {
+    return PrinterGroupFns.deletePrinterGroup(this.printerGroupDeps, request);
+  };
+
+  BatchUpdatePrinterGroup = async (batches: PrinterGroupFns.UpdatePrinterGroupProps[]) => {
+    // Exposed for possible external batch updates if needed, although mostly internal
+    return PrinterGroupFns.batchUpdatePrinterGroup(this.printerGroupDeps, batches);
+  };
+
+  // ============================================================================
+  // Modifier Orchestration Methods
+  // ============================================================================
+
+  private get modifierDeps(): ModifierFns.ModifierDeps {
+    return {
+      wOptionTypeModel: this.wOptionTypeModel,
+      wOptionModel: this.wOptionModel,
+      logger: this._logger,
+      squareService: this.squareService,
+      dataProviderService: this.dataProviderService,
+      appConfig: this.appConfig,
+
+      catalog: this.catalog,
+      modifierTypes: this.modifier_types,
+      modifierOptions: this.options,
+      productInstanceFunctions: this.ProductInstanceFunctions,
+
+      syncModifierTypes: () => this.SyncModifierTypes(),
+      syncOptions: () => this.SyncOptions(),
+      syncProductInstances: () => this.SyncProductInstances(),
+      recomputeCatalog: () => { this.RecomputeCatalog(); },
+      batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
+      updateProductsReferencingModifierTypeId: (ids) => this.UpdateProductsReferencingModifierTypeId(ids),
+      updateProductInstancesForOptionChanges: (ids) => this.UpdateProductInstancesForOptionChanges(ids),
+      removeModifierTypeFromProducts: (id) => this.RemoveModifierTypeFromProducts(id),
+      removeModifierOptionFromProductInstances: (mtId, moId) => this.RemoveModifierOptionFromProductInstances(mtId, moId),
+      deleteProductInstanceFunction: (id, suppress) => this.DeleteProductInstanceFunction(id, suppress), // Assuming this exists or using function
+    };
+  }
+
+  CreateModifierType = async (modifierType: Omit<IOptionType, 'id'>, options: ModifierFns.UncommitedOption[]) => {
+    return ModifierFns.createModifierType(this.modifierDeps, modifierType, options);
+  };
+
+  UpdateModifierType = async (props: ModifierFns.UpdateModifierTypeProps) => {
+    return ModifierFns.updateModifierType(this.modifierDeps, props);
+  };
+
+  DeleteModifierType = async (mt_id: string) => {
+    return ModifierFns.deleteModifierType(this.modifierDeps, mt_id);
+  };
+
+  CreateOption = async (modifierOption: Omit<IOption, 'id'>) => {
+    return ModifierFns.createOption(this.modifierDeps, modifierOption);
+  };
+
+  UpdateModifierOption = async (props: ModifierFns.UpdateModifierOptionProps) => {
+    return ModifierFns.updateModifierOption(this.modifierDeps, props);
+  };
+
+  DeleteModifierOption = async (mo_id: string, suppress_catalog_recomputation: boolean = false) => {
+    return ModifierFns.deleteModifierOption(this.modifierDeps, mo_id, suppress_catalog_recomputation);
+  };
+
+  ValidateOption = (modifierType: Pick<IOptionType, 'max_selected'>, modifierOption: Partial<ModifierFns.UncommitedOption>) => {
+    return ModifierFns.validateOption(modifierType, modifierOption);
+  };
+
+
+  // ============================================================================
+  // Product Orchestration Methods
+  // ============================================================================
+
+  private get productDeps(): ProductFns.ProductDeps {
+    return {
+      wProductModel: this.wProductModel,
+      wProductInstanceModel: this.wProductInstanceModel,
+      logger: this._logger,
+      squareService: this.squareService,
+      dataProviderService: this.dataProviderService,
+      appConfig: this.appConfig,
+
+      catalog: this.catalog,
+      catalogSelectors: this.CatalogSelectors,
+      modifierTypes: this.modifier_types,
+      categories: this.categories,
+      printerGroups: this.printerGroups,
+      productInstanceFunctions: this.ProductInstanceFunctions,
+
+      syncProducts: () => this.SyncProducts(),
+      syncProductInstances: () => this.SyncProductInstances(),
+      recomputeCatalog: () => { this.RecomputeCatalog(); },
+      batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
+    };
+  }
+
+  CreateProduct = async (
+    product: Omit<IProduct, 'id' | 'baseProductId'>,
+    instances: Omit<IProductInstance, 'id' | 'productId'>[],
+  ) => {
+    return ProductFns.createProduct(this.productDeps, product, instances);
+  };
+
+  BatchUpsertProduct = async (batches: UpsertProductBatchRequest[]) => {
+    return ProductFns.batchUpsertProduct(this.productDeps, batches);
+  };
+
+  UpdateProduct = async (pid: string, product: Partial<Omit<IProduct, 'id'>>) => {
+    return ProductFns.updateProduct(this.productDeps, pid, product);
+  };
+
+  BatchDeleteProduct = async (p_ids: string[], suppress_catalog_recomputation: boolean = false) => {
+    return ProductFns.batchDeleteProduct(this.productDeps, p_ids, suppress_catalog_recomputation);
+  };
+
+  DeleteProduct = async (p_id: string) => {
+    return ProductFns.deleteProduct(this.productDeps, p_id);
+  };
+
+  CreateProductInstance = async (instance: Omit<IProductInstance, 'id'>) => {
+    return ProductFns.createProductInstance(this.productDeps, instance);
+  };
+
+  BatchUpdateProductInstance = async (
+    batches: ProductFns.UpdateProductInstanceProps[],
+    suppress_catalog_recomputation: boolean = false,
+  ) => {
+    return ProductFns.batchUpdateProductInstance(this.productDeps, batches, suppress_catalog_recomputation);
+  };
+
+  UpdateProductInstance = async (
+    props: ProductFns.UpdateProductInstanceProps,
+    suppress_catalog_recomputation: boolean = false,
+  ) => {
+    return ProductFns.updateProductInstance(this.productDeps, props, suppress_catalog_recomputation);
+  };
+
+  DeleteProductInstance = async (pi_id: string, suppress_catalog_recomputation: boolean = false) => {
+    return ProductFns.deleteProductInstance(this.productDeps, pi_id, suppress_catalog_recomputation);
+  };
+
+
+  // ============================================================================
+  // Function Orchestration Methods
+  // ============================================================================
+
+  CreateProductInstanceFunction = async (pif: Omit<IProductInstanceFunction, 'id'>) => {
+    const doc = await FunctionFns.createProductInstanceFunction(this.functionDeps, pif);
+    await this.SyncProductInstanceFunctions();
+    this.RecomputeCatalog();
+    return doc;
+  };
+
+  UpdateProductInstanceFunction = async (
+    pif_id: string,
+    updates: Partial<Omit<IProductInstanceFunction, 'id'>>
+  ) => {
+    const doc = await FunctionFns.updateProductInstanceFunction(this.functionDeps, pif_id, updates);
+    if (!doc) return null;
+    await this.SyncProductInstanceFunctions();
+    this.RecomputeCatalog();
+    return doc;
+  };
+
+  DeleteProductInstanceFunction = async (pif_id: string, suppressRecompute = false) => {
+    const { deleted, optionsModified, productsModified } = await FunctionFns.deleteProductInstanceFunction(
+      this.functionDeps,
+      pif_id
+    );
+
+    if (!deleted) return null;
+
+    if (optionsModified > 0) await this.SyncOptions();
+    if (productsModified > 0) await this.SyncProducts();
+    await this.SyncProductInstanceFunctions();
+
+    if (!suppressRecompute) this.RecomputeCatalog();
+    return deleted;
+  };
+
+  CreateOrderInstanceFunction = async (oif: Omit<OrderInstanceFunction, 'id'>) => {
+    const doc = await FunctionFns.createOrderInstanceFunction(this.functionDeps, oif);
+    await this.SyncOrderInstanceFunctions();
+    this.RecomputeCatalog();
+    return doc;
+  };
+
+  UpdateOrderInstanceFunction = async (
+    id: string,
+    updates: Partial<Omit<OrderInstanceFunction, 'id'>>
+  ) => {
+    const doc = await FunctionFns.updateOrderInstanceFunction(this.functionDeps, id, updates);
+    if (!doc) return null;
+    await this.SyncOrderInstanceFunctions();
+    this.RecomputeCatalog();
+    return doc;
+  };
+
+  DeleteOrderInstanceFunction = async (id: string, suppressRecompute = false) => {
+    const doc = await FunctionFns.deleteOrderInstanceFunction(this.functionDeps, id);
+    if (!doc) return null;
+    await this.SyncOrderInstanceFunctions();
+    if (!suppressRecompute) this.RecomputeCatalog();
+    return doc;
+  };
 
   SyncCategories = async () => {
     this.logger.debug(`Syncing Categories.`);
@@ -253,7 +555,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.squareIdToWarioIdMapping = GenerateSquareReverseMapping(this.catalog);
   };
 
-  Bootstrap = async () => {
+  async onModuleInit() {
     this.logger.info(`Starting Bootstrap of CatalogProvider, Loading catalog from database...`);
 
     const newVer = await this.dbVersionModel.findOne().exec();
@@ -280,10 +582,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         this.logger.warn('Suppressing Square Catalog Sync at launch. Catalog skew may result.');
       }
     } else {
-      await this.catalogSquareSyncService.CheckAllPrinterGroupsSquareIdsAndFixIfNeeded(this.printerGroups);
-      const modifierTypeIdsUpdated = await this.catalogSquareSyncService.CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded();
+      await SquareSyncFns.checkAllPrinterGroupsSquareIdsAndFixIfNeeded(this.squareSyncDeps);
+      const modifierTypeIdsUpdated = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
       this.RecomputeCatalog();
-      await this.catalogSquareSyncService.CheckAllProductsHaveSquareIdsAndFixIfNeeded();
+      await SquareSyncFns.checkAllProductsHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
       if (modifierTypeIdsUpdated.length > 0) {
         this.logger.info(
           `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsUpdated.length.toString()} modifier types`,
@@ -294,7 +596,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
     if (this.migrationFlags.requireSquareRebuild && this.squareService.isInitialized) {
       this._logger.info('Forcing Square catalog rebuild on load');
-      await this.catalogSquareSyncService.ForceSquareCatalogCompleteUpsert();
+      await SquareSyncFns.forceSquareCatalogCompleteUpsert(this.squareSyncDeps);
     } else if (this.migrationFlags.requireSquareRebuild) {
       this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
     }
@@ -307,7 +609,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     const products = Object.values(this.products).filter((p) => p.modifiers.some((m) => mtids.includes(m.mtid)));
     if (products.length > 0) {
       // update them
-      await this.catalogProductService.BatchUpsertProduct(products.map((p) => ({ product: p, instances: [] })));
+      await this.BatchUpsertProduct(products.map((p) => ({ product: p, instances: [] })));
     }
   };
 
@@ -322,7 +624,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         product: { ...p.toObject(), ...update },
         instances: [],
       }));
-      await this.catalogProductService.BatchUpsertProduct(batches);
+      await this.BatchUpsertProduct(batches);
     }
     if (!suppress_catalog_recomputation) {
       this.RecomputeCatalog();
@@ -364,7 +666,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();
-      await this.catalogProductService.BatchUpdateProductInstance(batchProductInstanceUpdates, true);
+      await this.BatchUpdateProductInstance(batchProductInstanceUpdates, true);
       await this.SyncProductInstances();
     }
   };

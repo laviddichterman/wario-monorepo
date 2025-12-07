@@ -5,7 +5,6 @@ import { type IOption, type IOptionType } from '@wcp/wario-shared';
 import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogModifierService } from '../../config/catalog-provider/catalog-modifier.service';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import type {
   UncommitedOption,
@@ -17,14 +16,13 @@ import type {
 export class ModifierController {
   constructor(
     @Inject(CatalogProviderService) private catalogProvider: CatalogProviderService,
-    @Inject(CatalogModifierService) private catalogModifierService: CatalogModifierService,
     @Inject(SocketIoService) private socketIoService: SocketIoService,
   ) { }
 
   @Post('type')
   @Scopes('write:catalog')
   async CreateModifierType(@Body() body: { modifierType: Omit<IOptionType, 'id'>; options: UncommitedOption[] }) {
-    const doc = await this.catalogModifierService.CreateModifierType(body.modifierType, body.options);
+    const doc = await this.catalogProvider.CreateModifierType(body.modifierType, body.options);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -32,7 +30,10 @@ export class ModifierController {
   @Put('type')
   @Scopes('write:catalog')
   async UpdateModifierType(@Body() body: UpdateModifierTypeProps) {
-    const doc = await this.catalogModifierService.UpdateModifierType(body);
+    const doc = await this.catalogProvider.UpdateModifierType({
+      id: body.id,
+      modifierType: body.modifierType,
+    });
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -40,7 +41,7 @@ export class ModifierController {
   @Delete('type/:id')
   @Scopes('delete:catalog')
   async DeleteModifierType(@Param('id') id: string) {
-    const doc = await this.catalogModifierService.DeleteModifierType(id);
+    const doc = await this.catalogProvider.DeleteModifierType(id);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -48,7 +49,7 @@ export class ModifierController {
   @Post('option')
   @Scopes('write:catalog')
   async CreateOption(@Body() body: Omit<IOption, 'id'>) {
-    const doc = await this.catalogModifierService.CreateOption(body);
+    const doc = await this.catalogProvider.CreateOption(body);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -57,7 +58,11 @@ export class ModifierController {
   @Scopes('write:catalog')
   // todo: change the type to a dto
   async UpdateModifierOption(@Body() body: UpdateModifierOptionProps) {
-    const doc = await this.catalogModifierService.UpdateModifierOption(body);
+    const doc = await this.catalogProvider.UpdateModifierOption({
+      id: body.id,
+      modifierTypeId: body.modifierTypeId, // we need this to process the update
+      modifierOption: body.modifierOption,
+    });
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -65,7 +70,7 @@ export class ModifierController {
   @Delete('option/:id')
   @Scopes('delete:catalog')
   async DeleteModifierOption(@Param('id') id: string) {
-    const doc = await this.catalogModifierService.DeleteModifierOption(id);
+    const doc = await this.catalogProvider.DeleteModifierOption(id);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
