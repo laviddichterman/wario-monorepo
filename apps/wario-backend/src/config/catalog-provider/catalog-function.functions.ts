@@ -6,7 +6,9 @@
 import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 
-import type { IOption, IProduct, IProductInstanceFunction, OrderInstanceFunction } from '@wcp/wario-shared';
+import { type IOption, type IProduct, type IProductInstanceFunction, type OrderInstanceFunction } from '@wcp/wario-shared';
+
+import { toPartialUpdateQuery } from 'src/utils/partial-update';
 
 // ============================================================================
 // Dependencies Interface
@@ -38,8 +40,9 @@ export async function updateProductInstanceFunction(
   pifId: string,
   productInstanceFunction: Partial<Omit<IProductInstanceFunction, 'id'>>,
 ): Promise<IProductInstanceFunction | null> {
+
   const updated = await deps.wProductInstanceFunctionModel
-    .findByIdAndUpdate(pifId, productInstanceFunction, { new: true })
+    .findByIdAndUpdate(pifId, toPartialUpdateQuery(productInstanceFunction), { new: true })
     .exec();
   if (!updated) {
     return null;
@@ -107,7 +110,7 @@ export async function updateOrderInstanceFunction(
 ): Promise<OrderInstanceFunction | null> {
   const updated = await deps.wOrderInstanceFunctionModel.findByIdAndUpdate(
     id,
-    orderInstanceFunction,
+    toPartialUpdateQuery(orderInstanceFunction),
     { new: true }
   );
   if (!updated) {

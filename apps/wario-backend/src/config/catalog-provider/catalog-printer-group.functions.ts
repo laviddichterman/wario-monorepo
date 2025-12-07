@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
 /**
  * Pure functions for printer group CRUD operations.
  */
@@ -6,6 +7,10 @@ import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogObject } from 'square';
 
 import type { DeletePrinterGroupRequest, IProduct, KeyValue, PrinterGroup } from '@wcp/wario-shared';
+
+import { toPartialUpdateQuery } from 'src/utils/partial-update';
+
+import { PrinterGroupNotFoundException } from 'src/exceptions';
 
 import type { DataProviderService } from '../data-provider/data-provider.service';
 import {
@@ -98,7 +103,7 @@ export const batchUpdatePrinterGroup = async (deps: PrinterGroupDeps, batches: U
       [deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE], // message only needs to go to the alternate location
       { ...oldPGs[i], ...b.printerGroup },
       existingSquareObjects,
-      ('000' + String(i)).slice(-3),
+      ('000' + i).slice(-3),
     ),
   );
   const upsertResponse = await deps.squareService.BatchUpsertCatalogObjects(
@@ -116,10 +121,10 @@ export const batchUpdatePrinterGroup = async (deps: PrinterGroupDeps, batches: U
       const doc = await deps.wPrinterGroupModel
         .findByIdAndUpdate(
           b.id,
-          {
+          toPartialUpdateQuery<PrinterGroup>({
             ...b.printerGroup,
-            externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + String(i)).slice(-3))],
-          },
+            externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
+          }),
           { new: true },
         )
         .exec();
@@ -140,9 +145,17 @@ export const updatePrinterGroup = async (deps: PrinterGroupDeps, props: UpdatePr
 
 export const deletePrinterGroup = async (deps: PrinterGroupDeps, request: DeletePrinterGroupRequest & { id: string }) => {
   deps.logger.debug(`Removing Printer Group ${request.id}`);
+  if (request.reassign) {
+    const dest = await deps.wPrinterGroupModel.findById(request.printerGroup).exec();
+    if (!dest) {
+      deps.logger.error(`Printer Group with ID ${request.printerGroup} not found`);
+      throw new PrinterGroupNotFoundException(request.printerGroup);
+    }
+  }
   const doc = await deps.wPrinterGroupModel.findByIdAndDelete(request.id).exec();
   if (!doc) {
-    return null;
+    deps.logger.error(`Printer Group with ID ${request.id} not found`);
+    throw new PrinterGroupNotFoundException(request.id);
   }
 
   // NOTE: this removes the category from the Square ITEMs as well

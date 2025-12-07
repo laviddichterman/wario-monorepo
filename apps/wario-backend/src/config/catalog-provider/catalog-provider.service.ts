@@ -624,6 +624,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         product: { ...p.toObject(), ...update },
         instances: [],
       }));
+      // would be good to handle the partial update more gracefully
       await this.BatchUpsertProduct(batches);
     }
     if (!suppress_catalog_recomputation) {
