@@ -17,7 +17,10 @@ export class PrepTimingDto {
   @IsInt()
   prepStationId!: number;
 }
-
+/**
+ * Order guide is product instance functions that return a string if they should surface a warning or suggestion to the end user
+ * Each string is a @ProductInstanceFunction id that returns a string if it should surface a warning or suggestion to the end user
+ */
 export class IProductOrderGuideDto {
   @IsString({ each: true })
   warnings!: string[];

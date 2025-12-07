@@ -15,6 +15,7 @@
   "include": [
     "src",
     "tests",
+    "testing",
     "jest.config.cjs",
     "jest-environment.cjs",
     "tsup.config.ts"

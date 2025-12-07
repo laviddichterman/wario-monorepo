@@ -174,6 +174,11 @@ export const DateTimeIntervalBuilder = (fulfillmentTime: FulfillmentTime, fulfil
 };
 
 /**
+ * Helper constant representing a blanket disabled interval (start > end)
+ */
+export const BLANKET_DISABLED_INTERVAL: IWInterval = { start: 1, end: 0 };
+
+/**
  * DisableDataCheck
  *
  * Determine whether an item (product or option) is enabled, disabled by blanket disable, disabled by time window,
