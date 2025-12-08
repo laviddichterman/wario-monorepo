@@ -226,3 +226,78 @@ npx typeorm migration:generate -d ormconfig.ts src/migrations/MigrationName
 # Run migrations
 npx typeorm migration:run -d ormconfig.ts
 ```
+
+## 8. Repository Layer
+
+### Overview
+
+The repository layer abstracts database access, enabling dual-database operation during migration. Factory providers switch implementations based on `USE_POSTGRES`.
+
+### Directory Structure
+
+```
+src/repositories/
+├── interfaces/           # Database-agnostic contracts
+│   ├── category.repository.interface.ts
+│   ├── option.repository.interface.ts
+│   └── ... (10 total)
+├── mongoose/             # Wrappers around Mongoose models
+│   ├── category.mongoose.repository.ts
+│   └── ...
+├── typeorm/              # TypeORM implementations (SCD2)
+│   ├── category.typeorm.repository.ts
+│   └── ...
+└── repository.module.ts  # Factory providers
+```
+
+### Usage Pattern
+
+```typescript
+// In a service:
+constructor(
+  @Inject(CATEGORY_REPOSITORY)
+  private readonly categoryRepo: ICategoryRepository,
+) {}
+
+// Methods:
+const cat = await this.categoryRepo.findById(id);
+const all = await this.categoryRepo.findAll();
+await this.categoryRepo.save(category);
+```
+
+### Interface Tokens
+
+Use Symbol tokens for injection (not class names):
+
+| Token                                  | Interface                            |
+| -------------------------------------- | ------------------------------------ |
+| `CATEGORY_REPOSITORY`                  | `ICategoryRepository`                |
+| `DB_VERSION_REPOSITORY`                | `IDBVersionRepository`               |
+| `OPTION_TYPE_REPOSITORY`               | `IOptionTypeRepository`              |
+| `OPTION_REPOSITORY`                    | `IOptionRepository`                  |
+| `PRODUCT_REPOSITORY`                   | `IProductRepository`                 |
+| `PRODUCT_INSTANCE_REPOSITORY`          | `IProductInstanceRepository`         |
+| `ORDER_REPOSITORY`                     | `IOrderRepository`                   |
+| `FULFILLMENT_REPOSITORY`               | `IFulfillmentRepository`             |
+| `SETTINGS_REPOSITORY`                  | `ISettingsRepository`                |
+| `PRODUCT_INSTANCE_FUNCTION_REPOSITORY` | `IProductInstanceFunctionRepository` |
+| `ORDER_INSTANCE_FUNCTION_REPOSITORY`   | `IOrderInstanceFunctionRepository`   |
+
+### TypeORM SCD2 Pattern
+
+Catalog repos use soft-delete for temporal versioning:
+
+```typescript
+// Update closes old version, creates new
+async save(item) {
+  if (item.id) {
+    await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
+  }
+  return this.repo.save({ ...item, validFrom: now, validTo: null });
+}
+
+// Delete just closes the current version
+async delete(id) {
+  await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
+}
+```

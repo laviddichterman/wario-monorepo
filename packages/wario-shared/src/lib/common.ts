@@ -74,10 +74,10 @@ export const PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX = /(\{[A-Za-z0-9]+\})/g;
  * @template T - element object type
  * @param xs - array of objects
  * @param key - property key to index the resulting record by
- * @returns Record<string, T> - object map where each key is the stringified property value and each value is the original object
+ * @returns Record<K, T> - object map where each key is the property value and each value is the original object
  */
-export function ReduceArrayToMapByKey<T>(xs: T[], key: keyof T) {
-  return Object.fromEntries(xs.map((x) => [x[key], x])) as Record<string, T>;
+export function ReduceArrayToMapByKey<T extends Record<K, PropertyKey>, K extends keyof T>(xs: T[], key: K) {
+  return Object.fromEntries(xs.map((x) => [x[key], x])) as Record<K, T>;
 }
 
 export interface RecomputeTotalsResult {
@@ -199,23 +199,23 @@ export const DetermineCartBasedLeadTime = (
     const product = productSelector(cartLine.product.pid);
     return product?.product.timing
       ? {
-          ...acc,
-          // so we take the max of the base times at a station, then we sum the quantity times
-          [product.product.timing.prepStationId]: Object.hasOwn(acc, product.product.timing.prepStationId)
-            ? {
-                base: Math.max(
-                  acc[product.product.timing.prepStationId].base,
-                  product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
-                ),
-                quant:
-                  acc[product.product.timing.prepStationId].quant +
-                  product.product.timing.additionalUnitPrepTime * cartLine.quantity,
-              }
-            : {
-                base: product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
-                quant: product.product.timing.additionalUnitPrepTime * cartLine.quantity,
-              },
-        }
+        ...acc,
+        // so we take the max of the base times at a station, then we sum the quantity times
+        [product.product.timing.prepStationId]: Object.hasOwn(acc, product.product.timing.prepStationId)
+          ? {
+            base: Math.max(
+              acc[product.product.timing.prepStationId].base,
+              product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
+            ),
+            quant:
+              acc[product.product.timing.prepStationId].quant +
+              product.product.timing.additionalUnitPrepTime * cartLine.quantity,
+          }
+          : {
+            base: product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
+            quant: product.product.timing.additionalUnitPrepTime * cartLine.quantity,
+          },
+      }
       : acc;
   }, {});
   return Object.values(leadTimeMap).reduce((acc, entry) => Math.max(acc, entry.base + entry.quant), 0);
@@ -288,10 +288,10 @@ export function DisableDataCheck(
   order_time: Date | number | string,
 ):
   | (
-      | { enable: DISABLE_REASON.ENABLED }
-      | { enable: DISABLE_REASON.DISABLED_BLANKET }
-      | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
-    )
+    | { enable: DISABLE_REASON.ENABLED }
+    | { enable: DISABLE_REASON.DISABLED_BLANKET }
+    | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
+  )
   | { enable: DISABLE_REASON.DISABLED_AVAILABILITY; availability: IRecurringInterval[] } {
   const orderTimeAsNumber = getTime(order_time);
   if (disable_data) {

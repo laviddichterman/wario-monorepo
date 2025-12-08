@@ -141,6 +141,15 @@ export class OrderMongooseRepository implements IOrderRepository {
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
+  async tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null> {
+    const updated = await this.model.findOneAndUpdate(
+      { _id: id, locked: null },
+      { $set: { locked: lock } },
+      { new: true },
+    ).lean().exec();
+    return updated ? { ...updated, id: updated._id.toString() } : null;
+  }
+
   async unlockAll(): Promise<number> {
     const result = await this.model.updateMany(
       { locked: { $ne: null } },

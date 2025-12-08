@@ -1,11 +1,10 @@
 /**
  * Pure functions for catalog square synchronization operations.
  */
-import type { FilterQuery } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogObject } from 'square';
 
-import type { ICatalog, IOptionType, IProduct, KeyValue, PrinterGroup } from '@wcp/wario-shared';
+import type { ICatalog, IOption, IOptionType, IProduct, IProductInstance, KeyValue, PrinterGroup, UpsertProductBatchRequest } from '@wcp/wario-shared';
 
 import { GetNonSquareExternalIds, GetSquareExternalIds, GetSquareIdIndexFromExternalIds } from '../square-wario-bridge';
 import type { SquareService } from '../square/square.service';
@@ -24,31 +23,26 @@ import type {
 export interface SquareSyncDeps {
   logger: PinoLogger;
   squareService: SquareService;
-
   // State
   printerGroups: Record<string, PrinterGroup>;
   catalog: ICatalog;
 
   // Callbacks to other services/operations
-  batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<unknown>;
+  batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<(PrinterGroup | null)[]>;
   batchUpdateModifierType: (
     batches: UpdateModifierTypeProps[],
     suppress: boolean,
     updateRelated: boolean,
-  ) => Promise<unknown>;
-  batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<unknown>;
-  batchUpdateProductInstance: (batches: UpdateProductInstanceProps[], suppress: boolean) => Promise<unknown>;
-  updateProductsWithConstraint: (
-    match: FilterQuery<IProduct>,
-    update: Partial<IProduct>,
-    force: boolean,
-  ) => Promise<unknown>;
-
+  ) => Promise<(IOptionType | null)[]>;
+  batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<(IOption | null)[]>;
+  batchUpdateProductInstance: (batches: UpdateProductInstanceProps[], suppress: boolean) => Promise<(IProductInstance | null)[]>;
+  batchUpsertProduct: (batches: UpsertProductBatchRequest[]) => Promise<{ product: IProduct; instances: IProductInstance[] }[] | null>;
+  findAllProducts: () => Promise<IProduct[]>;
   // Sync Hooks
-  syncModifierTypes: () => Promise<unknown>;
-  syncOptions: () => Promise<unknown>;
-  syncProductInstances: () => Promise<unknown>;
-  syncProducts: () => Promise<unknown>;
+  syncModifierTypes: () => Promise<boolean>;
+  syncOptions: () => Promise<boolean>;
+  syncProductInstances: () => Promise<boolean>;
+  syncProducts: () => Promise<boolean>;
   recomputeCatalog: () => void;
 }
 
@@ -170,7 +164,7 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
     .map((x) => ({ id: x.modifierType.id, modifierType: {} }));
 
   if (batches.length > 0) {
-    const result = (await deps.batchUpdateModifierType(batches, false, false)) as (IOptionType | null)[];
+    const result = (await deps.batchUpdateModifierType(batches, false, false));
     return result.filter((x): x is IOptionType => x !== null).map((x) => x.id);
   }
   return [];
@@ -266,7 +260,11 @@ export const forceSquareCatalogCompleteUpsert = async (deps: SquareSyncDeps) => 
   void deps.syncProducts();
   deps.recomputeCatalog();
 
-  await deps.updateProductsWithConstraint({}, {}, true);
+  // update all products
+  const allProducts = await deps.findAllProducts();
+  await deps.batchUpsertProduct(allProducts.map((p) => ({ product: p, instances: [] })));
+  deps.recomputeCatalog();
+
   void deps.syncModifierTypes();
   void deps.syncOptions();
   void deps.syncProductInstances();

@@ -1,5 +1,6 @@
 // TypeORM repositories barrel export
 export * from './category.typeorm.repository';
+export * from './db-version.typeorm.repository';
 export * from './fulfillment.typeorm.repository';
 export * from './option-type.typeorm.repository';
 export * from './option.typeorm.repository';

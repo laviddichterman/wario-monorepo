@@ -13,6 +13,10 @@ export interface IOptionRepository {
   bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IOption, 'id'>> }>): Promise<number>;
   bulkDelete(ids: string[]): Promise<number>;
   deleteByModifierTypeId(modifierTypeId: string): Promise<number>;
+
+  // Enable field operations (for ProductInstanceFunction cascade)
+  clearEnableField(productInstanceFunctionId: string): Promise<number>;
 }
 
 export const OPTION_REPOSITORY = Symbol('IOptionRepository');
+

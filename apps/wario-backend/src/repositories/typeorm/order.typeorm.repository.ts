@@ -120,6 +120,15 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     return this.findById(id);
   }
 
+  async tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null> {
+    const result = await this.repo.update(
+      { id, locked: IsNull() },
+      { locked: lock },
+    );
+    if ((result.affected ?? 0) === 0) return null;
+    return this.findById(id);
+  }
+
   async unlockAll(): Promise<number> {
     const result = await this.repo
       .createQueryBuilder()

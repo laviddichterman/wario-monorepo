@@ -1,3 +1,5 @@
+import { PartialType } from '@nestjs/mapped-types';
+
 import {
   type CreateProductBatchRequest,
   type IOption,
@@ -6,6 +8,7 @@ import {
   type IProductInstance,
   type PrinterGroup,
   type UncommittedIProductInstance,
+  UncommittedOptionTypeDto,
   type UpdateIProductUpdateIProductInstance,
   type UpdateProductBatchRequest,
 } from '@wcp/wario-shared';
@@ -42,6 +45,7 @@ export type UpdateModifierOptionProps = {
 
 export type UncommitedOption = Omit<IOption, 'modifierTypeId' | 'id'>;
 export type UpsertOption = (Partial<UncommitedOption> & Pick<IOption, 'id'>) | UncommitedOption;
+export class UpdateOption extends PartialType(UncommittedOptionTypeDto) {}
 
 export function isUpdateProduct(
   batch: CreateProductBatchRequest | UpdateProductBatchRequest,

@@ -1,5 +1,6 @@
 // Repository interfaces barrel export
 export * from './category.repository.interface';
+export * from './db-version.repository.interface';
 export * from './fulfillment.repository.interface';
 export * from './key-value.repository.interface';
 export * from './option-type.repository.interface';

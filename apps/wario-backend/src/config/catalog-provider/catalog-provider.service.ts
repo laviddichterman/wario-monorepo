@@ -1,6 +1,4 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
@@ -25,6 +23,7 @@ import {
 } from '@wcp/wario-shared';
 
 import { CATEGORY_REPOSITORY, type ICategoryRepository } from '../../repositories/interfaces/category.repository.interface';
+import { DB_VERSION_REPOSITORY, type IDBVersionRepository } from '../../repositories/interfaces/db-version.repository.interface';
 import { type IOptionTypeRepository, OPTION_TYPE_REPOSITORY } from '../../repositories/interfaces/option-type.repository.interface';
 import { type IOptionRepository, OPTION_REPOSITORY } from '../../repositories/interfaces/option.repository.interface';
 import { type IOrderInstanceFunctionRepository, ORDER_INSTANCE_FUNCTION_REPOSITORY } from '../../repositories/interfaces/order-instance-function.repository.interface';
@@ -60,17 +59,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   private apiver: SEMVER;
 
   constructor(
-    @InjectModel('DBVersionSchema') private dbVersionModel: Model<SEMVER>,
-    @InjectModel('WCategorySchema') private wCategoryModel: Model<ICategory>,
-    @InjectModel('WProductInstanceSchema')
-    private wProductInstanceModel: Model<IProductInstance>,
-    @InjectModel('WProductSchema') private wProductModel: Model<IProduct>,
-    @InjectModel('WOptionSchema') private wOptionModel: Model<IOption>,
-    @InjectModel('WOptionTypeSchema') private wOptionTypeModel: Model<IOptionType>,
-    @InjectModel('WProductInstanceFunction')
-    private wProductInstanceFunctionModel: Model<IProductInstanceFunction>,
-    @InjectModel('WOrderInstanceFunction')
-    private wOrderInstanceFunctionModel: Model<OrderInstanceFunction>,
+    @Inject(DB_VERSION_REPOSITORY)
+    private dbVersionRepository: IDBVersionRepository,
     @Inject(OPTION_REPOSITORY)
     private optionRepository: IOptionRepository,
     @Inject(OPTION_TYPE_REPOSITORY)
@@ -148,10 +138,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
   private get functionDeps(): FunctionFns.FunctionDeps {
     return {
-      wProductInstanceFunctionModel: this.wProductInstanceFunctionModel,
-      wOrderInstanceFunctionModel: this.wOrderInstanceFunctionModel,
-      wOptionModel: this.wOptionModel,
-      wProductModel: this.wProductModel,
+      productInstanceFunctionRepository: this.productInstanceFunctionRepository,
+      orderInstanceFunctionRepository: this.orderInstanceFunctionRepository,
+      optionRepository: this.optionRepository,
+      productRepository: this.productRepository,
       logger: this._logger,
     };
   }
@@ -178,7 +168,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       batchUpdateModifierType: (b, s, u) => ModifierFns.batchUpdateModifierType(this.modifierDeps, b, s, u),
       batchUpdateModifierOption: (b) => ModifierFns.batchUpdateModifierOption(this.modifierDeps, b),
       batchUpdateProductInstance: (b, s) => ProductFns.batchUpdateProductInstance(this.productDeps, b, s),
-      updateProductsWithConstraint: (q, u, f) => this.UpdateProductsWithConstraint(q, u, f),
+      batchUpsertProduct: (b) => ProductFns.batchUpsertProduct(this.productDeps, b),
+      findAllProducts: () => this.productRepository.findAll(),
       syncModifierTypes: () => this.SyncModifierTypes(),
       syncOptions: () => this.SyncOptions(),
       syncProductInstances: () => this.SyncProductInstances(),
@@ -237,7 +228,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       printerGroups: this.printerGroups,
       syncPrinterGroups: () => this.SyncPrinterGroups(),
       batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
-      updateProductsWithConstraint: (q, u, f) => this.UpdateProductsWithConstraint(q, u, f),
+      reassignPrinterGroupForAllProducts: (oldId, newId) => this.productRepository.migratePrinterGroupForAllProducts(oldId, newId),
     };
   }
 
@@ -266,8 +257,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
   private get modifierDeps(): ModifierFns.ModifierDeps {
     return {
-      wOptionTypeModel: this.wOptionTypeModel,
-      wOptionModel: this.wOptionModel,
+      optionTypeRepository: this.optionTypeRepository,
+      optionRepository: this.optionRepository,
       logger: this._logger,
       squareService: this.squareService,
       dataProviderService: this.dataProviderService,
@@ -290,7 +281,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       removeModifierTypeFromProducts: (id) => this.RemoveModifierTypeFromProducts(id),
       removeModifierOptionFromProductInstances: (mtId, moId) =>
         this.RemoveModifierOptionFromProductInstances(mtId, moId),
-      deleteProductInstanceFunction: (id, suppress) => this.DeleteProductInstanceFunction(id, suppress), // Assuming this exists or using function
+      deleteProductInstanceFunction: (id, suppress) => this.DeleteProductInstanceFunction(id, suppress),
     };
   }
 
@@ -331,8 +322,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
   private get productDeps(): ProductFns.ProductDeps {
     return {
-      wProductModel: this.wProductModel,
-      wProductInstanceModel: this.wProductInstanceModel,
+      productRepository: this.productRepository,
+      productInstanceRepository: this.productInstanceRepository,
       logger: this._logger,
       squareService: this.squareService,
       dataProviderService: this.dataProviderService,
@@ -460,10 +451,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncCategories = async () => {
     this.logger.debug(`Syncing Categories.`);
     try {
-      this.categories = ReduceArrayToMapByKey(
-        (await this.wCategoryModel.find().exec()).map((x) => x.toObject()),
-        'id',
-      );
+      this.categories = ReduceArrayToMapByKey(await this.categoryRepository.findAll(), 'id');
     } catch (err: unknown) {
       this._logger.error({ err }, 'Failed fetching categories');
       return false;
@@ -486,7 +474,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncModifierTypes = async () => {
     this.logger.debug(`Syncing Modifier Types.`);
     try {
-      this.modifier_types = (await this.wOptionTypeModel.find().exec()).map((x) => x.toObject());
+      this.modifier_types = await this.optionTypeRepository.findAll();
     } catch (err: unknown) {
       this._logger.error({ err }, 'Failed fetching option types');
       return false;
@@ -497,7 +485,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncOptions = async () => {
     this.logger.debug(`Syncing Modifier Options.`);
     try {
-      this.options = (await this.wOptionModel.find().exec()).map((x) => x.toObject());
+      this.options = await this.optionRepository.findAll();
     } catch (err: unknown) {
       this._logger.error({ err }, 'SyncModifierOptions failed');
       return false;
@@ -508,7 +496,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncProducts = async () => {
     this.logger.debug(`Syncing Products.`);
     try {
-      this.products = (await this.wProductModel.find().exec()).map((x) => x.toObject());
+      this.products = await this.productRepository.findAll();
     } catch (err: unknown) {
       this._logger.error({ err }, 'Failed fetching products');
       return false;
@@ -519,7 +507,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncProductInstances = async () => {
     this.logger.debug(`Syncing Product Instances.`);
     try {
-      this.product_instances = (await this.wProductInstanceModel.find().exec()).map((x) => x.toObject());
+      this.product_instances = await this.productInstanceRepository.findAll();
     } catch (err: unknown) {
       this._logger.error({ err }, 'SyncProductInstances failed');
       return false;
@@ -531,7 +519,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.debug(`Syncing Product Instance Functions.`);
     try {
       this.product_instance_functions = ReduceArrayToMapByKey(
-        (await this.wProductInstanceFunctionModel.find().exec()).map((x) => x.toObject()),
+        await this.productInstanceFunctionRepository.findAll(),
         'id',
       );
     } catch (err: unknown) {
@@ -545,7 +533,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     this.logger.debug(`Syncing Order Instance Functions.`);
     try {
       this.orderInstanceFunctions = ReduceArrayToMapByKey(
-        (await this.wOrderInstanceFunctionModel.find().exec()).map((x) => x.toObject()),
+        await this.orderInstanceFunctionRepository.findAll(),
         'id',
       );
     } catch (err: unknown) {
@@ -574,7 +562,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   async onModuleInit() {
     this.logger.info(`Starting Bootstrap of CatalogProvider, Loading catalog from database...`);
 
-    const newVer = await this.dbVersionModel.findOne().exec();
+    const newVer = await this.dbVersionRepository.get();
     this.apiver = newVer as SEMVER;
 
     await Promise.all([
@@ -641,33 +629,14 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     }
   };
 
-  public UpdateProductsWithConstraint = async (
-    product_query: FilterQuery<IProduct>,
-    update: Partial<IProduct>,
-    suppress_catalog_recomputation: boolean,
-  ) => {
-    const products = await this.wProductModel.find(product_query).exec();
-    if (products.length > 0) {
-      const batches = products.map((p) => ({
-        product: { ...p.toObject(), ...update },
-        instances: [],
-      }));
-      // would be good to handle the partial update more gracefully
-      await this.BatchUpsertProduct(batches);
-    }
-    if (!suppress_catalog_recomputation) {
-      this.RecomputeCatalog();
-    }
-  };
+
 
   RemoveModifierTypeFromProducts = async (mt_id: string) => {
-    const products_update = await this.wProductModel.updateMany({}, { $pull: { modifiers: { mtid: mt_id } } }).exec();
-    if (products_update.modifiedCount > 0) {
-      const product_instance_update = await this.wProductInstanceModel
-        .updateMany({}, { $pull: { modifiers: { modifierTypeId: mt_id } } })
-        .exec();
+    const products_update = await this.productRepository.removeModifierTypeFromAll(mt_id);
+    if (products_update > 0) {
+      const product_instance_update = await this.productInstanceRepository.removeModifierTypeSelectionsFromAll(mt_id);
       this.logger.debug(
-        `Removed ModifierType ID from ${products_update.modifiedCount.toString()} products, ${product_instance_update.modifiedCount.toString()} product instances.`,
+        `Removed ModifierType ID from ${products_update.toString()} products, ${product_instance_update.toString()} product instances.`,
       );
       await this.SyncProducts();
       await this.SyncProductInstances();
@@ -677,16 +646,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   UpdateProductInstancesForOptionChanges = async (updatedOptions: string[]) => {
     // After we've updated the modifiers, we need to rebuild all products with the said modifier option(s) since the ordinal and price might have changed
     // TODO: verify we don't need to update products that could add that modifier too, like any product class with the modifier type enabled on it
-    const product_instances_to_update = await this.wProductInstanceModel
-      .find({
-        'modifiers.options': {
-          $elemMatch: { optionId: { $in: updatedOptions } },
-        },
-      })
-      .exec();
-    product_instances_to_update.map((x) => x.id as string);
+    const product_instances_to_update = await this.productInstanceRepository.findAllWithModifierOptions(updatedOptions);
     const batchProductInstanceUpdates = product_instances_to_update.map((pi) => ({
-      piid: pi.id as string,
+      piid: pi.id,
       product: this.catalog.products[pi.productId].product,
       productInstance: {
         modifiers: pi.modifiers,
@@ -701,15 +663,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   RemoveModifierOptionFromProductInstances = async (modifierTypeId: string, mo_id: string) => {
-    const product_instance_options_delete = await this.wProductInstanceModel
-      .updateMany(
-        { 'modifiers.modifierTypeId': modifierTypeId },
-        { $pull: { 'modifiers.$.options': { optionId: mo_id } } },
-      )
-      .exec();
-    if (product_instance_options_delete.modifiedCount > 0) {
+    const product_instance_options_delete = await this.productInstanceRepository.removeModifierOptionsFromAll(modifierTypeId, [mo_id]);
+    if (product_instance_options_delete > 0) {
       this.logger.debug(
-        `Removed ${product_instance_options_delete.modifiedCount.toString()} Options from Product Instances.`,
+        `Removed ${product_instance_options_delete.toString()} Options from Product Instances.`,
       );
       // TODO: run query for any modifiers.options.length === 0
       await this.SyncProductInstances();
@@ -722,23 +679,21 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
    *  */
   BackfillRemoveFulfillment = async (id: string) => {
     this.logger.debug(`Removing fulfillment ID ${id} references, if any exist.`);
-    const products_update = await this.wProductModel
-      .updateMany({}, { $pull: { serviceDisable: id, 'modifiers.$[].serviceDisable': id } })
-      .exec();
-    if (products_update.modifiedCount > 0) {
+    const products_update = await this.productRepository.removeServiceDisableFromAll(id);
+    if (products_update > 0) {
       this.logger.debug(
-        `Removed serviceDisable fulfillment ID from ${products_update.modifiedCount.toString()} products and modifiers.`,
+        `Removed serviceDisable fulfillment ID from ${products_update.toString()} products and modifiers.`,
       );
       await this.SyncProducts();
     }
-    const category_update = await this.wCategoryModel.updateMany({}, { $pull: { serviceDisable: id } }).exec();
-    if (category_update.modifiedCount > 0) {
+    const category_update = await this.categoryRepository.removeServiceDisableFromAll(id);
+    if (category_update > 0) {
       this.logger.debug(
-        `Removed serviceDisable fulfillment ID from ${category_update.modifiedCount.toString()} categories.`,
+        `Removed serviceDisable fulfillment ID from ${category_update.toString()} categories.`,
       );
       await this.SyncCategories();
     }
-    if (products_update.modifiedCount > 0 || category_update.modifiedCount > 0) {
+    if (products_update > 0 || category_update > 0) {
       this.RecomputeCatalog();
     }
   };

@@ -22,31 +22,56 @@ export class ProductInstanceFunctionTypeOrmRepository implements IProductInstanc
     return this.repo.find({ where: { validTo: IsNull() } });
   }
 
-  async save(fn: Omit<IProductInstanceFunction, 'id'> & { id?: string }): Promise<IProductInstanceFunction> {
+  async create(fn: Omit<IProductInstanceFunction, 'id'>): Promise<IProductInstanceFunction> {
     const now = new Date();
-
-    if (fn.id) {
-      await this.repo.update(
-        { id: fn.id, validTo: IsNull() },
-        { validTo: now },
-      );
-    }
-
     const entity = this.repo.create({
       ...fn,
-      id: fn.id || crypto.randomUUID(),
+      id: crypto.randomUUID(),
       validFrom: now,
       validTo: null,
     });
-
     return this.repo.save(entity);
   }
 
+  async update(id: string, partial: Partial<Omit<IProductInstanceFunction, 'id'>>): Promise<IProductInstanceFunction | null> {
+    const now = new Date();
+    const existing = await this.repo.findOne({ where: { id, validTo: IsNull() } });
+    if (!existing) {
+      return null;
+    }
+
+    // Close old version
+    await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
+
+    // Create new version
+    const entity = this.repo.create({
+      ...(existing as IProductInstanceFunction),
+      ...partial,
+      id,
+      validFrom: now,
+      validTo: null,
+    });
+    return this.repo.save(entity);
+  }
+
+  async save(fn: Omit<IProductInstanceFunction, 'id'> & { id?: string }): Promise<IProductInstanceFunction> {
+    if (fn.id) {
+      const result = await this.update(fn.id, fn);
+      if (!result) {
+        throw new Error(`ProductInstanceFunction ${fn.id} not found`);
+      }
+      return result;
+    }
+    return this.create(fn);
+  }
+
   async delete(id: string): Promise<boolean> {
+    const now = new Date();
     const result = await this.repo.update(
       { id, validTo: IsNull() },
-      { validTo: new Date() },
+      { validTo: now },
     );
     return (result.affected ?? 0) > 0;
   }
 }
+

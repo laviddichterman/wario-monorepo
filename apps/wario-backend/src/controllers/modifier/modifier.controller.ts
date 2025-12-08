@@ -1,14 +1,14 @@
-import { Body, Controller, Delete, Inject, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Inject, Param, Patch, Post } from '@nestjs/common';
 
-import { type IOption, type IOptionType } from '@wcp/wario-shared';
+import { type IOptionType, UncommittedOptionDto } from '@wcp/wario-shared';
 
 import { SocketIoService } from 'src/config/socket-io/socket-io.service';
+import { UpdateOptionDto } from 'src/dtos/modifier.dto';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
 import type {
   UncommitedOption,
-  UpdateModifierOptionProps,
   UpdateModifierTypeProps,
 } from '../../config/catalog-provider/catalog.types';
 
@@ -19,7 +19,7 @@ export class ModifierController {
     @Inject(SocketIoService) private socketIoService: SocketIoService,
   ) {}
 
-  @Post('type')
+  @Post()
   @Scopes('write:catalog')
   async CreateModifierType(@Body() body: { modifierType: Omit<IOptionType, 'id'>; options: UncommitedOption[] }) {
     const doc = await this.catalogProvider.CreateModifierType(body.modifierType, body.options);
@@ -27,7 +27,7 @@ export class ModifierController {
     return doc;
   }
 
-  @Put('type')
+  @Patch(':id')
   @Scopes('write:catalog')
   async UpdateModifierType(@Body() body: UpdateModifierTypeProps) {
     const doc = await this.catalogProvider.UpdateModifierType({
@@ -38,7 +38,7 @@ export class ModifierController {
     return doc;
   }
 
-  @Delete('type/:id')
+  @Delete(':id')
   @Scopes('delete:catalog')
   async DeleteModifierType(@Param('id') id: string) {
     const doc = await this.catalogProvider.DeleteModifierType(id);
@@ -46,28 +46,27 @@ export class ModifierController {
     return doc;
   }
 
-  @Post('option')
+  @Post(':mtid')
   @Scopes('write:catalog')
-  async CreateOption(@Body() body: Omit<IOption, 'id'>) {
-    const doc = await this.catalogProvider.CreateOption(body);
+  async CreateOption(@Body() body: UncommittedOptionDto, @Param('mtid') mtid: string) {
+    const doc = await this.catalogProvider.CreateOption({ modifierTypeId: mtid, ...(body as UncommitedOption) });
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
-  @Put('option')
+  @Patch(':mtid/:id')
   @Scopes('write:catalog')
-  // todo: change the type to a dto
-  async UpdateModifierOption(@Body() body: UpdateModifierOptionProps) {
+  async UpdateModifierOption(@Body() body: UpdateOptionDto, @Param('id') id: string, @Param('mtid') mtid: string) {
     const doc = await this.catalogProvider.UpdateModifierOption({
-      id: body.id,
-      modifierTypeId: body.modifierTypeId, // we need this to process the update
-      modifierOption: body.modifierOption,
+      id,
+      modifierTypeId: mtid,
+      modifierOption: body,
     });
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
 
-  @Delete('option/:id')
+  @Delete(':mtid/:id')
   @Scopes('delete:catalog')
   async DeleteModifierOption(@Param('id') id: string) {
     const doc = await this.catalogProvider.DeleteModifierOption(id);

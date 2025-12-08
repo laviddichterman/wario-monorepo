@@ -44,6 +44,12 @@ export interface IOrderRepository {
     lock: string,
   ): Promise<WOrderInstance | null>;
 
+  /**
+   * Atomically try to acquire lock on an order if not already locked.
+   * Used by OrderLockInterceptor. Returns the order if lock was acquired, null otherwise.
+   */
+  tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null>;
+
   /** Unlock all locked orders (admin operation). Returns count of unlocked orders. */
   unlockAll(): Promise<number>;
 }

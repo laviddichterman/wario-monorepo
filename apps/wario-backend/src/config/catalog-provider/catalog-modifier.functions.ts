@@ -1,5 +1,4 @@
 import { chunk } from 'es-toolkit/compat';
-import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogIdMapping, CatalogObject } from 'square';
 
@@ -15,6 +14,8 @@ import {
   type KeyValue,
 } from '@wcp/wario-shared';
 
+import type { IOptionTypeRepository } from '../../repositories/interfaces/option-type.repository.interface';
+import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';
 import { IsSetOfUniqueStrings } from '../../utils/utils';
 import type { AppConfigService } from '../app-config.service';
 import type { DataProviderService } from '../data-provider/data-provider.service';
@@ -41,8 +42,8 @@ export type { UncommitedOption, UpdateModifierOptionProps, UpdateModifierTypePro
 // ============================================================================
 
 export interface ModifierDeps {
-  wOptionTypeModel: Model<IOptionType>;
-  wOptionModel: Model<IOption>;
+  optionTypeRepository: IOptionTypeRepository;
+  optionRepository: IOptionRepository;
   logger: PinoLogger;
   squareService: SquareService;
   dataProviderService: DataProviderService;
@@ -104,13 +105,14 @@ export const createModifierType = async (
       throw Error('Failed validation on modifier option in a single select modifier type');
     }
   });
-  const doc = new deps.wOptionTypeModel({
+
+  const created = await deps.optionTypeRepository.create({
     ...modifierType,
     externalIDs: GetNonSquareExternalIds(modifierType.externalIDs),
   });
-  await doc.save();
-  const modifierTypeId = doc.id as string;
+  const modifierTypeId = created.id;
   await deps.syncModifierTypes();
+
   if (options.length > 0) {
     // we need to filter these external IDs because it'll interfere with adding the new modifier to the catalog
     const adjustedOptions: Omit<IOption, 'id'>[] = options
@@ -120,21 +122,14 @@ export const createModifierType = async (
         externalIDs: GetNonSquareExternalIds(opt.externalIDs),
       }))
       .sort((a, b) => a.ordinal - b.ordinal);
-    const optionDocuments = adjustedOptions.map((x) => new deps.wOptionModel(x));
-    // add the new option to the db, sync and recompute the catalog, then use UpdateModifierType to clean up
-    await deps.wOptionModel.bulkWrite(
-      optionDocuments.map((o) => ({
-        insertOne: {
-          document: o,
-        },
-      })),
-    );
+
+    await deps.optionRepository.bulkCreate(adjustedOptions);
     await deps.syncOptions();
     deps.recomputeCatalog();
     await updateModifierType(deps, { id: modifierTypeId, modifierType: {} });
   }
   deps.recomputeCatalog();
-  return doc.toObject();
+  return created;
 };
 
 export const batchUpdateModifierType = async (
@@ -237,20 +232,19 @@ export const batchUpdateModifierType = async (
     };
   });
 
+  // Update options using repository
   await Promise.all(
     updatedWarioObjects
       .flatMap((b) => b.options)
-      .map(async (b) => {
-        return (await deps.wOptionModel.findByIdAndUpdate(b.id, b, { new: true }))?.toObject() ?? null;
+      .map(async (opt) => {
+        return deps.optionRepository.update(opt.id, opt);
       }),
   );
 
+  // Update modifier types using repository
   const updatedModifierTypes = await Promise.all(
     updatedWarioObjects.map(async (b) => {
-      return (
-        (await deps.wOptionTypeModel.findByIdAndUpdate(b.modifierType.id, b.modifierType, { new: true }))?.toObject() ??
-        null
-      );
+      return deps.optionTypeRepository.update(b.modifierType.id, b.modifierType);
     }),
   );
 
@@ -275,11 +269,19 @@ export const updateModifierType = async (deps: ModifierDeps, props: UpdateModifi
 
 export const deleteModifierType = async (deps: ModifierDeps, mt_id: string) => {
   deps.logger.debug({ mt_id }, 'Removing Modifier Type');
-  const doc = await deps.wOptionTypeModel.findByIdAndDelete(mt_id).exec();
-  if (!doc) {
+
+  const existing = await deps.optionTypeRepository.findById(mt_id);
+  if (!existing) {
     deps.logger.warn('Unable to delete the ModifierType from the database.');
     return null;
   }
+
+  const deleted = await deps.optionTypeRepository.delete(mt_id);
+  if (!deleted) {
+    deps.logger.warn('Unable to delete the ModifierType from the database.');
+    return null;
+  }
+
   const modifierTypeEntry = deps.catalog.modifiers[mt_id];
 
   // if there are any square ids associated with this modifier type then we delete them first
@@ -306,7 +308,7 @@ export const deleteModifierType = async (deps: ModifierDeps, mt_id: string) => {
   await deps.syncOptions();
   await deps.syncModifierTypes();
   deps.recomputeCatalog();
-  return doc.toObject();
+  return existing;
 };
 
 export const createOption = async (deps: ModifierDeps, modifierOption: Omit<IOption, 'id'>) => {
@@ -328,8 +330,7 @@ export const createOption = async (deps: ModifierDeps, modifierOption: Omit<IOpt
   };
 
   // add the new option to the db, sync and recompute the catalog, then use UpdateModifierType to clean up
-  const doc = new deps.wOptionModel(adjustedOption);
-  await doc.save();
+  const created = await deps.optionRepository.create(adjustedOption);
   await deps.syncOptions();
   deps.recomputeCatalog();
   await updateModifierType(deps, {
@@ -338,7 +339,7 @@ export const createOption = async (deps: ModifierDeps, modifierOption: Omit<IOpt
   });
   deps.recomputeCatalog();
   // since we have new external IDs, we need to pull the modifier option from the catalog after the above syncing
-  return deps.catalog.options[doc.id as string];
+  return deps.catalog.options[created.id];
 };
 
 export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: UpdateModifierOptionProps[]) => {
@@ -472,23 +473,14 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
 
   const updated = await Promise.all(
     batchesInfo.map(async (b, i) => {
-      const doc = await deps.wOptionModel
-        .findByIdAndUpdate(
-          b.batch.id,
-          {
-            ...b.batch.modifierOption,
-            externalIDs: [
-              ...b.updatedOption.externalIDs,
-              ...IdMappingsToExternalIds(mappings, ('000' + String(i)).slice(-3)),
-            ],
-          },
-          { new: true },
-        )
-        .exec();
-      if (!doc) {
-        return null;
-      }
-      return doc.toObject();
+      const updateData = {
+        ...b.batch.modifierOption,
+        externalIDs: [
+          ...b.updatedOption.externalIDs,
+          ...IdMappingsToExternalIds(mappings, ('000' + String(i)).slice(-3)),
+        ],
+      };
+      return deps.optionRepository.update(b.batch.id, updateData);
     }),
   );
 
@@ -513,15 +505,21 @@ export const deleteModifierOption = async (
   suppress_catalog_recomputation: boolean = false,
 ) => {
   deps.logger.debug({ mo_id }, 'Removing Modifier Option');
-  const doc = await deps.wOptionModel.findByIdAndDelete(mo_id).exec();
-  if (!doc) {
+
+  const existing = await deps.optionRepository.findById(mo_id);
+  if (!existing) {
+    return null;
+  }
+
+  const deleted = await deps.optionRepository.delete(mo_id);
+  if (!deleted) {
     return null;
   }
 
   // NOTE: this removes the modifiers from the Square ITEMs and ITEM_VARIATIONs as well
-  await deps.batchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
+  await deps.batchDeleteCatalogObjectsFromExternalIds(existing.externalIDs);
 
-  await deps.removeModifierOptionFromProductInstances(doc.modifierTypeId, mo_id);
+  await deps.removeModifierOptionFromProductInstances(existing.modifierTypeId, mo_id);
 
   await deps.syncOptions();
   // need to delete any ProductInstanceFunctions that use this MO
@@ -529,12 +527,12 @@ export const deleteModifierOption = async (
     Object.values(deps.productInstanceFunctions).map(async (pif) => {
       const dependent_pfi_expressions = FindModifierPlacementExpressionsForMTID(
         pif.expression,
-        doc.modifierTypeId,
+        existing.modifierTypeId,
       ) as AbstractExpressionModifierPlacementExpression[];
       const filtered = dependent_pfi_expressions.filter((x) => x.expr.moid === mo_id);
       if (filtered.length > 0) {
         deps.logger.debug(
-          { modifierTypeId: doc.modifierTypeId, mo_id, pifId: pif.id },
+          { modifierTypeId: existing.modifierTypeId, mo_id, pifId: pif.id },
           'Found product instance function composed of MO, removing PIF',
         );
         // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
@@ -545,5 +543,5 @@ export const deleteModifierOption = async (
   if (!suppress_catalog_recomputation) {
     deps.recomputeCatalog();
   }
-  return doc.toObject();
+  return existing;
 };

@@ -1,5 +1,6 @@
 // Mongoose repositories barrel export
 export * from './category.mongoose.repository';
+export * from './db-version.mongoose.repository';
 export * from './fulfillment.mongoose.repository';
 export * from './key-value.mongoose.repository';
 export * from './option-type.mongoose.repository';

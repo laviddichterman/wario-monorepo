@@ -15,11 +15,12 @@ import {
   ProductInstanceFunctionEntity,
 } from '../entities/catalog';
 import { OrderEntity, OrderHistoryEntity } from '../entities/order';
-import { FulfillmentEntity, SettingsEntity } from '../entities/settings';
+import { DBVersionEntity, FulfillmentEntity, SettingsEntity } from '../entities/settings';
 
 // Interface tokens
 import {
   CATEGORY_REPOSITORY,
+  DB_VERSION_REPOSITORY,
   FULFILLMENT_REPOSITORY,
   OPTION_REPOSITORY,
   OPTION_TYPE_REPOSITORY,
@@ -33,6 +34,7 @@ import {
 // Mongoose repositories
 import {
   CategoryMongooseRepository,
+  DBVersionMongooseRepository,
   FulfillmentMongooseRepository,
   OptionMongooseRepository,
   OptionTypeMongooseRepository,
@@ -46,6 +48,7 @@ import {
 // TypeORM repositories
 import {
   CategoryTypeOrmRepository,
+  DBVersionTypeOrmRepository,
   FulfillmentTypeOrmRepository,
   OptionTypeOrmRepository,
   OptionTypeTypeOrmRepository,
@@ -60,6 +63,7 @@ import {
 const entities = [
   CatalogVersionEntity,
   CategoryEntity,
+  DBVersionEntity,
   FulfillmentEntity,
   OptionEntity,
   OptionTypeEntity,
@@ -74,6 +78,7 @@ const entities = [
 
 const typeOrmRepos = [
   CategoryTypeOrmRepository,
+  DBVersionTypeOrmRepository,
   FulfillmentTypeOrmRepository,
   OptionTypeOrmRepository,
   OptionTypeTypeOrmRepository,
@@ -87,6 +92,7 @@ const typeOrmRepos = [
 
 const mongooseRepos = [
   CategoryMongooseRepository,
+  DBVersionMongooseRepository,
   FulfillmentMongooseRepository,
   OptionMongooseRepository,
   OptionTypeMongooseRepository,
@@ -119,6 +125,12 @@ const mongooseRepos = [
       useFactory: (appConfig: AppConfigService, pgRepo: CategoryTypeOrmRepository, mongoRepo: CategoryMongooseRepository) =>
         appConfig.usePostgres ? pgRepo : mongoRepo,
       inject: [AppConfigService, CategoryTypeOrmRepository, CategoryMongooseRepository],
+    },
+    {
+      provide: DB_VERSION_REPOSITORY,
+      useFactory: (appConfig: AppConfigService, pgRepo: DBVersionTypeOrmRepository, mongoRepo: DBVersionMongooseRepository) =>
+        appConfig.usePostgres ? pgRepo : mongoRepo,
+      inject: [AppConfigService, DBVersionTypeOrmRepository, DBVersionMongooseRepository],
     },
     {
       provide: OPTION_TYPE_REPOSITORY,
@@ -177,6 +189,7 @@ const mongooseRepos = [
   ],
   exports: [
     CATEGORY_REPOSITORY,
+    DB_VERSION_REPOSITORY,
     FULFILLMENT_REPOSITORY,
     OPTION_REPOSITORY,
     OPTION_TYPE_REPOSITORY,

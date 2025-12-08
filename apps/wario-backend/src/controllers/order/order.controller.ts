@@ -107,12 +107,12 @@ export class OrderController {
     return response;
   }
 
-  // @Put('unlock')
-  // @Scopes('write:order')
-  // async putUnlock() {
-  //   await this.orderManager.ObliterateLocks();
-  //   return { ok: 'yay!' };
-  // }
+  @Put('unlock')
+  @Scopes('write:order')
+  async putUnlock() {
+    await this.orderManager.ObliterateLocks();
+    return { ok: 'yay!' };
+  }
 
   @Put(':oId/send')
   @Scopes('send:order')

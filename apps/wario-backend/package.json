@@ -65,7 +65,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.9",
     "@nestjs/platform-socket.io": "^11.1.9",
-    "@nestjs/schedule": "^6.0.1",
+    "@nestjs/schedule": "^6.1.0",
     "@nestjs/typeorm": "^11.0.0",
     "@nestjs/websockets": "^11.1.9",
     "@turf/invariant": "^7.3.1",
@@ -127,6 +127,6 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.48.1"
+    "typescript-eslint": "^8.49.0"
   }
 }

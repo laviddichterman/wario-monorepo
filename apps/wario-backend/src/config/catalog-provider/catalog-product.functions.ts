@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { chunk } from 'es-toolkit/compat';
-import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogIdMapping, CatalogObject } from 'square';
 
@@ -14,6 +13,7 @@ import {
   type IProductInstance,
   type KeyValue,
   type PrinterGroup,
+  ReduceArrayToMapByKey,
   type UncommittedIProduct,
   type UncommittedIProductInstance,
   type UpdateIProductRequest,
@@ -22,6 +22,8 @@ import {
   type UpsertProductBatchRequest,
 } from '@wcp/wario-shared';
 
+import type { IProductInstanceRepository } from '../../repositories/interfaces/product-instance.repository.interface';
+import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
 import { IsSetOfUniqueStrings } from '../../utils/utils';
 import type { AppConfigService } from '../app-config.service';
 import type { DataProviderService } from '../data-provider/data-provider.service';
@@ -49,8 +51,8 @@ export type { UpdateProductInstanceProps };
 // ============================================================================
 
 export interface ProductDeps {
-  wProductModel: Model<IProduct>;
-  wProductInstanceModel: Model<IProductInstance>;
+  productRepository: IProductRepository;
+  productInstanceRepository: IProductInstanceRepository;
   logger: PinoLogger;
   squareService: SquareService;
   dataProviderService: DataProviderService;
@@ -266,9 +268,9 @@ export const batchUpsertProduct = async (
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           !deps.catalog.productInstances[pi.id].displayFlags.pos.hide && pi.displayFlags?.pos.hide
             ? GetSquareExternalIds(
-                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-                pi.externalIDs ?? deps.catalog.productInstances[pi.id].externalIDs,
-              )
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              pi.externalIDs ?? deps.catalog.productInstances[pi.id].externalIDs,
+            )
             : [],
         )
         .flat(),
@@ -330,33 +332,33 @@ export const batchUpsertProduct = async (
         return pi.displayFlags.pos.hide
           ? []
           : [
-              ProductInstanceToSquareCatalogObject(
-                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-                b.product,
-                pi,
-                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-                deps.catalogSelectors,
-                existingSquareObjects,
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              pi,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              existingSquareObjects,
 
-                ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
-              ),
-            ];
+              ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
+            ),
+          ];
       });
       const insertCatalogObjects = b.insertInstances.flatMap((pi, k) => {
         return pi.displayFlags.pos.hide
           ? []
           : [
-              ProductInstanceToSquareCatalogObject(
-                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-                b.product,
-                pi,
-                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-                deps.catalogSelectors,
-                [],
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              pi,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              [],
 
-                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
-              ),
-            ];
+              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
+            ),
+          ];
       });
       return [...updateCatalogObjects, ...insertCatalogObjects];
     }),
@@ -429,88 +431,80 @@ export const batchUpsertProduct = async (
       }),
     };
   }) as { product: IProduct; instances: IProductInstance[]; index: number }[];
-  const updateBatchesInserts = adjustedUpdateBatches.map((b) => {
-    return {
-      index: b.index,
-      instances: b.insertInstances.map((pi, j) => {
-        return new deps.wProductInstanceModel({
-          ...pi,
-          productId: b.product.id,
-          externalIDs: [
-            ...pi.externalIDs,
-            ...IdMappingsToExternalIds(
-              mappings,
 
-              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + j)).slice(-7),
-            ),
-          ],
-        });
-      }),
-    };
-  });
-  const insertBatchInserts = adjustedInsertBatches.map((b) => {
-    const productDoc = new deps.wProductModel(b.product);
-    const batchInstanceDocs = b.instances.map(
-      (x, j) =>
-        new deps.wProductInstanceModel({
-          ...x,
-          productId: productDoc.id as string,
-          externalIDs: [
-            ...x.externalIDs,
-
-            ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
-          ],
-        }),
-    );
-    productDoc.baseProductId = batchInstanceDocs[0].id as string;
-    return {
-      product: productDoc,
-      instances: batchInstanceDocs,
+  // Prepare insert instances for update batches
+  const updateBatchesInsertInstances: Array<{ index: number; instances: Omit<IProductInstance, 'id'>[] }> =
+    adjustedUpdateBatches.map((b) => ({
       index: b.index,
-    };
-  });
-  if (insertBatchInserts.length) {
-    const bulkProductInsert = await deps.wProductModel.insertMany(insertBatchInserts.map((o) => o.product));
-    deps.logger.debug({ count: bulkProductInsert.length }, 'Saved new WProductModels');
-  }
-  const productInstanceInserts = [...insertBatchInserts, ...updateBatchesInserts];
-  if (productInstanceInserts.length) {
-    const bulkProductInstanceInsert = await deps.wProductInstanceModel.insertMany(
-      [...insertBatchInserts, ...updateBatchesInserts].flatMap((x) => x.instances),
-    );
-    deps.logger.debug({ count: bulkProductInstanceInsert.length }, 'Instances creation result');
-  }
-  if (bulkUpdate.length) {
-    const bulkProductUpdate = await deps.wProductModel.bulkWrite(
-      bulkUpdate.map((b) => ({
-        updateOne: {
-          filter: { id: b.product.id },
-          update: b.product,
-        },
+      instances: b.insertInstances.map((pi, j) => ({
+        ...pi,
+        productId: b.product.id,
+        externalIDs: [
+          ...pi.externalIDs,
+          ...IdMappingsToExternalIds(
+            mappings,
+            ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + j)).slice(-7),
+          ),
+        ],
       })),
-    );
-    deps.logger.debug({ result: bulkProductUpdate }, 'Bulk update of WProductModel successful');
-    const bulkProductInstanceUpdate = await deps.wProductInstanceModel.bulkWrite(
-      bulkUpdate.flatMap((b) =>
-        b.instances.map((pi) => ({
-          updateOne: {
-            filter: { id: pi.id },
-            update: pi,
-          },
-        })),
-      ),
-    );
-    deps.logger.debug({ result: bulkProductInstanceUpdate }, 'Bulk update of WProductInstanceModel successful');
+    }));
+
+  // Create products and instances for insert batches
+  const insertBatchResults: Array<{ product: IProduct; instances: IProductInstance[]; index: number }> = [];
+  for (const b of adjustedInsertBatches) {
+    // Create the product first to get its ID
+    const createdProduct = await deps.productRepository.create(b.product as Omit<IProduct, 'id'>);
+
+    // Create instances with the product ID
+    const instancesWithProductId = b.instances.map((x, j) => ({
+      ...x,
+      productId: createdProduct.id,
+      externalIDs: [
+        ...x.externalIDs,
+        ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
+      ],
+    }));
+
+    const createdInstances = await deps.productInstanceRepository.bulkCreate(instancesWithProductId);
+
+    // Update product with base product instance ID
+    const updatedProduct = await deps.productRepository.update(createdProduct.id, {
+      baseProductId: createdInstances[0].id,
+    });
+
+    insertBatchResults.push({
+      product: updatedProduct ?? createdProduct,
+      instances: createdInstances,
+      index: b.index,
+    });
   }
+
+  // Insert instances for update batches
+  const allInsertInstances = updateBatchesInsertInstances.flatMap((x) => x.instances);
+  let createdUpdateBatchInstances: IProductInstance[] = [];
+  if (allInsertInstances.length > 0) {
+    createdUpdateBatchInstances = await deps.productInstanceRepository.bulkCreate(allInsertInstances);
+    deps.logger.debug({ count: createdUpdateBatchInstances.length }, 'Instances creation result');
+  }
+
+  // Update products and instances
+  if (bulkUpdate.length) {
+    await deps.productRepository.bulkUpdate(
+      bulkUpdate.map((b) => ({ id: b.product.id, data: b.product })),
+    );
+    deps.logger.debug({ count: bulkUpdate.length }, 'Bulk update of products successful');
+
+    await deps.productInstanceRepository.bulkUpdate(
+      bulkUpdate.flatMap((b) => b.instances.map((pi) => ({ id: pi.id, data: pi }))),
+    );
+    deps.logger.debug({ count: bulkUpdate.flatMap((b) => b.instances).length }, 'Bulk update of product instances successful');
+  }
+
   await Promise.all([deps.syncProducts(), deps.syncProductInstances()]);
   deps.recomputeCatalog();
 
-  const reconstructedBatches: Record<number, { product: IProduct; instances: IProductInstance[]; index: number }> = {};
-  insertBatchInserts.forEach((b) => {
-    const product = b.product.toObject();
-    const instances = b.instances.map((x) => x.toObject());
-    reconstructedBatches[b.index] = { product, instances, index: b.index };
-  });
+  // Reconstruct results
+  const reconstructedBatches = ReduceArrayToMapByKey(insertBatchResults, 'index');
   bulkUpdate.forEach((b) => {
     reconstructedBatches[b.index] = {
       product: b.product,
@@ -518,12 +512,18 @@ export const batchUpsertProduct = async (
       index: b.index,
     };
   });
-  updateBatchesInserts.forEach((b) => {
+
+  // Map created instances back to their batches
+  let instanceOffset = 0;
+  updateBatchesInsertInstances.forEach((b) => {
+    const batchInstances = createdUpdateBatchInstances.slice(instanceOffset, instanceOffset + b.instances.length);
+    instanceOffset += b.instances.length;
     reconstructedBatches[b.index].instances = [
-      ...b.instances.map((x) => x.toObject()),
+      ...batchInstances,
       ...reconstructedBatches[b.index].instances,
     ];
   });
+
   return Object.values(reconstructedBatches)
     .sort((a, b) => a.index - b.index)
     .map((x) => ({
@@ -556,12 +556,11 @@ export const batchDeleteProduct = async (
   deps.logger.debug({ p_ids }, 'Removing Product(s)');
   const productEntries = p_ids.map((x) => deps.catalog.products[x]);
 
-  // needs to be ._id, NOT .id
-  const doc = await deps.wProductModel.deleteMany({ _id: { $in: p_ids } }).exec();
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  if (!doc) {
+  const deletedCount = await deps.productRepository.bulkDelete(p_ids);
+  if (deletedCount === 0) {
     return null;
   }
+
   // removing ALL product instances from Square
   await deps.batchDeleteCatalogObjectsFromExternalIds(
     productEntries
@@ -569,26 +568,32 @@ export const batchDeleteProduct = async (
       .reduce<KeyValue[]>((acc, pi) => [...acc, ...deps.catalog.productInstances[pi].externalIDs], []),
   );
 
-  const product_instance_delete = await deps.wProductInstanceModel.deleteMany({ productId: { $in: p_ids } }).exec();
-  if (product_instance_delete.deletedCount > 0) {
-    deps.logger.debug(`Removed ${product_instance_delete.deletedCount.toString()} Product Instances.`);
+  const instanceDeleteCount = await deps.productInstanceRepository.deleteByProductIds(p_ids);
+  if (instanceDeleteCount > 0) {
+    deps.logger.debug(`Removed ${instanceDeleteCount.toString()} Product Instances.`);
     await deps.syncProductInstances();
   }
   await deps.syncProducts();
   if (!suppress_catalog_recomputation) {
     deps.recomputeCatalog();
   }
-  return { deletedCount: doc.deletedCount, acknowledged: doc.acknowledged };
+  return { deletedCount, acknowledged: true };
 };
 
 export const deleteProduct = async (deps: ProductDeps, p_id: string) => {
   deps.logger.debug({ p_id }, 'Removing Product');
   const productEntry = deps.catalog.products[p_id];
 
-  const doc = await deps.wProductModel.findByIdAndDelete(p_id).exec();
-  if (!doc) {
+  const existing = await deps.productRepository.findById(p_id);
+  if (!existing) {
     return null;
   }
+
+  const deleted = await deps.productRepository.delete(p_id);
+  if (!deleted) {
+    return null;
+  }
+
   // removing ALL product instances from Square
   await deps.batchDeleteCatalogObjectsFromExternalIds(
     productEntry.instances.reduce<KeyValue[]>(
@@ -597,14 +602,14 @@ export const deleteProduct = async (deps: ProductDeps, p_id: string) => {
     ),
   );
 
-  const product_instance_delete = await deps.wProductInstanceModel.deleteMany({ productId: p_id }).exec();
-  if (product_instance_delete.deletedCount > 0) {
-    deps.logger.debug(`Removed ${product_instance_delete.deletedCount.toString()} Product Instances.`);
+  const instanceDeleteCount = await deps.productInstanceRepository.deleteByProductIds([p_id]);
+  if (instanceDeleteCount > 0) {
+    deps.logger.debug(`Removed ${instanceDeleteCount.toString()} Product Instances.`);
     await deps.syncProductInstances();
   }
   await deps.syncProducts();
   deps.recomputeCatalog();
-  return doc.toObject();
+  return existing;
 };
 
 export const createProductInstance = async (deps: ProductDeps, instance: Omit<IProductInstance, 'id'>) => {
@@ -639,11 +644,11 @@ export const createProductInstance = async (deps: ProductDeps, instance: Omit<IP
       externalIDs: [...adjustedInstance.externalIDs, ...IdMappingsToExternalIds(upsertResponse.result.idMappings, '')],
     };
   }
-  const doc = new deps.wProductInstanceModel(adjustedInstance);
-  await doc.save();
+
+  const created = await deps.productInstanceRepository.create(adjustedInstance);
   await deps.syncProductInstances();
   deps.recomputeCatalog();
-  return doc.toObject();
+  return created;
 };
 
 export const batchUpdateProductInstance = async (
@@ -694,17 +699,17 @@ export const batchUpdateProductInstance = async (
       return mergedInstance.displayFlags.pos.hide
         ? []
         : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              mergedInstance,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              existingSquareObjects,
+          ProductInstanceToSquareCatalogObject(
+            getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+            b.product,
+            mergedInstance,
+            b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+            deps.catalogSelectors,
+            existingSquareObjects,
 
-              ('000' + i).slice(-3),
-            ),
-          ];
+            ('000' + i).slice(-3),
+          ),
+        ];
     })
     .flat();
   if (catalogObjects.length > 0) {
@@ -722,21 +727,11 @@ export const batchUpdateProductInstance = async (
 
   const updated = await Promise.all(
     batches.map(async (b, i) => {
-      const doc = await deps.wProductInstanceModel
-        .findByIdAndUpdate(
-          b.piid,
-          {
-            ...b.productInstance,
-
-            externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
-          },
-          { new: true },
-        )
-        .exec();
-      if (!doc) {
-        return null;
-      }
-      return doc.toObject();
+      const updateData = {
+        ...b.productInstance,
+        externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
+      };
+      return deps.productInstanceRepository.update(b.piid, updateData);
     }),
   );
 
@@ -770,18 +765,24 @@ export const deleteProductInstance = async (
     }
 
     deps.logger.debug({ pi_id }, 'Removing Product Instance');
-    const doc = await deps.wProductInstanceModel.findByIdAndDelete(pi_id).exec();
-    if (!doc) {
+
+    const existing = await deps.productInstanceRepository.findById(pi_id);
+    if (!existing) {
       return null;
     }
 
-    await deps.batchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
+    const deleted = await deps.productInstanceRepository.delete(pi_id);
+    if (!deleted) {
+      return null;
+    }
+
+    await deps.batchDeleteCatalogObjectsFromExternalIds(existing.externalIDs);
 
     if (!suppress_catalog_recomputation) {
       await deps.syncProductInstances();
       deps.recomputeCatalog();
     }
-    return doc.toObject();
+    return existing;
   }
   return null;
 };

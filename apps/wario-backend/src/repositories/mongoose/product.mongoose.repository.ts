@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import type { IProduct } from '@wcp/wario-shared';
 
@@ -28,6 +28,11 @@ export class ProductMongooseRepository implements IProductRepository {
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
+  async findByQuery(filter: Partial<IProduct>): Promise<IProduct[]> {
+    const docs = await this.model.find(filter).lean().exec();
+    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+  }
+
   async create(product: Omit<IProduct, 'id'>): Promise<IProduct> {
     const created = await this.model.create(product);
     const doc = created.toObject();
@@ -51,8 +56,66 @@ export class ProductMongooseRepository implements IProductRepository {
     return result.deletedCount > 0;
   }
 
+  // Bulk operations
+  async bulkCreate(products: Omit<IProduct, 'id'>[]): Promise<IProduct[]> {
+    if (products.length === 0) return [];
+    const docs = await this.model.insertMany(products);
+    return docs.map((doc) => {
+      const obj = doc.toObject();
+      return { ...obj, id: obj._id.toString() };
+    });
+  }
+
+  async bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IProduct, 'id'>> }>): Promise<number> {
+    if (updates.length === 0) return 0;
+    const bulkOps = updates.map(({ id, data }) => ({
+      updateOne: {
+        filter: { _id: new Types.ObjectId(id) },
+        update: { $set: data },
+      },
+    }));
+    const result = await this.model.bulkWrite(bulkOps);
+    return result.modifiedCount;
+  }
+
+  async bulkDelete(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    const result = await this.model.deleteMany({ _id: { $in: ids } }).exec();
+    return result.deletedCount;
+  }
+
   async removeCategoryFromAll(categoryId: string): Promise<number> {
     const result = await this.model.updateMany({}, { $pull: { category_ids: categoryId } }).exec();
     return result.modifiedCount;
   }
+
+  async removeModifierTypeFromAll(mtId: string): Promise<number> {
+    const result = await this.model.updateMany({}, { $pull: { modifiers: { mtid: mtId } } }).exec();
+    return result.modifiedCount;
+  }
+
+  async clearModifierEnableField(productInstanceFunctionId: string): Promise<number> {
+    const result = await this.model.updateMany(
+      { 'modifiers.enable': productInstanceFunctionId },
+      { $set: { 'modifiers.$.enable': null } },
+    ).exec();
+    return result.modifiedCount;
+  }
+
+  async removeServiceDisableFromAll(serviceId: string): Promise<number> {
+    const result = await this.model.updateMany(
+      {},
+      { $pull: { serviceDisable: serviceId, 'modifiers.$[].serviceDisable': serviceId } },
+    ).exec();
+    return result.modifiedCount;
+  }
+
+  async migratePrinterGroupForAllProducts(oldId: string, newId: string | null): Promise<number> {
+    const result = await this.model.updateMany(
+      { printerGroup: oldId },
+      { $set: { printerGroup: newId } },
+    ).exec();
+    return result.modifiedCount;
+  }
 }
+

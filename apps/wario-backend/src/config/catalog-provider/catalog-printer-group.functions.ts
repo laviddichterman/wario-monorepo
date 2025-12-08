@@ -2,11 +2,11 @@
 /**
  * Pure functions for printer group CRUD operations.
  */
-import type { FilterQuery } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogObject } from 'square';
+import type { BatchDeleteCatalogObjectsResponse } from 'square';
 
-import type { DeletePrinterGroupRequest, IProduct, KeyValue, PrinterGroup } from '@wcp/wario-shared';
+import type { DeletePrinterGroupRequest, KeyValue, PrinterGroup } from '@wcp/wario-shared';
 
 import { PrinterGroupNotFoundException } from 'src/exceptions';
 
@@ -17,7 +17,7 @@ import {
   IdMappingsToExternalIds,
   PrinterGroupToSquareCatalogObjectPlusDummyProduct,
 } from '../square-wario-bridge';
-import type { SquareService } from '../square/square.service';
+import type { SquareProviderApiCallReturnValue, SquareService } from '../square/square.service';
 
 import type { UpdatePrinterGroupProps } from './catalog.types';
 
@@ -37,12 +37,8 @@ export interface PrinterGroupDeps {
   printerGroups: Record<string, PrinterGroup>; // State
 
   syncPrinterGroups: () => Promise<boolean>;
-  batchDeleteCatalogObjectsFromExternalIds: (ids: KeyValue[]) => Promise<unknown>;
-  updateProductsWithConstraint: (
-    match: FilterQuery<IProduct>,
-    update: Partial<IProduct>,
-    force: boolean,
-  ) => Promise<unknown>;
+  batchDeleteCatalogObjectsFromExternalIds: (ids: KeyValue[]) => Promise<true | SquareProviderApiCallReturnValue<BatchDeleteCatalogObjectsResponse>>;
+  reassignPrinterGroupForAllProducts: (oldId: string, newId: string | null) => Promise<number>;
 }
 
 // ============================================================================
@@ -170,10 +166,6 @@ export const deletePrinterGroup = async (
   await deps.syncPrinterGroups();
 
   // needs to write batch update product
-  await deps.updateProductsWithConstraint(
-    { printerGroup: request.id },
-    { printerGroup: request.reassign ? request.printerGroup : null },
-    false,
-  );
+  await deps.reassignPrinterGroupForAllProducts(request.id, request.reassign ? request.printerGroup : null);
   return existing;
 };

@@ -3,27 +3,24 @@
  * These functions handle database operations only - the caller (CatalogProviderService)
  * is responsible for syncing and recomputing the catalog.
  */
-import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 
-import {
-  type IOption,
-  type IProduct,
-  type IProductInstanceFunction,
-  type OrderInstanceFunction,
-} from '@wcp/wario-shared';
+import type { IProductInstanceFunction, OrderInstanceFunction } from '@wcp/wario-shared';
 
-import { toPartialUpdateQuery } from 'src/utils/partial-update';
+import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';
+import type { IOrderInstanceFunctionRepository } from '../../repositories/interfaces/order-instance-function.repository.interface';
+import type { IProductInstanceFunctionRepository } from '../../repositories/interfaces/product-instance-function.repository.interface';
+import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
 
 // ============================================================================
 // Dependencies Interface
 // ============================================================================
 
 export interface FunctionDeps {
-  wProductInstanceFunctionModel: Model<IProductInstanceFunction>;
-  wOrderInstanceFunctionModel: Model<OrderInstanceFunction>;
-  wOptionModel: Model<IOption>;
-  wProductModel: Model<IProduct>;
+  productInstanceFunctionRepository: IProductInstanceFunctionRepository;
+  orderInstanceFunctionRepository: IOrderInstanceFunctionRepository;
+  optionRepository: IOptionRepository;
+  productRepository: IProductRepository;
   logger: PinoLogger;
 }
 
@@ -35,9 +32,7 @@ export async function createProductInstanceFunction(
   deps: FunctionDeps,
   productInstanceFunction: Omit<IProductInstanceFunction, 'id'>,
 ): Promise<IProductInstanceFunction> {
-  const doc = new deps.wProductInstanceFunctionModel(productInstanceFunction);
-  await doc.save();
-  return doc.toObject();
+  return deps.productInstanceFunctionRepository.create(productInstanceFunction);
 }
 
 export async function updateProductInstanceFunction(
@@ -45,13 +40,7 @@ export async function updateProductInstanceFunction(
   pifId: string,
   productInstanceFunction: Partial<Omit<IProductInstanceFunction, 'id'>>,
 ): Promise<IProductInstanceFunction | null> {
-  const updated = await deps.wProductInstanceFunctionModel
-    .findByIdAndUpdate(pifId, toPartialUpdateQuery(productInstanceFunction), { new: true })
-    .exec();
-  if (!updated) {
-    return null;
-  }
-  return updated.toObject();
+  return deps.productInstanceFunctionRepository.update(pifId, productInstanceFunction);
 }
 
 export interface DeleteProductInstanceFunctionResult {
@@ -66,29 +55,31 @@ export async function deleteProductInstanceFunction(
 ): Promise<DeleteProductInstanceFunctionResult> {
   deps.logger.debug(`Removing Product Instance Function: ${pifId}`);
 
-  const doc = await deps.wProductInstanceFunctionModel.findByIdAndDelete(pifId).exec();
+  // First find the function to ensure it exists
+  const doc = await deps.productInstanceFunctionRepository.findById(pifId);
   if (!doc) {
     return { deleted: null, optionsModified: 0, productsModified: 0 };
   }
 
+  // Delete the function
+  await deps.productInstanceFunctionRepository.delete(pifId);
+
   // Remove references from options
-  const optionsUpdate = await deps.wOptionModel.updateMany({ enable: pifId }, { $set: { enable: null } }).exec();
-  if (optionsUpdate.modifiedCount > 0) {
-    deps.logger.debug(`Removed ${doc.id as string} from ${optionsUpdate.modifiedCount.toString()} Modifier Options.`);
+  const optionsModified = await deps.optionRepository.clearEnableField(pifId);
+  if (optionsModified > 0) {
+    deps.logger.debug(`Removed ${pifId} from ${optionsModified.toString()} Modifier Options.`);
   }
 
   // Remove references from products
-  const productsUpdate = await deps.wProductModel
-    .updateMany({ 'modifiers.enable': pifId }, { $set: { 'modifiers.$.enable': null } })
-    .exec();
-  if (productsUpdate.modifiedCount > 0) {
-    deps.logger.debug(`Removed ${doc.id as string} from ${productsUpdate.modifiedCount.toString()} Products.`);
+  const productsModified = await deps.productRepository.clearModifierEnableField(pifId);
+  if (productsModified > 0) {
+    deps.logger.debug(`Removed ${pifId} from ${productsModified.toString()} Products.`);
   }
 
   return {
-    deleted: doc.toObject(),
-    optionsModified: optionsUpdate.modifiedCount,
-    productsModified: productsUpdate.modifiedCount,
+    deleted: doc,
+    optionsModified,
+    productsModified,
   };
 }
 
@@ -100,9 +91,7 @@ export async function createOrderInstanceFunction(
   deps: FunctionDeps,
   orderInstanceFunction: Omit<OrderInstanceFunction, 'id'>,
 ): Promise<OrderInstanceFunction> {
-  const doc = new deps.wOrderInstanceFunctionModel(orderInstanceFunction);
-  await doc.save();
-  return doc.toObject();
+  return deps.orderInstanceFunctionRepository.create(orderInstanceFunction);
 }
 
 export async function updateOrderInstanceFunction(
@@ -110,15 +99,7 @@ export async function updateOrderInstanceFunction(
   id: string,
   orderInstanceFunction: Partial<Omit<OrderInstanceFunction, 'id'>>,
 ): Promise<OrderInstanceFunction | null> {
-  const updated = await deps.wOrderInstanceFunctionModel.findByIdAndUpdate(
-    id,
-    toPartialUpdateQuery(orderInstanceFunction),
-    { new: true },
-  );
-  if (!updated) {
-    return null;
-  }
-  return updated.toObject();
+  return deps.orderInstanceFunctionRepository.update(id, orderInstanceFunction);
 }
 
 export async function deleteOrderInstanceFunction(
@@ -126,9 +107,11 @@ export async function deleteOrderInstanceFunction(
   id: string,
 ): Promise<OrderInstanceFunction | null> {
   deps.logger.debug(`Removing Order Instance Function: ${id}`);
-  const doc = await deps.wOrderInstanceFunctionModel.findByIdAndDelete(id);
+  const doc = await deps.orderInstanceFunctionRepository.findById(id);
   if (!doc) {
     return null;
   }
-  return doc.toObject();
+  await deps.orderInstanceFunctionRepository.delete(id);
+  return doc;
 }
+
