@@ -31,6 +31,40 @@ export class AppConfigService {
     return `mongodb://${this.dbEndpoint}/${this.dbTable}`;
   }
 
+  // ============ PostgreSQL Configuration ============
+
+  get postgresHost(): string {
+    return this.configService.get<string>('POSTGRES_HOST') ?? 'localhost';
+  }
+
+  get postgresPort(): number {
+    const port = this.configService.get<string>('POSTGRES_PORT');
+    return port ? parseInt(port, 10) : 5432;
+  }
+
+  get postgresUser(): string {
+    return this.configService.get<string>('POSTGRES_USER') ?? '';
+  }
+
+  get postgresPassword(): string {
+    return this.configService.get<string>('POSTGRES_PASSWORD') ?? '';
+  }
+
+  get postgresDatabase(): string {
+    return this.configService.get<string>('POSTGRES_DB') ?? 'wario';
+  }
+
+  /**
+   * Feature flag for PostgreSQL migration.
+   * When true, uses PostgreSQL for data operations.
+   * When false, uses MongoDB (default - for gradual rollout).
+   */
+  get usePostgres(): boolean {
+    const value = this.configService.get<string>('USE_POSTGRES');
+    return value === '1' || value === 'true';
+  }
+
+
   // ============ Square API Configuration ============
 
   get squareBatchChunkSize(): number {

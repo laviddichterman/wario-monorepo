@@ -18,7 +18,7 @@ import { KeyValueModel } from '../../models/settings/KeyValueSchema';
 import { SettingsModel } from '../../models/settings/SettingsSchema';
 @Injectable()
 export class DataProviderService implements OnModuleInit {
-  private settings: IWSettings;
+  private settings: Pick<IWSettings, 'config'> & Partial<IWSettings>;
   private fulfillments: Record<string, FulfillmentConfig>;
   private keyvalueconfig: { [key: string]: string };
   private seatingResources: Record<string, SeatingResource>;
@@ -36,7 +36,7 @@ export class DataProviderService implements OnModuleInit {
   ) {
     this.fulfillments = {};
     this.seatingResources = {};
-    this.settings = { additional_pizza_lead_time: 5, config: {} };
+    this.settings = { config: {} };
     this.keyvalueconfig = {};
   }
 

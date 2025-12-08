@@ -3,6 +3,7 @@ import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule, PinoLogger } from 'nestjs-pino';
 
 import { CatalogModule } from 'src/models/catalog/catalog.module';
@@ -59,6 +60,24 @@ import { TasksModule } from './tasks/tasks.module';
         uri: appConfig.mongoUri,
         user: appConfig.dbUser,
         pass: appConfig.dbPass,
+      }),
+      inject: [AppConfigService],
+    }),
+    // PostgreSQL via TypeORM - enabled via USE_POSTGRES feature flag
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (appConfig: AppConfigService) => ({
+        type: 'postgres' as const,
+        host: appConfig.postgresHost,
+        port: appConfig.postgresPort,
+        username: appConfig.postgresUser,
+        password: appConfig.postgresPassword,
+        database: appConfig.postgresDatabase,
+        entities: [__dirname + '/entities/**/*.entity{.ts,.js}'],
+        synchronize: false, // Always use migrations
+        logging: !appConfig.isProduction,
+        // Only connect if USE_POSTGRES is enabled
+        autoLoadEntities: true,
       }),
       inject: [AppConfigService],
     }),

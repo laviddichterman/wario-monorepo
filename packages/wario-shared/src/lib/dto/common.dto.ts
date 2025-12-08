@@ -194,27 +194,32 @@ export class SeatingSectionDto {
   name!: string;
 }
 
+/** PUBLICLY VISIBLE SETTINGS */
 export class IWSettingsDto {
-  @IsNumber()
-  additional_pizza_lead_time!: number;
-
   @IsNotEmpty()
   config!: Record<string, number | string | boolean>;
 
-  // {
-  // SQUARE_APPLICATION_ID: String,
-  // SQUARE_LOCATION: String,
-  // DEFAULT_FULFILLMENTID: String,
-  // TIP_PREAMBLE: String,
-  // TAX_RATE: Number,
-  // ALLOW_ADVANCED: Boolean,
-  // MAX_PARTY_SIZE: Number,
-  // DELIVERY_LINK: String,
-  // DELIVERY_FEE: Number,
-  // AUTOGRAT_THRESHOLD: Number,
-  // MESSAGE_REQUEST_VEGAN: String,
-  // MESSAGE_REQUEST_HALF: String,
-  // MESSAGE_REQUEST_WELLDONE: String,
-  // MESSAGE_REQUEST_SLICING: String
-  // };
+  @IsString()
+  @IsNotEmpty()
+  LOCATION_NAME!: string;
+  @IsString()
+  @IsNotEmpty()
+  SQUARE_LOCATION!: string;
+  @IsString()
+  SQUARE_LOCATION_ALTERNATE!: string;
+  @IsString()
+  @IsNotEmpty()
+  SQUARE_APPLICATION_ID!: string;
+  @IsString()
+  @IsNotEmpty()
+  DEFAULT_FULFILLMENTID!: string;
+  @IsNumber()
+  @Min(0)
+  TAX_RATE!: number;
+  @IsBoolean()
+  ALLOW_ADVANCED!: boolean;
+  @IsString()
+  TIP_PREAMBLE!: string;
+  @IsString()
+  LOCATION_PHONE_NUMBER!: string;
 }

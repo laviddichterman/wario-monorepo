@@ -142,3 +142,87 @@ When you encounter `UnknownDependenciesException` or initialization order issues
 2. **Check if it's for reading config** - Use `AppConfigService`
 3. **Only use `forwardRef`** for true bidirectional runtime calls between services
 4. **Consider if the dependency is even needed** - Often services are injected but never used
+
+## 7. PostgreSQL Entities (TypeORM)
+
+### Overview
+
+The backend is migrating from MongoDB to PostgreSQL. TypeORM entities are defined in `src/entities/` and coexist with Mongoose schemas during the transition.
+
+**Feature Flag:** `USE_POSTGRES` env var controls whether TypeORM connects.
+
+### Directory Structure
+
+```
+src/entities/
+├── base/
+│   ├── temporal.entity.ts    # Abstract base for SCD2 versioning
+│   └── audit-log.entity.ts   # Generic change tracking
+├── catalog/
+│   ├── category.entity.ts
+│   ├── option-type.entity.ts
+│   ├── option.entity.ts
+│   ├── product.entity.ts
+│   ├── product-instance.entity.ts
+│   ├── catalog-version.entity.ts
+│   ├── product-instance-function.entity.ts
+│   └── order-instance-function.entity.ts
+├── order/
+│   ├── order.entity.ts
+│   └── order-history.entity.ts
+├── settings/
+│   ├── fulfillment.entity.ts
+│   └── settings.entity.ts
+└── index.ts
+```
+
+### Temporal Versioning (SCD2)
+
+Catalog entities extend `TemporalEntity` for point-in-time queries:
+
+```typescript
+abstract class TemporalEntity {
+  rowId: string; // PostgreSQL PK (uuid, generated)
+  id: string; // Logical entity ID (preserved from MongoDB _id)
+  validFrom: Date; // When this version became active
+  validTo: Date | null; // null = current version
+  createdAt: Date;
+}
+```
+
+**Query Pattern:**
+
+```sql
+WHERE id = ? AND validFrom <= ? AND (validTo IS NULL OR validTo > ?)
+```
+
+### Interface Parity
+
+All entities implement their `wario-shared` interfaces:
+
+| Entity                          | Implements                 |
+| ------------------------------- | -------------------------- |
+| `CategoryEntity`                | `ICategory`                |
+| `OptionTypeEntity`              | `IOptionType`              |
+| `OptionEntity`                  | `IOption`                  |
+| `ProductEntity`                 | `IProduct`                 |
+| `ProductInstanceEntity`         | `IProductInstance`         |
+| `FulfillmentEntity`             | `FulfillmentConfig`        |
+| `SettingsEntity`                | `IWSettings`               |
+| `OrderEntity`                   | `WOrderInstance`           |
+| `ProductInstanceFunctionEntity` | `IProductInstanceFunction` |
+| `OrderInstanceFunctionEntity`   | `OrderInstanceFunction`    |
+
+### Discriminated Unions as JSONB
+
+Complex expression types (`IAbstractExpression`, etc.) are stored as JSONB columns since they're recursive structures evaluated at runtime, not queried by structure.
+
+### CLI Migrations
+
+```bash
+# Generate migration from entity changes
+npx typeorm migration:generate -d ormconfig.ts src/migrations/MigrationName
+
+# Run migrations
+npx typeorm migration:run -d ormconfig.ts
+```

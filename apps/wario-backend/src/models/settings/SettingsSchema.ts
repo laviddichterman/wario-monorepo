@@ -5,10 +5,6 @@ import mongoose, { Schema } from 'mongoose';
 import { type IWSettings } from '@wcp/wario-shared';
 
 export const SettingsSchema = new Schema<IWSettings>({
-  additional_pizza_lead_time: {
-    type: Number,
-    default: 5,
-  },
   config: {
     LOCATION_NAME: String,
     SQUARE_LOCATION: String,
