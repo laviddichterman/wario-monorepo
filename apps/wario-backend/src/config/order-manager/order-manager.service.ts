@@ -4,9 +4,7 @@
 import * as crypto from 'crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { format, formatISO, formatRFC3339, Interval, isSameDay, isSameMinute } from 'date-fns';
-import { FilterQuery, Model } from 'mongoose';
+import { format, formatISO, formatRFC3339, Interval, isSameMinute } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Order, Order as SquareOrder } from 'square';
 
@@ -36,11 +34,13 @@ import {
   WDateUtils,
   WError,
   WFulfillmentStatus,
+  WOrderInstance,
   WOrderInstancePartial,
   WOrderStatus,
 } from '@wcp/wario-shared';
 
-import { WOrderInstance, WOrderInstanceDocument } from '../../models/orders/WOrderInstance';
+import type { IOrderRepository } from '../../repositories/interfaces';
+import { ORDER_REPOSITORY } from '../../repositories/interfaces';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { GoogleService } from '../google/google.service';
@@ -62,8 +62,9 @@ const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
 @Injectable()
 export class OrderManagerService {
   constructor(
-    @InjectModel('WOrderInstance')
-    private orderModel: Model<WOrderInstanceDocument>,
+    @Inject(ORDER_REPOSITORY)
+    private orderRepository: IOrderRepository,
+
     @Inject(GoogleService) private googleService: GoogleService,
     @Inject(SquareService) private squareService: SquareService,
     @Inject(StoreCreditProviderService) private storeCreditService: StoreCreditProviderService,
@@ -86,45 +87,27 @@ export class OrderManagerService {
   SendOrders = async () => {
     const now = Date.now();
     const endOfRange = this.GetEndOfSendingRange(now);
-    const isEndRangeSameDay = isSameDay(now, endOfRange);
     const endOfRangeAsFT = WDateUtils.ComputeFulfillmentTime(endOfRange);
-    const endOfRangeAsQuery = {
-      'fulfillment.selectedDate': endOfRangeAsFT.selectedDate,
-      'fulfillment.selectedTime': { $lte: endOfRangeAsFT.selectedTime },
-    };
-    const timeConstraint = isEndRangeSameDay
-      ? endOfRangeAsQuery
-      : {
-          $or: [{ 'fulfillment.selectedDate': WDateUtils.formatISODate(now) }, endOfRangeAsQuery],
-        };
     const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    await this.orderModel
-      .updateMany(
-        {
-          status: WOrderStatus.CONFIRMED,
-          locked: null,
-          'fulfillment.status': WFulfillmentStatus.PROPOSED,
-          ...timeConstraint,
-        },
-        { locked: idempotencyKey },
-      )
-      .then(async (updateResult) => {
-        if (updateResult.modifiedCount > 0) {
-          this.logger.info(
-            `Locked ${String(updateResult.modifiedCount)} orders with service before ${formatISO(endOfRange)}`,
-          );
-          await this.orderModel
-            .find({
-              locked: idempotencyKey,
-            })
-            .then(async (lockedOrders) => {
-              for (let i = 0; i < lockedOrders.length; ++i) {
-                await this.printerService.SendLockedOrder(lockedOrders[i].toObject(), true);
-              }
-            });
-          return;
-        }
-      });
+
+    // Lock orders ready for fulfillment
+    const lockedCount = await this.orderRepository.lockReadyOrders(
+      WOrderStatus.CONFIRMED,
+      WFulfillmentStatus.PROPOSED,
+      endOfRangeAsFT.selectedDate,
+      endOfRangeAsFT.selectedTime,
+      idempotencyKey,
+    );
+
+    if (lockedCount > 0) {
+      this.logger.info(
+        `Locked ${String(lockedCount)} orders with service before ${formatISO(endOfRange)}`,
+      );
+      const lockedOrders = await this.orderRepository.findByLock(idempotencyKey);
+      for (const order of lockedOrders) {
+        await this.printerService.SendLockedOrder(order, true);
+      }
+    }
   };
 
   private GetEndOfSendingRange = (now: Date | number): Date => {
@@ -133,49 +116,6 @@ export class OrderManagerService {
     return new Date(typeof now === 'number' ? now + THREE_HOURS_MS : now.getTime() + THREE_HOURS_MS);
   };
 
-  // Helper methods (private)
-
-  LockAndActOnOrder = async (
-    idempotencyKey: string,
-    orderId: string,
-    testDbOrder: FilterQuery<WOrderInstance>,
-    onSuccess: (order: WOrderInstance) => Promise<ResponseWithStatusCode<CrudOrderResponse>>,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    this.logger.debug({ idempotencyKey, orderId }, 'Received request attempting to lock Order');
-    return await this.orderModel
-      .findOneAndUpdate({ _id: orderId, locked: null, ...testDbOrder }, { locked: idempotencyKey }, { new: true })
-      .then(async (order): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-        if (!order) {
-          return {
-            status: 404,
-            success: false,
-            error: [
-              {
-                category: 'INVALID_REQUEST_ERROR',
-                code: 'UNEXPECTED_VALUE',
-                detail: 'Order not found/locked',
-              },
-            ],
-          };
-        }
-        return await onSuccess(order.toObject());
-      })
-      .catch((err: unknown) => {
-        const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)} `;
-        this.logger.error({ err }, `Unable to find ${orderId}`);
-        return {
-          status: 404,
-          success: false,
-          error: [
-            {
-              category: 'INVALID_REQUEST_ERROR',
-              code: 'NOT_FOUND',
-              detail: errorDetail,
-            },
-          ],
-        };
-      });
-  };
 
   /**
    * Send a move ticket for a pre-locked order.
@@ -225,36 +165,30 @@ export class OrderManagerService {
       }
 
       // update order in DB, release lock
-      return await this.orderModel
-        .findOneAndUpdate(
-          { locked: lockedOrder.locked, _id: lockedOrder.id },
-          {
-            locked: null,
-            metadata: [
-              ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
-              ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
-            ],
-          },
-          { new: true },
-        )
-        .then((updatedOrder): ResponseWithStatusCode<ResponseSuccess<WOrderInstance>> => {
-          if (!updatedOrder) {
-            throw new Error('Failed to find updated order after sending to Square.');
-          }
-          return {
-            success: true as const,
-            status: 200,
-            result: updatedOrder.toObject(),
-          };
-        })
-        .catch((err: unknown) => {
-          throw err;
-        });
+      const updatedOrder = await this.orderRepository.updateWithLock(
+        lockedOrder.id,
+        lockedOrder.locked,
+        {
+          locked: null,
+          metadata: [
+            ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
+            ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
+          ],
+        },
+      );
+      if (!updatedOrder) {
+        throw new Error('Failed to find updated order after sending to Square.');
+      }
+      return {
+        success: true as const,
+        status: 200,
+        result: updatedOrder,
+      };
     } catch (error: unknown) {
       const errorDetail = `Caught error when attempting to send move ticket: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)} `;
       this.logger.error({ err: error }, 'Caught error when attempting to send move ticket');
       try {
-        await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
+        await this.orderRepository.releaseLock(lockedOrder.id);
       } catch (err2: unknown) {
         this.logger.error(
           { err: err2 },
@@ -335,10 +269,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-                success: false;
-                result: null;
-                error: SquareError[];
-              };
+              success: false;
+              result: null;
+              error: SquareError[];
+            };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit
@@ -478,59 +412,51 @@ export class OrderManagerService {
       }
 
       // update order in DB, release lock
-      return await this.orderModel
-        .findOneAndUpdate(
-          { locked: lockedOrder.locked, _id: lockedOrder.id },
+      try {
+        const updatedOrder = await this.orderRepository.updateWithLock(
+          lockedOrder.id,
+          lockedOrder.locked,
           {
             locked: null,
             status: WOrderStatus.CANCELED,
-            'fulfillment.status': WFulfillmentStatus.CANCELED,
+            fulfillment: { ...(lockedOrder.fulfillment as FulfillmentData), status: WFulfillmentStatus.CANCELED },
             metadata: [
               ...lockedOrder.metadata.filter((x) => !['SQORDER_PRINT', 'SQORDER_MSG'].includes(x.key)),
               ...(SQORDER_PRINT.length > 0 ? [{ key: 'SQORDER_PRINT', value: SQORDER_PRINT.join(',') }] : []),
               ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
             ],
-            // TODO: need to add refunds to the order too?
           },
-          { new: true },
-        )
-        .then((updatedOrder): ResponseWithStatusCode<CrudOrderResponse> => {
-          if (!updatedOrder) {
-            return {
-              status: 404,
-              success: false,
-              error: [
-                {
-                  category: 'API_ERROR',
-                  code: 'NOT_FOUND',
-                  detail: 'Order not found',
-                },
-              ],
-            };
-          }
-          const updatedOrderObject = updatedOrder.toObject();
-          // TODO: free up order slot and unblock time as appropriate
-
-          // send notice to subscribers
-
-          // return to caller
-          // this.socketIoService.EmitOrder(updatedOrderObject); // TODO: Implement EmitOrder in SocketIoService
-          return { status: 200, success: true as const, result: updatedOrderObject };
-        })
-        .catch((err: unknown) => {
-          const errorDetail = `Unable to commit update to order to release lock and cancel. Got error: ${JSON.stringify(err, null, 2)}`;
+        );
+        if (!updatedOrder) {
           return {
-            status: 500,
-            success: false as const,
+            status: 404,
+            success: false,
             error: [
               {
                 category: 'API_ERROR',
-                code: 'INTERNAL_SERVER_ERROR',
-                detail: errorDetail,
+                code: 'NOT_FOUND',
+                detail: 'Order not found',
               },
             ],
           };
-        });
+        }
+        // TODO: free up order slot and unblock time as appropriate
+        // this.socketIoService.EmitOrder(updatedOrder); // TODO: Implement EmitOrder in SocketIoService
+        return { status: 200, success: true as const, result: updatedOrder };
+      } catch (err: unknown) {
+        const errorDetail = `Unable to commit update to order to release lock and cancel. Got error: ${JSON.stringify(err, null, 2)}`;
+        return {
+          status: 500,
+          success: false as const,
+          error: [
+            {
+              category: 'API_ERROR',
+              code: 'INTERNAL_SERVER_ERROR',
+              detail: errorDetail,
+            },
+          ],
+        };
+      }
     } catch (error: unknown) {
       const errorDetail = `Caught error when attempting to cancel order: ${JSON.stringify(error, null, 2)}`;
       this.logger.error({ err: error }, 'Caught error when attempting to cancel order');
@@ -761,9 +687,10 @@ export class OrderManagerService {
     }
 
     // adjust DB event
-    return await this.orderModel
-      .findOneAndUpdate(
-        { locked: lockedOrder.locked, _id: lockedOrder.id },
+    try {
+      const updatedOrder = await this.orderRepository.updateWithLock(
+        lockedOrder.id,
+        lockedOrder.locked,
         {
           locked: null,
           fulfillment: fulfillmentDto,
@@ -772,33 +699,28 @@ export class OrderManagerService {
             ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
           ],
         },
-        { new: true },
-      )
-      .then((updatedOrder) => {
-        // return success/failure
-        // this.socketIoService.EmitOrder(updatedOrder!.toObject()); // TODO: Implement EmitOrder in SocketIoService
-        return {
-          status: 200,
-          success: true,
-          error: [],
-          result: updatedOrder!.toObject(),
-        };
-      })
-      .catch((err: unknown) => {
-        const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error({ err }, 'Unable to commit update to order to release lock and update fulfillment time');
-        return {
-          status: 500,
-          success: false,
-          error: [
-            {
-              category: 'API_ERROR',
-              code: 'INTERNAL_SERVER_ERROR',
-              detail: errorDetail,
-            },
-          ],
-        };
-      });
+      );
+      // this.socketIoService.EmitOrder(updatedOrder!); // TODO: Implement EmitOrder in SocketIoService
+      return {
+        status: 200,
+        success: true as const,
+        result: updatedOrder!,
+      };
+    } catch (err: unknown) {
+      const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
+      this.logger.error({ err }, 'Unable to commit update to order to release lock and update fulfillment time');
+      return {
+        status: 500,
+        success: false,
+        error: [
+          {
+            category: 'API_ERROR',
+            code: 'INTERNAL_SERVER_ERROR',
+            detail: errorDetail,
+          },
+        ],
+      };
+    }
   };
 
   /**
@@ -856,9 +778,10 @@ export class OrderManagerService {
     const calendarResponse = await this.orderCalendarService.CreateCalendarEvent(eventJson);
 
     // update order in DB, release lock
-    return await this.orderModel
-      .findOneAndUpdate(
-        { locked: lockedOrder.locked, _id: lockedOrder.id },
+    try {
+      const updatedOrder = await this.orderRepository.updateWithLock(
+        lockedOrder.id,
+        lockedOrder.locked,
         {
           locked: null,
           status: WOrderStatus.CONFIRMED,
@@ -867,151 +790,108 @@ export class OrderManagerService {
             ...(calendarResponse ? [{ key: 'GCALEVENT', value: calendarResponse }] : []),
           ],
         },
-        { new: true },
-      )
-      .then((updatedOrder): ResponseWithStatusCode<ResponseSuccess<WOrderInstance>> => {
-        const updatedOrderObject = updatedOrder!.toObject();
-        // send notice to subscribers
-        // this.socketIoService.EmitOrder(updatedOrderObject); // TODO: Implement EmitOrder in SocketIoService
-        // return to caller
-        return { status: 200, success: true as const, result: updatedOrderObject };
-      })
-      .catch((err: unknown) => {
-        const errorDetail = `Unable to commit update to order to release lock and confirm. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error({ err }, 'Unable to commit update to order to release lock and confirm');
-        return {
-          status: 500,
-          success: false as const,
-          error: [
-            {
-              category: 'API_ERROR',
-              code: 'INTERNAL_SERVER_ERROR',
-              detail: errorDetail,
-            },
-          ],
-        };
-      });
+      );
+      // this.socketIoService.EmitOrder(updatedOrder!); // TODO: Implement EmitOrder in SocketIoService
+      return { status: 200, success: true as const, result: updatedOrder! };
+    } catch (err: unknown) {
+      const errorDetail = `Unable to commit update to order to release lock and confirm. Got error: ${JSON.stringify(err, null, 2)}`;
+      this.logger.error({ err }, 'Unable to commit update to order to release lock and confirm');
+      return {
+        status: 500,
+        success: false as const,
+        error: [
+          {
+            category: 'API_ERROR',
+            code: 'INTERNAL_SERVER_ERROR',
+            detail: errorDetail,
+          },
+        ],
+      };
+    }
   };
 
   // Public methods
   GetOrder = async (orderId: string): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    return await this.orderModel
-      .findById(orderId)
-      .then((order) => {
-        if (!order) {
-          return {
-            status: 404,
-            success: false as const,
-            error: [
-              {
-                category: 'INVALID_REQUEST_ERROR',
-                code: 'NOT_FOUND',
-                detail: 'Order not found',
-              },
-            ],
-          };
-        }
-        return { status: 200, success: true as const, result: order.toObject() };
-      })
-      .catch((err: unknown) => {
-        const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error({ err }, `Unable to find ${orderId}`);
+    try {
+      const order = await this.orderRepository.findById(orderId);
+      if (!order) {
         return {
-          status: 500,
+          status: 404,
           success: false as const,
           error: [
             {
-              category: 'API_ERROR',
-              code: 'INTERNAL_SERVER_ERROR',
-              detail: errorDetail,
+              category: 'INVALID_REQUEST_ERROR',
+              code: 'NOT_FOUND',
+              detail: 'Order not found',
             },
           ],
         };
-      });
+      }
+      return { status: 200, success: true as const, result: order };
+    } catch (err: unknown) {
+      const errorDetail = `Unable to find ${orderId}. Got error: ${JSON.stringify(err, null, 2)}`;
+      this.logger.error({ err }, `Unable to find ${orderId}`);
+      return {
+        status: 500,
+        success: false as const,
+        error: [
+          {
+            category: 'API_ERROR',
+            code: 'INTERNAL_SERVER_ERROR',
+            detail: errorDetail,
+          },
+        ],
+      };
+    }
   };
 
-  GetOrders = async (
-    query: FilterQuery<WOrderInstance>,
-  ): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
-    return await this.orderModel
-      .find(query)
-      .then((orders) => {
-        return {
-          status: 200,
-          success: true as const,
-          result: orders.map((x) => x.toObject()),
-        };
-      })
-      .catch((err: unknown) => {
-        const errorDetail = `Unable to find orders. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error({ err }, 'Unable to find orders');
-        return {
-          status: 500,
-          success: false as const,
-          error: [
-            {
-              category: 'API_ERROR',
-              code: 'INTERNAL_SERVER_ERROR',
-              detail: errorDetail,
-            },
-          ],
-        };
-      });
+  GetOrders = async ({ date, status }: { date: string | null; status: WOrderStatus | null }): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
+    try {
+      let orders: WOrderInstance[];
+      if (date && status) {
+        // Both filters - need to filter in memory since we don't have a combined method
+        const dateOrders = await this.orderRepository.findByFulfillmentDate(date);
+        orders = dateOrders.filter(o => o.status === status);
+      } else if (date) {
+        orders = await this.orderRepository.findByFulfillmentDate(date);
+      } else if (status) {
+        orders = await this.orderRepository.findByStatus(status);
+      } else {
+        // No filters - return empty for now (or could add findAll method)
+        orders = [];
+      }
+      return {
+        status: 200,
+        success: true as const,
+        result: orders,
+      };
+    } catch (err: unknown) {
+      const errorDetail = `Unable to find orders. Got error: ${JSON.stringify(err, null, 2)}`;
+      this.logger.error({ err }, 'Unable to find orders');
+      return {
+        status: 500,
+        success: false as const,
+        error: [
+          {
+            category: 'API_ERROR',
+            code: 'INTERNAL_SERVER_ERROR',
+            detail: errorDetail,
+          },
+        ],
+      };
+    }
   };
 
   ObliterateLocks = async (): Promise<ResponseWithStatusCode<ResponseSuccess<string> | ResponseFailure>> => {
-    return await this.orderModel
-      .updateMany({ locked: { $ne: null } }, { locked: null })
-      .then((updateResult) => {
-        return {
-          status: 200,
-          success: true as const,
-          result: `Unlocked ${updateResult.modifiedCount.toString()} orders.`,
-        };
-      })
-      .catch((err: unknown) => {
-        const errorDetail = `Unable to unlock orders. Got error: ${JSON.stringify(err, null, 2)}`;
-        this.logger.error({ err }, 'Unable to unlock orders');
-        return {
-          status: 500,
-          success: false,
-          error: [
-            {
-              category: 'API_ERROR',
-              code: 'INTERNAL_SERVER_ERROR',
-              detail: errorDetail,
-            },
-          ],
-        };
-      });
+    const unlockResult = await this.orderRepository.unlockAll();
+    return {
+      status: 200,
+      success: true as const,
+      result: `Unlocked ${unlockResult.toString()} orders.`,
+    };
   };
 
-  SendMoveOrderTicket = async (
-    orderId: string,
-    destination: string,
-    additionalMessage: string,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    return await this.LockAndActOnOrder(
-      idempotencyKey,
-      orderId,
-      { status: { $in: [WOrderStatus.CONFIRMED, WOrderStatus.COMPLETED] } },
-      (order) => this.SendMoveLockedOrderTicket(order, destination, additionalMessage),
-    );
-  };
 
-  SendOrder = async (orderId: string): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    return await this.LockAndActOnOrder(
-      idempotencyKey,
-      orderId,
-      {
-        status: WOrderStatus.CONFIRMED,
-        'fulfillment.status': WFulfillmentStatus.PROPOSED,
-      },
-      (order) => this.printerService.SendLockedOrder(order, true),
-    );
-  };
 
   /**
    * Send a pre-locked order to the printer service.
@@ -1022,47 +902,8 @@ export class OrderManagerService {
     return this.printerService.SendLockedOrder(lockedOrder, true);
   };
 
-  CancelOrder = async (
-    orderId: string,
-    reason: string,
-    emailCustomer: boolean,
-    refundToOriginalPayment: boolean,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    return await this.LockAndActOnOrder(idempotencyKey, orderId, { status: { $ne: WOrderStatus.CANCELED } }, (order) =>
-      this.CancelLockedOrder(order, reason, emailCustomer, refundToOriginalPayment),
-    );
-  };
 
-  AdjustOrderTime = async (
-    orderId: string,
-    newTime: FulfillmentTime,
-    emailCustomer: boolean,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    return await this.LockAndActOnOrder(idempotencyKey, orderId, { status: { $ne: WOrderStatus.CANCELED } }, (order) =>
-      this.AdjustLockedOrderTime(order, newTime, emailCustomer),
-    );
-  };
 
-  AdjustOrder = async (
-    orderId: string,
-    orderUpdate: Partial<
-      Pick<WOrderInstance, 'customerInfo' | 'cart' | 'discounts' | 'fulfillment' | 'specialInstructions' | 'tip'>
-    >,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    return await this.LockAndActOnOrder(idempotencyKey, orderId, { status: { $ne: WOrderStatus.CANCELED } }, (order) =>
-      this.ModifyLockedOrder(order, orderUpdate),
-    );
-  };
-
-  ConfirmOrder = async (orderId: string): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const idempotencyKey = crypto.randomBytes(22).toString('hex');
-    return await this.LockAndActOnOrder(idempotencyKey, orderId, { status: WOrderStatus.OPEN }, (order) =>
-      this.ConfirmLockedOrder(order),
-    );
-  };
 
   public CreateOrder = async (
     createOrderRequest: CreateOrderRequestV2,
@@ -1382,15 +1223,13 @@ export class OrderManagerService {
           ),
         );
 
-        const savedOrder = (
-          await new this.orderModel({
-            ...completedOrderInstance,
-            metadata: [
-              { key: 'SQORDER', value: squareOrder.id! },
-              ...(calendarEventId ? [{ key: 'GCALEVENT', value: calendarEventId }] : []),
-            ],
-          }).save()
-        ).toObject();
+        const savedOrder = await this.orderRepository.create({
+          ...completedOrderInstance,
+          metadata: [
+            { key: 'SQORDER', value: squareOrder.id! },
+            ...(calendarEventId ? [{ key: 'GCALEVENT', value: calendarEventId }] : []),
+          ],
+        });
         this.logger.info({ savedOrder }, 'Successfully saved OrderInstance to database');
 
         // send email to customer

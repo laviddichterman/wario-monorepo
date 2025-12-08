@@ -2,16 +2,15 @@
 /**
  * Pure functions for printer group CRUD operations.
  */
-import type { FilterQuery, Model } from 'mongoose';
+import type { FilterQuery } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogObject } from 'square';
 
 import type { DeletePrinterGroupRequest, IProduct, KeyValue, PrinterGroup } from '@wcp/wario-shared';
 
-import { toPartialUpdateQuery } from 'src/utils/partial-update';
-
 import { PrinterGroupNotFoundException } from 'src/exceptions';
 
+import type { IPrinterGroupRepository } from '../../repositories/interfaces/printer-group.repository.interface';
 import type { DataProviderService } from '../data-provider/data-provider.service';
 import {
   GetSquareExternalIds,
@@ -30,7 +29,7 @@ export type { UpdatePrinterGroupProps };
 // ============================================================================
 
 export interface PrinterGroupDeps {
-  wPrinterGroupModel: Model<PrinterGroup>;
+  printerGroupRepository: IPrinterGroupRepository;
   logger: PinoLogger;
   squareService: SquareService;
   dataProviderService: DataProviderService;
@@ -68,13 +67,12 @@ export const createPrinterGroup = async (deps: PrinterGroupDeps, printerGroup: O
     return null;
   }
 
-  const doc = new deps.wPrinterGroupModel({
+  const created = await deps.printerGroupRepository.create({
     ...printerGroup,
     externalIDs: [...printerGroup.externalIDs, ...IdMappingsToExternalIds(upsertResponse.result.idMappings, '')],
   });
-  await doc.save();
   await deps.syncPrinterGroups();
-  return doc.toObject();
+  return created;
 };
 
 export const batchUpdatePrinterGroup = async (
@@ -125,20 +123,11 @@ export const batchUpdatePrinterGroup = async (
 
   const updated = await Promise.all(
     batches.map(async (b, i) => {
-      const doc = await deps.wPrinterGroupModel
-        .findByIdAndUpdate(
-          b.id,
-          toPartialUpdateQuery<PrinterGroup>({
-            ...b.printerGroup,
-            externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
-          }),
-          { new: true },
-        )
-        .exec();
-      if (!doc) {
-        return null;
-      }
-      return doc.toObject();
+      const updatedPG = await deps.printerGroupRepository.update(b.id, {
+        ...b.printerGroup,
+        externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
+      });
+      return updatedPG;
     }),
   );
 
@@ -156,20 +145,27 @@ export const deletePrinterGroup = async (
 ) => {
   deps.logger.debug(`Removing Printer Group ${request.id}`);
   if (request.reassign) {
-    const dest = await deps.wPrinterGroupModel.findById(request.printerGroup).exec();
+    const dest = await deps.printerGroupRepository.findById(request.printerGroup);
     if (!dest) {
       deps.logger.error(`Printer Group with ID ${request.printerGroup} not found`);
       throw new PrinterGroupNotFoundException(request.printerGroup);
     }
   }
-  const doc = await deps.wPrinterGroupModel.findByIdAndDelete(request.id).exec();
-  if (!doc) {
+
+  const existing = await deps.printerGroupRepository.findById(request.id);
+  if (!existing) {
+    deps.logger.error(`Printer Group with ID ${request.id} not found`);
+    throw new PrinterGroupNotFoundException(request.id);
+  }
+
+  const deleted = await deps.printerGroupRepository.delete(request.id);
+  if (!deleted) {
     deps.logger.error(`Printer Group with ID ${request.id} not found`);
     throw new PrinterGroupNotFoundException(request.id);
   }
 
   // NOTE: this removes the category from the Square ITEMs as well
-  await deps.batchDeleteCatalogObjectsFromExternalIds(doc.externalIDs);
+  await deps.batchDeleteCatalogObjectsFromExternalIds(existing.externalIDs);
 
   await deps.syncPrinterGroups();
 
@@ -179,5 +175,5 @@ export const deletePrinterGroup = async (
     { printerGroup: request.reassign ? request.printerGroup : null },
     false,
   );
-  return doc.toObject();
+  return existing;
 };

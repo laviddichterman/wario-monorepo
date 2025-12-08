@@ -1,5 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
@@ -12,10 +11,17 @@ import {
   WDateUtils,
 } from '@wcp/wario-shared';
 
-import { SeatingResourceModel } from '../../models/orders/WSeatingResource';
-import { FulfillmentModel } from '../../models/settings/FulfillmentSchema';
-import { KeyValueModel } from '../../models/settings/KeyValueSchema';
-import { SettingsModel } from '../../models/settings/SettingsSchema';
+import {
+  FULFILLMENT_REPOSITORY,
+  KEY_VALUE_REPOSITORY,
+  SEATING_RESOURCE_REPOSITORY,
+  SETTINGS_REPOSITORY,
+} from '../../repositories/interfaces';
+import type { IFulfillmentRepository } from '../../repositories/interfaces/fulfillment.repository.interface';
+import type { IKeyValueRepository, KeyValueEntry } from '../../repositories/interfaces/key-value.repository.interface';
+import type { ISeatingResourceRepository } from '../../repositories/interfaces/seating-resource.repository.interface';
+import type { ISettingsRepository } from '../../repositories/interfaces/settings.repository.interface';
+
 @Injectable()
 export class DataProviderService implements OnModuleInit {
   private settings: Pick<IWSettings, 'config'> & Partial<IWSettings>;
@@ -24,13 +30,14 @@ export class DataProviderService implements OnModuleInit {
   private seatingResources: Record<string, SeatingResource>;
 
   constructor(
-    @InjectModel('SettingsSchema')
-    private settingsModel: typeof SettingsModel,
-    @InjectModel('KeyValueSchema') private keyValueModel: typeof KeyValueModel,
-    @InjectModel('FulfillmentSchema')
-    private fulfillmentModel: typeof FulfillmentModel,
-    @InjectModel('SeatingResource')
-    private seatingResourceModel: typeof SeatingResourceModel,
+    @Inject(SETTINGS_REPOSITORY)
+    private settingsRepository: ISettingsRepository,
+    @Inject(KEY_VALUE_REPOSITORY)
+    private keyValueRepository: IKeyValueRepository,
+    @Inject(FULFILLMENT_REPOSITORY)
+    private fulfillmentRepository: IFulfillmentRepository,
+    @Inject(SEATING_RESOURCE_REPOSITORY)
+    private seatingResourceRepository: ISeatingResourceRepository,
     @InjectPinoLogger(DataProviderService.name)
     private readonly logger: PinoLogger,
   ) {
@@ -47,10 +54,8 @@ export class DataProviderService implements OnModuleInit {
   public syncFulfillments = async () => {
     this.logger.debug(`Syncing Fulfillments.`);
     try {
-      this.fulfillments = ReduceArrayToMapByKey(
-        (await this.fulfillmentModel.find().exec()).map((x) => x.toObject()),
-        'id',
-      );
+      const fulfillments = await this.fulfillmentRepository.findAll();
+      this.fulfillments = ReduceArrayToMapByKey(fulfillments, 'id');
     } catch (err: unknown) {
       this.logger.error({ err }, 'Failed fetching fulfillments');
     }
@@ -59,10 +64,8 @@ export class DataProviderService implements OnModuleInit {
   public syncSeatingResources = async () => {
     this.logger.debug(`Syncing Seating Resources.`);
     try {
-      this.seatingResources = ReduceArrayToMapByKey(
-        (await this.seatingResourceModel.find().exec()).map((x) => x.toObject()),
-        'id',
-      );
+      const resources = await this.seatingResourceRepository.findAll();
+      this.seatingResources = ReduceArrayToMapByKey(resources, 'id');
     } catch (err: unknown) {
       this.logger.error({ err }, 'Failed fetching seating resources');
     }
@@ -75,27 +78,25 @@ export class DataProviderService implements OnModuleInit {
     await this.syncSeatingResources();
 
     // look for key value config area:
-    const found_key_value_store = await this.keyValueModel.findOne();
-    if (!found_key_value_store) {
+    const keyValueEntries = await this.keyValueRepository.findAll();
+    if (keyValueEntries.length === 0) {
       this.keyvalueconfig = {};
-      const keyvalueconfig_document = new this.keyValueModel({ settings: [] });
-      await keyvalueconfig_document.save();
-      this.logger.info('Added default (empty) key value config area');
+      this.logger.info('No key value config found, using empty config');
     } else {
-      this.logger.debug({ keyValueStore: found_key_value_store }, 'Found KeyValueSchema in database');
-      for (const setting of found_key_value_store.settings) {
-        if (Object.hasOwn(this.keyvalueconfig, setting.key)) {
-          this.logger.error(`Clobbering key: ${setting.key} containing ${this.keyvalueconfig[setting.key]}`);
+      this.logger.debug({ keyValueCount: keyValueEntries.length }, 'Found KeyValue entries in database');
+      for (const entry of keyValueEntries) {
+        if (Object.hasOwn(this.keyvalueconfig, entry.key)) {
+          this.logger.error(`Clobbering key: ${entry.key} containing ${this.keyvalueconfig[entry.key]}`);
         }
-        this.keyvalueconfig[setting.key] = setting.value;
+        this.keyvalueconfig[entry.key] = entry.value;
       }
     }
 
     // check for and populate settings, including operating hours
-    const found_settings = await this.settingsModel.findOne();
-    this.logger.info({ settings: found_settings }, 'Found settings');
+    const foundSettings = await this.settingsRepository.get();
+    this.logger.info({ settings: foundSettings }, 'Found settings');
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.settings = found_settings!;
+    this.settings = foundSettings!;
 
     this.logger.debug('Done Bootstrapping DataProvider');
   };
@@ -122,12 +123,8 @@ export class DataProviderService implements OnModuleInit {
   updateSettings = async (da: IWSettings) => {
     this.settings = da;
     try {
-      const db_settings = await this.settingsModel.findOne();
-      if (db_settings) {
-        Object.assign(db_settings, da);
-        await db_settings.save();
-        this.logger.debug({ settings: db_settings }, 'Saved settings');
-      }
+      await this.settingsRepository.save(da);
+      this.logger.debug({ settings: da }, 'Saved settings');
     } catch (err: unknown) {
       this.logger.error({ err }, 'Error saving settings');
       throw err;
@@ -142,9 +139,7 @@ export class DataProviderService implements OnModuleInit {
           request.date,
           this.fulfillments[fId].blockedOff,
         );
-        return this.fulfillmentModel.findByIdAndUpdate(fId, {
-          blockedOff: newBlockedOff,
-        });
+        return this.fulfillmentRepository.update(fId, { blockedOff: newBlockedOff });
       }),
     );
   };
@@ -158,9 +153,7 @@ export class DataProviderService implements OnModuleInit {
           this.fulfillments[fId].blockedOff,
           this.fulfillments[fId].timeStep,
         );
-        return this.fulfillmentModel.findByIdAndUpdate(fId, {
-          blockedOff: newBlockedOff,
-        });
+        return this.fulfillmentRepository.update(fId, { blockedOff: newBlockedOff });
       }),
     );
   };
@@ -168,121 +161,98 @@ export class DataProviderService implements OnModuleInit {
   setLeadTimes = async (request: SetLeadTimesRequest) => {
     return await Promise.all(
       Object.entries(request).map(async ([fId, leadTime]) => {
-        return this.fulfillmentModel.findByIdAndUpdate(fId, {
-          leadTime: leadTime,
-        });
+        return this.fulfillmentRepository.update(fId, { leadTime });
       }),
     );
   };
 
   setFulfillment = async (fulfillment: Omit<FulfillmentConfig, 'id'>) => {
-    const fm = new this.fulfillmentModel(fulfillment);
-    const savePromise = fm
-      .save()
-      .then((x) => {
-        this.logger.debug({ fulfillment: x }, 'Saved new fulfillment');
-        this.fulfillments[x.id as string] = x;
-        return x;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Error saving new fulfillment');
-        throw err;
-      });
-    return savePromise;
+    try {
+      const created = await this.fulfillmentRepository.create(fulfillment);
+      this.logger.debug({ fulfillment: created }, 'Saved new fulfillment');
+      this.fulfillments[created.id] = created;
+      return created;
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Error saving new fulfillment');
+      throw err;
+    }
   };
 
   // TODO: does this properly handle partial updates?
   updateFulfillment = async (id: string, fulfillment: Partial<Omit<FulfillmentConfig, 'id'>>) => {
-    return this.fulfillmentModel
-      .findByIdAndUpdate(id, fulfillment, { new: true })
-      .then((doc) => {
-        this.logger.debug({ fulfillmentId: id, fulfillment: doc }, 'Updated fulfillment');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.fulfillments[id] = doc!;
-        return doc;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Error updating fulfillment');
-        throw err;
-      });
+    try {
+      const updated = await this.fulfillmentRepository.update(id, fulfillment);
+      this.logger.debug({ fulfillmentId: id, fulfillment: updated }, 'Updated fulfillment');
+      if (updated) {
+        this.fulfillments[id] = updated;
+      }
+      return updated;
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Error updating fulfillment');
+      throw err;
+    }
   };
 
   /** this probably should get deleted. We want to disable seating resources and repurpose disabled ones otherwise this might become a data management nightmare */
   deleteFulfillment = async (id: string) => {
-    return this.fulfillmentModel
-      .findByIdAndDelete(id)
-      .then((doc) => {
-        this.logger.debug({ fulfillmentId: id, fulfillment: doc }, 'Deleted fulfillment');
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete this.fulfillments[id];
-        return doc;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Error deleting fulfillment');
-        throw err;
-      });
+    try {
+      const deleted = await this.fulfillmentRepository.delete(id);
+      this.logger.debug({ fulfillmentId: id, deleted }, 'Deleted fulfillment');
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete this.fulfillments[id];
+      return deleted;
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Error deleting fulfillment');
+      throw err;
+    }
   };
 
   setSeatingResource = async (seatingResource: Omit<SeatingResource, 'id'>) => {
-    const sr = new this.seatingResourceModel(seatingResource);
-    const savePromise = sr
-      .save()
-      .then((x) => {
-        this.logger.debug({ seatingResource: x }, 'Saved new seating resource');
-        this.seatingResources[x.id as string] = x;
-        return x;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Error saving new seating resource');
-        throw err;
-      });
-    return savePromise;
+    try {
+      const created = await this.seatingResourceRepository.create(seatingResource);
+      this.logger.debug({ seatingResource: created }, 'Saved new seating resource');
+      this.seatingResources[created.id] = created;
+      return created;
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Error saving new seating resource');
+      throw err;
+    }
   };
 
   updateSeatingResource = async (id: string, seatingResource: Partial<Omit<SeatingResource, 'id'>>) => {
-    return this.seatingResourceModel
-      .findByIdAndUpdate(id, seatingResource, { new: true })
-      .then((doc) => {
-        this.logger.debug({ seatingResourceId: id, seatingResource: doc }, 'Updated Seating Resource');
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.seatingResources[id] = doc!;
-        return doc;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Error updating Seating Resource');
-        throw err;
-      });
+    try {
+      const updated = await this.seatingResourceRepository.update(id, seatingResource);
+      this.logger.debug({ seatingResourceId: id, seatingResource: updated }, 'Updated Seating Resource');
+      if (updated) {
+        this.seatingResources[id] = updated;
+      }
+      return updated;
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Error updating Seating Resource');
+      throw err;
+    }
   };
 
   /** precondition: references to this seating resource have already been removed from the catalog! */
   deleteSeatingResource = async (id: string) => {
-    return this.seatingResourceModel
-      .findByIdAndDelete(id)
-      .then((doc) => {
-        this.logger.debug({ seatingResourceId: id, seatingResource: doc }, 'Deleted seating resource');
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete this.seatingResources[id];
-        return doc;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Error deleting seating resource');
-        throw err;
-      });
+    try {
+      const deleted = await this.seatingResourceRepository.delete(id);
+      this.logger.debug({ seatingResourceId: id, deleted }, 'Deleted seating resource');
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete this.seatingResources[id];
+      return deleted;
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Error deleting seating resource');
+      throw err;
+    }
   };
 
   updateKeyValueConfig = async (da: { [key: string]: string }) => {
     this.keyvalueconfig = da;
     try {
-      const db_key_values = await this.keyValueModel.findOne();
-      if (db_key_values) {
-        const settings_list: { key: string; value: string }[] = [];
-        for (const i in da) {
-          settings_list.push({ key: i, value: da[i] });
-        }
-        db_key_values.settings = settings_list;
-        await db_key_values.save();
-        this.logger.debug({ keyValueConfig: db_key_values }, 'Saved key/value config');
-      }
+      const entries: KeyValueEntry[] = Object.entries(da).map(([key, value]) => ({ key, value }));
+      await this.keyValueRepository.setAll(entries);
+      this.logger.debug({ keyValueConfig: da }, 'Saved key/value config');
     } catch (err: unknown) {
       this.logger.error({ err }, 'Error saving key/value config');
       throw err;

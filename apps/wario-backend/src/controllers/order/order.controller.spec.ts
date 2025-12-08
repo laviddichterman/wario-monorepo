@@ -234,22 +234,6 @@ describe('OrderController', () => {
     });
   });
 
-  // =========================================================================
-  // PUT /api/v1/order/unlock Tests
-  // =========================================================================
-
-  describe('putUnlock', () => {
-    it('should call ObliterateLocks and return success', async () => {
-      mockOrderManager.ObliterateLocks.mockResolvedValue({
-        status: 200,
-        success: true,
-        result: 'Unlocked 3 orders.',
-      });
-
-      const result = await controller.putUnlock();
-
-      expect(result).toEqual({ ok: 'yay!' });
-      expect(mockOrderManager.ObliterateLocks).toHaveBeenCalled();
-    });
-  });
+  // Note: putUnlock tests removed as the method is currently commented out
 });
+

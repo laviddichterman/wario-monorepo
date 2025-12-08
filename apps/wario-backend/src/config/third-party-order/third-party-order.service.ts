@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { UTCDate } from '@date-fns/utc';
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Inject, Injectable } from '@nestjs/common';
 import { formatISO, formatRFC3339, subMinutes } from 'date-fns';
-import { Model } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
@@ -14,10 +12,11 @@ import {
   TenderBaseStatus,
   WDateUtils,
   WFulfillmentStatus,
+  type WOrderInstance,
   WOrderStatus,
 } from '@wcp/wario-shared';
 
-import { WOrderInstance, WOrderInstanceDocument } from '../../models/orders/WOrderInstance';
+import { type IOrderRepository, ORDER_REPOSITORY } from '../../repositories/interfaces/order.repository.interface';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { BigIntMoneyToIntMoney, LineItemsToOrderInstanceCart } from '../square-wario-bridge';
@@ -30,8 +29,8 @@ import { SquareService } from '../square/square.service';
 @Injectable()
 export class ThirdPartyOrderService {
   constructor(
-    @InjectModel('WOrderInstance')
-    private orderModel: Model<WOrderInstanceDocument>,
+    @Inject(ORDER_REPOSITORY)
+    private orderRepo: IOrderRepository,
     private squareService: SquareService,
     private catalogProviderService: CatalogProviderService,
     private dataProvider: DataProviderService,
@@ -85,11 +84,7 @@ export class ThirdPartyOrderService {
       const squareOrderIds = ordersToInspect.map((x) => x.id as string);
 
       // Find orders we've already ingested
-      const found3pOrders = await this.orderModel
-        .find({
-          'fulfillment.thirdPartyInfo.squareId': { $in: squareOrderIds },
-        })
-        .exec();
+      const found3pOrders = await this.orderRepo.findByThirdPartySquareIds(squareOrderIds);
 
       const ordersToIngest = ordersToInspect.filter(
         (x) => found3pOrders.findIndex((order) => order.fulfillment.thirdPartyInfo!.squareId === x.id!) === -1,
@@ -210,8 +205,8 @@ export class ThirdPartyOrderService {
 
       if (orderInstances.length > 0) {
         this.logger.info({ orderInstancesCount: orderInstances.length, orderInstances }, 'Inserting 3p orders...');
-        const saveResponse = await this.orderModel.bulkSave(orderInstances.map((x) => new this.orderModel(x)));
-        this.logger.info({ saveResponse }, 'Save response for 3p order');
+        const savedOrders = await this.orderRepo.bulkCreate(orderInstances);
+        this.logger.info({ savedOrdersCount: savedOrders.length }, 'Saved 3p orders');
       }
     } catch (err: unknown) {
       this.logger.error({ err }, 'Got error when attempting to ingest 3p orders');

@@ -24,6 +24,14 @@ import {
   UpsertProductBatchRequest,
 } from '@wcp/wario-shared';
 
+import { CATEGORY_REPOSITORY, type ICategoryRepository } from '../../repositories/interfaces/category.repository.interface';
+import { type IOptionTypeRepository, OPTION_TYPE_REPOSITORY } from '../../repositories/interfaces/option-type.repository.interface';
+import { type IOptionRepository, OPTION_REPOSITORY } from '../../repositories/interfaces/option.repository.interface';
+import { type IOrderInstanceFunctionRepository, ORDER_INSTANCE_FUNCTION_REPOSITORY } from '../../repositories/interfaces/order-instance-function.repository.interface';
+import { type IPrinterGroupRepository, PRINTER_GROUP_REPOSITORY } from '../../repositories/interfaces/printer-group.repository.interface';
+import { type IProductInstanceFunctionRepository, PRODUCT_INSTANCE_FUNCTION_REPOSITORY } from '../../repositories/interfaces/product-instance-function.repository.interface';
+import { type IProductInstanceRepository, PRODUCT_INSTANCE_REPOSITORY } from '../../repositories/interfaces/product-instance.repository.interface';
+import { type IProductRepository, PRODUCT_REPOSITORY } from '../../repositories/interfaces/product.repository.interface';
 import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { MigrationFlagsService } from '../migration-flags.service';
@@ -63,8 +71,22 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     private wProductInstanceFunctionModel: Model<IProductInstanceFunction>,
     @InjectModel('WOrderInstanceFunction')
     private wOrderInstanceFunctionModel: Model<OrderInstanceFunction>,
-    @InjectModel('WPrinterGroupSchema')
-    private printerGroupModel: Model<PrinterGroup>,
+    @Inject(OPTION_REPOSITORY)
+    private optionRepository: IOptionRepository,
+    @Inject(OPTION_TYPE_REPOSITORY)
+    private optionTypeRepository: IOptionTypeRepository,
+    @Inject(PRODUCT_REPOSITORY)
+    private productRepository: IProductRepository,
+    @Inject(PRODUCT_INSTANCE_REPOSITORY)
+    private productInstanceRepository: IProductInstanceRepository,
+    @Inject(PRODUCT_INSTANCE_FUNCTION_REPOSITORY)
+    private productInstanceFunctionRepository: IProductInstanceFunctionRepository,
+    @Inject(ORDER_INSTANCE_FUNCTION_REPOSITORY)
+    private orderInstanceFunctionRepository: IOrderInstanceFunctionRepository,
+    @Inject(PRINTER_GROUP_REPOSITORY)
+    private printerGroupRepository: IPrinterGroupRepository,
+    @Inject(CATEGORY_REPOSITORY)
+    private categoryRepository: ICategoryRepository,
     @Inject(AppConfigService) private appConfig: AppConfigService,
     @Inject(DataProviderService) private dataProviderService: DataProviderService,
     @Inject(MigrationFlagsService) private migrationFlags: MigrationFlagsService,
@@ -136,8 +158,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
   private get categoryDeps(): CategoryFns.CategoryDeps {
     return {
-      wCategoryModel: this.wCategoryModel,
-      wProductModel: this.wProductModel,
+      categoryRepository: this.categoryRepository,
+      productRepository: this.productRepository,
       logger: this._logger,
       fulfillments: this.dataProviderService.Fulfillments,
       categories: this.categories,
@@ -208,7 +230,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
   private get printerGroupDeps(): PrinterGroupFns.PrinterGroupDeps {
     return {
-      wPrinterGroupModel: this.printerGroupModel,
+      printerGroupRepository: this.printerGroupRepository,
       logger: this._logger,
       squareService: this.squareService,
       dataProviderService: this.dataProviderService,
@@ -452,11 +474,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncPrinterGroups = async () => {
     this.logger.debug(`Syncing Printer Groups.`);
     try {
-      const results = await this.printerGroupModel.find().exec();
-      this.printerGroups = ReduceArrayToMapByKey(
-        results.map((x) => x.toObject()),
-        'id',
-      );
+      const results = await this.printerGroupRepository.findAll();
+      this.printerGroups = ReduceArrayToMapByKey(results, 'id');
     } catch (err: unknown) {
       this._logger.error({ err }, 'Failed fetching printer groups');
       return false;

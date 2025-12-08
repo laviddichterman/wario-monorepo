@@ -1,8 +1,6 @@
 import { UTCDate } from '@date-fns/utc';
-import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { Inject, Injectable } from '@nestjs/common';
 import { formatRFC3339, isBefore, subDays } from 'date-fns';
-import { Model } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
@@ -14,14 +12,13 @@ import {
   type FulfillmentConfig,
   type FulfillmentData,
   RebuildAndSortCart,
-  ResponseSuccess,
   ResponseWithStatusCode,
   WDateUtils,
   WFulfillmentStatus,
   type WOrderInstance,
 } from '@wcp/wario-shared';
 
-import { WOrderInstanceDocument } from '../../models/orders/WOrderInstance';
+import { type IOrderRepository, ORDER_REPOSITORY } from '../../repositories/interfaces/order.repository.interface';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import {
@@ -60,8 +57,8 @@ export interface PrinterMessage {
 @Injectable()
 export class PrinterService {
   constructor(
-    @InjectModel('WOrderInstance')
-    private orderModel: Model<WOrderInstanceDocument>,
+    @Inject(ORDER_REPOSITORY)
+    private orderRepo: IOrderRepository,
     private squareService: SquareService,
     private dataProvider: DataProviderService,
     private catalogProviderService: CatalogProviderService,
@@ -630,23 +627,17 @@ export class PrinterService {
           { key: 'SQORDER_PRINT', value: SQORDER_PRINT.join(',') },
         ],
       };
-      return await this.orderModel
-        .findOneAndUpdate({ locked: lockedOrder.locked, _id: lockedOrder.id }, updatedOrder, { new: true })
-        .then((updated): ResponseWithStatusCode<ResponseSuccess<WOrderInstance>> => {
-          if (!updated) {
-            throw new Error('Failed to find updated order after sending to Square.');
-          }
-          return { success: true as const, status: 200, result: updated.toObject() };
-        })
-        .catch((err: unknown) => {
-          throw err;
-        });
+      const updated = await this.orderRepo.updateWithLock(lockedOrder.id, lockedOrder.locked, updatedOrder);
+      if (!updated) {
+        throw new Error('Failed to find updated order after sending to Square.');
+      }
+      return { success: true as const, status: 200, result: updated };
     } catch (error: unknown) {
       const errorDetail = `Caught error when attempting to send order: ${JSON.stringify(error, Object.getOwnPropertyNames(error), 2)}`;
       this.logger.error({ err: error }, 'Caught error when attempting to send order');
       if (releaseLock) {
         try {
-          await this.orderModel.findOneAndUpdate({ _id: lockedOrder.id }, { locked: null });
+          await this.orderRepo.releaseLock(lockedOrder.id);
         } catch (err2: unknown) {
           this.logger.error(
             { err: err2 },

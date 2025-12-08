@@ -1,18 +1,20 @@
 /**
  * Pure functions for category CRUD operations.
  */
-import type { Model } from 'mongoose';
 import type { PinoLogger } from 'nestjs-pino';
 
-import type { FulfillmentConfig, ICatalog, ICategory, IProduct } from '@wcp/wario-shared';
+import type { FulfillmentConfig, ICatalog, ICategory } from '@wcp/wario-shared';
+
+import type { ICategoryRepository } from '../../repositories/interfaces/category.repository.interface';
+import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
 
 // ============================================================================
 // Dependencies Interface
 // ============================================================================
 
 export interface CategoryDeps {
-  wCategoryModel: Model<ICategory>;
-  wProductModel: Model<IProduct>;
+  categoryRepository: ICategoryRepository;
+  productRepository: IProductRepository;
   logger: PinoLogger;
 
   // State needed for validation/logic
@@ -29,9 +31,7 @@ export interface CategoryDeps {
 // ============================================================================
 
 export async function createCategory(deps: CategoryDeps, category: Omit<ICategory, 'id'>): Promise<ICategory> {
-  const doc = new deps.wCategoryModel(category);
-  await doc.save();
-  return doc.toObject();
+  return deps.categoryRepository.create(category);
 }
 
 // TODO: support Partial update
@@ -61,21 +61,17 @@ export async function updateCategory(
         `In changing ${categoryId}'s parent_id to ${category.parent_id}, found cycle at ${cur}, blanking out ${cur}'s parent_id to prevent cycle.`,
       );
 
-      cycleUpdatePromise = deps.wCategoryModel.findByIdAndUpdate(cur, { parent_id: null }, { new: true }).exec();
+      cycleUpdatePromise = deps.categoryRepository.update(cur, { parent_id: null });
     }
   }
 
-  const response = await deps.wCategoryModel.findByIdAndUpdate(categoryId, category, { new: true }).exec();
+  const response = await deps.categoryRepository.update(categoryId, category);
 
   if (cycleUpdatePromise) {
     await cycleUpdatePromise;
   }
 
-  if (!response) {
-    return null;
-  }
-
-  return response.toObject();
+  return response;
 }
 
 export async function deleteCategory(
@@ -100,22 +96,25 @@ export async function deleteCategory(
     }
   });
 
-  // 2. Delete from DB
-  const doc = await deps.wCategoryModel.findByIdAndDelete(categoryId).exec();
-  if (!doc) {
+  // 2. Get the category before deletion
+  const existing = await deps.categoryRepository.findById(categoryId);
+  if (!existing) {
     return { deleted: null, productsModified: false };
   }
 
-  // 3. Update children (flatten hierarchy)
+  // 3. Delete from DB
+  await deps.categoryRepository.delete(categoryId);
+
+  // 4. Update children (flatten hierarchy)
   await Promise.all(
     Object.values(deps.categories).map(async (cat) => {
       if (cat.parent_id && cat.parent_id === categoryId) {
-        await deps.wCategoryModel.findByIdAndUpdate(cat.id, { parent_id: null }, { new: true }).exec();
+        await deps.categoryRepository.update(cat.id, { parent_id: null });
       }
     }),
   );
 
-  // 4. Handle contained products
+  // 5. Handle contained products
   let productsModified = false;
   if (deleteContainedProducts) {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -126,13 +125,13 @@ export async function deleteCategory(
     }
   } else {
     // Remove category reference from products
-    const productsUpdate = await deps.wProductModel.updateMany({}, { $pull: { category_ids: categoryId } }).exec();
+    const modifiedCount = await deps.productRepository.removeCategoryFromAll(categoryId);
 
-    if (productsUpdate.modifiedCount > 0) {
-      deps.logger.debug(`Removed Category ID from ${productsUpdate.modifiedCount.toString()} products.`);
+    if (modifiedCount > 0) {
+      deps.logger.debug(`Removed Category ID from ${modifiedCount.toString()} products.`);
       productsModified = true;
     }
   }
 
-  return { deleted: doc.toObject(), productsModified };
+  return { deleted: existing, productsModified };
 }

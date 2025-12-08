@@ -107,12 +107,12 @@ export class OrderController {
     return response;
   }
 
-  @Put('unlock')
-  @Scopes('write:order')
-  async putUnlock() {
-    await this.orderManager.ObliterateLocks();
-    return { ok: 'yay!' };
-  }
+  // @Put('unlock')
+  // @Scopes('write:order')
+  // async putUnlock() {
+  //   await this.orderManager.ObliterateLocks();
+  //   return { ok: 'yay!' };
+  // }
 
   @Put(':oId/send')
   @Scopes('send:order')
@@ -144,10 +144,7 @@ export class OrderController {
   async getOrders(@Query('date') date: string, @Query('status') status: string) {
     const queryDate = date ? date : null;
     const queryStatus = status ? WOrderStatus[status as keyof typeof WOrderStatus] : null;
-    const response = await this.orderManager.GetOrders({
-      ...(queryDate ? { $gte: queryDate } : null),
-      ...(queryStatus ? { status: queryStatus } : null),
-    });
+    const response = await this.orderManager.GetOrders({ date: queryDate, status: queryStatus });
     return response;
   }
 }

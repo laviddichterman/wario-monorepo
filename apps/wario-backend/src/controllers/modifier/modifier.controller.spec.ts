@@ -149,7 +149,7 @@ describe('ModifierController', () => {
       (mockCatalogService.CreateOption as jest.Mock).mockResolvedValue(mockOption);
 
       const body = asUncommittedOption(createMockOption({ displayName: 'Pepperoni', modifierTypeId: 'mt-123' }));
-      const result = await controller.CreateOption(body);
+      const result = await controller.CreateOption(body, body.modifierTypeId);
 
       // Verify result satisfies IOption interface
       assertIsOption(result);
@@ -170,7 +170,7 @@ describe('ModifierController', () => {
         modifierOption: { displayName: 'Updated Pepperoni' },
       };
       const result = await controller.UpdateModifierOption(
-        body as Parameters<typeof controller.UpdateModifierOption>[0],
+        body as Parameters<typeof controller.UpdateModifierOption>[0], body.id, body.modifierTypeId
       );
 
       // Verify result satisfies IOption interface
