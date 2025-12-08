@@ -15,20 +15,30 @@ import {
   ProductInstanceFunctionEntity,
 } from '../entities/catalog';
 import { OrderEntity, OrderHistoryEntity } from '../entities/order';
-import { DBVersionEntity, FulfillmentEntity, SettingsEntity } from '../entities/settings';
+import {
+  DBVersionEntity,
+  FulfillmentEntity,
+  KeyValueEntity,
+  PrinterGroupEntity,
+  SeatingResourceEntity,
+  SettingsEntity,
+} from '../entities/settings';
 
 // Interface tokens
 import {
   CATEGORY_REPOSITORY,
   DB_VERSION_REPOSITORY,
   FULFILLMENT_REPOSITORY,
+  KEY_VALUE_REPOSITORY,
   OPTION_REPOSITORY,
   OPTION_TYPE_REPOSITORY,
   ORDER_INSTANCE_FUNCTION_REPOSITORY,
   ORDER_REPOSITORY,
+  PRINTER_GROUP_REPOSITORY,
   PRODUCT_INSTANCE_FUNCTION_REPOSITORY,
   PRODUCT_INSTANCE_REPOSITORY,
   PRODUCT_REPOSITORY,
+  SEATING_RESOURCE_REPOSITORY,
   SETTINGS_REPOSITORY,
 } from './interfaces';
 // Mongoose repositories
@@ -36,13 +46,16 @@ import {
   CategoryMongooseRepository,
   DBVersionMongooseRepository,
   FulfillmentMongooseRepository,
+  KeyValueMongooseRepository,
   OptionMongooseRepository,
   OptionTypeMongooseRepository,
   OrderInstanceFunctionMongooseRepository,
   OrderMongooseRepository,
+  PrinterGroupMongooseRepository,
   ProductInstanceFunctionMongooseRepository,
   ProductInstanceMongooseRepository,
   ProductMongooseRepository,
+  SeatingResourceMongooseRepository,
   SettingsMongooseRepository,
 } from './mongoose';
 // TypeORM repositories
@@ -50,13 +63,16 @@ import {
   CategoryTypeOrmRepository,
   DBVersionTypeOrmRepository,
   FulfillmentTypeOrmRepository,
+  KeyValueTypeOrmRepository,
   OptionTypeOrmRepository,
   OptionTypeTypeOrmRepository,
   OrderInstanceFunctionTypeOrmRepository,
   OrderTypeOrmRepository,
+  PrinterGroupTypeOrmRepository,
   ProductInstanceFunctionTypeOrmRepository,
   ProductInstanceTypeOrmRepository,
   ProductTypeOrmRepository,
+  SeatingResourceTypeOrmRepository,
   SettingsTypeOrmRepository,
 } from './typeorm';
 
@@ -65,14 +81,17 @@ const entities = [
   CategoryEntity,
   DBVersionEntity,
   FulfillmentEntity,
+  KeyValueEntity,
   OptionEntity,
   OptionTypeEntity,
   OrderEntity,
   OrderHistoryEntity,
   OrderInstanceFunctionEntity,
+  PrinterGroupEntity,
   ProductEntity,
   ProductInstanceEntity,
   ProductInstanceFunctionEntity,
+  SeatingResourceEntity,
   SettingsEntity,
 ];
 
@@ -80,13 +99,16 @@ const typeOrmRepos = [
   CategoryTypeOrmRepository,
   DBVersionTypeOrmRepository,
   FulfillmentTypeOrmRepository,
+  KeyValueTypeOrmRepository,
   OptionTypeOrmRepository,
   OptionTypeTypeOrmRepository,
   OrderInstanceFunctionTypeOrmRepository,
   OrderTypeOrmRepository,
+  PrinterGroupTypeOrmRepository,
   ProductInstanceFunctionTypeOrmRepository,
   ProductInstanceTypeOrmRepository,
   ProductTypeOrmRepository,
+  SeatingResourceTypeOrmRepository,
   SettingsTypeOrmRepository,
 ];
 
@@ -94,13 +116,16 @@ const mongooseRepos = [
   CategoryMongooseRepository,
   DBVersionMongooseRepository,
   FulfillmentMongooseRepository,
+  KeyValueMongooseRepository,
   OptionMongooseRepository,
   OptionTypeMongooseRepository,
   OrderInstanceFunctionMongooseRepository,
   OrderMongooseRepository,
+  PrinterGroupMongooseRepository,
   ProductInstanceFunctionMongooseRepository,
   ProductInstanceMongooseRepository,
   ProductMongooseRepository,
+  SeatingResourceMongooseRepository,
   SettingsMongooseRepository,
 ];
 
@@ -186,18 +211,39 @@ const mongooseRepos = [
         appConfig.usePostgres ? pgRepo : mongoRepo,
       inject: [AppConfigService, OrderInstanceFunctionTypeOrmRepository, OrderInstanceFunctionMongooseRepository],
     },
+    {
+      provide: KEY_VALUE_REPOSITORY,
+      useFactory: (appConfig: AppConfigService, pgRepo: KeyValueTypeOrmRepository, mongoRepo: KeyValueMongooseRepository) =>
+        appConfig.usePostgres ? pgRepo : mongoRepo,
+      inject: [AppConfigService, KeyValueTypeOrmRepository, KeyValueMongooseRepository],
+    },
+    {
+      provide: PRINTER_GROUP_REPOSITORY,
+      useFactory: (appConfig: AppConfigService, pgRepo: PrinterGroupTypeOrmRepository, mongoRepo: PrinterGroupMongooseRepository) =>
+        appConfig.usePostgres ? pgRepo : mongoRepo,
+      inject: [AppConfigService, PrinterGroupTypeOrmRepository, PrinterGroupMongooseRepository],
+    },
+    {
+      provide: SEATING_RESOURCE_REPOSITORY,
+      useFactory: (appConfig: AppConfigService, pgRepo: SeatingResourceTypeOrmRepository, mongoRepo: SeatingResourceMongooseRepository) =>
+        appConfig.usePostgres ? pgRepo : mongoRepo,
+      inject: [AppConfigService, SeatingResourceTypeOrmRepository, SeatingResourceMongooseRepository],
+    },
   ],
   exports: [
     CATEGORY_REPOSITORY,
     DB_VERSION_REPOSITORY,
     FULFILLMENT_REPOSITORY,
+    KEY_VALUE_REPOSITORY,
     OPTION_REPOSITORY,
     OPTION_TYPE_REPOSITORY,
     ORDER_INSTANCE_FUNCTION_REPOSITORY,
     ORDER_REPOSITORY,
+    PRINTER_GROUP_REPOSITORY,
     PRODUCT_INSTANCE_FUNCTION_REPOSITORY,
     PRODUCT_INSTANCE_REPOSITORY,
     PRODUCT_REPOSITORY,
+    SEATING_RESOURCE_REPOSITORY,
     SETTINGS_REPOSITORY,
   ],
 })

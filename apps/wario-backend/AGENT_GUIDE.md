@@ -171,14 +171,20 @@ src/entities/
 │   ├── order.entity.ts
 │   └── order-history.entity.ts
 ├── settings/
+│   ├── db-version.entity.ts
 │   ├── fulfillment.entity.ts
+│   ├── key-value.entity.ts
+│   ├── printer-group.entity.ts  # Temporal (extends TemporalEntity)
+│   ├── seating-resource.entity.ts
 │   └── settings.entity.ts
 └── index.ts
 ```
 
 ### Temporal Versioning (SCD2)
 
-Catalog entities extend `TemporalEntity` for point-in-time queries:
+Catalog entities and PrinterGroup extend `TemporalEntity` for point-in-time queries:
+
+**Temporal entities:** `CategoryEntity`, `OptionTypeEntity`, `OptionEntity`, `ProductEntity`, `ProductInstanceEntity`, `ProductInstanceFunctionEntity`, `OrderInstanceFunctionEntity`, `PrinterGroupEntity`
 
 ```typescript
 abstract class TemporalEntity {
@@ -273,15 +279,18 @@ Use Symbol tokens for injection (not class names):
 | -------------------------------------- | ------------------------------------ |
 | `CATEGORY_REPOSITORY`                  | `ICategoryRepository`                |
 | `DB_VERSION_REPOSITORY`                | `IDBVersionRepository`               |
+| `FULFILLMENT_REPOSITORY`               | `IFulfillmentRepository`             |
+| `KEY_VALUE_REPOSITORY`                 | `IKeyValueRepository`                |
 | `OPTION_TYPE_REPOSITORY`               | `IOptionTypeRepository`              |
 | `OPTION_REPOSITORY`                    | `IOptionRepository`                  |
+| `ORDER_INSTANCE_FUNCTION_REPOSITORY`   | `IOrderInstanceFunctionRepository`   |
+| `ORDER_REPOSITORY`                     | `IOrderRepository`                   |
+| `PRINTER_GROUP_REPOSITORY`             | `IPrinterGroupRepository`            |
 | `PRODUCT_REPOSITORY`                   | `IProductRepository`                 |
 | `PRODUCT_INSTANCE_REPOSITORY`          | `IProductInstanceRepository`         |
-| `ORDER_REPOSITORY`                     | `IOrderRepository`                   |
-| `FULFILLMENT_REPOSITORY`               | `IFulfillmentRepository`             |
-| `SETTINGS_REPOSITORY`                  | `ISettingsRepository`                |
 | `PRODUCT_INSTANCE_FUNCTION_REPOSITORY` | `IProductInstanceFunctionRepository` |
-| `ORDER_INSTANCE_FUNCTION_REPOSITORY`   | `IOrderInstanceFunctionRepository`   |
+| `SEATING_RESOURCE_REPOSITORY`          | `ISeatingResourceRepository`         |
+| `SETTINGS_REPOSITORY`                  | `ISettingsRepository`                |
 
 ### TypeORM SCD2 Pattern
 
@@ -301,3 +310,76 @@ async delete(id) {
   await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
 }
 ```
+
+### Catalog Version Locking
+
+> [!IMPORTANT]
+> Catalog CRUD operations are **not atomic** by default. Without locking, an order created mid-update may see an inconsistent catalog state.
+
+#### The Problem
+
+```
+T+0ms: updateProduct() closes old version (validTo = T)
+T+1ms: ORDER CREATED at T+1ms → sees NO valid product!
+T+2ms: updateProduct() inserts new version (validFrom = T+2ms)
+```
+
+#### Solution: Transactional Locking
+
+**For Catalog CRUD** — Acquire exclusive lock:
+
+```typescript
+async updateProduct(id: string, data: Partial<Product>) {
+  return this.dataSource.transaction(async (manager) => {
+    // 1. Acquire exclusive lock on current catalog version
+    await manager.query(
+      `SELECT * FROM catalog_versions WHERE id = $1 FOR UPDATE`,
+      [currentVersionId]
+    );
+
+    // 2. All operations use same timestamp
+    const now = new Date();
+
+    // 3. Close old, insert new (atomic within transaction)
+    await manager.update(ProductEntity, { id, validTo: IsNull() }, { validTo: now });
+    await manager.insert(ProductEntity, { ...data, validFrom: now, validTo: null });
+  });
+}
+```
+
+**For Order Creation** — Acquire shared lock:
+
+```typescript
+async createOrder(order: CreateOrderDto) {
+  return this.dataSource.transaction(async (manager) => {
+    // 1. Shared lock allows concurrent reads, blocks writes
+    const [catalogVersion] = await manager.query(
+      `SELECT * FROM catalog_versions ORDER BY effective_at DESC LIMIT 1 FOR SHARE`
+    );
+
+    // 2. Query catalog at this version's timestamp
+    const products = await manager.find(ProductEntity, {
+      where: {
+        validFrom: LessThanOrEqual(catalogVersion.effectiveAt),
+        validTo: IsNull()
+      }
+    });
+
+    // 3. Create order with catalog version reference
+    await manager.insert(OrderEntity, {
+      ...order,
+      catalogVersionId: catalogVersion.id
+    });
+  });
+}
+```
+
+#### Lock Compatibility Matrix
+
+| Operation      | Lock Type                | Blocks                     |
+| -------------- | ------------------------ | -------------------------- |
+| Catalog CRUD   | `FOR UPDATE` (exclusive) | Other CRUD, order creation |
+| Order Creation | `FOR SHARE` (shared)     | Catalog CRUD only          |
+| Order Read     | None                     | Nothing                    |
+
+This ensures orders always see a **consistent catalog snapshot**.
