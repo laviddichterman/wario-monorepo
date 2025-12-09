@@ -4,11 +4,13 @@ import { CatalogModule } from '../models/catalog/catalog.module';
 import { OrdersModule } from '../models/orders/orders.module';
 import { QueryModule } from '../models/query/query.module';
 import { SettingsModule } from '../models/settings/settings.module';
+import { RepositoryModule } from '../repositories/repository.module';
 
-import { AppConfigService } from './app-config.service';
+import { AppConfigurationModule } from './app-configuration.module';
 import { CatalogProviderService } from './catalog-provider/catalog-provider.service';
 import { DataProviderService } from './data-provider/data-provider.service';
 import { DatabaseManagerService } from './database-manager/database-manager.service';
+import { MongooseToPostgresMigrator } from './database-manager/mongoose-to-postgres.migrator';
 import { ErrorNotificationService } from './error-notification/error-notification.service';
 import { GoogleService } from './google/google.service';
 import { MigrationFlagsService } from './migration-flags.service';
@@ -25,9 +27,15 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
 
 @Global()
 @Module({
-  imports: [OrdersModule, CatalogModule, QueryModule, SettingsModule],
+  imports: [
+    OrdersModule,
+    CatalogModule,
+    QueryModule,
+    SettingsModule,
+    AppConfigurationModule,
+    RepositoryModule,
+  ],
   providers: [
-    AppConfigService,
     MigrationFlagsService,
     DataProviderService,
     SocketIoService,
@@ -44,9 +52,10 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     SquareService,
     StoreCreditProviderService,
     DatabaseManagerService,
+    MongooseToPostgresMigrator,
   ],
   exports: [
-    AppConfigService,
+
     MigrationFlagsService,
     DataProviderService,
     SocketIoService,
@@ -64,6 +73,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     SquareService,
     StoreCreditProviderService,
     DatabaseManagerService,
+    MongooseToPostgresMigrator,
   ],
 })
 export class ConfigModule {}

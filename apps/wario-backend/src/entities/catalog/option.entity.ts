@@ -44,8 +44,8 @@ export class OptionEntity extends TemporalEntity implements IOption {
   @Column({ type: 'varchar', length: 36 })
   modifierTypeId!: string;
 
-  @ManyToOne('OptionTypeEntity', 'options')
-  @JoinColumn({ name: 'modifierTypeId' })
+  @ManyToOne('OptionTypeEntity', 'options', { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'modifierTypeId', referencedColumnName: 'id' })
   modifierType?: OptionTypeEntity;
 
   @Column('jsonb')

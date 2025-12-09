@@ -17,7 +17,7 @@ export class OrderHistoryEntity {
   orderId!: string;
 
   @ManyToOne(() => OrderEntity)
-  @JoinColumn({ name: 'orderId' })
+  @JoinColumn({ name: 'orderId', referencedColumnName: 'id' })
   order?: OrderEntity;
 
   @Column({ type: 'varchar', length: 20 })

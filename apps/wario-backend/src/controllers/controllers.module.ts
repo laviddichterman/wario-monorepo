@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { OrdersModule } from '../models/orders/orders.module';
+import { RepositoryModule } from '../repositories/repository.module';
 
 import { AccountingController } from './accounting/accounting.controller';
 import { CategoryController } from './category/category.controller';
@@ -17,7 +18,7 @@ import { SettingsController } from './settings/settings.controller';
 import { StoreCreditController } from './store-credit/store-credit.controller';
 
 @Module({
-  imports: [OrdersModule],
+  imports: [OrdersModule, RepositoryModule],
   controllers: [
     OrderController,
     ProductController,

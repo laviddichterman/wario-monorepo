@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppConfigService } from '../config/app-config.service';
-import { ConfigModule } from '../config/config.module';
+import { AppConfigurationModule } from '../config/app-configuration.module';
 // Entities
 import {
   CatalogVersionEntity,
@@ -23,6 +23,10 @@ import {
   SeatingResourceEntity,
   SettingsEntity,
 } from '../entities/settings';
+import { CatalogModule } from '../models/catalog/catalog.module';
+import { OrdersModule } from '../models/orders/orders.module';
+import { QueryModule } from '../models/query/query.module';
+import { SettingsModule } from '../models/settings/settings.module';
 
 // Interface tokens
 import {
@@ -136,8 +140,12 @@ const mongooseRepos = [
  */
 @Module({
   imports: [
-    ConfigModule,
+    AppConfigurationModule,
     TypeOrmModule.forFeature(entities),
+    CatalogModule,
+    SettingsModule,
+    OrdersModule,
+    QueryModule,
   ],
   providers: [
     // Register concrete repos as injectable

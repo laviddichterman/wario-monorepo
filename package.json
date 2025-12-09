@@ -11,6 +11,7 @@
     "backend:lint": "pnpm --filter ./apps/wario-backend lint",
     "backend:start": "pnpm --filter ./apps/wario-backend start",
     "backend:test": "pnpm --filter ./apps/wario-backend test",
+    "backend:test:e2e": "pnpm --filter ./apps/wario-backend test:e2e",
     "backend:typecheck": "pnpm --filter ./apps/wario-backend typecheck",
     "build": "pnpm -r --filter \"./{apps,packages}/*\" run build",
     "changeset": "changeset",

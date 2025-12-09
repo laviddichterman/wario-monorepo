@@ -18,11 +18,11 @@ import type { ProductInstanceEntity } from './product-instance.entity';
 // Use string reference to avoid circular dependency
 @Entity('products')
 export class ProductEntity extends TemporalEntity implements IProduct {
-  @Column({ type: 'varchar', length: 36, default: '' })
+  @Column({ type: 'varchar', length: 36 })
   baseProductId!: string;
 
-  @ManyToOne('ProductInstanceEntity', { nullable: true })
-  @JoinColumn({ name: 'baseProductId' })
+  @ManyToOne('ProductInstanceEntity', { nullable: true, createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'baseProductId', referencedColumnName: 'id' })
   baseProduct?: ProductInstanceEntity;
 
   @Column('jsonb')
@@ -58,4 +58,3 @@ export class ProductEntity extends TemporalEntity implements IProduct {
   @OneToMany('ProductInstanceEntity', 'product')
   instances?: ProductInstanceEntity[];
 }
-

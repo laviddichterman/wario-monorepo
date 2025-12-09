@@ -21,7 +21,11 @@ export class DBVersionTypeOrmRepository implements IDBVersionRepository {
   }
 
   async set(version: SEMVER): Promise<void> {
-    await this.repo.clear(); // Ensure only one version row exists
-    await this.repo.save(version);
+    const existing = await this.repo.findOne({ where: {} });
+    if (existing) {
+      await this.repo.update({ rowId: existing.rowId }, version);
+      return;
+    }
+    await this.repo.insert(version);
   }
 }

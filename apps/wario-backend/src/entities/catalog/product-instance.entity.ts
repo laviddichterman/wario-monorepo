@@ -16,8 +16,8 @@ export class ProductInstanceEntity extends TemporalEntity implements IProductIns
   @Column({ type: 'varchar', length: 36 })
   productId!: string;
 
-  @ManyToOne('ProductEntity', 'instances')
-  @JoinColumn({ name: 'productId' })
+  @ManyToOne('ProductEntity', 'instances', { createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'productId', referencedColumnName: 'id' })
   product?: ProductEntity;
 
   @Column('int', { default: 0 })

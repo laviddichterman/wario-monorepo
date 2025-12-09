@@ -9,7 +9,7 @@ export class CategoryEntity extends TemporalEntity implements ICategory {
   @Column()
   name!: string;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   description!: string | null;
 
   @Column('int')
@@ -18,14 +18,14 @@ export class CategoryEntity extends TemporalEntity implements ICategory {
   @Column({ type: 'varchar', length: 36, nullable: true })
   parent_id!: string | null;
 
-  @ManyToOne(() => CategoryEntity, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
+  @ManyToOne(() => CategoryEntity, { nullable: true, createForeignKeyConstraints: false })
+  @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
   parent?: CategoryEntity;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   subheading!: string | null;
 
-  @Column({ nullable: true })
+  @Column('text', { nullable: true })
   footnotes!: string | null;
 
   @Column('jsonb')

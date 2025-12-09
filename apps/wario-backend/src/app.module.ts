@@ -74,7 +74,10 @@ import { TasksModule } from './tasks/tasks.module';
         password: appConfig.postgresPassword,
         database: appConfig.postgresDatabase,
         entities: [__dirname + '/entities/**/*.entity{.ts,.js}'],
-        synchronize: false, // Always use migrations
+        migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+        migrationsTableName: 'typeorm_migrations',
+        migrationsRun: appConfig.usePostgres && !appConfig.allowSchemaSync,
+        synchronize: appConfig.allowSchemaSync,
         logging: !appConfig.isProduction,
         // Only connect if USE_POSTGRES is enabled
         autoLoadEntities: true,
@@ -110,4 +113,4 @@ import { TasksModule } from './tasks/tasks.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

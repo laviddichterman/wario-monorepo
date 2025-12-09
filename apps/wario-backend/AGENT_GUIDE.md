@@ -105,6 +105,16 @@ Each migration is a function that receives a `DataSource` and performs necessary
 
 The service checks the current DB version against `package.json` and runs pending migrations sequentially.
 
+### Initialization & Data Migration
+
+The `DatabaseManagerService` handles the initial setup of the PostgreSQL database:
+
+1.  **Fresh Install Detection**: If the `DBVersion` table is missing, it assumes a fresh install.
+2.  **Safety Guard**: It explicitly checks that critical tables (`settings`, `orders`, `products`) do not exist. If they do, it aborts to prevent data loss.
+3.  **Schema Sync**: Creates the database schema (tables) using `synchronize(false)`.
+4.  **Auto-Migration from Mongoose**: If connected to MongoDB and legacy data is found (`Settings` collection not empty), it triggers the **MongooseToPostgresMigrator** to move data to Postgres.
+5.  **Seeding Defaults**: If no legacy data is found, it seeds default `Settings` and a default `PrinterGroup` for a clean start.
+
 ### Legacy Support
 
 `LEGACY_MONGOOSE_MIGRATIONS` exists for historical support but is **frozen**. All new schema changes should target PostgreSQL.
@@ -113,6 +123,27 @@ The service checks the current DB version against `package.json` and runs pendin
 
 - **Unit Tests:** `*.spec.ts` files next to the source.
 - **E2E Tests:** Located in `test/`. Run via `pnpm output backend:test:e2e`.
+
+### Testing Norms
+
+**STRICT ADHERENCE REQUIRED.** See `.agent/workflows/strict-testing.md` for the full workflow.
+
+1.  **Mock Data**:
+    - **NEVER** usage object literals for entities.
+    - **ALWAYS** usage factory functions (e.g. `createMockProduct`, `createMockSettingsEntity`).
+    - If a factory is missing, create it in `test/utils/mock-entities.ts`.
+
+2.  **Type Safety**:
+    - **NEVER** use `as any`. Fix the type definition or the mock data.
+    - **Legacy Data**: Define proper types for legacy shapes (e.g. `type LegacySettings = Partial<SettingsEntity> & { extra: boolean }`).
+
+3.  **Patterns**:
+    - **Null Checks**: Throw errors, don't just return.
+      - `if (!app) throw new Error('App undefined'); await app.close();`
+    - **Destructuring**: Underscore unused variables.
+      - `const { id: _id, ...rest } = data;`
+    - **Class Spreading**: Cast to Interface to avoid "unsafe spread".
+      - `const plain = { ...(instance as IProduct) };`
 
 ### Common Tasks
 
@@ -139,8 +170,9 @@ The service checks the current DB version against `package.json` and runs pendin
 ### AppConfigService
 
 **File:** `src/config/app-config.service.ts`
+**Module:** `src/config/app-configuration.module.ts` (Global)
 
-The **single source of truth** for environment variables. Never use `process.env` directly in services.
+The **single source of truth** for environment variables. Never use `process.env` directly in services. The service is provided by `AppConfigurationModule` to avoid circular dependencies with `ConfigModule`.
 
 ```typescript
 // ❌ Bad - scattered env reads

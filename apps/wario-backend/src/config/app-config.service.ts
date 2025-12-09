@@ -82,6 +82,24 @@ export class AppConfigService {
     return value === '1' || value === 'true' || this.suppressSquareInitSync;
   }
 
+  /**
+   * Allows running schema/data migrations in production.
+   * Keep false by default to prevent accidental destructive changes.
+   */
+  get allowProdMigrations(): boolean {
+    const value = this.configService.get<string>('ALLOW_PROD_MIGRATIONS');
+    return value === '1' || value === 'true';
+  }
+
+  /**
+   * Allows falling back to TypeORM synchronize for local/dev bootstrap
+   * when no migrations exist yet. Should not be enabled in production.
+   */
+  get allowSchemaSync(): boolean {
+    const value = this.configService.get<string>('ALLOW_SCHEMA_SYNC');
+    return value === '1' || value === 'true';
+  }
+
   // ============ Environment Configuration ============
 
   get timezone(): string {

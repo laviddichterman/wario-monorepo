@@ -90,6 +90,7 @@ export function createMockDataSource(): MockType<DataSource> {
     release: jest.fn(),
     manager: createMockTypeOrmRepository() as unknown as EntityManager, // Mock manager as a repo for simple calls
     query: jest.fn().mockResolvedValue([]),
+    hasTable: jest.fn().mockResolvedValue(false),
   };
 
   return {
@@ -97,6 +98,7 @@ export function createMockDataSource(): MockType<DataSource> {
     initialize: jest.fn().mockResolvedValue(this),
     destroy: jest.fn().mockResolvedValue(this),
     createQueryRunner: jest.fn().mockReturnValue(queryRunnerMock),
+    runMigrations: jest.fn().mockResolvedValue([]),
     transaction: jest.fn().mockImplementation(async (cb: (em: unknown) => Promise<unknown>) => {
       // Create a mock entityManager that is passed to the callback
       const mockManager = {

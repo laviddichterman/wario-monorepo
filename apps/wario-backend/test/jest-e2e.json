@@ -1,15 +1,25 @@
 {
-  "moduleFileExtensions": ["js", "json", "ts"],
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
   "rootDir": ".",
-  "testEnvironment": "jsdom",
+  "testEnvironment": "./jest-environment.js",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
   "moduleNameMapper": {
     "^@test/(.*)$": "<rootDir>/$1",
-    "^@/(.*)$": "<rootDir>/../src/$1"
+    "^@/(.*)$": "<rootDir>/../src/$1",
+    "^src/(.*)$": "<rootDir>/../src/$1"
   },
-  "setupFilesAfterEnv": ["<rootDir>/setup.ts"],
+  "setupFiles": [
+    "<rootDir>/setup-env.ts"
+  ],
+  "setupFilesAfterEnv": [
+    "<rootDir>/setup.ts"
+  ],
   "testTimeout": 30000
 }
