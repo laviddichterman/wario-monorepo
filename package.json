@@ -89,7 +89,7 @@
     "@changesets/cli": "^2.29.8",
     "@playwright/test": "^1.57.0",
     "@tanstack/eslint-plugin-query": "^5.91.2",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.2",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
