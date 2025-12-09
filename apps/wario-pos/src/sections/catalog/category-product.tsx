@@ -9,8 +9,10 @@ import type { SxProps, Theme } from '@mui/material/styles';
 import { paths } from '@/routes/paths';
 
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
+import CategoryDialoguesContainer from '@/components/wario/menu/category-dialogues.container';
+import CategoryInterstitialContainer from '@/components/wario/menu/category-interstitial.container';
 import CategoryTableContainer from '@/components/wario/menu/category/category_table.container';
-import CategoryDialoguesContainer from '@/components/wario/menu/category_dialogues.container';
+import ProductDialoguesContainer from '@/components/wario/menu/product-dialogues.container';
 
 import { hideDisabledProductsAtom, openCategoryInterstitialAtom } from '@/atoms/catalog';
 import { DashboardContent } from '@/layouts/dashboard';
@@ -85,6 +87,8 @@ export function CatalogCategoryProductView(_props: Props) {
           </Grid>
         </Grid>
         <CategoryDialoguesContainer />
+        <CategoryInterstitialContainer />
+        <ProductDialoguesContainer />
       </DashboardContent>
     </>
   );

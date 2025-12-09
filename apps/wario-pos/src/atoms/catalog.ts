@@ -13,6 +13,7 @@ export type CatalogDialog =
   | 'CategoryAdd'
   | 'CategoryEdit'
   | 'CategoryDelete'
+  | 'ProductInterstitial'
   | 'ProductAdd'
   | 'ProductImport'
   | 'HierarchicalProductImport'
@@ -55,6 +56,11 @@ export const closeDialogueAtom = atom(null, (_get, set) => {
   set(selectedProductClassIdAtom, null);
   set(selectedProductInstanceIdAtom, null);
 });
+
+export const openProductInterstitialAtom = atom(null, (_get, set) => {
+  set(dialogueStateAtom, 'ProductInterstitial');
+});
+
 
 export const openCategoryInterstitialAtom = atom(null, (_get, set) => {
   set(dialogueStateAtom, 'CategoryInterstitial');

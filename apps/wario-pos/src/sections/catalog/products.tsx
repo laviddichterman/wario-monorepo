@@ -11,9 +11,11 @@ import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 import { paths } from '@/routes/paths';
 
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
+import ProductDialoguesContainer from '@/components/wario/menu/product-dialogues.container';
+import ProductInterstitialContainer from '@/components/wario/menu/product-interstitial.container';
 import ProductTableContainer from '@/components/wario/menu/product/product_table.container';
 
-import { hideDisabledProductsAtom, openCategoryInterstitialAtom } from '@/atoms/catalog';
+import { hideDisabledProductsAtom, openProductInterstitialAtom } from '@/atoms/catalog';
 import { DashboardContent } from '@/layouts/dashboard';
 
 // ----------------------------------------------------------------------
@@ -42,7 +44,7 @@ const useProductIdsAfterDisableFilter = () => {
 export function CatalogProductView(_props: Props) {
   const productsAfterDisableFilter = useProductIdsAfterDisableFilter();
   const [hideDisabled, setHideDisabled] = useAtom(hideDisabledProductsAtom);
-  const openCategoryInterstitial = useSetAtom(openCategoryInterstitialAtom);
+  const openProductInterstitial = useSetAtom(openProductInterstitialAtom);
 
   const toolbarActions = useMemo(
     () => [
@@ -72,7 +74,7 @@ export function CatalogProductView(_props: Props) {
           <Tooltip key="AddNew" title="Add new...">
             <IconButton
               onClick={() => {
-                openCategoryInterstitial();
+                openProductInterstitial();
               }}
             >
               <AddBox />
@@ -81,7 +83,7 @@ export function CatalogProductView(_props: Props) {
         ),
       },
     ],
-    [setHideDisabled, openCategoryInterstitial, hideDisabled],
+    [setHideDisabled, openProductInterstitial, hideDisabled],
   );
   return (
     <>
@@ -108,6 +110,8 @@ export function CatalogProductView(_props: Props) {
             />
           </Grid>
         </Grid>
+        <ProductDialoguesContainer />
+        <ProductInterstitialContainer />
       </DashboardContent>
     </>
   );
