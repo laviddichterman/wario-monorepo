@@ -286,13 +286,19 @@ Complex expression types (`IAbstractExpression`, etc.) are stored as JSONB colum
 
 ### CLI Migrations
 
+TypeORM configuration is centralized in `src/config/typeorm-config.helper.ts` to ensure consistency between CLI and runtime. See `documentation/DatabaseMigration.md` for the full workflow.
+
 ```bash
 # Generate migration from entity changes
+cd apps/wario-backend
 npx typeorm migration:generate -d ormconfig.ts src/migrations/MigrationName
 
 # Run migrations
 npx typeorm migration:run -d ormconfig.ts
 ```
+
+> [!WARNING]
+> **Circular FK Constraints**: The `DeferCircularFKConstraints` migration drops FK constraints for data migration. These are reinstated by `ReinstateCircularFKConstraints`. Do not manually add/remove these constraints.
 
 ## 8. Repository Layer
 

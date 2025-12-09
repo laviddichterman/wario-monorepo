@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/restrict-template-expressions */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/restrict-template-expressions */
 
 import { randomUUID } from 'crypto';
 
@@ -8,10 +8,13 @@ import { Connection } from 'mongoose';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { DataSource, EntityManager } from 'typeorm';
 
+import { SEMVER } from '@wcp/wario-shared';
+
 import {
+  CatalogVersionEntity,
   CategoryEntity,
   DBVersionEntity,
-  FulfillmentEntity, // Fixed name
+  FulfillmentEntity,
   KeyValueEntity,
   OptionEntity,
   OptionTypeEntity,
@@ -33,9 +36,32 @@ export class MongooseToPostgresMigrator {
     private readonly logger: PinoLogger,
   ) { }
 
+  // Migration statistics for summary
+  private stats = {
+    settings: 0,
+    keyValues: 0,
+    printerGroups: 0,
+    seatingResources: 0,
+    fulfillments: 0,
+    categories: 0,
+    optionTypes: 0,
+    options: 0,
+    productInstanceFunctions: 0,
+    productInstances: 0,
+    products: 0,
+    orders: 0,
+  };
+
+  private resetStats(): void {
+    Object.keys(this.stats).forEach((key) => {
+      this.stats[key as keyof typeof this.stats] = 0;
+    });
+  }
+
   async migrateAll(): Promise<void> {
     this.logger.info('Starting Mongoose to Postgres Migration...');
     const start = Date.now();
+    this.resetStats();
 
     await this.dataSource.transaction(async (manager) => {
       // 1. Independent Entities
@@ -47,20 +73,51 @@ export class MongooseToPostgresMigrator {
       await this.migrateFulfillments(manager);
 
       // 2. Catalog (Dependencies: PrinterGroup)
-      // Order matters for references if we had foreign keys, but we largely use logical IDs.
-      // However, we should do them in order of hierarchy for sanity.
+      // Order matters for references - OptionTypes before Options, ProductInstances before Products
       await this.migrateCategories(manager);
+      await this.migrateOptionTypes(manager);
       await this.migrateOptions(manager);
       await this.migrateProductInstanceFunctions(manager);
       await this.migrateProductInstances(manager);
       await this.migrateProducts(manager);
 
-      // 3. Orders (Dependencies: Everything)
-      await this.migrateOrders(manager);
+      // 3. Create Catalog Version snapshot for historical order reference
+      const catalogVersion = await this.createMigrationCatalogVersion(manager);
+
+      // 4. Orders (Dependencies: Everything + CatalogVersion)
+      await this.migrateOrders(manager, catalogVersion.id);
     });
 
     const duration = (Date.now() - start) / 1000;
-    this.logger.info(`Migration completed in ${duration}s.`);
+    this.logMigrationSummary(duration);
+  }
+
+  private logMigrationSummary(durationSeconds: number): void {
+    const totalRecords = Object.values(this.stats).reduce((a, b) => a + b, 0);
+    this.logger.info({
+      duration: `${durationSeconds.toFixed(2)}s`,
+      totalRecords,
+      breakdown: this.stats,
+    }, 'Migration completed successfully');
+  }
+
+  /**
+   * Creates a CatalogVersion representing the migrated data state.
+   * Orders will reference this for historical pricing lookups.
+   */
+  private async createMigrationCatalogVersion(manager: EntityManager): Promise<CatalogVersionEntity> {
+    this.logger.info('Creating Catalog Version for migrated data...');
+
+    const version: SEMVER = { major: 0, minor: 0, patch: 0 };
+    const entity = manager.create(CatalogVersionEntity, {
+      version,
+      effectiveAt: new Date(0), // Beginning of time - represents pre-migration data
+      description: 'Initial migration from MongoDB',
+    });
+
+    const saved = await manager.save(CatalogVersionEntity, entity);
+    this.logger.info({ catalogVersionId: saved.id }, 'Created Migration CatalogVersion');
+    return saved;
   }
 
   private async migrateSettings(manager: EntityManager) {
@@ -77,6 +134,7 @@ export class MongooseToPostgresMigrator {
         config: data.config || {},
       });
       await manager.save(SettingsEntity, entity);
+      this.stats.settings = 1;
       this.logger.info('Migrated Settings.');
     } else {
       this.logger.warn('No Settings found in MongoDB.');
@@ -96,6 +154,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(KeyValueEntity, entities);
+      this.stats.keyValues = docs.length;
       this.logger.info(`Migrated ${docs.length} KeyValue entries.`);
     }
   }
@@ -137,6 +196,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(PrinterGroupEntity, entities);
+      this.stats.printerGroups = docs.length;
       this.logger.info(`Migrated ${docs.length} PrinterGroups.`);
     }
   }
@@ -162,6 +222,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(SeatingResourceEntity, entities);
+      this.stats.seatingResources = docs.length;
       this.logger.info(`Migrated ${docs.length} SeatingResources.`);
     }
   }
@@ -210,6 +271,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(FulfillmentEntity, entities);
+      this.stats.fulfillments = docs.length;
       this.logger.info(`Migrated ${docs.length} Fulfillments.`);
     }
   }
@@ -234,6 +296,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(CategoryEntity, entities);
+      this.stats.categories = docs.length;
       this.logger.info(`Migrated ${docs.length} Categories.`);
     }
   }
@@ -259,6 +322,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(OptionTypeEntity, entities);
+      this.stats.optionTypes = docs.length;
       this.logger.info(`Migrated ${docs.length} OptionTypes.`);
     }
   }
@@ -284,6 +348,7 @@ export class MongooseToPostgresMigrator {
         });
       });
       await manager.save(OptionEntity, entities);
+      this.stats.options = docs.length;
       this.logger.info(`Migrated ${docs.length} Options.`);
     }
   }
@@ -303,12 +368,17 @@ export class MongooseToPostgresMigrator {
 
       const entity = manager.create(ProductEntity, {
         id: doc._id.toString(),
+        baseProductId: doc.baseProductId || doc._id.toString(), // Copy from MongoDB, fallback to product ID
         price: doc.price,
-        category_ids: doc.category_ids,
-        tags: doc.tags,
+        disabled: doc.disabled || null,
+        externalIDs: doc.externalIDs || [],
+        serviceDisable: doc.serviceDisable || [],
+        displayFlags: doc.displayFlags,
+        timing: doc.timing || null,
+        availability: doc.availability || [],
+        modifiers: doc.modifiers || [],
+        category_ids: doc.category_ids || [],
         printerGroup: doc.printerGroup || null,
-        modifiers: doc.modifiers,
-        taxRate: doc.taxRate,
         // Temporal
         rowId: randomUUID(),
         validFrom: new Date(0),
@@ -329,10 +399,11 @@ export class MongooseToPostgresMigrator {
       await manager.save(ProductEntity, batch);
       count += batch.length;
     }
+    this.stats.products = count;
     this.logger.info(`Migrated total ${count} Products.`);
   }
 
-  private async migrateOrders(manager: EntityManager) {
+  private async migrateOrders(manager: EntityManager, catalogVersionId: string) {
     this.logger.info('Migrating Orders...');
     const collection = this.mongoConnection.collection('orders');
     // Cursor to avoid loading all at once
@@ -352,21 +423,22 @@ export class MongooseToPostgresMigrator {
       // Map fields to match OrderEntity
       const entity = manager.create(OrderEntity, {
         id: id,
-        shortId: doc.shortId,
         status: doc.status,
-        items: doc.items, // JSONB
-        fulfillment: doc.fulfillment, // JSONB
-        payment: doc.payment, // JSONB
-        total: doc.total,
-        subtotal: doc.subtotal,
+        customerInfo: doc.customerInfo || doc.customer, // Handle field rename
+        fulfillment: doc.fulfillment,
+        fulfillmentDate: doc.fulfillmentDate || (doc.fulfillment as { selectedDate?: string } | undefined)?.selectedDate || '1970-01-01',
+        cart: doc.cart || doc.items || [],
+        discounts: doc.discounts || [],
+        payments: doc.payments || doc.payment ? [doc.payment] : [],
+        refunds: doc.refunds || [],
+        metrics: doc.metrics,
+        taxes: doc.taxes || [],
         tip: doc.tip,
-        tax: doc.tax,
-        customer: doc.customer, // JSONB
-        locked: doc.locked,
-        thirdPartyInfo: doc.thirdPartyInfo, // JSONB
-        // Timestamps must be preserved
-        createdAt: doc.createdAt ? new Date(doc.createdAt) : undefined,
-        updatedAt: doc.updatedAt ? new Date(doc.updatedAt) : undefined,
+        metadata: doc.metadata || [],
+        specialInstructions: doc.specialInstructions,
+        locked: doc.locked || null,
+        catalogVersionId: catalogVersionId, // Required: link to migration catalog version
+        // Timestamps - TypeORM will set defaults if not provided
       });
 
       batch.push(entity);
@@ -383,6 +455,7 @@ export class MongooseToPostgresMigrator {
       await manager.save(OrderEntity, batch);
       count += batch.length;
     }
+    this.stats.orders = count;
     this.logger.info(`Migrated total ${count} Orders.`);
   }
 
@@ -424,6 +497,7 @@ export class MongooseToPostgresMigrator {
       await manager.save(ProductInstanceFunctionEntity, batch);
       count += batch.length;
     }
+    this.stats.productInstanceFunctions = count;
     this.logger.info(`Migrated total ${count} ProductInstanceFunctions.`);
   }
 
@@ -479,6 +553,7 @@ export class MongooseToPostgresMigrator {
       await manager.save(ProductInstanceEntity, batch);
       count += batch.length;
     }
+    this.stats.productInstances = count;
     this.logger.info(`Migrated total ${count} ProductInstances.`);
   }
 }

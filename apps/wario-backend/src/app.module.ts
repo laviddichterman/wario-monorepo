@@ -16,6 +16,7 @@ import { ScopesGuard } from './auth/guards/scopes.guard';
 import { AppConfigService } from './config/app-config.service';
 import { ConfigModule } from './config/config.module';
 import { ErrorNotificationService } from './config/error-notification/error-notification.service';
+import { buildTypeOrmConfig } from './config/typeorm-config.helper';
 import { ControllersModule } from './controllers/controllers.module';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { OrdersModule } from './models/orders/orders.module';
@@ -66,22 +67,38 @@ import { TasksModule } from './tasks/tasks.module';
     // PostgreSQL via TypeORM - enabled via USE_POSTGRES feature flag
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (appConfig: AppConfigService) => ({
-        type: 'postgres' as const,
-        host: appConfig.postgresHost,
-        port: appConfig.postgresPort,
-        username: appConfig.postgresUser,
-        password: appConfig.postgresPassword,
-        database: appConfig.postgresDatabase,
-        entities: [__dirname + '/entities/**/*.entity{.ts,.js}'],
-        migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-        migrationsTableName: 'typeorm_migrations',
-        migrationsRun: appConfig.usePostgres && !appConfig.allowSchemaSync,
-        synchronize: appConfig.allowSchemaSync,
-        logging: !appConfig.isProduction,
-        // Only connect if USE_POSTGRES is enabled
-        autoLoadEntities: true,
-      }),
+      useFactory: (appConfig: AppConfigService) => {
+        // Skip Postgres connection entirely when not using Postgres
+        if (!appConfig.usePostgres) {
+          return {
+            type: 'postgres' as const,
+            host: '', // Empty host prevents actual connection
+            synchronize: false,
+            migrationsRun: false,
+            autoLoadEntities: false,
+            retryAttempts: 0, // Don't retry on connection failure
+          };
+        }
+
+        return {
+          ...buildTypeOrmConfig(
+            {
+              host: appConfig.postgresHost,
+              port: appConfig.postgresPort,
+              username: appConfig.postgresUser,
+              password: appConfig.postgresPassword,
+              database: appConfig.postgresDatabase,
+              isProduction: appConfig.isProduction,
+            },
+            {
+              migrationsRun: !appConfig.allowSchemaSync,
+              synchronize: appConfig.allowSchemaSync,
+            },
+            __dirname,
+          ),
+          autoLoadEntities: true,
+        };
+      },
       inject: [AppConfigService],
     }),
     OrdersModule,

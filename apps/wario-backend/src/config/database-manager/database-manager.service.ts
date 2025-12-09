@@ -119,6 +119,19 @@ export class DatabaseManagerService implements OnModuleInit {
     '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => { }],
   };
 
+  /**
+   * Bootstrap handles 4 initialization scenarios:
+   * 
+   * EXISTING DATABASE (has version):
+   *   - usePostgres=true  → Run postgres data migrations
+   *   - usePostgres=false → Run legacy mongoose migrations
+   * 
+   * FRESH INSTALL (no version):
+   *   - usePostgres=true  + mongo data exists → Migrate from MongoDB
+   *   - usePostgres=true  + no mongo data    → Seed default config
+   *   - usePostgres=false + mongo data exists → Use mongoose (legacy mode)
+   *   - usePostgres=false + no mongo data    → ERROR (unsupported)
+   */
   Bootstrap = async () => {
     this.logger.info('>>> ENTERING BOOTSTRAP <<<');
     const [VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH] = PACKAGE_JSON.version.split('.', 3).map((x) => parseInt(x));
@@ -135,6 +148,7 @@ export class DatabaseManagerService implements OnModuleInit {
     let db_version: SEMVER | null = null;
 
     if (this.appConfigService.usePostgres) {
+      // POSTGRES MODE
       // Migrations are run automatically by TypeOrmModule (migrationsRun: true)
       try {
         db_version = await this.dbVersionRepository.get();
@@ -144,24 +158,39 @@ export class DatabaseManagerService implements OnModuleInit {
         await this.initializeFreshDatabase(VERSION_PACKAGE);
         return; // Initialization sets the version, so we are done for this run
       }
-    } else {
-      db_version = await this.dbVersionRepository.get();
-    }
 
-    if (!db_version && this.appConfigService.usePostgres) {
-      this.logger.warn('DB version not found. Treating database as fresh.');
-      await this.initializeFreshDatabase(VERSION_PACKAGE);
-      return;
-    }
-
-    if (db_version) {
-      if (this.isDbVersionAhead(db_version, VERSION_PACKAGE)) {
-        const msg = `Database version (${this.semverToString(db_version)}) is ahead of package version (${PACKAGE_JSON.version}). Refusing to start to avoid downgrade.`;
-        this.logger.error(msg);
-        throw new Error(msg);
+      if (!db_version) {
+        this.logger.warn('DB version not found. Treating database as fresh.');
+        await this.initializeFreshDatabase(VERSION_PACKAGE);
+        return;
       }
-      current_db_version = `${String(db_version.major)}.${String(db_version.minor)}.${String(db_version.patch)}`;
+    } else {
+      // MONGOOSE (LEGACY) MODE
+      db_version = await this.dbVersionRepository.get();
+
+      if (!db_version) {
+        // Fresh install in mongoose mode - check if mongo has any data
+        const hasMongoData = await this.checkMongoHasData();
+        if (!hasMongoData) {
+          const msg = 'UNSUPPORTED: Fresh install with USE_POSTGRES=false and no MongoDB data. ' +
+            'Set USE_POSTGRES=true to initialize a new PostgreSQL database.';
+          this.logger.error(msg);
+          throw new Error(msg);
+        }
+        // Has mongo data but no version - this is case 4, continue with legacy mode
+        this.logger.info('Fresh Mongoose database with existing data. Setting initial version.');
+        await this.SetVersion(VERSION_PACKAGE);
+        return;
+      }
     }
+
+    // At this point db_version is guaranteed to exist (other cases returned early)
+    if (this.isDbVersionAhead(db_version, VERSION_PACKAGE)) {
+      const msg = `Database version (${this.semverToString(db_version)}) is ahead of package version (${PACKAGE_JSON.version}). Refusing to start to avoid downgrade.`;
+      this.logger.error(msg);
+      throw new Error(msg);
+    }
+    current_db_version = `${String(db_version.major)}.${String(db_version.minor)}.${String(db_version.patch)}`;
 
     // Branching logic based on database backend
     if (this.appConfigService.usePostgres) {
@@ -172,6 +201,17 @@ export class DatabaseManagerService implements OnModuleInit {
 
     this.logger.info('Database upgrade checks completed.');
   };
+
+  /**
+   * Check if MongoDB has any data (Settings collection not empty).
+   */
+  private async checkMongoHasData(): Promise<boolean> {
+    if ((this.mongoConnection.readyState as unknown as number) !== 1) {
+      return false;
+    }
+    const settingsCount = await this.mongoConnection.collection('settings').countDocuments();
+    return settingsCount > 0;
+  }
 
   private initializeFreshDatabase = async (initialVersion: SEMVER) => {
     this.logger.info('Initializing Fresh Database...');
