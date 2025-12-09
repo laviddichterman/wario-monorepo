@@ -19,7 +19,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:unit": "jest --testPathPattern=\\.spec\\.ts$",
     "test:watch": "jest --watch",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "migration:generate": "typeorm migration:generate -d ormconfig.ts",
+    "migration:run": "typeorm migration:run -d ormconfig.ts",
+    "migration:revert": "typeorm migration:revert -d ormconfig.ts"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -108,7 +111,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^29.5.14",
     "@types/json-bigint": "^1.0.4",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.2",
     "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "^4.0.1",
     "@types/pg": "^8.15.6",
