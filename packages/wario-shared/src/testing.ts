@@ -50,6 +50,7 @@ export {
   createMockProductInstanceDisplayFlagsPos,
   createMockProductModifier,
   createMockProductOrderGuide,
+  createMockProductInstanceFunction,
 } from '../tests/mocks';
 
 // Comprehensive mock catalog for high coverage testing

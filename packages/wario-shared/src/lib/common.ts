@@ -77,7 +77,7 @@ export const PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX = /(\{[A-Za-z0-9]+\})/g;
  * @returns Record<K, T> - object map where each key is the property value and each value is the original object
  */
 export function ReduceArrayToMapByKey<T extends Record<K, PropertyKey>, K extends keyof T>(xs: T[], key: K) {
-  return Object.fromEntries(xs.map((x) => [x[key], x])) as Record<K, T>;
+  return Object.fromEntries(xs.map((x) => [x[key], x])) as Record<PropertyKey, T>;
 }
 
 export interface RecomputeTotalsResult {

@@ -5,6 +5,7 @@
 
 import { type DeepPartial, ReduceArrayToMapByKey } from '../src';
 import type {
+  AbstractExpressionConstLiteral,
   AbstractOrderExpression,
   AbstractOrderExpressionConstLiteral,
   AbstractOrderExpressionIfElseExpression,
@@ -12,6 +13,7 @@ import type {
   CatalogCategoryEntry,
   CatalogModifierEntry,
   CategoryDisplayFlags,
+  IAbstractExpression,
   ICatalog,
   ICategory,
   IConstLiteralExpression,
@@ -47,6 +49,7 @@ import {
   MODIFIER_CLASS,
   OrderInstanceFunctionType,
   PriceDisplay,
+  ProductInstanceFunctionType,
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
 import type { ICatalogSelectors } from '../src/lib/types';
@@ -380,3 +383,27 @@ export const createMockOrderInstanceFunction = (
 // ============================================================================
 // Product Instance Function Helpers
 // ============================================================================
+
+export const createMockAbstractExpressionConstLiteral = (
+  overrides: IConstLiteralExpression = { discriminator: ConstLiteralDiscriminator.NUMBER, value: 0 },
+): AbstractExpressionConstLiteral => ({
+  discriminator: ProductInstanceFunctionType.ConstLiteral,
+  expr: overrides,
+});
+
+export const createMockAbstractExpression = (
+  overrides: DeepPartial<IAbstractExpression> = {},
+): IAbstractExpression => {
+  // Simplified default: return const literal if discriminator absent or matches
+  // Full implementation would replicate the switch usage in createMockAbstractOrderExpression
+  return createMockAbstractExpressionConstLiteral((overrides.expr ?? {}) as IConstLiteralExpression);
+};
+
+export const createMockProductInstanceFunction = (
+  overrides: DeepPartial<IProductInstanceFunction> = {},
+): IProductInstanceFunction => ({
+  id: 'pif1',
+  name: 'Test Product Instance Function',
+  ...overrides,
+  expression: createMockAbstractExpression(overrides.expression),
+});

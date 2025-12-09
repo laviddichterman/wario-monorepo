@@ -48,9 +48,9 @@ export class FulfillmentTypeOrmRepository implements IFulfillmentRepository {
     await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
 
     // Create new version
+    const merged = { ...(existing as FulfillmentConfig), ...partial };
     const entity = this.repo.create({
-      ...existing,
-      ...partial,
+      ...merged,
       id,
       validFrom: now,
       validTo: null,

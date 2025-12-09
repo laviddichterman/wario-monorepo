@@ -80,6 +80,35 @@ The `CatalogProvider` service acts as the cache/proxy for Square's Catalog. Wari
 pnpm output backend:start:dev
 ```
 
+### Validating Changes
+
+Run the test suite before submitting:
+
+```bash
+pnpm backend:test
+```
+
+## Schema Migration
+
+The application handles schema migrations on startup via `DatabaseManagerService`.
+
+### PostgreSQL Migrations
+
+Migrations are defined in `POSTGRES_MIGRATIONS` map within `DatabaseManagerService`.
+Each migration is a function that receives a `DataSource` and performs necessary SQL or Repository operations.
+
+```typescript
+'1.0.1': [{ major: 1, minor: 0, patch: 2 }, async (dataSource) => {
+  await dataSource.query(`ALTER TABLE product ADD COLUMN dietary_info JSONB DEFAULT NULL`);
+}]
+```
+
+The service checks the current DB version against `package.json` and runs pending migrations sequentially.
+
+### Legacy Support
+
+`LEGACY_MONGOOSE_MIGRATIONS` exists for historical support but is **frozen**. All new schema changes should target PostgreSQL.
+
 ### Testing
 
 - **Unit Tests:** `*.spec.ts` files next to the source.

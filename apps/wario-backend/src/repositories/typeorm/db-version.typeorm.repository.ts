@@ -15,8 +15,13 @@ export class DBVersionTypeOrmRepository implements IDBVersionRepository {
   ) {}
 
   async get(): Promise<SEMVER | null> {
-    // DBVersion is a singleton - get first row
-    const result = await this.repo.find({ take: 1 });
-    return result[0] ?? null;
+    const entity = await this.repo.findOne({ where: {} });
+    if (!entity) return null;
+    return { major: entity.major, minor: entity.minor, patch: entity.patch };
+  }
+
+  async set(version: SEMVER): Promise<void> {
+    await this.repo.clear(); // Ensure only one version row exists
+    await this.repo.save(version);
   }
 }

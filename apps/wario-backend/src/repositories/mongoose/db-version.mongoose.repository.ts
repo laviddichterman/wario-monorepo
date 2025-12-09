@@ -14,7 +14,12 @@ export class DBVersionMongooseRepository implements IDBVersionRepository {
   ) {}
 
   async get(): Promise<SEMVER | null> {
-    const doc = await this.model.findOne().lean().exec();
-    return doc ?? null;
+    const doc = await this.model.findOne();
+    if (!doc) return null;
+    return { major: doc.major, minor: doc.minor, patch: doc.patch };
+  }
+
+  async set(version: SEMVER): Promise<void> {
+    await this.model.findOneAndUpdate({}, version, { upsert: true, new: true });
   }
 }
