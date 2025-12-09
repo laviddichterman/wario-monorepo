@@ -7,6 +7,8 @@ import { usePathname } from '@/routes/hooks';
 
 import { useAuthContext } from '@/hooks/useAuthContext';
 
+import { CONFIG } from '@/config';
+
 // ----------------------------------------------------------------------
 
 type AuthGuardProps = {
@@ -28,8 +30,14 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
     if (!authenticated) {
       // Redirect directly to Auth0 login
+      // Include authorizationParams with scope and audience to ensure
+      // offline_access is requested, which is required for refresh tokens
       await loginWithRedirect({
         appState: { returnTo: pathname },
+        authorizationParams: {
+          scope: CONFIG.auth0.scope,
+          audience: CONFIG.auth0.audience,
+        },
       });
       return;
     }

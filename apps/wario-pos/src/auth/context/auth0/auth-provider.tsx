@@ -66,7 +66,7 @@ export function AuthProvider({ children }: Props) {
 // ----------------------------------------------------------------------
 
 function AuthProviderContainer({ children }: Props) {
-  const { user, isLoading, isAuthenticated, getAccessTokenSilently } = useAuth0<UserType>();
+  const { user, isLoading, isAuthenticated, getAccessTokenSilently, logout } = useAuth0<UserType>();
 
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [tokenClaims, setTokenClaims] = useState<AccessTokenClaims | null>(null);
@@ -86,9 +86,24 @@ function AuthProviderContainer({ children }: Props) {
         delete axios.defaults.headers.common.Authorization;
       }
     } catch (error) {
-      console.error(error);
+      // Check if the error is due to missing/expired refresh token
+      // Auth0 throws 'login_required' or 'Missing Refresh Token' errors when
+      // silent token refresh fails
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const isRefreshTokenError =
+        errorMessage.includes('Missing Refresh Token') ||
+        errorMessage.includes('login_required') ||
+        errorMessage.includes('invalid_grant');
+
+      if (isRefreshTokenError) {
+        // Log user out and redirect to login page
+        // This provides a clean UX instead of leaving the user in a broken state
+        void logout({ logoutParams: { returnTo: window.location.origin } });
+      } else {
+        console.error('Auth token error:', error);
+      }
     }
-  }, [getAccessTokenSilently, isAuthenticated]);
+  }, [getAccessTokenSilently, isAuthenticated, logout]);
 
   useEffect(() => {
     void getAccessToken();
