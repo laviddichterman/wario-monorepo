@@ -1,6 +1,8 @@
 import { useSetAtom } from 'jotai';
 
-import { DeleteOutline, Edit } from '@mui/icons-material';
+import DeleteForeverOutlined from '@mui/icons-material/DeleteForeverOutlined';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import Edit from '@mui/icons-material/Edit';
 import Tooltip from '@mui/material/Tooltip';
 import type { GridRenderCellParams, GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem } from '@mui/x-data-grid-premium';
@@ -80,7 +82,7 @@ const ProductInstanceTableContainer = ({ product_instance_ids }: ProductInstance
               disabled={params.row.base}
               icon={
                 <Tooltip title="Delete Product Instance">
-                  <DeleteOutline />
+                  {params.row.base ? <DeleteForeverOutlined /> : <DeleteOutline />}
                 </Tooltip>
               }
               label="Delete Product Instance"
