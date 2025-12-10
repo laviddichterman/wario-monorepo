@@ -3,8 +3,7 @@ import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { Add } from '@mui/icons-material';
-import { TabPanel } from '@mui/lab';
-import { Box, Button, Tab } from '@mui/material';
+import { Box, Button } from '@mui/material';
 
 import { type CatalogProductEntry } from '@wcp/wario-shared';
 import { useBaseProductNameByProductId, useCatalogSelectors, useProductEntryById } from '@wcp/wario-ux-shared/query';
@@ -154,27 +153,23 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
       onConfirmClick={() => {
         void editProduct();
       }}
-      initialTab="variations"
-      extraTabs={<Tab label={`Variations (${String(instanceIds.length)})`} value="variations" />}
-      extraTabPanels={
-        <TabPanel value="variations" sx={{ p: 0, pt: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box>
-              {instanceIds.map((instanceId, index) => (
-                <ProductInstanceRow
-                  key={instanceId}
-                  instanceId={instanceId}
-                  parentProduct={toProductApiBody(productForm)}
-                  catalogSelectors={catalogSelectors}
-                  defaultExpanded={index === 0}
-                />
-              ))}
-            </Box>
-            <Button startIcon={<Add />} onClick={handleAddVariation} fullWidth variant="outlined">
-              Add Variation
-            </Button>
+      productInstancesContent={
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Box>
+            {instanceIds.map((instanceId, index) => (
+              <ProductInstanceRow
+                key={instanceId}
+                instanceId={instanceId}
+                parentProduct={toProductApiBody(productForm)}
+                catalogSelectors={catalogSelectors}
+                defaultExpanded={index === 0}
+              />
+            ))}
           </Box>
-        </TabPanel>
+          <Button startIcon={<Add />} onClick={handleAddVariation} fullWidth variant="outlined">
+            Add Variation
+          </Button>
+        </Box>
       }
     />
   );

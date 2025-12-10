@@ -51,12 +51,11 @@ import ProductModifierComponent from './ProductModifierComponent';
 // =============================================================================
 
 export interface ProductFormBodyProps {
-  extraTabs?: React.ReactNode;
-  extraTabPanels?: React.ReactNode;
+  productInstancesContent?: React.ReactNode;
   initialTab?: string;
 }
 
-export const ProductFormBody = ({ extraTabs, extraTabPanels, initialTab }: ProductFormBodyProps) => {
+export const ProductFormBody = ({ productInstancesContent, initialTab }: ProductFormBodyProps) => {
   const [form, setForm] = useAtom(productFormAtom);
   const isProcessing = useAtomValue(productFormProcessingAtom);
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
@@ -100,7 +99,6 @@ export const ProductFormBody = ({ extraTabs, extraTabPanels, initialTab }: Produ
           }}
           aria-label="Product config tabs"
         >
-          {extraTabs}
           <Tab label="General" value="general" />
           <Tab label="Configuration" value="config" />
           <Tab label="Modifiers" value="modifiers" />
@@ -112,6 +110,7 @@ export const ProductFormBody = ({ extraTabs, extraTabPanels, initialTab }: Produ
          ============================== */}
       <TabPanel value="general">
         <Grid container spacing={2}>
+          {productInstancesContent && <Grid size={12}>{productInstancesContent}</Grid>}
           <Grid size={12}>
             <Autocomplete
               multiple
@@ -407,7 +406,6 @@ export const ProductFormBody = ({ extraTabs, extraTabPanels, initialTab }: Produ
           setModifiers={handleSetModifiers}
         />
       </TabPanel>
-      {extraTabPanels}
     </TabContext>
   );
 };
@@ -418,8 +416,7 @@ export interface ProductFormComponentProps {
   onConfirmClick: VoidFunction;
   disableConfirm?: boolean;
   children?: React.ReactNode;
-  extraTabs?: React.ReactNode;
-  extraTabPanels?: React.ReactNode;
+  productInstancesContent?: React.ReactNode;
   initialTab?: string;
 }
 
@@ -429,8 +426,7 @@ export const ProductComponent = ({
   onConfirmClick,
   disableConfirm = false,
   children,
-  extraTabs,
-  extraTabPanels,
+  productInstancesContent,
   initialTab,
 }: ProductFormComponentProps) => {
   const { isValid, isProcessing } = useProductForm();
@@ -464,7 +460,7 @@ export const ProductComponent = ({
       confirmText={confirmText}
       body={
         <>
-          <ProductFormBody extraTabs={extraTabs} extraTabPanels={extraTabPanels} initialTab={initialTab} />
+          <ProductFormBody productInstancesContent={productInstancesContent} initialTab={initialTab} />
           {children}
         </>
       }

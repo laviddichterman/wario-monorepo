@@ -2,9 +2,6 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
-import { TabPanel } from '@mui/lab';
-import { Tab } from '@mui/material';
-
 import { useAddProductMutation } from '@/hooks/useProductMutations';
 
 import {
@@ -83,12 +80,7 @@ const ProductAddContainer = ({ onCloseCallback }: ProductAddContainerProps) => {
       confirmText="Add"
       onCloseCallback={onCloseCallback}
       onConfirmClick={addProduct}
-      extraTabs={<Tab label="Base Variation" value="variation" />}
-      extraTabPanels={
-        <TabPanel value="variation" sx={{ p: 0, pt: 2 }}>
-          <ProductInstanceContainer parent_product={toProductApiBody(productForm)} />
-        </TabPanel>
-      }
+      productInstancesContent={<ProductInstanceContainer parent_product={toProductApiBody(productForm)} />}
     />
   );
 };
