@@ -7,6 +7,8 @@ export type StringPropertyComponentProps = {
   label: string;
   disabled: boolean;
   error?: TextFieldProps['error'];
+  size?: TextFieldProps['size'];
+  slotProps?: TextFieldProps['slotProps'];
 } & ValSetVal<string>;
 
 export function StringPropertyComponent(props: StringPropertyComponentProps) {
@@ -18,9 +20,11 @@ export function StringPropertyComponent(props: StringPropertyComponentProps) {
       fullWidth
       disabled={props.disabled}
       value={props.value}
+      size={props.size}
       onChange={(e) => {
         props.setValue(e.target.value);
       }}
+      slotProps={props.slotProps}
     />
   );
 }

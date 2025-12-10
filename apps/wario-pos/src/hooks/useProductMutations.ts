@@ -6,6 +6,8 @@ import type {
   IProduct,
   IProductInstance,
   IWInterval,
+  PartialUncommittedProductInstanceDto,
+  UncommittedIProductInstance,
   UpsertProductBatchRequest,
 } from '@wcp/wario-shared';
 
@@ -35,6 +37,17 @@ export type BatchUpsertProductResponse = {
   product: IProduct;
   instances: IProductInstance[];
 }[];
+
+interface CreateProductInstanceRequest {
+  productId: string;
+  form: UncommittedIProductInstance;
+}
+
+interface UpdateProductInstanceRequest {
+  productId: string;
+  instanceId: string;
+  form: PartialUncommittedProductInstanceDto;
+}
 
 // ============================================================================
 // Mutations
@@ -179,6 +192,53 @@ export function useBatchDeleteProductsMutation() {
       }
 
       return results;
+    },
+  });
+}
+
+/**
+ * Mutation hook for adding a new product instance
+ */
+export function useCreateProductInstanceMutation() {
+  const { getAccessTokenSilently } = useAuth0();
+
+  return useMutation({
+    mutationFn: async ({ productId, form }: CreateProductInstanceRequest) => {
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, form, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      return response.data;
+    },
+  });
+}
+
+/**
+ * Mutation hook for updating a product instance
+ */
+export function useUpdateProductInstanceMutation() {
+  const { getAccessTokenSilently } = useAuth0();
+
+  return useMutation({
+    mutationFn: async ({ productId, instanceId, form }: UpdateProductInstanceRequest) => {
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+
+      const response = await axiosInstance.patch<IProductInstance>(
+        `/api/v1/menu/product/${productId}/${instanceId}`,
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      return response.data;
     },
   });
 }

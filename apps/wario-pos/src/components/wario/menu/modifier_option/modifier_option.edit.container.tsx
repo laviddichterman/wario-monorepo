@@ -1,106 +1,130 @@
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import type { IOption, IOptionType } from '@wcp/wario-shared';
-import { useOptionById, useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
+import { TabContext, TabList } from '@mui/lab';
+import { Button, Tab } from '@mui/material';
 
-import { useEditModifierOptionMutation } from '@/hooks/useModifierOptionMutations';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
+import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 
 import {
   fromModifierOptionEntity,
   modifierOptionFormAtom,
   modifierOptionFormProcessingAtom,
+  toModifierOptionApiBody,
 } from '@/atoms/forms/modifierOptionFormAtoms';
+import { HOST_API } from '@/config';
 
-import { ModifierOptionComponent } from './modifier_option.component';
+import { ModifierOptionFormBody } from './modifier_option.component';
 
-interface ModifierOptionEditContainerProps {
+export interface ModifierOptionEditContainerProps {
   modifier_option_id: string;
   onCloseCallback: VoidFunction;
 }
 
-const ModifierOptionEditContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionEditContainerProps) => {
-  const modifier_option = useOptionById(modifier_option_id) as IOption | null;
-  const modifierType = useValueFromModifierEntryById(
-    modifier_option?.modifierTypeId ?? '',
-    'modifierType',
-  ) as IOptionType | null;
+export const ModifierOptionEditContainer = ({
+  modifier_option_id,
+  onCloseCallback,
+}: ModifierOptionEditContainerProps) => {
+  const catalogSelectors = useCatalogSelectors();
+  const setForm = useSetAtom(modifierOptionFormAtom);
 
-  const setFormState = useSetAtom(modifierOptionFormAtom);
-
-  // Initialize form from existing entity
   useEffect(() => {
-    if (modifier_option) {
-      setFormState(fromModifierOptionEntity(modifier_option));
+    if (catalogSelectors) {
+      const ent = catalogSelectors.option(modifier_option_id);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (ent) {
+        setForm(fromModifierOptionEntity(ent));
+      }
     }
     return () => {
-      setFormState(null);
+      setForm(null);
     };
-  }, [modifier_option, setFormState]);
+  }, [catalogSelectors, modifier_option_id, setForm]);
 
-  if (!modifier_option || !modifierType) {
-    return null;
-  }
+  if (!catalogSelectors) return null;
 
-  return (
-    <ModifierOptionEditContainerInner
-      modifier_option={modifier_option}
-      modifierType={modifierType}
-      onCloseCallback={onCloseCallback}
-    />
-  );
+  return <ModifierOptionEditForm modifier_option_id={modifier_option_id} onCloseCallback={onCloseCallback} />;
 };
 
-interface InnerProps {
+interface ModifierOptionEditFormProps {
+  modifier_option_id: string;
   onCloseCallback: VoidFunction;
-  modifier_option: IOption;
-  modifierType: IOptionType;
 }
 
-const ModifierOptionEditContainerInner = ({ onCloseCallback, modifier_option, modifierType }: InnerProps) => {
+const ModifierOptionEditForm = ({ modifier_option_id, onCloseCallback }: ModifierOptionEditFormProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const setIsProcessing = useSetAtom(modifierOptionFormProcessingAtom);
-  const formState = useAtomValue(modifierOptionFormAtom);
+  const catalogSelectors = useCatalogSelectors();
+  const [activeTab, setActiveTab] = useState('identity');
 
-  const editMutation = useEditModifierOptionMutation();
+  const [form] = useAtom(modifierOptionFormAtom);
+  const [isProcessing, setIsProcessing] = useAtom(modifierOptionFormProcessingAtom);
 
-  const editModifierOption = () => {
-    if (!formState || editMutation.isPending) return;
-
+  const save = async () => {
+    if (!form) return;
     setIsProcessing(true);
-    editMutation.mutate(
-      {
-        modifierTypeId: modifier_option.modifierTypeId,
-        optionId: modifier_option.id,
-        form: formState,
-      },
-      {
-        onSuccess: () => {
-          enqueueSnackbar(`Updated modifier option: ${formState.displayName}.`);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const body: any = toModifierOptionApiBody(form);
+
+      const response = await fetch(`${HOST_API}/api/v1/menu/modifier_option/${modifier_option_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        onError: (error) => {
-          enqueueSnackbar(
-            `Unable to update modifier option: ${formState.displayName}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' },
-          );
-          console.error(error);
-        },
-        onSettled: () => {
-          setIsProcessing(false);
-          onCloseCallback();
-        },
-      },
-    );
+        body: JSON.stringify(body),
+      });
+
+      if (response.status === 200) {
+        enqueueSnackbar('Saved modifier option');
+        onCloseCallback();
+      } else {
+        enqueueSnackbar('Failed to save modifier option', { variant: 'error' });
+      }
+    } catch (e) {
+      console.error(e);
+      enqueueSnackbar('Failed to save modifier option', { variant: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
+  const modifierOption = catalogSelectors?.option(modifier_option_id);
+  const modifierTypeId = modifierOption?.modifierTypeId;
+  const modifierEntry = modifierTypeId ? catalogSelectors?.modifierEntry(modifierTypeId) : null;
+
+  if (!catalogSelectors || !modifierOption || !modifierEntry) return null;
+
   return (
-    <ModifierOptionComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={editModifierOption}
-      modifierType={modifierType}
-    />
+    <TabContext value={activeTab}>
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+        <AppDialog.Header onClose={onCloseCallback} title="Edit Modifier Option">
+          <TabList
+            onChange={(_e, v: string) => {
+              setActiveTab(v);
+            }}
+            aria-label="Modifier option tabs"
+          >
+            <Tab label="Identity" value="identity" />
+            <Tab label="Rules" value="rules" />
+            <Tab label="Configuration" value="config" />
+            <Tab label="Availability" value="availability" />
+          </TabList>
+        </AppDialog.Header>
+        <AppDialog.Content>
+          <ModifierOptionFormBody modifierType={modifierEntry.modifierType} />
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button onClick={onCloseCallback} disabled={isProcessing}>
+            Cancel
+          </Button>
+          <Button onClick={() => void save()} disabled={isProcessing} variant="contained">
+            Save
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    </TabContext>
   );
 };
 

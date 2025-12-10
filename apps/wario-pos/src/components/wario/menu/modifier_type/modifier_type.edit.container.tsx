@@ -1,17 +1,31 @@
+import { useStore } from 'jotai';
 import { useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { ArrowBack } from '@mui/icons-material';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
+import { Button, IconButton, Tab, Typography } from '@mui/material';
 
 import type { IOptionType } from '@wcp/wario-shared';
-import { useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
+import { useCatalogSelectors, useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import { useEditModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
+import {
+  DEFAULT_MODIFIER_OPTION_FORM,
+  fromModifierOptionEntity,
+  modifierOptionFormFamily,
+} from '@/atoms/forms/modifierOptionFormAtoms';
 import { fromModifierTypeEntity, modifierTypeFormAtom, useModifierTypeForm } from '@/atoms/forms/modifierTypeFormAtoms';
 
-import { ModifierTypeFormComponent, type ModifierTypeModifyUiProps } from './modifier_type.component';
+import { ModifierOptionFormBody } from '../modifier_option/modifier_option.component';
+import { UnifiedModifierOptionTable } from '../modifier_option/unified_modifier_option_table';
+
+import { ModifierTypeFormBody, type ModifierTypeModifyUiProps } from './modifier_type.component';
 
 const useModifierTypeById = (id: string | null) => {
   return useValueFromModifierEntryById(id ?? '', 'modifierType');
@@ -38,22 +52,60 @@ interface InnerProps {
 
 const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
+  const catalogSelectors = useCatalogSelectors();
+  const store = useStore();
+
+  // Fetch options list from Entry because IOptionType doesn't have it
+  const optionsFromEntry = useValueFromModifierEntryById(modifier_type.id, 'options');
 
   const setFormState = useSetAtom(modifierTypeFormAtom);
-  const { form, setIsProcessing } = useModifierTypeForm();
+  const { form, setIsProcessing, isProcessing } = useModifierTypeForm();
 
   const editMutation = useEditModifierTypeMutation();
+  const [activeTab, setActiveTab] = useState('rules');
+
+  // Local state for options list
+  const [optionIds, setOptionIds] = useState<string[]>([]);
+  // Drill-down state
+  const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
+
+  // Derived atom for drill-down view - calculated at top level to avoid conditional hook
+  // We use useMemo to ensure stable reference if needed, though atomFamily returns stable atoms per ID.
+  const editingOptionAtom = useMemo(
+    () => (editingOptionId ? modifierOptionFormFamily(editingOptionId) : null),
+    [editingOptionId],
+  );
 
   // Initialize form from existing entity
   useEffect(() => {
+    // 1. Type Form
     setFormState(fromModifierTypeEntity(modifier_type));
+
+    // 2. Option List & Atoms
+    if (optionsFromEntry) {
+      setOptionIds(optionsFromEntry);
+
+      optionsFromEntry.forEach((id) => {
+        const ent = catalogSelectors?.option(id);
+        if (ent) {
+          store.set(modifierOptionFormFamily(id), fromModifierOptionEntity(ent));
+        }
+      });
+    }
+
     return () => {
       setFormState(null);
+      // Cleanup option atoms
+      optionsFromEntry?.forEach((id) => {
+        modifierOptionFormFamily.remove(id);
+      });
     };
-  }, [modifier_type, setFormState]);
+  }, [modifier_type, setFormState, catalogSelectors, optionsFromEntry, store]);
 
   const editModifierType = () => {
     if (!form || editMutation.isPending) return;
+
+    // TODO: Implement Batch Update for Options (Scope Limitation: UX Only for now)
 
     setIsProcessing(true);
     editMutation.mutate(
@@ -76,8 +128,119 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
     );
   };
 
+  const handleAddOption = () => {
+    const newId = `temp_${String(Date.now())}`;
+    const newOption = {
+      ...DEFAULT_MODIFIER_OPTION_FORM,
+      ordinal: optionIds.length,
+    };
+    store.set(modifierOptionFormFamily(newId), newOption);
+    setOptionIds((prev) => [...prev, newId]);
+    setEditingOptionId(newId);
+  };
+
+  const handleEditOption = (id: string) => {
+    setEditingOptionId(id);
+  };
+
+  const handleDeleteOption = (id: string) => {
+    setOptionIds((prev) => prev.filter((x) => x !== id));
+    modifierOptionFormFamily.remove(id);
+  };
+
+  const handleCopyOption = (id: string) => {
+    const sourceForm = store.get(modifierOptionFormFamily(id));
+    if (!sourceForm) return;
+
+    const newId = `temp_${String(Date.now())}`;
+    store.set(modifierOptionFormFamily(newId), { ...sourceForm, displayName: `${sourceForm.displayName} (Copy)` });
+    setOptionIds((prev) => [...prev, newId]);
+  };
+
+  if (!form) return null;
+
+  // Drill-down View
+  if (editingOptionId && editingOptionAtom) {
+    return (
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+        <AppDialog.Header
+          onClose={onCloseCallback}
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <IconButton
+                onClick={() => {
+                  setEditingOptionId(null);
+                }}
+                size="small"
+                edge="start"
+              >
+                <ArrowBack />
+              </IconButton>
+              <Typography variant="h6">Edit Option</Typography>
+            </div>
+          }
+        >
+          {/* Header Actions/Tabs if needed */}
+        </AppDialog.Header>
+        <AppDialog.Content>
+          {/* FormAtom is passed directly now, derived at top level */}
+          <ModifierOptionFormBody modifierType={modifier_type} formAtom={editingOptionAtom} />
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button
+            onClick={() => {
+              setEditingOptionId(null);
+            }}
+            variant="contained"
+          >
+            Done
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    );
+  }
+
+  // Main View
   return (
-    <ModifierTypeFormComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={editModifierType} />
+    <TabContext value={activeTab}>
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+        <AppDialog.Header onClose={onCloseCallback} title={`Edit ${form.name}`}>
+          <TabList
+            onChange={(_e, v: string) => {
+              setActiveTab(v);
+            }}
+            aria-label="modifier type tabs"
+            textColor="inherit"
+          >
+            <Tab label="Rules" value="rules" />
+            <Tab label="Formatting" value="formatting" />
+            <Tab label="Options" value="options" />
+          </TabList>
+        </AppDialog.Header>
+        <AppDialog.Content>
+          {/* Main type form uses global atom, so it renders regardless of tab (logic inside handles hiding) */}
+          <ModifierTypeFormBody />
+
+          <TabPanel value="options" sx={{ p: 0, pt: 2 }}>
+            <UnifiedModifierOptionTable
+              optionIds={optionIds}
+              onAddOption={handleAddOption}
+              onEditOption={handleEditOption}
+              onDeleteOption={handleDeleteOption}
+              onCopyOption={handleCopyOption}
+            />
+          </TabPanel>
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button onClick={onCloseCallback} disabled={isProcessing}>
+            Cancel
+          </Button>
+          <Button onClick={editModifierType} disabled={isProcessing} variant="contained">
+            Save
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    </TabContext>
   );
 };
 

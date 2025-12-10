@@ -1,14 +1,34 @@
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import type { IProduct } from '@wcp/wario-shared';
-import { useBaseProductNameByProductId, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
+import { Add } from '@mui/icons-material';
+import { TabPanel } from '@mui/lab';
+import { Box, Button, Tab } from '@mui/material';
 
-import { useEditProductMutation } from '@/hooks/useProductMutations';
+import { type CatalogProductEntry } from '@wcp/wario-shared';
+import { useBaseProductNameByProductId, useCatalogSelectors, useProductEntryById } from '@wcp/wario-ux-shared/query';
 
-import { fromProductEntity, productFormAtom, productFormProcessingAtom } from '@/atoms/forms/productFormAtoms';
+import {
+  useCreateProductInstanceMutation,
+  useEditProductMutation,
+  useUpdateProductInstanceMutation,
+} from '@/hooks/useProductMutations';
 
+import {
+  fromProductEntity,
+  productFormAtom,
+  productFormProcessingAtom,
+  toProductApiBody,
+} from '@/atoms/forms/productFormAtoms';
+import {
+  DEFAULT_PRODUCT_INSTANCE_FORM,
+  productInstanceExpandedFamily,
+  productInstanceFormFamily,
+  toProductInstanceApiBody,
+} from '@/atoms/forms/productInstanceFormAtoms';
+
+import { ProductInstanceRow } from './instance/product_instance.row';
 import { ProductComponent } from './product.component';
 
 export interface ProductEditContainerProps {
@@ -18,64 +38,146 @@ export interface ProductEditContainerProps {
 
 const ProductEditContainer = ({ product_id, onCloseCallback }: ProductEditContainerProps) => {
   const productName = useBaseProductNameByProductId(product_id);
-  const product = useValueFromProductEntryById(product_id, 'product');
+  const productEntry = useProductEntryById(product_id);
 
-  if (!product || !productName) {
+  if (!productEntry || !productName) {
     return null;
   }
 
-  return <ProductEditContainerInner product={product} productName={productName} onCloseCallback={onCloseCallback} />;
+  return (
+    <ProductEditContainerInner
+      productEntry={productEntry}
+      productName={productName}
+      onCloseCallback={onCloseCallback}
+    />
+  );
 };
 
 interface InnerProps {
-  product: IProduct;
+  productEntry: CatalogProductEntry;
   productName: string;
   onCloseCallback: VoidFunction;
 }
 
-const ProductEditContainerInner = ({ product, productName, onCloseCallback }: InnerProps) => {
+const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
+  const store = useStore();
+  const catalogSelectors = useCatalogSelectors();
 
   const setProductForm = useSetAtom(productFormAtom);
   const setIsProcessing = useSetAtom(productFormProcessingAtom);
   const productForm = useAtomValue(productFormAtom);
 
   const editMutation = useEditProductMutation();
+  const createInstanceMutation = useCreateProductInstanceMutation();
+  const updateInstanceMutation = useUpdateProductInstanceMutation();
+
+  const [instanceIds, setInstanceIds] = useState<string[]>([]);
 
   useEffect(() => {
-    setProductForm(fromProductEntity(product));
+    setProductForm(fromProductEntity(productEntry.product));
+    setInstanceIds(productEntry.instances);
     return () => {
       setProductForm(null);
+      // Cleanup family atoms
+      // Cleanup loaded instances
+      productEntry.instances.forEach((id) => {
+        productInstanceFormFamily.remove(id);
+        productInstanceExpandedFamily.remove(id);
+      });
     };
-  }, [product, setProductForm]);
+  }, [productEntry, setProductForm]);
 
-  const editProduct = () => {
+  const handleAddVariation = () => {
+    const tempId = `temp_${String(Date.now())}`;
+    const newInstance = { ...DEFAULT_PRODUCT_INSTANCE_FORM };
+    // Auto-generate ordinal based on count
+    newInstance.ordinal = instanceIds.length; // 0-indexed or 1-? Usually 0 is fine.
+
+    store.set(productInstanceFormFamily(tempId), newInstance);
+    // Expand the new row
+    store.set(productInstanceExpandedFamily(tempId), true);
+
+    setInstanceIds((prev) => [...prev, tempId]);
+  };
+
+  const editProduct = async () => {
     if (!productForm || editMutation.isPending) return;
 
     setIsProcessing(true);
-    editMutation.mutate(
-      { id: product.id, form: productForm },
-      {
-        onSuccess: () => {
-          enqueueSnackbar(`Updated ${productName}.`);
-        },
-        onError: (error) => {
-          enqueueSnackbar(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`, {
-            variant: 'error',
+
+    try {
+      // 1. Update Product
+      await editMutation.mutateAsync({ id: productEntry.product.id, form: productForm });
+
+      // 2. Process Instances
+      const instancePromises = instanceIds.map(async (id) => {
+        const instanceForm = store.get(productInstanceFormFamily(id));
+        if (!instanceForm) return; // Not loaded/modified
+
+        const apiBody = toProductInstanceApiBody(instanceForm);
+
+        if (id.startsWith('temp_')) {
+          await createInstanceMutation.mutateAsync({
+            productId: productEntry.product.id,
+            form: apiBody,
           });
-          console.error(error);
-        },
-        onSettled: () => {
-          setIsProcessing(false);
-          onCloseCallback();
-        },
-      },
-    );
+        } else {
+          await updateInstanceMutation.mutateAsync({
+            productId: productEntry.product.id,
+            instanceId: id,
+            form: apiBody,
+          });
+        }
+      });
+
+      await Promise.all(instancePromises);
+
+      enqueueSnackbar(`Updated ${productName}.`);
+      onCloseCallback();
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar(`Unable to update ${productName}. Error details in console.`, {
+        variant: 'error',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  if (!productForm) return null;
+  if (!productForm || !catalogSelectors) return null;
 
-  return <ProductComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={editProduct} />;
+  return (
+    <ProductComponent
+      confirmText="Save"
+      onCloseCallback={onCloseCallback}
+      onConfirmClick={() => {
+        void editProduct();
+      }}
+      initialTab="variations"
+      extraTabs={<Tab label={`Variations (${String(instanceIds.length)})`} value="variations" />}
+      extraTabPanels={
+        <TabPanel value="variations" sx={{ p: 0, pt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box>
+              {instanceIds.map((instanceId, index) => (
+                <ProductInstanceRow
+                  key={instanceId}
+                  instanceId={instanceId}
+                  parentProduct={toProductApiBody(productForm)}
+                  catalogSelectors={catalogSelectors}
+                  defaultExpanded={index === 0}
+                />
+              ))}
+            </Box>
+            <Button startIcon={<Add />} onClick={handleAddVariation} fullWidth variant="outlined">
+              Add Variation
+            </Button>
+          </Box>
+        </TabPanel>
+      }
+    />
+  );
 };
 
 export default ProductEditContainer;

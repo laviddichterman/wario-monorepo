@@ -8,6 +8,7 @@ export type FloatNumericPropertyComponentProps = {
   step?: number;
   label: string;
   disabled: boolean;
+  size?: 'small' | 'medium';
 } & ValSetVal<number>;
 
 export function FloatNumericPropertyComponent(props: FloatNumericPropertyComponentProps) {
@@ -16,6 +17,7 @@ export function FloatNumericPropertyComponent(props: FloatNumericPropertyCompone
       type="number"
       fullWidth
       label={props.label}
+      size={props.size}
       numberProps={{
         allowEmpty: false,
         defaultValue: props.value,

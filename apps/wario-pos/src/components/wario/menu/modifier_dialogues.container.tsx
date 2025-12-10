@@ -12,7 +12,7 @@ import {
   selectedModifierTypeIdAtom,
 } from '@/atoms/catalog';
 
-import ModifierOptionAddContainer from './modifier_option/modifier_option.add.container';
+import { ModifierOptionAddContainer } from './modifier_option/modifier_option.add.container';
 import ModifierOptionDeleteContainer from './modifier_option/modifier_option.delete.container';
 import ModifierOptionDisableContainer from './modifier_option/modifier_option.disable.container';
 import ModifierOptionDisableUntilEodContainer from './modifier_option/modifier_option.disable_until_eod.container';
@@ -150,37 +150,21 @@ const ModifierDialoguesContainer = () => {
         }
       />
       <ModifierOptionAdd />
-      <DialogContainer
-        title={'Add Modifier Type'}
-        onClose={() => {
-          closeDialogue();
-        }}
-        open={dialogueState === 'ModifierTypeAdd'}
-        innerComponent={
-          <ModifierTypeAddContainer
-            onCloseCallback={() => {
-              closeDialogue();
-            }}
-          />
-        }
-      />
-      <DialogContainer
-        title={'Edit Modifier Type'}
-        onClose={() => {
-          closeDialogue();
-        }}
-        open={dialogueState === 'ModifierTypeEdit'}
-        innerComponent={
-          modifierTypeId !== null && (
-            <ModifierTypeEditContainer
-              onCloseCallback={() => {
-                closeDialogue();
-              }}
-              modifier_type_id={modifierTypeId}
-            />
-          )
-        }
-      />
+      {dialogueState === 'ModifierTypeAdd' && (
+        <ModifierTypeAddContainer
+          onCloseCallback={() => {
+            closeDialogue();
+          }}
+        />
+      )}
+      {dialogueState === 'ModifierTypeEdit' && modifierTypeId !== null && (
+        <ModifierTypeEditContainer
+          onCloseCallback={() => {
+            closeDialogue();
+          }}
+          modifier_type_id={modifierTypeId}
+        />
+      )}
       <DialogContainer
         title={'Copy Modifier Type'}
         maxWidth={'xl'}

@@ -167,24 +167,14 @@ const ProductDialoguesContainer = () => {
         }
       />
       <ProductInstanceAddDialogue />
-      <DialogContainer
-        maxWidth={'xl'}
-        title={'Edit Product Instance'}
-        onClose={() => {
-          closeDialogue();
-        }}
-        open={dialogueState === 'ProductInstanceEdit'}
-        innerComponent={
-          selectedProductInstanceId !== null && (
-            <ProductInstanceEditContainer
-              onCloseCallback={() => {
-                closeDialogue();
-              }}
-              product_instance_id={selectedProductInstanceId}
-            />
-          )
-        }
-      />
+      {dialogueState === 'ProductInstanceEdit' && selectedProductInstanceId !== null && (
+        <ProductInstanceEditContainer
+          onCloseCallback={() => {
+            closeDialogue();
+          }}
+          product_instance_id={selectedProductInstanceId}
+        />
+      )}
       <DialogContainer
         title={'Delete Product Instance'}
         onClose={() => {

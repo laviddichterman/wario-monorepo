@@ -1,6 +1,7 @@
-import { useAtom, useAtomValue } from 'jotai';
+import { type PrimitiveAtom, useAtom, useAtomValue } from 'jotai';
 import { useState } from 'react';
 
+import { TabPanel } from '@mui/lab';
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
 import {
@@ -14,7 +15,7 @@ import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { useCatalogSelectors, useProductInstanceFunctionIds } from '@wcp/wario-ux-shared/query';
 
 import AvailabilityListBuilderComponent from '@/components/wario/AvailabilityListBuilderComponent';
-import DatetimeBasedDisableComponent from '@/components/wario/datetime_based_disable.component';
+import { AvailabilityStatusPropertiesComponent } from '@/components/wario/AvailabilityStatusPropertiesComponent';
 import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
 import { FloatNumericPropertyComponent } from '@/components/wario/property-components/FloatNumericPropertyComponent';
 import { IMoneyPropertyComponent } from '@/components/wario/property-components/IMoneyPropertyComponent';
@@ -69,178 +70,209 @@ export const ModifierOptionContainer = (
   };
   return (
     <>
-      <Grid
-        size={{
-          xs: 12,
-          md: 6,
-        }}
-      >
-        <StringPropertyComponent
-          disabled={props.isProcessing}
-          label="Display Name"
-          value={props.displayName}
-          setValue={props.setDisplayName}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          md: 6,
-        }}
-      >
-        <StringPropertyComponent
-          disabled={props.isProcessing}
-          label="Description"
-          value={props.description}
-          setValue={props.setDescription}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          sm: 4,
-        }}
-      >
-        <StringPropertyComponent
-          disabled={props.isProcessing}
-          label="Short Code"
-          value={props.shortcode}
-          setValue={props.setShortcode}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xs: 6,
-          sm: 4,
-        }}
-      >
-        <IMoneyPropertyComponent
-          disabled={props.isProcessing}
-          label="Price"
-          value={props.price}
-          setValue={props.setPrice}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xs: 6,
-          sm: 4,
-        }}
-      >
-        <IntNumericPropertyComponent
-          disabled={props.isProcessing}
-          label="Ordinal"
-          value={props.ordinal}
-          setValue={props.setOrdinal}
-        />
-      </Grid>
-      <Grid size={4}>
-        <FloatNumericPropertyComponent
-          disabled={props.isProcessing}
-          label="Flavor Factor"
-          value={props.flavorFactor}
-          setValue={props.setFlavorFactor}
-        />
-      </Grid>
-      <Grid size={4}>
-        <FloatNumericPropertyComponent
-          disabled={props.isProcessing}
-          label="Bake Max"
-          value={props.bakeFactor}
-          setValue={props.setBakeFactor}
-        />
-      </Grid>
-      <Grid size={4}>
-        <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing || props.modifierType.max_selected === 1}
-          label="Can Split"
-          value={props.modifierType.max_selected !== 1 && props.canSplit}
-          setValue={handleSetCanSplit}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={4}>
-        <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
-          label="Allow Heavy"
-          value={props.allowHeavy}
-          setValue={props.setAllowHeavy}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={4}>
-        <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
-          label="Allow Lite"
-          value={props.allowLite}
-          setValue={props.setAllowLite}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={4}>
-        <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing || props.modifierType.max_selected === 1}
-          label="Allow OTS"
-          value={props.modifierType.max_selected !== 1 && props.allowOTS}
-          setValue={handleSetAllowOTS}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={12}>
-        <Autocomplete
-          fullWidth
-          options={productInstanceFunctions}
-          value={props.enableFunction}
-          onChange={(_e, v) => {
-            props.setEnableFunction(v);
-          }}
-          getOptionLabel={(option) => catalogSelectors?.productInstanceFunction(option).name || option}
-          isOptionEqualToValue={(o, v) => o === v}
-          renderInput={(params) => <TextField {...params} label="Enable Function Name" />}
-        />
-      </Grid>
-      <Grid size={6}>
-        <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
-          label="Omit from shortname"
-          value={props.omitFromShortname}
-          setValue={props.setOmitFromShortname}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={6}>
-        <ToggleBooleanPropertyComponent
-          disabled={props.isProcessing}
-          label="Omit from name"
-          value={props.omitFromName}
-          setValue={props.setOmitFromName}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={12}>
-        <ExternalIdsExpansionPanelComponent
-          title="External IDs"
-          disabled={props.isProcessing}
-          value={props.externalIds}
-          setValue={props.setExternalIds}
-        />
-      </Grid>
-      <Grid size={12}>
-        <AvailabilityListBuilderComponent
-          availabilityIsValid={props.availabilityIsValid}
-          setAvailabilityIsValid={props.setAvailabilityIsValid}
-          disabled={props.isProcessing}
-          value={props.availability}
-          setValue={props.setAvailability}
-        />
-      </Grid>
-      <Grid size={12}>
-        <DatetimeBasedDisableComponent
-          disabled={props.isProcessing}
-          value={props.disabled}
-          setValue={props.setDisabled}
-        />
-      </Grid>
+      {/* ==============================
+          TAB: IDENTITY
+         ============================== */}
+      <TabPanel value="identity" sx={{ p: 0, pt: 2 }}>
+        <Grid container spacing={2}>
+          <Grid
+            size={{
+              xs: 12,
+              md: 8,
+            }}
+          >
+            <StringPropertyComponent
+              disabled={props.isProcessing}
+              label="Display Name"
+              value={props.displayName}
+              setValue={props.setDisplayName}
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 6,
+              md: 4,
+            }}
+          >
+            <StringPropertyComponent
+              disabled={props.isProcessing}
+              label="Short Code"
+              value={props.shortcode}
+              setValue={props.setShortcode}
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              md: 12,
+            }}
+          >
+            <StringPropertyComponent
+              disabled={props.isProcessing}
+              label="Description"
+              value={props.description}
+              setValue={props.setDescription}
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6,
+            }}
+          >
+            <IMoneyPropertyComponent
+              disabled={props.isProcessing}
+              label="Price"
+              value={props.price}
+              setValue={props.setPrice}
+            />
+          </Grid>
+          <Grid
+            size={{
+              xs: 6,
+              sm: 6,
+            }}
+          >
+            <IntNumericPropertyComponent
+              disabled={props.isProcessing}
+              label="Ordinal"
+              value={props.ordinal}
+              setValue={props.setOrdinal}
+            />
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* ==============================
+          TAB: RULES
+         ============================== */}
+      <TabPanel value="rules" sx={{ p: 0, pt: 2 }}>
+        <Grid container spacing={2}>
+          <Grid size={6}>
+            <FloatNumericPropertyComponent
+              disabled={props.isProcessing}
+              label="Flavor Factor"
+              value={props.flavorFactor}
+              setValue={props.setFlavorFactor}
+            />
+          </Grid>
+          <Grid size={6}>
+            <FloatNumericPropertyComponent
+              disabled={props.isProcessing}
+              label="Bake Max"
+              value={props.bakeFactor}
+              setValue={props.setBakeFactor}
+            />
+          </Grid>
+          <Grid size={12}>
+            <ToggleBooleanPropertyComponent
+              disabled={props.isProcessing || props.modifierType.max_selected === 1}
+              label="Can Split"
+              value={props.modifierType.max_selected !== 1 && props.canSplit}
+              setValue={handleSetCanSplit}
+              labelPlacement="end"
+            />
+          </Grid>
+          <Grid size={12}>
+            <Autocomplete
+              fullWidth
+              options={productInstanceFunctions}
+              value={props.enableFunction}
+              onChange={(_e, v) => {
+                props.setEnableFunction(v);
+              }}
+              getOptionLabel={(option) => catalogSelectors?.productInstanceFunction(option).name || option}
+              isOptionEqualToValue={(o, v) => o === v}
+              renderInput={(params) => <TextField {...params} label="Enable Function Name" />}
+            />
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* ==============================
+          TAB: CONFIGURATION
+         ============================== */}
+      <TabPanel value="config" sx={{ p: 0, pt: 2 }}>
+        <Grid container spacing={2}>
+          <Grid size={4}>
+            <ToggleBooleanPropertyComponent
+              disabled={props.isProcessing}
+              label="Allow Heavy"
+              value={props.allowHeavy}
+              setValue={props.setAllowHeavy}
+              labelPlacement="end"
+            />
+          </Grid>
+          <Grid size={4}>
+            <ToggleBooleanPropertyComponent
+              disabled={props.isProcessing}
+              label="Allow Lite"
+              value={props.allowLite}
+              setValue={props.setAllowLite}
+              labelPlacement="end"
+            />
+          </Grid>
+          <Grid size={4}>
+            <ToggleBooleanPropertyComponent
+              disabled={props.isProcessing || props.modifierType.max_selected === 1}
+              label="Allow OTS"
+              value={props.modifierType.max_selected !== 1 && props.allowOTS}
+              setValue={handleSetAllowOTS}
+              labelPlacement="end"
+            />
+          </Grid>
+          <Grid size={6}>
+            <ToggleBooleanPropertyComponent
+              disabled={props.isProcessing}
+              label="Omit from shortname"
+              value={props.omitFromShortname}
+              setValue={props.setOmitFromShortname}
+              labelPlacement="end"
+            />
+          </Grid>
+          <Grid size={6}>
+            <ToggleBooleanPropertyComponent
+              disabled={props.isProcessing}
+              label="Omit from name"
+              value={props.omitFromName}
+              setValue={props.setOmitFromName}
+              labelPlacement="end"
+            />
+          </Grid>
+          <Grid size={12}>
+            <ExternalIdsExpansionPanelComponent
+              title="External IDs"
+              disabled={props.isProcessing}
+              value={props.externalIds}
+              setValue={props.setExternalIds}
+            />
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* ==============================
+          TAB: AVAILABILITY
+         ============================== */}
+      <TabPanel value="availability" sx={{ p: 0, pt: 2 }}>
+        <Grid container spacing={2}>
+          <Grid size={12}>
+            <AvailabilityListBuilderComponent
+              availabilityIsValid={props.availabilityIsValid}
+              setAvailabilityIsValid={props.setAvailabilityIsValid}
+              disabled={props.isProcessing}
+              value={props.availability}
+              setValue={props.setAvailability}
+            />
+          </Grid>
+          <Grid size={12}>
+            <AvailabilityStatusPropertiesComponent
+              disabled={props.isProcessing}
+              value={props.disabled}
+              setValue={props.setDisabled}
+            />
+          </Grid>
+        </Grid>
+      </TabPanel>
     </>
   );
 };
@@ -248,8 +280,14 @@ export const ModifierOptionContainer = (
 // =============================================================================
 // NEW JOTAI-BASED EXPORTS
 // =============================================================================
-export const ModifierOptionFormBody = ({ modifierType }: { modifierType: Omit<IOptionType, 'id'> }) => {
-  const [form, setForm] = useAtom(modifierOptionFormAtom);
+export const ModifierOptionFormBody = ({
+  modifierType,
+  formAtom = modifierOptionFormAtom,
+}: {
+  modifierType: Omit<IOptionType, 'id'>;
+  formAtom?: PrimitiveAtom<ModifierOptionFormState | null>;
+}) => {
+  const [form, setForm] = useAtom(formAtom);
   const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
 

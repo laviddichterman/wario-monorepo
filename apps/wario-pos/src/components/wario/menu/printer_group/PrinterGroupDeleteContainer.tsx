@@ -13,12 +13,15 @@ import { createNullGuard } from '@/components/wario/catalog-null-guard';
 import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
 import { ElementActionComponent } from '../element.action.component';
 
-import { type PrinterGroupEditProps } from './PrinterGroupComponent';
+export interface PrinterGroupDeleteProps {
+  printerGroupId: string;
+  onCloseCallback: VoidFunction;
+}
 
 // Create null guard at module level to follow Rules of Hooks
 const PrinterGroupNullGuard = createNullGuard(usePrinterGroupById);
 
-const PrinterGroupDeleteContainer = ({ printerGroupId, onCloseCallback }: PrinterGroupEditProps) => {
+const PrinterGroupDeleteContainer = ({ printerGroupId, onCloseCallback }: PrinterGroupDeleteProps) => {
   return (
     <PrinterGroupNullGuard
       id={printerGroupId}

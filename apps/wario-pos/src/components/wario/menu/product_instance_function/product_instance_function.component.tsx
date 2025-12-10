@@ -1,32 +1,19 @@
+import { TabPanel } from '@mui/lab';
 import { Grid, TextField } from '@mui/material';
 
 import { useProductInstanceFunctionForm } from '@/atoms/forms/productInstanceFunctionFormAtoms';
 
-import { ElementActionComponent, type ElementActionComponentProps } from '../element.action.component';
-
 import AbstractExpressionFunctionalContainer from './abstract_expression_functional.container';
 
-// =============================================================================
-// FORM COMPONENT
-// =============================================================================
-
-type ProductInstanceFunctionFormComponentProps = Omit<ElementActionComponentProps, 'disableConfirmOn' | 'body'>;
-
-const ProductInstanceFunctionFormComponent = ({
-  isProcessing,
-  ...forwardRefs
-}: ProductInstanceFunctionFormComponentProps) => {
-  const { form, updateField, isValid } = useProductInstanceFunctionForm();
+export const ProductInstanceFunctionFormBody = () => {
+  const { form, updateField } = useProductInstanceFunctionForm();
 
   if (!form) return null;
 
   return (
-    <ElementActionComponent
-      {...forwardRefs}
-      isProcessing={isProcessing}
-      disableConfirmOn={!isValid || isProcessing}
-      body={
-        <>
+    <>
+      <TabPanel value="identity">
+        <Grid container spacing={2}>
           <Grid size={12}>
             <TextField
               label="Function Name"
@@ -41,6 +28,10 @@ const ProductInstanceFunctionFormComponent = ({
               }}
             />
           </Grid>
+        </Grid>
+      </TabPanel>
+      <TabPanel value="logic">
+        <Grid container spacing={2}>
           <Grid size={12}>
             <AbstractExpressionFunctionalContainer
               value={form.expression}
@@ -49,10 +40,8 @@ const ProductInstanceFunctionFormComponent = ({
               }}
             />
           </Grid>
-        </>
-      }
-    />
+        </Grid>
+      </TabPanel>
+    </>
   );
 };
-
-export default ProductInstanceFunctionFormComponent;

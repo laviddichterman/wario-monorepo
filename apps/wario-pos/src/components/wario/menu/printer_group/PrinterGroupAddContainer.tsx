@@ -2,6 +2,10 @@ import { useAtom, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
+import { Button } from '@mui/material';
+
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
+
 import { useAddPrinterGroupMutation } from '@/hooks/usePrinterGroupsQuery';
 
 import {
@@ -11,7 +15,7 @@ import {
   toPrinterGroupApiBody,
 } from '@/atoms/forms/printerGroupFormAtoms';
 
-import { PrinterGroupComponent } from './PrinterGroupComponent';
+import { PrinterGroupFormBody } from './PrinterGroupComponent';
 
 export interface PrinterGroupAddContainerProps {
   onCloseCallback: VoidFunction;
@@ -58,7 +62,22 @@ const PrinterGroupAddContainer = ({ onCloseCallback }: PrinterGroupAddContainerP
     });
   };
 
-  return <PrinterGroupComponent confirmText="Add" onCloseCallback={onCloseCallback} onConfirmClick={addPrinterGroup} />;
+  return (
+    <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+      <AppDialog.Header onClose={onCloseCallback} title="Add Printer Group" />
+      <AppDialog.Content>
+        <PrinterGroupFormBody />
+      </AppDialog.Content>
+      <AppDialog.Actions>
+        <Button onClick={onCloseCallback} disabled={isProcessing}>
+          Cancel
+        </Button>
+        <Button onClick={addPrinterGroup} disabled={isProcessing} variant="contained">
+          Add
+        </Button>
+      </AppDialog.Actions>
+    </AppDialog.Root>
+  );
 };
 
 export default PrinterGroupAddContainer;

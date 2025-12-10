@@ -1,19 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { useAuth0 } from '@auth0/auth0-react';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 
-import { ExpandMore } from '@mui/icons-material';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  FormControlLabel,
-  Grid,
-  Switch,
-  Typography,
-} from '@mui/material';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
+import { Box, Button, FormControlLabel, Grid, Switch, Tab } from '@mui/material';
 
 import {
   type CatalogProductEntry,
@@ -21,6 +12,7 @@ import {
   type UncommittedIProduct,
   type UncommittedIProductInstance,
 } from '@wcp/wario-shared';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogSelectors, useProductEntryById } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -30,7 +22,6 @@ import {
   toProductApiBody,
 } from '@/atoms/forms/productFormAtoms';
 import {
-  fromProductInstanceEntity,
   productInstanceCopyFlagFamily,
   productInstanceExpandedFamily,
   productInstanceFormFamily,
@@ -38,8 +29,8 @@ import {
 } from '@/atoms/forms/productInstanceFormAtoms';
 import { HOST_API } from '@/config';
 
-import { ProductInstanceContainer } from './instance/product_instance.component';
-import { ProductComponent } from './product.component';
+import { ProductInstanceRow } from './instance/product_instance.row';
+import { ProductFormBody } from './product.component';
 
 export interface ProductCopyContainerProps {
   product_id: string;
@@ -134,6 +125,8 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
   );
   const allInstances = useAtomValue(allInstancesAtom);
 
+  const [activeTab, setActiveTab] = useState('settings');
+
   const copyProduct = async () => {
     if (isProcessing || !productForm) return;
 
@@ -197,20 +190,50 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
   if (!productForm) return null;
 
   return (
-    <ProductComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={() => void copyProduct()}>
-      {productEntry.instances.map((instanceId, i) => (
-        <ProductInstanceCopyRow
-          key={instanceId}
-          instanceId={instanceId}
-          catalogSelectors={catalogSelectors}
-          isBase={indexOfBase === i}
-          setAsBase={() => {
-            setIndexOfBase(i);
-          }}
-          parentProduct={toProductApiBody(productForm)}
-        />
-      ))}
-    </ProductComponent>
+    <TabContext value={activeTab}>
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+        <AppDialog.Header onClose={onCloseCallback} title="Copy Product">
+          <TabList
+            onChange={(_e, v: string) => {
+              setActiveTab(v);
+            }}
+            aria-label="Product copy tabs"
+          >
+            <Tab label="Settings" value="settings" />
+            <Tab label="Variations" value="variations" />
+          </TabList>
+        </AppDialog.Header>
+        <AppDialog.Content>
+          <TabPanel value="settings" sx={{ p: 0, pt: 2 }}>
+            <ProductFormBody />
+          </TabPanel>
+          <TabPanel value="variations" sx={{ p: 0, pt: 2 }}>
+            <Box>
+              {productEntry.instances.map((instanceId, i) => (
+                <ProductInstanceCopyRow
+                  key={instanceId}
+                  instanceId={instanceId}
+                  catalogSelectors={catalogSelectors}
+                  isBase={indexOfBase === i}
+                  setAsBase={() => {
+                    setIndexOfBase(i);
+                  }}
+                  parentProduct={toProductApiBody(productForm)}
+                />
+              ))}
+            </Box>
+          </TabPanel>
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button onClick={onCloseCallback} disabled={isProcessing}>
+            Cancel
+          </Button>
+          <Button onClick={() => void copyProduct()} disabled={isProcessing} variant="contained">
+            Copy
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    </TabContext>
   );
 };
 
@@ -231,46 +254,16 @@ const ProductInstanceCopyRow = ({
   setAsBase: () => void;
   parentProduct: UncommittedIProduct;
 }) => {
-  // access atoms via family
-  const [form, setForm] = useAtom(productInstanceFormFamily(instanceId));
   const [copy, setCopy] = useAtom(productInstanceCopyFlagFamily(instanceId));
-  const [expanded, setExpanded] = useAtom(productInstanceExpandedFamily(instanceId));
-
-  useEffect(() => {
-    // Initialize form on mount if null
-    // We check if form is null to avoid overwriting user changes if re-mounted (though keys should prevent that)
-    // Actually, better to always init on mount to be safe, or check uniqueness.
-    const ent = catalogSelectors.productInstance(instanceId);
-    if (ent) {
-      setForm(fromProductInstanceEntity(ent));
-    }
-    // Should we reset copy/expanded? Default is True/False.
-
-    return () => {
-      // We don't cleanup per row, we cleanup in parent or let them linger?
-      // Parent cleans up.
-    };
-  }, [instanceId, catalogSelectors, setForm]);
-
-  // Pass the specific atom to the container
-  // We can't pass `productInstanceFormFamily(instanceId)` directly if the container expects `PrimitiveAtom<FormState>`
-  // `atomFamily` returns a PrimitiveAtom (or WritableAtom).
-  // Yes, `productInstanceFormFamily(instanceId)` returns the atom object which is stable.
-  const rowAtom = useMemo(() => productInstanceFormFamily(instanceId), [instanceId]);
 
   return (
-    <Accordion
-      expanded={expanded && copy}
-      onChange={() => {
-        setExpanded(!expanded);
-      }}
-    >
-      <AccordionSummary expandIcon={<ExpandMore />}>
-        <Grid container>
-          <Grid size="grow">
-            <Typography>{form?.displayName || 'Loading...'}</Typography>
-          </Grid>
-          <Grid size={2}>
+    <ProductInstanceRow
+      instanceId={instanceId}
+      parentProduct={parentProduct}
+      catalogSelectors={catalogSelectors}
+      actions={
+        <Grid container spacing={2} alignItems="center">
+          <Grid size="auto">
             <FormControlLabel
               control={
                 <Switch
@@ -287,7 +280,7 @@ const ProductInstanceCopyRow = ({
               label="Copy"
             />
           </Grid>
-          <Grid size={2}>
+          <Grid size="auto">
             <FormControlLabel
               control={
                 <Switch
@@ -305,11 +298,7 @@ const ProductInstanceCopyRow = ({
             />
           </Grid>
         </Grid>
-      </AccordionSummary>
-      <AccordionDetails>
-        {/* Pass the atom directly to the container */}
-        <ProductInstanceContainer parent_product={parentProduct} formAtom={rowAtom} />
-      </AccordionDetails>
-    </Accordion>
+      }
+    />
   );
 };

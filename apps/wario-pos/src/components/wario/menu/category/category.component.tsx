@@ -1,6 +1,6 @@
 import { useAtom, useAtomValue } from 'jotai';
 
-import { Autocomplete, Grid, TextField } from '@mui/material';
+import { Autocomplete, Grid, TextField, Typography } from '@mui/material';
 
 import { CALL_LINE_DISPLAY, CategoryDisplay, type ICatalogSelectors } from '@wcp/wario-shared';
 import { useCatalogSelectors, useCategoryIds, useFulfillments } from '@wcp/wario-ux-shared/query';
@@ -15,7 +15,6 @@ import {
 import { IntNumericPropertyComponent } from '../../property-components/IntNumericPropertyComponent';
 import { StringEnumPropertyComponent } from '../../property-components/StringEnumPropertyComponent';
 import { StringPropertyComponent } from '../../property-components/StringPropertyComponent';
-import { ElementActionComponent } from '../element.action.component';
 
 /**
  * Hook to access Category form state and validation.
@@ -54,13 +53,16 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
   };
 
   return (
-    <>
-      <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-        }}
-      >
+    <Grid container spacing={2}>
+      {/* ==============================
+          IDENTITY
+         ============================== */}
+      <Grid size={12}>
+        <Typography variant="overline" color="text.secondary">
+          Identity
+        </Typography>
+      </Grid>
+      <Grid size={{ xs: 12, md: 6 }}>
         <StringPropertyComponent
           disabled={isProcessing}
           label="Category Name"
@@ -70,12 +72,7 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           }}
         />
       </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-        }}
-      >
+      <Grid size={{ xs: 12, md: 6 }}>
         <Autocomplete
           options={categoryIds}
           value={form.parent}
@@ -87,7 +84,41 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           renderInput={(params) => <TextField {...params} label="Parent Category (Optional)" />}
         />
       </Grid>
-      <Grid size={9}>
+      <Grid size={3}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          label="Ordinal"
+          value={form.ordinal}
+          setValue={(v) => {
+            updateField('ordinal', v);
+          }}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 9 }}>
+        <Autocomplete
+          multiple
+          fullWidth
+          filterSelectedOptions
+          options={fulfillments.map((x) => x.id)}
+          value={form.serviceDisable}
+          onChange={(_, v) => {
+            updateField('serviceDisable', v);
+          }}
+          getOptionLabel={(option) => fulfillments.find((v) => v.id === option)?.displayName ?? 'INVALID'}
+          isOptionEqualToValue={(option, value) => option === value}
+          renderInput={(params) => <TextField {...params} label="Disabled Services" />}
+        />
+      </Grid>
+
+      {/* ==============================
+          DISPLAY
+         ============================== */}
+      <Grid size={12} sx={{ mt: 2 }}>
+        <Typography variant="overline" color="text.secondary">
+          Display
+        </Typography>
+      </Grid>
+      <Grid size={12}>
         <TextField
           multiline
           fullWidth
@@ -97,16 +128,6 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           value={form.description}
           onChange={(e) => {
             updateField('description', e.target.value);
-          }}
-        />
-      </Grid>
-      <Grid size={3}>
-        <IntNumericPropertyComponent
-          disabled={isProcessing}
-          label="Ordinal"
-          value={form.ordinal}
-          setValue={(v) => {
-            updateField('ordinal', v);
           }}
         />
       </Grid>
@@ -136,12 +157,7 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           }}
         />
       </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-        }}
-      >
+      <Grid size={{ xs: 12, md: 6 }}>
         <StringPropertyComponent
           disabled={isProcessing}
           label="Call Line Name"
@@ -151,27 +167,7 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           }}
         />
       </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          sm: 6,
-        }}
-      >
-        <Autocomplete
-          multiple
-          fullWidth
-          filterSelectedOptions
-          options={fulfillments.map((x) => x.id)}
-          value={form.serviceDisable}
-          onChange={(_, v) => {
-            updateField('serviceDisable', v);
-          }}
-          getOptionLabel={(option) => fulfillments.find((v) => v.id === option)?.displayName ?? 'INVALID'}
-          isOptionEqualToValue={(option, value) => option === value}
-          renderInput={(params) => <TextField {...params} label="Disabled Services" />}
-        />
-      </Grid>
-      <Grid container size={6}>
+      <Grid container size={{ xs: 12, md: 3 }}>
         <StringEnumPropertyComponent
           disabled={isProcessing}
           label="Call Line Display"
@@ -182,7 +178,7 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           options={Object.values(CALL_LINE_DISPLAY)}
         />
       </Grid>
-      <Grid container size={6}>
+      <Grid container size={{ xs: 12, md: 3 }}>
         <StringEnumPropertyComponent
           disabled={isProcessing}
           label="Nested Display"
@@ -193,48 +189,6 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           options={Object.values(CategoryDisplay)}
         />
       </Grid>
-    </>
+    </Grid>
   );
 };
-
-export interface CategoryFormProps {
-  confirmText: string;
-  onCloseCallback: VoidFunction;
-  onConfirmClick: VoidFunction;
-  disableConfirm?: boolean;
-  children?: React.ReactNode;
-  excludeCategoryId?: string;
-}
-
-/**
- * Complete Category form with actions.
- * Wraps CategoryFormBody with confirm/cancel buttons.
- */
-export const CategoryComponent = ({
-  confirmText,
-  onCloseCallback,
-  onConfirmClick,
-  disableConfirm = false,
-  children,
-  excludeCategoryId,
-}: CategoryFormProps) => {
-  const { isValid, isProcessing } = useCategoryForm();
-
-  return (
-    <ElementActionComponent
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={onConfirmClick}
-      isProcessing={isProcessing}
-      disableConfirmOn={disableConfirm || !isValid || isProcessing}
-      confirmText={confirmText}
-      body={
-        <>
-          <CategoryFormBody excludeCategoryId={excludeCategoryId} />
-          {children}
-        </>
-      }
-    />
-  );
-};
-
-export default CategoryComponent;

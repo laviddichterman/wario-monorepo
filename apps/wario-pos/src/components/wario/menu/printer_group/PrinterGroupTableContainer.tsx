@@ -94,39 +94,21 @@ const PrinterGroupTableContainer = () => {
         getRowId={(row: PrinterGroup) => row.id}
         disableToolbar={false}
       />
-      <DialogContainer
-        maxWidth="xl"
-        title="Add Printer Group"
-        onClose={() => {
-          setIsPrinterGroupAddOpen(false);
-        }}
-        open={isPrinterGroupAddOpen}
-        innerComponent={
-          <PrinterGroupAddContainer
-            onCloseCallback={() => {
-              setIsPrinterGroupAddOpen(false);
-            }}
-          />
-        }
-      />
-      <DialogContainer
-        maxWidth="xl"
-        title="Edit Printer Group"
-        onClose={() => {
-          setIsPrinterGroupEditOpen(false);
-        }}
-        open={isPrinterGroupEditOpen}
-        innerComponent={
-          printerGroupIdToEdit !== null && (
-            <PrinterGroupEditContainer
-              onCloseCallback={() => {
-                setIsPrinterGroupEditOpen(false);
-              }}
-              printerGroupId={printerGroupIdToEdit}
-            />
-          )
-        }
-      />
+      {isPrinterGroupAddOpen && (
+        <PrinterGroupAddContainer
+          onCloseCallback={() => {
+            setIsPrinterGroupAddOpen(false);
+          }}
+        />
+      )}
+      {isPrinterGroupEditOpen && printerGroupIdToEdit !== null && (
+        <PrinterGroupEditContainer
+          onCloseCallback={() => {
+            setIsPrinterGroupEditOpen(false);
+          }}
+          printerGroupId={printerGroupIdToEdit}
+        />
+      )}
       <DialogContainer
         title="Delete Printer Group"
         onClose={() => {

@@ -1,5 +1,5 @@
 import { atom, useAtomValue } from 'jotai';
-import { atomFamily } from 'jotai/utils';
+import { atomFamily } from 'jotai-family';
 
 import type { IMoney, IOption, IOptionType, IRecurringInterval, IWInterval, KeyValue } from '@wcp/wario-shared';
 
@@ -126,13 +126,17 @@ export const toModifierOptionApiBody = (form: ModifierOptionFormState): Omit<IOp
  * AtomFamily for modifier option form state, indexed by position.
  * Each option in the copy list gets its own atom.
  */
-export const modifierOptionFormFamily = atomFamily((_index: number) => atom<ModifierOptionFormState | null>(null));
+/**
+ * AtomFamily for modifier option form state, indexed by position.
+ * Each option in the copy list gets its own atom.
+ */
+export const modifierOptionFormFamily = atomFamily((_param: string | number) => atom<ModifierOptionFormState | null>(null));
 
 /** Copy flag for each option (whether to include in the copy) */
-export const modifierOptionCopyFlagFamily = atomFamily((_index: number) => atom(true));
+export const modifierOptionCopyFlagFamily = atomFamily((_param: string | number) => atom(true));
 
 /** Expanded state for each option's accordion */
-export const modifierOptionExpandedFamily = atomFamily((_index: number) => atom(false));
+export const modifierOptionExpandedFamily = atomFamily((_param: string | number) => atom(false));
 
 /**
  * Master atom to track how many options are in the copy operation.

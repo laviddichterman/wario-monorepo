@@ -2,7 +2,10 @@ import { useAtom, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
+import { Button } from '@mui/material';
+
 import type { PrinterGroup } from '@wcp/wario-shared';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useEditPrinterGroupMutation, usePrinterGroupById } from '@/hooks/usePrinterGroupsQuery';
 
@@ -15,8 +18,12 @@ import {
   toPrinterGroupApiBody,
 } from '@/atoms/forms/printerGroupFormAtoms';
 
-import type { PrinterGroupEditProps } from './PrinterGroupComponent';
-import { PrinterGroupComponent } from './PrinterGroupComponent';
+import { PrinterGroupFormBody } from './PrinterGroupComponent';
+
+export interface PrinterGroupEditProps {
+  printerGroupId: string | null;
+  onCloseCallback: VoidFunction;
+}
 
 // Create null guard at module level to follow Rules of Hooks
 const PrinterGroupNullGuard = createNullGuard(usePrinterGroupById);
@@ -81,8 +88,22 @@ const PrinterGroupEditContainerInner = ({
       return current;
     });
   };
+
   return (
-    <PrinterGroupComponent confirmText="Save" onCloseCallback={onCloseCallback} onConfirmClick={editPrinterGroup} />
+    <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+      <AppDialog.Header onClose={onCloseCallback} title="Edit Printer Group" />
+      <AppDialog.Content>
+        <PrinterGroupFormBody />
+      </AppDialog.Content>
+      <AppDialog.Actions>
+        <Button onClick={onCloseCallback} disabled={isProcessing}>
+          Cancel
+        </Button>
+        <Button onClick={editPrinterGroup} disabled={isProcessing} variant="contained">
+          Save
+        </Button>
+      </AppDialog.Actions>
+    </AppDialog.Root>
   );
 };
 

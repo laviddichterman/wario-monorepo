@@ -1,7 +1,20 @@
 import { useAtom, useAtomValue } from 'jotai';
 import { useState } from 'react';
 
-import { Autocomplete, Grid, TextField } from '@mui/material';
+import { ExpandMore } from '@mui/icons-material';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Autocomplete,
+  Box,
+  Grid,
+  Stack,
+  Tab,
+  TextField,
+  Typography,
+} from '@mui/material';
 
 import { type IProductModifier } from '@wcp/wario-shared';
 import {
@@ -14,7 +27,7 @@ import {
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
 import AvailabilityListBuilderComponent from '@/components/wario/AvailabilityListBuilderComponent';
-import DatetimeBasedDisableComponent from '@/components/wario/datetime_based_disable.component';
+import { AvailabilityStatusPropertiesComponent } from '@/components/wario/AvailabilityStatusPropertiesComponent';
 import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
 import PrepTimingPropertyComponent from '@/components/wario/PrepTimingPropertyComponent';
 import { FloatNumericPropertyComponent } from '@/components/wario/property-components/FloatNumericPropertyComponent';
@@ -37,10 +50,17 @@ import ProductModifierComponent from './ProductModifierComponent';
 // NEW JOTAI-BASED COMPONENTS
 // =============================================================================
 
-export const ProductFormBody = () => {
+export interface ProductFormBodyProps {
+  extraTabs?: React.ReactNode;
+  extraTabPanels?: React.ReactNode;
+  initialTab?: string;
+}
+
+export const ProductFormBody = ({ extraTabs, extraTabPanels, initialTab }: ProductFormBodyProps) => {
   const [form, setForm] = useAtom(productFormAtom);
   const isProcessing = useAtomValue(productFormProcessingAtom);
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
+  const [tabValue, setTabValue] = useState(initialTab || 'general');
 
   const catalog = useCatalogSelectors();
   const categoryIds = useCategoryIds();
@@ -72,215 +92,323 @@ export const ProductFormBody = () => {
   };
 
   return (
-    <>
-      <Grid size={12}>
-        <Autocomplete
-          multiple
-          filterSelectedOptions
-          options={categoryIds}
-          value={form.parentCategories}
-          onChange={(_e, v) => {
-            updateField('parentCategories', v);
+    <TabContext value={tabValue}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+        <TabList
+          onChange={(_: unknown, v: string) => {
+            setTabValue(v);
           }}
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(option) => catalog?.category(option)?.category.name ?? option}
-          isOptionEqualToValue={(option, value) => option === value}
-          renderInput={(params) => <TextField {...params} label="Categories" />}
-        />
-      </Grid>
-      <Grid size={12}>
-        <Autocomplete
-          filterSelectedOptions
-          options={Object.keys(printerGroups)}
-          value={form.printerGroup}
-          onChange={(_e, v) => {
-            updateField('printerGroup', v);
-          }}
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(pgId) => printerGroups[pgId]?.name ?? 'Undefined'}
-          isOptionEqualToValue={(option, value) => option === value}
-          renderInput={(params) => <TextField {...params} label="Printer Group" />}
-        />
-      </Grid>
-      {/* universal break */}
-      <Grid size={6}>
-        <IMoneyPropertyComponent
-          disabled={isProcessing}
-          label="Price"
-          value={form.price}
-          setValue={(v) => {
-            updateField('price', v);
-          }}
-        />
-      </Grid>
-      <Grid size={6}>
-        <StringPropertyComponent
-          disabled={isProcessing}
-          label="Singular Noun"
-          value={form.singularNoun}
-          setValue={(v) => {
-            updateField('singularNoun', v);
-          }}
-        />
-      </Grid>
-      <Grid size={12}>
-        <ExternalIdsExpansionPanelComponent
-          title="External IDs"
-          disabled={isProcessing}
-          value={form.externalIds}
-          setValue={(v) => {
-            updateField('externalIds', v);
-          }}
-        />
-      </Grid>
-      {/* universal break */}
-      <Grid size={4}>
-        <FloatNumericPropertyComponent
-          disabled={isProcessing}
-          label="Flavor Max"
-          value={form.flavorMax}
-          setValue={(v) => {
-            updateField('flavorMax', v);
-          }}
-        />
-      </Grid>
-      <Grid size={4}>
-        <FloatNumericPropertyComponent
-          disabled={isProcessing}
-          label="Bake Max"
-          value={form.bakeMax}
-          setValue={(v) => {
-            updateField('bakeMax', v);
-          }}
-        />
-      </Grid>
-      <Grid size={4}>
-        <FloatNumericPropertyComponent
-          disabled={isProcessing}
-          label="Bake Differential Max"
-          value={form.bakeDifferentialMax}
-          setValue={(v) => {
-            updateField('bakeDifferentialMax', v);
-          }}
-        />
-      </Grid>
-      {/* universal break */}
-      <Grid
-        size={{
-          xs: 12,
-          md: 6,
-        }}
-      >
-        <Autocomplete
-          multiple
-          filterSelectedOptions
-          fullWidth
-          options={productInstanceFunctionIds}
-          value={form.orderGuideSuggestionFunctions}
-          onChange={(_, v) => {
-            updateField('orderGuideSuggestionFunctions', v);
-          }}
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(option) => catalog?.productInstanceFunction(option)?.name ?? option}
-          isOptionEqualToValue={(option, value) => option === value}
-          renderInput={(params) => <TextField {...params} label="Order Guide Suggestion Functions" />}
-        />
-      </Grid>
-      <Grid
-        size={{
-          xs: 12,
-          md: 6,
-        }}
-      >
-        <Autocomplete
-          multiple
-          filterSelectedOptions
-          fullWidth
-          options={Object.keys(catalog?.productInstanceFunctions || {})}
-          value={form.orderGuideWarningFunctions}
-          onChange={(_, v) => {
-            updateField('orderGuideWarningFunctions', v);
-          }}
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(option) => catalog?.productInstanceFunction(option)?.name ?? option}
-          isOptionEqualToValue={(option, value) => option === value}
-          renderInput={(params) => <TextField {...params} label="Order Guide Warning Functions" />}
-        />
-      </Grid>
-      <Grid size={12}>
-        <Autocomplete
-          multiple
-          filterSelectedOptions
-          options={fulfillments.map((x) => x.id)}
-          value={form.serviceDisable}
-          onChange={(_, v) => {
-            updateField('serviceDisable', v);
-          }}
-          getOptionLabel={(option) => fulfillments.find((v) => v.id === option)?.displayName ?? 'INVALID'}
-          isOptionEqualToValue={(option, value) => option === value}
-          renderInput={(params) => <TextField {...params} label="Disabled Services" />}
-        />
-      </Grid>
-      <Grid size={3}>
-        <ToggleBooleanPropertyComponent
-          disabled={isProcessing}
-          label="Is 3rd Party"
-          setValue={(v) => {
-            updateField('is3p', v);
-          }}
-          value={form.is3p}
-          labelPlacement="end"
-        />
-      </Grid>
-      <Grid size={9}>
-        <ToggleBooleanPropertyComponent
-          disabled={isProcessing || form.modifiers.length === 0}
-          label="Show Name of Base Product Instead of Component Modifiers"
-          value={form.showNameOfBaseProduct || form.modifiers.length === 0}
-          setValue={(v) => {
-            updateField('showNameOfBaseProduct', v);
-          }}
-          labelPlacement="end"
-        />
-      </Grid>
+          aria-label="Product config tabs"
+        >
+          {extraTabs}
+          <Tab label="General" value="general" />
+          <Tab label="Configuration" value="config" />
+          <Tab label="Modifiers" value="modifiers" />
+        </TabList>
+      </Box>
 
-      <Grid size={12}>
+      {/* ==============================
+          TAB: GENERAL
+         ============================== */}
+      <TabPanel value="general">
+        <Grid container spacing={2}>
+          <Grid size={12}>
+            <Autocomplete
+              multiple
+              filterSelectedOptions
+              options={categoryIds}
+              value={form.parentCategories}
+              onChange={(_e, v) => {
+                updateField('parentCategories', v);
+              }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              getOptionLabel={(option) => catalog?.category(option)?.category.name ?? option}
+              isOptionEqualToValue={(option, value) => option === value}
+              renderInput={(params) => <TextField {...params} label="Categories" />}
+            />
+          </Grid>
+          <Grid size={12}>
+            <Autocomplete
+              filterSelectedOptions
+              options={Object.keys(printerGroups)}
+              value={form.printerGroup}
+              onChange={(_e, v) => {
+                updateField('printerGroup', v);
+              }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              getOptionLabel={(pgId) => printerGroups[pgId]?.name ?? 'Undefined'}
+              isOptionEqualToValue={(option, value) => option === value}
+              renderInput={(params) => <TextField {...params} label="Printer Group" />}
+            />
+          </Grid>
+          <Grid size={6}>
+            <IMoneyPropertyComponent
+              disabled={isProcessing}
+              label="Price"
+              value={form.price}
+              setValue={(v) => {
+                updateField('price', v);
+              }}
+            />
+          </Grid>
+          <Grid size={6}>
+            <StringPropertyComponent
+              disabled={isProcessing}
+              label="Singular Noun"
+              value={form.singularNoun}
+              setValue={(v) => {
+                updateField('singularNoun', v);
+              }}
+            />
+          </Grid>
+
+          {/* Availability & Timing Section */}
+          <Grid size={12}>
+            <Typography variant="overline" color="text.secondary" sx={{ mt: 2, display: 'block', width: '100%' }}>
+              Availability & Timing
+            </Typography>
+          </Grid>
+          <Grid size={12}>
+            <AvailabilityStatusPropertiesComponent
+              disabled={isProcessing}
+              value={form.disabled}
+              setValue={(v) => {
+                updateField('disabled', v);
+              }}
+            />
+          </Grid>
+          <Grid size={12}>
+            <Stack spacing={2}>
+              {/* Schedule Toggle */}
+              <ToggleBooleanPropertyComponent
+                disabled={isProcessing}
+                label="Limit Availability Hours"
+                value={form.availability.length > 0}
+                setValue={(v) => {
+                  if (v) {
+                    if (form.availability.length === 0) {
+                      updateField('availability', [{ interval: { start: -1, end: -1 }, rrule: '' }]);
+                    }
+                  } else {
+                    updateField('availability', []);
+                  }
+                }}
+                labelPlacement="end"
+              />
+              {/* Builder */}
+              {form.availability.length > 0 && (
+                <AvailabilityListBuilderComponent
+                  availabilityIsValid={availabilityIsValid}
+                  setAvailabilityIsValid={setAvailabilityIsValid}
+                  disabled={isProcessing}
+                  value={form.availability}
+                  setValue={(v) => {
+                    updateField('availability', v);
+                  }}
+                />
+              )}
+
+              {/* Prep Timing Toggle */}
+              <ToggleBooleanPropertyComponent
+                disabled={isProcessing}
+                label="Specific Prep Time"
+                value={form.timing !== null}
+                setValue={(v) => {
+                  if (v) {
+                    updateField('timing', { additionalUnitPrepTime: 5, prepStationId: 0, prepTime: 10 });
+                  } else {
+                    updateField('timing', null);
+                  }
+                }}
+                labelPlacement="end"
+              />
+              {/* Timing Fields */}
+              {form.timing && (
+                <PrepTimingPropertyComponent
+                  disabled={isProcessing}
+                  value={form.timing}
+                  setValue={(v) => {
+                    updateField('timing', v);
+                  }}
+                />
+              )}
+            </Stack>
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* ==============================
+          TAB: CONFIGURATION
+         ============================== */}
+      <TabPanel value="config">
+        <Grid container spacing={3}>
+          {/* ==============================
+              Advanced Settings
+             ============================== */}
+          <Grid size={12}>
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <Typography>Advanced Settings</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={3}>
+                  {/* Limits */}
+                  <Grid size={12}>
+                    <Typography variant="overline" display="block" color="text.secondary" gutterBottom>
+                      Limits
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={4}>
+                        <FloatNumericPropertyComponent
+                          disabled={isProcessing}
+                          label="Flavor Max"
+                          value={form.flavorMax}
+                          setValue={(v) => {
+                            updateField('flavorMax', v);
+                          }}
+                        />
+                      </Grid>
+                      <Grid size={4}>
+                        <FloatNumericPropertyComponent
+                          disabled={isProcessing}
+                          label="Bake Max"
+                          value={form.bakeMax}
+                          setValue={(v) => {
+                            updateField('bakeMax', v);
+                          }}
+                        />
+                      </Grid>
+                      <Grid size={4}>
+                        <FloatNumericPropertyComponent
+                          disabled={isProcessing}
+                          label="Bake Diff Max"
+                          value={form.bakeDifferentialMax}
+                          setValue={(v) => {
+                            updateField('bakeDifferentialMax', v);
+                          }}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  {/* Order Guide */}
+                  <Grid size={12}>
+                    <Typography variant="overline" display="block" color="text.secondary" gutterBottom>
+                      Order Guide
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Autocomplete
+                          multiple
+                          filterSelectedOptions
+                          fullWidth
+                          options={productInstanceFunctionIds}
+                          value={form.orderGuideSuggestionFunctions}
+                          onChange={(_, v) => {
+                            updateField('orderGuideSuggestionFunctions', v);
+                          }}
+                          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                          getOptionLabel={(option) => catalog?.productInstanceFunction(option)?.name ?? option}
+                          isOptionEqualToValue={(option, value) => option === value}
+                          renderInput={(params) => <TextField {...params} label="Suggestion Functions" />}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Autocomplete
+                          multiple
+                          filterSelectedOptions
+                          fullWidth
+                          options={Object.keys(catalog?.productInstanceFunctions || {})}
+                          value={form.orderGuideWarningFunctions}
+                          onChange={(_, v) => {
+                            updateField('orderGuideWarningFunctions', v);
+                          }}
+                          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                          getOptionLabel={(option) => catalog?.productInstanceFunction(option)?.name ?? option}
+                          isOptionEqualToValue={(option, value) => option === value}
+                          renderInput={(params) => <TextField {...params} label="Warning Functions" />}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  {/* Visibility & Flags */}
+                  <Grid size={12}>
+                    <Typography variant="overline" display="block" color="text.secondary" gutterBottom>
+                      Visibility & Flags
+                    </Typography>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid size={12}>
+                        <Autocomplete
+                          multiple
+                          filterSelectedOptions
+                          options={fulfillments.map((x) => x.id)}
+                          value={form.serviceDisable}
+                          onChange={(_, v) => {
+                            updateField('serviceDisable', v);
+                          }}
+                          getOptionLabel={(option) =>
+                            fulfillments.find((v) => v.id === option)?.displayName ?? 'INVALID'
+                          }
+                          isOptionEqualToValue={(option, value) => option === value}
+                          renderInput={(params) => <TextField {...params} label="Disabled Services" />}
+                        />
+                      </Grid>
+                      <Grid size={3}>
+                        <ToggleBooleanPropertyComponent
+                          disabled={isProcessing}
+                          label="Is 3rd Party"
+                          setValue={(v) => {
+                            updateField('is3p', v);
+                          }}
+                          value={form.is3p}
+                          labelPlacement="end"
+                        />
+                      </Grid>
+                      <Grid size={9}>
+                        <ToggleBooleanPropertyComponent
+                          disabled={isProcessing || form.modifiers.length === 0}
+                          label="Show Name of Base Product Instead of Component Modifiers"
+                          value={form.showNameOfBaseProduct || form.modifiers.length === 0}
+                          setValue={(v) => {
+                            updateField('showNameOfBaseProduct', v);
+                          }}
+                          labelPlacement="end"
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  {/* External IDs */}
+                  <Grid size={12}>
+                    <ExternalIdsExpansionPanelComponent
+                      title="External IDs"
+                      disabled={isProcessing}
+                      value={form.externalIds}
+                      setValue={(v) => {
+                        updateField('externalIds', v);
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
+          </Grid>
+        </Grid>
+      </TabPanel>
+
+      {/* ==============================
+          TAB: MODIFIERS
+         ============================== */}
+      <TabPanel value="modifiers">
         <ProductModifierComponent
           isProcessing={isProcessing}
           modifiers={form.modifiers}
           setModifiers={handleSetModifiers}
         />
-      </Grid>
-      <Grid size={12}>
-        <AvailabilityListBuilderComponent
-          availabilityIsValid={availabilityIsValid}
-          setAvailabilityIsValid={setAvailabilityIsValid}
-          disabled={isProcessing}
-          value={form.availability}
-          setValue={(v) => {
-            updateField('availability', v);
-          }}
-        />
-      </Grid>
-      <Grid size={12}>
-        <PrepTimingPropertyComponent
-          disabled={isProcessing}
-          value={form.timing}
-          setValue={(v) => {
-            updateField('timing', v);
-          }}
-        />
-      </Grid>
-      <Grid size={12}>
-        <DatetimeBasedDisableComponent
-          disabled={isProcessing}
-          value={form.disabled}
-          setValue={(v) => {
-            updateField('disabled', v);
-          }}
-        />
-      </Grid>
-    </>
+      </TabPanel>
+      {extraTabPanels}
+    </TabContext>
   );
 };
 
@@ -290,6 +418,9 @@ export interface ProductFormComponentProps {
   onConfirmClick: VoidFunction;
   disableConfirm?: boolean;
   children?: React.ReactNode;
+  extraTabs?: React.ReactNode;
+  extraTabPanels?: React.ReactNode;
+  initialTab?: string;
 }
 
 export const ProductComponent = ({
@@ -298,6 +429,9 @@ export const ProductComponent = ({
   onConfirmClick,
   disableConfirm = false,
   children,
+  extraTabs,
+  extraTabPanels,
+  initialTab,
 }: ProductFormComponentProps) => {
   const { isValid, isProcessing } = useProductForm();
 
@@ -330,7 +464,7 @@ export const ProductComponent = ({
       confirmText={confirmText}
       body={
         <>
-          <ProductFormBody />
+          <ProductFormBody extraTabs={extraTabs} extraTabPanels={extraTabPanels} initialTab={initialTab} />
           {children}
         </>
       }

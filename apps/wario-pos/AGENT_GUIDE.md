@@ -61,7 +61,11 @@
 
 Located in `src/sections/catalog`. This is a complex UI that writes back to `wario-backend`.
 
-- **Flow**: User clicks "Edit" -> `openProductEditAtom` fires -> `CatalogDialog` opens -> Form submits via `useProductMutation` -> Invalidate Query -> UI updates.
+- **Flow**: User clicks "Edit" -> `openProductEditAtom` fires -> `CatalogDialog` opens.
+- **Saving**: `ProductEditContainer` handles complex saves:
+  - Updates Product Class via `useEditProductMutation`.
+  - Concurrently updates/creates Product Instances via `useUpdateProductInstanceMutation`/`useCreateProductInstanceMutation`.
+- **Post-Save**: Invalidate Query -> UI updates.
 
 ### Order Dashboard
 
@@ -74,8 +78,8 @@ Located in `src/sections/order`.
 ### Running Locally
 
 ```bash
-# Start Vite dev server
-pnpm output pos:dev
+# Start Vite dev server from root of the monorepo
+pnpm run pos:dev
 ```
 
 ### Common Tasks

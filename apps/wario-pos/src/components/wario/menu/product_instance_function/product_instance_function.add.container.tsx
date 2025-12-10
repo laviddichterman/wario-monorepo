@@ -1,6 +1,11 @@
 import { useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { TabContext, TabList } from '@mui/lab';
+import { Button, Tab } from '@mui/material';
+
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useAddProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
 
@@ -10,7 +15,7 @@ import {
   useProductInstanceFunctionForm,
 } from '@/atoms/forms/productInstanceFunctionFormAtoms';
 
-import ProductInstanceFunctionFormComponent from './product_instance_function.component';
+import { ProductInstanceFunctionFormBody } from './product_instance_function.component';
 
 interface ProductInstanceFunctionAddContainerProps {
   onCloseCallback: VoidFunction;
@@ -22,6 +27,8 @@ const ProductInstanceFunctionAddContainer = ({ onCloseCallback }: ProductInstanc
 
   const setForm = useSetAtom(productInstanceFunctionFormAtom);
   const { form, isValid } = useProductInstanceFunctionForm();
+
+  const [activeTab, setActiveTab] = useState('identity');
 
   // Initialize form on mount
   useEffect(() => {
@@ -57,12 +64,33 @@ const ProductInstanceFunctionAddContainer = ({ onCloseCallback }: ProductInstanc
   if (!form) return null;
 
   return (
-    <ProductInstanceFunctionFormComponent
-      confirmText="Add"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={addProductInstanceFunction}
-      isProcessing={addMutation.isPending}
-    />
+    <TabContext value={activeTab}>
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+        <AppDialog.Header onClose={onCloseCallback} title="Add Function">
+          <TabList
+            onChange={(_e, v: string) => {
+              setActiveTab(v);
+            }}
+            aria-label="function tabs"
+            textColor="inherit"
+          >
+            <Tab label="Identity" value="identity" />
+            <Tab label="Logic" value="logic" />
+          </TabList>
+        </AppDialog.Header>
+        <AppDialog.Content>
+          <ProductInstanceFunctionFormBody />
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button onClick={onCloseCallback} disabled={addMutation.isPending}>
+            Cancel
+          </Button>
+          <Button onClick={addProductInstanceFunction} disabled={!isValid || addMutation.isPending} variant="contained">
+            Add
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    </TabContext>
   );
 };
 

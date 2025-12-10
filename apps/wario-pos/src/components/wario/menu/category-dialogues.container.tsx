@@ -15,23 +15,14 @@ const CategoryDialoguesContainer = () => {
 
   return (
     <>
-      <DialogContainer
-        title={'Edit Category'}
-        onClose={() => {
-          closeDialogue();
-        }}
-        open={dialogueState === 'CategoryEdit'}
-        innerComponent={
-          selectedCategoryId !== null && (
-            <CategoryEditContainer
-              onCloseCallback={() => {
-                closeDialogue();
-              }}
-              categoryId={selectedCategoryId}
-            />
-          )
-        }
-      />
+      {dialogueState === 'CategoryEdit' && selectedCategoryId !== null && (
+        <CategoryEditContainer
+          onCloseCallback={() => {
+            closeDialogue();
+          }}
+          categoryId={selectedCategoryId}
+        />
+      )}
       <DialogContainer
         title={'Delete Category'}
         onClose={() => {

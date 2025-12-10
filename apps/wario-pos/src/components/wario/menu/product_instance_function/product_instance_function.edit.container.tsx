@@ -1,8 +1,12 @@
 import { useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+
+import { TabContext, TabList } from '@mui/lab';
+import { Button, Tab } from '@mui/material';
 
 import type { IProductInstanceFunction } from '@wcp/wario-shared';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
 import { useEditProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
@@ -13,7 +17,7 @@ import {
   useProductInstanceFunctionForm,
 } from '@/atoms/forms/productInstanceFunctionFormAtoms';
 
-import ProductInstanceFunctionFormComponent from './product_instance_function.component';
+import { ProductInstanceFunctionFormBody } from './product_instance_function.component';
 
 interface ProductInstanceFunctionEditContainerProps {
   pifId: string;
@@ -51,6 +55,8 @@ const ProductInstanceFunctionEditContainerInner = ({
   const setForm = useSetAtom(productInstanceFunctionFormAtom);
   const { form, isValid } = useProductInstanceFunctionForm();
 
+  const [activeTab, setActiveTab] = useState('identity');
+
   // Initialize form on mount with entity data
   useEffect(() => {
     setForm(fromProductInstanceFunctionEntity(productInstanceFunction));
@@ -85,12 +91,37 @@ const ProductInstanceFunctionEditContainerInner = ({
   if (!form) return null;
 
   return (
-    <ProductInstanceFunctionFormComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={editProductInstanceFunction}
-      isProcessing={editMutation.isPending}
-    />
+    <TabContext value={activeTab}>
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+        <AppDialog.Header onClose={onCloseCallback} title={`Edit ${form.functionName}`}>
+          <TabList
+            onChange={(_e, v: string) => {
+              setActiveTab(v);
+            }}
+            aria-label="function tabs"
+            textColor="inherit"
+          >
+            <Tab label="Identity" value="identity" />
+            <Tab label="Logic" value="logic" />
+          </TabList>
+        </AppDialog.Header>
+        <AppDialog.Content>
+          <ProductInstanceFunctionFormBody />
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button onClick={onCloseCallback} disabled={editMutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={editProductInstanceFunction}
+            disabled={!isValid || editMutation.isPending}
+            variant="contained"
+          >
+            Save
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    </TabContext>
   );
 };
 

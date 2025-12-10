@@ -2,11 +2,15 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
+import { Button } from '@mui/material';
+
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
+
 import { useAddCategoryMutation } from '@/hooks/useCategoryMutations';
 
 import { categoryFormAtom, categoryFormProcessingAtom, DEFAULT_CATEGORY_FORM } from '@/atoms/forms/categoryFormAtoms';
 
-import { CategoryComponent } from './category.component';
+import { CategoryFormBody } from './category.component';
 
 export interface CategoryAddContainerProps {
   onCloseCallback: VoidFunction;
@@ -48,7 +52,22 @@ const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) =>
     });
   };
 
-  return <CategoryComponent confirmText="Add" onCloseCallback={onCloseCallback} onConfirmClick={addCategory} />;
+  return (
+    <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+      <AppDialog.Header onClose={onCloseCallback} title="Add Category" />
+      <AppDialog.Content>
+        <CategoryFormBody />
+      </AppDialog.Content>
+      <AppDialog.Actions>
+        <Button onClick={onCloseCallback} disabled={isProcessing}>
+          Cancel
+        </Button>
+        <Button onClick={addCategory} disabled={isProcessing} variant="contained">
+          Add
+        </Button>
+      </AppDialog.Actions>
+    </AppDialog.Root>
+  );
 };
 
 export default CategoryAddContainer;

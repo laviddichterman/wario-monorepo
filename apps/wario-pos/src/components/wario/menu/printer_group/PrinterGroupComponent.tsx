@@ -1,23 +1,16 @@
 import { useAtom, useAtomValue } from 'jotai';
 
-import { Grid } from '@mui/material';
+import { Grid, Typography } from '@mui/material';
 
 import {
   printerGroupFormAtom,
   printerGroupFormProcessingAtom,
   type PrinterGroupFormState,
-  usePrinterGroupForm,
 } from '@/atoms/forms/printerGroupFormAtoms';
 
 import ExternalIdsExpansionPanelComponent from '../../ExternalIdsExpansionPanelComponent';
 import { StringPropertyComponent } from '../../property-components/StringPropertyComponent';
 import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
-import { ElementActionComponent } from '../element.action.component';
-
-export interface PrinterGroupEditProps {
-  printerGroupId: string | null;
-  onCloseCallback: VoidFunction;
-}
 
 export const PrinterGroupFormBody = () => {
   const [form, setForm] = useAtom(printerGroupFormAtom);
@@ -30,13 +23,11 @@ export const PrinterGroupFormBody = () => {
   };
 
   return (
-    <>
-      <Grid
-        size={{
-          xs: 12,
-          sm: 4,
-        }}
-      >
+    <Grid container spacing={2}>
+      {/* ==============================
+          IDENTITY
+         ============================== */}
+      <Grid size={12}>
         <StringPropertyComponent
           disabled={isProcessing}
           label="Name"
@@ -46,12 +37,16 @@ export const PrinterGroupFormBody = () => {
           }}
         />
       </Grid>
-      <Grid
-        size={{
-          xs: 6,
-          sm: 4,
-        }}
-      >
+
+      {/* ==============================
+          CONFIGURATION
+         ============================== */}
+      <Grid size={12} sx={{ mt: 1 }}>
+        <Typography variant="overline" color="text.secondary">
+          Configuration
+        </Typography>
+      </Grid>
+      <Grid size={{ xs: 6, sm: 4 }}>
         <ToggleBooleanPropertyComponent
           disabled={isProcessing}
           label="Single Item Per Ticket"
@@ -62,12 +57,7 @@ export const PrinterGroupFormBody = () => {
           labelPlacement="end"
         />
       </Grid>
-      <Grid
-        size={{
-          xs: 6,
-          sm: 4,
-        }}
-      >
+      <Grid size={{ xs: 6, sm: 4 }}>
         <ToggleBooleanPropertyComponent
           disabled={isProcessing}
           label="Is Expo Printer"
@@ -88,42 +78,6 @@ export const PrinterGroupFormBody = () => {
           }}
         />
       </Grid>
-    </>
+    </Grid>
   );
 };
-
-export interface PrinterGroupFormProps {
-  confirmText: string;
-  onCloseCallback: VoidFunction;
-  onConfirmClick: VoidFunction;
-  disableConfirm?: boolean;
-  children?: React.ReactNode;
-}
-
-export const PrinterGroupComponent = ({
-  confirmText,
-  onCloseCallback,
-  onConfirmClick,
-  disableConfirm = false,
-  children,
-}: PrinterGroupFormProps) => {
-  const { isValid, isProcessing } = usePrinterGroupForm();
-
-  return (
-    <ElementActionComponent
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={onConfirmClick}
-      isProcessing={isProcessing}
-      disableConfirmOn={disableConfirm || !isValid || isProcessing}
-      confirmText={confirmText}
-      body={
-        <>
-          <PrinterGroupFormBody />
-          {children}
-        </>
-      }
-    />
-  );
-};
-
-export default PrinterGroupComponent;

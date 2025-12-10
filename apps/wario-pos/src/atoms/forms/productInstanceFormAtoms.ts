@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 
 import { atom, useAtomValue } from 'jotai';
-import { atomFamily } from 'jotai/utils';
+import { atomFamily } from 'jotai-family';
 
 import {
   type IProductInstanceDisplayFlagsMenuDto,

@@ -115,39 +115,21 @@ const ProductInstanceFunctionTableContainer = () => {
           },
         ]}
       />
-      <DialogContainer
-        maxWidth={'xl'}
-        title={'Add Product Instance Function'}
-        onClose={() => {
-          setIsProductInstanceFunctionAddOpen(false);
-        }}
-        open={isProductInstanceFunctionAddOpen}
-        innerComponent={
-          <ProductInstanceFunctionAddContainer
-            onCloseCallback={() => {
-              setIsProductInstanceFunctionAddOpen(false);
-            }}
-          />
-        }
-      />
-      <DialogContainer
-        maxWidth={'xl'}
-        title={'Edit Product Instance Function'}
-        onClose={() => {
-          setIsProductInstanceFunctionEditOpen(false);
-        }}
-        open={isProductInstanceFunctionEditOpen}
-        innerComponent={
-          pifIdToEdit !== null && (
-            <ProductInstanceFunctionEditContainer
-              onCloseCallback={() => {
-                setIsProductInstanceFunctionEditOpen(false);
-              }}
-              pifId={pifIdToEdit}
-            />
-          )
-        }
-      />
+      {isProductInstanceFunctionAddOpen && (
+        <ProductInstanceFunctionAddContainer
+          onCloseCallback={() => {
+            setIsProductInstanceFunctionAddOpen(false);
+          }}
+        />
+      )}
+      {isProductInstanceFunctionEditOpen && pifIdToEdit !== null && (
+        <ProductInstanceFunctionEditContainer
+          onCloseCallback={() => {
+            setIsProductInstanceFunctionEditOpen(false);
+          }}
+          pifId={pifIdToEdit}
+        />
+      )}
       <DialogContainer
         title={'Delete Product Instance Function'}
         onClose={() => {

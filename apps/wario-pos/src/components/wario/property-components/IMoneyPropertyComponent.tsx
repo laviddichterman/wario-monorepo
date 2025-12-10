@@ -8,6 +8,7 @@ export type IMoneyPropertyComponentProps = {
   step?: number;
   label: string;
   disabled: boolean;
+  size?: 'small' | 'medium';
 } & ValSetVal<IMoney>;
 
 export function IMoneyPropertyComponent(props: IMoneyPropertyComponentProps) {
@@ -15,6 +16,7 @@ export function IMoneyPropertyComponent(props: IMoneyPropertyComponentProps) {
     <MoneyInput
       fullWidth
       label={props.label}
+      size={props.size}
       numberProps={{
         allowEmpty: false,
         min: props.min ?? 0.0,

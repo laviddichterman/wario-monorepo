@@ -4,17 +4,23 @@ import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { ExpandMore } from '@mui/icons-material';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Box,
+  Button,
   FormControlLabel,
   Grid,
+  Stack,
   Switch,
+  Tab,
   Typography,
 } from '@mui/material';
 
 import type { IOption, IOptionType } from '@wcp/wario-shared';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogQuery, useModifierEntryById } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -37,7 +43,7 @@ import { HOST_API } from '@/config';
 
 import { ModifierOptionContainer } from '../modifier_option/modifier_option.component';
 
-import { ModifierTypeFormComponent } from './modifier_type.component';
+import { ModifierTypeFormBody } from './modifier_type.component';
 
 export interface ModifierTypeCopyContainerProps {
   modifierTypeId: string;
@@ -70,6 +76,7 @@ interface InnerProps {
 const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const { getAccessTokenSilently } = useAuth0();
+  const [activeTab, setActiveTab] = useState('rules');
 
   // ModifierType form state (reusing Phase 1 atoms)
   const setModifierTypeForm = useSetAtom(modifierTypeFormAtom);
@@ -138,22 +145,52 @@ const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onClose
   };
 
   return (
-    <ModifierTypeFormComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={() => void copyModifierTypeAndOptions()}
-      disableConfirm={!isModifierTypeValid}
-    >
-      {modifierTypeEntry.options.map((optionId, index) => (
-        <ModifierOptionCopyEditor
-          key={optionId}
-          index={index}
-          option={allOptions[optionId]}
-          modifierType={modifierTypeEntry.modifierType}
-          isProcessing={isProcessing}
-        />
-      ))}
-    </ModifierTypeFormComponent>
+    <TabContext value={activeTab}>
+      <AppDialog.Root open onClose={onCloseCallback} maxWidth="xl" fullWidth>
+        <AppDialog.Header onClose={onCloseCallback} title="Copy Modifier Type">
+          <TabList
+            onChange={(_e, v: string) => {
+              setActiveTab(v);
+            }}
+            aria-label="Modifier type tabs"
+          >
+            <Tab label="Rules" value="rules" />
+            <Tab label="Formatting" value="formatting" />
+            <Tab label="Options" value="options" />
+          </TabList>
+        </AppDialog.Header>
+        <AppDialog.Content>
+          <ModifierTypeFormBody />
+          <TabPanel value="options" sx={{ p: 0, pt: 2 }}>
+            <Stack spacing={2}>
+              {modifierTypeEntry.options.map((optionId, index) => (
+                <ModifierOptionCopyEditor
+                  key={optionId}
+                  index={index}
+                  option={allOptions[optionId]}
+                  modifierType={modifierTypeEntry.modifierType}
+                  isProcessing={isProcessing}
+                />
+              ))}
+            </Stack>
+          </TabPanel>
+        </AppDialog.Content>
+        <AppDialog.Actions>
+          <Button onClick={onCloseCallback} disabled={isProcessing}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              void copyModifierTypeAndOptions();
+            }}
+            disabled={!isModifierTypeValid || isProcessing}
+            variant="contained"
+          >
+            Save
+          </Button>
+        </AppDialog.Actions>
+      </AppDialog.Root>
+    </TabContext>
   );
 };
 
@@ -177,6 +214,7 @@ const ModifierOptionCopyEditor = ({ index, option, modifierType, isProcessing }:
   const [copyFlag, setCopyFlag] = useAtom(modifierOptionCopyFlagFamily(index));
   const [expanded, setExpanded] = useAtom(modifierOptionExpandedFamily(index));
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
+  const [activeTab, setActiveTab] = useState('identity');
 
   // Initialize this option's form state
   useEffect(() => {
@@ -194,7 +232,13 @@ const ModifierOptionCopyEditor = ({ index, option, modifierType, isProcessing }:
 
   return (
     <Accordion
-      sx={{ p: 2 }}
+      variant="outlined"
+      sx={{
+        p: 0,
+        borderRadius: 1,
+        '&:before': { display: 'none' },
+        borderColor: 'divider',
+      }}
       expanded={expanded && copyFlag}
       onChange={(_, ex) => {
         setExpanded(ex);
@@ -215,6 +259,9 @@ const ModifierOptionCopyEditor = ({ index, option, modifierType, isProcessing }:
                     setCopyFlag(e.target.checked);
                   }}
                   name="Copy"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
                 />
               }
               label="Copy"
@@ -223,84 +270,99 @@ const ModifierOptionCopyEditor = ({ index, option, modifierType, isProcessing }:
         </Grid>
       </AccordionSummary>
       <AccordionDetails>
-        <Grid container spacing={3} justifyContent="center">
-          {formState && (
-            <ModifierOptionContainer
-              isProcessing={isProcessing}
-              modifierType={modifierType}
-              displayName={formState.displayName}
-              setDisplayName={(v) => {
-                updateField('displayName', v);
+        <TabContext value={activeTab}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <TabList
+              onChange={(_e, v: string) => {
+                setActiveTab(v);
               }}
-              description={formState.description}
-              setDescription={(v) => {
-                updateField('description', v);
-              }}
-              shortcode={formState.shortcode}
-              setShortcode={(v) => {
-                updateField('shortcode', v);
-              }}
-              ordinal={formState.ordinal}
-              setOrdinal={(v) => {
-                updateField('ordinal', v);
-              }}
-              price={formState.price}
-              setPrice={(v) => {
-                updateField('price', v);
-              }}
-              externalIds={formState.externalIds}
-              setExternalIds={(v) => {
-                updateField('externalIds', v);
-              }}
-              enableFunction={formState.enableFunction}
-              setEnableFunction={(v) => {
-                updateField('enableFunction', v);
-              }}
-              flavorFactor={formState.flavorFactor}
-              setFlavorFactor={(v) => {
-                updateField('flavorFactor', v);
-              }}
-              bakeFactor={formState.bakeFactor}
-              setBakeFactor={(v) => {
-                updateField('bakeFactor', v);
-              }}
-              canSplit={formState.canSplit}
-              setCanSplit={(v) => {
-                updateField('canSplit', v);
-              }}
-              allowHeavy={formState.allowHeavy}
-              setAllowHeavy={(v) => {
-                updateField('allowHeavy', v);
-              }}
-              allowLite={formState.allowLite}
-              setAllowLite={(v) => {
-                updateField('allowLite', v);
-              }}
-              allowOTS={formState.allowOTS}
-              setAllowOTS={(v) => {
-                updateField('allowOTS', v);
-              }}
-              omitFromShortname={formState.omitFromShortname}
-              setOmitFromShortname={(v) => {
-                updateField('omitFromShortname', v);
-              }}
-              omitFromName={formState.omitFromName}
-              setOmitFromName={(v) => {
-                updateField('omitFromName', v);
-              }}
-              availability={formState.availability}
-              setAvailability={(v) => {
-                updateField('availability', v);
-              }}
-              disabled={formState.disabled}
-              setDisabled={(v) => {
-                updateField('disabled', v);
-              }}
-              availabilityIsValid={availabilityIsValid}
-              setAvailabilityIsValid={setAvailabilityIsValid}
-            />
-          )}
-        </Grid>
+              aria-label="Option tabs"
+            >
+              <Tab label="Identity" value="identity" />
+              <Tab label="Rules" value="rules" />
+              <Tab label="Configuration" value="config" />
+              <Tab label="Availability" value="availability" />
+            </TabList>
+          </Box>
+          <Grid container spacing={3} justifyContent="center" sx={{ mt: 2 }}>
+            {formState && (
+              <ModifierOptionContainer
+                isProcessing={isProcessing}
+                modifierType={modifierType}
+                displayName={formState.displayName}
+                setDisplayName={(v) => {
+                  updateField('displayName', v);
+                }}
+                description={formState.description}
+                setDescription={(v) => {
+                  updateField('description', v);
+                }}
+                shortcode={formState.shortcode}
+                setShortcode={(v) => {
+                  updateField('shortcode', v);
+                }}
+                ordinal={formState.ordinal}
+                setOrdinal={(v) => {
+                  updateField('ordinal', v);
+                }}
+                price={formState.price}
+                setPrice={(v) => {
+                  updateField('price', v);
+                }}
+                externalIds={formState.externalIds}
+                setExternalIds={(v) => {
+                  updateField('externalIds', v);
+                }}
+                enableFunction={formState.enableFunction}
+                setEnableFunction={(v) => {
+                  updateField('enableFunction', v);
+                }}
+                flavorFactor={formState.flavorFactor}
+                setFlavorFactor={(v) => {
+                  updateField('flavorFactor', v);
+                }}
+                bakeFactor={formState.bakeFactor}
+                setBakeFactor={(v) => {
+                  updateField('bakeFactor', v);
+                }}
+                canSplit={formState.canSplit}
+                setCanSplit={(v) => {
+                  updateField('canSplit', v);
+                }}
+                allowHeavy={formState.allowHeavy}
+                setAllowHeavy={(v) => {
+                  updateField('allowHeavy', v);
+                }}
+                allowLite={formState.allowLite}
+                setAllowLite={(v) => {
+                  updateField('allowLite', v);
+                }}
+                allowOTS={formState.allowOTS}
+                setAllowOTS={(v) => {
+                  updateField('allowOTS', v);
+                }}
+                omitFromShortname={formState.omitFromShortname}
+                setOmitFromShortname={(v) => {
+                  updateField('omitFromShortname', v);
+                }}
+                omitFromName={formState.omitFromName}
+                setOmitFromName={(v) => {
+                  updateField('omitFromName', v);
+                }}
+                availability={formState.availability}
+                setAvailability={(v) => {
+                  updateField('availability', v);
+                }}
+                disabled={formState.disabled}
+                setDisabled={(v) => {
+                  updateField('disabled', v);
+                }}
+                availabilityIsValid={availabilityIsValid}
+                setAvailabilityIsValid={setAvailabilityIsValid}
+              />
+            )}
+          </Grid>
+        </TabContext>
       </AccordionDetails>
     </Accordion>
   );

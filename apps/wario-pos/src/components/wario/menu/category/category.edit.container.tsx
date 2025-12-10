@@ -1,8 +1,11 @@
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
+import { Button } from '@mui/material';
+
 import type { ICategory } from '@wcp/wario-shared';
+import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useEditCategoryMutation } from '@/hooks/useCategoryMutations';
@@ -11,7 +14,7 @@ import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
 import { categoryFormAtom, categoryFormProcessingAtom, fromCategoryEntity } from '@/atoms/forms/categoryFormAtoms';
 
-import { CategoryComponent } from './category.component';
+import { CategoryFormBody } from './category.component';
 
 const CategoryNullGuard = createNullGuard(useCategoryById);
 export interface CategoryEditProps {
@@ -39,7 +42,7 @@ const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) =
   const { enqueueSnackbar } = useSnackbar();
 
   const setFormState = useSetAtom(categoryFormAtom);
-  const setIsProcessing = useSetAtom(categoryFormProcessingAtom);
+  const [isProcessing, setIsProcessing] = useAtom(categoryFormProcessingAtom);
   const formState = useAtomValue(categoryFormAtom);
 
   const editMutation = useEditCategoryMutation();
@@ -76,13 +79,23 @@ const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) =
     );
   };
 
+  if (!formState) return null;
+
   return (
-    <CategoryComponent
-      confirmText="Save"
-      onCloseCallback={onCloseCallback}
-      onConfirmClick={editCategory}
-      excludeCategoryId={category.id}
-    />
+    <AppDialog.Root open onClose={onCloseCallback} maxWidth="md" fullWidth>
+      <AppDialog.Header onClose={onCloseCallback} title={`Edit ${formState.name}`} />
+      <AppDialog.Content>
+        <CategoryFormBody excludeCategoryId={category.id} />
+      </AppDialog.Content>
+      <AppDialog.Actions>
+        <Button onClick={onCloseCallback} disabled={isProcessing}>
+          Cancel
+        </Button>
+        <Button onClick={editCategory} disabled={isProcessing} variant="contained">
+          Save
+        </Button>
+      </AppDialog.Actions>
+    </AppDialog.Root>
   );
 };
 
