@@ -35,9 +35,9 @@ const useProductIdsAfterDisableFilter = () => {
     const products = Object.values(catalog.products);
     const filteredProducts = !hideDisabledProducts
       ? products
-      : products.filter((x) => !x.product.disabled || x.product.disabled.start <= x.product.disabled.end);
+      : products.filter((x) => !x.disabled || x.disabled.start <= x.disabled.end);
 
-    return filteredProducts.map((x) => x.product.id);
+    return filteredProducts.map((x) => x.id);
   }, [catalog, hideDisabledProducts]);
 };
 

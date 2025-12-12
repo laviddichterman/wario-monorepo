@@ -1,6 +1,6 @@
 /**
  * Tests for WCPOption module
- * 
+ *
  * Tests the option-related utility functions for:
  * - Display name formatting
  * - Option enable/disable logic based on bake/flavor limits
@@ -34,8 +34,7 @@ import {
 // ============================================================================
 
 describe('ListModifierChoicesByDisplayName', () => {
-  const createOptionSelector = (options: IOption[]) =>
-    (id: string) => options.find(o => o.id === id);
+  const createOptionSelector = (options: IOption[]) => (id: string) => options.find((o) => o.id === id);
 
   it('should join two choices with "or"', () => {
     const options = [
@@ -97,8 +96,7 @@ describe('ListModifierChoicesByDisplayName', () => {
 // ============================================================================
 
 describe('HandleOptionNameFilterOmitByName', () => {
-  const createOptionSelector = (options: IOption[]) =>
-    (id: string) => options.find(o => o.id === id);
+  const createOptionSelector = (options: IOption[]) => (id: string) => options.find((o) => o.id === id);
 
   it('should return display name when not omitted', () => {
     const option = createMockOption({
@@ -136,8 +134,7 @@ describe('HandleOptionNameFilterOmitByName', () => {
 // ============================================================================
 
 describe('HandleOptionNameNoFilter', () => {
-  const createOptionSelector = (options: IOption[]) =>
-    (id: string) => options.find(o => o.id === id);
+  const createOptionSelector = (options: IOption[]) => (id: string) => options.find((o) => o.id === id);
 
   it('should return display name regardless of omit flag', () => {
     const option = createMockOption({
@@ -175,24 +172,26 @@ describe('HandleOptionCurry', () => {
   });
 
   it('should return "Your choice of" text for YOUR_CHOICE_OF display mode', () => {
-    const modifierTypes = [createMockOptionType({
-      id: 'mt1',
-      displayName: 'Toppings',
-      options: [],
-      displayFlags: {
-        is3p: false,
-        omit_section_if_no_available_options: false,
-        omit_options_if_not_available: false,
-        use_toggle_if_only_two_options: false,
-        hidden: false,
-        empty_display_as: DISPLAY_AS.YOUR_CHOICE_OF,
-        modifier_class: MODIFIER_CLASS.ADD,
-        template_string: '',
-        multiple_item_separator: ', ',
-        non_empty_group_prefix: '',
-        non_empty_group_suffix: '',
-      },
-    })];
+    const modifierTypes = [
+      createMockOptionType({
+        id: 'mt1',
+        displayName: 'Toppings',
+        options: [],
+        displayFlags: {
+          is3p: false,
+          omit_section_if_no_available_options: false,
+          omit_options_if_not_available: false,
+          use_toggle_if_only_two_options: false,
+          hidden: false,
+          empty_display_as: DISPLAY_AS.YOUR_CHOICE_OF,
+          modifier_class: MODIFIER_CLASS.ADD,
+          template_string: '',
+          multiple_item_separator: ', ',
+          non_empty_group_prefix: '',
+          non_empty_group_suffix: '',
+        },
+      }),
+    ];
     const selectors = createMockCatalogSelectorsFromArrays({ modifierTypes, options: [] });
 
     const handler = HandleOptionCurry(selectors, HandleOptionNameNoFilter);
@@ -206,23 +205,25 @@ describe('HandleOptionCurry', () => {
       createMockOption({ id: 'opt1', displayName: 'Small' }),
       createMockOption({ id: 'opt2', displayName: 'Large' }),
     ];
-    const modifierTypes = [createMockOptionType({
-      id: 'mt1',
-      options: ['opt1', 'opt2'],
-      displayFlags: {
-        is3p: false,
-        omit_section_if_no_available_options: false,
-        omit_options_if_not_available: false,
-        use_toggle_if_only_two_options: false,
-        hidden: false,
-        empty_display_as: DISPLAY_AS.LIST_CHOICES,
-        modifier_class: MODIFIER_CLASS.ADD,
-        template_string: '',
-        multiple_item_separator: ', ',
-        non_empty_group_prefix: '',
-        non_empty_group_suffix: '',
-      },
-    })];
+    const modifierTypes = [
+      createMockOptionType({
+        id: 'mt1',
+        options: ['opt1', 'opt2'],
+        displayFlags: {
+          is3p: false,
+          omit_section_if_no_available_options: false,
+          omit_options_if_not_available: false,
+          use_toggle_if_only_two_options: false,
+          hidden: false,
+          empty_display_as: DISPLAY_AS.LIST_CHOICES,
+          modifier_class: MODIFIER_CLASS.ADD,
+          template_string: '',
+          multiple_item_separator: ', ',
+          non_empty_group_prefix: '',
+          non_empty_group_suffix: '',
+        },
+      }),
+    ];
     const selectors = createMockCatalogSelectorsFromArrays({ modifierTypes, options });
 
     const handler = HandleOptionCurry(selectors, HandleOptionNameNoFilter);
@@ -396,15 +397,7 @@ describe('IsOptionEnabled', () => {
     const { selectors, option } = createTestCatalogSelectors({ bake_max: 1 });
     const wcpProduct: WCPProduct = { productId: 'prod1', modifiers: [] };
 
-    const result = IsOptionEnabled(
-      'mt1',
-      option,
-      wcpProduct,
-      [0, 0],
-      [0, 0],
-      OptionPlacement.WHOLE,
-      selectors,
-    );
+    const result = IsOptionEnabled('mt1', option, wcpProduct, [0, 0], [0, 0], OptionPlacement.WHOLE, selectors);
 
     expect(result.enable).toBe(DISABLE_REASON.DISABLED_WEIGHT);
   });
@@ -413,15 +406,7 @@ describe('IsOptionEnabled', () => {
     const { selectors, option } = createTestCatalogSelectors({ flavor_max: 1 });
     const wcpProduct: WCPProduct = { productId: 'prod1', modifiers: [] };
 
-    const result = IsOptionEnabled(
-      'mt1',
-      option,
-      wcpProduct,
-      [0, 0],
-      [0, 0],
-      OptionPlacement.WHOLE,
-      selectors,
-    );
+    const result = IsOptionEnabled('mt1', option, wcpProduct, [0, 0], [0, 0], OptionPlacement.WHOLE, selectors);
 
     expect(result.enable).toBe(DISABLE_REASON.DISABLED_FLAVORS);
   });
@@ -431,29 +416,25 @@ describe('IsOptionEnabled', () => {
     const wcpProduct: WCPProduct = { productId: 'prod1', modifiers: [] };
 
     // Add option to LEFT only - differential will be 2 (bake factor)
-    const result = IsOptionEnabled(
-      'mt1',
-      option,
-      wcpProduct,
-      [0, 0],
-      [0, 0],
-      OptionPlacement.LEFT,
-      selectors,
-    );
+    const result = IsOptionEnabled('mt1', option, wcpProduct, [0, 0], [0, 0], OptionPlacement.LEFT, selectors);
 
     expect(result.enable).toBe(DISABLE_REASON.DISABLED_SPLIT_DIFFERENTIAL);
   });
 
   it('should handle option already placed on one side', () => {
     const { selectors, option } = createTestCatalogSelectors({ bake_max: 10 });
-    const modifiers: ProductInstanceModifierEntry[] = [{
-      modifierTypeId: 'mt1',
-      options: [{
-        optionId: 'opt1',
-        placement: OptionPlacement.LEFT,
-        qualifier: OptionQualifier.REGULAR,
-      }],
-    }];
+    const modifiers: ProductInstanceModifierEntry[] = [
+      {
+        modifierTypeId: 'mt1',
+        options: [
+          {
+            optionId: 'opt1',
+            placement: OptionPlacement.LEFT,
+            qualifier: OptionQualifier.REGULAR,
+          },
+        ],
+      },
+    ];
     const wcpProduct: WCPProduct = { productId: 'prod1', modifiers };
 
     // Attempt to also add to RIGHT - should work since we're within limits

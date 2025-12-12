@@ -71,11 +71,13 @@ const ModifierDialoguesContainer = () => {
         }}
         open={dialogueState === 'ModifierOptionEdit'}
         innerComponent={
-          modifierOptionId !== null && (
+          modifierOptionId !== null &&
+          modifierTypeId !== null && (
             <ModifierOptionEditContainer
               onCloseCallback={() => {
                 closeDialogue();
               }}
+              modifier_type_id={modifierTypeId}
               modifier_option_id={modifierOptionId}
             />
           )
@@ -88,11 +90,13 @@ const ModifierDialoguesContainer = () => {
         }}
         open={dialogueState === 'ModifierOptionDisableUntilEod'}
         innerComponent={
-          modifierOptionId !== null && (
+          modifierOptionId !== null &&
+          modifierTypeId !== null && (
             <ModifierOptionDisableUntilEodContainer
               onCloseCallback={() => {
                 closeDialogue();
               }}
+              modifier_type_id={modifierTypeId}
               modifier_option_id={modifierOptionId}
             />
           )
@@ -105,11 +109,13 @@ const ModifierDialoguesContainer = () => {
         }}
         open={dialogueState === 'ModifierOptionDisable'}
         innerComponent={
-          modifierOptionId !== null && (
+          modifierOptionId !== null &&
+          modifierTypeId !== null && (
             <ModifierOptionDisableContainer
               onCloseCallback={() => {
                 closeDialogue();
               }}
+              modifier_type_id={modifierTypeId}
               modifier_option_id={modifierOptionId}
             />
           )
@@ -122,11 +128,13 @@ const ModifierDialoguesContainer = () => {
         }}
         open={dialogueState === 'ModifierOptionEnable'}
         innerComponent={
-          modifierOptionId !== null && (
+          modifierOptionId !== null &&
+          modifierTypeId !== null && (
             <ModifierOptionEnableContainer
               onCloseCallback={() => {
                 closeDialogue();
               }}
+              modifier_type_id={modifierTypeId}
               modifier_option_id={modifierOptionId}
             />
           )
@@ -139,11 +147,13 @@ const ModifierDialoguesContainer = () => {
         }}
         open={dialogueState === 'ModifierOptionDelete'}
         innerComponent={
-          modifierOptionId !== null && (
+          modifierOptionId !== null &&
+          modifierTypeId !== null && (
             <ModifierOptionDeleteContainer
               onCloseCallback={() => {
                 closeDialogue();
               }}
+              modifier_type_id={modifierTypeId}
               modifier_option_id={modifierOptionId}
             />
           )

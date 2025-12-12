@@ -15,17 +15,16 @@ import { type Selector } from '../utility-types';
 
 import { WCPProductGenerateMetadata } from './WCPProduct';
 
-
 export type PotentiallyVisibleDisableReasons = ReturnType<typeof DisableDataCheck>['enable'];
 
 export const ShowTemporarilyDisabledProducts = (reason: PotentiallyVisibleDisableReasons) => {
   // Show enabled products and blanket-disabled (temporarily disabled) products
   return reason !== DISABLE_REASON.DISABLED_BLANKET;
-}
+};
 
 export const ShowCurrentlyAvailableProducts = (reason: PotentiallyVisibleDisableReasons) => {
   return reason === DISABLE_REASON.ENABLED;
-}
+};
 
 /**
  * Represents a visible product instance with all computed metadata.
@@ -178,7 +177,6 @@ export function ComputeCategoryVisibilityMap(
   return { products, populatedChildren };
 }
 
-
 /**
  * Pure function to compute if a product instance is potentially visible.
  * Extracted from useDetermineIfPotentiallyVisible hook for reuse in data computation.
@@ -210,7 +208,6 @@ export function ComputePotentiallyVisible(
   return disableCheck.reduce((acc, reason) => DisableReasonAccumulator(acc, reason), DISABLE_REASON.ENABLED);
 }
 
-
 /**
  * Accumulates disable reasons, returning the "most disabled" reason.
  * Generally used to determine if the disable reason is either strictly enabled or strictly disabled.
@@ -218,7 +215,10 @@ export function ComputePotentiallyVisible(
  * @param next next disable reason to accumulate
  * @returns the accumulated disable reason
  */
-export const DisableReasonAccumulator = (current: PotentiallyVisibleDisableReasons, next: PotentiallyVisibleDisableReasons) => {
+export const DisableReasonAccumulator = (
+  current: PotentiallyVisibleDisableReasons,
+  next: PotentiallyVisibleDisableReasons,
+) => {
   if (current === DISABLE_REASON.DISABLED_BLANKET || next === DISABLE_REASON.DISABLED_BLANKET) {
     return DISABLE_REASON.DISABLED_BLANKET;
   }
@@ -230,7 +230,7 @@ export const DisableReasonAccumulator = (current: PotentiallyVisibleDisableReaso
     return DISABLE_REASON.DISABLED_AVAILABILITY;
   }
   return DISABLE_REASON.ENABLED;
-}
+};
 
 export const CheckRequiredModifiersAreAvailable = (
   product: IProduct,
@@ -243,7 +243,9 @@ export const CheckRequiredModifiersAreAvailable = (
   modifiers.forEach((productInstanceModifierEntry) => {
     // TODO: for incomplete product instances, this should check for a viable way to order the product
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const productModifierDefinition = product.modifiers.find((x) => x.mtid === productInstanceModifierEntry.modifierTypeId)!;
+    const productModifierDefinition = product.modifiers.find(
+      (x) => x.mtid === productInstanceModifierEntry.modifierTypeId,
+    )!;
     passes &&=
       !IsSomethingDisabledForFulfillment(productModifierDefinition, fulfillmentId) &&
       productInstanceModifierEntry.options.reduce((acc: boolean, x) => {
@@ -252,7 +254,7 @@ export const CheckRequiredModifiersAreAvailable = (
           acc &&
           modifierOption !== undefined &&
           DisableDataCheck(modifierOption.disabled, modifierOption.availability, order_time).enable ===
-          DISABLE_REASON.ENABLED
+            DISABLE_REASON.ENABLED
         );
       }, true);
   });
@@ -268,7 +270,6 @@ export const GetMenuHideDisplayFlag: DisableFlagGetterType = (x) =>
 export const GetOrderHideDisplayFlag: DisableFlagGetterType = (x) =>
   (x as Pick<IProductInstanceDisplayFlags, 'order'>).order.hide;
 export const IgnoreHideDisplayFlags: DisableFlagGetterType = (_x) => false;
-
 
 /**
  * Checks if a product is enabled and visible
@@ -296,22 +297,16 @@ export function FilterProductUsingCatalog(
     !IsSomethingDisabledForFulfillment(productClass, fulfillmentId) &&
     !hide_product_functor(display_flags) &&
     DoesProductPassAvailabilityCheck(productClass, order_time) &&
-    CheckRequiredModifiersAreAvailable(
-      productClass,
-      modifiers,
-      catalogSelectors.option,
-      order_time,
-      fulfillmentId,
-    )
+    CheckRequiredModifiersAreAvailable(productClass, modifiers, catalogSelectors.option, order_time, fulfillmentId)
   );
 }
 
-export function DoesProductPassAvailabilityCheck(product: Pick<IProduct, 'disabled' | 'availability'>, order_time: Date | number) {
-  return (
-    DisableDataCheck(product.disabled, product.availability, order_time).enable === DISABLE_REASON.ENABLED
-  );
+export function DoesProductPassAvailabilityCheck(
+  product: Pick<IProduct, 'disabled' | 'availability'>,
+  order_time: Date | number,
+) {
+  return DisableDataCheck(product.disabled, product.availability, order_time).enable === DISABLE_REASON.ENABLED;
 }
-
 
 /**
  *
@@ -341,27 +336,34 @@ export function FilterWCPProduct(
   );
 }
 
-
 /**
- * Generate a list of products that are reachable from a fulfillment, and are not disabled for that fulfillment. 
- * @param fulfillment 
- * @param catalogSelectors 
- * @returns 
+ * Generate a list of products that are reachable from a fulfillment, and are not disabled for that fulfillment.
+ * @param fulfillment
+ * @param catalogSelectors
+ * @returns
  */
-export const GenerateProductsReachableAndNotDisabledFromFulfillment = (fulfillment: Pick<FulfillmentConfig, 'id' | 'orderBaseCategoryId' | 'orderSupplementaryCategoryId'>, catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productEntry'>) => {
+export const GenerateProductsReachableAndNotDisabledFromFulfillment = (
+  fulfillment: Pick<FulfillmentConfig, 'id' | 'orderBaseCategoryId' | 'orderSupplementaryCategoryId'>,
+  catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productEntry'>,
+) => {
   const GenerateOrderedArray = (inner_id: string): string[] => {
     const cat = catalogSelectors.category(inner_id);
-    if (!cat || (cat.serviceDisable.indexOf(fulfillment.id) !== -1)) {
+    if (!cat || cat.serviceDisable.indexOf(fulfillment.id) !== -1) {
       return [];
     }
-    return [...cat.children.flatMap((childId: string) => GenerateOrderedArray(childId)), ...cat.products.filter((x) => {
-      const product = catalogSelectors.productEntry(x);
-      return product && product.serviceDisable.indexOf(fulfillment.id) === -1;
-    })];
-  }
-  return new Set([...GenerateOrderedArray(fulfillment.orderBaseCategoryId), ...(fulfillment.orderSupplementaryCategoryId ? GenerateOrderedArray(fulfillment.orderSupplementaryCategoryId) : [])]);
-}
-
+    return [
+      ...cat.children.flatMap((childId: string) => GenerateOrderedArray(childId)),
+      ...cat.products.filter((x) => {
+        const product = catalogSelectors.productEntry(x);
+        return product && product.serviceDisable.indexOf(fulfillment.id) === -1;
+      }),
+    ];
+  };
+  return new Set([
+    ...GenerateOrderedArray(fulfillment.orderBaseCategoryId),
+    ...(fulfillment.orderSupplementaryCategoryId ? GenerateOrderedArray(fulfillment.orderSupplementaryCategoryId) : []),
+  ]);
+};
 
 /**
  * Filters a product to see if it is available for purchase in a fulfillment in a given configuration.
@@ -409,14 +411,13 @@ export function FilterProductSelector(
               (mo.placement === OptionPlacement.WHOLE &&
                 mdModifier.options[mo.optionId].enable_whole.enable === DISABLE_REASON.ENABLED)) &&
             DisableDataCheck(modifierOption.disabled, modifierOption.availability, order_time).enable ===
-            DISABLE_REASON.ENABLED
+              DISABLE_REASON.ENABLED
           );
         }, true)
       );
     }, true)
   );
 }
-
 
 export function CanThisBeOrderedAtThisTimeAndFulfillmentCatalog(
   productId: string,

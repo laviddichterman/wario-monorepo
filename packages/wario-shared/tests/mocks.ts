@@ -255,9 +255,7 @@ export const createMockCategoryDisplayFlags = (
   ...overrides,
 });
 
-export const createMockCategory = (
-  overrides: Partial<ICategory> = {},
-): ICategory => ({
+export const createMockCategory = (overrides: Partial<ICategory> = {}): ICategory => ({
   id: 'cat1',
   name: 'Test Category',
   description: '',
@@ -376,9 +374,7 @@ export const createMockAbstractExpressionConstLiteral = (
   expr: overrides,
 });
 
-export const createMockAbstractExpression = (
-  overrides: DeepPartial<IAbstractExpression> = {},
-): IAbstractExpression => {
+export const createMockAbstractExpression = (overrides: DeepPartial<IAbstractExpression> = {}): IAbstractExpression => {
   // Simplified default: return const literal if discriminator absent or matches
   // Full implementation would replicate the switch usage in createMockAbstractOrderExpression
   return createMockAbstractExpressionConstLiteral((overrides.expr ?? {}) as IConstLiteralExpression);
@@ -390,7 +386,8 @@ export const createMockProductInstanceFunction = (
   id: 'pif1',
   name: 'Test Product Instance Function',
   ...overrides,
-  expression: 'discriminator' in (overrides.expression ?? {})
-    ? (overrides.expression as IAbstractExpression)
-    : createMockAbstractExpression(overrides.expression),
+  expression:
+    'discriminator' in (overrides.expression ?? {})
+      ? (overrides.expression as IAbstractExpression)
+      : createMockAbstractExpression(overrides.expression),
 });

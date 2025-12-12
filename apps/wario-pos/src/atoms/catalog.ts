@@ -61,7 +61,6 @@ export const openProductInterstitialAtom = atom(null, (_get, set) => {
   set(dialogueStateAtom, 'ProductInterstitial');
 });
 
-
 export const openCategoryInterstitialAtom = atom(null, (_get, set) => {
   set(dialogueStateAtom, 'CategoryInterstitial');
 });
@@ -127,15 +126,23 @@ export const openProductInstanceAddAtom = atom(null, (_get, set, parentProductId
   set(dialogueStateAtom, 'ProductInstanceAdd');
 });
 
-export const openProductInstanceEditAtom = atom(null, (_get, set, productInstanceId: string) => {
-  set(selectedProductInstanceIdAtom, productInstanceId);
-  set(dialogueStateAtom, 'ProductInstanceEdit');
-});
+export const openProductInstanceEditAtom = atom(
+  null,
+  (_get, set, { productId, instanceId }: { productId: string; instanceId: string }) => {
+    set(selectedProductClassIdAtom, productId);
+    set(selectedProductInstanceIdAtom, instanceId);
+    set(dialogueStateAtom, 'ProductInstanceEdit');
+  },
+);
 
-export const openProductInstanceDeleteAtom = atom(null, (_get, set, productInstanceId: string) => {
-  set(selectedProductInstanceIdAtom, productInstanceId);
-  set(dialogueStateAtom, 'ProductInstanceDelete');
-});
+export const openProductInstanceDeleteAtom = atom(
+  null,
+  (_get, set, { productId, instanceId }: { productId: string; instanceId: string }) => {
+    set(selectedProductClassIdAtom, productId);
+    set(selectedProductInstanceIdAtom, instanceId);
+    set(dialogueStateAtom, 'ProductInstanceDelete');
+  },
+);
 
 export const setDetailPanelSizeForRowIdAtom = atom(null, (get, set, { id, size }: { id: GridRowId; size: number }) => {
   const current = get(detailPanelSizesAtom);
@@ -168,27 +175,47 @@ export const openModifierOptionAddAtom = atom(null, (_get, set, modifierTypeId: 
   set(dialogueStateAtom, 'ModifierOptionAdd');
 });
 
-export const openModifierOptionEditAtom = atom(null, (_get, set, modifierOptionId: string) => {
-  set(selectedModifierOptionIdAtom, modifierOptionId);
-  set(dialogueStateAtom, 'ModifierOptionEdit');
-});
+export const openModifierOptionEditAtom = atom(
+  null,
+  (_get, set, { modifierTypeId, optionId }: { modifierTypeId: string; optionId: string }) => {
+    set(selectedModifierTypeIdAtom, modifierTypeId);
+    set(selectedModifierOptionIdAtom, optionId);
+    set(dialogueStateAtom, 'ModifierOptionEdit');
+  },
+);
 
-export const openModifierOptionDeleteAtom = atom(null, (_get, set, modifierOptionId: string) => {
-  set(selectedModifierOptionIdAtom, modifierOptionId);
-  set(dialogueStateAtom, 'ModifierOptionDelete');
-});
+export const openModifierOptionDeleteAtom = atom(
+  null,
+  (_get, set, { modifierTypeId, optionId }: { modifierTypeId: string; optionId: string }) => {
+    set(selectedModifierTypeIdAtom, modifierTypeId);
+    set(selectedModifierOptionIdAtom, optionId);
+    set(dialogueStateAtom, 'ModifierOptionDelete');
+  },
+);
 
-export const openModifierOptionDisableUntilEodAtom = atom(null, (_get, set, modifierOptionId: string) => {
-  set(selectedModifierOptionIdAtom, modifierOptionId);
-  set(dialogueStateAtom, 'ModifierOptionDisableUntilEod');
-});
+export const openModifierOptionDisableUntilEodAtom = atom(
+  null,
+  (_get, set, { modifierTypeId, optionId }: { modifierTypeId: string; optionId: string }) => {
+    set(selectedModifierTypeIdAtom, modifierTypeId);
+    set(selectedModifierOptionIdAtom, optionId);
+    set(dialogueStateAtom, 'ModifierOptionDisableUntilEod');
+  },
+);
 
-export const openModifierOptionDisableAtom = atom(null, (_get, set, modifierOptionId: string) => {
-  set(selectedModifierOptionIdAtom, modifierOptionId);
-  set(dialogueStateAtom, 'ModifierOptionDisable');
-});
+export const openModifierOptionDisableAtom = atom(
+  null,
+  (_get, set, { modifierTypeId, optionId }: { modifierTypeId: string; optionId: string }) => {
+    set(selectedModifierTypeIdAtom, modifierTypeId);
+    set(selectedModifierOptionIdAtom, optionId);
+    set(dialogueStateAtom, 'ModifierOptionDisable');
+  },
+);
 
-export const openModifierOptionEnableAtom = atom(null, (_get, set, modifierOptionId: string) => {
-  set(selectedModifierOptionIdAtom, modifierOptionId);
-  set(dialogueStateAtom, 'ModifierOptionEnable');
-});
+export const openModifierOptionEnableAtom = atom(
+  null,
+  (_get, set, { modifierTypeId, optionId }: { modifierTypeId: string; optionId: string }) => {
+    set(selectedModifierTypeIdAtom, modifierTypeId);
+    set(selectedModifierOptionIdAtom, optionId);
+    set(dialogueStateAtom, 'ModifierOptionEnable');
+  },
+);

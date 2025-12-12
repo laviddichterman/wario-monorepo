@@ -20,7 +20,7 @@ import { IOptionInstanceDto } from './modifier.dto';
 
 /**
  * Preparation timing configurations for a product.
- * A product has a base prep time, which is the time it takes to make one. 
+ * A product has a base prep time, which is the time it takes to make one.
  * It also has an additional prep time, which is the time it takes to make each additional unit.
  * Conceptually the single unit time is like the bake time.
  * The additional unit time is like the prep time (like, time to top a pizza).
@@ -203,7 +203,7 @@ export class UncommittedIProductDto {
   @Type(() => IProductDisplayFlagsDto)
   displayFlags!: IProductDisplayFlagsDto;
 
-  /** Preparation timing configuration. 
+  /** Preparation timing configuration.
    * @see @link PrepTimingDto for more information.
    */
   @ValidateNested()
@@ -227,12 +227,12 @@ export class UncommittedIProductDto {
   printerGroup!: string | null;
 
   /**
- * List of IDs for Product Instances belonging to this product.
- * Must have at least one instance.
- * @remarks Order matters a lot here. The 0th element is the base or default configuration.
- * In terms of how multi-instance products work, the end of this array should be the "most complex" configuration.
- * The naming starts at the end of the array and works to the beginning, looking for a match that "at least" satisfies the product configuration.
- */
+   * List of IDs for Product Instances belonging to this product.
+   * Must have at least one instance.
+   * @remarks Order matters a lot here. The 0th element is the base or default configuration.
+   * In terms of how multi-instance products work, the end of this array should be the "most complex" configuration.
+   * The naming starts at the end of the array and works to the beginning, looking for a match that "at least" satisfies the product configuration.
+   */
   @ValidateNested({ each: true })
   @IsString({ each: true })
   @ArrayMinSize(1)

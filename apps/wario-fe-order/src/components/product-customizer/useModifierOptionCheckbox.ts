@@ -14,12 +14,10 @@ import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } fro
 
 import { UpdateModifierOptionStateCheckbox } from './WProductCustomizerLogic';
 
-export function useModifierOptionCheckbox({ option, modifierTypeId }: { option: IOption, modifierTypeId: string }) {
+export function useModifierOptionCheckbox({ option, modifierTypeId }: { option: IOption; modifierTypeId: string }) {
   const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
   const optionState = useCustomizerStore((s) =>
-    s.selectedProduct
-      ? selectOptionState(s.selectedProduct.m.modifier_map, modifierTypeId, option.id)
-      : undefined,
+    s.selectedProduct ? selectOptionState(s.selectedProduct.m.modifier_map, modifierTypeId, option.id) : undefined,
   );
   const modifierTypeEntry = useModifierTypeById(modifierTypeId) as IOptionType;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

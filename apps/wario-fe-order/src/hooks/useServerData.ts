@@ -38,8 +38,7 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
       const modifierEntry = catalogSelectors.modifierEntry(k);
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierEntry can be undefined at runtime
       if (!modifierEntry) return acc;
-      const omit_section_if_no_available_options =
-        modifierEntry.displayFlags.omit_section_if_no_available_options;
+      const omit_section_if_no_available_options = modifierEntry.displayFlags.omit_section_if_no_available_options;
       const hidden = modifierEntry.displayFlags.hidden;
       return !hidden && (!omit_section_if_no_available_options || v.has_selectable) ? { ...acc, [k]: v } : acc;
     }, {});

@@ -141,18 +141,18 @@ export class WFunctional {
     return branchResult[0] === true
       ? branchResult
       : [
-        false,
-        [
-          <IAbstractExpression>{
-            discriminator: ProductInstanceFunctionType.Logical,
-            expr: {
-              operator: LogicalFunctionOperator.AND,
-              operandA: branchTestResult[1][0],
-              operandB: branchResult[1][0],
+          false,
+          [
+            <IAbstractExpression>{
+              discriminator: ProductInstanceFunctionType.Logical,
+              expr: {
+                operator: LogicalFunctionOperator.AND,
+                operandA: branchTestResult[1][0],
+                operandB: branchResult[1][0],
+              },
             },
-          },
-        ],
-      ];
+          ],
+        ];
   }
 
   static ProcessConstLiteralStatement(stmt: IConstLiteralExpression) {
@@ -371,17 +371,17 @@ export class WFunctional {
               return (
                 acc2 +
                 metadataTypeMultiplier *
-                (optInstance.placement === OptionPlacement.LEFT || optInstance.placement === OptionPlacement.WHOLE
-                  ? 1
-                  : 0)
+                  (optInstance.placement === OptionPlacement.LEFT || optInstance.placement === OptionPlacement.WHOLE
+                    ? 1
+                    : 0)
               );
             case PRODUCT_LOCATION.RIGHT:
               return (
                 acc2 +
                 metadataTypeMultiplier *
-                (optInstance.placement === OptionPlacement.RIGHT || optInstance.placement === OptionPlacement.WHOLE
-                  ? 1
-                  : 0)
+                  (optInstance.placement === OptionPlacement.RIGHT || optInstance.placement === OptionPlacement.WHOLE
+                    ? 1
+                    : 0)
               );
           }
         }, 0)

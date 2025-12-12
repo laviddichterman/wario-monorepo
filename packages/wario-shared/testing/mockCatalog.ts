@@ -44,7 +44,16 @@ import {
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
 import type { ICatalogSelectors } from '../src/lib/types';
-import { createMockCategory, createMockOption, createMockOptionType, createMockOrderInstanceFunction, createMockProduct, createMockProductInstance, createMockProductInstanceDisplayFlags, createMockProductInstanceFunction } from '../tests/mocks';
+import {
+  createMockCategory,
+  createMockOption,
+  createMockOptionType,
+  createMockOrderInstanceFunction,
+  createMockProduct,
+  createMockProductInstance,
+  createMockProductInstanceDisplayFlags,
+  createMockProductInstanceFunction,
+} from '../tests/mocks';
 
 // ============================================================================
 // IDs - Central Registry
@@ -144,8 +153,6 @@ export const PIZZA_CATEGORY: ICategory = createMockCategory({
   products: [MOCK_IDS.BASIC_PIZZA, MOCK_IDS.COMPLEX_PIZZA, MOCK_IDS.SPLIT_PIZZA],
 });
 
-
-
 export const DRINKS_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.DRINKS_CATEGORY,
   name: 'Drinks',
@@ -224,8 +231,6 @@ export const ROOT_CATEGORY: ICategory = createMockCategory({
   children: [PIZZA_CATEGORY.id],
   products: [],
 });
-
-
 
 export const ALL_CATEGORIES: ICategory[] = [
   ROOT_CATEGORY,
@@ -1107,25 +1112,26 @@ export const ALL_PRODUCTS: IProduct[] = [
 // Product Instances
 // ============================================================================
 
-const createProductInstanceDisplayFlags = (ordinal: number, hide = false) => createMockProductInstanceDisplayFlags({
-  pos: { hide: false, name: '', skip_customization: false },
-  menu: {
-    ordinal,
-    hide,
-    price_display: PriceDisplay.ALWAYS,
-    adornment: '',
-    suppress_exhaustive_modifier_list: false,
-    show_modifier_options: true,
-  },
-  order: {
-    ordinal,
-    hide,
-    skip_customization: false,
-    price_display: PriceDisplay.FROM_X,
-    adornment: '',
-    suppress_exhaustive_modifier_list: false,
-  },
-});
+const createProductInstanceDisplayFlags = (ordinal: number, hide = false) =>
+  createMockProductInstanceDisplayFlags({
+    pos: { hide: false, name: '', skip_customization: false },
+    menu: {
+      ordinal,
+      hide,
+      price_display: PriceDisplay.ALWAYS,
+      adornment: '',
+      suppress_exhaustive_modifier_list: false,
+      show_modifier_options: true,
+    },
+    order: {
+      ordinal,
+      hide,
+      skip_customization: false,
+      price_display: PriceDisplay.FROM_X,
+      adornment: '',
+      suppress_exhaustive_modifier_list: false,
+    },
+  });
 
 export const PI_PLAIN_CHEESE: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_PLAIN_CHEESE,

@@ -9,7 +9,7 @@ import {
   type IProductInstanceDisplayFlagsPosDto,
   type KeyValue,
   PriceDisplay,
-  type ProductModifierEntry,
+  type ProductInstanceModifierEntry,
   type UncommittedIProductInstance,
 } from '@wcp/wario-shared';
 
@@ -20,7 +20,7 @@ export interface ProductInstanceFormState {
   shortcode: string;
   ordinal: number;
   externalIds: KeyValue[];
-  modifiers: ProductModifierEntry[];
+  modifiers: ProductInstanceModifierEntry[];
 
   // Display Flags - POS
   posHide: boolean;

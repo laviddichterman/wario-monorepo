@@ -24,5 +24,4 @@ export * from './queryClient';
 // Types
 export * from './types';
 
-
 export type { SocketContextValue } from './context/socket-context-definition';

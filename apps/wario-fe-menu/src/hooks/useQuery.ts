@@ -1,9 +1,6 @@
 import { formatISO } from 'date-fns';
 
-import {
-  GetNextAvailableServiceDate,
-  WDateUtils,
-} from '@wcp/wario-shared';
+import { GetNextAvailableServiceDate, WDateUtils } from '@wcp/wario-shared';
 import {
   useDefaultFulfillmentId,
   useFulfillmentById,

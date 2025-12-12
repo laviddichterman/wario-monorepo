@@ -167,14 +167,17 @@ const ProductDialoguesContainer = () => {
         }
       />
       <ProductInstanceAddDialogue />
-      {dialogueState === 'ProductInstanceEdit' && selectedProductInstanceId !== null && (
-        <ProductInstanceEditContainer
-          onCloseCallback={() => {
-            closeDialogue();
-          }}
-          product_instance_id={selectedProductInstanceId}
-        />
-      )}
+      {dialogueState === 'ProductInstanceEdit' &&
+        selectedProductInstanceId !== null &&
+        selectedProductClassId !== null && (
+          <ProductInstanceEditContainer
+            onCloseCallback={() => {
+              closeDialogue();
+            }}
+            product_id={selectedProductClassId}
+            product_instance_id={selectedProductInstanceId}
+          />
+        )}
       <DialogContainer
         title={'Delete Product Instance'}
         onClose={() => {
@@ -182,11 +185,13 @@ const ProductDialoguesContainer = () => {
         }}
         open={dialogueState === 'ProductInstanceDelete'}
         innerComponent={
-          selectedProductInstanceId !== null && (
+          selectedProductInstanceId !== null &&
+          selectedProductClassId !== null && (
             <ProductInstanceDeleteContainer
               onCloseCallback={() => {
                 closeDialogue();
               }}
+              product_id={selectedProductClassId}
               product_instance_id={selectedProductInstanceId}
             />
           )

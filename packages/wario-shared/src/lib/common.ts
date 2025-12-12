@@ -129,17 +129,13 @@ export const RebuildAndSortCart = (
   }, {});
 };
 
-
 /**
  * Groups and orders cart entries by their category using a category ordering map.
  * @param cart
  * @param categoryOrderMap
  * @returns
  */
-export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(
-  cart: T[],
-  categoryOrderMap: IdOrdinalMap
-) => {
+export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(cart: T[], categoryOrderMap: IdOrdinalMap) => {
   return Object.entries(
     cart.reduce(
       (cartMap: Record<string, T[]>, entry: T) =>
@@ -148,10 +144,7 @@ export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(
           : { ...cartMap, [entry.categoryId]: [entry] },
       {},
     ),
-  ).sort(
-    ([keyA, _], [keyB, __]) =>
-      (categoryOrderMap[keyA] ?? 0) - (categoryOrderMap[keyB] ?? 0),
-  );
+  ).sort(([keyA, _], [keyB, __]) => (categoryOrderMap[keyA] ?? 0) - (categoryOrderMap[keyB] ?? 0));
 };
 
 /**
@@ -193,31 +186,27 @@ export const CartByPrinterGroup = (
  * @returns number - estimated lead time in minutes
  */
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
-export const DetermineCartBasedLeadTime = (
-  cart: CoreCartEntry[],
-  productSelector: Selector<IProduct>,
-): number => {
+export const DetermineCartBasedLeadTime = (cart: CoreCartEntry[], productSelector: Selector<IProduct>): number => {
   const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number }>>((acc, cartLine) => {
     const product = productSelector(cartLine.product.pid);
     return product?.timing
       ? {
-        ...acc,
-        // so we take the max of the base times at a station, then we sum the quantity times
-        [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
-          ? {
-            base: Math.max(
-              acc[product.timing.prepStationId].base,
-              product.timing.prepTime - product.timing.additionalUnitPrepTime,
-            ),
-            quant:
-              acc[product.timing.prepStationId].quant +
-              product.timing.additionalUnitPrepTime * cartLine.quantity,
-          }
-          : {
-            base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
-            quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
-          },
-      }
+          ...acc,
+          // so we take the max of the base times at a station, then we sum the quantity times
+          [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
+            ? {
+                base: Math.max(
+                  acc[product.timing.prepStationId].base,
+                  product.timing.prepTime - product.timing.additionalUnitPrepTime,
+                ),
+                quant:
+                  acc[product.timing.prepStationId].quant + product.timing.additionalUnitPrepTime * cartLine.quantity,
+              }
+            : {
+                base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
+                quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
+              },
+        }
       : acc;
   }, {});
   return Object.values(leadTimeMap).reduce((acc, entry) => Math.max(acc, entry.base + entry.quant), 0);
@@ -256,9 +245,12 @@ export const DateTimeIntervalBuilder = (fulfillmentTime: FulfillmentTime, fulfil
 
 /** Generic version of the service disable check for a fulfillment ID
  * Used by IProduct, IOption, and IProduct.modifiers
- * 
+ *
  */
-export function IsSomethingDisabledForFulfillment<T extends { serviceDisable: string[] }>(something: Pick<T, 'serviceDisable'>, fulfillmentId: string) {
+export function IsSomethingDisabledForFulfillment<T extends { serviceDisable: string[] }>(
+  something: Pick<T, 'serviceDisable'>,
+  fulfillmentId: string,
+) {
   return something.serviceDisable.indexOf(fulfillmentId) !== -1;
 }
 
@@ -298,10 +290,10 @@ export function DisableDataCheck(
   order_time: Date | number | string,
 ):
   | (
-    | { enable: DISABLE_REASON.ENABLED }
-    | { enable: DISABLE_REASON.DISABLED_BLANKET }
-    | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
-  )
+      | { enable: DISABLE_REASON.ENABLED }
+      | { enable: DISABLE_REASON.DISABLED_BLANKET }
+      | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
+    )
   | { enable: DISABLE_REASON.DISABLED_AVAILABILITY; availability: IRecurringInterval[] } {
   const orderTimeAsNumber = getTime(order_time);
   if (disable_data) {
@@ -529,10 +521,7 @@ export const EventTitleStringBuilder = (
     : fulfillmentConfig.shortcode;
   const supplementalSections = Object.entries(cart)
     .filter(([cid, _]) => mainCategoryTree.findIndex((x) => x === cid) === -1)
-    .sort(
-      ([cIdA, _], [cIdB, __]) =>
-        categoryIdOrdinalMap[cIdA] - categoryIdOrdinalMap[cIdB],
-    )
+    .sort(([cIdA, _], [cIdB, __]) => categoryIdOrdinalMap[cIdA] - categoryIdOrdinalMap[cIdB])
     .map(([_, catCart]) => EventTitleSectionBuilder(catalogSelectors, catCart))
     .join(' ');
   return `${fulfillmentShortcode} ${mainCategorySection ? `${mainCategorySection} ` : ''}${customer}${GenerateDineInGuestCountString(fulfillmentDto.dineInInfo ?? null)} ${supplementalSections}${has_special_instructions ? ' *' : ''}`;

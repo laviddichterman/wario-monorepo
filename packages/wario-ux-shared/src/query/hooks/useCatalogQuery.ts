@@ -82,7 +82,7 @@ export function useCategoryNameFromCategoryById(categoryId: string | null) {
  */
 export function useModifierEntryIds() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.keys(catalog.modifiers) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.keys(catalog.modifiers) : []), [catalog]);
 }
 
 /**
@@ -114,7 +114,7 @@ export function useIsModifierTypeVisibleById(modifierTypeId: string | null, hasS
  */
 export function useOptionIds() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.keys(catalog.options) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.keys(catalog.options) : []), [catalog]);
 }
 
 /**
@@ -136,7 +136,7 @@ export function useValueFromOptionById<K extends keyof IOption>(id: string | nul
  */
 export function useProductEntryIds() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.keys(catalog.products) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.keys(catalog.products) : []), [catalog]);
 }
 
 /**
@@ -144,7 +144,7 @@ export function useProductEntryIds() {
  */
 export function useProductEntries() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.values(catalog.products) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.values(catalog.products) : []), [catalog]);
 }
 
 /**
@@ -165,7 +165,7 @@ export function useValueFromProductById<K extends keyof IProduct>(id: string | n
  */
 export function useProductInstanceIds() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.keys(catalog.productInstances) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.keys(catalog.productInstances) : []), [catalog]);
 }
 
 /**
@@ -187,7 +187,7 @@ export function useValueFromProductInstanceById<K extends keyof IProductInstance
  */
 export function useOrderInstanceFunctionIds() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.keys(catalog.orderInstanceFunctions) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.keys(catalog.orderInstanceFunctions) : []), [catalog]);
 }
 
 /**
@@ -203,7 +203,7 @@ export function useOrderInstanceFunctionById(id: string | null) {
  */
 export function useProductInstanceFunctionIds() {
   const { data: catalog } = useCatalogQuery();
-  return useMemo(() => catalog ? Object.keys(catalog.productInstanceFunctions) : [], [catalog]);
+  return useMemo(() => (catalog ? Object.keys(catalog.productInstanceFunctions) : []), [catalog]);
 }
 
 /**
@@ -214,7 +214,10 @@ export function useProductInstanceFunctionById(id: string | null) {
   return useMemo(() => catalog?.productInstanceFunctions[id ?? ''] ?? null, [catalog, id]);
 }
 
-export function useValueFromProductInstanceFunctionById<K extends keyof IProductInstanceFunction>(id: string | null, key: K) {
+export function useValueFromProductInstanceFunctionById<K extends keyof IProductInstanceFunction>(
+  id: string | null,
+  key: K,
+) {
   const productInstanceFunction = useProductInstanceFunctionById(id);
   const value = productInstanceFunction ? productInstanceFunction[key] : null;
   return value;
@@ -396,18 +399,3 @@ export function useFilterSelectableModifiers(mMap: MetadataModifierMap) {
   );
   return mods;
 }
-
-// /**
-//  * Same as @useFilterSelectableModifiers but also sorts the modifiers by ordinal
-//  */
-// export function useFilterAndSortSelectableModifiers(mMap: MetadataModifierMap) {
-//   const { modifierEntry: modifierTypeSelector } = useCatalogSelectors() as ICatalogSelectors;
-//   const mods = useMemo(() => Object.entries(mMap)
-//   .reduce<Record<string, { md: MetadataModifierMapEntry, entry: CatalogModifierEntry }>>((acc, [k, v]) => {
-//     const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
-//     return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: { md: v, entry: modifierEntry } } : acc;
-//   }, {}), [mMap, modifierTypeSelector])
-// .sort((a, b) => a.entry.modifierType.ordinal - b.entry.modifierType.ordinal)
-//   .reduce<MetadataModifierMap>((acc, x) => ({ ...acc, [x.entry.modifierType.id]: x.md }), {});
-//   return mods;
-// }

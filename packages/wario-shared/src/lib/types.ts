@@ -233,16 +233,16 @@ export type UnresolvedPayment =
   | Omit<StoreCreditPayment, 'amount' | 'tipAmount'>
   | Omit<CreditPayment, 'amount' | 'tipAmount'>
   | (Omit<CashPayment, 'amount' | 'tipAmount' | 'payment'> & {
-    payment: Omit<CashPayment['payment'], 'change'>;
-  });
+      payment: Omit<CashPayment['payment'], 'change'>;
+    });
 
 export type UnresolvedDiscount =
   | (Omit<OrderLineDiscountCodeAmount, 'discount'> & {
-    discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'>;
-  })
+      discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'>;
+    })
   | (Omit<OrderManualPercentDiscount, 'discount'> & {
-    discount: Omit<OrderManualPercentDiscount['discount'], 'amount'>;
-  })
+      discount: Omit<OrderManualPercentDiscount['discount'], 'amount'>;
+    })
   | (Omit<OrderManualAmountDiscount, 'discount'> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
 
 // =============================================================================

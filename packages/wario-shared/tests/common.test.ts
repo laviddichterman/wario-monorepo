@@ -152,14 +152,18 @@ describe('ReduceArrayToMapByKey', () => {
 
 describe('GetPlacementFromMIDOID', () => {
   it('should return option instance when modifier and option exist', () => {
-    const modifiers: ProductInstanceModifierEntry[] = [{
-      modifierTypeId: 'mt1',
-      options: [{
-        optionId: 'opt1',
-        placement: OptionPlacement.LEFT,
-        qualifier: OptionQualifier.HEAVY,
-      }],
-    }];
+    const modifiers: ProductInstanceModifierEntry[] = [
+      {
+        modifierTypeId: 'mt1',
+        options: [
+          {
+            optionId: 'opt1',
+            placement: OptionPlacement.LEFT,
+            qualifier: OptionQualifier.HEAVY,
+          },
+        ],
+      },
+    ];
 
     const result = GetPlacementFromMIDOID(modifiers, 'mt1', 'opt1');
 
@@ -177,14 +181,18 @@ describe('GetPlacementFromMIDOID', () => {
   });
 
   it('should return NONE placement when option not found in modifier', () => {
-    const modifiers: ProductInstanceModifierEntry[] = [{
-      modifierTypeId: 'mt1',
-      options: [{
-        optionId: 'opt_other',
-        placement: OptionPlacement.WHOLE,
-        qualifier: OptionQualifier.REGULAR,
-      }],
-    }];
+    const modifiers: ProductInstanceModifierEntry[] = [
+      {
+        modifierTypeId: 'mt1',
+        options: [
+          {
+            optionId: 'opt_other',
+            placement: OptionPlacement.WHOLE,
+            qualifier: OptionQualifier.REGULAR,
+          },
+        ],
+      },
+    ];
 
     const result = GetPlacementFromMIDOID(modifiers, 'mt1', 'opt1');
 
@@ -288,14 +296,14 @@ describe('ComputeGratuityServiceCharge', () => {
 });
 
 // ============================================================================
-// ComputeHasBankersRoundingSkew Tests  
+// ComputeHasBankersRoundingSkew Tests
 // ============================================================================
 
 describe('ComputeHasBankersRoundingSkew', () => {
   it('should return true when tax calculation results in .5 cents', () => {
     // e.g. $5.00 * 0.05 = $0.25 (25 cents) - no skew
     // But $5.55 * 0.09009009 = $0.50000... - skew
-    const result = ComputeHasBankersRoundingSkew({ amount: 500, currency: CURRENCY.USD }, 0.10);
+    const result = ComputeHasBankersRoundingSkew({ amount: 500, currency: CURRENCY.USD }, 0.1);
     // 500 * 0.10 = 50.0 - no skew
     expect(result).toBe(false);
   });
@@ -313,7 +321,7 @@ describe('ComputeHasBankersRoundingSkew', () => {
 
 describe('ComputeTaxAmount', () => {
   it('should compute tax correctly', () => {
-    const result = ComputeTaxAmount({ amount: 1000, currency: CURRENCY.USD }, 0.10);
+    const result = ComputeTaxAmount({ amount: 1000, currency: CURRENCY.USD }, 0.1);
     expect(result).toEqual({ amount: 100, currency: CURRENCY.USD });
   });
 
@@ -330,10 +338,7 @@ describe('ComputeTaxAmount', () => {
 
 describe('ComputeTipBasis', () => {
   it('should add subtotal and tax', () => {
-    const result = ComputeTipBasis(
-      { amount: 1000, currency: CURRENCY.USD },
-      { amount: 100, currency: CURRENCY.USD },
-    );
+    const result = ComputeTipBasis({ amount: 1000, currency: CURRENCY.USD }, { amount: 100, currency: CURRENCY.USD });
     expect(result).toEqual({ amount: 1100, currency: CURRENCY.USD });
   });
 });
@@ -345,7 +350,7 @@ describe('ComputeTipBasis', () => {
 describe('ComputeTipValue', () => {
   it('should compute percentage tip', () => {
     const result = ComputeTipValue(
-      { isPercentage: true, isSuggestion: false, value: 0.20 },
+      { isPercentage: true, isSuggestion: false, value: 0.2 },
       { amount: 1000, currency: CURRENCY.USD },
     );
     expect(result).toEqual({ amount: 200, currency: CURRENCY.USD });

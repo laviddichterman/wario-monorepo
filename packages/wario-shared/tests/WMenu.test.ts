@@ -11,7 +11,7 @@ import {
   IgnoreHideDisplayFlags,
   ShowTemporarilyDisabledProducts,
   SortByOrderingArray,
-  SortProductModifierEntries
+  SortProductModifierEntries,
 } from '../src/lib/objects/WMenu';
 import type { WProductMetadata } from '../src/lib/types';
 

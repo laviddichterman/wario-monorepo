@@ -130,7 +130,9 @@ export const toModifierOptionApiBody = (form: ModifierOptionFormState): Omit<IOp
  * AtomFamily for modifier option form state, indexed by position.
  * Each option in the copy list gets its own atom.
  */
-export const modifierOptionFormFamily = atomFamily((_param: string | number) => atom<ModifierOptionFormState | null>(null));
+export const modifierOptionFormFamily = atomFamily((_param: string | number) =>
+  atom<ModifierOptionFormState | null>(null),
+);
 
 /** Copy flag for each option (whether to include in the copy) */
 export const modifierOptionCopyFlagFamily = atomFamily((_param: string | number) => atom(true));

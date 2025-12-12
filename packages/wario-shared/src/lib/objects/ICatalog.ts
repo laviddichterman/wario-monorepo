@@ -13,8 +13,7 @@ import type {
 import type { ICatalogSelectors, IdOrdinalMap } from '../types';
 import type { Selector } from '../utility-types';
 
-
-/** 
+/**
  * GenerateCategoryOrderList
  *
  * Generate a list of a category id to its overall ordinal position in the catalog hierarchy.
@@ -24,7 +23,11 @@ import type { Selector } from '../utility-types';
  * @param filter - optional filter function to filter out objects, if not provided, no filtering is done (usefull to pass a function that checks for a pre-set fulfillment ID in a category service disable array)
  * @returns string[] - list of catalog object ids in order
  */
-export const GenerateCategoryOrderList = (id: string, selector: Selector<ICategory>, filter?: (obj: ICategory) => boolean) => {
+export const GenerateCategoryOrderList = (
+  id: string,
+  selector: Selector<ICategory>,
+  filter?: (obj: ICategory) => boolean,
+) => {
   const GenerateOrderedArray = (inner_id: string): string[] => {
     const cat = selector(inner_id);
     if (!cat || (filter && !filter(cat))) {
@@ -32,9 +35,9 @@ export const GenerateCategoryOrderList = (id: string, selector: Selector<ICatego
       return [];
     }
     return [...cat.children.flatMap((childId: string) => GenerateOrderedArray(childId)), inner_id];
-  }
+  };
   return GenerateOrderedArray(id);
-}
+};
 
 /**
  * GenerateCategoryOrderMap
@@ -46,10 +49,11 @@ export const GenerateCategoryOrderList = (id: string, selector: Selector<ICatego
  * @returns Record<string, number> - object mapping catalog object id to its overall ordinal position
  */
 export const GenerateCategoryOrderMap = (id: string, selector: Selector<ICategory>) => {
-  return Object.fromEntries(GenerateCategoryOrderList(id, selector).map((x, i) => ([x, i] as [string, number])));
-}
+  return Object.fromEntries(GenerateCategoryOrderList(id, selector).map((x, i) => [x, i] as [string, number]));
+};
 
-export const SortByOrdinalMap = <T extends { id: string }>(xs: T[], idOrdinalMap: IdOrdinalMap) => xs.sort((a, b) => idOrdinalMap[a.id] - idOrdinalMap[b.id]);
+export const SortByOrdinalMap = <T extends { id: string }>(xs: T[], idOrdinalMap: IdOrdinalMap) =>
+  xs.sort((a, b) => idOrdinalMap[a.id] - idOrdinalMap[b.id]);
 
 export const CatalogGenerator = (
   categories: ICategory[],

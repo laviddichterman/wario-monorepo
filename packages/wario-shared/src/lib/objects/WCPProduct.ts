@@ -183,7 +183,9 @@ export function CreateProductWithMetadataFromV2(
   return { p: wcpProduct, m: productMetadata };
 }
 
-function ProductModifierEntriesGetter(productMods: ProductInstanceModifierEntry[]): (mtid: string) => IOptionInstance[] {
+function ProductModifierEntriesGetter(
+  productMods: ProductInstanceModifierEntry[],
+): (mtid: string) => IOptionInstance[] {
   return (mtid: string) => {
     const foundMod = productMods.find((x) => x.modifierTypeId === mtid);
     return foundMod ? foundMod.options : [];
@@ -237,10 +239,7 @@ function WProductCompareGeneric(
       console.error(`Cannot find modifier with ID ${mtid}`);
       return;
     }
-    if (
-      CATALOG_MODIFIER_INFO.min_selected === 1 &&
-      CATALOG_MODIFIER_INFO.max_selected === 1
-    ) {
+    if (CATALOG_MODIFIER_INFO.min_selected === 1 && CATALOG_MODIFIER_INFO.max_selected === 1) {
       // CASE: SINGLE select modifier, this logic isn't very well-defined. TODO: rework
       if (first_option_list.length === 1) {
         const first_option = first_option_list[0];
@@ -446,14 +445,16 @@ export function WCPProductGenerateMetadata(
   // want this function to find the appropriate name. Meaning the base product is the first element in the array
   // and the most modified products are at the end.
   PRODUCT_CLASS_ENTRY.instances
-    .toReversed().map((x) => catalogSelectors.productInstance(x)!)
+    .toReversed()
+    .map((x) => catalogSelectors.productInstance(x)!)
     .forEach((comparison_product) => {
       if (match_info.product[LEFT_SIDE] === null || match_info.product[RIGHT_SIDE] === null) {
         const comparison_info = WProductCompareGeneric(
           PRODUCT_CLASS_ENTRY.modifiers,
           ProductModifierEntriesGetter(modifiers),
           ProductModifierEntriesGetter(comparison_product.modifiers),
-          catalogSelectors.modifierEntry);
+          catalogSelectors.modifierEntry,
+        );
         CheckMatchForSide(LEFT_SIDE, comparison_info, comparison_product);
         CheckMatchForSide(RIGHT_SIDE, comparison_info, comparison_product);
       }
@@ -515,7 +516,10 @@ export function WCPProductGenerateMetadata(
   });
 
   // determine if we're comparing to the base product on the left and right sides
-  const is_compare_to_base = [PRODUCT_CLASS_ENTRY.instances[0] === leftPI.id, PRODUCT_CLASS_ENTRY.instances[0] === rightPI.id];
+  const is_compare_to_base = [
+    PRODUCT_CLASS_ENTRY.instances[0] === leftPI.id,
+    PRODUCT_CLASS_ENTRY.instances[0] === rightPI.id,
+  ];
 
   // split out options beyond the base product into left additions, right additions, and whole additions
   // each entry in these arrays represents the modifier index on the product class and the option index in that particular modifier
@@ -533,28 +537,27 @@ export function WCPProductGenerateMetadata(
       }
       const modifier_type_enable_function =
         productModifier.enable !== null ? catalogSelectors.productInstanceFunction(productModifier.enable) : undefined;
-      const is_single_select =
-        modifierEntry.min_selected === 1 && modifierEntry.max_selected === 1;
+      const is_single_select = modifierEntry.min_selected === 1 && modifierEntry.max_selected === 1;
       const is_base_product_edge_case = is_single_select && !PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product;
       metadata.modifier_map[mtid] = { has_selectable: false, meets_minimum: false, options: {} };
       const enable_modifier_type:
         | { enable: DISABLE_REASON.ENABLED }
         | { enable: DISABLE_REASON.DISABLED_FUNCTION; functionId: string }
-        | { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE; fulfillment: string } =
-        IsSomethingDisabledForFulfillment(productModifier, fulfillmentId)
-          ? { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE, fulfillment: fulfillmentId }
-          : !modifier_type_enable_function ||
+        | { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE; fulfillment: string } = IsSomethingDisabledForFulfillment(
+        productModifier,
+        fulfillmentId,
+      )
+        ? { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE, fulfillment: fulfillmentId }
+        : !modifier_type_enable_function ||
             WFunctional.ProcessProductInstanceFunction(modifiers, modifier_type_enable_function, catalogSelectors)
-            ? { enable: DISABLE_REASON.ENABLED }
-            : { enable: DISABLE_REASON.DISABLED_FUNCTION, functionId: modifier_type_enable_function.id };
+          ? { enable: DISABLE_REASON.ENABLED }
+          : { enable: DISABLE_REASON.DISABLED_FUNCTION, functionId: modifier_type_enable_function.id };
 
       // this is a dangerous swap from menu to catalog where we don't have a contract on if we should be going through filtered modifiers at this point or not
       modifierEntry.options.forEach((oId) => {
         const option_object = catalogSelectors.option(oId);
         if (!option_object) {
-          console.error(
-            `Unable to find modifier option ${oId} of modifier type: ${modifierEntry.name} (${mtid})`,
-          );
+          console.error(`Unable to find modifier option ${oId} of modifier type: ${modifierEntry.name} (${mtid})`);
           return;
         }
         const can_split = option_object.metadata.can_split
@@ -574,40 +577,40 @@ export function WCPProductGenerateMetadata(
               : is_enabled.enable !== DISABLE_REASON.ENABLED
                 ? is_enabled
                 : IsOptionEnabled(
-                  modifierEntry.id,
-                  option_object,
-                  { productId, modifiers },
-                  metadata.bake_count,
-                  metadata.flavor_count,
-                  OptionPlacement.LEFT,
-                  catalogSelectors,
-                ),
+                    modifierEntry.id,
+                    option_object,
+                    { productId, modifiers },
+                    metadata.bake_count,
+                    metadata.flavor_count,
+                    OptionPlacement.LEFT,
+                    catalogSelectors,
+                  ),
           enable_right:
             can_split.enable !== DISABLE_REASON.ENABLED
               ? can_split
               : is_enabled.enable !== DISABLE_REASON.ENABLED
                 ? is_enabled
                 : IsOptionEnabled(
+                    modifierEntry.id,
+                    option_object,
+                    { productId, modifiers },
+                    metadata.bake_count,
+                    metadata.flavor_count,
+                    OptionPlacement.RIGHT,
+                    catalogSelectors,
+                  ),
+          enable_whole:
+            is_enabled.enable !== DISABLE_REASON.ENABLED
+              ? is_enabled
+              : IsOptionEnabled(
                   modifierEntry.id,
                   option_object,
                   { productId, modifiers },
                   metadata.bake_count,
                   metadata.flavor_count,
-                  OptionPlacement.RIGHT,
+                  OptionPlacement.WHOLE,
                   catalogSelectors,
                 ),
-          enable_whole:
-            is_enabled.enable !== DISABLE_REASON.ENABLED
-              ? is_enabled
-              : IsOptionEnabled(
-                modifierEntry.id,
-                option_object,
-                { productId, modifiers },
-                metadata.bake_count,
-                metadata.flavor_count,
-                OptionPlacement.WHOLE,
-                catalogSelectors,
-              ),
         } as MetadataModifierOptionMapEntry;
         const enable_left_or_right =
           option_info.enable_left.enable === DISABLE_REASON.ENABLED ||

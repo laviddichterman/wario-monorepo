@@ -25,14 +25,13 @@ import {
   useProductInstanceById,
   useProductMetadata,
   useServerTime,
-  useValueFromFulfillmentById
+  useValueFromFulfillmentById,
 } from '@wcp/wario-ux-shared/query';
 
 import { selectCart, selectCartEntry, useCartStore } from '@/stores/useCartStore';
 import { selectCartId, useCustomizerStore } from '@/stores/useCustomizerStore';
 import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { usePaymentStore } from '@/stores/usePaymentStore';
-
 
 export function useMainCategoryOrderListForFulfillment() {
   const mainCategoryId = usePropertyFromSelectedFulfillment('menuBaseCategoryId');
@@ -63,7 +62,7 @@ export function useCategoryOrderingList() {
 export function useCategoryOrderingMap() {
   const list = useCategoryOrderingList();
   return useMemo(() => {
-    return Object.fromEntries(list.map((x, i) => ([x, i] as [string, number])));
+    return Object.fromEntries(list.map((x, i) => [x, i] as [string, number]));
   }, [list]);
 }
 
@@ -138,7 +137,10 @@ export function useIsAutogratuityEnabled() {
 /**
  * Selects/Computes the product metadata for a potentially custom product (product class ID and selected modifiers) using the currently populated fulfillment info
  */
-export function useProductMetadataWithCurrentFulfillmentData(productId: string, modifiers: ProductInstanceModifierEntry[]) {
+export function useProductMetadataWithCurrentFulfillmentData(
+  productId: string,
+  modifiers: ProductInstanceModifierEntry[],
+) {
   const selectedService = useFulfillmentStore(selectSelectedService) as string;
   const serviceDate = useFulfillmentStore(selectServiceDateTime) as Date;
   const metadata = useProductMetadata(productId, modifiers, serviceDate, selectedService);
@@ -165,26 +167,23 @@ export function useSortedVisibleModifiers(productId: string, modifiers: ProductI
 
   return useMemo(() => {
     if (!productType || !metadata || !catalogSelectors) return [];
-    return (
-      productType.modifiers
-        .filter((x) => x.serviceDisable.indexOf(fulfillmentId) === -1)
-        .map((x) => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
+    return productType.modifiers
+      .filter((x) => x.serviceDisable.indexOf(fulfillmentId) === -1)
+      .map((x) => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
 
-        .filter((x) => IsModifierTypeVisible(x.entry, x.md.has_selectable))
-        .sort(
-          (a, b) =>
-            (a.entry as IOptionType).ordinal -
-            (b.entry as IOptionType).ordinal,
-        )
-        .map((x) => x.pm)
-    );
+      .filter((x) => IsModifierTypeVisible(x.entry, x.md.has_selectable))
+      .sort((a, b) => (a.entry as IOptionType).ordinal - (b.entry as IOptionType).ordinal)
+      .map((x) => x.pm);
   }, [productType, fulfillmentId, metadata, catalogSelectors]);
 }
 
 /**
  * Selects/Computes the product metadata for a catalog product instance using the currently populated fulfillment info
  */
-export function useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(productId: string, productInstanceId: string) {
+export function useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(
+  productId: string,
+  productInstanceId: string,
+) {
   const product = useProductInstanceById(productInstanceId) as IProductInstance;
   return useProductMetadataWithCurrentFulfillmentData(productId, product.modifiers);
 }
@@ -237,9 +236,9 @@ export function useCartBasedLeadTime() {
   return useMemo(() => {
     return catalogSelectors
       ? DetermineCartBasedLeadTime(
-        cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
-        catalogSelectors.productEntry,
-      )
+          cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
+          catalogSelectors.productEntry,
+        )
       : 0;
   }, [cart, catalogSelectors]);
 }

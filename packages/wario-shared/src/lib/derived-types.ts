@@ -19,9 +19,7 @@ import type {
   UpdateProductBatchRequestDto,
   ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
-import type {
-  ICatalogDto,
-} from './dto/catalog.dto';
+import type { ICatalogDto } from './dto/catalog.dto';
 import type { CategoryDisplayFlagsDto, ICategoryDto, UncommittedCategoryDto } from './dto/category.dto';
 import type {
   AddressComponentDto,

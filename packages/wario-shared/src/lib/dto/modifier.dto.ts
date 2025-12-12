@@ -273,7 +273,6 @@ export class UncommittedOptionDto {
   @Type(() => IRecurringIntervalDto)
   availability!: IRecurringIntervalDto[];
 
-
   /** Business logic behavior flags. */
   @ValidateNested()
   @Type(() => IOptionMetadataDto)
