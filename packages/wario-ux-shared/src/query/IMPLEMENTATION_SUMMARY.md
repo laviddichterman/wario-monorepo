@@ -110,13 +110,23 @@ ICatalog uses `Record<string, T>` (dictionaries), not arrays:
 ```typescript
 {
   options: Record<string, IOption>,
-  modifiers: Record<string, CatalogModifierEntry>,
-  categories: Record<string, CatalogCategoryEntry>,
-  products: Record<string, CatalogProductEntry>,
+  modifiers: Record<string, IOptionType>,  // IOptionType.options contains ordered option IDs
+  categories: Record<string, ICategory>,   // ICategory.products/children contain ordered IDs
+  products: Record<string, IProduct>,      // IProduct.instances contains ordered instance IDs
   productInstances: Record<string, IProductInstance>,
   // ...
 }
 ```
+
+> **2025 Schema Update**: Ordering is now embedded directly in parent entities:
+>
+> - `IOptionType.options` lists option IDs in display order
+> - `ICategory.children` lists child category IDs in display order
+> - `ICategory.products` lists product IDs in display order
+> - `IProduct.instances` lists product instance IDs in display order (first is the base/default instance)
+
+> [!IMPORTANT]
+> **Root Category**: A root category node is required at the top of the hierarchy. All categories must be descendants of this root. Database initialization must create this root category.
 
 The `useCatalogSelectors()` hook returns selector functions that match the Redux `ICatalogSelectorWrapper` pattern.
 

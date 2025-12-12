@@ -7,6 +7,8 @@
 export { SocketContext } from './context/socket-context-definition';
 export { SocketProvider } from './context/SocketContext';
 
+export * from './create-category-shopper';
+
 // Hooks (queries)
 export * from './hooks';
 
@@ -21,5 +23,6 @@ export * from './queryClient';
 
 // Types
 export * from './types';
+
 
 export type { SocketContextValue } from './context/socket-context-definition';

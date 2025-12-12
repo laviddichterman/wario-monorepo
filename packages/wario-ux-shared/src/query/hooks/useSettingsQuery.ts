@@ -28,28 +28,31 @@ export function useSettingsQuery(options?: Omit<UseQueryOptions<IWSettings | nul
 
 /**
  * Hook to get a specific setting by key
+ * 2025 Schema Update: IWSettings now has typed fields directly (no more config object)
  * @param key
  * @returns
  */
-export function useSetting(key: keyof IWSettings['config']) {
+export function useSetting<K extends keyof IWSettings>(key: K) {
   const { data: settings } = useSettingsQuery();
-
-  // Simple derived value - returns the setting or null
-  const setting = settings ? settings.config[key] : null;
-  return setting;
+  return settings ? settings[key] : null;
 }
 
-export const useSquareAppId = () => useSetting('SQUARE_APPLICATION_ID') as string | null;
-export const useSquareLocationId = () => useSetting('SQUARE_LOCATION') as string | null;
-export const useDefaultFulfillmentId = () => useSetting('DEFAULT_FULFILLMENTID') as string | null;
-export const useAllowAdvanced = () => useSetting('ALLOW_ADVANCED') as boolean | null;
-export const useGratuityServiceCharge = () => useSetting('SERVICE_CHARGE') as number | null;
-// todo: put this on the fulfillment
-export const useDeliveryAreaLink = () => useSetting('DELIVERY_LINK') as string | null;
-export const useTipPreamble = () => useSetting('TIP_PREAMBLE') as string | null;
-export const useTaxRate = () => useSetting('TAX_RATE') as number | null;
-export const useAutoGratutityThreshold = () => useSetting('AUTOGRAT_THRESHOLD') as number | null;
-export const useMessageRequestVegan = () => useSetting('MESSAGE_REQUEST_VEGAN') as string | null;
-export const useMessageRequestHalf = () => useSetting('MESSAGE_REQUEST_HALF') as string | null;
-export const useMessageRequestWellDone = () => useSetting('MESSAGE_REQUEST_WELLDONE') as string | null;
-export const useMessageRequestSlicing = () => useSetting('MESSAGE_REQUEST_SLICING') as string | null;
+// Settings that exist in the new IWSettings schema:
+export const useSquareAppId = () => useSetting('SQUARE_APPLICATION_ID');
+export const useSquareLocationId = () => useSetting('SQUARE_LOCATION');
+export const useDefaultFulfillmentId = () => useSetting('DEFAULT_FULFILLMENTID');
+export const useAllowAdvanced = () => useSetting('ALLOW_ADVANCED');
+export const useTipPreamble = () => useSetting('TIP_PREAMBLE');
+export const useTaxRate = () => useSetting('TAX_RATE');
+export const useLocationName = () => useSetting('LOCATION_NAME');
+export const useLocationPhoneNumber = () => useSetting('LOCATION_PHONE_NUMBER');
+
+// TODO: These settings were removed from IWSettings - they may need to be re-added
+// or moved to fulfillment config or environment variables:
+// - SERVICE_CHARGE (now on FulfillmentConfig.autograt)
+// - DELIVERY_LINK (move to fulfillment or env)
+// - AUTOGRAT_THRESHOLD (now on FulfillmentConfig.autograt)
+// - MESSAGE_REQUEST_VEGAN (move to catalog/product config)
+// - MESSAGE_REQUEST_HALF (move to catalog/product config)
+// - MESSAGE_REQUEST_WELLDONE (move to catalog/product config)
+// - MESSAGE_REQUEST_SLICING (move to catalog/product config)

@@ -8,9 +8,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import {
-  type CatalogCategoryEntry,
-  type CatalogModifierEntry,
-  type CatalogProductEntry,
   FilterProductUsingCatalog,
   GetMenuHideDisplayFlag,
   GetOrderHideDisplayFlag,
@@ -25,7 +22,7 @@ import {
   type IProductInstanceFunction,
   IsModifierTypeVisible,
   type MetadataModifierMap,
-  type ProductModifierEntry,
+  type ProductInstanceModifierEntry,
   WCPProductGenerateMetadata,
 } from '@wcp/wario-shared';
 
@@ -63,19 +60,10 @@ export function useCategoryIds() {
 /**
  * Hook to get a specific category by ID
  */
-export function useCategoryEntryById(id: string | null) {
+export function useCategoryById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
   return catalog?.categories[id ?? ''] ?? null;
 }
-
-export function useValueFromCategoryEntryById<K extends keyof CatalogCategoryEntry>(id: string | null, key: K) {
-  const categoryEntry = useCategoryEntryById(id);
-  // Simple derived value - returns the specific key from the category
-  const value = categoryEntry ? categoryEntry[key] : null;
-  return value;
-}
-
-export const useCategoryById = (id: string | null) => useValueFromCategoryEntryById(id, 'category');
 
 export function useValueFromCategoryById<K extends keyof ICategory>(id: string | null, key: K) {
   const categoryEntry = useCategoryById(id);
@@ -90,48 +78,30 @@ export function useCategoryNameFromCategoryById(categoryId: string | null) {
 }
 
 /**
- * Hook to check if category exists and is allowed for fulfillment
- * Replaces SelectCategoryExistsAndIsAllowedForFulfillment
- */
-export function useDoesCategoryDisableFulfillment(categoryId: string | null, fulfillmentId: string) {
-  const serviceDisable = useValueFromCategoryById(categoryId, 'serviceDisable');
-  return serviceDisable && serviceDisable.indexOf(fulfillmentId) === -1;
-}
-
-/**
  * Hook to get all modifier entry IDs from catalog
  */
 export function useModifierEntryIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.modifiers) : [];
+  return useMemo(() => catalog ? Object.keys(catalog.modifiers) : [], [catalog]);
 }
 
 /**
  * Hook to get a specific modifier entry by ID
  */
-export function useModifierEntryById(id: string | null) {
+export function useModifierTypeById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.modifiers[id ?? ''] ?? null;
+  return useMemo(() => catalog?.modifiers[id ?? ''] ?? null, [catalog, id]);
 }
-
-export function useValueFromModifierEntryById<K extends keyof CatalogModifierEntry>(id: string | null, key: K) {
-  const modifierEntry = useModifierEntryById(id);
-  const value = modifierEntry ? modifierEntry[key] : null;
-  return value;
-}
-
-export const useModifierTypeById = (id: string | null) => useValueFromModifierEntryById(id, 'modifierType');
-
 
 export function useValueFromModifierTypeById<K extends keyof IOptionType>(id: string | null, key: K) {
-  const modifierEntry = useModifierTypeById(id);
-  const value = modifierEntry ? modifierEntry[key] : null;
+  const modifierType = useModifierTypeById(id);
+  const value = modifierType ? modifierType[key] : null;
   return value;
 }
 
 export function useModifierTypeNameById(id: string | null) {
-  const modifierEntry = useModifierTypeById(id);
-  return modifierEntry?.displayName || modifierEntry?.name || '';
+  const modifierType = useModifierTypeById(id);
+  return modifierType?.displayName || modifierType?.name || '';
 }
 
 export function useIsModifierTypeVisibleById(modifierTypeId: string | null, hasSelectable: boolean) {
@@ -144,7 +114,7 @@ export function useIsModifierTypeVisibleById(modifierTypeId: string | null, hasS
  */
 export function useOptionIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.options) : [];
+  return useMemo(() => catalog ? Object.keys(catalog.options) : [], [catalog]);
 }
 
 /**
@@ -152,7 +122,7 @@ export function useOptionIds() {
  */
 export function useOptionById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.options[id ?? ''] ?? null;
+  return useMemo(() => catalog?.options[id ?? ''] ?? null, [catalog, id]);
 }
 
 export function useValueFromOptionById<K extends keyof IOption>(id: string | null, key: K) {
@@ -166,7 +136,7 @@ export function useValueFromOptionById<K extends keyof IOption>(id: string | nul
  */
 export function useProductEntryIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.products) : [];
+  return useMemo(() => catalog ? Object.keys(catalog.products) : [], [catalog]);
 }
 
 /**
@@ -174,35 +144,28 @@ export function useProductEntryIds() {
  */
 export function useProductEntries() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.values(catalog.products) : [];
+  return useMemo(() => catalog ? Object.values(catalog.products) : [], [catalog]);
 }
 
 /**
- * Hook to get a specific product entry by ID
+ * Hook to get a specific product by ID
  */
-export function useProductEntryById(id: string | null) {
+export function useProductById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.products[id ?? ''] ?? null;
+  return useMemo(() => catalog?.products[id ?? ''] ?? null, [catalog, id]);
 }
 
-export function useValueFromProductEntryById<K extends keyof CatalogProductEntry>(id: string | null, key: K) {
-  const productEntry = useProductEntryById(id);
-  const value = productEntry ? productEntry[key] : null;
+export function useValueFromProductById<K extends keyof IProduct>(id: string | null, key: K) {
+  const product = useProductById(id);
+  const value = product ? product[key] : null;
   return value;
 }
-
-export function useValueFromProductTypeById<K extends keyof IProduct>(id: string | null, key: K) {
-  const productEntry = useValueFromProductEntryById(id, 'product');
-  const value = productEntry ? productEntry[key] : null;
-  return value;
-}
-
 /**
  * Hook to get all product instance IDs from catalog
  */
 export function useProductInstanceIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.productInstances) : [];
+  return useMemo(() => catalog ? Object.keys(catalog.productInstances) : [], [catalog]);
 }
 
 /**
@@ -210,7 +173,7 @@ export function useProductInstanceIds() {
  */
 export function useProductInstanceById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.productInstances[id ?? ''] ?? null;
+  return useMemo(() => catalog?.productInstances[id ?? ''] ?? null, [catalog, id]);
 }
 
 export function useValueFromProductInstanceById<K extends keyof IProductInstance>(id: string | null, key: K) {
@@ -224,7 +187,7 @@ export function useValueFromProductInstanceById<K extends keyof IProductInstance
  */
 export function useOrderInstanceFunctionIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.orderInstanceFunctions) : [];
+  return useMemo(() => catalog ? Object.keys(catalog.orderInstanceFunctions) : [], [catalog]);
 }
 
 /**
@@ -232,7 +195,7 @@ export function useOrderInstanceFunctionIds() {
  */
 export function useOrderInstanceFunctionById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.orderInstanceFunctions[id ?? ''] ?? null;
+  return useMemo(() => catalog?.orderInstanceFunctions[id ?? ''] ?? null, [catalog, id]);
 }
 
 /**
@@ -240,7 +203,7 @@ export function useOrderInstanceFunctionById(id: string | null) {
  */
 export function useProductInstanceFunctionIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.productInstanceFunctions) : [];
+  return useMemo(() => catalog ? Object.keys(catalog.productInstanceFunctions) : [], [catalog]);
 }
 
 /**
@@ -248,7 +211,7 @@ export function useProductInstanceFunctionIds() {
  */
 export function useProductInstanceFunctionById(id: string | null) {
   const { data: catalog } = useCatalogQuery();
-  return catalog?.productInstanceFunctions[id ?? ''] ?? null;
+  return useMemo(() => catalog?.productInstanceFunctions[id ?? ''] ?? null, [catalog, id]);
 }
 
 export function useValueFromProductInstanceFunctionById<K extends keyof IProductInstanceFunction>(id: string | null, key: K) {
@@ -284,29 +247,25 @@ export function useCatalogSelectors() {
     };
   }, [catalog]);
 }
-// Added for wario-fe-menu
-
-export function useParentProductEntryFromProductInstanceId(productInstanceId: string) {
-  const product = useProductInstanceById(productInstanceId) as IProductInstance;
-  const productEntry = useProductEntryById(product.productId);
-  return productEntry;
-}
 
 export function useBaseProductByProductId(productClassId: string) {
-  const productEntry = useProductEntryById(productClassId);
-  const baseProductId = productEntry?.product.baseProductId ?? '';
+  const productEntry = useProductById(productClassId);
+  // instances[0] is the base product instance per 2025 schema
+  const baseProductId = productEntry?.instances[0] ?? '';
   const productInstance = useProductInstanceById(baseProductId);
   return productInstance;
 }
 
 export function useBaseProductNameByProductId(productClassId: string) {
-  const baseProduct = useBaseProductByProductId(productClassId);
-  return baseProduct?.displayName || 'UNDEFINED';
+  const productEntry = useProductById(productClassId);
+  const baseProductId = productEntry?.instances[0] ?? '';
+  const productInstance = useProductInstanceById(baseProductId);
+  return productInstance?.displayName || 'UNDEFINED';
 }
 
 export function useProductMetadata(
   productId: string,
-  modifiers: ProductModifierEntry[],
+  modifiers: ProductInstanceModifierEntry[],
   service_time: Date | number,
   fulfillmentId: string,
 ) {
@@ -320,29 +279,31 @@ export function useProductMetadata(
 
 export function useProductsNotPermanentlyDisabled() {
   const products = useProductEntries();
-  return products.filter((x) => !x.product.disabled || x.product.disabled.start <= x.product.disabled.end);
+  return products.filter((x) => !x.disabled || x.disabled.start <= x.disabled.end);
 }
 
 export function useProductIdsNotPermanentlyDisabled() {
   const products = useProductsNotPermanentlyDisabled();
-  return products.map((x) => x.product.id);
+  return products.map((x) => x.id);
 }
-
+// plan is to re-write this in the order page and see if the new schema might make it possible to not pre-filter
 function filteredProducts(
-  category: CatalogCategoryEntry,
+  category: ICategory,
   filter: ProductCategoryFilter,
   catalogSelectors: ICatalogSelectors,
   order_time: Date | number,
   fulfillmentId: string,
 ) {
   const categoryProductInstances = category.products.reduce<IProductInstance[]>(
-    (acc: IProductInstance[], productId) => {
-      const product = catalogSelectors.productEntry(productId) as CatalogProductEntry;
-      if (!product.product.disabled || product.product.disabled.start <= product.product.disabled.end) {
+    (acc: IProductInstance[], productId: string) => {
+      const product = catalogSelectors.productEntry(productId);
+      if (!product) return acc;
+      if (!product.disabled || product.disabled.start <= product.disabled.end) {
         return [
           ...acc,
-          ...product.instances.reduce<IProductInstance[]>((accB, pIId) => {
-            const pi = catalogSelectors.productInstance(pIId) as IProductInstance;
+          ...product.instances.reduce<IProductInstance[]>((accB: IProductInstance[], pIId: string) => {
+            const pi = catalogSelectors.productInstance(pIId);
+            if (!pi) return accB;
             const passesFilter = FilterProductUsingCatalog(
               productId,
               pi.modifiers,
@@ -367,37 +328,6 @@ function filteredProducts(
   return categoryProductInstances;
 }
 
-/**
- * Selects product instance IDs that pass relevant filters and are immediate children of the given categoryID
- * Returns values in context order (Menu | Order)
- */
-export function useProductInstancesInCategory(
-  categoryId: string,
-  filter: ProductCategoryFilter,
-  order_time: Date | number,
-  fulfillmentId: string,
-) {
-  const categoryEntry = useCategoryEntryById(categoryId);
-  const catalogSelectors = useCatalogSelectors();
-  const { data: catalog } = useCatalogQuery();
-
-  if (!catalog || !catalogSelectors || !categoryEntry || categoryEntry.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
-    return [];
-  }
-  const categoryProductInstances = filteredProducts(categoryEntry, filter, catalogSelectors, order_time, fulfillmentId);
-  switch (filter) {
-    case 'Menu':
-      categoryProductInstances.sort((a, b) => a.displayFlags.menu.ordinal - b.displayFlags.menu.ordinal);
-      break;
-    case 'Order':
-      categoryProductInstances.sort((a, b) => a.displayFlags.order.ordinal - b.displayFlags.order.ordinal);
-      break;
-    default:
-      break;
-  }
-  return categoryProductInstances.map((x) => x.id);
-}
-
 function selectPopulatedSubcategoryIdsInCategory(
   catalogSelectors: ICatalogSelectors,
   categoryId: string,
@@ -406,10 +336,11 @@ function selectPopulatedSubcategoryIdsInCategory(
   fulfillmentId: string,
 ) {
   const categoryEntry = catalogSelectors.category(categoryId);
-  if (!categoryEntry || categoryEntry.category.serviceDisable.indexOf(fulfillmentId) !== -1) {
+  if (!categoryEntry || categoryEntry.serviceDisable.indexOf(fulfillmentId) !== -1) {
     return [];
   }
-  const subcats = categoryEntry.children.reduce((acc: CatalogCategoryEntry[], subcatId) => {
+  // Children are already ordered in the parent's children array per 2025 schema
+  const subcats = categoryEntry.children.reduce((acc: ICategory[], subcatId: string) => {
     const subcategory = catalogSelectors.category(subcatId);
     const instances = subcategory
       ? filteredProducts(subcategory, filter, catalogSelectors, order_time, fulfillmentId)
@@ -418,13 +349,13 @@ function selectPopulatedSubcategoryIdsInCategory(
       instances.length > 0 ||
       selectPopulatedSubcategoryIdsInCategory(catalogSelectors, subcatId, filter, order_time, fulfillmentId).length > 0
     ) {
-      return [...acc, subcategory as CatalogCategoryEntry];
+      return subcategory ? [...acc, subcategory] : acc;
     } else {
       return acc;
     }
   }, []);
-  subcats.sort((a, b) => a.category.ordinal - b.category.ordinal);
-  return subcats.map((x) => x.category.id);
+  // No need to sort - ordering is preserved from parent's children array
+  return subcats.map((x: ICategory) => x.id);
 }
 
 /**
@@ -457,8 +388,9 @@ export function useFilterSelectableModifiers(mMap: MetadataModifierMap) {
   const mods = useMemo(
     () =>
       Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-        const modifierEntry = modifierTypeSelector(k) as CatalogModifierEntry;
-        return IsModifierTypeVisible(modifierEntry.modifierType, v.has_selectable) ? { ...acc, k: v } : acc;
+        const modifierType = modifierTypeSelector(k);
+        if (!modifierType) return acc;
+        return IsModifierTypeVisible(modifierType, v.has_selectable) ? { ...acc, [k]: v } : acc;
       }, {}),
     [mMap, modifierTypeSelector],
   );
