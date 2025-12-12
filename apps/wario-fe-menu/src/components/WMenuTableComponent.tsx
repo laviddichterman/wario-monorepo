@@ -7,19 +7,11 @@ import type { GridEventListener, GridFilterModel, GridRowId } from '@mui/x-data-
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium';
 import { useKeepGroupedColumnsHidden } from '@mui/x-data-grid-premium/hooks';
 
-import {
-  type ICatalogSelectors,
-  type IProductInstance,
-  WCPProductGenerateMetadata,
-  type WProduct,
-} from '@wcp/wario-shared';
-import { useCatalogSelectors, useDefaultFulfillmentId } from '@wcp/wario-ux-shared/query';
+import { ShowTemporarilyDisabledProducts } from '@wcp/wario-shared';
+import { useVisibleProductsInCategory } from '@wcp/wario-ux-shared/query';
 import { Separator, WarioToggleButton } from '@wcp/wario-ux-shared/styled';
 
-import {
-  useCurrentTimeForDefaultFulfillment,
-  useProductInstanceIdsInCategoryForNextAvailableTime,
-} from '@/hooks/useQuery';
+import { useCurrentTimeForDefaultFulfillment } from '@/hooks/useQuery';
 
 export interface ToolbarAction {
   size: number;
@@ -72,6 +64,7 @@ type RowType = {
 };
 interface WMenuDisplayProps {
   categoryId: string;
+  fulfillmentId: string;
 }
 // interface DGEmbeddedMetadata { size: number; ordinal: number; key: string };
 // const DataGridMetadataPrefix = /DG_(S(?<size>\d)_)?(O(?<ordinal>-?\d)_)?(?<name>.*)/;
@@ -98,32 +91,26 @@ interface WMenuDisplayProps {
 //   return { ...acc, products: [...acc.products, curr] } as HierarchicalProductStructure;
 // }
 
-function useProductDataForTableRows(categoryId: string): RowType[] {
-  const productInstanceIds = useProductInstanceIdsInCategoryForNextAvailableTime(categoryId, 'Menu');
-  const service_time = useCurrentTimeForDefaultFulfillment();
-  const fulfillmentId = useDefaultFulfillmentId() as string;
-  const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
-  return productInstanceIds
-    .map((productInstanceId) => {
-      const productInstance = catalogSelectors.productInstance(productInstanceId) as IProductInstance;
-      return {
-        p: productInstance,
-        m: WCPProductGenerateMetadata(
-          productInstance.productId,
-          productInstance.modifiers,
-          catalogSelectors,
-          service_time,
-          fulfillmentId,
-        ),
-      } satisfies WProduct;
-    })
+function useProductDataForTableRows(categoryId: string, fulfillmentId: string): RowType[] {
+  const nextAvailableTime = useCurrentTimeForDefaultFulfillment();
+  const products = useVisibleProductsInCategory(
+    categoryId,
+    fulfillmentId,
+    nextAvailableTime,
+    'menu',
+    ShowTemporarilyDisabledProducts,
+  );
+  return products
     .map((x) => {
       return {
-        id: x.p.id,
-        categories: (x.p.externalIDs.find((ext) => ext.key === 'Categories')?.value ?? '').split(','),
-        name: x.m.name,
-        price: x.m.price,
-        metadata: x.p.externalIDs.reduce((acc, kv) => (kv.value.length ? { ...acc, [kv.key]: kv.value } : acc), {}),
+        id: x.productInstance.id,
+        categories: (x.productInstance.externalIDs.find((ext) => ext.key === 'Categories')?.value ?? '').split(','),
+        name: x.metadata.name,
+        price: x.metadata.price,
+        metadata: x.productInstance.externalIDs.reduce(
+          (acc, kv) => (kv.value.length ? { ...acc, [kv.key]: kv.value } : acc),
+          {},
+        ),
       };
     })
     .map((x) => {
@@ -631,8 +618,8 @@ function MenuDataGridInner({ productRows }: { productRows: RowType[] }) {
   );
 }
 
-export function WMenuDataGrid({ categoryId }: WMenuDisplayProps) {
-  const memoizedComputedRows = useProductDataForTableRows(categoryId);
+export function WMenuDataGrid({ categoryId, fulfillmentId }: WMenuDisplayProps) {
+  const memoizedComputedRows = useProductDataForTableRows(categoryId, fulfillmentId);
 
   // const dynamicColumns: GridColDef<{ id: string; }>[] = useMemo(() => {
   //   const acc: Record<string, DGEmbeddedMetadata> = {};
