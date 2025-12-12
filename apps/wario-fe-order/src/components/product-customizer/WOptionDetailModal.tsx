@@ -19,7 +19,7 @@ export function WOptionDetailModal({ mtid_moid }: IOptionDetailModal) {
   const setAdvancedModifierOption = useCustomizerStore((s) => s.setAdvancedModifierOption);
   const option = useOptionById(mtid_moid[1]) as IOption;
   const { onClickWhole, onClickLeft, onClickRight, onUpdateOption, isWhole, isLeft, isRight, optionState } =
-    useModifierOptionCheckbox(option);
+    useModifierOptionCheckbox({ option, modifierTypeId: mtid_moid[0] });
   const intitialOptionState = useCustomizerStore((s) => s.advancedModifierInitialState);
 
   const onConfirmCallback = () => {

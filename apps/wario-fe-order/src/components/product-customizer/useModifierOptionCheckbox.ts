@@ -1,27 +1,27 @@
 import { useMemo } from 'react';
 
 import {
-  type CatalogModifierEntry,
   type ICatalogSelectors,
   type IOption,
   type IOptionState,
+  type IOptionType,
   OptionPlacement,
 } from '@wcp/wario-shared';
-import { useCatalogSelectors, useModifierEntryById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
 import { selectOptionState, useCustomizerStore } from '@/stores/useCustomizerStore';
 import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 
 import { UpdateModifierOptionStateCheckbox } from './WProductCustomizerLogic';
 
-export function useModifierOptionCheckbox(option: IOption) {
+export function useModifierOptionCheckbox({ option, modifierTypeId }: { option: IOption, modifierTypeId: string }) {
   const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
   const optionState = useCustomizerStore((s) =>
     s.selectedProduct
-      ? selectOptionState(s.selectedProduct.m.modifier_map, option.modifierTypeId, option.id)
+      ? selectOptionState(s.selectedProduct.m.modifier_map, modifierTypeId, option.id)
       : undefined,
   );
-  const modifierTypeEntry = useModifierEntryById(option.modifierTypeId) as CatalogModifierEntry;
+  const modifierTypeEntry = useModifierTypeById(modifierTypeId) as IOptionType;
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const isWhole = useMemo(() => optionState!.placement === OptionPlacement.WHOLE, [optionState]);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

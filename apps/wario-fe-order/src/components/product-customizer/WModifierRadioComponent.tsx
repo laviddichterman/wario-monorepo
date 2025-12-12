@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 
-import { DISABLE_REASON, type ICatalogSelectors, type IOption } from '@wcp/wario-shared';
+import { DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionType } from '@wcp/wario-shared';
 import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 import { CustomizerFormControlLabel } from '@wcp/wario-ux-shared/styled';
 
@@ -19,24 +19,24 @@ import { UpdateModifierOptionStateToggleOrRadio } from './WProductCustomizerLogi
 
 interface IModifierRadioCustomizerComponent {
   options: IOption[];
+  modifierType: IOptionType;
 }
 
-export function WModifierRadioComponent({ options }: IModifierRadioCustomizerComponent) {
+export function WModifierRadioComponent({ options, modifierType }: IModifierRadioCustomizerComponent) {
   const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
   const selectedProduct = useCustomizerStore((s) => s.selectedProduct);
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
   const fulfillmentId = useFulfillmentStore(selectSelectedService);
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime);
   const modifierMap = useCustomizerStore((s) => s.selectedProduct?.m.modifier_map);
-  const modifierTypeId = options[0].modifierTypeId;
   const selectedOptionId = useCustomizerStore((s) => {
-    const modEntry = s.selectedProduct?.p.modifiers.find((x) => x.modifierTypeId === modifierTypeId);
+    const modEntry = s.selectedProduct?.p.modifiers.find((x) => x.modifierTypeId === modifierType.id);
     return modEntry?.options.length === 1 ? modEntry.options[0].optionId : null;
   });
 
   const getOptionState = useMemo(
-    () => (moId: string) => (modifierMap ? selectOptionState(modifierMap, modifierTypeId, moId) : undefined),
-    [modifierMap, modifierTypeId],
+    () => (moId: string) => (modifierMap ? selectOptionState(modifierMap, modifierType.id, moId) : undefined),
+    [modifierMap, modifierType.id],
   );
 
   if (!serviceDateTime || !selectedProduct || !fulfillmentId) {
@@ -47,7 +47,7 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
     e.preventDefault();
     updateCustomizerProduct(
       UpdateModifierOptionStateToggleOrRadio(
-        modifierTypeId,
+        modifierType.id,
         e.target.value,
         selectedProduct,
         catalogSelectors,
@@ -61,7 +61,7 @@ export function WModifierRadioComponent({ options }: IModifierRadioCustomizerCom
       sx={{ width: '100%' }}
       onChange={onChange}
       value={selectedOptionId}
-      aria-labelledby={`modifier_control_${modifierTypeId}`}
+      aria-labelledby={`modifier_control_${modifierType.id}`}
     >
       <Grid container>
         {options.map((opt, i) => {

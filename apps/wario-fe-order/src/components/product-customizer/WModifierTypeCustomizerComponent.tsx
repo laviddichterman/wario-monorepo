@@ -5,11 +5,7 @@ import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 
 import { type IOptionType, type IProductInstance, type WCPProduct } from '@wcp/wario-shared';
-import {
-  useBaseProductByProductId,
-  useModifierTypeNameById,
-  useValueFromModifierEntryById,
-} from '@wcp/wario-ux-shared/query';
+import { useBaseProductByProductId, useModifierTypeById, useModifierTypeNameById } from '@wcp/wario-ux-shared/query';
 
 import { useVisibleModifierOptions } from '@/hooks/useDerivedState';
 
@@ -29,7 +25,7 @@ export function WModifierTypeCustomizerComponent({
 }: IModifierTypeCustomizerComponent & Omit<FormControlProps, 'children'>) {
   const baseProductInstance = useBaseProductByProductId(product.productId) as IProductInstance;
   const visibleOptions = useVisibleModifierOptions(product.productId, product.modifiers, mtid);
-  const modifierType = useValueFromModifierEntryById(mtid, 'modifierType') as IOptionType;
+  const modifierType = useModifierTypeById(mtid) as IOptionType;
   const modifierTypeName = useModifierTypeNameById(mtid);
   const modifierOptionsHtml = useMemo(() => {
     if (modifierType.max_selected === 1) {
@@ -46,6 +42,7 @@ export function WModifierTypeCustomizerComponent({
               // since there are only two visible options, the base option is either at index 1 or 0
               return (
                 <WModifierOptionToggle
+                  modifierTypeId={modifierType.id}
                   toggleOptionChecked={visibleOptions[baseOptionIndex === 0 ? 1 : 0]}
                   toggleOptionUnchecked={visibleOptions[baseOptionIndex]}
                 />
@@ -56,13 +53,13 @@ export function WModifierTypeCustomizerComponent({
         }
 
         // return MODIFIER_DISPLAY.RADIO;
-        return <WModifierRadioComponent options={visibleOptions} />;
+        return <WModifierRadioComponent options={visibleOptions} modifierType={modifierType} />;
       }
     }
     return (
       <FormGroup row aria-labelledby={`modifier_control_${mtid}`}>
         {visibleOptions.map((option, i: number) => (
-          <WModifierOptionCheckboxComponent key={i} option={option} />
+          <WModifierOptionCheckboxComponent key={i} option={option} modifierTypeId={mtid} />
         ))}
       </FormGroup>
     );

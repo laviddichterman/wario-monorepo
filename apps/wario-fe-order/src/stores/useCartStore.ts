@@ -3,9 +3,9 @@ import { devtools } from 'zustand/middleware';
 
 import type {
   CartEntry,
-  CatalogModifierEntry,
-  CatalogProductEntry,
   CoreCartEntry,
+  IOptionType,
+  IProduct,
   Selector,
   WCPProduct,
   WCPProductV2Dto,
@@ -180,8 +180,8 @@ export const selectCartEntry = (state: CartStore, id: string | null) =>
  */
 export const findDuplicateInCart = (
   cart: CartEntry[],
-  catalogModifierEntrySelector: Selector<CatalogModifierEntry>,
-  productEntrySelector: Selector<CatalogProductEntry>,
+  catalogModifierEntrySelector: Selector<IOptionType>,
+  productEntrySelector: Selector<IProduct>,
   categoryId: string,
   product: WCPProduct,
   skipId: string | null = null,

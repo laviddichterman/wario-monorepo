@@ -7,7 +7,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 
-import { DISABLE_REASON, type IOption, OptionPlacement, OptionQualifier } from '@wcp/wario-shared';
+import { DISABLE_REASON, type IOption, OptionPlacement, OptionQualifier, type WProduct } from '@wcp/wario-shared';
 import { CustomizerFormControlLabel } from '@wcp/wario-ux-shared/styled';
 
 import { selectShowAdvanced, useCustomizerStore } from '@/stores/useCustomizerStore';
@@ -17,15 +17,20 @@ import { ModifierOptionTooltip } from '../ModifierOptionTooltip';
 import { useModifierOptionCheckbox } from './useModifierOptionCheckbox';
 
 interface IModifierOptionCheckboxCustomizerComponent {
+  modifierTypeId: string;
   option: IOption;
 }
 
-export function WModifierOptionCheckboxComponent({ option }: IModifierOptionCheckboxCustomizerComponent) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const selectedProduct = useCustomizerStore((s) => s.selectedProduct!);
+export function WModifierOptionCheckboxComponent({
+  modifierTypeId,
+  option,
+}: IModifierOptionCheckboxCustomizerComponent) {
+  const selectedProduct = useCustomizerStore((s) => s.selectedProduct) as WProduct;
   const setAdvancedModifierOption = useCustomizerStore((s) => s.setAdvancedModifierOption);
-  const { onClickWhole, onClickLeft, onClickRight, isWhole, isLeft, isRight, optionState } =
-    useModifierOptionCheckbox(option);
+  const { onClickWhole, onClickLeft, onClickRight, isWhole, isLeft, isRight, optionState } = useModifierOptionCheckbox({
+    option,
+    modifierTypeId,
+  });
   const canShowAdvanced = useCustomizerStore(selectShowAdvanced);
   const showAdvanced = useMemo(
     () =>
@@ -47,7 +52,7 @@ export function WModifierOptionCheckboxComponent({ option }: IModifierOptionChec
     return null;
   }
   const onClickAdvanced = () => {
-    setAdvancedModifierOption([option.modifierTypeId, option.id]);
+    setAdvancedModifierOption([modifierTypeId, option.id]);
   };
 
   return (

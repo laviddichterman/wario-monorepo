@@ -12,7 +12,6 @@ import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 
 import { WDateUtils } from '@wcp/wario-shared';
-import { useMessageRequestHalf, useMessageRequestSlicing, useMessageRequestVegan } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import { usePropertyFromSelectedFulfillment, useSelectedServiceTimeDisplayString } from '@/hooks/useDerivedState';
@@ -31,6 +30,10 @@ const REQUEST_SOONER =
   "It looks like you're trying to ask us to make your pizza sooner. While we would love to do so, the times you were able to select represents our real-time availability. Please send us a text if you're looking for your pizza earlier and it's not a Friday, Saturday, or Sunday, otherwise, you'll need to remove this request to continue with your order.";
 const REQUEST_RANCH = 'Please look at our menu before requesting ranch.';
 
+const REQUEST_HALF = import.meta.env.MESSAGE_REQUEST_HALF;
+const REQUEST_SLICING = import.meta.env.MESSAGE_REQUEST_SLICING;
+const REQUEST_VEGAN = import.meta.env.MESSAGE_REQUEST_VEGAN;
+
 export default function WReviewOrderStage() {
   const nextStage = useStepperStore((s) => s.nextStage);
   const backStage = useStepperStore((s) => s.backStage);
@@ -42,9 +45,6 @@ export default function WReviewOrderStage() {
   // Use individual selectors to avoid creating new objects on every render
   const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
   const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
-  const REQUEST_HALF = useMessageRequestHalf();
-  const REQUEST_SLICING = useMessageRequestSlicing();
-  const REQUEST_VEGAN = useMessageRequestVegan();
   const selectedServiceDisplayName = usePropertyFromSelectedFulfillment('displayName');
   const serviceTimeDisplayString = useSelectedServiceTimeDisplayString();
   const serviceDateTime = useFulfillmentStore(selectServiceDateTime);
@@ -95,7 +95,7 @@ export default function WReviewOrderStage() {
     }
     setDisableSubmit(disableorder);
     setSpecialInstructionsResponses(special_instructions_responses);
-  }, [REQUEST_HALF, REQUEST_SLICING, REQUEST_VEGAN, acknowledgeInstructionsDialogue, specialInstructions]);
+  }, [acknowledgeInstructionsDialogue, specialInstructions]);
 
   if (selectedServiceDisplayName === null || serviceDateTime === null) {
     return <div>You found a bug</div>;

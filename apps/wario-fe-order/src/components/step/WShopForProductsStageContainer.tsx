@@ -5,7 +5,7 @@ import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { useFulfillmentMainCategoryId, useFulfillmentSupplementalCategoryId } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 
-import { useMainProductCategoryCount } from '@/hooks/useDerivedState';
+import { useMainProductCategoryCartCount } from '@/hooks/useDerivedState';
 
 import { selectCart, useCartStore } from '@/stores/useCartStore';
 import { selectSelectedWProduct, useCustomizerStore } from '@/stores/useCustomizerStore';
@@ -18,15 +18,10 @@ import { WOrderCart } from '../WOrderCartComponent';
 
 import { WShopForProductsStage } from './WShopForProductsStageComponent';
 
-export interface WShopForProductsStageProps {
-  categoryId: string;
-  setScrollToOnReturn: (value: React.SetStateAction<string>) => void;
-}
-
 export default function WShopForProductsContainer({ productSet }: { productSet: 'PRIMARY' | 'SECONDARY' }) {
   const [scrollToOnReturn, setScrollToOnReturn] = useState('WARIO_order');
   const selectedFulfillmentId = useFulfillmentStore(selectSelectedService) as string;
-  const numMainCategoryProducts = useMainProductCategoryCount(selectedFulfillmentId);
+  const numMainCategoryProducts = useMainProductCategoryCartCount();
   const mainCategoryId = useFulfillmentMainCategoryId(selectedFulfillmentId);
   const supplementalCategoryId = useFulfillmentSupplementalCategoryId(selectedFulfillmentId);
   const cart = useCartStore(selectCart);

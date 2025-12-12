@@ -39,8 +39,8 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierEntry can be undefined at runtime
       if (!modifierEntry) return acc;
       const omit_section_if_no_available_options =
-        modifierEntry.modifierType.displayFlags.omit_section_if_no_available_options;
-      const hidden = modifierEntry.modifierType.displayFlags.hidden;
+        modifierEntry.displayFlags.omit_section_if_no_available_options;
+      const hidden = modifierEntry.displayFlags.hidden;
       return !hidden && (!omit_section_if_no_available_options || v.has_selectable) ? { ...acc, [k]: v } : acc;
     }, {});
   }, [catalogSelectors, mMap]);
@@ -58,6 +58,6 @@ export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSe
     const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierTypeEntry can be undefined at runtime
     if (!modifierTypeEntry) return false;
-    return IsModifierTypeVisible(modifierTypeEntry.modifierType, hasSelectable);
+    return IsModifierTypeVisible(modifierTypeEntry, hasSelectable);
   }, [catalogSelectors, modifierTypeId, hasSelectable]);
 }

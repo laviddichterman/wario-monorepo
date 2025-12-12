@@ -16,11 +16,16 @@ import { ModifierOptionTooltip } from '../ModifierOptionTooltip';
 import { UpdateModifierOptionStateToggleOrRadio } from './WProductCustomizerLogic';
 
 interface IModifierOptionToggle {
+  modifierTypeId: string;
   toggleOptionChecked: IOption;
   toggleOptionUnchecked: IOption;
 }
 
-export function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUnchecked }: IModifierOptionToggle) {
+export function WModifierOptionToggle({
+  modifierTypeId,
+  toggleOptionChecked,
+  toggleOptionUnchecked,
+}: IModifierOptionToggle) {
   const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
   const selectedProduct = useCustomizerStore((s) => s.selectedProduct);
   const catalogSelectors = useCatalogSelectors() as ICatalogSelectors;
@@ -28,16 +33,12 @@ export function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUncheck
   const fulfillmentId = useFulfillmentStore(selectSelectedService);
   const optionUncheckedState = useCustomizerStore((s) =>
     s.selectedProduct
-      ? selectOptionState(
-          s.selectedProduct.m.modifier_map,
-          toggleOptionUnchecked.modifierTypeId,
-          toggleOptionUnchecked.id,
-        )
+      ? selectOptionState(s.selectedProduct.m.modifier_map, modifierTypeId, toggleOptionUnchecked.id)
       : undefined,
   );
   const optionCheckedState = useCustomizerStore((s) =>
     s.selectedProduct
-      ? selectOptionState(s.selectedProduct.m.modifier_map, toggleOptionChecked.modifierTypeId, toggleOptionChecked.id)
+      ? selectOptionState(s.selectedProduct.m.modifier_map, modifierTypeId, toggleOptionChecked.id)
       : undefined,
   );
   const optionValue = useMemo(
@@ -51,7 +52,7 @@ export function WModifierOptionToggle({ toggleOptionChecked, toggleOptionUncheck
     e.preventDefault();
     updateCustomizerProduct(
       UpdateModifierOptionStateToggleOrRadio(
-        toggleOptionChecked.modifierTypeId,
+        modifierTypeId,
         e.target.checked ? toggleOptionChecked.id : toggleOptionUnchecked.id,
         selectedProduct,
         catalogSelectors,

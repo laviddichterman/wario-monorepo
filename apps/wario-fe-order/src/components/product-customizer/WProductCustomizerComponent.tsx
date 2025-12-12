@@ -12,7 +12,7 @@ import {
   type WProductMetadata,
 } from '@wcp/wario-shared';
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
-import { useAllowAdvanced, useCatalogSelectors, useValueFromProductTypeById } from '@wcp/wario-ux-shared/query';
+import { useAllowAdvanced, useCatalogSelectors, useValueFromProductById } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle, WarioButton } from '@wcp/wario-ux-shared/styled';
 
 import {
@@ -82,7 +82,7 @@ export const WProductCustomizerComponentInner = forwardRef<
     product.p.productId,
     product.p.modifiers,
   ) as WProductMetadata;
-  const { singular_noun: selectedProductNoun } = useValueFromProductTypeById(
+  const { singular_noun: selectedProductNoun } = useValueFromProductById(
     product.p.productId,
     'displayFlags',
   ) as IProductDisplayFlags;

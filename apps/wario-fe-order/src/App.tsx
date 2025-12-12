@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
 import { useEffect, useLayoutEffect } from 'react';
 
@@ -11,11 +10,9 @@ import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import { MotionLazy } from '@wcp/wario-ux-shared/containers';
 import { useIsSocketDataLoaded } from '@wcp/wario-ux-shared/query';
 
-import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
-
+import CartValidationEffect from '@/components/CartValidationEffect';
 import WOrderingComponent from '@/components/WOrderingComponent';
 
-import { setupCartValidationListener } from '@/listeners/cartValidationListener';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 
 const theme = createTheme(themeOptions);
@@ -30,32 +27,11 @@ const theme = createTheme(themeOptions);
 const App = () => {
   const { setUserAgent } = useMetricsStore();
   const isSocketDataLoaded = useIsSocketDataLoaded();
-  // const currentTime = useServerTime();
-  const queryClient = useQueryClient();
-  const submitOrderMutation = useSubmitOrderMutation();
 
   // Set user agent for metrics
   useEffect(() => {
     setUserAgent(window.navigator.userAgent);
   }, [setUserAgent]);
-
-  // Setup cart validation listener
-  useEffect(() => {
-    if (!isSocketDataLoaded) {
-      return;
-    }
-
-    // Function to check if order has been submitted
-    const getIsOrderSubmitted = () => {
-      return submitOrderMutation.isPending || submitOrderMutation.isSuccess;
-    };
-
-    // Setup listener and get cleanup function
-    const cleanup = setupCartValidationListener(queryClient, getIsOrderSubmitted);
-
-    // Cleanup on unmount or when socket data reloads
-    return cleanup;
-  }, [isSocketDataLoaded, queryClient, submitOrderMutation.isPending, submitOrderMutation.isSuccess]);
 
   // Scroll to order section when data is loaded
   useLayoutEffect(() => {
@@ -75,9 +51,12 @@ const App = () => {
               <LoadingScreen />
             </MotionLazy>
           ) : (
-            <div id="WARIO_order">
-              <WOrderingComponent />
-            </div>
+            <>
+              <CartValidationEffect />
+              <div id="WARIO_order">
+                <WOrderingComponent />
+              </div>
+            </>
           )}
         </SnackbarProvider>
       </ThemeProvider>

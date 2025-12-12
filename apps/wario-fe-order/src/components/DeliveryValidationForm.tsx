@@ -7,11 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import Link from '@mui/material/Link';
 
 import { FormProvider, RHFTextField } from '@wcp/wario-ux-shared/components';
-import {
-  type DeliveryInfoFormData,
-  useDeliveryAreaLink,
-  useValidateDeliveryAddressMutation,
-} from '@wcp/wario-ux-shared/query';
+import { type DeliveryInfoFormData, useValidateDeliveryAddressMutation } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, OkResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import axios from '@/utils/axios';
@@ -38,7 +34,6 @@ export default function DeliveryInfoForm() {
   const validateDeliveryAddressMutation = useValidateDeliveryAddressMutation({ axiosInstance: axios });
   const setDeliveryInfo = useFulfillmentStore((s) => s.setDeliveryInfo);
   const deliveryInfo = useFulfillmentStore(selectDeliveryInfo);
-  const DELIVERY_LINK = useDeliveryAreaLink() as string;
   const deliveryForm = useDeliveryInfoForm();
   const {
     handleSubmit,
@@ -124,7 +119,7 @@ export default function DeliveryInfoForm() {
       {validateDeliveryAddressMutation.isSuccess && !validateDeliveryAddressMutation.data.in_area && (
         <ErrorResponseOutput>
           The address {validateDeliveryAddressMutation.data.validated_address} isn't in our{' '}
-          <Link target="_blank" href={DELIVERY_LINK}>
+          <Link target="_blank" href={import.meta.env.DELIVERY_LINK}>
             delivery area
           </Link>
         </ErrorResponseOutput>

@@ -3,18 +3,18 @@ import { type ReactNode, useMemo } from 'react';
 import {
   type ICatalogModifierSelectors,
   type MetadataModifierMap,
-  type ProductModifierEntry,
+  type ProductInstanceModifierEntry,
   WFunctional,
 } from '@wcp/wario-shared';
 import {
   useCatalogSelectors,
   useModifierTypeNameById,
-  useProductEntryById,
+  useProductById,
   useProductInstanceFunctionById,
 } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, OkResponseOutput, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
-const useProcessProductInstanceFunction = (productModifierEntries: ProductModifierEntry[], pifId: string) => {
+const useProcessProductInstanceFunction = (productModifierEntries: ProductInstanceModifierEntry[], pifId: string) => {
   const productInstanceFunction = useProductInstanceFunctionById(pifId);
   const { modifierEntry, option } = useCatalogSelectors() as ICatalogModifierSelectors;
   return useMemo(
@@ -35,7 +35,7 @@ const OrderGuideMessage = ({
   innerComponent,
 }: {
   pifId: string;
-  productModifierEntries: ProductModifierEntry[];
+  productModifierEntries: ProductInstanceModifierEntry[];
   innerComponent: (message: string) => ReactNode;
 }) => {
   const processedFunctionResult = useProcessProductInstanceFunction(productModifierEntries, pifId);
@@ -47,10 +47,10 @@ export const OrderGuideMessagesComponent = ({
   productModifierEntries,
 }: {
   productId: string;
-  productModifierEntries: ProductModifierEntry[];
+  productModifierEntries: ProductInstanceModifierEntry[];
 }) => {
-  const productEntry = useProductEntryById(productId);
-  const orderGuideWarningFunctions = productEntry?.product.displayFlags.order_guide.suggestions ?? [];
+  const productEntry = useProductById(productId);
+  const orderGuideWarningFunctions = productEntry?.displayFlags.order_guide.suggestions ?? [];
   return (
     <>
       {orderGuideWarningFunctions.map((pifId, i) => (
@@ -69,10 +69,10 @@ export const OrderGuideWarningsComponent = ({
   productModifierEntries,
 }: {
   productId: string;
-  productModifierEntries: ProductModifierEntry[];
+  productModifierEntries: ProductInstanceModifierEntry[];
 }) => {
-  const productEntry = useProductEntryById(productId);
-  const orderGuideSuggestionFunctions = productEntry?.product.displayFlags.order_guide.warnings ?? [];
+  const productEntry = useProductById(productId);
+  const orderGuideSuggestionFunctions = productEntry?.displayFlags.order_guide.warnings ?? [];
   return (
     <>
       {orderGuideSuggestionFunctions.map((pifId, i) => (

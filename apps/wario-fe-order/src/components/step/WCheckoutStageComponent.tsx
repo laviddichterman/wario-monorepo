@@ -28,12 +28,11 @@ import {
 } from '@wcp/wario-ux-shared/styled';
 
 import { useOrderRequestBuilder } from '@/hooks/useBuildOrderRequest';
-import { useIsAutogratuityEnabledByFulfillmentId, usePropertyFromSelectedFulfillment } from '@/hooks/useDerivedState';
+import { useIsAutogratuityEnabled, usePropertyFromSelectedFulfillment } from '@/hooks/useDerivedState';
 import { useBalanceAfterPayments, useTipBasis, useTipValue } from '@/hooks/useOrderTotals';
 import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';
 
 import { IS_PRODUCTION } from '@/config';
-import { selectSelectedService, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 import { selectSelectedTip, selectSquareTokenErrors, usePaymentStore } from '@/stores/usePaymentStore';
 import { useStepperStore } from '@/stores/useStepperStore';
@@ -48,11 +47,6 @@ const TIP_SUGGESTION_25: TipSelection = { value: 0.25, isSuggestion: true, isPer
 const TIP_SUGGESTION_30: TipSelection = { value: 0.3, isSuggestion: true, isPercentage: true } as const;
 
 const TIP_SUGGESTIONS = [TIP_SUGGESTION_15, TIP_SUGGESTION_20, TIP_SUGGESTION_25, TIP_SUGGESTION_30] as const;
-
-function useIsAutogratuityEnabled() {
-  const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
-  return useIsAutogratuityEnabledByFulfillmentId(fulfillmentId);
-}
 
 export default function WCheckoutStage() {
   const { backStage } = useStepperStore();
