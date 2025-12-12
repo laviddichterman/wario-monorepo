@@ -27,14 +27,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
 
 @Global()
 @Module({
-  imports: [
-    OrdersModule,
-    CatalogModule,
-    QueryModule,
-    SettingsModule,
-    AppConfigurationModule,
-    RepositoryModule,
-  ],
+  imports: [OrdersModule, CatalogModule, QueryModule, SettingsModule, AppConfigurationModule, RepositoryModule],
   providers: [
     MigrationFlagsService,
     DataProviderService,
@@ -55,7 +48,6 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     MongooseToPostgresMigrator,
   ],
   exports: [
-
     MigrationFlagsService,
     DataProviderService,
     SocketIoService,

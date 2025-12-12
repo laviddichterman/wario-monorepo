@@ -35,7 +35,7 @@ import {
   type OrderTax,
   type PrinterGroup,
   PRODUCT_LOCATION,
-  type ProductModifierEntry,
+  type ProductInstanceModifierEntry,
   TenderBaseStatus,
   type WCPProductV2Dto,
   type WProduct,
@@ -46,6 +46,7 @@ import { IS_PRODUCTION } from '../utils/utils';
 // Interface to replace direct dependency on CatalogProviderInstance
 export interface ICatalogContext {
   Catalog: ICatalog;
+  // TODO: investigate if we can also store the product ID along with the product Instance ID to speed up lookups
   ReverseMappings: Record<string, string>;
   PrinterGroups: Record<string, PrinterGroup>;
   CatalogSelectors: ICatalogSelectors;
@@ -105,8 +106,8 @@ export const GenerateSquareReverseMapping = (catalog: ICatalog): Record<string, 
   const acc: Record<string, string> = {};
   Object.values(catalog.modifiers).forEach((modEntry) => {
     if (modEntry.options.length >= 1) {
-      GetSquareExternalIds(modEntry.modifierType.externalIDs).forEach((kv) => {
-        acc[kv.value] = modEntry.modifierType.id;
+      GetSquareExternalIds(modEntry.externalIDs).forEach((kv) => {
+        acc[kv.value] = modEntry.id;
       });
       modEntry.options.forEach((oId) => {
         GetSquareExternalIds(catalog.options[oId].externalIDs).forEach((kv) => {
@@ -137,13 +138,32 @@ export const LineItemsToOrderInstanceCart = (
         if (!pIId) {
           catalogContext.logger?.error('Unable to find matching product instance ID for square item variation');
         }
-        const warioProductInstance = catalogContext.Catalog.productInstances[pIId];
-        const warioProduct = catalogContext.Catalog.products[warioProductInstance.productId].product;
-        const modifiers: ProductModifierEntry[] = Object.values(
-          (line.modifiers ?? []).reduce((acc: Record<string, ProductModifierEntry>, lineMod) => {
+
+        // Thankfully this is only used on 3p integrations. But this is very slow now that we don't store a direct mapping back to the product ID from the instance.
+        const _warioProductInstance = catalogContext.Catalog.productInstances[pIId];
+        // Find the product that contains this instance
+        const productId = Object.keys(catalogContext.Catalog.products).find((pid) =>
+          catalogContext.Catalog.products[pid].instances.includes(pIId),
+        );
+        if (!productId) {
+          catalogContext.logger?.error('Unable to find matching product ID for product instance');
+          throw new Error('Product not found for instance');
+        }
+
+        const _warioProduct = catalogContext.Catalog.products[productId];
+        const modifiers: ProductInstanceModifierEntry[] = Object.values(
+          (line.modifiers ?? []).reduce((acc: Record<string, ProductInstanceModifierEntry>, lineMod) => {
             const oId = catalogContext.ReverseMappings[lineMod.catalogObjectId!];
-            const warioModifierOption = catalogContext.Catalog.options[oId];
-            const mTId = warioModifierOption.modifierTypeId;
+
+            const _warioModifierOption = catalogContext.Catalog.options[oId];
+            // Find the modifier type that contains this option
+            const mTId = Object.keys(catalogContext.Catalog.modifiers).find((mtid) =>
+              catalogContext.Catalog.modifiers[mtid].options.includes(oId),
+            );
+            if (!mTId) {
+              catalogContext.logger?.error('Unable to find matching modifier type ID for option');
+              throw new Error('Modifier type not found for option');
+            }
             return {
               ...acc,
               [mTId]: {
@@ -161,25 +181,27 @@ export const LineItemsToOrderInstanceCart = (
             };
           }, {}),
         )
-          // now sort it...
-          .sort(
-            (a, b) =>
-              catalogContext.Catalog.modifiers[a.modifierTypeId].modifierType.ordinal -
-              catalogContext.Catalog.modifiers[b.modifierTypeId].modifierType.ordinal,
-          )
+          // now sort it by the order of modifier types in the catalog (using index in Object.keys as ordinal)
+          .sort((a, b) => {
+            const modifierTypeIds = Object.keys(catalogContext.Catalog.modifiers);
+            return modifierTypeIds.indexOf(a.modifierTypeId) - modifierTypeIds.indexOf(b.modifierTypeId);
+          })
           .map((x) => ({
             ...x,
-            options: x.options.sort(
-              (a, b) =>
-                catalogContext.Catalog.options[a.optionId].ordinal - catalogContext.Catalog.options[b.optionId].ordinal,
-            ),
+            options: x.options.sort((a, b) => {
+              // Sort by position in the modifier type's options array
+              const modifierType = catalogContext.Catalog.modifiers[x.modifierTypeId];
+              return modifierType.options.indexOf(a.optionId) - modifierType.options.indexOf(b.optionId);
+            }),
           }));
-        // PRECONDITION: 3p products are unique to the 3p merchant and shouldn't yield a category outside of the 3p menu tree
-        const category = warioProduct.category_ids[0];
+        // Find a category that contains this product
+        const category = Object.keys(catalogContext.Catalog.categories).find((cid) =>
+          catalogContext.Catalog.categories[cid].products.includes(productId),
+        );
         return {
-          categoryId: category,
+          categoryId: category ?? '',
           product: {
-            pid: warioProductInstance.productId,
+            pid: productId,
             modifiers: modifiers,
           },
           quantity: parseInt(line.quantity),
@@ -428,7 +450,7 @@ const WProductModifiersToSquareModifiers = (
   const acc: OrderLineItemModifier[] = [];
   // NOTE: only supports whole pizzas, needs work to support split pizzas
   product.p.modifiers.forEach((mod) => {
-    const modifierTypeEntry = catalogContext.Catalog.modifiers[mod.modifierTypeId];
+    const modifierType = catalogContext.Catalog.modifiers[mod.modifierTypeId];
     const baseProductInstanceSelectedOptionsForModifierType =
       catalogContext.Catalog.productInstances[product.m.pi[0]].modifiers.find(
         (x) => x.modifierTypeId === mod.modifierTypeId,
@@ -440,7 +462,7 @@ const WProductModifiersToSquareModifiers = (
         OptionInstanceToSquareIdSpecifier(option, catalogContext.logger),
       );
       if (
-        modifierTypeEntry.modifierType.max_selected === 1 ||
+        modifierType.max_selected === 1 ||
         baseProductInstanceSelectedOptionsForModifierType.findIndex(
           (x) => x.optionId === option.optionId && x.placement === option.placement && x.qualifier === option.qualifier,
         ) === -1
@@ -448,13 +470,13 @@ const WProductModifiersToSquareModifiers = (
         acc.push(
           squareModifierId === null
             ? {
-                basePriceMoney: IMoneyToBigIntMoney(catalogOption.price),
-                name: catalogOption.displayName,
-              }
+              basePriceMoney: IMoneyToBigIntMoney(catalogOption.price),
+              name: catalogOption.displayName,
+            }
             : {
-                catalogObjectId: squareModifierId,
-                quantity: '1',
-              },
+              catalogObjectId: squareModifierId,
+              quantity: '1',
+            },
         );
       }
     });
@@ -495,13 +517,13 @@ export const CreateOrderFromCart = (
         quantity: x.quantity.toString(10),
         ...(squareItemVariationId === null
           ? {
-              name: x.product.m.name,
-              variationName: x.product.m.name,
-              basePriceMoney: IMoneyToBigIntMoney(catalogProduct.product.price),
-            }
+            name: x.product.m.name,
+            variationName: x.product.m.name,
+            basePriceMoney: IMoneyToBigIntMoney(catalogProduct.price),
+          }
           : {
-              catalogObjectId: squareItemVariationId,
-            }),
+            catalogObjectId: squareItemVariationId,
+          }),
         itemType: 'ITEM',
         modifiers: WProductModifiersToSquareModifiers(x.product, catalogContext),
       };
@@ -665,11 +687,11 @@ export const ProductInstanceToSquareCatalogObject = (
     const modifierEntry = catalogSelectors.modifierEntry(mtspec.mtid)!;
     const selectedOptionsForModifierType =
       productInstance.modifiers.find((x) => x.modifierTypeId === mtspec.mtid)?.options ?? [];
-    if (modifierEntry.modifierType.max_selected === 1) {
+    if (modifierEntry.max_selected === 1) {
       // single select modifiers get added to the square product
-      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST');
+      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.externalIDs, 'MODIFIER_LIST');
       if (squareModifierListId === null) {
-        logger?.error({ externalIDs: modifierEntry.modifierType.externalIDs }, 'Missing MODIFIER_LIST');
+        logger?.error({ externalIDs: modifierEntry.externalIDs }, 'Missing MODIFIER_LIST');
         return;
       }
       if (selectedOptionsForModifierType.length > 1) {
@@ -684,31 +706,31 @@ export const ProductInstanceToSquareCatalogObject = (
       }
       modifierListInfo.push({
         modifierListId: squareModifierListId,
-        minSelectedModifiers: modifierEntry.modifierType.min_selected,
+        minSelectedModifiers: modifierEntry.min_selected,
         maxSelectedModifiers: 1,
         ...(selectedOptionsForModifierType.length > 0
           ? {
-              modifierOverrides: selectedOptionsForModifierType.map((optionInstance) => ({
-                modifierId: GetSquareIdFromExternalIds(
-                  catalogSelectors.option(optionInstance.optionId)!.externalIDs,
-                  OptionInstanceToSquareIdSpecifier(optionInstance, logger),
-                )!,
-                onByDefault: true,
-              })),
-            }
+            modifierOverrides: selectedOptionsForModifierType.map((optionInstance) => ({
+              modifierId: GetSquareIdFromExternalIds(
+                catalogSelectors.option(optionInstance.optionId)!.externalIDs,
+                OptionInstanceToSquareIdSpecifier(optionInstance, logger),
+              )!,
+              onByDefault: true,
+            })),
+          }
           : {}),
       });
     } else {
       // add the modifier to the list
-      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.modifierType.externalIDs, 'MODIFIER_LIST');
+      const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.externalIDs, 'MODIFIER_LIST');
       if (squareModifierListId === null) {
-        logger?.error({ externalIDs: modifierEntry.modifierType.externalIDs }, 'Missing MODIFIER_LIST');
+        logger?.error({ externalIDs: modifierEntry.externalIDs }, 'Missing MODIFIER_LIST');
         return;
       }
       modifierListInfo.push({
         modifierListId: squareModifierListId,
-        minSelectedModifiers: modifierEntry.modifierType.min_selected,
-        maxSelectedModifiers: modifierEntry.modifierType.max_selected ?? -1,
+        minSelectedModifiers: modifierEntry.min_selected,
+        maxSelectedModifiers: modifierEntry.max_selected ?? -1,
       });
       // multi select modifiers, if pre-selected get added to the built in price
       modifierEntry.options.forEach((oId) => {
@@ -741,9 +763,9 @@ export const ProductInstanceToSquareCatalogObject = (
     itemData: {
       ...(printerGroup
         ? {
-            categories: [...otherCategories, { id: newPrinterGroupCategory! }],
-            reportingCategory: { id: newPrinterGroupCategory! },
-          }
+          categories: [...otherCategories, { id: newPrinterGroupCategory! }],
+          reportingCategory: { id: newPrinterGroupCategory! },
+        }
         : { categories: otherCategories }),
       abbreviation: productInstance.shortcode.slice(0, 24),
       availableElectronically: true,
@@ -784,7 +806,8 @@ export const ProductInstanceToSquareCatalogObject = (
 export const ModifierOptionPlacementsAndQualifiersToSquareCatalogObjects = (
   locationIds: string[],
   modifierListId: string,
-  option: Omit<IOption, 'id' | 'modifierTypeId'>,
+  option: Omit<IOption, 'id'>,
+  optionOrdinal: number,
   currentObjects: Pick<CatalogObject, 'id' | 'version'>[],
   batch: string,
 ): CatalogObject[] => {
@@ -800,96 +823,96 @@ export const ModifierOptionPlacementsAndQualifiersToSquareCatalogObjects = (
   const versionLite = currentObjects.find((x) => x.id === squareIdLite)?.version ?? null;
   const squareIdOts = GetSquareIdFromExternalIds(option.externalIDs, 'MODIFIER_OTS') ?? `#${batch}_MODIFIER_OTS`;
   const versionOts = currentObjects.find((x) => x.id === squareIdOts)?.version ?? null;
-  const baseOrdinal = option.ordinal * 6;
+  const baseOrdinal = optionOrdinal * 6;
   const modifierLite: CatalogObject[] = option.metadata.allowLite
     ? [
-        {
-          id: squareIdLite,
-          type: 'MODIFIER',
-          presentAtAllLocations: false,
-          presentAtLocationIds: locationIds,
-          ...(versionLite !== null ? { version: versionLite } : {}),
-          modifierData: {
-            name: `LITE ${option.displayName}`,
-            // todo kitchenName: `LITE ${option.shortcode}`,
-            ordinal: baseOrdinal + 4,
-            modifierListId: modifierListId,
-            priceMoney: IMoneyToBigIntMoney(option.price),
-          },
+      {
+        id: squareIdLite,
+        type: 'MODIFIER',
+        presentAtAllLocations: false,
+        presentAtLocationIds: locationIds,
+        ...(versionLite !== null ? { version: versionLite } : {}),
+        modifierData: {
+          name: `LITE ${option.displayName}`,
+          // todo kitchenName: `LITE ${option.shortcode}`,
+          ordinal: baseOrdinal + 4,
+          modifierListId: modifierListId,
+          priceMoney: IMoneyToBigIntMoney(option.price),
         },
-      ]
+      },
+    ]
     : [];
   const modifierHeavy: CatalogObject[] = option.metadata.allowHeavy
     ? [
-        {
-          id: squareIdHeavy,
-          type: 'MODIFIER',
-          presentAtAllLocations: false,
-          presentAtLocationIds: locationIds,
-          ...(versionHeavy !== null ? { version: versionHeavy } : {}),
-          modifierData: {
-            name: `HEAVY ${option.displayName}`,
-            // todo kitchenName: `HEAVY ${option.shortcode}`,
-            ordinal: baseOrdinal + 5,
-            modifierListId: modifierListId,
-            priceMoney: IMoneyToBigIntMoney({
-              currency: option.price.currency,
-              amount: option.price.amount * 2,
-            }),
-          },
+      {
+        id: squareIdHeavy,
+        type: 'MODIFIER',
+        presentAtAllLocations: false,
+        presentAtLocationIds: locationIds,
+        ...(versionHeavy !== null ? { version: versionHeavy } : {}),
+        modifierData: {
+          name: `HEAVY ${option.displayName}`,
+          // todo kitchenName: `HEAVY ${option.shortcode}`,
+          ordinal: baseOrdinal + 5,
+          modifierListId: modifierListId,
+          priceMoney: IMoneyToBigIntMoney({
+            currency: option.price.currency,
+            amount: option.price.amount * 2,
+          }),
         },
-      ]
+      },
+    ]
     : [];
   const modifierOts: CatalogObject[] = option.metadata.allowOTS
     ? [
-        {
-          id: squareIdOts,
-          type: 'MODIFIER',
-          presentAtAllLocations: false,
-          presentAtLocationIds: locationIds,
-          ...(versionOts !== null ? { version: versionOts } : {}),
-          modifierData: {
-            name: `OTS ${option.displayName}`,
-            // todo kitchenName: `OTS ${option.shortcode}`,
-            ordinal: baseOrdinal + 6,
-            modifierListId: modifierListId,
-            priceMoney: IMoneyToBigIntMoney(option.price),
-          },
+      {
+        id: squareIdOts,
+        type: 'MODIFIER',
+        presentAtAllLocations: false,
+        presentAtLocationIds: locationIds,
+        ...(versionOts !== null ? { version: versionOts } : {}),
+        modifierData: {
+          name: `OTS ${option.displayName}`,
+          // todo kitchenName: `OTS ${option.shortcode}`,
+          ordinal: baseOrdinal + 6,
+          modifierListId: modifierListId,
+          priceMoney: IMoneyToBigIntMoney(option.price),
         },
-      ]
+      },
+    ]
     : [];
   const modifiersSplit: CatalogObject[] = option.metadata.can_split
     ? [
-        {
-          id: squareIdLeft,
-          type: 'MODIFIER',
+      {
+        id: squareIdLeft,
+        type: 'MODIFIER',
 
-          presentAtAllLocations: false,
-          presentAtLocationIds: locationIds,
-          ...(versionLeft !== null ? { version: versionLeft } : {}),
-          modifierData: {
-            name: `L) ${option.displayName}`,
-            // todo kitchenName: `L) ${option.shortcode}`,
-            ordinal: baseOrdinal + 1,
-            modifierListId: modifierListId,
-            priceMoney: IMoneyToBigIntMoney(option.price),
-          },
+        presentAtAllLocations: false,
+        presentAtLocationIds: locationIds,
+        ...(versionLeft !== null ? { version: versionLeft } : {}),
+        modifierData: {
+          name: `L) ${option.displayName}`,
+          // todo kitchenName: `L) ${option.shortcode}`,
+          ordinal: baseOrdinal + 1,
+          modifierListId: modifierListId,
+          priceMoney: IMoneyToBigIntMoney(option.price),
         },
-        {
-          id: squareIdRight,
-          type: 'MODIFIER',
-          presentAtAllLocations: false,
-          presentAtLocationIds: locationIds,
-          ...(versionRight !== null ? { version: versionRight } : {}),
-          modifierData: {
-            name: `R) ${option.displayName}`,
-            // todo kitchenName: `R) ${option.shortcode}`,
-            ordinal: baseOrdinal + 3,
-            modifierListId: modifierListId,
-            priceMoney: IMoneyToBigIntMoney(option.price),
-          },
+      },
+      {
+        id: squareIdRight,
+        type: 'MODIFIER',
+        presentAtAllLocations: false,
+        presentAtLocationIds: locationIds,
+        ...(versionRight !== null ? { version: versionRight } : {}),
+        modifierData: {
+          name: `R) ${option.displayName}`,
+          // todo kitchenName: `R) ${option.shortcode}`,
+          ordinal: baseOrdinal + 3,
+          modifierListId: modifierListId,
+          priceMoney: IMoneyToBigIntMoney(option.price),
         },
-      ]
+      },
+    ]
     : [];
   const modifierWhole: CatalogObject = {
     id: squareIdWhole,
@@ -915,9 +938,10 @@ export const ModifierTypeToSquareCatalogObject = (
   locationIds: string[],
   modifierType: Pick<
     IOptionType,
-    'name' | 'displayName' | 'ordinal' | 'externalIDs' | 'max_selected' | 'min_selected' | 'displayFlags'
+    'name' | 'displayName' | 'externalIDs' | 'max_selected' | 'min_selected' | 'displayFlags'
   >,
-  options: Omit<IOption, 'id' | 'modifierTypeId'>[],
+  modifierTypeOrdinal: number,
+  options: Omit<IOption, 'id'>[],
   currentObjects: Pick<CatalogObject, 'id' | 'version'>[],
   batch: string,
 ): CatalogObject => {
@@ -927,7 +951,7 @@ export const ModifierTypeToSquareCatalogObject = (
   const displayName = modifierType.displayName.length > 0 ? modifierType.displayName : modifierType.name;
   const squareName = modifierType.displayFlags.is3p
     ? displayName
-    : `${('0000' + modifierType.ordinal * 100).slice(-4)}| ${displayName}`;
+    : `${('0000' + modifierTypeOrdinal * 100).slice(-4)}| ${displayName}`;
   return {
     id: modifierListId,
     ...(version !== null ? { version } : {}),
@@ -936,15 +960,16 @@ export const ModifierTypeToSquareCatalogObject = (
     presentAtLocationIds: locationIds,
     modifierListData: {
       name: squareName,
-      ordinal: modifierType.ordinal * 1024,
+      ordinal: modifierTypeOrdinal * 1024,
       selectionType: 'MULTIPLE', // this should always be MULTIPLE otherwise square autoselects a modifier
+      // Options are already in order from the parent entity's options array
       modifiers: options
-        .sort((a, b) => a.ordinal - b.ordinal)
         .map((o, i) =>
           ModifierOptionPlacementsAndQualifiersToSquareCatalogObjects(
             locationIds,
             modifierListId,
             o,
+            i, // pass index as ordinal
             currentObjects,
             `${batch}S${('000' + i).slice(-3)}S`,
           ),
@@ -979,7 +1004,7 @@ export const ProductInstanceUpdateMergeExternalIds = (
  */
 export const ValidateModifiersForInstance = function (
   productModifierSpecification: IProductModifier[],
-  instanceModifierSpecification: ProductModifierEntry[],
+  instanceModifierSpecification: ProductInstanceModifierEntry[],
 ) {
   const mtidsInInstanceSpec = new Set(...instanceModifierSpecification.map((x) => x.modifierTypeId));
   const mtidsInProductSpec = new Set(...productModifierSpecification.map((x) => x.mtid));

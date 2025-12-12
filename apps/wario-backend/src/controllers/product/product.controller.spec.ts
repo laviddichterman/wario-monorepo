@@ -47,11 +47,10 @@ describe('ProductController', () => {
     });
 
     // Setup CatalogSelectors for patchProductInstance
+    // In 2025 schema, productEntry returns IProduct directly (no .product wrapper)
     Object.defineProperty(mockCatalogService, 'CatalogSelectors', {
       get: () => ({
-        productEntry: jest.fn().mockReturnValue({
-          product: createMockProduct({ id: 'prod-123' }),
-        }),
+        productEntry: jest.fn().mockReturnValue(createMockProduct({ id: 'prod-123' })),
       }),
       configurable: true,
     });
@@ -153,9 +152,9 @@ describe('ProductController', () => {
 
   describe('postProductInstance', () => {
     it('should create product instance and emit catalog', async () => {
+      // productId is no longer on IProductInstance in 2025 schema
       const mockInstance = createMockProductInstance({
         id: 'pi-new',
-        productId: 'prod-123',
       });
       (mockCatalogService.CreateProductInstance as jest.Mock).mockResolvedValue(mockInstance);
 

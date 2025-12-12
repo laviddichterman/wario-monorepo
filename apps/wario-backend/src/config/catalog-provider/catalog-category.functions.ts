@@ -1,5 +1,8 @@
 /**
  * Pure functions for category CRUD operations.
+ *
+ * 2025 Schema: Categories use children[] and products[] arrays for hierarchy.
+ * No parent_id field - parent manages its children array.
  */
 import type { PinoLogger } from 'nestjs-pino';
 
@@ -34,7 +37,12 @@ export async function createCategory(deps: CategoryDeps, category: Omit<ICategor
   return deps.categoryRepository.create(category);
 }
 
-// TODO: support Partial update
+/**
+ * Update a category.
+ * Note: With 2025 schema, parent-child relationships are managed via the parent's children[] array,
+ * not via a parent_id on the child. Moving a category requires updating the old parent's children
+ * array (to remove) and the new parent's children array (to add).
+ */
 export async function updateCategory(
   deps: CategoryDeps,
   categoryId: string,
@@ -45,32 +53,7 @@ export async function updateCategory(
     return null;
   }
 
-  let cycleUpdatePromise: Promise<unknown> | null = null;
-  const currentCategory = deps.categories[categoryId];
-
-  if (currentCategory.parent_id !== category.parent_id && category.parent_id) {
-    // need to check for potential cycle
-    let cur: string | null = category.parent_id;
-    while (cur && deps.categories[cur].parent_id !== categoryId) {
-      cur = deps.categories[cur].parent_id;
-    }
-
-    // if the cursor is not empty/null/blank then we stopped because we found the cycle
-    if (cur) {
-      deps.logger.debug(
-        `In changing ${categoryId}'s parent_id to ${category.parent_id}, found cycle at ${cur}, blanking out ${cur}'s parent_id to prevent cycle.`,
-      );
-
-      cycleUpdatePromise = deps.categoryRepository.update(cur, { parent_id: null });
-    }
-  }
-
   const response = await deps.categoryRepository.update(categoryId, category);
-
-  if (cycleUpdatePromise) {
-    await cycleUpdatePromise;
-  }
-
   return response;
 }
 
@@ -105,11 +88,16 @@ export async function deleteCategory(
   // 3. Delete from DB
   await deps.categoryRepository.delete(categoryId);
 
-  // 4. Update children (flatten hierarchy)
+  // 4. Remove this category from any parent's children array
+  // In 2025 schema, we need to find the parent that has this category in its children array
+  // and remove it from there
+  // This is very inefficient, but it's the only way to do it AT THE MOMENT
+  // TODO: in a post mongoose world, migrate this to be more efficient
   await Promise.all(
     Object.values(deps.categories).map(async (cat) => {
-      if (cat.parent_id && cat.parent_id === categoryId) {
-        await deps.categoryRepository.update(cat.id, { parent_id: null });
+      if (cat.children.includes(categoryId)) {
+        const updatedChildren = cat.children.filter((id) => id !== categoryId);
+        await deps.categoryRepository.update(cat.id, { children: updatedChildren });
       }
     }),
   );
@@ -117,18 +105,20 @@ export async function deleteCategory(
   // 5. Handle contained products
   let productsModified = false;
   if (deleteContainedProducts) {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const productsToDelete = deps.catalog.categories[categoryId]?.products ?? [];
+    // Products in this category are in existing.products
+    const productsToDelete = existing.products;
     if (productsToDelete.length > 0) {
       await deps.batchDeleteProducts(productsToDelete, true);
-      productsModified = true; // batchDeleteProducts might handle sync, but we flag it anyway
+      productsModified = true;
     }
   } else {
-    // Remove category reference from products
-    const modifiedCount = await deps.productRepository.removeCategoryFromAll(categoryId);
-
-    if (modifiedCount > 0) {
-      deps.logger.debug(`Removed Category ID from ${modifiedCount.toString()} products.`);
+    // Remove products from this category (they become orphaned)
+    // In 2025 schema, products don't have category_ids, so we just need to clear
+    // the category's products array (already deleted above)
+    if (existing.products.length > 0) {
+      deps.logger.debug(
+        `Category ${categoryId} had ${String(existing.products.length)} products that might be orphaned.`,
+      );
       productsModified = true;
     }
   }

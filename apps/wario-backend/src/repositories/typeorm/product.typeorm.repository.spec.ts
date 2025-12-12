@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { type InsertQueryBuilder, IsNull, type ObjectLiteral, type Repository, type SelectQueryBuilder, type UpdateQueryBuilder } from 'typeorm';
+import {
+  type InsertQueryBuilder,
+  IsNull,
+  type ObjectLiteral,
+  type Repository,
+  type SelectQueryBuilder,
+  type UpdateQueryBuilder,
+} from 'typeorm';
 
 import { createMockProductEntity } from '../../../test/utils/mock-entities';
 import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
@@ -10,7 +17,9 @@ import { ProductEntity } from '../../entities/catalog/product.entity';
 import { ProductTypeOrmRepository } from './product.typeorm.repository';
 
 // Combine query builders for mocking
-type MockQueryBuilder<T extends ObjectLiteral> = MockType<SelectQueryBuilder<T> & UpdateQueryBuilder<T> & InsertQueryBuilder<T>>;
+type MockQueryBuilder<T extends ObjectLiteral> = MockType<
+  SelectQueryBuilder<T> & UpdateQueryBuilder<T> & InsertQueryBuilder<T>
+>;
 
 describe('ProductTypeOrmRepository', () => {
   let repository: ProductTypeOrmRepository;
@@ -45,23 +54,7 @@ describe('ProductTypeOrmRepository', () => {
     });
   });
 
-  describe('findByCategoryId', () => {
-    it('should use query builder', async () => {
-      if (!mockRepo.createQueryBuilder) {
-        throw new Error('createQueryBuilder is not defined');
-      }
-      const qb = mockRepo.createQueryBuilder() as unknown as MockQueryBuilder<ProductEntity>;
-      await repository.findByCategoryId('cat1');
-
-      expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('product');
-
-      expect(qb.where).toHaveBeenCalledWith('product.validTo IS NULL');
-
-      expect(qb.andWhere).toHaveBeenCalledWith(':categoryId = ANY(product.category_ids)', { categoryId: 'cat1' });
-
-      expect(qb.getMany).toHaveBeenCalled();
-    });
-  });
+  // findByCategoryId removed in 2025 schema - category_ids no longer on product
 
   describe('crud', () => {
     it('should create', async () => {
@@ -90,31 +83,6 @@ describe('ProductTypeOrmRepository', () => {
     });
   });
 
-  describe('removeCategoryFromAll', () => {
-    it('should update affected products', async () => {
-      const prod = createMockProductEntity({ id: 'p1', category_ids: ['c1', 'c2'] });
-
-      const txRepo = createMockTypeOrmRepository<ProductEntity>();
-      if (!txRepo.find) {
-        throw new Error('find is not defined');
-      }
-      txRepo.find.mockResolvedValue([prod]);
-      if (!mockRepo.manager) {
-        throw new Error('manager is not defined');
-      }
-      (mockRepo.manager.getRepository as jest.Mock).mockReturnValue(txRepo);
-
-      const count = await repository.removeCategoryFromAll('c1');
-      expect(count).toBe(1);
-      // Verify we closed p1
-      expect(txRepo.update).toHaveBeenCalled();
-      // And inserted new version
-      if (!txRepo.createQueryBuilder) {
-        throw new Error('createQueryBuilder is not defined');
-      }
-      expect(txRepo.createQueryBuilder().insert).toHaveBeenCalled();
-    });
-  });
 
   describe('bulk operations', () => {
     it('bulkUpdate', async () => {
@@ -130,7 +98,6 @@ describe('ProductTypeOrmRepository', () => {
         throw new Error('manager is not defined');
       }
       (mockRepo.manager.getRepository as jest.Mock).mockReturnValue(txRepo);
-
 
       await repository.bulkUpdate(updates);
       if (!txRepo.createQueryBuilder) {

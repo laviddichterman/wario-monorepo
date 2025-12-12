@@ -28,11 +28,7 @@ export class KeyValueMongooseRepository implements IKeyValueRepository {
   }
 
   async set(key: string, value: string): Promise<void> {
-    await this.model.updateOne(
-      { key },
-      { $set: { value } },
-      { upsert: true },
-    ).exec();
+    await this.model.updateOne({ key }, { $set: { value } }, { upsert: true }).exec();
   }
 
   async setAll(entries: KeyValueEntry[]): Promise<void> {

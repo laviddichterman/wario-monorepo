@@ -50,19 +50,6 @@ export const WOptionSchema = new Schema<MT>(
       required: true,
     },
 
-    // placement index
-    ordinal: {
-      type: Number,
-      required: true,
-    },
-
-    // option type enumeration
-    modifierTypeId: {
-      type: String,
-      ref: 'WOptionTypeSchema',
-      required: true,
-    },
-
     metadata: {
       // how much this contributes to the flavor
       flavor_factor: Number,

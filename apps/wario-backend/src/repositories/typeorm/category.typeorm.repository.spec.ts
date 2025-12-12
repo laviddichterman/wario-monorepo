@@ -51,17 +51,17 @@ describe('CategoryTypeOrmRepository', () => {
     });
   });
 
-  describe('findByParentId', () => {
-    it('should find by parent id', async () => {
+  describe('findByIds', () => {
+    it('should find by multiple ids', async () => {
       mockRepo.find?.mockResolvedValue([]);
-      await repository.findByParentId('p1');
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { parent_id: 'p1', validTo: IsNull() } });
+      await repository.findByIds(['p1', 'p2']);
+      expect(mockRepo.find).toHaveBeenCalledWith({ where: { id: expect.anything(), validTo: IsNull() } });
     });
 
-    it('should find roots when parent id is null', async () => {
-      mockRepo.find?.mockResolvedValue([]);
-      await repository.findByParentId(null);
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { parent_id: IsNull(), validTo: IsNull() } });
+    it('should return empty array when ids is empty', async () => {
+      const result = await repository.findByIds([]);
+      expect(result).toEqual([]);
+      expect(mockRepo.find).not.toHaveBeenCalled();
     });
   });
 
@@ -97,15 +97,17 @@ describe('CategoryTypeOrmRepository', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(
         { id, validTo: IsNull() },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        expect.objectContaining({ validTo: expect.any(Date) })
+        expect.objectContaining({ validTo: expect.any(Date) }),
       );
 
       // Create new
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        id,
-        name: 'New',
-        validTo: null
-      }));
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id,
+          name: 'New',
+          validTo: null,
+        }),
+      );
       expect(mockRepo.save).toHaveBeenCalled();
     });
 
@@ -124,30 +126,81 @@ describe('CategoryTypeOrmRepository', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(
         { id: 'c1', validTo: IsNull() },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        expect.objectContaining({ validTo: expect.any(Date) })
+        expect.objectContaining({ validTo: expect.any(Date) }),
       );
     });
   });
 
   describe('removeServiceDisableFromAll', () => {
-    it('should remove service id from active categories', async () => {
+    it('should remove service id from active categories using transaction', async () => {
       const cat1 = createMockCategoryEntity({ id: 'c1', serviceDisable: ['s1', 's2'] });
-      const cat2 = createMockCategoryEntity({ id: 'c2', serviceDisable: ['s2'] });
 
-      mockRepo.find?.mockResolvedValue([cat1, cat2]);
-      mockRepo.findOne?.mockResolvedValue(cat1); // For the update call internal lookup
+      // The new implementation uses a transaction with:
+      // 1. createQueryBuilder().where().andWhere().setParameter().getMany() to find affected
+      // 2. repo.update() to close old versions
+      // 3. createQueryBuilder().insert().into().values().execute() to insert new versions
 
-      // We spy on update to verify calls
-      const updateSpy = jest.spyOn(repository, 'update').mockResolvedValue(cat1);
+      // Mock the transaction to capture the nested repo calls
+      const mockNestedQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        setParameter: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([cat1]),
+        insert: jest.fn().mockReturnThis(),
+        into: jest.fn().mockReturnThis(),
+        values: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ identifiers: [], raw: [], generatedMaps: [] }),
+      };
+
+      const mockNestedRepo = {
+        createQueryBuilder: jest.fn().mockReturnValue(mockNestedQueryBuilder),
+        update: jest.fn().mockResolvedValue({ affected: 1, raw: [], generatedMaps: [] }),
+        create: jest.fn().mockImplementation((data: unknown) => data),
+      };
+
+      // Override the manager.transaction mock to use our nested repo
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      mockRepo.manager!.transaction = jest.fn().mockImplementation(
+        async (cb: (em: { getRepository: () => typeof mockNestedRepo }) => Promise<unknown>) => {
+          return cb({ getRepository: () => mockNestedRepo });
+        },
+      );
 
       const count = await repository.removeServiceDisableFromAll('s1');
 
       expect(count).toBe(1);
-      expect(updateSpy).toHaveBeenCalledWith('c1', {
-        serviceDisable: ['s2']
-      });
-      // cat2 does not contain s1, so no update called for it
-      expect(updateSpy).toHaveBeenCalledTimes(1);
+      // Verify the query builder was used to find affected categories
+      expect(mockNestedQueryBuilder.setParameter).toHaveBeenCalledWith('serviceId', 's1');
+      expect(mockNestedQueryBuilder.getMany).toHaveBeenCalled();
+      // Verify old version was closed
+      expect(mockNestedRepo.update).toHaveBeenCalled();
+      // Verify new version was inserted
+      expect(mockNestedQueryBuilder.insert).toHaveBeenCalled();
+      expect(mockNestedQueryBuilder.execute).toHaveBeenCalled();
+    });
+
+    it('should return 0 when no categories contain the serviceId', async () => {
+      const mockNestedQueryBuilder = {
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        setParameter: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]), // No affected categories
+      };
+
+      const mockNestedRepo = {
+        createQueryBuilder: jest.fn().mockReturnValue(mockNestedQueryBuilder),
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      mockRepo.manager!.transaction = jest.fn().mockImplementation(
+        async (cb: (em: { getRepository: () => typeof mockNestedRepo }) => Promise<unknown>) => {
+          return cb({ getRepository: () => mockNestedRepo });
+        },
+      );
+
+      const count = await repository.removeServiceDisableFromAll('nonexistent');
+
+      expect(count).toBe(0);
     });
   });
 });

@@ -22,15 +22,39 @@ import {
   UpsertProductBatchRequest,
 } from '@wcp/wario-shared';
 
-import { CATEGORY_REPOSITORY, type ICategoryRepository } from '../../repositories/interfaces/category.repository.interface';
-import { DB_VERSION_REPOSITORY, type IDBVersionRepository } from '../../repositories/interfaces/db-version.repository.interface';
-import { type IOptionTypeRepository, OPTION_TYPE_REPOSITORY } from '../../repositories/interfaces/option-type.repository.interface';
+import {
+  CATEGORY_REPOSITORY,
+  type ICategoryRepository,
+} from '../../repositories/interfaces/category.repository.interface';
+import {
+  DB_VERSION_REPOSITORY,
+  type IDBVersionRepository,
+} from '../../repositories/interfaces/db-version.repository.interface';
+import {
+  type IOptionTypeRepository,
+  OPTION_TYPE_REPOSITORY,
+} from '../../repositories/interfaces/option-type.repository.interface';
 import { type IOptionRepository, OPTION_REPOSITORY } from '../../repositories/interfaces/option.repository.interface';
-import { type IOrderInstanceFunctionRepository, ORDER_INSTANCE_FUNCTION_REPOSITORY } from '../../repositories/interfaces/order-instance-function.repository.interface';
-import { type IPrinterGroupRepository, PRINTER_GROUP_REPOSITORY } from '../../repositories/interfaces/printer-group.repository.interface';
-import { type IProductInstanceFunctionRepository, PRODUCT_INSTANCE_FUNCTION_REPOSITORY } from '../../repositories/interfaces/product-instance-function.repository.interface';
-import { type IProductInstanceRepository, PRODUCT_INSTANCE_REPOSITORY } from '../../repositories/interfaces/product-instance.repository.interface';
-import { type IProductRepository, PRODUCT_REPOSITORY } from '../../repositories/interfaces/product.repository.interface';
+import {
+  type IOrderInstanceFunctionRepository,
+  ORDER_INSTANCE_FUNCTION_REPOSITORY,
+} from '../../repositories/interfaces/order-instance-function.repository.interface';
+import {
+  type IPrinterGroupRepository,
+  PRINTER_GROUP_REPOSITORY,
+} from '../../repositories/interfaces/printer-group.repository.interface';
+import {
+  type IProductInstanceFunctionRepository,
+  PRODUCT_INSTANCE_FUNCTION_REPOSITORY,
+} from '../../repositories/interfaces/product-instance-function.repository.interface';
+import {
+  type IProductInstanceRepository,
+  PRODUCT_INSTANCE_REPOSITORY,
+} from '../../repositories/interfaces/product-instance.repository.interface';
+import {
+  type IProductRepository,
+  PRODUCT_REPOSITORY,
+} from '../../repositories/interfaces/product.repository.interface';
 import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { MigrationFlagsService } from '../migration-flags.service';
@@ -228,7 +252,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       printerGroups: this.printerGroups,
       syncPrinterGroups: () => this.SyncPrinterGroups(),
       batchDeleteCatalogObjectsFromExternalIds: (ids) => this.BatchDeleteCatalogObjectsFromExternalIds(ids),
-      reassignPrinterGroupForAllProducts: (oldId, newId) => this.productRepository.migratePrinterGroupForAllProducts(oldId, newId),
+      reassignPrinterGroupForAllProducts: (oldId, newId) =>
+        this.productRepository.migratePrinterGroupForAllProducts(oldId, newId),
     };
   }
 
@@ -297,16 +322,20 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ModifierFns.deleteModifierType(this.modifierDeps, mt_id);
   };
 
-  CreateOption = async (modifierOption: Omit<IOption, 'id'>) => {
-    return ModifierFns.createOption(this.modifierDeps, modifierOption);
+  CreateOption = async (modifierTypeId: string, modifierOption: Omit<IOption, 'id'>) => {
+    return ModifierFns.createOption(this.modifierDeps, modifierTypeId, modifierOption);
   };
 
   UpdateModifierOption = async (props: ModifierFns.UpdateModifierOptionProps) => {
     return ModifierFns.updateModifierOption(this.modifierDeps, props);
   };
 
-  DeleteModifierOption = async (mo_id: string, suppress_catalog_recomputation: boolean = false) => {
-    return ModifierFns.deleteModifierOption(this.modifierDeps, mo_id, suppress_catalog_recomputation);
+  DeleteModifierOption = async (
+    modifierTypeId: string,
+    mo_id: string,
+    suppress_catalog_recomputation: boolean = false,
+  ) => {
+    return ModifierFns.deleteModifierOption(this.modifierDeps, modifierTypeId, mo_id, suppress_catalog_recomputation);
   };
 
   ValidateOption = (
@@ -345,10 +374,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     };
   }
 
-  CreateProduct = async (
-    product: Omit<IProduct, 'id' | 'baseProductId'>,
-    instances: Omit<IProductInstance, 'id' | 'productId'>[],
-  ) => {
+  CreateProduct = async (product: Omit<IProduct, 'id'>, instances: Omit<IProductInstance, 'id'>[]) => {
     return ProductFns.createProduct(this.productDeps, product, instances);
   };
 
@@ -368,8 +394,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ProductFns.deleteProduct(this.productDeps, p_id);
   };
 
-  CreateProductInstance = async (instance: Omit<IProductInstance, 'id'>) => {
-    return ProductFns.createProductInstance(this.productDeps, instance);
+  CreateProductInstance = async (productId: string, instance: Omit<IProductInstance, 'id'>) => {
+    return ProductFns.createProductInstance(this.productDeps, productId, instance);
   };
 
   BatchUpdateProductInstance = async (
@@ -532,10 +558,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   SyncOrderInstanceFunctions = async () => {
     this.logger.debug(`Syncing Order Instance Functions.`);
     try {
-      this.orderInstanceFunctions = ReduceArrayToMapByKey(
-        await this.orderInstanceFunctionRepository.findAll(),
-        'id',
-      );
+      this.orderInstanceFunctions = ReduceArrayToMapByKey(await this.orderInstanceFunctionRepository.findAll(), 'id');
     } catch (err: unknown) {
       this._logger.error({ err }, 'Failed fetching order instance functions');
       return false;
@@ -629,8 +652,6 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     }
   };
 
-
-
   RemoveModifierTypeFromProducts = async (mt_id: string) => {
     const products_update = await this.productRepository.removeModifierTypeFromAll(mt_id);
     if (products_update > 0) {
@@ -647,13 +668,25 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     // After we've updated the modifiers, we need to rebuild all products with the said modifier option(s) since the ordinal and price might have changed
     // TODO: verify we don't need to update products that could add that modifier too, like any product class with the modifier type enabled on it
     const product_instances_to_update = await this.productInstanceRepository.findAllWithModifierOptions(updatedOptions);
-    const batchProductInstanceUpdates = product_instances_to_update.map((pi) => ({
-      piid: pi.id,
-      product: this.catalog.products[pi.productId].product,
-      productInstance: {
-        modifiers: pi.modifiers,
-      },
-    }));
+    const batchProductInstanceUpdates = product_instances_to_update
+      .map((pi) => {
+        // Find the product that contains this instance
+        const productId = Object.keys(this.catalog.products).find((pid) =>
+          this.catalog.products[pid].instances.includes(pi.id),
+        );
+        return {
+          piid: pi.id,
+          product: productId ? this.catalog.products[productId] : null,
+          productInstance: {
+            modifiers: pi.modifiers,
+          },
+        };
+      })
+      .filter((update) => update.product !== null) as Array<{
+      piid: string;
+      product: IProduct;
+      productInstance: { modifiers: IProductInstance['modifiers'] };
+    }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();
@@ -663,11 +696,12 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   RemoveModifierOptionFromProductInstances = async (modifierTypeId: string, mo_id: string) => {
-    const product_instance_options_delete = await this.productInstanceRepository.removeModifierOptionsFromAll(modifierTypeId, [mo_id]);
+    const product_instance_options_delete = await this.productInstanceRepository.removeModifierOptionsFromAll(
+      modifierTypeId,
+      [mo_id],
+    );
     if (product_instance_options_delete > 0) {
-      this.logger.debug(
-        `Removed ${product_instance_options_delete.toString()} Options from Product Instances.`,
-      );
+      this.logger.debug(`Removed ${product_instance_options_delete.toString()} Options from Product Instances.`);
       // TODO: run query for any modifiers.options.length === 0
       await this.SyncProductInstances();
     }
@@ -688,9 +722,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     }
     const category_update = await this.categoryRepository.removeServiceDisableFromAll(id);
     if (category_update > 0) {
-      this.logger.debug(
-        `Removed serviceDisable fulfillment ID from ${category_update.toString()} categories.`,
-      );
+      this.logger.debug(`Removed serviceDisable fulfillment ID from ${category_update.toString()} categories.`);
       await this.SyncCategories();
     }
     if (products_update > 0 || category_update > 0) {

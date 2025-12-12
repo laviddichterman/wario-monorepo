@@ -22,8 +22,9 @@ export class OptionTypeOrmRepository implements IOptionRepository {
     return this.repo.find({ where: { validTo: IsNull() } });
   }
 
-  async findByModifierTypeId(modifierTypeId: string): Promise<IOption[]> {
-    return this.repo.find({ where: { modifierTypeId, validTo: IsNull() } });
+  async findByIds(ids: string[]): Promise<IOption[]> {
+    if (!ids.length) return [];
+    return this.repo.find({ where: { id: In(ids), validTo: IsNull() } });
   }
 
   async create(option: Omit<IOption, 'id'>): Promise<IOption> {
@@ -60,10 +61,7 @@ export class OptionTypeOrmRepository implements IOptionRepository {
 
   async delete(id: string): Promise<boolean> {
     const now = new Date();
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
     return (result.affected ?? 0) > 0;
   }
 
@@ -137,19 +135,7 @@ export class OptionTypeOrmRepository implements IOptionRepository {
       return 0;
     }
 
-    const result = await this.repo.update(
-      { id: In(ids), validTo: IsNull() },
-      { validTo: now },
-    );
-    return result.affected ?? 0;
-  }
-
-  async deleteByModifierTypeId(modifierTypeId: string): Promise<number> {
-    const now = new Date();
-    const result = await this.repo.update(
-      { modifierTypeId, validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id: In(ids), validTo: IsNull() }, { validTo: now });
     return result.affected ?? 0;
   }
 
@@ -184,4 +170,3 @@ export class OptionTypeOrmRepository implements IOptionRepository {
     });
   }
 }
-

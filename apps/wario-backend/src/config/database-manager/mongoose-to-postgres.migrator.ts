@@ -34,7 +34,7 @@ export class MongooseToPostgresMigrator {
     private readonly dataSource: DataSource,
     @InjectPinoLogger(MongooseToPostgresMigrator.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   // Migration statistics for summary
   private stats = {
@@ -94,11 +94,14 @@ export class MongooseToPostgresMigrator {
 
   private logMigrationSummary(durationSeconds: number): void {
     const totalRecords = Object.values(this.stats).reduce((a, b) => a + b, 0);
-    this.logger.info({
-      duration: `${durationSeconds.toFixed(2)}s`,
-      totalRecords,
-      breakdown: this.stats,
-    }, 'Migration completed successfully');
+    this.logger.info(
+      {
+        duration: `${durationSeconds.toFixed(2)}s`,
+        totalRecords,
+        breakdown: this.stats,
+      },
+      'Migration completed successfully',
+    );
   }
 
   /**
@@ -126,7 +129,6 @@ export class MongooseToPostgresMigrator {
     const doc = await collection.findOne({});
 
     if (doc) {
-
       const { _id, __v, ...data } = doc;
       // We only ever have one settings row in PG (rowId will be generated)
       const entity = manager.create(SettingsEntity, {
@@ -147,7 +149,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         return manager.create(KeyValueEntity, {
           key: doc.key,
           value: doc.value,
@@ -181,7 +183,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         return manager.create(PrinterGroupEntity, {
           id: doc._id.toString(),
           name: doc.name,
@@ -207,7 +209,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         return manager.create(SeatingResourceEntity, {
           id: doc._id.toString(),
           name: doc.name,
@@ -233,7 +235,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         // Mapping Mongoose fields to FulfillmentEntity
         // Assuming Mongoose schema was roughly similar to the interface
         return manager.create(FulfillmentEntity, {
@@ -282,7 +284,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         return manager.create(CategoryEntity, {
           id: doc._id.toString(),
           displayName: doc.displayName,
@@ -307,7 +309,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         return manager.create(OptionTypeEntity, {
           id: doc._id.toString(),
           name: doc.name,
@@ -333,7 +335,7 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map(doc => {
+      const entities = docs.map((doc) => {
         return manager.create(OptionEntity, {
           id: doc._id.toString(),
           name: doc.name,
@@ -426,7 +428,10 @@ export class MongooseToPostgresMigrator {
         status: doc.status,
         customerInfo: doc.customerInfo || doc.customer, // Handle field rename
         fulfillment: doc.fulfillment,
-        fulfillmentDate: doc.fulfillmentDate || (doc.fulfillment as { selectedDate?: string } | undefined)?.selectedDate || '1970-01-01',
+        fulfillmentDate:
+          doc.fulfillmentDate ||
+          (doc.fulfillment as { selectedDate?: string } | undefined)?.selectedDate ||
+          '1970-01-01',
         cart: doc.cart || doc.items || [],
         discounts: doc.discounts || [],
         payments: doc.payments || doc.payment ? [doc.payment] : [],

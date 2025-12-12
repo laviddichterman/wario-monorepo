@@ -46,34 +46,27 @@ export interface TypeOrmConfigOptions {
 }
 
 /**
- * Default glob patterns for entities when running from source (ts-node, tests).
- */
-const DEFAULT_ENTITIES_SOURCE = ['src/entities/**/*.entity.ts'];
-
-/**
- * Default glob patterns for entities when running from compiled output.
+ * Default glob patterns for entities when running from compiled output (CLI).
  */
 const DEFAULT_ENTITIES_COMPILED = ['dist/src/entities/**/*.entity.js'];
 
 /**
- * Default glob patterns for migrations.
- * Includes both source and compiled locations for CLI compatibility.
+ * Default glob patterns for migrations when running from compiled output (CLI).
  */
-const DEFAULT_MIGRATIONS = [
-  'src/migrations/**/*.ts',
-  'dist/src/migrations/**/*.js',
-];
+const DEFAULT_MIGRATIONS_COMPILED = ['dist/src/migrations/**/*.js'];
 
 /**
  * Determines entity paths based on the caller location.
  * When called from app.module.ts (via __dirname), uses relative path with glob.
- * When called from CLI (ormconfig.ts), uses source/dist patterns.
+ * When called from CLI (ormconfig.ts, no dirname), uses only compiled JS patterns
+ * since CLI runs against the built dist/ output.
  */
 function resolveEntityPaths(dirname?: string): string[] {
   if (dirname) {
     return [path.join(dirname, 'entities/**/*.entity{.ts,.js}')];
   }
-  return [...DEFAULT_ENTITIES_SOURCE, ...DEFAULT_ENTITIES_COMPILED];
+  // CLI mode: only use compiled .js files to avoid ESM/CJS mismatch
+  return DEFAULT_ENTITIES_COMPILED;
 }
 
 /**
@@ -83,7 +76,8 @@ function resolveMigrationPaths(dirname?: string): string[] {
   if (dirname) {
     return [path.join(dirname, 'migrations/**/*{.ts,.js}')];
   }
-  return DEFAULT_MIGRATIONS;
+  // CLI mode: only use compiled .js files to avoid ESM/CJS mismatch
+  return DEFAULT_MIGRATIONS_COMPILED;
 }
 
 /**
@@ -118,12 +112,7 @@ export function buildTypeOrmConfig(
   options: TypeOrmConfigOptions = {},
   dirname?: string,
 ): DataSourceOptions {
-  const {
-    migrationsRun = false,
-    synchronize = false,
-    entities,
-    migrations,
-  } = options;
+  const { migrationsRun = false, synchronize = false, entities, migrations } = options;
 
   return {
     type: 'postgres',
@@ -144,10 +133,10 @@ export function buildTypeOrmConfig(
 /**
  * Creates a standalone AppConfigService instance for use outside NestJS.
  * Manually initializes ConfigService with process.env values.
- * 
+ *
  * Use this in CLI contexts (ormconfig.ts) to get the exact same config
  * logic as the NestJS runtime.
- * 
+ *
  * @example
  * // In ormconfig.ts:
  * const appConfig = createStandaloneAppConfig();
@@ -158,7 +147,6 @@ export function buildTypeOrmConfig(
  * });
  */
 export function createStandaloneAppConfig(): AppConfigService {
-
   const configService = new ConfigService(process.env);
   return new AppConfigService(configService);
 }

@@ -115,16 +115,19 @@ export const createModifierType = async (
 
   if (options.length > 0) {
     // we need to filter these external IDs because it'll interfere with adding the new modifier to the catalog
-    const adjustedOptions: Omit<IOption, 'id'>[] = options
-      .map((opt) => ({
-        ...opt,
-        modifierTypeId,
-        externalIDs: GetNonSquareExternalIds(opt.externalIDs),
-      }))
-      .sort((a, b) => a.ordinal - b.ordinal);
+    // Options array order in the request defines the display order
+    const adjustedOptions: Omit<IOption, 'id'>[] = options.map((opt) => ({
+      ...opt,
+      externalIDs: GetNonSquareExternalIds(opt.externalIDs),
+    }));
 
-    await deps.optionRepository.bulkCreate(adjustedOptions);
+    const createdOptions = await deps.optionRepository.bulkCreate(adjustedOptions);
+    // Update the modifier type with the new option IDs in order
+    await deps.optionTypeRepository.update(modifierTypeId, {
+      options: createdOptions.map((o) => o.id),
+    });
     await deps.syncOptions();
+    await deps.syncModifierTypes();
     deps.recomputeCatalog();
     await updateModifierType(deps, { id: modifierTypeId, modifierType: {} });
   }
@@ -145,19 +148,45 @@ export const batchUpdateModifierType = async (
     'Updating modifier type(s)',
   );
 
+  // 1. Get old modifier type and options
+  // create a merged modifier type and determine if we need to update modifier options and products
   const batchData = batches.map((b) => {
-    const oldMT = deps.modifierTypes.find((x) => x.id === b.id) as IOptionType;
+    const oldMT = deps.catalog.modifiers[b.id] as IOptionType;
+    let thisBatchUpdateModifierOptionsAndProducts = updateModifierOptionsAndProducts;
+    if (b.modifierType.options) {
+      // TODO DETERMINE WHAT THIS MEANS IF THE LIST REMOVES OPTIONS
+      if (
+        !(
+          b.modifierType.options.length === oldMT.options.length &&
+          b.modifierType.options.every((opt) => {
+            return oldMT.options.includes(opt);
+          })
+        )
+      ) {
+        throw Error(
+          `Cannot perform batch update on modifier type ${b.id} with different options inside the options list, old: ${JSON.stringify(oldMT.options)}, new: ${JSON.stringify(b.modifierType.options)}`,
+        );
+      }
+      // batch will re-order the options, so we need to adjust the ordering in square, meaning we need to run an update on the options
+      // we're not going to be precious, so we're going to update all of the options
+      thisBatchUpdateModifierOptionsAndProducts = true;
+    }
+    // Get options that belong to this modifier type from its options array
+    const optionsForMT = oldMT.options.map((optId) => deps.modifierOptions.find((o) => o.id === optId) as IOption);
     return {
       batch: b,
       oldMT,
       updatedModifierType: { ...oldMT, ...b.modifierType },
-      updatedOptions: deps.modifierOptions
-        .filter((o) => o.modifierTypeId === b.id)
-        .map((o) => ({ ...o, ...(b.modifierType.displayFlags as IOptionTypeDisplayFlags) })),
-      updateModifierOptionsAndProducts,
+      updatedOptions: optionsForMT.map((o) => ({ ...o, ...(b.modifierType.displayFlags as IOptionTypeDisplayFlags) })),
+      updateModifierOptionsAndProducts: thisBatchUpdateModifierOptionsAndProducts,
     };
   });
 
+  /**
+   * @todo POST MIGRATION TO NEW WARIO_SHARED @TODO: we need to update the modifier options at some point and I think it needs to be here?
+   */
+
+  // 2. Get all existing square objects across all batches
   const existingSquareExternalIds: string[] = [];
   batchData.forEach((b) => {
     existingSquareExternalIds.push(...GetSquareExternalIds(b.oldMT.externalIDs).map((x) => x.value));
@@ -182,12 +211,14 @@ export const batchUpdateModifierType = async (
     existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
   }
 
+  // 3. create square objects for upsert
   const catalogObjectsForUpsert: CatalogObject[] = [];
   batchData.forEach((b, i) => {
     catalogObjectsForUpsert.push(
       ModifierTypeToSquareCatalogObject(
         getLocationsConsidering3pFlag(deps, b.updatedModifierType.displayFlags.is3p),
         b.updatedModifierType,
+        i, // modifierTypeOrdinal
         b.updatedOptions,
         existingSquareObjects,
         ('000' + String(i)).slice(-3),
@@ -282,12 +313,12 @@ export const deleteModifierType = async (deps: ModifierDeps, mt_id: string) => {
     return null;
   }
 
-  const modifierTypeEntry = deps.catalog.modifiers[mt_id];
+  const modifierType = deps.catalog.modifiers[mt_id];
 
   // if there are any square ids associated with this modifier type then we delete them first
-  await deps.batchDeleteCatalogObjectsFromExternalIds(modifierTypeEntry.modifierType.externalIDs);
+  await deps.batchDeleteCatalogObjectsFromExternalIds(modifierType.externalIDs);
 
-  await Promise.all(deps.catalog.modifiers[mt_id].options.map((op) => deleteModifierOption(deps, op, true)));
+  await Promise.all(modifierType.options.map((op) => deleteModifierOption(deps, mt_id, op, true)));
 
   await deps.removeModifierTypeFromProducts(mt_id);
 
@@ -311,14 +342,14 @@ export const deleteModifierType = async (deps: ModifierDeps, mt_id: string) => {
   return existing;
 };
 
-export const createOption = async (deps: ModifierDeps, modifierOption: Omit<IOption, 'id'>) => {
+export const createOption = async (deps: ModifierDeps, modifierTypeId: string, modifierOption: Omit<IOption, 'id'>) => {
   // first find the Modifier Type ID in the catalog
-  if (!Object.hasOwn(deps.catalog.modifiers, modifierOption.modifierTypeId)) {
+  if (!Object.hasOwn(deps.catalog.modifiers, modifierTypeId)) {
     return null;
   }
 
-  const modifierTypeEntry = deps.catalog.modifiers[modifierOption.modifierTypeId];
-  if (!validateOption(modifierTypeEntry.modifierType, modifierOption)) {
+  const modifierType = deps.catalog.modifiers[modifierTypeId];
+  if (!validateOption(modifierType, modifierOption)) {
     throw Error('Failed validation on modifier option in a single select modifier type');
   }
 
@@ -334,7 +365,7 @@ export const createOption = async (deps: ModifierDeps, modifierOption: Omit<IOpt
   await deps.syncOptions();
   deps.recomputeCatalog();
   await updateModifierType(deps, {
-    id: modifierOption.modifierTypeId,
+    id: modifierTypeId,
     modifierType: {},
   });
   deps.recomputeCatalog();
@@ -354,20 +385,22 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
     deps.logger.error(errorDetail);
     throw Error(errorDetail);
   }
-  const batchesInfo = batches.map((b) => {
-    const oldOption = deps.catalog.options[b.id];
+  const batchesInfo = batches.map((batch) => {
+    const modifierType = deps.catalog.modifiers[batch.modifierTypeId];
+    const oldOption = deps.catalog.options[batch.id];
+    const updatedOption = { ...(oldOption as IOption), ...batch.modifierOption };
     return {
-      batch: b,
+      batch,
+      modifierType,
       oldOption,
-      modifierTypeEntry: deps.catalog.modifiers[b.modifierTypeId],
-      updatedOption: { ...(oldOption as IOption), ...b.modifierOption },
+      updatedOption,
     };
   });
 
   const squareCatalogObjectsToDelete: string[] = [];
   const existingSquareExternalIds: string[] = [];
   batchesInfo.forEach((b, _i) => {
-    if (!validateOption(b.modifierTypeEntry.modifierType, b.updatedOption)) {
+    if (!validateOption(b.modifierType, b.updatedOption)) {
       const errorDetail = `Failed validation on modifier option`;
       deps.logger.error({ option: b.updatedOption }, errorDetail);
       throw Error(errorDetail);
@@ -406,11 +439,9 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
         squareCatalogObjectsToDelete.push(kvL.value, kvR.value);
       }
     }
+    existingSquareExternalIds.push(...GetSquareExternalIds(b.modifierType.externalIDs).map((x) => x.value));
     existingSquareExternalIds.push(
-      ...GetSquareExternalIds(b.modifierTypeEntry.modifierType.externalIDs).map((x) => x.value),
-    );
-    existingSquareExternalIds.push(
-      ...b.modifierTypeEntry.options
+      ...b.modifierType.options
         .filter((x) => x !== b.batch.id)
         .flatMap((oId) => GetSquareExternalIds(deps.catalog.options[oId].externalIDs))
         .map((x) => x.value),
@@ -442,13 +473,14 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
   }
   const catalogObjectsForUpsert: CatalogObject[] = [];
   batchesInfo.forEach((b, i) => {
-    const options = b.modifierTypeEntry.options.map((oId) =>
+    const options = b.modifierType.options.map((oId) =>
       oId === b.batch.id ? b.updatedOption : deps.catalog.options[oId],
     );
     catalogObjectsForUpsert.push(
       ModifierTypeToSquareCatalogObject(
-        getLocationsConsidering3pFlag(deps, b.modifierTypeEntry.modifierType.displayFlags.is3p),
-        b.modifierTypeEntry.modifierType,
+        getLocationsConsidering3pFlag(deps, b.modifierType.displayFlags.is3p),
+        b.modifierType,
+        i, // modifierTypeOrdinal
         options,
         existingSquareObjects,
         ('000' + String(i)).slice(-3),
@@ -501,10 +533,11 @@ export const updateModifierOption = async (deps: ModifierDeps, props: UpdateModi
 
 export const deleteModifierOption = async (
   deps: ModifierDeps,
+  modifierTypeId: string,
   mo_id: string,
   suppress_catalog_recomputation: boolean = false,
 ) => {
-  deps.logger.debug({ mo_id }, 'Removing Modifier Option');
+  deps.logger.debug({ modifierTypeId, mo_id }, 'Removing Modifier Option');
 
   const existing = await deps.optionRepository.findById(mo_id);
   if (!existing) {
@@ -519,7 +552,7 @@ export const deleteModifierOption = async (
   // NOTE: this removes the modifiers from the Square ITEMs and ITEM_VARIATIONs as well
   await deps.batchDeleteCatalogObjectsFromExternalIds(existing.externalIDs);
 
-  await deps.removeModifierOptionFromProductInstances(existing.modifierTypeId, mo_id);
+  await deps.removeModifierOptionFromProductInstances(modifierTypeId, mo_id);
 
   await deps.syncOptions();
   // need to delete any ProductInstanceFunctions that use this MO
@@ -527,12 +560,12 @@ export const deleteModifierOption = async (
     Object.values(deps.productInstanceFunctions).map(async (pif) => {
       const dependent_pfi_expressions = FindModifierPlacementExpressionsForMTID(
         pif.expression,
-        existing.modifierTypeId,
+        modifierTypeId,
       ) as AbstractExpressionModifierPlacementExpression[];
       const filtered = dependent_pfi_expressions.filter((x) => x.expr.moid === mo_id);
       if (filtered.length > 0) {
         deps.logger.debug(
-          { modifierTypeId: existing.modifierTypeId, mo_id, pifId: pif.id },
+          { modifierTypeId, mo_id, pifId: pif.id },
           'Found product instance function composed of MO, removing PIF',
         );
         // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted

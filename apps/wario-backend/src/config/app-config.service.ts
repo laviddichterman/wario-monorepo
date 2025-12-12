@@ -64,7 +64,6 @@ export class AppConfigService {
     return value === '1' || value === 'true';
   }
 
-
   // ============ Square API Configuration ============
 
   get squareBatchChunkSize(): number {
@@ -98,6 +97,11 @@ export class AppConfigService {
   get allowSchemaSync(): boolean {
     const value = this.configService.get<string>('ALLOW_SCHEMA_SYNC');
     return value === '1' || value === 'true';
+  }
+
+  get autogratThreshold(): number {
+    const value = this.configService.get<string>('AUTOGRAT_THRESHOLD');
+    return value ? parseInt(value, 10) : 6;
   }
 
   // ============ Environment Configuration ============

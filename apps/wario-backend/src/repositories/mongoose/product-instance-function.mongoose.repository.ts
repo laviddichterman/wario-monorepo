@@ -30,12 +30,11 @@ export class ProductInstanceFunctionMongooseRepository implements IProductInstan
     return { ...doc, id: doc._id.toString() };
   }
 
-  async update(id: string, partial: Partial<Omit<IProductInstanceFunction, 'id'>>): Promise<IProductInstanceFunction | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      toPartialUpdateQuery(partial),
-      { new: true },
-    ).lean().exec();
+  async update(
+    id: string,
+    partial: Partial<Omit<IProductInstanceFunction, 'id'>>,
+  ): Promise<IProductInstanceFunction | null> {
+    const updated = await this.model.findByIdAndUpdate(id, toPartialUpdateQuery(partial), { new: true }).lean().exec();
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
@@ -55,4 +54,3 @@ export class ProductInstanceFunctionMongooseRepository implements IProductInstan
     return result.deletedCount > 0;
   }
 }
-

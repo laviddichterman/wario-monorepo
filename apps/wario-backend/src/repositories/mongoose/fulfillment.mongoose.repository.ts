@@ -35,11 +35,7 @@ export class FulfillmentMongooseRepository implements IFulfillmentRepository {
   }
 
   async update(id: string, partial: Partial<Omit<FulfillmentConfig, 'id'>>): Promise<FulfillmentConfig | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }

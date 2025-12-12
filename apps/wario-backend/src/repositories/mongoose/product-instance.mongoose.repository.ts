@@ -18,11 +18,18 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
     return doc ? { ...doc, id: doc._id.toString() } : null;
   }
 
+  async findByIds(ids: string[]): Promise<IProductInstance[]> {
+    if (!ids.length) return [];
+    return this.model
+      .find({ _id: { $in: ids } })
+      .lean()
+      .exec();
+  }
+
   async findAll(): Promise<IProductInstance[]> {
     const docs = await this.model.find().lean().exec();
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
-
 
   async findAllWithModifierOptions(optionIds: string[]): Promise<IProductInstance[]> {
     const product_instances_to_update = await this.model
@@ -48,11 +55,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
   }
 
   async update(id: string, partial: Partial<Omit<IProductInstance, 'id'>>): Promise<IProductInstance | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }
@@ -92,19 +95,10 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
     return result.deletedCount;
   }
 
-  async deleteByProductIds(productIds: string[]): Promise<number> {
-    if (productIds.length === 0) return 0;
-    const result = await this.model.deleteMany({ productId: { $in: productIds } }).exec();
-    return result.deletedCount;
-  }
-
   async removeModifierTypeSelectionsFromAll(mtId: string): Promise<number> {
     // Remove option selections that reference this modifier type
     // This requires knowing the option IDs that belong to the modifier type
-    const result = await this.model.updateMany(
-      {},
-      { $pull: { modifiers: { modifierTypeId: mtId } } },
-    ).exec();
+    const result = await this.model.updateMany({}, { $pull: { modifiers: { modifierTypeId: mtId } } }).exec();
     return result.modifiedCount;
   }
 

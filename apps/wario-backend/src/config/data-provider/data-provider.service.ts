@@ -24,7 +24,7 @@ import type { ISettingsRepository } from '../../repositories/interfaces/settings
 
 @Injectable()
 export class DataProviderService implements OnModuleInit {
-  private settings: Pick<IWSettings, 'config'> & Partial<IWSettings>;
+  private settings: IWSettings | null;
   private fulfillments: Record<string, FulfillmentConfig>;
   private keyvalueconfig: { [key: string]: string };
   private seatingResources: Record<string, SeatingResource>;
@@ -43,7 +43,7 @@ export class DataProviderService implements OnModuleInit {
   ) {
     this.fulfillments = {};
     this.seatingResources = {};
-    this.settings = { config: {} };
+    this.settings = null;
     this.keyvalueconfig = {};
   }
 
@@ -95,13 +95,12 @@ export class DataProviderService implements OnModuleInit {
     // check for and populate settings, including operating hours
     const foundSettings = await this.settingsRepository.get();
     this.logger.info({ settings: foundSettings }, 'Found settings');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    this.settings = foundSettings!;
+    this.settings = foundSettings ?? null;
 
     this.logger.debug('Done Bootstrapping DataProvider');
   };
 
-  get Settings() {
+  get Settings(): IWSettings | null {
     return this.settings;
   }
 

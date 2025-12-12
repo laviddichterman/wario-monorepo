@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
 import type {
   IMoney,
@@ -12,9 +12,10 @@ import type {
 
 import { TemporalEntity } from '../base/temporal.entity';
 
-import type { OptionTypeEntity } from './option-type.entity';
-
-// Use string reference to avoid circular dependency
+/**
+ * Option entity with 2025 schema.
+ * No longer has ordinal or modifierTypeId - ordering and membership is via OptionType.options array.
+ */
 @Entity('options')
 export class OptionEntity extends TemporalEntity implements IOption {
   @Column()
@@ -38,16 +39,6 @@ export class OptionEntity extends TemporalEntity implements IOption {
   @Column('jsonb', { default: [] })
   availability!: IRecurringInterval[];
 
-  @Column('int')
-  ordinal!: number;
-
-  @Column({ type: 'varchar', length: 36 })
-  modifierTypeId!: string;
-
-  @ManyToOne('OptionTypeEntity', 'options', { createForeignKeyConstraints: false })
-  @JoinColumn({ name: 'modifierTypeId', referencedColumnName: 'id' })
-  modifierType?: OptionTypeEntity;
-
   @Column('jsonb')
   metadata!: IOptionMetadata;
 
@@ -57,4 +48,3 @@ export class OptionEntity extends TemporalEntity implements IOption {
   @Column('jsonb')
   displayFlags!: IOptionDisplayFlags;
 }
-

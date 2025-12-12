@@ -14,15 +14,14 @@ export class MigrationStateEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', unique: true })
   collectionName!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   lastMigratedId?: string; // MongoDB _id of the last successfully migrated document
 
   @Column({
-    type: 'enum',
-    enum: MigrationStatus,
+    type: 'varchar',
     default: MigrationStatus.PENDING,
   })
   status!: MigrationStatus;
@@ -33,9 +32,9 @@ export class MigrationStateEntity {
   @Column({ type: 'text', nullable: true })
   error?: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
 }

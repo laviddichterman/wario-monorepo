@@ -40,11 +40,7 @@ export class ProductMongooseRepository implements IProductRepository {
   }
 
   async update(id: string, partial: Partial<Omit<IProduct, 'id'>>): Promise<IProduct | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }
@@ -95,27 +91,21 @@ export class ProductMongooseRepository implements IProductRepository {
   }
 
   async clearModifierEnableField(productInstanceFunctionId: string): Promise<number> {
-    const result = await this.model.updateMany(
-      { 'modifiers.enable': productInstanceFunctionId },
-      { $set: { 'modifiers.$.enable': null } },
-    ).exec();
+    const result = await this.model
+      .updateMany({ 'modifiers.enable': productInstanceFunctionId }, { $set: { 'modifiers.$.enable': null } })
+      .exec();
     return result.modifiedCount;
   }
 
   async removeServiceDisableFromAll(serviceId: string): Promise<number> {
-    const result = await this.model.updateMany(
-      {},
-      { $pull: { serviceDisable: serviceId, 'modifiers.$[].serviceDisable': serviceId } },
-    ).exec();
+    const result = await this.model
+      .updateMany({}, { $pull: { serviceDisable: serviceId, 'modifiers.$[].serviceDisable': serviceId } })
+      .exec();
     return result.modifiedCount;
   }
 
   async migratePrinterGroupForAllProducts(oldId: string, newId: string | null): Promise<number> {
-    const result = await this.model.updateMany(
-      { printerGroup: oldId },
-      { $set: { printerGroup: newId } },
-    ).exec();
+    const result = await this.model.updateMany({ printerGroup: oldId }, { $set: { printerGroup: newId } }).exec();
     return result.modifiedCount;
   }
 }
-

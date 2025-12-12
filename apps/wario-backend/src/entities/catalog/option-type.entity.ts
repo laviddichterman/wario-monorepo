@@ -1,12 +1,14 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
 import type { IOptionType, IOptionTypeDisplayFlags, KeyValue } from '@wcp/wario-shared';
 
 import { TemporalEntity } from '../base/temporal.entity';
 
-// Forward reference - OptionEntity imports this file
-import type { OptionEntity } from './option.entity';
-
+/**
+ * Option type (modifier group) entity with 2025 schema.
+ * Ordering of options embedded in `options` array.
+ * Still has ordinal for ordering modifier groups relative to each other.
+ */
 @Entity('option_types')
 export class OptionTypeEntity extends TemporalEntity implements IOptionType {
   @Column()
@@ -30,7 +32,7 @@ export class OptionTypeEntity extends TemporalEntity implements IOptionType {
   @Column('jsonb')
   displayFlags!: IOptionTypeDisplayFlags;
 
-  @OneToMany('OptionEntity', 'modifierType')
-  options?: OptionEntity[];
+  /** Ordered list of option IDs in this modifier group */
+  @Column('text', { array: true, default: [] })
+  options!: string[];
 }
-

@@ -13,10 +13,13 @@ export interface BulkWriteResult {
   deletedCount: number;
 }
 
+/**
+ * 2025 Schema: Products no longer have category_ids.
+ * Category membership is tracked via Category.products array.
+ */
 export interface IProductRepository {
   findById(id: string): Promise<IProduct | null>;
   findAll(): Promise<IProduct[]>;
-  findByCategoryId(categoryId: string): Promise<IProduct[]>;
   findByQuery(filter: Partial<IProduct>): Promise<IProduct[]>;
   create(product: Omit<IProduct, 'id'>): Promise<IProduct>;
   update(id: string, partial: Partial<Omit<IProduct, 'id'>>): Promise<IProduct | null>;
@@ -27,8 +30,6 @@ export interface IProductRepository {
   bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IProduct, 'id'>> }>): Promise<number>;
   bulkDelete(ids: string[]): Promise<number>;
 
-  /** Removes a category ID from category_ids array across all products */
-  removeCategoryFromAll(categoryId: string): Promise<number>;
   /** Removes a modifier type from modifiers array across all matching products */
   removeModifierTypeFromAll(mtId: string): Promise<number>;
   /** Clears enable field in modifiers for a ProductInstanceFunction cascade delete */
@@ -40,5 +41,3 @@ export interface IProductRepository {
 }
 
 export const PRODUCT_REPOSITORY = Symbol('IProductRepository');
-
-

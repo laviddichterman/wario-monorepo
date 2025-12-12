@@ -12,7 +12,7 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
   constructor(
     @InjectRepository(ProductInstanceEntity)
     private readonly repo: Repository<ProductInstanceEntity>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<IProductInstance | null> {
     return this.repo.findOne({ where: { id, validTo: IsNull() } });
@@ -22,8 +22,11 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
     return this.repo.find({ where: { validTo: IsNull() } });
   }
 
-  async findByProductId(productId: string): Promise<IProductInstance[]> {
-    return this.repo.find({ where: { productId, validTo: IsNull() } });
+  // findByProductId removed - productId no longer exists in 2025 schema
+  // Use instances array on IProduct instead
+  async findByIds(ids: string[]): Promise<IProductInstance[]> {
+    if (!ids.length) return [];
+    return this.repo.find({ where: { id: In(ids), validTo: IsNull() } });
   }
 
   async findAllWithModifierOptions(optionIds: string[]): Promise<IProductInstance[]> {
@@ -31,7 +34,7 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
       .createQueryBuilder('pi')
       .where('pi.validTo IS NULL')
       .andWhere(`pi.modifiers @> ANY(ARRAY[:...optionIds]::jsonb[])`, {
-        optionIds: optionIds.map(id => JSON.stringify([{ options: [{ optionId: id }] }]))
+        optionIds: optionIds.map((id) => JSON.stringify([{ options: [{ optionId: id }] }])),
       })
       .getMany();
   }
@@ -70,10 +73,7 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
 
   async delete(id: string): Promise<boolean> {
     const now = new Date();
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
     return (result.affected ?? 0) > 0;
   }
 
@@ -147,41 +147,38 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
     }
 
     const now = new Date();
-    const result = await this.repo.update(
-      { id: In(ids), validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id: In(ids), validTo: IsNull() }, { validTo: now });
     return result.affected ?? 0;
   }
 
-  async deleteByProductIds(productIds: string[]): Promise<number> {
-    if (!productIds.length) {
-      return 0;
-    }
-
-    const now = new Date();
-    const result = await this.repo.update(
-      { productId: In(productIds), validTo: IsNull() },
-      { validTo: now },
-    );
-    return result.affected ?? 0;
-  }
-
+  /**
+   * Removes all modifier selections for a given modifier type from all active product instances.
+   * Uses SCD2: closes affected rows and inserts new versions with the modifier type removed.
+   * Efficient: only fetches/updates rows that contain the modifierTypeId.
+   */
   async removeModifierTypeSelectionsFromAll(mtId: string): Promise<number> {
     const now = new Date();
     return this.repo.manager.transaction(async (manager) => {
       const repo = manager.getRepository(ProductInstanceEntity);
-      const instances = await repo.find({ where: { validTo: IsNull() } });
 
-      // Filter to only instances that have the modifier type
-      const affected = instances.filter((inst) =>
-        inst.modifiers.some((m) => m.modifierTypeId === mtId),
-      );
+      // Only fetch instances that contain this modifier type
+      // Uses JSONB containment to check if any modifier entry has matching modifierTypeId
+      const affected = await repo
+        .createQueryBuilder('pi')
+        .where('pi.validTo IS NULL')
+        .andWhere(`pi.modifiers @> :pattern::jsonb`)
+        .setParameter('pattern', JSON.stringify([{ modifierTypeId: mtId }]))
+        .getMany();
 
       if (!affected.length) {
         return 0;
       }
 
+      // Close old versions
+      const idsToClose = affected.map((inst) => inst.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the modifier type removed
       const newVersions = affected.map((inst) => {
         const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = inst;
         return repo.create({
@@ -192,43 +189,58 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
         });
       });
 
-      const idsToClose = affected.map((inst) => inst.id);
-      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
       await repo.createQueryBuilder().insert().into(ProductInstanceEntity).values(newVersions).execute();
-
       return affected.length;
     });
   }
 
-  async removeModifierOptionsFromAll(mtId: string, options: string[]): Promise<number> {
+  /**
+   * Removes specific modifier options from all active product instances that use them.
+   * Uses SCD2: closes affected rows and inserts new versions with the options removed.
+   * Efficient: only fetches/updates rows that contain any of the specified optionIds.
+   */
+  async removeModifierOptionsFromAll(mtId: string, optionIds: string[]): Promise<number> {
+    if (!optionIds.length) return 0;
+
     const now = new Date();
     return this.repo.manager.transaction(async (manager) => {
       const repo = manager.getRepository(ProductInstanceEntity);
-      const instances = await repo.find({ where: { validTo: IsNull() } });
 
-      // Filter to only instances that have the modifier type
-      const affected = instances.filter((inst) =>
-        inst.modifiers.some((m) => m.modifierTypeId === mtId && m.options.some((o) => options.includes(o.optionId))),
-      );
+      // Only fetch instances that contain any of the specified option IDs
+      // Uses JSONB containment to check if any modifier entry has matching options
+      const affected = await repo
+        .createQueryBuilder('pi')
+        .where('pi.validTo IS NULL')
+        .andWhere(`pi.modifiers @> ANY(ARRAY[:...patterns]::jsonb[])`)
+        .setParameter(
+          'patterns',
+          optionIds.map((optId) => JSON.stringify([{ modifierTypeId: mtId, options: [{ optionId: optId }] }])),
+        )
+        .getMany();
 
       if (!affected.length) {
         return 0;
       }
 
+      // Close old versions
+      const idsToClose = affected.map((inst) => inst.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the specified options removed
+      const optionIdSet = new Set(optionIds);
       const newVersions = affected.map((inst) => {
         const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = inst;
         return repo.create({
           ...(rest as IProductInstance),
-          modifiers: inst.modifiers.map((m) => m.modifierTypeId === mtId ? { ...m, options: m.options.filter((o) => !options.includes(o.optionId)) } : m),
+          modifiers: inst.modifiers.map((m) =>
+            m.modifierTypeId === mtId ? { ...m, options: m.options.filter((o) => !optionIdSet.has(o.optionId)) } : m,
+          ),
           validFrom: now,
           validTo: null,
         });
       });
 
-      const idsToClose = affected.map((inst) => inst.id);
-      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
       await repo.createQueryBuilder().insert().into(ProductInstanceEntity).values(newVersions).execute();
-
       return affected.length;
     });
   }

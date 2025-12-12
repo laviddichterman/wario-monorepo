@@ -4,6 +4,8 @@ import {
   CanThisBeOrderedAtThisTimeAndFulfillmentCatalog,
   CategorizedRebuiltCart,
   CoreCartEntry,
+  FulfillmentConfig,
+  GenerateProductsReachableAndNotDisabledFromFulfillment,
   RebuildAndSortCart,
   WCPProductV2Dto,
   WProduct,
@@ -23,19 +25,20 @@ export class OrderValidationService {
    * Rebuilds the order cart from catalog data and validates product availability.
    * @param cart - The cart entries to rebuild
    * @param service_time - The time of service
-   * @param fulfillmentId - The fulfillment type ID
+   * @param fulfillment - The fulfillment config
    * @returns Object containing any products no longer available and the rebuilt cart
    */
   RebuildOrderState = (
     cart: CoreCartEntry<WCPProductV2Dto>[],
     service_time: Date | number,
-    fulfillmentId: string,
+    fulfillment: FulfillmentConfig,
   ): {
     noLongerAvailable: CoreCartEntry<WProduct>[];
     rebuiltCart: CategorizedRebuiltCart;
   } => {
     const catalogSelectors = this.catalogProviderService.CatalogSelectors;
-    const rebuiltCart = RebuildAndSortCart(cart, catalogSelectors, service_time, fulfillmentId);
+    const reachableProducts = GenerateProductsReachableAndNotDisabledFromFulfillment(fulfillment, catalogSelectors);
+    const rebuiltCart = RebuildAndSortCart(cart, catalogSelectors, service_time, fulfillment.id);
     // Check which products are no longer available at this time/fulfillment
     const noLongerAvailable: CoreCartEntry<WProduct>[] = Object.values(rebuiltCart).flatMap((entries) =>
       entries.filter(
@@ -45,7 +48,8 @@ export class OrderValidationService {
             x.product.p.modifiers,
             catalogSelectors,
             service_time,
-            fulfillmentId,
+            reachableProducts,
+            fulfillment.id,
             true,
           ) || !catalogSelectors.category(x.categoryId),
       ),

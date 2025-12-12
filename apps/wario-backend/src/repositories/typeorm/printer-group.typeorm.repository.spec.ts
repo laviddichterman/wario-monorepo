@@ -58,10 +58,12 @@ describe('PrinterGroupTypeOrmRepository', () => {
 
       await repository.create(input);
 
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        ...input,
-        validTo: null,
-      }));
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ...input,
+          validTo: null,
+        }),
+      );
       const createdEntity = mockRepo.create?.mock.calls[0][0] as PrinterGroupEntity;
       expect(createdEntity.validFrom).toBeInstanceOf(Date);
       expect(mockRepo.save).toHaveBeenCalled();
@@ -101,16 +103,18 @@ describe('PrinterGroupTypeOrmRepository', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(
         { id, validTo: IsNull() },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        expect.objectContaining({ validTo: expect.any(Date) })
+        expect.objectContaining({ validTo: expect.any(Date) }),
       );
 
       // Verify new version is created
-      expect(mockRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        id,
-        name: 'Kitchen V2', // Updated field
-        validTo: null,
-        // validFrom should be new Date()
-      }));
+      expect(mockRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id,
+          name: 'Kitchen V2', // Updated field
+          validTo: null,
+          // validFrom should be new Date()
+        }),
+      );
       expect(mockRepo.save).toHaveBeenCalled();
     });
 
@@ -131,7 +135,7 @@ describe('PrinterGroupTypeOrmRepository', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(
         { id: 'pg1', validTo: IsNull() },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        expect.objectContaining({ validTo: expect.any(Date) })
+        expect.objectContaining({ validTo: expect.any(Date) }),
       );
       expect(result).toBe(true);
     });

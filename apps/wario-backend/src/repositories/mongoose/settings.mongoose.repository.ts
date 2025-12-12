@@ -20,11 +20,10 @@ export class SettingsMongooseRepository implements ISettingsRepository {
 
   async save(settings: IWSettings): Promise<IWSettings> {
     // Upsert: find first and update, or create
-    const updated = await this.model.findOneAndUpdate(
-      {},
-      { $set: settings },
-      { new: true, upsert: true },
-    ).lean().exec();
+    const updated = await this.model
+      .findOneAndUpdate({}, { $set: settings }, { new: true, upsert: true })
+      .lean()
+      .exec();
     return updated;
   }
 }

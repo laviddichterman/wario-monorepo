@@ -35,11 +35,7 @@ export class SeatingResourceMongooseRepository implements ISeatingResourceReposi
   }
 
   async update(id: string, partial: Partial<Omit<SeatingResource, 'id'>>): Promise<SeatingResource | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }

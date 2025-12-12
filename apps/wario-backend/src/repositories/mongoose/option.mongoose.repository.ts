@@ -18,13 +18,16 @@ export class OptionMongooseRepository implements IOptionRepository {
     return doc ? { ...doc, id: doc._id.toString() } : null;
   }
 
-  async findAll(): Promise<IOption[]> {
-    const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+  async findByIds(ids: string[]): Promise<IOption[]> {
+    if (!ids.length) return [];
+    return this.model
+      .find({ _id: { $in: ids } })
+      .lean()
+      .exec();
   }
 
-  async findByModifierTypeId(modifierTypeId: string): Promise<IOption[]> {
-    const docs = await this.model.find({ modifierTypeId }).lean().exec();
+  async findAll(): Promise<IOption[]> {
+    const docs = await this.model.find().lean().exec();
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
@@ -35,11 +38,7 @@ export class OptionMongooseRepository implements IOptionRepository {
   }
 
   async update(id: string, partial: Partial<Omit<IOption, 'id'>>): Promise<IOption | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }
@@ -85,11 +84,9 @@ export class OptionMongooseRepository implements IOptionRepository {
   }
 
   async clearEnableField(productInstanceFunctionId: string): Promise<number> {
-    const result = await this.model.updateMany(
-      { enable: productInstanceFunctionId },
-      { $set: { enable: null } },
-    ).exec();
+    const result = await this.model
+      .updateMany({ enable: productInstanceFunctionId }, { $set: { enable: null } })
+      .exec();
     return result.modifiedCount;
   }
 }
-

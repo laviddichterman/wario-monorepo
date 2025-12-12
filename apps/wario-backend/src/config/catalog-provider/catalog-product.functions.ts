@@ -116,7 +116,7 @@ export const batchUpsertProduct = async (
   if (
     !ValidateProductModifiersFunctionsCategoriesPrinterGroups(
       batches.flatMap((x) => x.product.modifiers), // check invalid mods
-      batches.flatMap((x) => x.product.category_ids), // check invalid categories
+      [], // categories are no longer tracked on products
       batches.reduce(
         (pgids, x) => (x.product.printerGroup ? [...pgids, x.product.printerGroup] : pgids),
         [] satisfies string[],
@@ -151,7 +151,7 @@ export const batchUpsertProduct = async (
             instanceParentAcc ||
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             deps.catalog.productInstances[ins.id] === undefined || // IProductInstance being updated must exist
-            deps.catalog.productInstances[ins.id].productId !== b.product.id,
+            !deps.catalog.products[b.product.id].instances.includes(ins.id),
           false,
         ) || // IProductInstance being updated must belong to its parent IProduct
         !IsSetOfUniqueStrings(updateIProductInstances.map((x) => x.id)) || // IProductInstance being updated must only appear once in the instances array
@@ -159,7 +159,7 @@ export const batchUpsertProduct = async (
           (instanceAcc, ins) =>
             !ValidateModifiersForInstance(
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              b.product.modifiers ?? deps.catalog.products[b.product.id].product.modifiers ?? [],
+              b.product.modifiers ?? deps.catalog.products[b.product.id].modifiers ?? [],
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               deps.catalog.productInstances[ins.id].modifiers ?? ins.modifiers ?? [],
             ),
@@ -170,7 +170,7 @@ export const batchUpsertProduct = async (
             instanceAcc ||
             !ValidateModifiersForInstance(
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              b.product.modifiers ?? deps.catalog.products[b.product.id].product.modifiers ?? [],
+              b.product.modifiers ?? deps.catalog.products[b.product.id].modifiers ?? [],
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
               ins.modifiers ?? [],
             ),
@@ -206,16 +206,16 @@ export const batchUpsertProduct = async (
     let addedModifierTypes = false;
     const adjustedPrice =
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      b.product.price && b.product.price !== oldProductEntry.product.price ? b.product.price : null;
-    const adjustedPrinterGroup = b.product.printerGroup !== oldProductEntry.product.printerGroup;
+      b.product.price && b.product.price !== oldProductEntry.price ? b.product.price : null;
+    const adjustedPrinterGroup = b.product.printerGroup !== oldProductEntry.printerGroup;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (b.product.modifiers) {
-      const oldModifierTypes = oldProductEntry.product.modifiers.map((x) => x.mtid);
+      const oldModifierTypes = oldProductEntry.modifiers.map((x) => x.mtid);
       const newModifierTypes = b.product.modifiers.map((x) => x.mtid);
       removedModifierTypes = oldModifierTypes.filter((x) => !newModifierTypes.includes(x));
       addedModifierTypes = newModifierTypes.filter((x) => !oldModifierTypes.includes(x)).length > 0;
     }
-    const mergedProduct = { ...(oldProductEntry.product as IProduct), ...(b.product as UpdateIProductRequest) };
+    const mergedProduct = { ...(oldProductEntry as IProduct), ...(b.product as UpdateIProductRequest) };
 
     const insertInstances = b.instances.filter((b) => !isUpdateProductInstance(b)) as UncommittedIProductInstance[];
     const adjustedInsertInstances: Omit<IProductInstance, 'id'>[] = insertInstances.map((x) => {
@@ -268,9 +268,9 @@ export const batchUpsertProduct = async (
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           !deps.catalog.productInstances[pi.id].displayFlags.pos.hide && pi.displayFlags?.pos.hide
             ? GetSquareExternalIds(
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              pi.externalIDs ?? deps.catalog.productInstances[pi.id].externalIDs,
-            )
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                pi.externalIDs ?? deps.catalog.productInstances[pi.id].externalIDs,
+              )
             : [],
         )
         .flat(),
@@ -332,33 +332,33 @@ export const batchUpsertProduct = async (
         return pi.displayFlags.pos.hide
           ? []
           : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              pi,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              existingSquareObjects,
+              ProductInstanceToSquareCatalogObject(
+                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+                b.product,
+                pi,
+                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+                deps.catalogSelectors,
+                existingSquareObjects,
 
-              ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
-            ),
-          ];
+                ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
+              ),
+            ];
       });
       const insertCatalogObjects = b.insertInstances.flatMap((pi, k) => {
         return pi.displayFlags.pos.hide
           ? []
           : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              pi,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              [],
+              ProductInstanceToSquareCatalogObject(
+                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+                b.product,
+                pi,
+                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+                deps.catalogSelectors,
+                [],
 
-              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
-            ),
-          ];
+                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
+              ),
+            ];
       });
       return [...updateCatalogObjects, ...insertCatalogObjects];
     }),
@@ -467,9 +467,9 @@ export const batchUpsertProduct = async (
 
     const createdInstances = await deps.productInstanceRepository.bulkCreate(instancesWithProductId);
 
-    // Update product with base product instance ID
+    // Update product with the instances array
     const updatedProduct = await deps.productRepository.update(createdProduct.id, {
-      baseProductId: createdInstances[0].id,
+      instances: createdInstances.map((pi) => pi.id),
     });
 
     insertBatchResults.push({
@@ -489,15 +489,16 @@ export const batchUpsertProduct = async (
 
   // Update products and instances
   if (bulkUpdate.length) {
-    await deps.productRepository.bulkUpdate(
-      bulkUpdate.map((b) => ({ id: b.product.id, data: b.product })),
-    );
+    await deps.productRepository.bulkUpdate(bulkUpdate.map((b) => ({ id: b.product.id, data: b.product })));
     deps.logger.debug({ count: bulkUpdate.length }, 'Bulk update of products successful');
 
     await deps.productInstanceRepository.bulkUpdate(
       bulkUpdate.flatMap((b) => b.instances.map((pi) => ({ id: pi.id, data: pi }))),
     );
-    deps.logger.debug({ count: bulkUpdate.flatMap((b) => b.instances).length }, 'Bulk update of product instances successful');
+    deps.logger.debug(
+      { count: bulkUpdate.flatMap((b) => b.instances).length },
+      'Bulk update of product instances successful',
+    );
   }
 
   await Promise.all([deps.syncProducts(), deps.syncProductInstances()]);
@@ -518,24 +519,21 @@ export const batchUpsertProduct = async (
   updateBatchesInsertInstances.forEach((b) => {
     const batchInstances = createdUpdateBatchInstances.slice(instanceOffset, instanceOffset + b.instances.length);
     instanceOffset += b.instances.length;
-    reconstructedBatches[b.index].instances = [
-      ...batchInstances,
-      ...reconstructedBatches[b.index].instances,
-    ];
+    reconstructedBatches[b.index].instances = [...batchInstances, ...reconstructedBatches[b.index].instances];
   });
 
   return Object.values(reconstructedBatches)
     .sort((a, b) => a.index - b.index)
     .map((x) => ({
       product: x.product,
-      instances: x.instances.sort((a, b) => a.ordinal - b.ordinal),
+      instances: x.instances, // instances are already ordered
     }));
 };
 
 export const createProduct = async (
   deps: ProductDeps,
-  product: Omit<IProduct, 'id' | 'baseProductId'>,
-  instances: Omit<IProductInstance, 'id' | 'productId'>[],
+  product: Omit<IProduct, 'id'>,
+  instances: Omit<IProductInstance, 'id'>[],
 ) => {
   const result = await batchUpsertProduct(deps, [{ product: product, instances }]);
   return result ? result[0] : null;
@@ -560,15 +558,13 @@ export const batchDeleteProduct = async (
   if (deletedCount === 0) {
     return null;
   }
-
+  const instanceIds = productEntries.flatMap((x) => x.instances);
   // removing ALL product instances from Square
   await deps.batchDeleteCatalogObjectsFromExternalIds(
-    productEntries
-      .reduce<string[]>((acc, pe) => [...acc, ...pe.instances], [])
-      .reduce<KeyValue[]>((acc, pi) => [...acc, ...deps.catalog.productInstances[pi].externalIDs], []),
+    instanceIds.reduce<KeyValue[]>((acc, pi) => [...acc, ...deps.catalog.productInstances[pi].externalIDs], []),
   );
 
-  const instanceDeleteCount = await deps.productInstanceRepository.deleteByProductIds(p_ids);
+  const instanceDeleteCount = await deps.productInstanceRepository.bulkDelete(instanceIds);
   if (instanceDeleteCount > 0) {
     deps.logger.debug(`Removed ${instanceDeleteCount.toString()} Product Instances.`);
     await deps.syncProductInstances();
@@ -602,7 +598,7 @@ export const deleteProduct = async (deps: ProductDeps, p_id: string) => {
     ),
   );
 
-  const instanceDeleteCount = await deps.productInstanceRepository.deleteByProductIds([p_id]);
+  const instanceDeleteCount = await deps.productInstanceRepository.bulkDelete(productEntry.instances);
   if (instanceDeleteCount > 0) {
     deps.logger.debug(`Removed ${instanceDeleteCount.toString()} Product Instances.`);
     await deps.syncProductInstances();
@@ -612,7 +608,11 @@ export const deleteProduct = async (deps: ProductDeps, p_id: string) => {
   return existing;
 };
 
-export const createProductInstance = async (deps: ProductDeps, instance: Omit<IProductInstance, 'id'>) => {
+export const createProductInstance = async (
+  deps: ProductDeps,
+  productId: string,
+  instance: Omit<IProductInstance, 'id'>,
+) => {
   // we need to filter these external IDs because it'll interfere with adding the new product to the catalog
   const filteredExternalIds = GetNonSquareExternalIds(instance.externalIDs);
   let adjustedInstance: Omit<IProductInstance, 'id'> = {
@@ -622,7 +622,7 @@ export const createProductInstance = async (deps: ProductDeps, instance: Omit<IP
 
   if (!instance.displayFlags.pos.hide) {
     // add the product instance to the square catalog here
-    const product = deps.catalog.products[adjustedInstance.productId].product;
+    const product = deps.catalog.products[productId];
     const upsertResponse = await deps.squareService.UpsertCatalogObject(
       ProductInstanceToSquareCatalogObject(
         getLocationsConsidering3pFlag(deps, product.displayFlags.is3p),
@@ -699,17 +699,17 @@ export const batchUpdateProductInstance = async (
       return mergedInstance.displayFlags.pos.hide
         ? []
         : [
-          ProductInstanceToSquareCatalogObject(
-            getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-            b.product,
-            mergedInstance,
-            b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-            deps.catalogSelectors,
-            existingSquareObjects,
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              mergedInstance,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              existingSquareObjects,
 
-            ('000' + i).slice(-3),
-          ),
-        ];
+              ('000' + i).slice(-3),
+            ),
+          ];
     })
     .flat();
   if (catalogObjects.length > 0) {
@@ -758,9 +758,18 @@ export const deleteProductInstance = async (
   const instance = deps.catalog.productInstances[pi_id];
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (instance) {
-    const productEntry = deps.catalog.products[instance.productId];
-    if (productEntry.product.baseProductId === pi_id) {
-      deps.logger.warn({ productId: productEntry.product.id }, 'Attempted to delete base product instance for product');
+    // Find the product that contains this instance
+    const productId = Object.keys(deps.catalog.products).find((pid) =>
+      deps.catalog.products[pid].instances.includes(pi_id),
+    );
+    if (!productId) {
+      deps.logger.warn({ pi_id }, 'Could not find product for product instance');
+      return null;
+    }
+    const product = deps.catalog.products[productId];
+    // Cannot delete the base product instance (first in the instances array)
+    if (product.instances[0] === pi_id) {
+      deps.logger.warn({ productId }, 'Attempted to delete base product instance for product');
       return null;
     }
 

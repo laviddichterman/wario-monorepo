@@ -37,7 +37,9 @@ export interface PrinterGroupDeps {
   printerGroups: Record<string, PrinterGroup>; // State
 
   syncPrinterGroups: () => Promise<boolean>;
-  batchDeleteCatalogObjectsFromExternalIds: (ids: KeyValue[]) => Promise<true | SquareProviderApiCallReturnValue<BatchDeleteCatalogObjectsResponse>>;
+  batchDeleteCatalogObjectsFromExternalIds: (
+    ids: KeyValue[],
+  ) => Promise<true | SquareProviderApiCallReturnValue<BatchDeleteCatalogObjectsResponse>>;
   reassignPrinterGroupForAllProducts: (oldId: string, newId: string | null) => Promise<number>;
 }
 

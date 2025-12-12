@@ -7,10 +7,7 @@ import { UpdateOptionDto } from 'src/dtos/modifier.dto';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import type {
-  UncommitedOption,
-  UpdateModifierTypeProps,
-} from '../../config/catalog-provider/catalog.types';
+import type { UncommitedOption, UpdateModifierTypeProps } from '../../config/catalog-provider/catalog.types';
 
 @Controller('api/v1/menu/option')
 export class ModifierController {
@@ -49,7 +46,7 @@ export class ModifierController {
   @Post(':mtid')
   @Scopes('write:catalog')
   async CreateOption(@Body() body: UncommittedOptionDto, @Param('mtid') mtid: string) {
-    const doc = await this.catalogProvider.CreateOption({ modifierTypeId: mtid, ...(body as UncommitedOption) });
+    const doc = await this.catalogProvider.CreateOption(mtid, body as UncommitedOption);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }
@@ -68,8 +65,8 @@ export class ModifierController {
 
   @Delete(':mtid/:id')
   @Scopes('delete:catalog')
-  async DeleteModifierOption(@Param('id') id: string) {
-    const doc = await this.catalogProvider.DeleteModifierOption(id);
+  async DeleteModifierOption(@Param('id') id: string, @Param('mtid') mtid: string) {
+    const doc = await this.catalogProvider.DeleteModifierOption(mtid, id);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;
   }

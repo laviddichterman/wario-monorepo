@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
 import type {
   IMoney,
@@ -13,18 +13,14 @@ import type {
 
 import { TemporalEntity } from '../base/temporal.entity';
 
-import type { ProductInstanceEntity } from './product-instance.entity';
-
-// Use string reference to avoid circular dependency
+/**
+ * Product entity with 2025 schema.
+ * Ordering of instances embedded in `instances` array.
+ * First element of `instances` is the base/default product instance.
+ * Products are referenced by Category.products instead of having category_ids.
+ */
 @Entity('products')
 export class ProductEntity extends TemporalEntity implements IProduct {
-  @Column({ type: 'varchar', length: 36 })
-  baseProductId!: string;
-
-  @ManyToOne('ProductInstanceEntity', { nullable: true, createForeignKeyConstraints: false })
-  @JoinColumn({ name: 'baseProductId', referencedColumnName: 'id' })
-  baseProduct?: ProductInstanceEntity;
-
   @Column('jsonb')
   price!: IMoney;
 
@@ -49,12 +45,10 @@ export class ProductEntity extends TemporalEntity implements IProduct {
   @Column('jsonb', { default: [] })
   modifiers!: IProductModifier[];
 
-  @Column('text', { array: true, default: [] })
-  category_ids!: string[];
-
   @Column({ type: 'varchar', length: 36, nullable: true })
   printerGroup!: string | null;
 
-  @OneToMany('ProductInstanceEntity', 'product')
-  instances?: ProductInstanceEntity[];
+  /** Ordered list of product instance IDs. First element is the base/default instance. */
+  @Column('text', { array: true, default: [] })
+  instances!: string[];
 }

@@ -9,19 +9,17 @@ type IAbstractOrderExpression = OrderInstanceFunction['expression'];
 
 /**
  * OrderInstanceFunction entity for storing expressions that evaluate order instances.
- * 
+ *
  * These are discriminated union types with recursive nested expressions:
  * - ConstLiteral: Constant values (string, number, boolean)
  * - IfElse: Conditional branching
  * - Logical: AND, OR, NOT operations
- * 
+ *
  * The `expression` field stores the full recursive expression tree as JSONB.
  * Runtime evaluation uses OrderFunctional.ProcessOrderInstanceFunction().
  */
 @Entity('order_instance_functions')
-export class OrderInstanceFunctionEntity
-  extends TemporalEntity
-  implements OrderInstanceFunction {
+export class OrderInstanceFunctionEntity extends TemporalEntity implements OrderInstanceFunction {
   @Column()
   name!: string;
 

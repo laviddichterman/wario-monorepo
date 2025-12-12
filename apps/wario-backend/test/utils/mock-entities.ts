@@ -1,9 +1,5 @@
 /* eslint-disable @typescript-eslint/no-misused-spread */
 
-
- 
- 
-
 import {
   createMockCategory,
   createMockOption,
@@ -37,14 +33,15 @@ import { createMockWOrderInstance } from './order-mocks';
 // Temporal Entity Helper
 // ============================================================================
 
-export const mockTemporalEntity = <T extends TemporalEntity>(overrides: Partial<TemporalEntity> = {}): Partial<T> => ({
-  rowId: 'row-uuid',
-  id: 'temporal-id',
-  validFrom: new Date('2023-01-01T00:00:00Z'),
-  validTo: null,
-  createdAt: new Date('2023-01-01T00:00:00Z'),
-  ...overrides,
-} as unknown as Partial<T>);
+export const mockTemporalEntity = <T extends TemporalEntity>(overrides: Partial<TemporalEntity> = {}): Partial<T> =>
+  ({
+    rowId: 'row-uuid',
+    id: 'temporal-id',
+    validFrom: new Date('2023-01-01T00:00:00Z'),
+    validTo: null,
+    createdAt: new Date('2023-01-01T00:00:00Z'),
+    ...overrides,
+  }) as unknown as Partial<T>;
 
 // ============================================================================
 // Catalog Entities
@@ -57,14 +54,14 @@ export const createMockProductEntity = (overrides: Partial<ProductEntity> = {}):
   return {
     ...base,
     ...temporal,
-    baseProductId: overrides.baseProductId ?? 'pi1',
     printerGroup: overrides.printerGroup ?? null,
-    category_ids: overrides.category_ids ?? [],
     ...overrides,
   } as unknown as ProductEntity;
 };
 
-export const createMockProductInstanceEntity = (overrides: Partial<ProductInstanceEntity> = {}): ProductInstanceEntity => {
+export const createMockProductInstanceEntity = (
+  overrides: Partial<ProductInstanceEntity> = {},
+): ProductInstanceEntity => {
   const base = createMockProductInstance(overrides);
   const temporal = mockTemporalEntity<ProductInstanceEntity>(overrides);
   return {
@@ -104,7 +101,9 @@ export const createMockOptionEntity = (overrides: Partial<OptionEntity> = {}): O
   } as unknown as OptionEntity;
 };
 
-export const createMockOrderInstanceFunctionEntity = (overrides: Partial<OrderInstanceFunctionEntity> = {}): OrderInstanceFunctionEntity => {
+export const createMockOrderInstanceFunctionEntity = (
+  overrides: Partial<OrderInstanceFunctionEntity> = {},
+): OrderInstanceFunctionEntity => {
   const base = createMockOrderInstanceFunction(overrides);
   const temporal = mockTemporalEntity<OrderInstanceFunctionEntity>(overrides);
   return {
@@ -114,7 +113,9 @@ export const createMockOrderInstanceFunctionEntity = (overrides: Partial<OrderIn
   } as unknown as OrderInstanceFunctionEntity;
 };
 
-export const createMockProductInstanceFunctionEntity = (overrides: Partial<ProductInstanceFunctionEntity> = {}): ProductInstanceFunctionEntity => {
+export const createMockProductInstanceFunctionEntity = (
+  overrides: Partial<ProductInstanceFunctionEntity> = {},
+): ProductInstanceFunctionEntity => {
   const base = createMockProductInstanceFunction(overrides);
   const temporal = mockTemporalEntity<ProductInstanceFunctionEntity>(overrides);
   return {
@@ -131,7 +132,6 @@ export const createMockCatalogVersionEntity = (overrides: Partial<CatalogVersion
     publishedAt: new Date(),
     hash: 'hash',
   } as unknown as CatalogVersionEntity;
-
 
   return { ...defaults, ...overrides } as unknown as CatalogVersionEntity;
 };
@@ -218,7 +218,9 @@ export const createMockDbVersionEntity = (overrides: Partial<DBVersionEntity> = 
   } as unknown as DBVersionEntity;
 };
 
-export const createMockSeatingResourceEntity = (overrides: Partial<SeatingResourceEntity> = {}): SeatingResourceEntity => {
+export const createMockSeatingResourceEntity = (
+  overrides: Partial<SeatingResourceEntity> = {},
+): SeatingResourceEntity => {
   const defaults = {
     id: 'sr1',
     name: 'Table 1',

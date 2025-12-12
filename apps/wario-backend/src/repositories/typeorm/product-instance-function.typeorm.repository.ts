@@ -33,7 +33,10 @@ export class ProductInstanceFunctionTypeOrmRepository implements IProductInstanc
     return this.repo.save(entity);
   }
 
-  async update(id: string, partial: Partial<Omit<IProductInstanceFunction, 'id'>>): Promise<IProductInstanceFunction | null> {
+  async update(
+    id: string,
+    partial: Partial<Omit<IProductInstanceFunction, 'id'>>,
+  ): Promise<IProductInstanceFunction | null> {
     const now = new Date();
     const existing = await this.repo.findOne({ where: { id, validTo: IsNull() } });
     if (!existing) {
@@ -67,11 +70,7 @@ export class ProductInstanceFunctionTypeOrmRepository implements IProductInstanc
 
   async delete(id: string): Promise<boolean> {
     const now = new Date();
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
     return (result.affected ?? 0) > 0;
   }
 }
-

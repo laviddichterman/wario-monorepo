@@ -12,6 +12,7 @@ import { WOrderStatus } from '@wcp/wario-shared';
 
 import { createMock, createMockWOrderInstance, resetOrderIdCounter } from '../../../test/utils';
 import { ORDER_REPOSITORY } from '../../repositories/interfaces';
+import { AppConfigService } from '../app-config.service';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { GoogleService } from '../google/google.service';
@@ -67,6 +68,7 @@ describe('OrderManagerService', () => {
         { provide: StoreCreditProviderService, useValue: createMock<StoreCreditProviderService>() },
         { provide: CatalogProviderService, useValue: createMock<CatalogProviderService>() },
         { provide: DataProviderService, useValue: createMock<DataProviderService>() },
+        { provide: AppConfigService, useValue: createMock<AppConfigService>() },
         { provide: OrderNotificationService, useValue: createMock<OrderNotificationService>() },
         { provide: OrderPaymentService, useValue: createMock<OrderPaymentService>() },
         { provide: OrderValidationService, useValue: createMock<OrderValidationService>() },

@@ -32,7 +32,7 @@
     "@wcp/wario-ux-shared": "workspace:*",
     "axios": "^1.13.2",
     "date-fns": "^4.1.0",
-    "es-toolkit": "^1.42.0",
+    "es-toolkit": "^1.43.0",
     "libphonenumber-js": "^1.12.31",
     "mailcheck": "^1.1.1",
     "motion": "^12.23.26",

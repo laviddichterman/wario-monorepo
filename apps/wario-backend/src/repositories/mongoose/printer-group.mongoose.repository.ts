@@ -30,11 +30,7 @@ export class PrinterGroupMongooseRepository implements IPrinterGroupRepository {
   }
 
   async update(id: string, partial: Partial<Omit<PrinterGroup, 'id'>>): Promise<PrinterGroup | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }

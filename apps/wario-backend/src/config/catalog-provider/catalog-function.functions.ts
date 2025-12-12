@@ -114,4 +114,3 @@ export async function deleteOrderInstanceFunction(
   await deps.orderInstanceFunctionRepository.delete(id);
   return doc;
 }
-

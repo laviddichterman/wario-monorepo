@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity } from 'typeorm';
 
 import type { CategoryDisplayFlags, ICategory } from '@wcp/wario-shared';
 
@@ -12,16 +12,6 @@ export class CategoryEntity extends TemporalEntity implements ICategory {
   @Column('text', { nullable: true })
   description!: string | null;
 
-  @Column('int')
-  ordinal!: number;
-
-  @Column({ type: 'varchar', length: 36, nullable: true })
-  parent_id!: string | null;
-
-  @ManyToOne(() => CategoryEntity, { nullable: true, createForeignKeyConstraints: false })
-  @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
-  parent?: CategoryEntity;
-
   @Column('text', { nullable: true })
   subheading!: string | null;
 
@@ -33,4 +23,12 @@ export class CategoryEntity extends TemporalEntity implements ICategory {
 
   @Column('text', { array: true, default: [] })
   serviceDisable!: string[];
+
+  /** Ordered list of child category IDs */
+  @Column('text', { array: true, default: [] })
+  children!: string[];
+
+  /** Ordered list of product IDs in this category */
+  @Column('text', { array: true, default: [] })
+  products!: string[];
 }

@@ -36,7 +36,7 @@ function assertIsOptionType(value: unknown): asserts value is IOptionType {
   const optionType = value as IOptionType;
   expect(optionType).toHaveProperty('id');
   expect(optionType).toHaveProperty('name');
-  expect(optionType).toHaveProperty('ordinal');
+  // ordinal removed in 2025 schema
   expect(optionType).toHaveProperty('min_selected');
   expect(optionType).toHaveProperty('max_selected');
   expect(optionType).toHaveProperty('displayFlags');
@@ -49,8 +49,7 @@ function assertIsOption(value: unknown): asserts value is IOption {
   const option = value as IOption;
   expect(option).toHaveProperty('id');
   expect(option).toHaveProperty('displayName');
-  expect(option).toHaveProperty('modifierTypeId');
-  expect(option).toHaveProperty('ordinal');
+  // modifierTypeId and ordinal removed in 2025 schema
   expect(option).toHaveProperty('price');
 }
 
@@ -148,8 +147,9 @@ describe('ModifierController', () => {
       const mockOption = createMockOption({ id: 'opt-new', displayName: 'Pepperoni' });
       (mockCatalogService.CreateOption as jest.Mock).mockResolvedValue(mockOption);
 
-      const body = asUncommittedOption(createMockOption({ displayName: 'Pepperoni', modifierTypeId: 'mt-123' }));
-      const result = await controller.CreateOption(body, body.modifierTypeId);
+      const body = asUncommittedOption(createMockOption({ displayName: 'Pepperoni' }));
+      const modifierTypeId = 'mt-123';
+      const result = await controller.CreateOption(body, modifierTypeId);
 
       // Verify result satisfies IOption interface
       assertIsOption(result);
@@ -170,7 +170,9 @@ describe('ModifierController', () => {
         modifierOption: { displayName: 'Updated Pepperoni' },
       };
       const result = await controller.UpdateModifierOption(
-        body as Parameters<typeof controller.UpdateModifierOption>[0], body.id, body.modifierTypeId
+        body as Parameters<typeof controller.UpdateModifierOption>[0],
+        body.id,
+        body.modifierTypeId,
       );
 
       // Verify result satisfies IOption interface
@@ -186,12 +188,14 @@ describe('ModifierController', () => {
       const mockOption = createMockOption({ id: 'opt-123' });
       (mockCatalogService.DeleteModifierOption as jest.Mock).mockResolvedValue(mockOption);
 
-      const result = await controller.DeleteModifierOption('opt-123');
+      const modifierTypeId = 'mt-123';
+      const optionId = 'opt-123';
+      const result = await controller.DeleteModifierOption(optionId, modifierTypeId);
 
       // Verify result satisfies IOption interface
       assertIsOption(result);
       expect(result.id).toBe('opt-123');
-      expect(mockCatalogService.DeleteModifierOption).toHaveBeenCalledWith('opt-123');
+      expect(mockCatalogService.DeleteModifierOption).toHaveBeenCalledWith(modifierTypeId, optionId);
       expect(mockSocketService.EmitCatalog).toHaveBeenCalled();
     });
   });

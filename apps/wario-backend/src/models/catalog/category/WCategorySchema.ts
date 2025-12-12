@@ -14,15 +14,6 @@ export const WCategorySchema = new Schema<MT>(
     // used instead of the name if present. HTML allowed.
     description: String,
 
-    // placement index
-    ordinal: {
-      type: Number,
-      required: true,
-    },
-
-    // parent category ID if any
-    parent_id: { type: String, ref: 'WCategorySchema' },
-
     // subheading, optional, HTML allowed
     subheading: String,
 
@@ -43,6 +34,12 @@ export const WCategorySchema = new Schema<MT>(
       },
     },
     serviceDisable: [{ type: String, ref: 'FulfillmentSchema' }],
+
+    // ordered list of child category IDs
+    children: [{ type: String, ref: 'WCategorySchema' }],
+
+    // ordered list of product IDs appearing in this category
+    products: [{ type: String, ref: 'WProductSchema' }],
   },
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );

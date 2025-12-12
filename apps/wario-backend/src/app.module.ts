@@ -130,4 +130,4 @@ import { TasksModule } from './tasks/tasks.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

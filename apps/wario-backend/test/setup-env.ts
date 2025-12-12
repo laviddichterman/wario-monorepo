@@ -1,4 +1,3 @@
-
 // Explicitly set environment variables for E2E testing
 process.env.POSTGRES_HOST = 'localhost';
 process.env.POSTGRES_PORT = '5432';

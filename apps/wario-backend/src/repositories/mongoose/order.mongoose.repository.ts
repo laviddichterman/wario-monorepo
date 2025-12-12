@@ -29,19 +29,18 @@ export class OrderMongooseRepository implements IOrderRepository {
   }
 
   async findByDateRange(startDate: string, endDate: string): Promise<WOrderInstance[]> {
-    const docs = await this.model.find({
-      'fulfillment.selectedDate': { $gte: startDate, $lte: endDate },
-    }).lean().exec();
+    const docs = await this.model
+      .find({
+        'fulfillment.selectedDate': { $gte: startDate, $lte: endDate },
+      })
+      .lean()
+      .exec();
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
   async save(order: WOrderInstance): Promise<WOrderInstance> {
     if (order.id) {
-      const updated = await this.model.findByIdAndUpdate(
-        order.id,
-        { $set: order },
-        { new: true },
-      ).lean().exec();
+      const updated = await this.model.findByIdAndUpdate(order.id, { $set: order }, { new: true }).lean().exec();
       if (!updated) {
         throw new Error(`Order ${order.id} not found`);
       }
@@ -54,11 +53,7 @@ export class OrderMongooseRepository implements IOrderRepository {
   }
 
   async updateStatus(id: string, status: WOrderStatus): Promise<WOrderInstance | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: { status } },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: { status } }, { new: true }).lean().exec();
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
@@ -69,9 +64,12 @@ export class OrderMongooseRepository implements IOrderRepository {
 
   async findByThirdPartySquareIds(squareIds: string[]): Promise<WOrderInstance[]> {
     if (squareIds.length === 0) return [];
-    const docs = await this.model.find({
-      'fulfillment.thirdPartyInfo.squareId': { $in: squareIds },
-    }).lean().exec();
+    const docs = await this.model
+      .find({
+        'fulfillment.thirdPartyInfo.squareId': { $in: squareIds },
+      })
+      .lean()
+      .exec();
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
@@ -80,11 +78,10 @@ export class OrderMongooseRepository implements IOrderRepository {
     lock: string | null,
     updates: Partial<WOrderInstance>,
   ): Promise<WOrderInstance | null> {
-    const updated = await this.model.findOneAndUpdate(
-      { _id: id, locked: lock },
-      { $set: updates },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model
+      .findOneAndUpdate({ _id: id, locked: lock }, { $set: updates }, { new: true })
+      .lean()
+      .exec();
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
@@ -115,47 +112,39 @@ export class OrderMongooseRepository implements IOrderRepository {
     maxSelectedTime: number,
     lock: string,
   ): Promise<number> {
-    const result = await this.model.updateMany(
-      {
-        status,
-        locked: null,
-        'fulfillment.status': fulfillmentStatus,
-        'fulfillment.selectedDate': selectedDate,
-        'fulfillment.selectedTime': { $lte: maxSelectedTime },
-      },
-      { $set: { locked: lock } },
-    ).exec();
+    const result = await this.model
+      .updateMany(
+        {
+          status,
+          locked: null,
+          'fulfillment.status': fulfillmentStatus,
+          'fulfillment.selectedDate': selectedDate,
+          'fulfillment.selectedTime': { $lte: maxSelectedTime },
+        },
+        { $set: { locked: lock } },
+      )
+      .exec();
     return result.modifiedCount;
   }
 
-  async acquireLock(
-    id: string,
-    status: WOrderStatus,
-    lock: string,
-  ): Promise<WOrderInstance | null> {
-    const updated = await this.model.findOneAndUpdate(
-      { _id: id, locked: null, status },
-      { $set: { locked: lock } },
-      { new: true },
-    ).lean().exec();
+  async acquireLock(id: string, status: WOrderStatus, lock: string): Promise<WOrderInstance | null> {
+    const updated = await this.model
+      .findOneAndUpdate({ _id: id, locked: null, status }, { $set: { locked: lock } }, { new: true })
+      .lean()
+      .exec();
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
   async tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null> {
-    const updated = await this.model.findOneAndUpdate(
-      { _id: id, locked: null },
-      { $set: { locked: lock } },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model
+      .findOneAndUpdate({ _id: id, locked: null }, { $set: { locked: lock } }, { new: true })
+      .lean()
+      .exec();
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
   async unlockAll(): Promise<number> {
-    const result = await this.model.updateMany(
-      { locked: { $ne: null } },
-      { $set: { locked: null } },
-    ).exec();
+    const result = await this.model.updateMany({ locked: { $ne: null } }, { $set: { locked: null } }).exec();
     return result.modifiedCount;
   }
 }
-

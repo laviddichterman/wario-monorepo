@@ -59,10 +59,7 @@ export class FulfillmentTypeOrmRepository implements IFulfillmentRepository {
   }
 
   async delete(id: string): Promise<boolean> {
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: new Date() },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: new Date() });
     return (result.affected ?? 0) > 0;
   }
 }

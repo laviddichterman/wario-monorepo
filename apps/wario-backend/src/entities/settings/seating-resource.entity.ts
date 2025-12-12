@@ -1,7 +1,6 @@
 import { Column, CreateDateColumn, Entity, PrimaryColumn, UpdateDateColumn } from 'typeorm';
 
-import type { SeatingResource } from '@wcp/wario-shared';
-import { SeatingShape } from '@wcp/wario-shared';
+import type { SeatingResource, SeatingShape } from '@wcp/wario-shared';
 
 /**
  * SeatingResource entity - represents a table or seating area.

@@ -7,13 +7,18 @@
 import type { Provider } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import type { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
-import { DataSource, type EntityManager, type QueryRunner, type Repository, type SelectQueryBuilder, type UpdateQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  type EntityManager,
+  type QueryRunner,
+  type Repository,
+  type SelectQueryBuilder,
+  type UpdateQueryBuilder,
+} from 'typeorm';
 
 export type MockType<T> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [P in keyof T]?: T[P] extends (...args: any[]) => any
-  ? jest.Mock<ReturnType<T[P]>, Parameters<T[P]>>
-  : T[P];
+  [P in keyof T]?: T[P] extends (...args: any[]) => any ? jest.Mock<ReturnType<T[P]>, Parameters<T[P]>> : T[P];
 };
 
 export type MockQueryBuilder<T extends object> = MockType<SelectQueryBuilder<T> & UpdateQueryBuilder<T>>;
@@ -27,6 +32,8 @@ export function createMockTypeOrmRepository<T extends object = object>(): MockTy
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     orWhere: jest.fn().mockReturnThis(),
+    setParameter: jest.fn().mockReturnThis(),
+    setParameters: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),

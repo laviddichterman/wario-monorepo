@@ -113,7 +113,7 @@ describe('FulfillmentTypeOrmRepository', () => {
       expect(mockRepo.update).toHaveBeenCalledWith(
         { id: 'f1', validTo: IsNull() },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        expect.objectContaining({ validTo: expect.any(Date) })
+        expect.objectContaining({ validTo: expect.any(Date) }),
       );
     });
   });

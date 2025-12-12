@@ -95,5 +95,3 @@ export class FulfillmentEntity extends TemporalEntity implements FulfillmentConf
   @Column('jsonb', { nullable: true })
   serviceArea?: Polygon;
 }
-
-

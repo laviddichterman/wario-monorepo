@@ -4,7 +4,16 @@
 import type { PinoLogger } from 'nestjs-pino';
 import type { CatalogObject } from 'square';
 
-import type { ICatalog, IOption, IOptionType, IProduct, IProductInstance, KeyValue, PrinterGroup, UpsertProductBatchRequest } from '@wcp/wario-shared';
+import type {
+  ICatalog,
+  IOption,
+  IOptionType,
+  IProduct,
+  IProductInstance,
+  KeyValue,
+  PrinterGroup,
+  UpsertProductBatchRequest,
+} from '@wcp/wario-shared';
 
 import { GetNonSquareExternalIds, GetSquareExternalIds, GetSquareIdIndexFromExternalIds } from '../square-wario-bridge';
 import type { SquareService } from '../square/square.service';
@@ -35,8 +44,13 @@ export interface SquareSyncDeps {
     updateRelated: boolean,
   ) => Promise<(IOptionType | null)[]>;
   batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<(IOption | null)[]>;
-  batchUpdateProductInstance: (batches: UpdateProductInstanceProps[], suppress: boolean) => Promise<(IProductInstance | null)[]>;
-  batchUpsertProduct: (batches: UpsertProductBatchRequest[]) => Promise<{ product: IProduct; instances: IProductInstance[] }[] | null>;
+  batchUpdateProductInstance: (
+    batches: UpdateProductInstanceProps[],
+    suppress: boolean,
+  ) => Promise<(IProductInstance | null)[]>;
+  batchUpsertProduct: (
+    batches: UpsertProductBatchRequest[],
+  ) => Promise<{ product: IProduct; instances: IProductInstance[] }[] | null>;
   findAllProducts: () => Promise<IProduct[]>;
   // Sync Hooks
   syncModifierTypes: () => Promise<boolean>;
@@ -105,7 +119,7 @@ export const checkAllPrinterGroupsSquareIdsAndFixIfNeeded = async (deps: SquareS
 
 export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {
   const squareCatalogObjectIds = Object.values(deps.catalog.modifiers)
-    .map((modifierTypeEntry) => GetSquareExternalIds(modifierTypeEntry.modifierType.externalIDs).map((x) => x.value))
+    .map((modifierType) => GetSquareExternalIds(modifierType.externalIDs).map((x) => x.value))
     .flat();
 
   if (squareCatalogObjectIds.length > 0) {
@@ -113,26 +127,26 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
     if (catalogObjectResponse.success) {
       const foundObjects = catalogObjectResponse.result.objects as CatalogObject[];
       const missingSquareCatalogObjectBatches: UpdateModifierTypeProps[] = [];
-      const optionUpdates: { id: string; externalIDs: KeyValue[] }[] = [];
+      const optionUpdates: { id: string; modifierTypeId: string; externalIDs: KeyValue[] }[] = [];
       Object.values(deps.catalog.modifiers)
-        .filter((x) =>
-          GetSquareExternalIds(x.modifierType.externalIDs).reduce(
+        .filter((mt) =>
+          GetSquareExternalIds(mt.externalIDs).reduce(
             (acc, kv) => acc || foundObjects.findIndex((o) => o.id === kv.value) === -1,
             false,
           ),
         )
-        .forEach((x) => {
+        .forEach((mt) => {
           missingSquareCatalogObjectBatches.push({
-            id: x.modifierType.id,
+            id: mt.id,
             modifierType: {
-              externalIDs: GetNonSquareExternalIds(x.modifierType.externalIDs),
+              externalIDs: GetNonSquareExternalIds(mt.externalIDs),
             },
           });
-          deps.logger.info(`Pruning square catalog IDs from options: ${x.options.join(', ')}`);
+          deps.logger.info(`Pruning square catalog IDs from options: ${mt.options.join(', ')}`);
           optionUpdates.push(
-            ...x.options.map((oId) => ({
+            ...mt.options.map((oId) => ({
               id: oId,
-
+              modifierTypeId: mt.id,
               externalIDs: GetNonSquareExternalIds(deps.catalog.options[oId].externalIDs),
             })),
           );
@@ -144,7 +158,7 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
         await deps.batchUpdateModifierOption(
           optionUpdates.map((x) => ({
             id: x.id,
-            modifierTypeId: deps.catalog.options[x.id].modifierTypeId,
+            modifierTypeId: x.modifierTypeId,
             modifierOption: { externalIDs: x.externalIDs },
           })),
         );
@@ -153,18 +167,18 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
   }
   const batches = Object.values(deps.catalog.modifiers)
     .filter(
-      (x) =>
-        GetSquareIdIndexFromExternalIds(x.modifierType.externalIDs, 'MODIFIER_LIST') === -1 ||
-        x.options.reduce(
+      (mt) =>
+        GetSquareIdIndexFromExternalIds(mt.externalIDs, 'MODIFIER_LIST') === -1 ||
+        mt.options.reduce(
           (acc, oId) =>
             acc || GetSquareIdIndexFromExternalIds(deps.catalog.options[oId].externalIDs, 'MODIFIER') === -1,
           false,
         ),
     )
-    .map((x) => ({ id: x.modifierType.id, modifierType: {} }));
+    .map((mt) => ({ id: mt.id, modifierType: {} }));
 
   if (batches.length > 0) {
-    const result = (await deps.batchUpdateModifierType(batches, false, false));
+    const result = await deps.batchUpdateModifierType(batches, false, false);
     return result.filter((x): x is IOptionType => x !== null).map((x) => x.id);
   }
   return [];
@@ -195,11 +209,11 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
             .map((piid) => ({
               piid,
               product: {
-                modifiers: p.product.modifiers,
-                price: p.product.price,
-                printerGroup: p.product.printerGroup,
-                disabled: p.product.disabled,
-                displayFlags: p.product.displayFlags,
+                modifiers: p.modifiers,
+                price: p.price,
+                printerGroup: p.printerGroup,
+                disabled: p.disabled,
+                displayFlags: p.displayFlags,
               },
               productInstance: {
                 externalIDs: GetNonSquareExternalIds(deps.catalog.productInstances[piid].externalIDs),
@@ -226,11 +240,11 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
         .map((piid) => ({
           piid,
           product: {
-            modifiers: p.product.modifiers,
-            price: p.product.price,
-            printerGroup: p.product.printerGroup,
-            disabled: p.product.disabled,
-            displayFlags: p.product.displayFlags,
+            modifiers: p.modifiers,
+            price: p.price,
+            printerGroup: p.printerGroup,
+            disabled: p.disabled,
+            displayFlags: p.displayFlags,
           },
           productInstance: {},
         })),
@@ -249,8 +263,8 @@ export const forceSquareCatalogCompleteUpsert = async (deps: SquareSyncDeps) => 
     printerGroup: {},
   }));
   await deps.batchUpdatePrinterGroup(printerGroupUpdates);
-  const modifierTypeUpdates = Object.values(deps.catalog.modifiers).map((x) => ({
-    id: x.modifierType.id,
+  const modifierTypeUpdates = Object.values(deps.catalog.modifiers).map((mt) => ({
+    id: mt.id,
     modifierType: {},
   }));
   await deps.batchUpdateModifierType(modifierTypeUpdates, true, true);

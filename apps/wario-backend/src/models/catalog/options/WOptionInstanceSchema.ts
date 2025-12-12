@@ -1,6 +1,11 @@
 import { Schema } from 'mongoose';
 
-import { type IOptionInstance, OptionPlacement, OptionQualifier, type ProductModifierEntry } from '@wcp/wario-shared';
+import {
+  type IOptionInstance,
+  OptionPlacement,
+  OptionQualifier,
+  type ProductInstanceModifierEntry,
+} from '@wcp/wario-shared';
 
 export const WOptionInstanceSchema = new Schema<IOptionInstance>(
   {
@@ -24,7 +29,7 @@ export const WOptionInstanceSchema = new Schema<IOptionInstance>(
   { _id: false },
 );
 
-export const ProductModifierSchema = new Schema<ProductModifierEntry>(
+export const ProductModifierSchema = new Schema<ProductInstanceModifierEntry>(
   {
     modifierTypeId: {
       type: String,

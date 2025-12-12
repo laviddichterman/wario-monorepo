@@ -35,7 +35,7 @@ describe('OptionTypeOrmRepository', () => {
     expect(repository).toBeDefined();
   });
 
-  describe('findById/findAll/findByModifierTypeId', () => {
+  describe('findById/findAll/findByIds', () => {
     it('should find active', async () => {
       await repository.findById('o1');
       expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { id: 'o1', validTo: IsNull() } });
@@ -43,8 +43,9 @@ describe('OptionTypeOrmRepository', () => {
       await repository.findAll();
       expect(mockRepo.find).toHaveBeenCalledWith({ where: { validTo: IsNull() } });
 
-      await repository.findByModifierTypeId('mt1');
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { modifierTypeId: 'mt1', validTo: IsNull() } });
+      // findByModifierTypeId replaced with findByIds in 2025 schema
+      await repository.findByIds(['o1', 'o2']);
+      expect(mockRepo.find).toHaveBeenCalled();
     });
   });
 

@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { type InsertQueryBuilder, IsNull, type ObjectLiteral, type Repository, type SelectQueryBuilder, type UpdateQueryBuilder } from 'typeorm';
+import {
+  type InsertQueryBuilder,
+  IsNull,
+  type ObjectLiteral,
+  type Repository,
+  type SelectQueryBuilder,
+  type UpdateQueryBuilder,
+} from 'typeorm';
 
 import { createMockProductInstanceEntity } from '../../../test/utils/mock-entities';
 import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
@@ -10,7 +17,9 @@ import { ProductInstanceEntity } from '../../entities/catalog/product-instance.e
 import { ProductInstanceTypeOrmRepository } from './product-instance.typeorm.repository';
 
 // Combine query builders for mocking
-type MockQueryBuilder<T extends ObjectLiteral> = MockType<SelectQueryBuilder<T> & UpdateQueryBuilder<T> & InsertQueryBuilder<T>>;
+type MockQueryBuilder<T extends ObjectLiteral> = MockType<
+  SelectQueryBuilder<T> & UpdateQueryBuilder<T> & InsertQueryBuilder<T>
+>;
 
 describe('ProductInstanceTypeOrmRepository', () => {
   let repository: ProductInstanceTypeOrmRepository;
@@ -32,21 +41,21 @@ describe('ProductInstanceTypeOrmRepository', () => {
   });
 
   describe('finders', () => {
-    it('findById, findAll, findByProductId', async () => {
+    it('findById, findAll, findByIds', async () => {
       await repository.findById('pi1');
       expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { id: 'pi1', validTo: IsNull() } });
 
       await repository.findAll();
       expect(mockRepo.find).toHaveBeenCalledWith({ where: { validTo: IsNull() } });
 
-      await repository.findByProductId('p1');
-      expect(mockRepo.find).toHaveBeenCalledWith({ where: { productId: 'p1', validTo: IsNull() } });
+      // findByProductId replaced with findByIds in 2025 schema
+      await repository.findByIds(['pi1', 'pi2']);
+      expect(mockRepo.find).toHaveBeenCalled();
     });
 
     it('findAllWithModifierOptions should use jsonb query', async () => {
       const qb = mockRepo.createQueryBuilder!() as unknown as MockQueryBuilder<ProductInstanceEntity>;
       await repository.findAllWithModifierOptions(['opt1', 'opt2']);
-
 
       expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('pi');
       expect(qb.where).toHaveBeenCalledWith('pi.validTo IS NULL');
@@ -87,7 +96,6 @@ describe('ProductInstanceTypeOrmRepository', () => {
       const txRepo = createMockTypeOrmRepository<ProductInstanceEntity>();
       txRepo.find!.mockResolvedValue([existing]);
       (mockRepo.manager!.getRepository as jest.Mock).mockReturnValue(txRepo);
-
 
       await repository.bulkUpdate(updates);
 

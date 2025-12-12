@@ -31,11 +31,7 @@ export class OrderInstanceFunctionMongooseRepository implements IOrderInstanceFu
   }
 
   async update(id: string, partial: Partial<Omit<OrderInstanceFunction, 'id'>>): Promise<OrderInstanceFunction | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      toPartialUpdateQuery(partial),
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, toPartialUpdateQuery(partial), { new: true }).lean().exec();
     return updated ? { ...updated, id: updated._id.toString() } : null;
   }
 
@@ -55,4 +51,3 @@ export class OrderInstanceFunctionMongooseRepository implements IOrderInstanceFu
     return result.deletedCount > 0;
   }
 }
-

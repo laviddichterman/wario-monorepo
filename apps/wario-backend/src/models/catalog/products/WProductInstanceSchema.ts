@@ -10,12 +10,6 @@ import { ProductModifierSchema } from '../options/WOptionInstanceSchema';
 type MT = Omit<IProductInstance, 'id'>;
 export const WProductInstanceSchema = new Schema<MT>(
   {
-    // reference to the WProductSchema ID for this class of item
-    productId: { type: String, ref: 'WProductSchema', required: true },
-
-    // ordinal for product matching
-    ordinal: Number,
-
     // applied modifiers for this instance of the product
     modifiers: {
       type: [ProductModifierSchema],

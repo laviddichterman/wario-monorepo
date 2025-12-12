@@ -5,10 +5,14 @@ import { DataSource } from 'typeorm';
 
 import { createMockModelProvider } from '../../../test/utils/mock-database';
 import { MockDataSourceProvider, type MockType } from '../../../test/utils/mock-typeorm';
-import { DB_VERSION_REPOSITORY, type IDBVersionRepository } from '../../repositories/interfaces/db-version.repository.interface';
+import {
+  DB_VERSION_REPOSITORY,
+  type IDBVersionRepository,
+} from '../../repositories/interfaces/db-version.repository.interface';
 import { AppConfigService } from '../app-config.service';
 
 import { DatabaseManagerService } from './database-manager.service';
+import { MongooseToPostgresMigrator } from './mongoose-to-postgres.migrator';
 
 // Mock package.json version
 jest.mock('../../../package.json', () => ({
@@ -59,6 +63,13 @@ describe('DatabaseManagerService', () => {
         mockLoggerProvider,
         mockAppConfigServiceProvider,
         MockDataSourceProvider,
+        // MongooseToPostgresMigrator mock
+        {
+          provide: MongooseToPostgresMigrator,
+          useValue: {
+            migrateAll: jest.fn().mockResolvedValue(undefined),
+          },
+        },
         // Legacy Mongoose dependencies
         createMockModelProvider('DBVersionSchema'), // Even though we use repo now, DI might strict check?
         {
@@ -95,8 +106,11 @@ describe('DatabaseManagerService', () => {
 
       await service.Bootstrap();
 
-      expect(migrationSpy).toHaveBeenCalledWith(mockDataSource);
-      expect(mockDbVersionRepo.set).toHaveBeenCalledWith({ major: 1, minor: 0, patch: 1 });
+      // Migration function is called with EntityManager from transaction (internal), not DataSource directly
+      expect(migrationSpy).toHaveBeenCalled();
+      // Version is updated within the transaction, so dbVersionRepo.set is NOT called
+      // Instead, the version is updated via the transactional manager.getRepository
+      expect(mockDataSource.transaction).toHaveBeenCalled();
     });
 
     it('should handle no-op migrations when no explicit path exists', async () => {

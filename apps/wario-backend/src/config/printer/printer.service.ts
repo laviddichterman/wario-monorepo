@@ -11,6 +11,7 @@ import {
   EventTitleStringBuilder,
   type FulfillmentConfig,
   type FulfillmentData,
+  GenerateCategoryOrderMap,
   RebuildAndSortCart,
   ResponseWithStatusCode,
   WDateUtils,
@@ -178,8 +179,13 @@ export class PrinterService {
       const promisedTime = DateTimeIntervalBuilder(order.fulfillment as FulfillmentData, fulfillmentConfig.maxDuration);
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
+      const categoryIdOrdinalMap = GenerateCategoryOrderMap(
+        fulfillmentConfig.orderBaseCategoryId,
+        this.catalogProviderService.CatalogSelectors.category,
+      );
       const eventTitle = EventTitleStringBuilder(
         this.catalogProviderService.CatalogSelectors,
+        categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
         order.fulfillment as FulfillmentData,
@@ -383,8 +389,13 @@ export class PrinterService {
       const oldPromisedTime = WDateUtils.ComputeServiceDateTime(order.fulfillment as FulfillmentData);
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
+      const categoryIdOrdinalMap = GenerateCategoryOrderMap(
+        fulfillmentConfig.orderBaseCategoryId,
+        this.catalogProviderService.CatalogSelectors.category,
+      );
       const eventTitle = EventTitleStringBuilder(
         this.catalogProviderService.CatalogSelectors,
+        categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
         order.fulfillment as FulfillmentData,
@@ -460,8 +471,13 @@ export class PrinterService {
     try {
       const customerName = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
 
+      const categoryIdOrdinalMap = GenerateCategoryOrderMap(
+        fulfillmentConfig.orderBaseCategoryId,
+        this.catalogProviderService.CatalogSelectors.category,
+      );
       const eventTitle = EventTitleStringBuilder(
         this.catalogProviderService.CatalogSelectors,
+        categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
         order.fulfillment as FulfillmentData,
@@ -599,8 +615,13 @@ export class PrinterService {
         promisedTime.start,
         fulfillmentConfig.id,
       );
+      const categoryIdOrdinalMap = GenerateCategoryOrderMap(
+        fulfillmentConfig.orderBaseCategoryId,
+        this.catalogProviderService.CatalogSelectors.category,
+      );
       const eventTitle = EventTitleStringBuilder(
         this.catalogProviderService.CatalogSelectors,
+        categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
         lockedOrder.fulfillment,

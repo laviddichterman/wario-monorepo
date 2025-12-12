@@ -45,7 +45,6 @@ describe('SettingsTypeOrmRepository', () => {
       expect(mockRepo.find).toHaveBeenCalledWith({ take: 1 });
     });
 
-
     it('should return null if no settings exist', async () => {
       mockRepo.find?.mockResolvedValue([]);
 
@@ -72,7 +71,6 @@ describe('SettingsTypeOrmRepository', () => {
       // (mockRepo.manager!.getRepository as jest.Mock).mockReturnValue(txRepo);
 
       await repository.save(input);
-
 
       expect(mockDataSource.transaction).toHaveBeenCalled();
       if (!mockRepo.manager) {

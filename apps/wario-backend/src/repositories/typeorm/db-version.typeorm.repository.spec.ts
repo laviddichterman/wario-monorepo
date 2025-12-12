@@ -53,13 +53,25 @@ describe('DBVersionTypeOrmRepository', () => {
   });
 
   describe('set', () => {
-    it('should clear existing version and save new one', async () => {
+    it('should update existing version if one exists', async () => {
+      const existingVersion = createMockDbVersionEntity({ major: 1, minor: 0, patch: 0 });
+      mockRepo.findOne?.mockResolvedValue(existingVersion);
       const newVersion = { major: 2, minor: 0, patch: 0 };
 
       await repository.set(newVersion);
 
-      expect(mockRepo.clear).toHaveBeenCalled();
-      expect(mockRepo.save).toHaveBeenCalledWith(newVersion);
+      expect(mockRepo.findOne).toHaveBeenCalledWith({ where: {} });
+      expect(mockRepo.update).toHaveBeenCalledWith({ rowId: existingVersion.rowId }, newVersion);
+    });
+
+    it('should insert new version if none exists', async () => {
+      mockRepo.findOne?.mockResolvedValue(null);
+      const newVersion = { major: 2, minor: 0, patch: 0 };
+
+      await repository.set(newVersion);
+
+      expect(mockRepo.findOne).toHaveBeenCalledWith({ where: {} });
+      expect(mockRepo.insert).toHaveBeenCalledWith(newVersion);
     });
   });
 });

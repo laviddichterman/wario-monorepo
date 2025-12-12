@@ -20,9 +20,9 @@
     "test:unit": "jest --testPathPattern=\\.spec\\.ts$",
     "test:watch": "jest --watch",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "migration:generate": "typeorm migration:generate -d ormconfig.ts",
-    "migration:run": "typeorm migration:run -d ormconfig.ts",
-    "migration:revert": "typeorm migration:revert -d ormconfig.ts"
+    "migration:generate": "pnpm build && node ./node_modules/typeorm/cli.js migration:generate -d dist/ormconfig.js",
+    "migration:run": "pnpm build && node ./node_modules/typeorm/cli.js migration:run -d dist/ormconfig.js",
+    "migration:revert": "pnpm build && node ./node_modules/typeorm/cli.js migration:revert -d dist/ormconfig.js"
   },
   "jest": {
     "moduleFileExtensions": [
@@ -79,9 +79,9 @@
     "cors": "^2.8.5",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
-    "es-toolkit": "^1.42.0",
+    "es-toolkit": "^1.43.0",
     "google-auth-library": "^10.5.0",
-    "googleapis": "^167.0.0",
+    "googleapis": "^168.0.0",
     "json-bigint": "^1.0.0",
     "jwks-rsa": "^3.2.0",
     "mongoose": "^7.8.8",

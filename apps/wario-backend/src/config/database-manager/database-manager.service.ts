@@ -34,7 +34,7 @@ export class DatabaseManagerService implements OnModuleInit {
     private migrator: MongooseToPostgresMigrator,
     @InjectPinoLogger(DatabaseManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   private initializationPromise: Promise<void> | null = null;
   private resolveInitialization: (() => void) | null = null;
@@ -56,13 +56,15 @@ export class DatabaseManagerService implements OnModuleInit {
       this.rejectInitialization = reject;
     });
     // Start bootstrap but don't await usage here to allow async init chain
-    this.Bootstrap().then(() => {
-      this.resolveInitialization?.();
-      return;
-    }).catch((err: unknown) => {
-      this.logger.error({ err }, 'Database Bootstrap Failed');
-      this.rejectInitialization?.(err);
-    });
+    this.Bootstrap()
+      .then(() => {
+        this.resolveInitialization?.();
+        return;
+      })
+      .catch((err: unknown) => {
+        this.logger.error({ err }, 'Database Bootstrap Failed');
+        this.rejectInitialization?.(err);
+      });
 
     // Satisfy linter that we aren't awaiting anything (intentional fire-and-forget for bootstrap)
     return Promise.resolve();
@@ -84,14 +86,11 @@ export class DatabaseManagerService implements OnModuleInit {
   private async hasTable(tableName: string): Promise<boolean> {
     const runner = this.dataSource.createQueryRunner();
     try {
-
       return await runner.hasTable(tableName);
     } finally {
       await runner.release();
     }
   }
-
-
 
   private SetVersion = async (new_version: SEMVER) => {
     return this.dbVersionRepository.set(new_version);
@@ -116,16 +115,16 @@ export class DatabaseManagerService implements OnModuleInit {
    * WE DO NOT MIGRATE MONGOOSE SCHEMA ANYMORE.
    */
   private LEGACY_MONGOOSE_MIGRATIONS: ILegacyMigrationFunctionObject = {
-    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => { }],
+    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => {}],
   };
 
   /**
    * Bootstrap handles 4 initialization scenarios:
-   * 
+   *
    * EXISTING DATABASE (has version):
    *   - usePostgres=true  → Run postgres data migrations
    *   - usePostgres=false → Run legacy mongoose migrations
-   * 
+   *
    * FRESH INSTALL (no version):
    *   - usePostgres=true  + mongo data exists → Migrate from MongoDB
    *   - usePostgres=true  + no mongo data    → Seed default config
@@ -142,7 +141,9 @@ export class DatabaseManagerService implements OnModuleInit {
     };
 
     // Load version from the DB (Unified Repository)
-    this.logger.info(`Running database upgrade bootstrap. Mode: ${this.appConfigService.usePostgres ? 'POSTGRES' : 'MONGOOSE (Legacy)'}`);
+    this.logger.info(
+      `Running database upgrade bootstrap. Mode: ${this.appConfigService.usePostgres ? 'POSTGRES' : 'MONGOOSE (Legacy)'}`,
+    );
 
     let current_db_version = '0.0.0';
     let db_version: SEMVER | null = null;
@@ -172,7 +173,8 @@ export class DatabaseManagerService implements OnModuleInit {
         // Fresh install in mongoose mode - check if mongo has any data
         const hasMongoData = await this.checkMongoHasData();
         if (!hasMongoData) {
-          const msg = 'UNSUPPORTED: Fresh install with USE_POSTGRES=false and no MongoDB data. ' +
+          const msg =
+            'UNSUPPORTED: Fresh install with USE_POSTGRES=false and no MongoDB data. ' +
             'Set USE_POSTGRES=true to initialize a new PostgreSQL database.';
           this.logger.error(msg);
           throw new Error(msg);
@@ -222,8 +224,7 @@ export class DatabaseManagerService implements OnModuleInit {
     const hasDbVersionTable = await this.hasTable('db_version');
     if (!hasDbVersionTable) {
       if (!this.appConfigService.allowSchemaSync) {
-        const msg =
-          'Schema migrations did not create tables and ALLOW_SCHEMA_SYNC is false; refusing to synchronize.';
+        const msg = 'Schema migrations did not create tables and ALLOW_SCHEMA_SYNC is false; refusing to synchronize.';
         this.logger.error(msg);
         throw new Error(msg);
       }
@@ -251,21 +252,14 @@ export class DatabaseManagerService implements OnModuleInit {
     // 3. Set Version
     await this.SetVersion(initialVersion);
     this.logger.info({ initialVersion }, 'Fresh Initialization Completed. Setting to package version.');
-  }
+  };
 
   private checkSafeToInitialize = async () => {
     // Check for existence of DATA in critical tables to prevent overwriting a DB that just has a missing version table
     // With migrationsRun: true, tables will always exist. We must check for ROWS.
     const runner = this.dataSource.createQueryRunner();
     try {
-      const tables = [
-        'orders',
-        'products',
-        'settings',
-        'printer_group',
-        'fulfillments',
-        'categories',
-      ];
+      const tables = ['orders', 'products', 'settings', 'printer_group', 'fulfillments', 'categories'];
       for (const table of tables) {
         const hasTable = await runner.hasTable(table);
         if (hasTable) {
@@ -282,7 +276,7 @@ export class DatabaseManagerService implements OnModuleInit {
     } finally {
       await runner.release();
     }
-  }
+  };
 
   private seedDefaults = async () => {
     await this.dataSource.transaction(async (manager) => {
@@ -291,10 +285,9 @@ export class DatabaseManagerService implements OnModuleInit {
         config: {}, // Defaults
       });
       await manager.save(SettingsEntity, settings);
-
     });
     this.logger.info('Seeded default data (Settings, PrinterGroup).');
-  }
+  };
 
   private runPostgresMigrations = async (currentVersion: string, targetVersionStr: string, targetVersion: SEMVER) => {
     let current = currentVersion;
@@ -335,9 +328,13 @@ export class DatabaseManagerService implements OnModuleInit {
         current = targetVersionStr;
       }
     }
-  }
+  };
 
-  private runLegacyMongooseMigrations = async (currentVersion: string, targetVersionStr: string, targetVersion: SEMVER) => {
+  private runLegacyMongooseMigrations = async (
+    currentVersion: string,
+    targetVersionStr: string,
+    targetVersion: SEMVER,
+  ) => {
     let current = currentVersion;
 
     while (targetVersionStr !== current) {
@@ -358,5 +355,5 @@ export class DatabaseManagerService implements OnModuleInit {
         current = targetVersionStr;
       }
     }
-  }
+  };
 }

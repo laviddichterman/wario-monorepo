@@ -51,24 +51,30 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
       console.warn(`[WARN] Skipping dropDatabase for safety. URI: ${MONGO_URI}`);
     }
 
-    // Seed ProductInstance first (Products reference it via baseProductId)
+    // Seed ProductInstance first
     const mockProductInstance = createMockProductInstanceEntity({
       id: TEST_PRODUCT_INSTANCE_ID,
-      productId: TEST_PRODUCT_ID,
       displayName: 'Test Product Instance',
       shortcode: 'TPI',
     });
 
-    const { rowId: _piRowId, validFrom: _piVf, validTo: _piVt, createdAt: _piCa, id: piId, ...productInstanceData } = mockProductInstance;
+    const {
+      rowId: _piRowId,
+      validFrom: _piVf,
+      validTo: _piVt,
+      createdAt: _piCa,
+      id: piId,
+      ...productInstanceData
+    } = mockProductInstance;
     await mongoConn.collection('wproductinstances').insertOne({
       _id: piId as unknown as mongoose.Types.ObjectId,
       ...productInstanceData,
     });
 
-    // Seed Product with reference to ProductInstance
+    // Seed Product with reference to ProductInstance via instances array
     const mockProduct = createMockProductEntity({
       id: TEST_PRODUCT_ID,
-      baseProductId: TEST_PRODUCT_INSTANCE_ID,
+      instances: [TEST_PRODUCT_INSTANCE_ID],
       price: { amount: 1000, currency: 'USD' },
     });
 
@@ -85,7 +91,14 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
       displayName: 'Size',
     });
 
-    const { rowId: _otRowId, validFrom: _otVf, validTo: _otVt, createdAt: _otCa, id: otId, ...optionTypeData } = mockOptionType;
+    const {
+      rowId: _otRowId,
+      validFrom: _otVf,
+      validTo: _otVt,
+      createdAt: _otCa,
+      id: otId,
+      ...optionTypeData
+    } = mockOptionType;
     await mongoConn.collection('optiontypes').insertOne({
       _id: otId as unknown as mongoose.Types.ObjectId,
       ...optionTypeData,
@@ -107,14 +120,15 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
 
     // Seed DBVersion (Legacy) -> 1.0.0
     await mongoConn.collection('dbversions').insertOne({
-      major: 1, minor: 0, patch: 0,
+      major: 1,
+      minor: 0,
+      patch: 0,
     });
 
     // 2. Start App (triggers Migration)
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    })
-      .compile();
+    }).compile();
 
     app = moduleFixture.createNestApplication();
     await app.init(); // This triggers DatabaseManagerService.onModuleInit -> migrateAll
@@ -136,7 +150,7 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
     if (!dataSource) throw new Error('DataSource not initialized');
 
     // Check if Product was migrated
-    const products: ProductEntity[] = (await dataSource.query(`SELECT * FROM products WHERE id = $1`, [TEST_PRODUCT_ID]));
+    const products: ProductEntity[] = await dataSource.query(`SELECT * FROM products WHERE id = $1`, [TEST_PRODUCT_ID]);
     expect(products.length).toBe(1);
 
     // Validating price structure
@@ -144,21 +158,23 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
     expect(products[0].price.amount).toBe(1000);
   });
 
-  it('should migrate products with valid baseProductId', async () => {
+  it('should migrate products with valid instances array', async () => {
     if (!dataSource) throw new Error('DataSource not initialized');
 
-    const products: ProductEntity[] = (await dataSource.query(`SELECT * FROM products WHERE id = $1`, [TEST_PRODUCT_ID]));
+    const products: ProductEntity[] = await dataSource.query(`SELECT * FROM products WHERE id = $1`, [TEST_PRODUCT_ID]);
     expect(products.length).toBe(1);
 
-    // CRITICAL: baseProductId should be set from MongoDB document
-    expect(products[0].baseProductId).toBe(TEST_PRODUCT_INSTANCE_ID);
+    // CRITICAL: instances array should contain the product instance ID
+    expect(products[0].instances).toContain(TEST_PRODUCT_INSTANCE_ID);
   });
 
   it('should migrate OptionTypes from Mongoose to Postgres', async () => {
     if (!dataSource) throw new Error('DataSource not initialized');
 
     // This was previously not being migrated (migrateOptionTypes was never called)
-    const optionTypes: OptionTypeEntity[] = (await dataSource.query(`SELECT * FROM option_types WHERE id = $1`, [TEST_OPTION_TYPE_ID]));
+    const optionTypes: OptionTypeEntity[] = await dataSource.query(`SELECT * FROM option_types WHERE id = $1`, [
+      TEST_OPTION_TYPE_ID,
+    ]);
     expect(optionTypes.length).toBe(1);
     expect(optionTypes[0].name).toBe('Test Option Type');
   });
@@ -167,16 +183,16 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
     if (!dataSource) throw new Error('DataSource not initialized');
 
     // A CatalogVersion should be created during migration for order references
-    const catalogVersions: CatalogVersionEntity[] = (await dataSource.query(
-      `SELECT * FROM catalog_versions WHERE description LIKE '%migration%'`
-    ));
+    const catalogVersions: CatalogVersionEntity[] = await dataSource.query(
+      `SELECT * FROM catalog_versions WHERE description LIKE '%migration%'`,
+    );
     expect(catalogVersions.length).toBeGreaterThan(0);
   });
 
   it('should set DBVersion correctly', async () => {
     if (!dataSource) throw new Error('DataSource not initialized');
 
-    const version: DBVersionEntity[] = (await dataSource.query(`SELECT * FROM db_version`));
+    const version: DBVersionEntity[] = await dataSource.query(`SELECT * FROM db_version`);
     expect(version.length).toBeGreaterThan(0);
   });
 });

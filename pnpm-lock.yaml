@@ -135,14 +135,14 @@ importers:
         specifier: ^17.2.3
         version: 17.2.3
       es-toolkit:
-        specifier: ^1.42.0
-        version: 1.42.0
+        specifier: ^1.43.0
+        version: 1.43.0
       google-auth-library:
         specifier: ^10.5.0
         version: 10.5.0
       googleapis:
-        specifier: ^167.0.0
-        version: 167.0.0
+        specifier: ^168.0.0
+        version: 168.0.0
       json-bigint:
         specifier: ^1.0.0
         version: 1.0.0
@@ -325,8 +325,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       es-toolkit:
-        specifier: ^1.42.0
-        version: 1.42.0
+        specifier: ^1.43.0
+        version: 1.43.0
       mailcheck:
         specifier: ^1.1.1
         version: 1.1.1
@@ -510,8 +510,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       es-toolkit:
-        specifier: ^1.42.0
-        version: 1.42.0
+        specifier: ^1.43.0
+        version: 1.43.0
       mailcheck:
         specifier: ^1.1.1
         version: 1.1.1
@@ -631,8 +631,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       es-toolkit:
-        specifier: ^1.42.0
-        version: 1.42.0
+        specifier: ^1.43.0
+        version: 1.43.0
       libphonenumber-js:
         specifier: ^1.12.31
         version: 1.12.31
@@ -815,8 +815,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       es-toolkit:
-        specifier: ^1.42.0
-        version: 1.42.0
+        specifier: ^1.43.0
+        version: 1.43.0
       geojson:
         specifier: ^0.5.0
         version: 0.5.0
@@ -866,8 +866,8 @@ importers:
         specifier: ^7.68.0
         version: 7.68.0(react@19.2.3)
       react-i18next:
-        specifier: ^16.4.1
-        version: 16.4.1(i18next@25.7.2(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
+        specifier: ^16.5.0
+        version: 16.5.0(i18next@25.7.2(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
       react-papaparse:
         specifier: ^4.4.0
         version: 4.4.0
@@ -1036,8 +1036,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       es-toolkit:
-        specifier: ^1.42.0
-        version: 1.42.0
+        specifier: ^1.43.0
+        version: 1.43.0
       geojson:
         specifier: ^0.5.0
         version: 0.5.0
@@ -1119,7 +1119,7 @@ importers:
         version: 4.1.0
       es-toolkit:
         specifier: ^1.41.0
-        version: 1.42.0
+        version: 1.43.0
       geojson:
         specifier: ^0.5.0
         version: 0.5.0
@@ -4623,8 +4623,8 @@ packages:
     resolution: {integrity: sha512-lGe34o6EHj9y3Kts9R4ZYs/Gr+6N7MCaMlIFA3F1R2O5/m7K06AxfSeO5530PEERE6/WyEg3lsuyw4GHlPZHog==}
     engines: {node: ^4.5.0 || >= 5.9}
 
-  baseline-browser-mapping@2.9.6:
-    resolution: {integrity: sha512-v9BVVpOTLB59C9E7aSnmIF8h7qRsFpx+A2nugVMTszEOMcfjlZMsXRm4LF23I3Z9AJxc8ANpIvzbzONoX9VJlg==}
+  baseline-browser-mapping@2.9.7:
+    resolution: {integrity: sha512-k9xFKplee6KIio3IDbwj+uaCLpqzOwakOgmqzPezM0sFJlFKcg30vk2wOiAJtkTSfx0SSQDSe8q+mWA/fSH5Zg==}
     hasBin: true
 
   better-path-resolve@1.0.0:
@@ -5278,8 +5278,8 @@ packages:
     resolution: {integrity: sha512-w+5mJ3GuFL+NjVtJlvydShqE1eN3h3PbI7/5LAsYJP/2qtuMXjfL2LpHSRqo4b4eSF5K/DH1JXKUAHSB2UW50g==}
     engines: {node: '>= 0.4'}
 
-  es-toolkit@1.42.0:
-    resolution: {integrity: sha512-SLHIyY7VfDJBM8clz4+T2oquwTQxEzu263AyhVK4jREOAwJ+8eebaa4wM3nlvnAqhDrMm2EsA6hWHaQsMPQ1nA==}
+  es-toolkit@1.43.0:
+    resolution: {integrity: sha512-SKCT8AsWvYzBBuUqMk4NPwFlSdqLpJwmy6AP322ERn8W2YLIB6JBXnwMI2Qsh2gfphT3q7EKAxKb23cvFHFwKA==}
 
   esbuild@0.25.12:
     resolution: {integrity: sha512-bbPBYYrtZbkt6Os6FiTLCTFxvq4tt3JKall1vRwshA3fdVztsLAatFaZobhkBC8/BrPetoa0oksYoKXoG4ryJg==}
@@ -5814,8 +5814,8 @@ packages:
     resolution: {integrity: sha512-eCzNACUXPb1PW5l0ULTzMHaL/ltPRADoPgjBlT8jWsTbxkCp6siv+qKJ/1ldaybCthGwsYFYallF7u9AkU4L+A==}
     engines: {node: '>=18.0.0'}
 
-  googleapis@167.0.0:
-    resolution: {integrity: sha512-8Xqeki6K9u9jh6rGRA/OywRMXg8yXuv4ZLwSSuMBB3Ze1pErbR/iv00UmVtcrP2LcSW2Fqi+LUJ7WgFMDoxd7Q==}
+  googleapis@168.0.0:
+    resolution: {integrity: sha512-A1gQtli8/UXjuGnBAwvObwcsIs2xheV82OnmnrrqSOzgzU0gsu18VbOBLh6G8DiMsZze5hJmOJJM7qsVuqAe6g==}
     engines: {node: '>=18'}
 
   gopd@1.2.0:
@@ -7471,8 +7471,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
 
-  react-i18next@16.4.1:
-    resolution: {integrity: sha512-GzsYomxb1/uE7nlJm0e1qQ8f+W9I3Xirh9VoycZIahk6C8Pmv/9Fd0ek6zjf1FSgtGLElDGqwi/4FOHEGUbsEQ==}
+  react-i18next@16.5.0:
+    resolution: {integrity: sha512-IMpPTyCTKxEj8klCrLKUTIUa8uYTd851+jcu2fJuUB9Agkk9Qq8asw4omyeHVnOXHrLgQJGTm5zTvn8HpaPiqw==}
     peerDependencies:
       i18next: '>= 25.6.2'
       react: '>= 16.8.0'
@@ -8016,8 +8016,8 @@ packages:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
 
-  strnum@2.1.1:
-    resolution: {integrity: sha512-7ZvoFTiCnGxBtDqJ//Cu6fWtZtc7Y3x+QOirG15wztbdngGSkht27o2pyGWrVy0b4WAy3jbKmnoK6g5VlVNUUw==}
+  strnum@2.1.2:
+    resolution: {integrity: sha512-l63NF9y/cLROq/yqKXSLtcMeeyOfnSQlfMSlzFt/K73oIaD8DGaQWd7Z34X9GPiKqP5rbSh84Hl4bOlLcjiSrQ==}
 
   strtok3@10.3.4:
     resolution: {integrity: sha512-KIy5nylvC5le1OdaaoCJ07L+8iQzJHGH6pWDuzS+d07Cu7n1MZ2x26P8ZKIWfbK02+XIL8Mp4RkWeqdUCrDMfg==}
@@ -14109,7 +14109,7 @@ snapshots:
 
   base64id@2.0.0: {}
 
-  baseline-browser-mapping@2.9.6: {}
+  baseline-browser-mapping@2.9.7: {}
 
   better-path-resolve@1.0.0:
     dependencies:
@@ -14162,7 +14162,7 @@ snapshots:
 
   browserslist@4.28.1:
     dependencies:
-      baseline-browser-mapping: 2.9.6
+      baseline-browser-mapping: 2.9.7
       caniuse-lite: 1.0.30001760
       electron-to-chromium: 1.5.267
       node-releases: 2.0.27
@@ -14800,7 +14800,7 @@ snapshots:
       is-date-object: 1.1.0
       is-symbol: 1.1.1
 
-  es-toolkit@1.42.0: {}
+  es-toolkit@1.43.0: {}
 
   esbuild@0.25.12:
     optionalDependencies:
@@ -15190,7 +15190,7 @@ snapshots:
 
   fast-xml-parser@5.2.5:
     dependencies:
-      strnum: 2.1.1
+      strnum: 2.1.2
 
   fastq@1.19.1:
     dependencies:
@@ -15518,7 +15518,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  googleapis@167.0.0:
+  googleapis@168.0.0:
     dependencies:
       google-auth-library: 10.5.0
       googleapis-common: 8.0.1
@@ -17480,7 +17480,7 @@ snapshots:
     dependencies:
       react: 19.2.3
 
-  react-i18next@16.4.1(i18next@25.7.2(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3):
+  react-i18next@16.5.0(i18next@25.7.2(typescript@5.9.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3):
     dependencies:
       '@babel/runtime': 7.28.4
       html-parse-stringify: 3.0.1
@@ -18144,7 +18144,7 @@ snapshots:
 
   strip-json-comments@5.0.3: {}
 
-  strnum@2.1.1: {}
+  strnum@2.1.2: {}
 
   strtok3@10.3.4:
     dependencies:

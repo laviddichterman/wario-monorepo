@@ -10,4 +10,3 @@ export interface IProductInstanceFunctionRepository {
 }
 
 export const PRODUCT_INSTANCE_FUNCTION_REPOSITORY = Symbol('IProductInstanceFunctionRepository');
-

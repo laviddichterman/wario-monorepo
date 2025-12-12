@@ -57,10 +57,7 @@ export class PrinterGroupTypeOrmRepository implements IPrinterGroupRepository {
 
   async delete(id: string): Promise<boolean> {
     const now = new Date();
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
     return (result.affected ?? 0) > 0;
   }
 }

@@ -63,9 +63,7 @@ describe('OrderTypeOrmRepository', () => {
 
       expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('order');
 
-
       expect(qb.where).toHaveBeenCalledWith(expect.stringContaining('thirdPartyInfo'), { squareIds: ids });
-
 
       expect(qb.getMany).toHaveBeenCalled();
     });
@@ -88,7 +86,7 @@ describe('OrderTypeOrmRepository', () => {
 
       expect(mockRepo.update).toHaveBeenCalledWith(
         { id: 'o1', status: WOrderStatus.OPEN, locked: IsNull() },
-        { locked: 'lock' }
+        { locked: 'lock' },
       );
       expect(res).toEqual(expect.objectContaining({ id: 'o1', locked: 'lock' }));
     });
@@ -96,10 +94,7 @@ describe('OrderTypeOrmRepository', () => {
     it('tryAcquireLock should update if null', async () => {
       mockRepo.update?.mockResolvedValue({ affected: 1, raw: [], generatedMaps: [] });
       await repository.tryAcquireLock('o1', 'lock');
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { id: 'o1', locked: IsNull() },
-        { locked: 'lock' }
-      );
+      expect(mockRepo.update).toHaveBeenCalledWith({ id: 'o1', locked: IsNull() }, { locked: 'lock' });
     });
 
     it('updateWithLock should use lock in where clause', async () => {
@@ -107,17 +102,11 @@ describe('OrderTypeOrmRepository', () => {
 
       // With lock
       await repository.updateWithLock('o1', 'mylock', { status: WOrderStatus.COMPLETED });
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { id: 'o1', locked: 'mylock' },
-        { status: WOrderStatus.COMPLETED }
-      );
+      expect(mockRepo.update).toHaveBeenCalledWith({ id: 'o1', locked: 'mylock' }, { status: WOrderStatus.COMPLETED });
 
       // Without lock
       await repository.updateWithLock('o1', null, { status: WOrderStatus.COMPLETED });
-      expect(mockRepo.update).toHaveBeenCalledWith(
-        { id: 'o1', locked: IsNull() },
-        { status: WOrderStatus.COMPLETED }
-      );
+      expect(mockRepo.update).toHaveBeenCalledWith({ id: 'o1', locked: IsNull() }, { status: WOrderStatus.COMPLETED });
     });
 
     it('lockReadyOrders', async () => {
@@ -133,25 +122,20 @@ describe('OrderTypeOrmRepository', () => {
         WFulfillmentStatus.CONFIRMED,
         '2023-01-01',
         1200,
-        'mylock'
+        'mylock',
       );
 
       expect(count).toBe(5);
 
       expect(mockRepo.createQueryBuilder).toHaveBeenCalled();
 
-
       expect(qb.update).toHaveBeenCalledWith(OrderEntity);
-
 
       expect(qb.set).toHaveBeenCalledWith({ locked: 'mylock' });
 
-
       expect(qb.where).toHaveBeenCalled();
 
-
       expect(qb.andWhere).toHaveBeenCalledTimes(4);
-
 
       expect(qb.execute).toHaveBeenCalled();
     });
@@ -163,9 +147,7 @@ describe('OrderTypeOrmRepository', () => {
       const qb = mockRepo.createQueryBuilder() as unknown as MockQueryBuilder<OrderEntity>;
       await repository.unlockAll();
 
-
       expect(qb.set).toHaveBeenCalledWith({ locked: null });
-
 
       expect(qb.where).toHaveBeenCalledWith('locked IS NOT NULL');
     });

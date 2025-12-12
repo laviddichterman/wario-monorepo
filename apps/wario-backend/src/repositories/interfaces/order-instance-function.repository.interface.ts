@@ -10,4 +10,3 @@ export interface IOrderInstanceFunctionRepository {
 }
 
 export const ORDER_INSTANCE_FUNCTION_REPOSITORY = Symbol('IOrderInstanceFunctionRepository');
-

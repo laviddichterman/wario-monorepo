@@ -29,9 +29,6 @@ export const ProductModifierSchema = new Schema(
 // represents a class of products that can be made and inserted into the catalog
 const WProductSchema = new Schema<MT>(
   {
-    // this should be required but we need to break a cyclic dependency in creation of a new product class
-    baseProductId: { type: String, ref: 'WProductInstanceSchema' },
-
     // Moneys in base currency unit (300 is $3)
     price: {
       type: WMoney,
@@ -83,10 +80,10 @@ const WProductSchema = new Schema<MT>(
     // list of option type IDs and nullable product instance function IDs
     modifiers: [ProductModifierSchema],
 
-    // Corresponding to a WCategorySchema
-    category_ids: [{ type: String, ref: 'WCategorySchema', _id: false }],
-
     printerGroup: String,
+
+    // ordered list of product instance IDs (first element is the base/default instance)
+    instances: [{ type: String, ref: 'WProductInstanceSchema' }],
   },
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );

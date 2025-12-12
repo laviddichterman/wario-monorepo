@@ -21,9 +21,6 @@ export const WOptionTypeSchema = new Schema<MT>(
       required: true,
     },
 
-    // ordinal
-    ordinal: { type: Number, required: true },
-
     // if the option type should NOT be enabled, then the min requirements need not be met for
     // a complete product.
     min_selected: { type: Number, required: true },
@@ -73,6 +70,9 @@ export const WOptionTypeSchema = new Schema<MT>(
       // when the section is not empty, string to append to the whole modifier type section when used in description/title, etc
       non_empty_group_suffix: String,
     },
+
+    // ordered list of option IDs belonging to this modifier type
+    options: [{ type: String, ref: 'WOptionSchema' }],
   },
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );

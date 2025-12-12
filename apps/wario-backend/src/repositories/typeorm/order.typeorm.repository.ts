@@ -60,9 +60,7 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     lock: string | null,
     updates: Partial<WOrderInstance>,
   ): Promise<WOrderInstance | null> {
-    const whereClause = lock === null
-      ? { id, locked: IsNull() }
-      : { id, locked: lock };
+    const whereClause = lock === null ? { id, locked: IsNull() } : { id, locked: lock };
     const result = await this.repo.update(whereClause, updates);
     if ((result.affected ?? 0) === 0) return null;
     return this.findById(id);
@@ -107,24 +105,14 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     return result.affected ?? 0;
   }
 
-  async acquireLock(
-    id: string,
-    status: WOrderStatus,
-    lock: string,
-  ): Promise<WOrderInstance | null> {
-    const result = await this.repo.update(
-      { id, status, locked: IsNull() },
-      { locked: lock },
-    );
+  async acquireLock(id: string, status: WOrderStatus, lock: string): Promise<WOrderInstance | null> {
+    const result = await this.repo.update({ id, status, locked: IsNull() }, { locked: lock });
     if ((result.affected ?? 0) === 0) return null;
     return this.findById(id);
   }
 
   async tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null> {
-    const result = await this.repo.update(
-      { id, locked: IsNull() },
-      { locked: lock },
-    );
+    const result = await this.repo.update({ id, locked: IsNull() }, { locked: lock });
     if ((result.affected ?? 0) === 0) return null;
     return this.findById(id);
   }
@@ -139,4 +127,3 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     return result.affected ?? 0;
   }
 }
-

@@ -100,10 +100,7 @@ export class ProductController {
   @Scopes('write:catalog')
   @HttpCode(201)
   async postProductInstance(@Param('pid') productId: string, @Body() body: UncommittedIProductInstanceDto) {
-    const doc = await this.catalogProvider.CreateProductInstance({
-      productId: productId,
-      ...(body as UncommittedIProductInstance),
-    });
+    const doc = await this.catalogProvider.CreateProductInstance(productId, body as UncommittedIProductInstance);
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
@@ -118,7 +115,7 @@ export class ProductController {
     @Param('piid') productInstanceId: string,
     @Body() body: PartialUncommittedProductInstanceDto,
   ) {
-    const product = this.catalogProvider.CatalogSelectors.productEntry(productId)?.product;
+    const product = this.catalogProvider.CatalogSelectors.productEntry(productId);
     if (!product) {
       throw new ProductNotFoundException(productId);
     }

@@ -194,7 +194,7 @@ export class OrderNotificationService {
     We're letting you know that we've updated your order time.<br />
     The new time is ${newTimeString}.<br />
     ${additionalMessage ? `<p>${additionalMessage}</p>` : ''}
-    If you have any questions, please feel free to reach out to us by responding to this email${this.dataProvider.Settings.config.LOCATION_PHONE_NUMBER ? ` or via text message at ${this.dataProvider.Settings.config.LOCATION_PHONE_NUMBER as string}` : ''}.`;
+    If you have any questions, please feel free to reach out to us by responding to this email${this.dataProvider.Settings?.LOCATION_PHONE_NUMBER ? ` or via text message at ${this.dataProvider.Settings.LOCATION_PHONE_NUMBER}` : ''}.`;
     return await this.googleService.SendEmail(
       {
         name: STORE_NAME,
@@ -347,7 +347,7 @@ export class OrderNotificationService {
     return Object.entries(cart)
       .filter(([_, cart]) => cart.length > 0)
       .map(([catid, category_cart]) => {
-        const category_name = catalogCategories[catid].category.name;
+        const category_name = catalogCategories[catid].name;
         const category_shortcart = {
           category_name: category_name,
           products: category_cart.map((x) => `${x.quantity.toString()}x: ${x.product.m.name}`),

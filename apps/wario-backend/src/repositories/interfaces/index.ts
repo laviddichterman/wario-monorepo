@@ -13,4 +13,3 @@ export * from './product-instance.repository.interface';
 export * from './product.repository.interface';
 export * from './seating-resource.repository.interface';
 export * from './settings.repository.interface';
-

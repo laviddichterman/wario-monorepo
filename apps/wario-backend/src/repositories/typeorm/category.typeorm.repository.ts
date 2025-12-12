@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 
 import type { ICategory } from '@wcp/wario-shared';
 
@@ -22,11 +22,9 @@ export class CategoryTypeOrmRepository implements ICategoryRepository {
     return this.repo.find({ where: { validTo: IsNull() } });
   }
 
-  async findByParentId(parentId: string | null): Promise<ICategory[]> {
-    if (parentId === null) {
-      return this.repo.find({ where: { parent_id: IsNull(), validTo: IsNull() } });
-    }
-    return this.repo.find({ where: { parent_id: parentId, validTo: IsNull() } });
+  async findByIds(ids: string[]): Promise<ICategory[]> {
+    if (!ids.length) return [];
+    return this.repo.find({ where: { id: In(ids), validTo: IsNull() } });
   }
 
   async create(category: Omit<ICategory, 'id'>): Promise<ICategory> {
@@ -63,25 +61,91 @@ export class CategoryTypeOrmRepository implements ICategoryRepository {
 
   async delete(id: string): Promise<boolean> {
     // Soft delete: set validTo on current version
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: new Date() },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: new Date() });
     return (result.affected ?? 0) > 0;
   }
 
+  /**
+   * Removes a service ID from the serviceDisable array of all active categories.
+   * Uses SCD2: closes affected rows and inserts new versions with the item removed.
+   * Efficient: only fetches/updates rows that contain the serviceId.
+   */
   async removeServiceDisableFromAll(serviceId: string): Promise<number> {
-    // For TypeORM with SCD2, we need to update all active categories
-    const categories = await this.repo.find({ where: { validTo: IsNull() } });
-    let count = 0;
-    for (const cat of categories) {
-      if (cat.serviceDisable.includes(serviceId)) {
-        await this.update(cat.id, {
+    const now = new Date();
+
+    return this.repo.manager.transaction(async (manager) => {
+      const repo = manager.getRepository(CategoryEntity);
+
+      // Only fetch categories that contain this serviceId
+      const affected = await repo
+        .createQueryBuilder('cat')
+        .where('cat.validTo IS NULL')
+        .andWhere(':serviceId = ANY(cat.serviceDisable)')
+        .setParameter('serviceId', serviceId)
+        .getMany();
+
+      if (!affected.length) return 0;
+
+      // Close old versions
+      const idsToClose = affected.map((c) => c.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the serviceId removed
+      const newVersions = affected.map((cat) => {
+        const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = cat;
+        return repo.create({
+          ...(rest as ICategory),
           serviceDisable: cat.serviceDisable.filter((s) => s !== serviceId),
+          validFrom: now,
+          validTo: null,
         });
-        count++;
-      }
-    }
-    return count;
+      });
+
+      await repo.createQueryBuilder().insert().into(CategoryEntity).values(newVersions).execute();
+      return affected.length;
+    });
+  }
+
+  /**
+   * Removes product IDs from the products array of all active categories.
+   * Uses SCD2: closes affected rows and inserts new versions with items removed.
+   * Efficient: only fetches/updates rows that have overlap with productIds.
+   */
+  async removeProductFromAll(productIds: string[]): Promise<number> {
+    if (!productIds.length) return 0;
+    const now = new Date();
+
+    return this.repo.manager.transaction(async (manager) => {
+      const repo = manager.getRepository(CategoryEntity);
+
+      // Only fetch categories that have overlap with the productIds
+      const affected = await repo
+        .createQueryBuilder('cat')
+        .where('cat.validTo IS NULL')
+        .andWhere('cat.products && :productIds::text[]')
+        .setParameter('productIds', productIds)
+        .getMany();
+
+      if (!affected.length) return 0;
+
+      // Close old versions
+      const idsToClose = affected.map((c) => c.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the productIds removed
+      const productIdSet = new Set(productIds);
+      const newVersions = affected.map((cat) => {
+        const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = cat;
+        return repo.create({
+          ...(rest as ICategory),
+          products: cat.products.filter((p) => !productIdSet.has(p)),
+          validFrom: now,
+          validTo: null,
+        });
+      });
+
+      await repo.createQueryBuilder().insert().into(CategoryEntity).values(newVersions).execute();
+      return affected.length;
+    });
   }
 }

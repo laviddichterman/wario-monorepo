@@ -15,9 +15,12 @@ import {
   DetermineCartBasedLeadTime,
   DiscountMethod,
   EventTitleStringBuilder,
+  FulfillmentConfig,
   FulfillmentData,
   FulfillmentTime,
   FulfillmentType,
+  GenerateCategoryOrderList,
+  ICategory,
   Metrics,
   MoneyToDisplayString,
   OrderLineDiscount,
@@ -29,6 +32,7 @@ import {
   ResponseFailure,
   ResponseSuccess,
   ResponseWithStatusCode,
+  Selector,
   TenderBaseStatus,
   ValidateLockAndSpendSuccess,
   WDateUtils,
@@ -41,6 +45,7 @@ import {
 
 import type { IOrderRepository } from '../../repositories/interfaces';
 import { ORDER_REPOSITORY } from '../../repositories/interfaces';
+import { AppConfigService } from '../app-config.service';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { GoogleService } from '../google/google.service';
@@ -59,6 +64,19 @@ const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
     : `${format(interval.start, WDateUtils.DisplayTimeFormat)} - ${format(interval.end, WDateUtils.DisplayTimeFormat)} `;
 };
 
+export const GenerateCategoryOrderMapForOrder = (
+  fulfillmentConfig: FulfillmentConfig,
+  categorySelector: Selector<ICategory>,
+): Record<string, number> => {
+  const mainCategoryOrderList = GenerateCategoryOrderList(fulfillmentConfig.orderBaseCategoryId, categorySelector);
+  const subCategoryOrderList = fulfillmentConfig.orderSupplementaryCategoryId
+    ? GenerateCategoryOrderList(fulfillmentConfig.orderSupplementaryCategoryId, categorySelector)
+    : [];
+  return Object.fromEntries(
+    [...mainCategoryOrderList, ...subCategoryOrderList].map((x, i) => [x, i] as [string, number]),
+  );
+};
+
 @Injectable()
 export class OrderManagerService {
   constructor(
@@ -70,6 +88,7 @@ export class OrderManagerService {
     @Inject(StoreCreditProviderService) private storeCreditService: StoreCreditProviderService,
     @Inject(CatalogProviderService) private catalogService: CatalogProviderService,
     @Inject(DataProviderService) private dataProvider: DataProviderService,
+    @Inject(AppConfigService) private appConfigService: AppConfigService,
     @Inject(OrderNotificationService) private orderNotificationService: OrderNotificationService,
     @Inject(OrderPaymentService) private orderPaymentService: OrderPaymentService,
     @Inject(OrderValidationService) private orderValidationService: OrderValidationService,
@@ -100,9 +119,7 @@ export class OrderManagerService {
     );
 
     if (lockedCount > 0) {
-      this.logger.info(
-        `Locked ${String(lockedCount)} orders with service before ${formatISO(endOfRange)}`,
-      );
+      this.logger.info(`Locked ${String(lockedCount)} orders with service before ${formatISO(endOfRange)}`);
       const lockedOrders = await this.orderRepository.findByLock(idempotencyKey);
       for (const order of lockedOrders) {
         await this.printerService.SendLockedOrder(order, true);
@@ -115,7 +132,6 @@ export class OrderManagerService {
     const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
     return new Date(typeof now === 'number' ? now + THREE_HOURS_MS : now.getTime() + THREE_HOURS_MS);
   };
-
 
   /**
    * Send a move ticket for a pre-locked order.
@@ -142,6 +158,7 @@ export class OrderManagerService {
     try {
       // send order to alternate location
       const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+
       const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
       const rebuiltCart = RebuildAndSortCart(
         lockedOrder.cart,
@@ -165,17 +182,13 @@ export class OrderManagerService {
       }
 
       // update order in DB, release lock
-      const updatedOrder = await this.orderRepository.updateWithLock(
-        lockedOrder.id,
-        lockedOrder.locked,
-        {
-          locked: null,
-          metadata: [
-            ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
-            ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
-          ],
-        },
-      );
+      const updatedOrder = await this.orderRepository.updateWithLock(lockedOrder.id, lockedOrder.locked, {
+        locked: null,
+        metadata: [
+          ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
+          ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
+        ],
+      });
       if (!updatedOrder) {
         throw new Error('Failed to find updated order after sending to Square.');
       }
@@ -269,10 +282,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-              success: false;
-              result: null;
-              error: SquareError[];
-            };
+                success: false;
+                result: null;
+                error: SquareError[];
+              };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit
@@ -413,20 +426,16 @@ export class OrderManagerService {
 
       // update order in DB, release lock
       try {
-        const updatedOrder = await this.orderRepository.updateWithLock(
-          lockedOrder.id,
-          lockedOrder.locked,
-          {
-            locked: null,
-            status: WOrderStatus.CANCELED,
-            fulfillment: { ...(lockedOrder.fulfillment as FulfillmentData), status: WFulfillmentStatus.CANCELED },
-            metadata: [
-              ...lockedOrder.metadata.filter((x) => !['SQORDER_PRINT', 'SQORDER_MSG'].includes(x.key)),
-              ...(SQORDER_PRINT.length > 0 ? [{ key: 'SQORDER_PRINT', value: SQORDER_PRINT.join(',') }] : []),
-              ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
-            ],
-          },
-        );
+        const updatedOrder = await this.orderRepository.updateWithLock(lockedOrder.id, lockedOrder.locked, {
+          locked: null,
+          status: WOrderStatus.CANCELED,
+          fulfillment: { ...(lockedOrder.fulfillment as FulfillmentData), status: WFulfillmentStatus.CANCELED },
+          metadata: [
+            ...lockedOrder.metadata.filter((x) => !['SQORDER_PRINT', 'SQORDER_MSG'].includes(x.key)),
+            ...(SQORDER_PRINT.length > 0 ? [{ key: 'SQORDER_PRINT', value: SQORDER_PRINT.join(',') }] : []),
+            ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
+          ],
+        });
         if (!updatedOrder) {
           return {
             status: 404,
@@ -482,6 +491,11 @@ export class OrderManagerService {
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     const updatedOrder = { ...lockedOrder, ...orderUpdate };
     const fulfillmentConfig = this.dataProvider.Fulfillments[updatedOrder.fulfillment.selectedService];
+    const categoryOrderMap = GenerateCategoryOrderMapForOrder(
+      fulfillmentConfig,
+      this.catalogService.CatalogSelectors.category,
+    );
+
     const _is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
     const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
     const _oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
@@ -497,6 +511,7 @@ export class OrderManagerService {
     );
     const eventTitle = EventTitleStringBuilder(
       this.catalogService.CatalogSelectors,
+      categoryOrderMap,
       fulfillmentConfig,
       customerName,
       lockedOrder.fulfillment,
@@ -514,8 +529,8 @@ export class OrderManagerService {
       discounts: updatedOrder.discounts,
       config: {
         SERVICE_CHARGE: 0,
-        AUTOGRAT_THRESHOLD: (this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number) || 5,
-        TAX_RATE: (this.dataProvider.Settings.config.TAX_RATE as number) || 0.1025,
+        AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
+        TAX_RATE: this.dataProvider.Settings?.TAX_RATE || 0.1025,
         CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
       },
     });
@@ -583,6 +598,10 @@ export class OrderManagerService {
     emailCustomer: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+    const categoryOrderMap = GenerateCategoryOrderMapForOrder(
+      fulfillmentConfig,
+      this.catalogService.CatalogSelectors.category,
+    );
     const is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
     const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
     const oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
@@ -598,6 +617,7 @@ export class OrderManagerService {
     );
     const eventTitle = EventTitleStringBuilder(
       this.catalogService.CatalogSelectors,
+      categoryOrderMap,
       fulfillmentConfig,
       customerName,
       lockedOrder.fulfillment,
@@ -677,8 +697,8 @@ export class OrderManagerService {
           discounts: lockedOrder.discounts,
           config: {
             SERVICE_CHARGE: 0,
-            AUTOGRAT_THRESHOLD: (this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number) || 5,
-            TAX_RATE: (this.dataProvider.Settings.config.TAX_RATE as number) || 0.1035,
+            AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
+            TAX_RATE: this.dataProvider.Settings?.TAX_RATE || 0.1035,
             CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
           },
         }),
@@ -688,18 +708,14 @@ export class OrderManagerService {
 
     // adjust DB event
     try {
-      const updatedOrder = await this.orderRepository.updateWithLock(
-        lockedOrder.id,
-        lockedOrder.locked,
-        {
-          locked: null,
-          fulfillment: fulfillmentDto,
-          metadata: [
-            ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
-            ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
-          ],
-        },
-      );
+      const updatedOrder = await this.orderRepository.updateWithLock(lockedOrder.id, lockedOrder.locked, {
+        locked: null,
+        fulfillment: fulfillmentDto,
+        metadata: [
+          ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
+          ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
+        ],
+      });
       // this.socketIoService.EmitOrder(updatedOrder!); // TODO: Implement EmitOrder in SocketIoService
       return {
         status: 200,
@@ -740,6 +756,10 @@ export class OrderManagerService {
 
     // create calendar entry
     const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+    const categoryOrderMap = GenerateCategoryOrderMapForOrder(
+      fulfillmentConfig,
+      this.catalogService.CatalogSelectors.category,
+    );
     const dateTimeInterval = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
     const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
     const rebuiltCart = RebuildAndSortCart(
@@ -750,6 +770,7 @@ export class OrderManagerService {
     );
     const eventTitle = EventTitleStringBuilder(
       this.catalogService.CatalogSelectors,
+      categoryOrderMap,
       fulfillmentConfig,
       customerName,
       lockedOrder.fulfillment,
@@ -769,8 +790,8 @@ export class OrderManagerService {
         discounts: lockedOrder.discounts,
         config: {
           SERVICE_CHARGE: 0,
-          AUTOGRAT_THRESHOLD: this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number,
-          TAX_RATE: this.dataProvider.Settings.config.TAX_RATE as number,
+          AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
+          TAX_RATE: this.dataProvider.Settings?.TAX_RATE || 0.1035,
           CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
         },
       }),
@@ -779,18 +800,14 @@ export class OrderManagerService {
 
     // update order in DB, release lock
     try {
-      const updatedOrder = await this.orderRepository.updateWithLock(
-        lockedOrder.id,
-        lockedOrder.locked,
-        {
-          locked: null,
-          status: WOrderStatus.CONFIRMED,
-          metadata: [
-            ...lockedOrder.metadata,
-            ...(calendarResponse ? [{ key: 'GCALEVENT', value: calendarResponse }] : []),
-          ],
-        },
-      );
+      const updatedOrder = await this.orderRepository.updateWithLock(lockedOrder.id, lockedOrder.locked, {
+        locked: null,
+        status: WOrderStatus.CONFIRMED,
+        metadata: [
+          ...lockedOrder.metadata,
+          ...(calendarResponse ? [{ key: 'GCALEVENT', value: calendarResponse }] : []),
+        ],
+      });
       // this.socketIoService.EmitOrder(updatedOrder!); // TODO: Implement EmitOrder in SocketIoService
       return { status: 200, success: true as const, result: updatedOrder! };
     } catch (err: unknown) {
@@ -845,13 +862,19 @@ export class OrderManagerService {
     }
   };
 
-  GetOrders = async ({ date, status }: { date: string | null; status: WOrderStatus | null }): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
+  GetOrders = async ({
+    date,
+    status,
+  }: {
+    date: string | null;
+    status: WOrderStatus | null;
+  }): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
     try {
       let orders: WOrderInstance[];
       if (date && status) {
         // Both filters - need to filter in memory since we don't have a combined method
         const dateOrders = await this.orderRepository.findByFulfillmentDate(date);
-        orders = dateOrders.filter(o => o.status === status);
+        orders = dateOrders.filter((o) => o.status === status);
       } else if (date) {
         orders = await this.orderRepository.findByFulfillmentDate(date);
       } else if (status) {
@@ -891,8 +914,6 @@ export class OrderManagerService {
     };
   };
 
-
-
   /**
    * Send a pre-locked order to the printer service.
    * The order must already be locked before calling this method.
@@ -901,9 +922,6 @@ export class OrderManagerService {
   public SendLockedOrder = async (lockedOrder: WOrderInstance): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     return this.printerService.SendLockedOrder(lockedOrder, true);
   };
-
-
-
 
   public CreateOrder = async (
     createOrderRequest: CreateOrderRequestV2,
@@ -924,6 +942,10 @@ export class OrderManagerService {
       };
     }
     const fulfillmentConfig = this.dataProvider.Fulfillments[createOrderRequest.fulfillment.selectedService];
+    const categoryOrderMap = GenerateCategoryOrderMapForOrder(
+      fulfillmentConfig,
+      this.catalogService.CatalogSelectors.category,
+    );
     const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
     const referenceId = requestTime.toString(36).toUpperCase();
     const dateTimeInterval = DateTimeIntervalBuilder(createOrderRequest.fulfillment, fulfillmentConfig.maxDuration);
@@ -940,7 +962,7 @@ export class OrderManagerService {
     const { noLongerAvailable, rebuiltCart } = this.orderValidationService.RebuildOrderState(
       createOrderRequest.cart,
       dateTimeInterval.start,
-      fulfillmentConfig.id,
+      fulfillmentConfig,
     );
     if (noLongerAvailable.length > 0) {
       this.logger.warn(
@@ -962,6 +984,7 @@ export class OrderManagerService {
 
     const shorthandEventTitle = EventTitleStringBuilder(
       this.catalogService.CatalogSelectors,
+      categoryOrderMap,
       fulfillmentConfig,
       customerName,
       createOrderRequest.fulfillment,
@@ -998,8 +1021,8 @@ export class OrderManagerService {
       order: orderInstance,
       config: {
         SERVICE_CHARGE: 0,
-        AUTOGRAT_THRESHOLD: (this.dataProvider.Settings.config.AUTOGRAT_THRESHOLD as number) ?? 0,
-        TAX_RATE: (this.dataProvider.Settings.config.TAX_RATE as number) ?? 0.1035,
+        AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
+        TAX_RATE: this.dataProvider.Settings?.TAX_RATE ?? 0.1035,
         CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
       },
     });

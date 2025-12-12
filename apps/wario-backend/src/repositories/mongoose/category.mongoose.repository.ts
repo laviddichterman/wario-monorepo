@@ -23,9 +23,12 @@ export class CategoryMongooseRepository implements ICategoryRepository {
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
-  async findByParentId(parentId: string | null): Promise<ICategory[]> {
-    const docs = await this.model.find({ parent_id: parentId }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+  async findByIds(ids: string[]): Promise<ICategory[]> {
+    if (!ids.length) return [];
+    return this.model
+      .find({ _id: { $in: ids } })
+      .lean()
+      .exec();
   }
 
   async create(category: Omit<ICategory, 'id'>): Promise<ICategory> {
@@ -35,11 +38,7 @@ export class CategoryMongooseRepository implements ICategoryRepository {
   }
 
   async update(id: string, partial: Partial<Omit<ICategory, 'id'>>): Promise<ICategory | null> {
-    const updated = await this.model.findByIdAndUpdate(
-      id,
-      { $set: partial },
-      { new: true },
-    ).lean().exec();
+    const updated = await this.model.findByIdAndUpdate(id, { $set: partial }, { new: true }).lean().exec();
     if (!updated) {
       return null;
     }
@@ -53,6 +52,13 @@ export class CategoryMongooseRepository implements ICategoryRepository {
 
   async removeServiceDisableFromAll(serviceId: string): Promise<number> {
     const result = await this.model.updateMany({}, { $pull: { serviceDisable: serviceId } }).exec();
+    return result.modifiedCount;
+  }
+
+  async removeProductFromAll(productIds: string[]): Promise<number> {
+    if (!productIds.length) return 0;
+    // MongoDB $pullAll removes all matching items from array in a single operation
+    const result = await this.model.updateMany({}, { $pullAll: { products: productIds } }).exec();
     return result.modifiedCount;
   }
 }

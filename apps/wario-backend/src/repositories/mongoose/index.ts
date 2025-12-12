@@ -13,4 +13,3 @@ export * from './product-instance.mongoose.repository';
 export * from './product.mongoose.repository';
 export * from './seating-resource.mongoose.repository';
 export * from './settings.mongoose.repository';
-

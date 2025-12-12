@@ -12,7 +12,7 @@ export class ProductTypeOrmRepository implements IProductRepository {
   constructor(
     @InjectRepository(ProductEntity)
     private readonly repo: Repository<ProductEntity>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<IProduct | null> {
     return this.repo.findOne({ where: { id, validTo: IsNull() } });
@@ -20,15 +20,6 @@ export class ProductTypeOrmRepository implements IProductRepository {
 
   async findAll(): Promise<IProduct[]> {
     return this.repo.find({ where: { validTo: IsNull() } });
-  }
-
-  async findByCategoryId(categoryId: string): Promise<IProduct[]> {
-    // category_ids is a text array, use array contains
-    return this.repo
-      .createQueryBuilder('product')
-      .where('product.validTo IS NULL')
-      .andWhere(':categoryId = ANY(product.category_ids)', { categoryId })
-      .getMany();
   }
 
   async create(product: Omit<IProduct, 'id'>): Promise<IProduct> {
@@ -65,42 +56,8 @@ export class ProductTypeOrmRepository implements IProductRepository {
 
   async delete(id: string): Promise<boolean> {
     const now = new Date();
-    const result = await this.repo.update(
-      { id, validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id, validTo: IsNull() }, { validTo: now });
     return (result.affected ?? 0) > 0;
-  }
-
-  async removeCategoryFromAll(categoryId: string): Promise<number> {
-    const now = new Date();
-    return this.repo.manager.transaction(async (manager) => {
-      const repo = manager.getRepository(ProductEntity);
-      const products = await repo.find({ where: { validTo: IsNull() } });
-
-      // Filter to only products that have the category
-      const affected = products.filter((prod) => prod.category_ids.includes(categoryId));
-
-      if (!affected.length) {
-        return 0;
-      }
-
-      const newVersions = affected.map((prod) => {
-        const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = prod;
-        return repo.create({
-          ...(rest as IProduct),
-          category_ids: prod.category_ids.filter((c) => c !== categoryId),
-          validFrom: now,
-          validTo: null,
-        });
-      });
-
-      const idsToClose = affected.map((prod) => prod.id);
-      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
-      await repo.createQueryBuilder().insert().into(ProductEntity).values(newVersions).execute();
-
-      return affected.length;
-    });
   }
 
   async findByQuery(filter: Partial<IProduct>): Promise<IProduct[]> {
@@ -177,28 +134,37 @@ export class ProductTypeOrmRepository implements IProductRepository {
     }
 
     const now = new Date();
-    const result = await this.repo.update(
-      { id: In(ids), validTo: IsNull() },
-      { validTo: now },
-    );
+    const result = await this.repo.update({ id: In(ids), validTo: IsNull() }, { validTo: now });
     return result.affected ?? 0;
   }
 
+  /**
+   * Removes a modifier type from all active products.
+   * Uses SCD2: closes affected rows and inserts new versions.
+   * Efficient: only fetches/updates rows that contain the modifier type.
+   */
   async removeModifierTypeFromAll(mtId: string): Promise<number> {
     const now = new Date();
     return this.repo.manager.transaction(async (manager) => {
       const repo = manager.getRepository(ProductEntity);
-      const products = await repo.find({ where: { validTo: IsNull() } });
 
-      // Filter to only products that have the modifier type
-      const affected = products.filter((prod) =>
-        prod.modifiers.some((m) => m.mtid === mtId),
-      );
+      // Only fetch products that contain this modifier type
+      const affected = await repo
+        .createQueryBuilder('prod')
+        .where('prod.validTo IS NULL')
+        .andWhere(`prod.modifiers @> :pattern::jsonb`)
+        .setParameter('pattern', JSON.stringify([{ mtid: mtId }]))
+        .getMany();
 
       if (!affected.length) {
         return 0;
       }
 
+      // Close old versions
+      const idsToClose = affected.map((prod) => prod.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the modifier type removed
       const newVersions = affected.map((prod) => {
         const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = prod;
         return repo.create({
@@ -209,10 +175,7 @@ export class ProductTypeOrmRepository implements IProductRepository {
         });
       });
 
-      const idsToClose = affected.map((prod) => prod.id);
-      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
       await repo.createQueryBuilder().insert().into(ProductEntity).values(newVersions).execute();
-
       return affected.length;
     });
   }
@@ -245,58 +208,81 @@ export class ProductTypeOrmRepository implements IProductRepository {
     });
   }
 
+  /**
+   * Clears the enable field from modifiers referencing a product instance function.
+   * Uses SCD2: closes affected rows and inserts new versions.
+   * Efficient: only fetches/updates rows that have a modifier with this enable field.
+   */
   async clearModifierEnableField(productInstanceFunctionId: string): Promise<number> {
     const now = new Date();
     return this.repo.manager.transaction(async (manager) => {
       const repo = manager.getRepository(ProductEntity);
-      const products = await repo.find({ where: { validTo: IsNull() } });
 
-      // Filter to only products that have a modifier with this enable field
-      const affected = products.filter((prod) =>
-        prod.modifiers.some((m) => m.enable === productInstanceFunctionId),
-      );
+      // Only fetch products that have a modifier with this enable field
+      const affected = await repo
+        .createQueryBuilder('prod')
+        .where('prod.validTo IS NULL')
+        .andWhere(`prod.modifiers @> :pattern::jsonb`)
+        .setParameter('pattern', JSON.stringify([{ enable: productInstanceFunctionId }]))
+        .getMany();
 
       if (!affected.length) {
         return 0;
       }
 
+      // Close old versions
+      const idsToClose = affected.map((prod) => prod.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the enable field cleared
       const newVersions = affected.map((prod) => {
         const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = prod;
         return repo.create({
           ...(rest as IProduct),
-          modifiers: prod.modifiers.map((m) =>
-            m.enable === productInstanceFunctionId ? { ...m, enable: null } : m,
-          ),
+          modifiers: prod.modifiers.map((m) => (m.enable === productInstanceFunctionId ? { ...m, enable: null } : m)),
           validFrom: now,
           validTo: null,
         });
       });
 
-      const idsToClose = affected.map((prod) => prod.id);
-      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
       await repo.createQueryBuilder().insert().into(ProductEntity).values(newVersions).execute();
-
       return affected.length;
     });
   }
 
+  /**
+   * Removes a service ID from serviceDisable arrays in all active products.
+   * Checks both top-level serviceDisable and modifier-level serviceDisable.
+   * Uses SCD2: closes affected rows and inserts new versions.
+   * Efficient: only fetches/updates rows that contain the serviceId.
+   */
   async removeServiceDisableFromAll(serviceId: string): Promise<number> {
     const now = new Date();
     return this.repo.manager.transaction(async (manager) => {
       const repo = manager.getRepository(ProductEntity);
-      const products = await repo.find({ where: { validTo: IsNull() } });
 
-      // Filter products that have the serviceId in either top-level or modifier serviceDisable
-      const affected = products.filter((prod) => {
-        const hasTopLevel = prod.serviceDisable.includes(serviceId);
-        const hasModifier = prod.modifiers.some((m) => m.serviceDisable.includes(serviceId));
-        return hasTopLevel || hasModifier;
-      });
+      // Only fetch products that have the serviceId in:
+      // 1. Top-level serviceDisable array, OR
+      // 2. Any modifier's serviceDisable array
+      const affected = await repo
+        .createQueryBuilder('prod')
+        .where('prod.validTo IS NULL')
+        .andWhere(
+          `(:serviceId = ANY(prod.serviceDisable) OR prod.modifiers @> :pattern::jsonb)`,
+        )
+        .setParameter('serviceId', serviceId)
+        .setParameter('pattern', JSON.stringify([{ serviceDisable: [serviceId] }]))
+        .getMany();
 
       if (!affected.length) {
         return 0;
       }
 
+      // Close old versions
+      const idsToClose = affected.map((prod) => prod.id);
+      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
+
+      // Create new versions with the serviceId removed from both places
       const newVersions = affected.map((prod) => {
         const { rowId: _rowId, validFrom: _vf, validTo: _vt, createdAt: _createdAt, ...rest } = prod;
         return repo.create({
@@ -311,12 +297,8 @@ export class ProductTypeOrmRepository implements IProductRepository {
         });
       });
 
-      const idsToClose = affected.map((prod) => prod.id);
-      await repo.update({ id: In(idsToClose), validTo: IsNull() }, { validTo: now });
       await repo.createQueryBuilder().insert().into(ProductEntity).values(newVersions).execute();
-
       return affected.length;
     });
   }
 }
-

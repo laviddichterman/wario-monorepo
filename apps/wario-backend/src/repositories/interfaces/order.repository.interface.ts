@@ -38,11 +38,7 @@ export interface IOrderRepository {
    * Atomically acquire lock on an order if conditions match.
    * Returns the order if lock was acquired, null otherwise.
    */
-  acquireLock(
-    id: string,
-    status: WOrderStatus,
-    lock: string,
-  ): Promise<WOrderInstance | null>;
+  acquireLock(id: string, status: WOrderStatus, lock: string): Promise<WOrderInstance | null>;
 
   /**
    * Atomically try to acquire lock on an order if not already locked.
@@ -55,5 +51,3 @@ export interface IOrderRepository {
 }
 
 export const ORDER_REPOSITORY = Symbol('IOrderRepository');
-
-

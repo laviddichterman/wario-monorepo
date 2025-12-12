@@ -10,10 +10,46 @@
 
 import { Test, type TestingModule } from '@nestjs/testing';
 
+import type { FulfillmentConfig } from '@wcp/wario-shared';
+
 import { mockCatalogProviderService } from '../../../test/utils';
 import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 
 import { OrderValidationService } from './order-validation.service';
+
+// Mock FulfillmentConfig for testing - using cast for test flexibility
+const createMockFulfillmentConfig = (overrides: Partial<FulfillmentConfig> = {}): FulfillmentConfig =>
+  ({
+    id: 'fulfillment-id',
+    displayName: 'Test Fulfillment',
+    shortcode: 'TF',
+    exposeFulfillment: true,
+    orderBaseCategoryId: 'base-cat-1',
+    menuBaseCategoryId: 'menu-cat-1',
+    orderSupplementaryCategoryId: null,
+    requirePrepayment: false,
+    allowPrepayment: true,
+    allowTipping: true,
+    autograt: null,
+    serviceCharge: null,
+    leadTime: 30,
+    leadTimeOffset: 0,
+    maxDuration: 60,
+    minDuration: 0,
+    timeStep: 15,
+    ordinal: 0,
+    service: 'PICKUP' as FulfillmentConfig['service'],
+    operatingHours: { rules: [] },
+    specialHours: [],
+    blockedOff: [],
+    messages: {
+      DESCRIPTION: 'Test description',
+      CONFIRMATION: 'Test confirmation',
+      INSTRUCTIONS: 'Test instructions',
+    },
+    terms: [],
+    ...overrides,
+  }) as FulfillmentConfig;
 
 describe('OrderValidationService', () => {
   let service: OrderValidationService;
@@ -64,7 +100,8 @@ describe('OrderValidationService', () => {
       });
 
       // Empty cart should return empty result without requiring catalog lookups
-      const result = service.RebuildOrderState([], new Date(), 'fulfillment-id');
+      const mockFulfillment = createMockFulfillmentConfig();
+      const result = service.RebuildOrderState([], new Date(), mockFulfillment);
 
       expect(result).toHaveProperty('noLongerAvailable');
       expect(result).toHaveProperty('rebuiltCart');
@@ -95,8 +132,9 @@ describe('OrderValidationService', () => {
       });
 
       // Should not throw when called with Date
+      const mockFulfillment = createMockFulfillmentConfig();
       expect(() => {
-        service.RebuildOrderState([], new Date('2024-01-15T18:00:00Z'), 'fulfillment-id');
+        service.RebuildOrderState([], new Date('2024-01-15T18:00:00Z'), mockFulfillment);
       }).not.toThrow();
     });
 
@@ -123,8 +161,9 @@ describe('OrderValidationService', () => {
       });
 
       // Should not throw when called with timestamp
+      const mockFulfillment = createMockFulfillmentConfig();
       expect(() => {
-        service.RebuildOrderState([], Date.now(), 'fulfillment-id');
+        service.RebuildOrderState([], Date.now(), mockFulfillment);
       }).not.toThrow();
     });
   });
