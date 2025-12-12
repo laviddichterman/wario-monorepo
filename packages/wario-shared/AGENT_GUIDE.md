@@ -26,3 +26,94 @@
 ## 3. Critical workflows
 
 - **Cart Logic**: The logic for "Are these two pizzas identical?" (`WProductEquals`) lives here. This ensures the Frontend cart grouping matches the Backend's expectations.
+
+### Visibility Logic (Display Path)
+
+Controls what products appear in menus and ordering UIs. Located in `src/lib/objects/WMenu.ts`.
+
+| Function                                             | Purpose                                                                                                                                         |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ComputeProductLevelVisibilityCheck`                 | Single source of truth for product visibility. Checks fulfillment, time, hide flags, and modifier availability. Returns `VisibleProductItem[]`. |
+| `ComputeCategoryVisibilityMap`                       | Pre-computes visibility for entire category tree in one pass. Returns `{ products, populatedChildren }` maps.                                   |
+| `ShowTemporarilyDisabledProducts`                    | Visibility filter for **menus**: shows enabled + time-disabled products (`reason !== DISABLED_BLANKET`).                                        |
+| `ShowCurrentlyAvailableProducts`                     | Visibility filter for **ordering**: shows only enabled products (`reason === ENABLED`).                                                         |
+| `GetMenuHideDisplayFlag` / `GetOrderHideDisplayFlag` | Returns `true` if product instance is hidden in that context.                                                                                   |
+
+**Visibility Check Order**:
+
+1. Fulfillment service disable check
+2. Time-based availability (via `DisableDataCheck`)
+3. Display flag (hide) check
+4. Modifier-level visibility (`ComputePotentiallyVisible`)
+
+### Validation Logic (Ordering Path)
+
+Controls whether a specific product configuration can be ordered. Located in `src/lib/objects/WMenu.ts`.
+
+| Function                                          | Purpose                                                                             |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `CanThisBeOrderedAtThisTimeAndFulfillmentCatalog` | Entry point for order validation. Checks if product is reachable + orderable.       |
+| `FilterWCPProduct`                                | Checks product orderability via `FilterProductSelector`.                            |
+| `FilterProductSelector`                           | Core validation: fulfillment disable, time availability, modifier option placement. |
+| `FilterProductUsingCatalog`                       | Category-level filtering with availability and modifier checks.                     |
+
+**Validation Check Order** (in `FilterProductSelector`):
+
+1. Incomplete check (if `filterIncomplete` is true)
+2. Fulfillment service disable
+3. Time-based availability (`DisableDataCheck === ENABLED`)
+4. Modifier option placement validity (left/right/whole enable checks)
+
+### Key Types
+
+```typescript
+type PotentiallyVisibleDisableReasons = DISABLE_REASON; // ENABLED, DISABLED_BLANKET, DISABLED_AVAILABILITY, etc.
+
+interface VisibleProductItem {
+  product: IProduct;
+  productInstance: IProductInstance;
+  metadata: WProductMetadata;
+}
+
+interface CategoryVisibilityMap {
+  products: Map<string, VisibleProductItem[]>;
+  populatedChildren: Map<string, string[]>;
+}
+```
+
+## 4. 2025 Schema Updates
+
+**Important**: See `documentation/DTO_GUIDE.md` for comprehensive breaking changes documentation, including:
+
+- Removed DTOs and fields
+- New ordering patterns (ordering embedded in parent entities)
+- Changed utility function signatures
+- **Root category requirement**: A root category must exist at the top of the hierarchy. All categories are its descendants. Database init must create it.
+
+Key files updated:
+
+- `documentation/DTO_GUIDE.md` - Full breaking changes table
+- `documentation/2025 schema updates.md` - Original change specification
+
+## Documentation Workflow (Shared Type Library)
+
+1. **Frame the task**: Capture a one-line problem statement, the primary consumer (backend validator, frontend form resolver, analytics), and the success metric (e.g., “Docs exist for all DTOs touched in PR #123; unknowns flagged; no broken links”).
+2. **Inventory the surfaces**: List every affected artifact before writing:
+   - Types/DTOs (`src/lib/types.ts`, `src/lib/dto/*`), domain objects (`src/lib/objects/*`), schemas (`src/lib/zod/*`), utilities, and any cross-package exports.
+   - Note relationships (e.g., `IProductInstance` → `IProductInstanceDto` → `CreateOrderRequestV2Dto`).
+3. **Lay down the skeleton** (per type/module) before filling details:
+   - Overview: what it represents and where it is used.
+   - Signature/shape: type alias/class name, required vs optional fields, default values.
+   - Params/fields table: name, type, required?, allowed values/ranges, units, examples.
+   - Behavior: validation rules, serialization notes (class-transformer/zod), versioning/compatibility, breaking-change risks.
+   - Consumers: known callers (services, DTOs, frontend forms).
+   - States: empty/loading/error/dirty where applicable.
+   - Examples: happy path + edge case.
+4. **Leave explicit stubs where unsure** so gaps are obvious:
+   - `TODO: Confirm <method|field> behavior — not obvious from src/lib/objects/<file>.ts`
+   - `??? Param <name> — clarify valid values/fallback (checked <file>:<line>, still unclear)`
+   - `TODO @owner 2024-05-20: Document error handling for <call>`
+   - Always log what you checked (file + line, ticket, PR) next to the stub.
+5. **Research pass**: Read source/types/tests, run quick examples if needed, and resolve stubs. If unknowns remain, keep the stub and add the trace of what you inspected.
+6. **Quality gate**: Verify every changed/added type has: overview, field table, behaviors, examples, consumer notes, and either resolved info or a stub. Check links, anchors, and code fences.
+7. **Handoff**: Summarize completed coverage + remaining stubs (with owners/dates). Note any risky areas (breaking changes, serialization/validation differences between browser/node). Ship alongside the PR that introduced the type changes.

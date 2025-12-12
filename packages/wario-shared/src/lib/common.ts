@@ -16,9 +16,6 @@ import { addMinutes, getTime, isSameDay, startOfDay } from 'date-fns';
 import { RRule } from 'rrule';
 
 import type {
-  CatalogCategoryEntry,
-  CatalogModifierEntry,
-  CatalogProductEntry,
   CoreCartEntry,
   DineInInfo,
   FulfillmentConfig,
@@ -27,12 +24,14 @@ import type {
   IMoney,
   IOption,
   IOptionInstance,
+  IOptionType,
+  IProduct,
   IProductInstance,
   IRecurringInterval,
   IWInterval,
   OrderLineDiscount,
   OrderPayment,
-  ProductModifierEntry,
+  ProductInstanceModifierEntry,
   TipSelection,
   WOrderInstancePartial,
 } from './derived-types';
@@ -47,12 +46,14 @@ import {
   PRODUCT_LOCATION,
 } from './enums';
 import { RoundToTwoDecimalPlaces } from './numbers';
+import { GenerateCategoryOrderList } from './objects/ICatalog';
 import { OrderFunctional } from './objects/OrderFunctional';
 import { CreateProductWithMetadataFromV2 } from './objects/WCPProduct';
 import WDateUtils from './objects/WDateUtils';
 import type {
   CategorizedRebuiltCart,
   ICatalogSelectors,
+  IdOrdinalMap,
   MetadataModifierMapEntry,
   UnresolvedDiscount,
   UnresolvedPayment,
@@ -128,15 +129,16 @@ export const RebuildAndSortCart = (
   }, {});
 };
 
+
 /**
- * Groups and orders cart entries by their category using Category's ordinal.
+ * Groups and orders cart entries by their category using a category ordering map.
  * @param cart
- * @param getCategoryEntryById
+ * @param categoryOrderMap
  * @returns
  */
 export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(
   cart: T[],
-  getCategoryEntryById: Selector<CatalogCategoryEntry>,
+  categoryOrderMap: IdOrdinalMap
 ) => {
   return Object.entries(
     cart.reduce(
@@ -148,7 +150,7 @@ export const GroupAndOrderCart = <T extends CoreCartEntry<WProduct>>(
     ),
   ).sort(
     ([keyA, _], [keyB, __]) =>
-      (getCategoryEntryById(keyA)?.category.ordinal ?? 0) - (getCategoryEntryById(keyB)?.category.ordinal ?? 0),
+      (categoryOrderMap[keyA] ?? 0) - (categoryOrderMap[keyB] ?? 0),
   );
 };
 
@@ -170,7 +172,7 @@ export const CartByPrinterGroup = (
 ): MapPrinterGroupToCartEntry =>
   cart
     .flat()
-    .map((x) => ({ entry: x, printerGroupId: productSelector(x.product.p.productId)?.product.printerGroup ?? null }))
+    .map((x) => ({ entry: x, printerGroupId: productSelector(x.product.p.productId)?.printerGroup ?? null }))
     .filter((x) => x.printerGroupId !== null)
     .reduce(
       (acc: MapPrinterGroupToCartEntry, x) => ({
@@ -193,27 +195,27 @@ export const CartByPrinterGroup = (
 // at some point this can use an actual scheduling algorithm, but for the moment it needs to just be a best guess
 export const DetermineCartBasedLeadTime = (
   cart: CoreCartEntry[],
-  productSelector: Selector<CatalogProductEntry>,
+  productSelector: Selector<IProduct>,
 ): number => {
   const leadTimeMap = cart.reduce<Record<number, { base: number; quant: number }>>((acc, cartLine) => {
     const product = productSelector(cartLine.product.pid);
-    return product?.product.timing
+    return product?.timing
       ? {
         ...acc,
         // so we take the max of the base times at a station, then we sum the quantity times
-        [product.product.timing.prepStationId]: Object.hasOwn(acc, product.product.timing.prepStationId)
+        [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
           ? {
             base: Math.max(
-              acc[product.product.timing.prepStationId].base,
-              product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
+              acc[product.timing.prepStationId].base,
+              product.timing.prepTime - product.timing.additionalUnitPrepTime,
             ),
             quant:
-              acc[product.product.timing.prepStationId].quant +
-              product.product.timing.additionalUnitPrepTime * cartLine.quantity,
+              acc[product.timing.prepStationId].quant +
+              product.timing.additionalUnitPrepTime * cartLine.quantity,
           }
           : {
-            base: product.product.timing.prepTime - product.product.timing.additionalUnitPrepTime,
-            quant: product.product.timing.additionalUnitPrepTime * cartLine.quantity,
+            base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
+            quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
           },
       }
       : acc;
@@ -222,7 +224,7 @@ export const DetermineCartBasedLeadTime = (
 };
 
 export const GetPlacementFromMIDOID = (
-  modifiers: ProductModifierEntry[],
+  modifiers: ProductInstanceModifierEntry[],
   mtid: string,
   oid: string,
 ): IOptionInstance => {
@@ -251,6 +253,14 @@ export const DateTimeIntervalBuilder = (fulfillmentTime: FulfillmentTime, fulfil
   const date_upper = addMinutes(date_lower, fulfillmentMaxDuration);
   return { start: date_lower, end: date_upper } as WNormalizedInterval;
 };
+
+/** Generic version of the service disable check for a fulfillment ID
+ * Used by IProduct, IOption, and IProduct.modifiers
+ * 
+ */
+export function IsSomethingDisabledForFulfillment<T extends { serviceDisable: string[] }>(something: Pick<T, 'serviceDisable'>, fulfillmentId: string) {
+  return something.serviceDisable.indexOf(fulfillmentId) !== -1;
+}
 
 /**
  * Helper constant representing a blanket disabled interval (start > end)
@@ -376,22 +386,21 @@ export const FilterUnselectableModifierOption = (mmEntry: MetadataModifierMapEnt
  * namely the line in WCPProduct: const is_enabled = enable_modifier_type.enable === DISABLE_REASON.ENABLED ? DisableDataCheck(option_object.disabled, option_object.availability, service_time) : enable_modifier_type;
  *
  * @param metadata - WProductMetadata for the product
- * @param modifierType - CatalogModifierEntry describing the modifier type
+ * @param modifierType - IOptionType describing the modifier type
  * @param modifierOptionSelector - selector to resolve IOption objects for modifier options
  * @param serviceDateTime - service date/time to use for availability checks (Date | number)
  * @returns IOption[] - ordered list of available modifier options
  */
 export const SortAndFilterModifierOptions = (
   metadata: WProductMetadata,
-  modifierType: CatalogModifierEntry,
+  modifierType: IOptionType,
   modifierOptionSelector: Selector<IOption>,
   serviceDateTime: Date | number,
 ) => {
-  const filterUnavailable = modifierType.modifierType.displayFlags.omit_options_if_not_available;
-  const mmEntry = metadata.modifier_map[modifierType.modifierType.id];
+  const filterUnavailable = modifierType.displayFlags.omit_options_if_not_available;
+  const mmEntry = metadata.modifier_map[modifierType.id];
   return modifierType.options
     .map((o) => modifierOptionSelector(o)!)
-    .sort((a, b) => a.ordinal - b.ordinal)
     .filter((o) => {
       const disableInfo = DisableDataCheck(o.disabled, o.availability, serviceDateTime).enable;
       const isUnavailableButStillVisible = !filterUnavailable || FilterUnselectableModifierOption(mmEntry, o.id);
@@ -430,6 +439,9 @@ export const GenerateDineInGuestCountString = (dineInInfo: DineInInfo | null) =>
  * Build a call-line / event title sub-section for a single category cart:
  * - chooses presentation style based on category.display_flags.call_line_display
  * - supports SHORTCODE, SHORTNAME and QUANTITY display modes
+ * SHORTCODE: a single shortcode, repeated quantity times. So if there are two items with a matched shortcode of z then it'll be "z z".
+ * SHORTNAME: the short name (like Be + NO NUTS) prefixed by a quantity, like 2xBe + NO NUTS
+ * QUANTITY: the quantity followed by the call line name. So like 2B if the category's call line name is B
  *
  * Note: internal helper used by EventTitleStringBuilder. Returns an empty string for empty cart or missing category.
  *
@@ -444,7 +456,7 @@ const EventTitleSectionBuilder = (
   if (cart.length === 0) {
     return '';
   }
-  const category = catalogSelectors.category(cart[0].categoryId)?.category;
+  const category = catalogSelectors.category(cart[0].categoryId);
   if (!category) {
     return '';
   }
@@ -499,6 +511,7 @@ const EventTitleSectionBuilder = (
  */
 export const EventTitleStringBuilder = (
   catalogSelectors: Pick<ICatalogSelectors, 'category' | 'productInstance'>,
+  categoryIdOrdinalMap: IdOrdinalMap,
   fulfillmentConfig: Pick<FulfillmentConfig, 'orderBaseCategoryId' | 'shortcode'>,
   customer: string,
   fulfillmentDto: FulfillmentData,
@@ -506,7 +519,7 @@ export const EventTitleStringBuilder = (
   special_instructions: string,
 ) => {
   const has_special_instructions = special_instructions && special_instructions.length > 0;
-  const mainCategoryTree = ComputeCategoryTreeIdList(fulfillmentConfig.orderBaseCategoryId, catalogSelectors.category);
+  const mainCategoryTree = GenerateCategoryOrderList(fulfillmentConfig.orderBaseCategoryId, catalogSelectors.category);
   const mainCategorySection = mainCategoryTree
     .map((x) => EventTitleSectionBuilder(catalogSelectors, cart[x] ?? []))
     .filter((x) => x.length > 0)
@@ -518,7 +531,7 @@ export const EventTitleStringBuilder = (
     .filter(([cid, _]) => mainCategoryTree.findIndex((x) => x === cid) === -1)
     .sort(
       ([cIdA, _], [cIdB, __]) =>
-        catalogSelectors.category(cIdA)!.category.ordinal - catalogSelectors.category(cIdB)!.category.ordinal,
+        categoryIdOrdinalMap[cIdA] - categoryIdOrdinalMap[cIdB],
     )
     .map(([_, catCart]) => EventTitleSectionBuilder(catalogSelectors, catCart))
     .join(' ');
@@ -538,25 +551,6 @@ export function MoneyToDisplayString(money: IMoney, showCurrencyUnit: boolean) {
 export function ComputeProductCategoryMatchCount(catIds: string[], cart: CoreCartEntry<unknown>[]) {
   return cart.reduce((acc, e) => acc + (catIds.indexOf(e.categoryId) !== -1 ? e.quantity : 0), 0);
 }
-
-/**
- * Returns the full list of category IDs including the passed root category node ID
- * @param rootId
- * @param categorySelector
- * @returns child category list sorted by ordinal (only sorted at the end)
- */
-export const ComputeCategoryTreeIdList = (rootId: string, categorySelector: Selector<CatalogCategoryEntry>) => {
-  const ComputeCategoryTreeIdListInternal: (cId: string) => { id: string; ordinal: number }[] = (cId) => {
-    const category = categorySelector(cId)!;
-    return [
-      { id: cId, ordinal: category.category.ordinal },
-      ...category.children.flatMap((x) => ComputeCategoryTreeIdListInternal(x)),
-    ];
-  };
-  return ComputeCategoryTreeIdListInternal(rootId)
-    .sort((a, b) => a.ordinal - b.ordinal)
-    .map((x) => x.id);
-};
 
 /**
  * ComputeCartSubTotal
@@ -924,7 +918,7 @@ export const RecomputeTotals = function ({
   fulfillment,
   order,
 }: RecomputeTotalsArgs): RecomputeTotalsResult {
-  const mainCategoryTree = ComputeCategoryTreeIdList(
+  const mainCategoryTree = GenerateCategoryOrderList(
     fulfillment.orderBaseCategoryId,
     config.CATALOG_SELECTORS.category,
   );

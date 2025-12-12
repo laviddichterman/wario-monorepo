@@ -16,259 +16,318 @@ import { DISPLAY_AS, MODIFIER_CLASS, OptionPlacement, OptionQualifier } from '..
 import { IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from './common.dto';
 
 /**
- * @description
- * IOptionTypeDisplayFlagsDto is a display flags object that is used to store additional information about a modifier type.
- *
- * @property {boolean} is3p - Whether the modifier type is a third party modifier type.
- * @property {boolean} omit_section_if_no_available_options - Whether the modifier type should if there are no available options. (Probably always yes?)
- * @property {boolean} omit_options_if_not_available - Whether the modifier type's options should be shown if they are not available.
- * @property {boolean} use_toggle_if_only_two_options - Whether the modifier type should use a toggle if there are only two options belonging to the modifier type. Requires that min_selected and max_selected are both 1. If so, then the default option will be the deselected option.
- * @property {boolean} hidden - Whether the modifier type is hidden.
- * @property {DISPLAY_AS} empty_display_as - The display as of the modifier type when it is empty.
- * @property {MODIFIER_CLASS} modifier_class - The modifier class of the modifier type.
- * @property {string} template_string - The template string of the modifier type.
- * @property {string} multiple_item_separator - The multiple item separator of the modifier type.
- * @property {string} non_empty_group_prefix - The non empty group prefix of the modifier type.
- * @property {string} non_empty_group_suffix - The non empty group suffix of the modifier type.
+ * Display configuration flags for a group of modifiers (Option Type).
+ * Controls how the modifier group is rendered in the UI.
  */
 export class IOptionTypeDisplayFlagsDto {
+  /**
+   * Indicates if this modifier group is for third-party integration.
+   */
   @IsBoolean()
   is3p!: boolean;
 
+  /**
+   * If true, the entire section is hidden when no options within it are available (for any reason, including disabled by a function rule or just out of stock).
+   * Should default to false.
+   */
   @IsBoolean()
   omit_section_if_no_available_options!: boolean;
 
+  /**
+   * If true, individual options are hidden from the list if they are unavailable.
+   * If false, they might be shown as disabled/grayed out.
+   */
   @IsBoolean()
   omit_options_if_not_available!: boolean;
 
+  /**
+   * If true, renders the selection as a toggle switch instead of a list/radio group.
+   * **Prerequisite**: Requires strict limits `min_selected: 1` and `max_selected: 1`
+   * and exactly two options. The first option usually acts as "Off" (or default) and the second as "On".
+   */
   @IsBoolean()
   use_toggle_if_only_two_options!: boolean;
 
+  /**
+   * If true, this modifier group is strictly for internal use or backend logic and should not be displayed to customers.
+   */
   @IsBoolean()
   hidden!: boolean;
 
+  /**
+   * Defines how the group should be presented when no selection has been made (if optional).
+   */
   @IsEnum(DISPLAY_AS)
   empty_display_as!: DISPLAY_AS;
 
+  /**
+   * semantic classification for the modifier group.
+   * @see {@link MODIFIER_CLASS}
+   */
   @IsEnum(MODIFIER_CLASS)
   modifier_class!: MODIFIER_CLASS;
 
+  /**
+   * String template for selections of this modifier type.
+   * Does not work for split modifiers.
+   * @example if template_string is "FOO" then a product name of "{FOO} Pizza" and a selection of Pepperoni will be "Pepperoni Pizza"
+   */
   @IsString()
   @IsNotEmpty()
   template_string!: string;
 
+  /**
+   * Separator used when listing multiple selected options from this group.
+   * Whitespace is preserved and not added.
+   * @example ',' results in 'Pepperoni,Mushroom'
+   */
   @IsString()
   @IsNotEmpty()
   multiple_item_separator!: string;
 
+  /**
+   * Prefix text displayed when the group has active selections.
+   */
   @IsString()
   @IsNotEmpty()
   non_empty_group_prefix!: string;
 
+  /**
+   * Suffix text displayed when the group has active selections.
+   */
   @IsString()
   @IsNotEmpty()
   non_empty_group_suffix!: string;
 }
 
+/**
+ * Base data for creating or updating a Modifier Group (Option Type).
+ * Contains all fields except the system-generated ID.
+ */
 export class UncommittedOptionTypeDto {
+  /** Internal system name for the modifier group */
   @IsString()
   @IsNotEmpty()
   name!: string;
 
+  /** Customer-facing label for the group. e.g. "Choose Your Size". */
   @IsString()
   @IsNotEmpty()
   displayName!: string;
 
+  /** External references for integration (e.g. POS IDs, 3rd party delivery IDs). */
   @ValidateNested({ each: true })
   @Type(() => KeyValueDto)
   externalIDs!: KeyValueDto[];
 
+  /**
+   * Sort order for display relative to other modifier groups.
+   * Lower numbers appear first.
+   */
   @IsInt()
   @Min(0)
   ordinal!: number;
 
+  /** Minimum number of options that must be selected from this group. */
   @IsInt()
   @Min(0)
   min_selected!: number;
 
+  /**
+   * Maximum number of options that can be selected from this group.
+   * Null implies no limit (unlimited selection).
+   */
   @IsInt()
   @Min(0)
   @IsOptional()
   max_selected!: number | null;
 
+  /** UI display configuration. */
   @ValidateNested()
   @Type(() => IOptionTypeDisplayFlagsDto)
   displayFlags!: IOptionTypeDisplayFlagsDto;
+
+  /**
+   * List of Option IDs (strings) that belong to this group.
+   * The order in this array determines the display order of options within the option type.
+   */
+  @IsString({ each: true })
+  options!: string[];
 }
 /**
- * @description
- * IOptionTypeDto is also known as a modifier type. It represents a group of modifier options that are somehow related.
- * An example could be selecting the size of something, or selecting which toppings you want on a pizza.
- * The is the type of the modifier type in the catalog.
- *
- * @property {string} id - The unique identifier of the modifier type.
- * @property {string} name - The name of the modifier type, this is the name that will be used in the catalog.
- * @property {string} displayName - The display name of the modifier type, this is the name that will be shown to the customer.
- * @property {KeyValueDto[]} externalIDs - The external IDs of the modifier type, this is used for integration with other systems and storing metadata about the modifier type.
- * @property {number} ordinal - The ordinal of the modifier type, this is used to determine the order of the modifier type relative to the other modifier types displayed alongside a product.
- * @property {number} min_selected - The minimum number of options that must be selected.
- * @property {number | null} max_selected - The maximum number of options that can be selected.
- * @property {IOptionTypeDisplayFlagsDto} displayFlags - The display flags of the modifier type. See {@link IOptionTypeDisplayFlagsDto} for more information.
+ * Represents a full Modifier Group (Option Type) with its unique ID.
+ * Examples: "Pizza Size", "Toppings", "Dressing".
  */
 export class IOptionTypeDto extends UncommittedOptionTypeDto {
+  /** Unique Identifier for the modifier group. */
   @IsString()
   @IsNotEmpty()
   id!: string;
 }
 
 /**
- * @description
- * IOptionMetadataDto is a metadata object that is used to store additional information about a modifier option.
- *
- * @property {number} flavor_factor - The flavor factor of the modifier option. This is used as a limiter defined at the IProduct level.
- * @property {number} bake_factor - The bake factor of the modifier option. Essentially the weight of the option. This is used as a limiter defined at the IProduct level.
- * @property {boolean} can_split - Whether the modifier option can be split. This is used to determine if the modifier option can be split in half. Useful for pizzas.
- * @property {boolean} allowHeavy - Whether the modifier option can be ordered with heavy/extra amount. This doubles the price and the bake_factor.
- * @property {boolean} allowLite - Whether the modifier option can be ordered 'lite' amount. This does not impact the price or the bake_factor.
- * @property {boolean} allowOTS - Whether the modifier option can be ordered "on the side".
+ * Metadata controlling behavior and business logic for a specific modifier option.
  */
 export class IOptionMetadataDto {
+  /**
+   * Used to limit combinations of too many toppings.
+   * The sum of active flavor factors might be capped at the product level.
+   */
   @IsNumber()
   flavor_factor!: number;
 
+  /**
+   * Represents the "weight" or impact on cooking.
+   * Used to ensure a product isn't overloaded with toppings that prevent proper cooking.
+   */
   @IsNumber()
   bake_factor!: number;
 
+  /**
+   * If true, this option can be applied to only half of the product (e.g. Left/Right on a Pizza).
+   */
   @IsBoolean()
   can_split!: boolean;
 
+  /**
+   * If true, allows "Double" or "Extra" quantity selection.
+   * Doubles price and bake factors.
+   */
   @IsBoolean()
   allowHeavy!: boolean;
 
+  /**
+   * If true, allows "Light" quantity selection.
+   * Affects portioning instructions but not price.
+   */
   @IsBoolean()
   allowLite!: boolean;
 
+  /**
+   * If true, this item can be requested "On The Side" (OTS).
+   */
   @IsBoolean()
   allowOTS!: boolean;
 }
 
 /**
- * @description
- * IOptionDisplayFlagsDto is a display flags object that is used to store additional information about a modifier option.
- *
- * @property {boolean} omit_from_shortname - Whether the modifier option should be omitted from the shortname of the product.
- * @property {boolean} omit_from_name - Whether the modifier option should be omitted from the full name of the product.
+ * Display flags for a specific modifier option.
  */
 export class IOptionDisplayFlagsDto {
+  /**
+   * If true, this option is excluded from the product's generated short-name/receipt alias.
+   */
   @IsBoolean()
   omit_from_shortname!: boolean;
 
+  /**
+   * If true, this option is excluded from the product's full display name construction.
+   */
   @IsBoolean()
   omit_from_name!: boolean;
 }
 
-/** Helper partial type used for API requests */
+/**
+ * Base data for creating or updating a Modifier Option.
+ * Excludes ID.
+ */
 export class UncommittedOptionDto {
+  /** Customer-facing name. e.g. "Pepperoni". */
   @IsString()
   @IsNotEmpty()
   displayName!: string;
 
+  /** Description or tooltip text. */
   @IsString()
   @IsNotEmpty()
   description!: string;
 
+  /** Abbreviated code for receipts or kitchen display. */
   @IsString()
   @IsNotEmpty()
   shortcode!: string;
 
+  /** Base price for this option. */
   @ValidateNested()
   @Type(() => IMoneyDto)
   price!: IMoneyDto;
 
+  /** External references (POS IDs, etc). */
   @ValidateNested({ each: true })
   @Type(() => KeyValueDto)
   externalIDs!: KeyValueDto[];
 
+  /**
+   * If set, defines a date range when this option is disabled/out of stock.
+   */
   @ValidateNested()
   @Type(() => IWIntervalDto)
   @IsOptional()
   disabled!: IWIntervalDto | null;
 
+  /**
+   * Defines recurring availability schedules (e.g. "Breakfast only").
+   * @see {@link IRecurringIntervalDto}
+   */
   @ValidateNested({ each: true })
   @Type(() => IRecurringIntervalDto)
   availability!: IRecurringIntervalDto[];
 
-  @IsInt()
-  @Min(0)
-  ordinal!: number;
 
+  /** Business logic behavior flags. */
   @ValidateNested()
   @Type(() => IOptionMetadataDto)
   metadata!: IOptionMetadataDto;
 
+  /**
+   * ID of a `ProductInstanceFunction` that determines dynamic availability.
+   * If null, the option is always enabled (subject to other checks).
+   */
   @IsString()
   @IsOptional()
   enable!: string | null;
 
+  /** UI rendering flags. */
   @ValidateNested()
   @Type(() => IOptionDisplayFlagsDto)
   displayFlags!: IOptionDisplayFlagsDto;
 }
 
 /**
- * @description
- * IOptionDto is a modifier option. It represents a single option that can be selected by the customer.
- *
- * @property {string} id - The unique identifier of the modifier option.
- * @property {string} modifierTypeId - The unique identifier of the modifier type that this option belongs to.
- * @property {string} displayName - The display name of the modifier option.
- * @property {string} description - The description of the modifier option. Not really used at the moment, but could be used for a tooltip.
- * @property {string} shortcode - The shortcode of the modifier option. This is used to build the shortname of a product.
- * @property {IMoneyDto} price - The price of the modifier option.
- * @property {KeyValueDto[]} externalIDs - The external IDs of the modifier option.
- * This is used for integration with other systems and storing metadata about the modifier option.
- * @property {IWIntervalDto} disabled - The disabled interval of the modifier option.
- * Specifies the time period during which the modifier option is disabled. @see {@link IWIntervalDto}.
- * @property {IRecurringIntervalDto[]} availability - The availability intervals of the modifier option. @see {@link IRecurringIntervalDto}
- * @property {number} ordinal - The ordinal of the modifier option.
- * This is used to determine the order of the modifier option relative to the other modifier options displayed in a modifier type.
- * @property {IOptionMetadataDto} metadata - The metadata of the modifier option. @see {@link IOptionMetadataDto}
- * @property {string | null} enable - The enable function ID that is used to determine if the modifier option should be enabled.
- * @see {@link IProductInstanceFunctionDto}
- * @property {IOptionDisplayFlagsDto} displayFlags - The display flags of the modifier option. @see {@link IOptionDisplayFlagsDto}
+ * Represents a specific option that can be selected.
+ * (e.g., "Pepperoni", "Large", "Soy Milk").
  */
 export class IOptionDto extends UncommittedOptionDto {
+  /** Unique Identifier for the option. */
   @IsString()
   @IsNotEmpty()
   id!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  modifierTypeId!: string;
 }
 /**
- * @description
- * IOptionStateDto is a tuple of how much and where the modifier option is placed.
- *
- * @property {OptionPlacement} placement - The placement of the modifier option. @see {@link OptionPlacement}
- * @property {OptionQualifier} qualifier - The @see {@link OptionQualifier} of the modifier option.
+ * Describes the state of a selected modifier customization.
+ * Define *how* a modifier is applied (e.g. "Left Half", "Heavy").
  */
 export class IOptionStateDto {
+  /**
+   * Spatial placement of the option (e.g. Left, Right, Whole).
+   */
   @IsEnum(OptionPlacement)
   placement!: OptionPlacement;
 
+  /**
+   * Quantity/Intensity qualifier (e.g. Lite, Regular, Heavy, Side).
+   * TODO: NOT IMPLEMENTED
+   */
   @IsEnum(OptionQualifier)
   qualifier!: OptionQualifier;
 }
 
 /**
- * @description
- * IOptionInstanceDto adds a modifier option ID to the {@link IOptionStateDto}. Representing a specific option that is selected in a particular way.
- *
- * @property {string} optionId - The ID of the modifier option.
- * @see {@link IOptionStateDto}
+ * A concrete instantiation of a modifier option on a product or order item.
+ * Connects the `optionId` with its configuration state.
  */
 export class IOptionInstanceDto extends IOptionStateDto {
+  /** The ID of the `IOptionDto` being selected. */
   @IsString()
   @IsNotEmpty()
   optionId!: string;

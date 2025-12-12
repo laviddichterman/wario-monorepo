@@ -1,11 +1,10 @@
 import { describe, expect, it } from '@jest/globals';
 
-import type { CatalogProductEntry, ProductModifierEntry } from '../src/lib/derived-types';
+import type { ProductInstanceModifierEntry } from '../src';
 import { CURRENCY, DISABLE_REASON, MODIFIER_MATCH, OptionPlacement, OptionQualifier } from '../src/lib/enums';
 import {
   ComputePotentialPrices,
   CreateWCPProduct,
-  SortModifersAndOptions,
   WProductCompare,
   WProductDisplayOptions,
   WProductEquals,
@@ -22,7 +21,7 @@ import {
 
 describe('CreateWCPProduct', () => {
   it('should create a product with given productId and modifiers', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -35,7 +34,7 @@ describe('CreateWCPProduct', () => {
   });
 
   it('should create a deep copy of modifiers', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -48,40 +47,6 @@ describe('CreateWCPProduct', () => {
 
     // Product should still have WHOLE
     expect(product.modifiers[0].options[0].placement).toBe(OptionPlacement.WHOLE);
-  });
-});
-
-describe('SortModifersAndOptions', () => {
-  it('should sort modifiers by ordinal and options within each modifier', () => {
-    const modifiers: ProductModifierEntry[] = [
-      {
-        modifierTypeId: 'mt2',
-        options: [
-          { optionId: 'opt3', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-          { optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR },
-        ],
-      },
-      {
-        modifierTypeId: 'mt1',
-        options: [{ optionId: 'opt2', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
-      },
-    ];
-
-    const selectors = createMockCatalogSelectorsFromArrays({
-      options: [
-        createMockOption({ id: 'opt1', ordinal: 1 }),
-        createMockOption({ id: 'opt2', ordinal: 2 }),
-        createMockOption({ id: 'opt3', ordinal: 3 }),
-      ],
-      modifierTypes: [createMockOptionType({ id: 'mt1', ordinal: 1 }), createMockOptionType({ id: 'mt2', ordinal: 2 })],
-    });
-
-    const sorted = SortModifersAndOptions(modifiers, selectors);
-
-    expect(sorted[0].modifierTypeId).toBe('mt1');
-    expect(sorted[1].modifierTypeId).toBe('mt2');
-    expect(sorted[1].options[0].optionId).toBe('opt1');
-    expect(sorted[1].options[1].optionId).toBe('opt3');
   });
 });
 
@@ -121,11 +86,10 @@ describe('WProductCompare', () => {
   it('should return NO_MATCH when product IDs differ', () => {
     const productA = CreateWCPProduct('prod1', []);
     const productB = CreateWCPProduct('prod2', []);
-    const product = createMockProduct({ id: 'prod1' });
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
+    const product = createMockProduct({ id: 'prod1', instances: ['pi1'] });
 
     const selectors = {
-      productEntry: (id: string) => (id === 'prod1' ? productEntry : undefined),
+      productEntry: (id: string) => (id === 'prod1' ? product : undefined),
       modifierEntry: () => undefined,
     };
 
@@ -139,11 +103,10 @@ describe('WProductCompare', () => {
   it('should return EXACT_MATCH for identical products with no modifiers', () => {
     const productA = CreateWCPProduct('prod1', []);
     const productB = CreateWCPProduct('prod1', []);
-    const product = createMockProduct({ id: 'prod1', modifiers: [] });
-    const productEntry: CatalogProductEntry = { product, instances: ['pi1'] };
+    const product = createMockProduct({ id: 'prod1', modifiers: [], instances: ['pi1'] });
 
     const selectors = {
-      productEntry: (id: string) => (id === 'prod1' ? productEntry : undefined),
+      productEntry: (id: string) => (id === 'prod1' ? product : undefined),
       modifierEntry: () => undefined,
     };
 
@@ -215,10 +178,10 @@ describe('ComputePotentialPrices', () => {
 
     const selectors = createMockCatalogSelectorsFromArrays({
       options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', price: { amount: 100, currency: CURRENCY.USD } }),
-        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', price: { amount: 200, currency: CURRENCY.USD } }),
+        createMockOption({ id: 'opt1', price: { amount: 100, currency: CURRENCY.USD } }),
+        createMockOption({ id: 'opt2', price: { amount: 200, currency: CURRENCY.USD } }),
       ],
-      modifierTypes: [createMockOptionType({ id: 'mt1', min_selected: 1, max_selected: 1 })],
+      modifierTypes: [createMockOptionType({ id: 'mt1', min_selected: 1, max_selected: 1, options: ['opt1', 'opt2'] })],
     });
 
     const prices = ComputePotentialPrices(metadata, selectors);
@@ -277,12 +240,12 @@ describe('ComputePotentialPrices', () => {
 
     const selectors = createMockCatalogSelectorsFromArrays({
       options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', price: { amount: 100, currency: CURRENCY.USD } }),
-        createMockOption({ id: 'opt2', modifierTypeId: 'mt2', price: { amount: 200, currency: CURRENCY.USD } }),
+        createMockOption({ id: 'opt1', price: { amount: 100, currency: CURRENCY.USD } }),
+        createMockOption({ id: 'opt2', price: { amount: 200, currency: CURRENCY.USD } }),
       ],
       modifierTypes: [
-        createMockOptionType({ id: 'mt1', min_selected: 1, max_selected: 1 }),
-        createMockOptionType({ id: 'mt2', min_selected: 1, max_selected: 1 }),
+        createMockOptionType({ id: 'mt1', min_selected: 1, max_selected: 1, options: ['opt1'] }),
+        createMockOptionType({ id: 'mt2', min_selected: 1, max_selected: 1, options: ['opt2'] }),
       ],
     });
 
@@ -311,8 +274,8 @@ describe('WProductDisplayOptions', () => {
     };
 
     const selectors = createMockCatalogSelectorsFromArrays({
-      options: [createMockOption({ id: 'opt1', modifierTypeId: 'mt1', displayName: 'Extra Cheese' })],
-      modifierTypes: [createMockOptionType({ id: 'mt1' })],
+      options: [createMockOption({ id: 'opt1', displayName: 'Extra Cheese' })],
+      modifierTypes: [createMockOptionType({ id: 'mt1', options: ['opt1'] })],
     });
 
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);
@@ -328,13 +291,11 @@ describe('WProductDisplayOptions', () => {
       right: [['mt1', 'opt2'] as [string, string]],
       whole: [],
     };
-
+    const opt1 = createMockOption({ id: 'opt1', displayName: 'Pepperoni' });
+    const opt2 = createMockOption({ id: 'opt2', displayName: 'Mushrooms' });
     const selectors = createMockCatalogSelectorsFromArrays({
-      options: [
-        createMockOption({ id: 'opt1', modifierTypeId: 'mt1', displayName: 'Pepperoni' }),
-        createMockOption({ id: 'opt2', modifierTypeId: 'mt1', displayName: 'Mushrooms' }),
-      ],
-      modifierTypes: [createMockOptionType({ id: 'mt1' })],
+      options: [opt1, opt2],
+      modifierTypes: [createMockOptionType({ id: 'mt1', options: [opt1.id, opt2.id] })],
     });
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);
 
@@ -356,18 +317,16 @@ describe('WProductDisplayOptions', () => {
       options: [
         createMockOption({
           id: 'opt1',
-          modifierTypeId: 'mt1',
           displayName: 'Visible',
           displayFlags: { omit_from_name: false, omit_from_shortname: false },
         }),
         createMockOption({
           id: 'opt2',
-          modifierTypeId: 'mt1',
           displayName: 'Hidden',
           displayFlags: { omit_from_name: true, omit_from_shortname: false },
         }),
       ],
-      modifierTypes: [createMockOptionType({ id: 'mt1' })],
+      modifierTypes: [createMockOptionType({ id: 'mt1', options: ['opt1', 'opt2'] })],
     });
 
     const result = WProductDisplayOptions(selectors, exhaustive_modifiers);

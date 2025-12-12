@@ -14,7 +14,7 @@ Successfully created comprehensive DTO (Data Transfer Object) classes for the wa
 4. **modifier.dto.ts** - Options and modifiers (IOptionDto, IOptionTypeDto, IOptionInstanceDto)
 5. **product.dto.ts** - Products and instances (IProductDto, IProductInstanceDto, PrepTimingDto)
 6. **category.dto.ts** - Categories (ICategoryDto)
-7. **catalog.dto.ts** - Complete catalog (ICatalogDto, CatalogModifierEntryDto, CatalogCategoryEntryDto)
+7. **catalog.dto.ts** - Complete catalog (ICatalogDto)
 8. **order.dto.ts** - Orders, payments, discounts (WOrderInstanceDto, CreateOrderRequestV2Dto, payment/discount DTOs)
 9. **expression.dto.ts** - Function expressions (IProductInstanceFunctionDto, OrderInstanceFunctionDto)
 

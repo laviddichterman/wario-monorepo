@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import type { IAbstractExpression, ProductModifierEntry } from '../src/lib/derived-types';
+import type { IAbstractExpression, ProductInstanceModifierEntry } from '../src/lib/derived-types';
 import {
   ConstLiteralDiscriminator,
   LogicalFunctionOperator,
@@ -250,19 +250,19 @@ describe('WFunctional.ProcessIfElseStatement', () => {
 
 describe('WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement', () => {
   it('should return false when modifier type is not found', () => {
-    const modifiers: ProductModifierEntry[] = [];
+    const modifiers: ProductInstanceModifierEntry[] = [];
     const stmt = { mtid: 'mt1' };
     expect(WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement(modifiers, stmt)).toBe(false);
   });
 
   it('should return false when modifier type has no selected options', () => {
-    const modifiers: ProductModifierEntry[] = [{ modifierTypeId: 'mt1', options: [] }];
+    const modifiers: ProductInstanceModifierEntry[] = [{ modifierTypeId: 'mt1', options: [] }];
     const stmt = { mtid: 'mt1' };
     expect(WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement(modifiers, stmt)).toBe(false);
   });
 
   it('should return false when all options have placement NONE', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.NONE, qualifier: OptionQualifier.REGULAR }],
@@ -273,7 +273,7 @@ describe('WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement', (
   });
 
   it('should return true when at least one option has non-NONE placement', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -286,19 +286,19 @@ describe('WFunctional.ProcessHasAnyOfModifierTypeExtractionOperatorStatement', (
 
 describe('WFunctional.ProcessModifierPlacementExtractionOperatorStatement', () => {
   it('should return NONE when modifier type is not found', () => {
-    const modifiers: ProductModifierEntry[] = [];
+    const modifiers: ProductInstanceModifierEntry[] = [];
     const stmt = { mtid: 'mt1', moid: 'opt1' };
     expect(WFunctional.ProcessModifierPlacementExtractionOperatorStatement(modifiers, stmt)).toBe(OptionPlacement.NONE);
   });
 
   it('should return NONE when option is not found in modifier', () => {
-    const modifiers: ProductModifierEntry[] = [{ modifierTypeId: 'mt1', options: [] }];
+    const modifiers: ProductInstanceModifierEntry[] = [{ modifierTypeId: 'mt1', options: [] }];
     const stmt = { mtid: 'mt1', moid: 'opt1' };
     expect(WFunctional.ProcessModifierPlacementExtractionOperatorStatement(modifiers, stmt)).toBe(OptionPlacement.NONE);
   });
 
   it('should return the correct placement when option is found', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.LEFT, qualifier: OptionQualifier.REGULAR }],
@@ -311,14 +311,14 @@ describe('WFunctional.ProcessModifierPlacementExtractionOperatorStatement', () =
 
 describe('WFunctional.ProcessProductMetadataExpression', () => {
   it('should return 0 when no modifiers are provided', () => {
-    const modifiers: ProductModifierEntry[] = [];
+    const modifiers: ProductInstanceModifierEntry[] = [];
     const mockSelectors = createMockCatalogSelectorsFromArrays();
     const stmt = { field: MetadataField.FLAVOR, location: PRODUCT_LOCATION.LEFT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(0);
   });
 
   it('should sum flavor factors for LEFT placement', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [
@@ -331,23 +331,20 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
       options: [
         createMockOption({
           id: 'opt1',
-          modifierTypeId: 'mt1',
           metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }),
         }),
         createMockOption({
           id: 'opt2',
-          modifierTypeId: 'mt1',
           metadata: createMockOptionMetadata({ flavor_factor: 3, bake_factor: 1, can_split: true }),
         }),
       ],
-      modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
     const stmt = { field: MetadataField.FLAVOR, location: PRODUCT_LOCATION.LEFT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(2);
   });
 
   it('should sum flavor factors for WHOLE placement on LEFT location', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -357,18 +354,16 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
       options: [
         createMockOption({
           id: 'opt1',
-          modifierTypeId: 'mt1',
           metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 1, can_split: true }),
         }),
       ],
-      modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
     const stmt = { field: MetadataField.FLAVOR, location: PRODUCT_LOCATION.LEFT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(2);
   });
 
   it('should sum bake factors for RIGHT placement', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.RIGHT, qualifier: OptionQualifier.REGULAR }],
@@ -378,11 +373,9 @@ describe('WFunctional.ProcessProductMetadataExpression', () => {
       options: [
         createMockOption({
           id: 'opt1',
-          modifierTypeId: 'mt1',
           metadata: createMockOptionMetadata({ flavor_factor: 2, bake_factor: 3, can_split: true }),
         }),
       ],
-      modifierTypes: [createMockOptionType({ id: 'mt1' })],
     });
     const stmt = { field: MetadataField.WEIGHT, location: PRODUCT_LOCATION.RIGHT };
     expect(WFunctional.ProcessProductMetadataExpression(modifiers, stmt, mockSelectors)).toBe(3);
@@ -542,7 +535,7 @@ describe('WFunctional.ProcessAbstractExpressionStatement', () => {
   });
 
   it('should process ModifierPlacement expression', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -556,7 +549,7 @@ describe('WFunctional.ProcessAbstractExpressionStatement', () => {
   });
 
   it('should process HasAnyOfModifierType expression', () => {
-    const modifiers: ProductModifierEntry[] = [
+    const modifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: 'mt1',
         options: [{ optionId: 'opt1', placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -589,7 +582,7 @@ describe('WFunctional.ProcessProductInstanceFunction', () => {
 
 describe('WFunctional.AbstractExpressionStatementToString', () => {
   const mockSelectors = createMockCatalogSelectorsFromArrays({
-    modifierTypes: [createMockOptionType({ id: 'mt1', name: 'Toppings' })],
+    modifierTypes: [createMockOptionType({ id: 'mt1', name: 'Toppings', options: ['opt1'] })],
     options: [createMockOption({ id: 'opt1', displayName: 'Extra Cheese' })],
   });
   it('should convert boolean literal to string', () => {

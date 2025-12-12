@@ -20,7 +20,7 @@ import {
   TipSelectionAmountDto,
   TipSelectionPercentageDto,
 } from './common.dto';
-import { ProductModifierEntryDto } from './product.dto';
+import { ProductInstanceModifierEntryDto } from './product.dto';
 import { WSeatingInfoDto } from './seating.dto';
 
 export class DineInInfoDto {
@@ -105,8 +105,8 @@ export class WCPProductV2Dto {
   pid!: string;
 
   @ValidateNested({ each: true })
-  @Type(() => ProductModifierEntryDto)
-  modifiers!: ProductModifierEntryDto[];
+  @Type(() => ProductInstanceModifierEntryDto)
+  modifiers!: ProductInstanceModifierEntryDto[];
 }
 
 export class CoreCartEntryDto {

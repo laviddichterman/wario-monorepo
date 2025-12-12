@@ -11,6 +11,63 @@ All DTO classes are located in `src/lib/dto/` and are exported from the main pac
 - Automatic transformation with class-transformer
 - Serialization/deserialization of API payloads
 
+## 2025 Schema Changes
+
+The following breaking changes were introduced to simplify ordering and eliminate redundant fields:
+
+### Removed DTOs
+
+- `CatalogModifierEntryDto` - Ordering now embedded in `IOptionTypeDto.options`
+- `CatalogCategoryEntryDto` - Ordering now embedded in `ICategoryDto.children` and `ICategoryDto.products`
+- `CatalogProductEntryDto` - Ordering now embedded in `IProductDto.instances`
+
+### Removed Fields
+
+| DTO                   | Removed Field    | Replacement                                               |
+| --------------------- | ---------------- | --------------------------------------------------------- |
+| `IProductDto`         | `baseProductId`  | Use `instances[0]` (first element is base instance)       |
+| `IProductDto`         | `category_ids`   | Categories reference products via `ICategoryDto.products` |
+| `IProductInstanceDto` | `ordinal`        | Ordering is position in parent's `instances` array        |
+| `IProductInstanceDto` | `productId`      | Prevents FK cycles; find via `IProductDto.instances`      |
+| `ICategoryDto`        | `ordinal`        | Ordering is position in parent's `children` array         |
+| `ICategoryDto`        | `parent_id`      | Tree is inverted; parent has `children` array             |
+| `IOptionDto`          | `ordinal`        | Ordering is position in `IOptionTypeDto.options`          |
+| `IOptionDto`          | `modifierTypeId` | Membership tracked via `IOptionTypeDto.options` array     |
+| `IWSettingsDto`       | `config`         | Replaced with typed fields                                |
+
+### New Fields
+
+| DTO                     | New Field   | Description                                          |
+| ----------------------- | ----------- | ---------------------------------------------------- |
+| `ICategoryDto`          | `children`  | Ordered array of child category IDs                  |
+| `ICategoryDto`          | `products`  | Ordered array of product IDs in this category        |
+| `IOptionTypeDto`        | `options`   | Ordered array of option IDs                          |
+| `IProductDto`           | `instances` | Ordered array of product instance IDs (first = base) |
+| `IProductOrderGuideDto` | `errors`    | List of error function IDs (not yet implemented)     |
+
+### Changed Functions
+
+| Function                    | Change                                                         |
+| --------------------------- | -------------------------------------------------------------- |
+| `GroupAndOrderCart`         | Now takes `IdOrdinalMap` instead of category selector function |
+| `EventTitleStringBuilder`   | Now takes `IdOrdinalMap` in addition to other parameters       |
+| `IsOptionEnabled`           | Now takes `modifierTypeId` as first parameter                  |
+| `ComputeCategoryTreeIdList` | Removed (redundant)                                            |
+| `SortModifiersByOrdinal`    | Removed (redundant)                                            |
+| `SortModifersAndOptions`    | Removed (options now pre-ordered in IOptionType.options)       |
+
+### Usage Pattern: Sorting Maps
+
+Where possible, use a sorting map (type `IdOrdinalMap`) instead of selector functions for ordering lookups.
+
+### Root Category Requirement
+
+> [!IMPORTANT]
+> A **root category node** is required at the top of the category hierarchy. All other categories must be descendants of this root.
+>
+> - The root category's `children` array contains the top-level category IDs
+> - Database initialization must create this root category (typically named "Root" or similar)
+
 ## File Structure
 
 ```
@@ -113,6 +170,9 @@ Base types used throughout the application:
 - `DeliveryAddressValidateResponseDto` - Delivery address validation response
 - `DeliveryInfoDto` - Delivery information
 - `SeatingSectionDto` - Seating section
+- `IWSettingsDto` - Public application settings
+
+> **2025 Schema Update**: `IWSettingsDto` no longer has a generic `config` key-value store. It now contains typed fields directly (e.g., `LOCATION_NAME`, `TAX_RATE`, `DEFAULT_FULFILLMENTID`).
 
 ### Interval DTOs (`interval.dto.ts`)
 
@@ -135,20 +195,24 @@ Fulfillment service configuration:
 Product modifiers and options:
 
 - `IOptionTypeDisplayFlagsDto` - Display flags for option types
-- `IOptionTypeDto` - Option/modifier type
+- `UncommittedOptionTypeDto` - Base data for creating/updating a modifier group (contains `options` field)
+- `IOptionTypeDto` - Option/modifier type (extends `UncommittedOptionTypeDto`)
 - `IOptionMetadataDto` - Option metadata
 - `IOptionDisplayFlagsDto` - Option display flags
-- `IOptionDto` - Option/modifier
+- `UncommittedOptionDto` - Base data for creating/updating an option
+- `IOptionDto` - Option/modifier (extends `UncommittedOptionDto`)
 - `IOptionStateDto` - Option state (placement/qualifier)
 - `IOptionInstanceDto` - Option instance
 - `CategoryDisplayFlagsDto` - Category display flags
+
+> **2025 Schema Update**: `IOptionTypeDto.options` is now an ordered array of option IDs. The order in this array determines the display order. `IOptionDto` no longer has an `ordinal` field.
 
 ### Product DTOs (`product.dto.ts`)
 
 Products and product instances:
 
 - `PrepTimingDto` - Preparation timing
-- `IProductOrderGuideDto` - Product order guide (warnings/suggestions)
+- `IProductOrderGuideDto` - Product order guide (warnings/suggestions/errors)
 - `IProductDisplayFlagsDto` - Product display flags
 - `IProductModifierDto` - Product modifier configuration
 - `IProductDto` - Product
@@ -156,23 +220,40 @@ Products and product instances:
 - `IProductInstanceDisplayFlagsMenuDto` - Menu display flags
 - `IProductInstanceDisplayFlagsOrderDto` - Order display flags
 - `IProductInstanceDisplayFlagsDto` - All product instance display flags combined
-- `ProductModifierEntryDto` - Product modifier entry
-- `IProductInstanceDto` - Product instance
+- `ProductInstanceModifierEntryDto` - Product INSTANCE modifier entry
+- `UncommittedIProductInstanceDto` - Base data for creating/updating a product instance
+- `IProductInstanceDto` - Product instance (extends `UncommittedIProductInstanceDto`)
+
+> **2025 Schema Update**:
+>
+> - `IProductDto.instances` is now an ordered array of product instance IDs. The first element is the base (default) product instance.
+> - `IProductDto` no longer has a `baseProductId` field - use `instances[0]` instead.
+> - `IProductDto` no longer has a `category_ids` field - categories now reference products via `ICategoryDto.products`.
+> - `IProductInstanceDto` no longer has `ordinal` or `productId` fields - ordering is embedded in the parent's `instances` array.
+> - `IProductInstanceDisplayFlagsMenuDto.ordinal` and `IProductInstanceDisplayFlagsOrderDto.ordinal` only affect ordering relative to other instances of the same product, not across products.
 
 ### Category DTOs (`category.dto.ts`)
 
 Product categories:
 
-- `ICategoryDto` - Category
+- `CategoryDisplayFlagsDto` - Display configuration flags for categories
+- `UncommittedCategoryDto` - Base data for creating/updating a category
+- `ICategoryDto` - Category (extends `UncommittedCategoryDto`)
+
+> **2025 Schema Update**: Categories now have `children` (ordered list of child category IDs) and `products` (ordered list of product IDs) fields. The `ordinal` and `parent_id` fields have been removed as the category tree is now inverted with ordering embedded in the array positions.
 
 ### Catalog DTOs (`catalog.dto.ts`)
 
 Complete catalog structure:
 
-- `CatalogModifierEntryDto` - Catalog modifier entry
-- `CatalogCategoryEntryDto` - Catalog category entry
-- `CatalogProductEntryDto` - Catalog product entry
-- `ICatalogDto` - Complete catalog
+- `ICatalogDto` - Complete catalog containing dictionaries of all catalog entities
+
+> **2025 Schema Update**: The intermediate entry DTOs (`CatalogModifierEntryDto`, `CatalogCategoryEntryDto`, `CatalogProductEntryDto`) have been removed. Ordering information is now embedded directly in the parent entities:
+>
+> - `IOptionTypeDto.options` lists option IDs in display order
+> - `ICategoryDto.children` lists child category IDs in display order
+> - `ICategoryDto.products` lists product IDs in display order
+> - `IProductDto.instances` lists product instance IDs in display order (first is the base instance)
 
 ### Order DTOs (`order.dto.ts`)
 

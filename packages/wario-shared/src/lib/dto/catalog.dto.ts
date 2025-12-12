@@ -7,48 +7,18 @@ import type { IProductInstanceFunctionDto, OrderInstanceFunctionDto } from './ex
 import { IOptionDto, IOptionTypeDto } from './modifier.dto';
 import { IProductDto, IProductInstanceDto } from './product.dto';
 
-export class CatalogModifierEntryDto {
-  @IsString({ each: true })
-  options!: string[];
-
-  @ValidateNested()
-  @Type(() => IOptionTypeDto)
-  modifierType!: IOptionTypeDto;
-}
-
-export class CatalogCategoryEntryDto {
-  @ValidateNested()
-  @Type(() => ICategoryDto)
-  category!: ICategoryDto;
-
-  @IsString({ each: true })
-  children!: string[];
-
-  @IsString({ each: true })
-  products!: string[];
-}
-
-export class CatalogProductEntryDto {
-  @ValidateNested()
-  @Type(() => IProductDto)
-  product!: IProductDto;
-
-  @IsString({ each: true })
-  instances!: string[];
-}
-
 export class ICatalogDto {
   @IsObject()
   options!: Record<string, IOptionDto>;
 
   @IsObject()
-  modifiers!: Record<string, CatalogModifierEntryDto>;
+  modifiers!: Record<string, IOptionTypeDto>;
 
   @IsObject()
-  categories!: Record<string, CatalogCategoryEntryDto>;
+  categories!: Record<string, ICategoryDto>;
 
   @IsObject()
-  products!: Record<string, CatalogProductEntryDto>;
+  products!: Record<string, IProductDto>;
 
   @IsObject()
   productInstances!: Record<string, IProductInstanceDto>;

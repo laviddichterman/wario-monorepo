@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/only-throw-error */
 import { GetPlacementFromMIDOID } from '../common';
-import type { CatalogModifierEntry, IOption, IOptionType } from '../derived-types';
+import type { IOption, IOptionType } from '../derived-types';
 import { DISABLE_REASON, DISPLAY_AS, type OptionPlacement, PRODUCT_LOCATION } from '../enums';
 import type { ICatalogModifierSelectors, ICatalogSelectors, MTID_MOID, OptionEnableState, WCPProduct } from '../types';
 import { type Selector } from '../utility-types';
@@ -42,7 +42,7 @@ const RIGHT_SIDE = PRODUCT_LOCATION.RIGHT;
 type ModifierNameGetterFunction = (SelectModifierOption: Selector<IOption>, moid: string) => string;
 
 export const ListModifierChoicesByDisplayName = (
-  CATALOG_MODIFIER_INFO: CatalogModifierEntry,
+  CATALOG_MODIFIER_INFO: IOptionType,
   SelectModifierOption: Selector<IOption>,
 ) => {
   // TODO: needs to filter disabled or unavailable options
@@ -65,14 +65,14 @@ export const HandleOptionCurry =
     if (x[1] === '') {
       const CATALOG_MODIFIER_INFO = catModSelectors.modifierEntry(x[0]);
       if (CATALOG_MODIFIER_INFO) {
-        switch (CATALOG_MODIFIER_INFO.modifierType.displayFlags.empty_display_as) {
+        switch (CATALOG_MODIFIER_INFO.displayFlags.empty_display_as) {
           case DISPLAY_AS.YOUR_CHOICE_OF:
-            return `Your choice of ${CATALOG_MODIFIER_INFO.modifierType.displayName || CATALOG_MODIFIER_INFO.modifierType.name}`;
+            return `Your choice of ${CATALOG_MODIFIER_INFO.displayName || CATALOG_MODIFIER_INFO.name}`;
           case DISPLAY_AS.LIST_CHOICES:
             return ListModifierChoicesByDisplayName(CATALOG_MODIFIER_INFO, catModSelectors.option);
           // DISPLAY_AS.OMIT is handled elsewhere
           default:
-            throw `Unknown value for empty_display_as flag: ${CATALOG_MODIFIER_INFO.modifierType.displayFlags.empty_display_as}`;
+            throw `Unknown value for empty_display_as flag: ${CATALOG_MODIFIER_INFO.displayFlags.empty_display_as}`;
         }
       }
     }
@@ -80,6 +80,7 @@ export const HandleOptionCurry =
   };
 
 export function IsOptionEnabled(
+  modifierTypeId: string,
   option: IOption,
   product: WCPProduct,
   bake_count: readonly [number, number],
@@ -92,9 +93,9 @@ export function IsOptionEnabled(
   // we would handle the limitation by using smarts at the wcpmodifierdir level
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const productClassEntry = catalogSelectors.productEntry(product.productId)!;
-  const placement = GetPlacementFromMIDOID(product.modifiers, option.modifierTypeId, option.id);
+  const placement = GetPlacementFromMIDOID(product.modifiers, modifierTypeId, option.id);
   // TODO: bake and flavor stuff should move into the enable_filter itself, the option itself should just hold generalized metadata the enable filter function can use/reference
-  const { bake_max, flavor_max, bake_differential } = productClassEntry.product.displayFlags;
+  const { bake_max, flavor_max, bake_differential } = productClassEntry.displayFlags;
   const proposed_delta = DELTA_MATRIX[placement.placement][location];
 
   const bake_after = [

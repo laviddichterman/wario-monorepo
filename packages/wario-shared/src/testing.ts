@@ -27,8 +27,6 @@ export {
   // Category
   createMockCategory,
   createMockCategoryDisplayFlags,
-  // Option-related
-  createMockModifierEntry,
   // Primitive helpers
   createMockMoney,
   createMockOption,
@@ -36,6 +34,11 @@ export {
   createMockOptionMetadata,
   createMockOptionType,
   createMockOptionTypeDisplayFlags,
+
+  // functional
+  createMockAbstractExpression,
+  createMockAbstractExpressionConstLiteral,
+  createMockProductInstanceFunction,
   createMockOrderInstanceFunction,
 
   // Product-related
@@ -50,7 +53,7 @@ export {
   createMockProductInstanceDisplayFlagsPos,
   createMockProductModifier,
   createMockProductOrderGuide,
-  createMockProductInstanceFunction,
+
 } from '../tests/mocks';
 
 // Comprehensive mock catalog for high coverage testing

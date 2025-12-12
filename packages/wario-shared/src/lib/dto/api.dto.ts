@@ -17,7 +17,7 @@ import {
   IProductInstanceDisplayFlagsDto,
   IProductModifierDto,
   PrepTimingDto,
-  ProductModifierEntryDto,
+  ProductInstanceModifierEntryDto,
   UncommittedIProductInstanceDto,
 } from '../..';
 import { PaymentMethod, StoreCreditType } from '../enums';
@@ -230,7 +230,8 @@ export class UpdateIProductRequestDto {
   printerGroup!: string | null;
 }
 /**
- * Partial<Omit<IProductInstance, "id" | "productId">>
+ * NOTE THIS API NEEDS REVIEW SINCE WE NEED TO THINK ABOUT HOW WE HANDLE UPDATES WITH A NEW INSTANCE OR A REMOVED ONE
+ * Partial<Omit<IProductInstance, "id">>
  */
 export class PartialUncommittedProductInstanceDto {
   @IsInt()
@@ -239,9 +240,9 @@ export class PartialUncommittedProductInstanceDto {
   ordinal!: number;
 
   @ValidateNested({ each: true })
-  @Type(() => ProductModifierEntryDto)
+  @Type(() => ProductInstanceModifierEntryDto)
   @IsOptional()
-  modifiers!: ProductModifierEntryDto[];
+  modifiers!: ProductInstanceModifierEntryDto[];
 
   @ValidateNested()
   @Type(() => IProductInstanceDisplayFlagsDto)

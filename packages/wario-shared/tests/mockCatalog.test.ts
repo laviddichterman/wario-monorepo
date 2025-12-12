@@ -8,7 +8,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { DisableDataCheck } from '../src/lib/common';
-import type { ProductModifierEntry } from '../src/lib/derived-types';
+import type { ProductInstanceModifierEntry } from '../src/lib/derived-types';
 import { DISABLE_REASON, MODIFIER_MATCH, OptionPlacement, OptionQualifier } from '../src/lib/enums';
 import {
   ComputePotentialPrices,
@@ -21,11 +21,7 @@ import { WFunctional } from '../src/lib/objects/WFunctional';
 import {
   CanThisBeOrderedAtThisTimeAndFulfillmentCatalog,
   CheckRequiredModifiersAreAvailable,
-  DoesProductExistInCatalog,
-  FilterProductInstanceUsingCatalog,
   FilterWCPProduct,
-  IgnoreHideDisplayFlags,
-  IsThisCategoryVisibleForFulfillment,
 } from '../src/lib/objects/WMenu';
 // Import from our mock catalog
 import {
@@ -38,8 +34,6 @@ import {
   BASIC_PIZZA_PRODUCT,
   COMPLEX_PIZZA_PRODUCT,
   createMockServiceTime,
-  DISABLED_CATEGORY,
-  DISABLED_PRODUCT,
   FUNC_CRUST_ENABLES_SAUCE,
   FUNC_FLAVOR_CHECK,
   FUNC_HAS_ANY_TOPPINGS,
@@ -53,11 +47,8 @@ import {
   MODIFIERS_PLAIN_CHEESE,
   MODIFIERS_SPLIT_PIZZA,
   MODIFIERS_WITH_QUALIFIERS,
-  NESTED_CHILD_CATEGORY,
   OPTION_TOPPING_DISABLED,
   OPTION_TOPPING_TIME_LIMITED,
-  PI_PLAIN_CHEESE,
-  PIZZA_CATEGORY,
   SPLIT_PIZZA_PRODUCT,
 } from '../testing';
 
@@ -71,7 +62,7 @@ describe('Mock Catalog Structure', () => {
       ALL_CATEGORIES.forEach((cat) => {
         const entry = MOCK_CATALOG_SELECTORS.category(cat.id);
         expect(entry).toBeDefined();
-        expect(entry?.category.id).toBe(cat.id);
+        expect(entry?.id).toBe(cat.id);
       });
     });
 
@@ -79,7 +70,7 @@ describe('Mock Catalog Structure', () => {
       ALL_MODIFIER_TYPES.forEach((mt) => {
         const entry = MOCK_CATALOG_SELECTORS.modifierEntry(mt.id);
         expect(entry).toBeDefined();
-        expect(entry?.modifierType.id).toBe(mt.id);
+        expect(entry?.id).toBe(mt.id);
       });
     });
 
@@ -95,7 +86,7 @@ describe('Mock Catalog Structure', () => {
       ALL_PRODUCTS.forEach((prod) => {
         const entry = MOCK_CATALOG_SELECTORS.productEntry(prod.id);
         expect(entry).toBeDefined();
-        expect(entry?.product.id).toBe(prod.id);
+        expect(entry?.id).toBe(prod.id);
       });
     });
 
@@ -143,32 +134,16 @@ describe('Mock Catalog Structure', () => {
 // ============================================================================
 
 describe('Category Visibility', () => {
-  const fulfillmentPickup = MOCK_IDS.FULFILLMENT_PICKUP;
-  const fulfillmentDelivery = MOCK_IDS.FULFILLMENT_DELIVERY;
-
-  it('should return true for enabled categories', () => {
-    expect(
-      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, PIZZA_CATEGORY.id, fulfillmentPickup),
-    ).toBe(true);
+  it('should provide access to category serviceDisable array for visibility checks', () => {
+    const pizzaCategory = MOCK_CATALOG_SELECTORS.category(MOCK_IDS.PIZZA_CATEGORY);
+    expect(pizzaCategory).toBeDefined();
+    expect(pizzaCategory?.serviceDisable).toEqual([]);
   });
 
-  it('should return false for service-disabled categories', () => {
-    expect(
-      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, DISABLED_CATEGORY.id, fulfillmentPickup),
-    ).toBe(false);
-  });
-
-  it('should return true for service-disabled category with different fulfillment', () => {
-    expect(
-      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, DISABLED_CATEGORY.id, fulfillmentDelivery),
-    ).toBe(true);
-  });
-
-  it('should check parent category visibility for nested categories', () => {
-    // NESTED_CHILD_CATEGORY is a child of PIZZA_CATEGORY, which is visible
-    expect(
-      IsThisCategoryVisibleForFulfillment(MOCK_CATALOG_SELECTORS.category, NESTED_CHILD_CATEGORY.id, fulfillmentPickup),
-    ).toBe(true);
+  it('should have serviceDisable for disabled categories', () => {
+    const disabledCategory = MOCK_CATALOG_SELECTORS.category(MOCK_IDS.DISABLED_CATEGORY);
+    expect(disabledCategory).toBeDefined();
+    expect(disabledCategory?.serviceDisable).toContain(MOCK_IDS.FULFILLMENT_PICKUP);
   });
 });
 
@@ -386,7 +361,7 @@ describe('Product Instance Functions', () => {
     });
 
     it('should return false when crust IS stuffed', () => {
-      const modifiersWithStuffedCrust: ProductModifierEntry[] = [
+      const modifiersWithStuffedCrust: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -433,36 +408,6 @@ describe('Product Orderability', () => {
   const serviceTime = createMockServiceTime();
   const fulfillment = MOCK_IDS.FULFILLMENT_PICKUP;
 
-  it('should allow ordering enabled products', () => {
-    const result = FilterProductInstanceUsingCatalog(
-      PI_PLAIN_CHEESE,
-      MOCK_CATALOG_SELECTORS,
-      IgnoreHideDisplayFlags,
-      serviceTime,
-      fulfillment,
-    );
-
-    expect(result).toBe(true);
-  });
-
-  it('should check if product exists in catalog with valid modifiers', () => {
-    const result = DoesProductExistInCatalog(
-      BASIC_PIZZA_PRODUCT.id,
-      MODIFIERS_PEPPERONI,
-      fulfillment,
-      MOCK_CATALOG_SELECTORS,
-    );
-
-    expect(result).toBe(true);
-  });
-
-  it('should return false for products in disabled categories', () => {
-    const result = DoesProductExistInCatalog(DISABLED_PRODUCT.id, [], fulfillment, MOCK_CATALOG_SELECTORS);
-
-    // Should be false because the category is disabled for pickup
-    expect(result).toBe(false);
-  });
-
   it('should filter incomplete products when filterIncomplete is true', () => {
     const result = FilterWCPProduct(
       BASIC_PIZZA_PRODUCT.id,
@@ -490,11 +435,13 @@ describe('Product Orderability', () => {
   });
 
   it('should check orderability for complete products', () => {
+    const reachableProducts = new Set([BASIC_PIZZA_PRODUCT.id]);
     const result = CanThisBeOrderedAtThisTimeAndFulfillmentCatalog(
       BASIC_PIZZA_PRODUCT.id,
       MODIFIERS_PEPPERONI,
       MOCK_CATALOG_SELECTORS,
       serviceTime,
+      reachableProducts,
       fulfillment,
       true,
     );
@@ -524,7 +471,7 @@ describe('CheckRequiredModifiersAreAvailable', () => {
   });
 
   it('should return false when modifier option is not found', () => {
-    const invalidModifiers: ProductModifierEntry[] = [
+    const invalidModifiers: ProductInstanceModifierEntry[] = [
       {
         modifierTypeId: MOCK_IDS.SIZE_MT,
         options: [
@@ -546,7 +493,7 @@ describe('CheckRequiredModifiersAreAvailable', () => {
 
   it('should return false when modifier is service-disabled for fulfillment', () => {
     // COMPLEX_PIZZA has REMOVAL_MT disabled for delivery
-    const modifiersWithRemoval: ProductModifierEntry[] = [
+    const modifiersWithRemoval: ProductInstanceModifierEntry[] = [
       ...MODIFIERS_COMPLEX_PIZZA,
       {
         modifierTypeId: MOCK_IDS.REMOVAL_MT,
@@ -750,7 +697,7 @@ describe('Order Guide Functions', () => {
   describe('FUNC_WARN_HIGH_TOPPINGS (returns string or false)', () => {
     it('should return warning string when flavor count is high (>= 5)', () => {
       // Create modifiers with high flavor count (pepperoni=2 + mushrooms=1 + extra_cheese=3 = 6)
-      const highFlavorModifiers: ProductModifierEntry[] = [
+      const highFlavorModifiers: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -825,7 +772,7 @@ describe('Order Guide Functions', () => {
     });
 
     it('should return false when thin crust is NOT selected', () => {
-      const modifiersWithThickCrust: ProductModifierEntry[] = [
+      const modifiersWithThickCrust: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -902,7 +849,7 @@ describe('Edge Cases and Potential Bugs', () => {
 
   describe('Empty Modifiers Edge Cases', () => {
     it('should handle product with no modifiers selected at all', () => {
-      const emptyModifiers: ProductModifierEntry[] = [];
+      const emptyModifiers: ProductInstanceModifierEntry[] = [];
 
       const metadata = WCPProductGenerateMetadata(
         BASIC_PIZZA_PRODUCT.id,
@@ -917,7 +864,7 @@ describe('Edge Cases and Potential Bugs', () => {
     });
 
     it('should handle modifier entry with empty options array', () => {
-      const modifierWithNoOptions: ProductModifierEntry[] = [
+      const modifierWithNoOptions: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [], // No options selected
@@ -951,7 +898,7 @@ describe('Edge Cases and Potential Bugs', () => {
     });
 
     it('should handle modifier entry with non-existent modifier type gracefully', () => {
-      const invalidModifier: ProductModifierEntry[] = [
+      const invalidModifier: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: 'nonexistent_mt',
           options: [],
@@ -975,7 +922,7 @@ describe('Edge Cases and Potential Bugs', () => {
   describe('Maximum Selection Edge Cases', () => {
     it('should handle selecting exactly max_selected options', () => {
       // TOPPINGS_MT has max_selected: 5
-      const maxToppings: ProductModifierEntry[] = [
+      const maxToppings: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -1020,7 +967,7 @@ describe('Edge Cases and Potential Bugs', () => {
 
   describe('Flavor and Bake Limit Edge Cases', () => {
     it('should calculate cumulative flavor factors correctly', () => {
-      const manyToppings: ProductModifierEntry[] = [
+      const manyToppings: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -1063,7 +1010,7 @@ describe('Edge Cases and Potential Bugs', () => {
     });
 
     it('should apply negative flavor factors from removal options', () => {
-      const modifiersWithRemoval: ProductModifierEntry[] = [
+      const modifiersWithRemoval: ProductInstanceModifierEntry[] = [
         ...MODIFIERS_COMPLEX_PIZZA,
         {
           modifierTypeId: MOCK_IDS.REMOVAL_MT,
@@ -1095,7 +1042,7 @@ describe('Edge Cases and Potential Bugs', () => {
 
   describe('Split Product Edge Cases', () => {
     it('should handle same topping on both sides (LEFT and RIGHT)', () => {
-      const sameOnBothSides: ProductModifierEntry[] = [
+      const sameOnBothSides: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -1136,7 +1083,7 @@ describe('Edge Cases and Potential Bugs', () => {
     });
 
     it('should handle mixing WHOLE and LEFT/RIGHT placements', () => {
-      const mixedPlacements: ProductModifierEntry[] = [
+      const mixedPlacements: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -1210,7 +1157,7 @@ describe('Edge Cases and Potential Bugs', () => {
     });
 
     it('should detect AT_LEAST match for different multi-select options', () => {
-      const withPepperoni: ProductModifierEntry[] = [
+      const withPepperoni: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [
@@ -1229,7 +1176,7 @@ describe('Edge Cases and Potential Bugs', () => {
         },
       ];
 
-      const withPepperoniAndMushrooms: ProductModifierEntry[] = [
+      const withPepperoniAndMushrooms: ProductInstanceModifierEntry[] = [
         {
           modifierTypeId: MOCK_IDS.SIZE_MT,
           options: [

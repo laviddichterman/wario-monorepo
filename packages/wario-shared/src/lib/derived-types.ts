@@ -20,9 +20,6 @@ import type {
   ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
 import type {
-  CatalogCategoryEntryDto,
-  CatalogModifierEntryDto,
-  CatalogProductEntryDto,
   ICatalogDto,
 } from './dto/catalog.dto';
 import type { CategoryDisplayFlagsDto, ICategoryDto, UncommittedCategoryDto } from './dto/category.dto';
@@ -132,7 +129,7 @@ import type {
   IProductModifierDto,
   IProductOrderGuideDto,
   PrepTimingDto,
-  ProductModifierEntryDto,
+  ProductInstanceModifierEntryDto,
   UncommittedIProductDto,
   UncommittedIProductInstanceDto,
 } from './dto/product.dto';
@@ -216,7 +213,7 @@ export type IProductOrderGuide = Omit<IProductOrderGuideDto, never>;
 export type IProductModifier = Omit<IProductModifierDto, never>;
 export type IProduct = Omit<IProductDto, never>;
 export type IProductDisplayFlags = Omit<IProductDisplayFlagsDto, never>;
-export type ProductModifierEntry = Omit<ProductModifierEntryDto, never>;
+export type ProductInstanceModifierEntry = Omit<ProductInstanceModifierEntryDto, never>;
 export type IProductInstanceDisplayFlagsPos = Omit<IProductInstanceDisplayFlagsPosDto, never>;
 export type IProductInstanceDisplayFlagsMenu = Omit<IProductInstanceDisplayFlagsMenuDto, never>;
 export type IProductInstanceDisplayFlagsOrder = Omit<IProductInstanceDisplayFlagsOrderDto, never>;
@@ -228,13 +225,9 @@ export type IProductInstanceDisplayFlags = Omit<IProductInstanceDisplayFlagsDto,
 // =============================================================================
 
 export type RecordModifierOptions = Record<string, IOption>;
-export type CatalogModifierEntry = Omit<CatalogModifierEntryDto, never>;
-export type ICatalogModifiers = Record<string, CatalogModifierEntry>;
-export type CatalogCategoryEntry = Omit<CatalogCategoryEntryDto, never>;
-export type ICatalogCategories = Record<string, CatalogCategoryEntry>;
-export type RecordProductInstances = Record<string, IProductInstance>;
-export type CatalogProductEntry = Omit<CatalogProductEntryDto, never>;
-export type ICatalogProducts = Record<string, CatalogProductEntry>;
+export type RecordICategories = Record<string, ICategory>;
+export type RecordIProductInstances = Record<string, IProductInstance>;
+export type RecordIProducts = Record<string, IProduct>;
 export type RecordProductInstanceFunctions = Record<string, IProductInstanceFunction>;
 export type RecordOrderInstanceFunctions = Record<string, OrderInstanceFunction>;
 

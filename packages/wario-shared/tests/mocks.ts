@@ -10,8 +10,6 @@ import type {
   AbstractOrderExpressionConstLiteral,
   AbstractOrderExpressionIfElseExpression,
   AbstractOrderExpressionLogicalExpression,
-  CatalogCategoryEntry,
-  CatalogModifierEntry,
   CategoryDisplayFlags,
   IAbstractExpression,
   ICatalog,
@@ -86,12 +84,10 @@ export const createMockOptionDisplayFlags = (overrides: Partial<IOptionDisplayFl
 
 export const createMockOption = (overrides: Partial<IOption> = {}): IOption => ({
   id: 'opt1',
-  modifierTypeId: 'mt1',
   displayName: 'Test Option',
   shortcode: 'TO',
   enable: null,
   description: '',
-  ordinal: 0,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -130,18 +126,9 @@ export const createMockOptionType = (overrides: Partial<IOptionType> = {}): IOpt
   ordinal: 0,
   min_selected: 0,
   max_selected: 10,
+  options: [],
   ...overrides,
   displayFlags: createMockOptionTypeDisplayFlags(overrides.displayFlags),
-});
-
-// ============================================================================
-// Catalog Modifier Entry Helper
-// ============================================================================
-
-export const createMockModifierEntry = (overrides: Partial<CatalogModifierEntry> = {}): CatalogModifierEntry => ({
-  options: ['opt1'],
-  ...overrides,
-  modifierType: createMockOptionType(overrides.modifierType),
 });
 
 // ============================================================================
@@ -158,6 +145,7 @@ export const createMockPrepTiming = (overrides: Partial<PrepTiming> = {}): PrepT
 export const createMockProductOrderGuide = (overrides: Partial<IProductOrderGuide> = {}): IProductOrderGuide => ({
   warnings: [],
   suggestions: [],
+  errors: [],
   ...overrides,
 });
 
@@ -186,9 +174,8 @@ export const createMockProduct = (overrides: Partial<IProduct> = {}): IProduct =
   availability: [],
   externalIDs: [],
   modifiers: [],
-  baseProductId: 'pi1',
-  category_ids: ['cat1'],
   printerGroup: null,
+  instances: ['PI1'],
   ...overrides,
   price: createMockMoney(overrides.price as IMoney),
   displayFlags: createMockProductDisplayFlags(overrides.displayFlags),
@@ -246,11 +233,9 @@ export const createMockProductInstanceDisplayFlags = (
 
 export const createMockProductInstance = (overrides: Partial<IProductInstance> = {}): IProductInstance => ({
   id: 'pi1',
-  productId: 'prod1',
   displayName: 'Test Product',
   shortcode: 'TP',
   description: '',
-  ordinal: 0,
   modifiers: [],
   externalIDs: [],
   ...overrides,
@@ -271,16 +256,16 @@ export const createMockCategoryDisplayFlags = (
 });
 
 export const createMockCategory = (
-  overrides: Partial<CatalogCategoryEntry['category']> = {},
-): CatalogCategoryEntry['category'] => ({
+  overrides: Partial<ICategory> = {},
+): ICategory => ({
   id: 'cat1',
   name: 'Test Category',
   description: '',
   subheading: null,
   footnotes: null,
-  parent_id: null,
-  ordinal: 0,
   serviceDisable: [],
+  children: [],
+  products: [],
   display_flags: createMockCategoryDisplayFlags(overrides.display_flags),
   ...overrides,
 });
@@ -405,5 +390,7 @@ export const createMockProductInstanceFunction = (
   id: 'pif1',
   name: 'Test Product Instance Function',
   ...overrides,
-  expression: createMockAbstractExpression(overrides.expression),
+  expression: 'discriminator' in (overrides.expression ?? {})
+    ? (overrides.expression as IAbstractExpression)
+    : createMockAbstractExpression(overrides.expression),
 });

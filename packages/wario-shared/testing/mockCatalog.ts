@@ -16,9 +16,6 @@
  */
 
 import type {
-  CatalogCategoryEntry,
-  CatalogModifierEntry,
-  CatalogProductEntry,
   ICatalog,
   ICategory,
   IOption,
@@ -27,7 +24,7 @@ import type {
   IProductInstance,
   IProductInstanceFunction,
   OrderInstanceFunction,
-  ProductModifierEntry,
+  ProductInstanceModifierEntry,
   RecordOrderInstanceFunctions,
   RecordProductInstanceFunctions,
 } from '../src/lib/derived-types';
@@ -47,6 +44,7 @@ import {
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
 import type { ICatalogSelectors } from '../src/lib/types';
+import { createMockCategory, createMockOption, createMockOptionType, createMockOrderInstanceFunction, createMockProduct, createMockProductInstance, createMockProductInstanceDisplayFlags, createMockProductInstanceFunction } from '../tests/mocks';
 
 // ============================================================================
 // IDs - Central Registry
@@ -130,102 +128,104 @@ export const MOCK_IDS = {
 // ============================================================================
 // Categories
 // ============================================================================
-
-export const ROOT_CATEGORY: ICategory = {
-  id: MOCK_IDS.ROOT_CATEGORY,
-  name: 'Menu',
-  description: 'Root menu category',
-  subheading: null,
-  footnotes: null,
-  parent_id: null,
-  ordinal: 0,
-  serviceDisable: [],
-  display_flags: {
-    nesting: CategoryDisplay.FLAT,
-    call_line_name: 'MENU',
-    call_line_display: CALL_LINE_DISPLAY.SHORTCODE,
-  },
-};
-
-export const PIZZA_CATEGORY: ICategory = {
+export const PIZZA_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.PIZZA_CATEGORY,
   name: 'Pizza',
   description: 'Delicious pizzas',
   subheading: 'Build your perfect pie',
   footnotes: null,
-  parent_id: MOCK_IDS.ROOT_CATEGORY,
-  ordinal: 1,
   serviceDisable: [],
   display_flags: {
     nesting: CategoryDisplay.TAB,
     call_line_name: 'PIZ',
     call_line_display: CALL_LINE_DISPLAY.SHORTNAME,
   },
-};
+  children: [MOCK_IDS.NESTED_CHILD_CATEGORY],
+  products: [MOCK_IDS.BASIC_PIZZA, MOCK_IDS.COMPLEX_PIZZA, MOCK_IDS.SPLIT_PIZZA],
+});
 
-export const DRINKS_CATEGORY: ICategory = {
+
+
+export const DRINKS_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.DRINKS_CATEGORY,
   name: 'Drinks',
   description: 'Refreshing beverages',
   subheading: null,
   footnotes: null,
-  parent_id: MOCK_IDS.ROOT_CATEGORY,
-  ordinal: 2,
   serviceDisable: [],
   display_flags: {
     nesting: CategoryDisplay.FLAT,
     call_line_name: 'DRK',
     call_line_display: CALL_LINE_DISPLAY.QUANTITY,
   },
-};
+  children: [],
+  products: [],
+});
 
-export const DISABLED_CATEGORY: ICategory = {
+export const DISABLED_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.DISABLED_CATEGORY,
   name: 'Disabled Category',
   description: 'Category disabled for pickup',
   subheading: null,
   footnotes: null,
-  parent_id: MOCK_IDS.ROOT_CATEGORY,
-  ordinal: 99,
   serviceDisable: [MOCK_IDS.FULFILLMENT_PICKUP],
   display_flags: {
     nesting: CategoryDisplay.FLAT,
     call_line_name: '',
     call_line_display: CALL_LINE_DISPLAY.SHORTCODE,
   },
-};
+  children: [],
+  products: [MOCK_IDS.DISABLED_PRODUCT],
+});
 
-export const NESTED_CHILD_CATEGORY: ICategory = {
+export const NESTED_CHILD_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.NESTED_CHILD_CATEGORY,
   name: 'Specialty Pizzas',
   description: 'Premium pizza selections',
   subheading: null,
   footnotes: null,
-  parent_id: MOCK_IDS.PIZZA_CATEGORY,
-  ordinal: 10,
   serviceDisable: [],
   display_flags: {
     nesting: CategoryDisplay.ACCORDION,
     call_line_name: 'SPE',
     call_line_display: CALL_LINE_DISPLAY.SHORTCODE,
   },
-};
+  children: [],
+  products: [MOCK_IDS.SPLIT_PIZZA],
+});
 
-export const TIME_DISABLED_CATEGORY: ICategory = {
+export const TIME_DISABLED_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.TIME_DISABLED_CATEGORY,
   name: 'Lunch Specials',
   description: 'Only available during lunch',
   subheading: null,
   footnotes: null,
-  parent_id: MOCK_IDS.ROOT_CATEGORY,
-  ordinal: 50,
   serviceDisable: [],
   display_flags: {
     nesting: CategoryDisplay.FLAT,
     call_line_name: 'LCH',
     call_line_display: CALL_LINE_DISPLAY.SHORTCODE,
   },
-};
+  children: [],
+  products: [],
+});
+export const ROOT_CATEGORY: ICategory = createMockCategory({
+  id: MOCK_IDS.ROOT_CATEGORY,
+  name: 'Menu',
+  description: 'Root menu category',
+  subheading: null,
+  footnotes: null,
+  serviceDisable: [],
+  display_flags: {
+    nesting: CategoryDisplay.FLAT,
+    call_line_name: 'MENU',
+    call_line_display: CALL_LINE_DISPLAY.SHORTCODE,
+  },
+  children: [PIZZA_CATEGORY.id],
+  products: [],
+});
+
+
 
 export const ALL_CATEGORIES: ICategory[] = [
   ROOT_CATEGORY,
@@ -240,12 +240,11 @@ export const ALL_CATEGORIES: ICategory[] = [
 // Modifier Types (Option Types)
 // ============================================================================
 
-export const SIZE_MODIFIER_TYPE: IOptionType = {
+export const SIZE_MODIFIER_TYPE: IOptionType = createMockOptionType({
   id: MOCK_IDS.SIZE_MT,
   name: 'Size',
   displayName: 'Choose Your Size',
   externalIDs: [],
-  ordinal: 0,
   min_selected: 1,
   max_selected: 1,
   displayFlags: {
@@ -261,14 +260,14 @@ export const SIZE_MODIFIER_TYPE: IOptionType = {
     non_empty_group_prefix: '',
     non_empty_group_suffix: '',
   },
-};
+  options: [MOCK_IDS.SIZE_SMALL, MOCK_IDS.SIZE_MEDIUM, MOCK_IDS.SIZE_LARGE],
+});
 
-export const TOPPINGS_MODIFIER_TYPE: IOptionType = {
+export const TOPPINGS_MODIFIER_TYPE: IOptionType = createMockOptionType({
   id: MOCK_IDS.TOPPINGS_MT,
   name: 'Toppings',
   displayName: 'Add Toppings',
   externalIDs: [],
-  ordinal: 1,
   min_selected: 0,
   max_selected: 5,
   displayFlags: {
@@ -284,14 +283,21 @@ export const TOPPINGS_MODIFIER_TYPE: IOptionType = {
     non_empty_group_prefix: 'with ',
     non_empty_group_suffix: '',
   },
-};
+  options: [
+    MOCK_IDS.TOPPING_PEPPERONI,
+    MOCK_IDS.TOPPING_MUSHROOMS,
+    MOCK_IDS.TOPPING_OLIVES,
+    MOCK_IDS.TOPPING_EXTRA_CHEESE,
+    MOCK_IDS.TOPPING_DISABLED,
+    MOCK_IDS.TOPPING_TIME_LIMITED,
+  ],
+});
 
-export const CRUST_MODIFIER_TYPE: IOptionType = {
+export const CRUST_MODIFIER_TYPE: IOptionType = createMockOptionType({
   id: MOCK_IDS.CRUST_MT,
   name: 'Crust',
   displayName: 'Select Crust',
   externalIDs: [],
-  ordinal: 2,
   min_selected: 1,
   max_selected: 1,
   displayFlags: {
@@ -307,14 +313,14 @@ export const CRUST_MODIFIER_TYPE: IOptionType = {
     non_empty_group_prefix: '',
     non_empty_group_suffix: ' crust',
   },
-};
+  options: [MOCK_IDS.CRUST_THIN, MOCK_IDS.CRUST_THICK, MOCK_IDS.CRUST_STUFFED],
+});
 
-export const SAUCE_MODIFIER_TYPE: IOptionType = {
+export const SAUCE_MODIFIER_TYPE: IOptionType = createMockOptionType({
   id: MOCK_IDS.SAUCE_MT,
   name: 'Sauce',
   displayName: 'Choose Sauce',
   externalIDs: [],
-  ordinal: 3,
   min_selected: 0,
   max_selected: 2,
   displayFlags: {
@@ -330,14 +336,14 @@ export const SAUCE_MODIFIER_TYPE: IOptionType = {
     non_empty_group_prefix: '',
     non_empty_group_suffix: '',
   },
-};
+  options: [MOCK_IDS.SAUCE_MARINARA, MOCK_IDS.SAUCE_ALFREDO],
+});
 
-export const REMOVAL_MODIFIER_TYPE: IOptionType = {
+export const REMOVAL_MODIFIER_TYPE: IOptionType = createMockOptionType({
   id: MOCK_IDS.REMOVAL_MT,
   name: 'Removals',
   displayName: 'Remove Items',
   externalIDs: [],
-  ordinal: 10,
   min_selected: 0,
   max_selected: 5,
   displayFlags: {
@@ -353,7 +359,8 @@ export const REMOVAL_MODIFIER_TYPE: IOptionType = {
     non_empty_group_prefix: 'NO ',
     non_empty_group_suffix: '',
   },
-};
+  options: [MOCK_IDS.REMOVAL_NO_CHEESE, MOCK_IDS.REMOVAL_NO_SAUCE],
+});
 
 export const ALL_MODIFIER_TYPES: IOptionType[] = [
   SIZE_MODIFIER_TYPE,
@@ -368,14 +375,12 @@ export const ALL_MODIFIER_TYPES: IOptionType[] = [
 // ============================================================================
 
 // Size Options
-export const OPTION_SIZE_SMALL: IOption = {
+export const OPTION_SIZE_SMALL: IOption = createMockOption({
   id: MOCK_IDS.SIZE_SMALL,
-  modifierTypeId: MOCK_IDS.SIZE_MT,
   displayName: 'Small (10")',
   shortcode: 'SM',
   enable: null,
   description: 'Perfect for one',
-  ordinal: 0,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -392,16 +397,14 @@ export const OPTION_SIZE_SMALL: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_SIZE_MEDIUM: IOption = {
+export const OPTION_SIZE_MEDIUM: IOption = createMockOption({
   id: MOCK_IDS.SIZE_MEDIUM,
-  modifierTypeId: MOCK_IDS.SIZE_MT,
   displayName: 'Medium (12")',
   shortcode: 'MD',
   enable: null,
   description: 'Great for sharing',
-  ordinal: 1,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -418,16 +421,14 @@ export const OPTION_SIZE_MEDIUM: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_SIZE_LARGE: IOption = {
+export const OPTION_SIZE_LARGE: IOption = createMockOption({
   id: MOCK_IDS.SIZE_LARGE,
-  modifierTypeId: MOCK_IDS.SIZE_MT,
   displayName: 'Large (14")',
   shortcode: 'LG',
   enable: null,
   description: 'Party size',
-  ordinal: 2,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -444,17 +445,15 @@ export const OPTION_SIZE_LARGE: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
 // Topping Options
-export const OPTION_TOPPING_PEPPERONI: IOption = {
+export const OPTION_TOPPING_PEPPERONI: IOption = createMockOption({
   id: MOCK_IDS.TOPPING_PEPPERONI,
-  modifierTypeId: MOCK_IDS.TOPPINGS_MT,
   displayName: 'Pepperoni',
   shortcode: 'PEP',
   enable: null,
   description: 'Classic pepperoni',
-  ordinal: 0,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -471,16 +470,14 @@ export const OPTION_TOPPING_PEPPERONI: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_TOPPING_MUSHROOMS: IOption = {
+export const OPTION_TOPPING_MUSHROOMS: IOption = createMockOption({
   id: MOCK_IDS.TOPPING_MUSHROOMS,
-  modifierTypeId: MOCK_IDS.TOPPINGS_MT,
   displayName: 'Mushrooms',
   shortcode: 'MSH',
   enable: null,
   description: 'Fresh sliced mushrooms',
-  ordinal: 1,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -497,16 +494,14 @@ export const OPTION_TOPPING_MUSHROOMS: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_TOPPING_OLIVES: IOption = {
+export const OPTION_TOPPING_OLIVES: IOption = createMockOption({
   id: MOCK_IDS.TOPPING_OLIVES,
-  modifierTypeId: MOCK_IDS.TOPPINGS_MT,
   displayName: 'Black Olives',
   shortcode: 'OLV',
   enable: null,
   description: 'Sliced black olives',
-  ordinal: 2,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -523,16 +518,14 @@ export const OPTION_TOPPING_OLIVES: IOption = {
     omit_from_name: false,
     omit_from_shortname: true, // Omit from shortname for testing
   },
-};
+});
 
-export const OPTION_TOPPING_EXTRA_CHEESE: IOption = {
+export const OPTION_TOPPING_EXTRA_CHEESE: IOption = createMockOption({
   id: MOCK_IDS.TOPPING_EXTRA_CHEESE,
-  modifierTypeId: MOCK_IDS.TOPPINGS_MT,
   displayName: 'Extra Cheese',
   shortcode: 'XCH',
   enable: null,
   description: 'Double the cheese',
-  ordinal: 3,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -549,16 +542,14 @@ export const OPTION_TOPPING_EXTRA_CHEESE: IOption = {
     omit_from_name: true, // Omit from name for testing
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_TOPPING_DISABLED: IOption = {
+export const OPTION_TOPPING_DISABLED: IOption = createMockOption({
   id: MOCK_IDS.TOPPING_DISABLED,
-  modifierTypeId: MOCK_IDS.TOPPINGS_MT,
   displayName: 'Truffle (Seasonal)',
   shortcode: 'TRF',
   enable: null,
   description: 'Seasonal truffle shavings',
-  ordinal: 10,
   externalIDs: [],
   disabled: { start: 1, end: 0 }, // Blanket disabled (start > end)
   availability: [],
@@ -575,16 +566,14 @@ export const OPTION_TOPPING_DISABLED: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_TOPPING_TIME_LIMITED: IOption = {
+export const OPTION_TOPPING_TIME_LIMITED: IOption = createMockOption({
   id: MOCK_IDS.TOPPING_TIME_LIMITED,
-  modifierTypeId: MOCK_IDS.TOPPINGS_MT,
   displayName: 'Lunch Special Topping',
   shortcode: 'LST',
   enable: null,
   description: 'Available 11am-2pm',
-  ordinal: 11,
   externalIDs: [],
   disabled: null,
   availability: [
@@ -608,17 +597,15 @@ export const OPTION_TOPPING_TIME_LIMITED: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
 // Crust Options
-export const OPTION_CRUST_THIN: IOption = {
+export const OPTION_CRUST_THIN: IOption = createMockOption({
   id: MOCK_IDS.CRUST_THIN,
-  modifierTypeId: MOCK_IDS.CRUST_MT,
   displayName: 'Thin Crust',
   shortcode: 'THN',
   enable: null,
   description: 'Crispy thin crust',
-  ordinal: 0,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -635,16 +622,14 @@ export const OPTION_CRUST_THIN: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_CRUST_THICK: IOption = {
+export const OPTION_CRUST_THICK: IOption = createMockOption({
   id: MOCK_IDS.CRUST_THICK,
-  modifierTypeId: MOCK_IDS.CRUST_MT,
   displayName: 'Thick Crust',
   shortcode: 'THK',
   enable: null,
   description: 'Traditional thick crust',
-  ordinal: 1,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -661,16 +646,14 @@ export const OPTION_CRUST_THICK: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_CRUST_STUFFED: IOption = {
+export const OPTION_CRUST_STUFFED: IOption = createMockOption({
   id: MOCK_IDS.CRUST_STUFFED,
-  modifierTypeId: MOCK_IDS.CRUST_MT,
   displayName: 'Stuffed Crust',
   shortcode: 'STF',
   enable: null,
   description: 'Cheese-stuffed crust',
-  ordinal: 2,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -687,17 +670,15 @@ export const OPTION_CRUST_STUFFED: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
 // Sauce Options
-export const OPTION_SAUCE_MARINARA: IOption = {
+export const OPTION_SAUCE_MARINARA: IOption = createMockOption({
   id: MOCK_IDS.SAUCE_MARINARA,
-  modifierTypeId: MOCK_IDS.SAUCE_MT,
   displayName: 'Marinara',
   shortcode: 'MAR',
   enable: null,
   description: 'Classic marinara sauce',
-  ordinal: 0,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -714,16 +695,14 @@ export const OPTION_SAUCE_MARINARA: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_SAUCE_ALFREDO: IOption = {
+export const OPTION_SAUCE_ALFREDO: IOption = createMockOption({
   id: MOCK_IDS.SAUCE_ALFREDO,
-  modifierTypeId: MOCK_IDS.SAUCE_MT,
   displayName: 'Alfredo',
   shortcode: 'ALF',
   enable: null,
   description: 'Creamy alfredo sauce',
-  ordinal: 1,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -740,17 +719,15 @@ export const OPTION_SAUCE_ALFREDO: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
 // Removal Options
-export const OPTION_REMOVAL_NO_CHEESE: IOption = {
+export const OPTION_REMOVAL_NO_CHEESE: IOption = createMockOption({
   id: MOCK_IDS.REMOVAL_NO_CHEESE,
-  modifierTypeId: MOCK_IDS.REMOVAL_MT,
   displayName: 'Cheese',
   shortcode: 'NCH',
   enable: null,
   description: 'Remove cheese',
-  ordinal: 0,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -767,16 +744,14 @@ export const OPTION_REMOVAL_NO_CHEESE: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
-export const OPTION_REMOVAL_NO_SAUCE: IOption = {
+export const OPTION_REMOVAL_NO_SAUCE: IOption = createMockOption({
   id: MOCK_IDS.REMOVAL_NO_SAUCE,
-  modifierTypeId: MOCK_IDS.REMOVAL_MT,
   displayName: 'Sauce',
   shortcode: 'NSC',
   enable: null,
   description: 'Remove sauce',
-  ordinal: 1,
   externalIDs: [],
   disabled: null,
   availability: [],
@@ -793,7 +768,7 @@ export const OPTION_REMOVAL_NO_SAUCE: IOption = {
     omit_from_name: false,
     omit_from_shortname: false,
   },
-};
+});
 
 export const ALL_OPTIONS: IOption[] = [
   OPTION_SIZE_SMALL,
@@ -818,7 +793,7 @@ export const ALL_OPTIONS: IOption[] = [
 // Product Instance Functions
 // ============================================================================
 
-export const FUNC_CRUST_ENABLES_SAUCE: IProductInstanceFunction = {
+export const FUNC_CRUST_ENABLES_SAUCE: IProductInstanceFunction = createMockProductInstanceFunction({
   id: MOCK_IDS.FUNC_CRUST_ENABLES_SAUCE,
   name: 'Crust Enables Sauce',
   expression: {
@@ -848,18 +823,18 @@ export const FUNC_CRUST_ENABLES_SAUCE: IProductInstanceFunction = {
       },
     },
   },
-};
+});
 
-export const FUNC_HAS_ANY_TOPPINGS: IProductInstanceFunction = {
+export const FUNC_HAS_ANY_TOPPINGS: IProductInstanceFunction = createMockProductInstanceFunction({
   id: MOCK_IDS.FUNC_HAS_ANY_TOPPINGS,
   name: 'Has Any Toppings',
   expression: {
     discriminator: ProductInstanceFunctionType.HasAnyOfModifierType,
     expr: { mtid: MOCK_IDS.TOPPINGS_MT },
   },
-};
+});
 
-export const FUNC_FLAVOR_CHECK: IProductInstanceFunction = {
+export const FUNC_FLAVOR_CHECK: IProductInstanceFunction = createMockProductInstanceFunction({
   id: MOCK_IDS.FUNC_FLAVOR_CHECK,
   name: 'Flavor Limit Check',
   expression: {
@@ -876,12 +851,12 @@ export const FUNC_FLAVOR_CHECK: IProductInstanceFunction = {
       },
     },
   },
-};
+});
 
 /**
  * Order guide warning function: returns warning string if product has 3+ toppings, otherwise false
  */
-export const FUNC_WARN_HIGH_TOPPINGS: IProductInstanceFunction = {
+export const FUNC_WARN_HIGH_TOPPINGS: IProductInstanceFunction = createMockProductInstanceFunction({
   id: MOCK_IDS.FUNC_WARN_HIGH_TOPPINGS,
   name: 'Warn High Toppings',
   expression: {
@@ -911,12 +886,12 @@ export const FUNC_WARN_HIGH_TOPPINGS: IProductInstanceFunction = {
       },
     },
   },
-};
+});
 
 /**
  * Order guide suggestion function: returns suggestion if product has thin crust, otherwise false
  */
-export const FUNC_SUGGEST_GARLIC_BREAD: IProductInstanceFunction = {
+export const FUNC_SUGGEST_GARLIC_BREAD: IProductInstanceFunction = createMockProductInstanceFunction({
   id: MOCK_IDS.FUNC_SUGGEST_GARLIC_BREAD,
   name: 'Suggest Garlic Bread',
   expression: {
@@ -946,7 +921,7 @@ export const FUNC_SUGGEST_GARLIC_BREAD: IProductInstanceFunction = {
       },
     },
   },
-};
+});
 
 export const ALL_PRODUCT_INSTANCE_FUNCTIONS: IProductInstanceFunction[] = [
   FUNC_CRUST_ENABLES_SAUCE,
@@ -960,7 +935,7 @@ export const ALL_PRODUCT_INSTANCE_FUNCTIONS: IProductInstanceFunction[] = [
 // Order Instance Functions
 // ============================================================================
 
-export const FUNC_ORDER_SIZE_CHECK: OrderInstanceFunction = {
+export const FUNC_ORDER_SIZE_CHECK: OrderInstanceFunction = createMockOrderInstanceFunction({
   id: MOCK_IDS.FUNC_ORDER_SIZE_CHECK,
   name: 'Order Size Check',
   expression: {
@@ -977,9 +952,9 @@ export const FUNC_ORDER_SIZE_CHECK: OrderInstanceFunction = {
       },
     },
   },
-};
+});
 
-export const FUNC_ORDER_QUANTITY_CHECK: OrderInstanceFunction = {
+export const FUNC_ORDER_QUANTITY_CHECK: OrderInstanceFunction = createMockOrderInstanceFunction({
   id: MOCK_IDS.FUNC_ORDER_QUANTITY_CHECK,
   name: 'Order Quantity Check',
   expression: {
@@ -1009,7 +984,7 @@ export const FUNC_ORDER_QUANTITY_CHECK: OrderInstanceFunction = {
       },
     },
   },
-};
+});
 
 export const ALL_ORDER_INSTANCE_FUNCTIONS: OrderInstanceFunction[] = [FUNC_ORDER_SIZE_CHECK, FUNC_ORDER_QUANTITY_CHECK];
 
@@ -1027,8 +1002,6 @@ export const BASIC_PIZZA_PRODUCT: IProduct = {
     { mtid: MOCK_IDS.SIZE_MT, enable: null, serviceDisable: [] },
     { mtid: MOCK_IDS.TOPPINGS_MT, enable: null, serviceDisable: [] },
   ],
-  baseProductId: MOCK_IDS.PI_PLAIN_CHEESE,
-  category_ids: [MOCK_IDS.PIZZA_CATEGORY],
   printerGroup: null,
   price: { amount: 1000, currency: CURRENCY.USD },
   displayFlags: {
@@ -1038,13 +1011,15 @@ export const BASIC_PIZZA_PRODUCT: IProduct = {
     flavor_max: 10,
     bake_max: 10,
     bake_differential: 2,
-    order_guide: { warnings: [], suggestions: [] },
+    order_guide: { warnings: [], suggestions: [], errors: [] },
   },
   timing: { prepTime: 15, additionalUnitPrepTime: 5, prepStationId: 1 },
+  instances: [MOCK_IDS.PI_PLAIN_CHEESE, MOCK_IDS.PI_PEPPERONI],
 };
 
-export const COMPLEX_PIZZA_PRODUCT: IProduct = {
+export const COMPLEX_PIZZA_PRODUCT: IProduct = createMockProduct({
   id: MOCK_IDS.COMPLEX_PIZZA,
+  instances: [MOCK_IDS.PI_COMPLEX_BASE, MOCK_IDS.PI_COMPLEX_THIN_CRUST, MOCK_IDS.PI_COMPLEX_STUFFED],
   serviceDisable: [],
   disabled: null,
   availability: [],
@@ -1056,8 +1031,6 @@ export const COMPLEX_PIZZA_PRODUCT: IProduct = {
     { mtid: MOCK_IDS.TOPPINGS_MT, enable: null, serviceDisable: [] },
     { mtid: MOCK_IDS.REMOVAL_MT, enable: null, serviceDisable: [MOCK_IDS.FULFILLMENT_DELIVERY] },
   ],
-  baseProductId: MOCK_IDS.PI_COMPLEX_BASE,
-  category_ids: [MOCK_IDS.PIZZA_CATEGORY],
   printerGroup: 'printer_group_1',
   price: { amount: 1200, currency: CURRENCY.USD },
   displayFlags: {
@@ -1070,13 +1043,15 @@ export const COMPLEX_PIZZA_PRODUCT: IProduct = {
     order_guide: {
       warnings: [MOCK_IDS.FUNC_WARN_HIGH_TOPPINGS],
       suggestions: [MOCK_IDS.FUNC_SUGGEST_GARLIC_BREAD],
+      errors: [],
     },
   },
   timing: { prepTime: 20, additionalUnitPrepTime: 7, prepStationId: 1 },
-};
+});
 
-export const SPLIT_PIZZA_PRODUCT: IProduct = {
+export const SPLIT_PIZZA_PRODUCT: IProduct = createMockProduct({
   id: MOCK_IDS.SPLIT_PIZZA,
+  instances: [MOCK_IDS.PI_SPLIT_BASE, MOCK_IDS.PI_SPLIT_HALF_PEPPERONI],
   serviceDisable: [],
   disabled: null,
   availability: [],
@@ -1085,8 +1060,6 @@ export const SPLIT_PIZZA_PRODUCT: IProduct = {
     { mtid: MOCK_IDS.SIZE_MT, enable: null, serviceDisable: [] },
     { mtid: MOCK_IDS.TOPPINGS_MT, enable: null, serviceDisable: [] },
   ],
-  baseProductId: MOCK_IDS.PI_SPLIT_BASE,
-  category_ids: [MOCK_IDS.NESTED_CHILD_CATEGORY],
   printerGroup: null,
   price: { amount: 1500, currency: CURRENCY.USD },
   displayFlags: {
@@ -1096,20 +1069,19 @@ export const SPLIT_PIZZA_PRODUCT: IProduct = {
     flavor_max: 10,
     bake_max: 10,
     bake_differential: 2,
-    order_guide: { warnings: [], suggestions: [] },
+    order_guide: { warnings: [], suggestions: [], errors: [] },
   },
   timing: { prepTime: 18, additionalUnitPrepTime: 6, prepStationId: 2 },
-};
+});
 
-export const DISABLED_PRODUCT: IProduct = {
+export const DISABLED_PRODUCT: IProduct = createMockProduct({
   id: MOCK_IDS.DISABLED_PRODUCT,
+  instances: [MOCK_IDS.PI_DISABLED_BASE],
   serviceDisable: [MOCK_IDS.FULFILLMENT_PICKUP, MOCK_IDS.FULFILLMENT_DELIVERY],
   disabled: null,
   availability: [],
   externalIDs: [],
   modifiers: [{ mtid: MOCK_IDS.SIZE_MT, enable: null, serviceDisable: [] }],
-  baseProductId: MOCK_IDS.PI_DISABLED_BASE,
-  category_ids: [MOCK_IDS.DISABLED_CATEGORY],
   printerGroup: null,
   price: { amount: 800, currency: CURRENCY.USD },
   displayFlags: {
@@ -1119,10 +1091,10 @@ export const DISABLED_PRODUCT: IProduct = {
     flavor_max: 5,
     bake_max: 5,
     bake_differential: 1,
-    order_guide: { warnings: [], suggestions: [] },
+    order_guide: { warnings: [], suggestions: [], errors: [] },
   },
   timing: { prepTime: 10, additionalUnitPrepTime: 2, prepStationId: 3 },
-};
+});
 
 export const ALL_PRODUCTS: IProduct[] = [
   BASIC_PIZZA_PRODUCT,
@@ -1135,7 +1107,7 @@ export const ALL_PRODUCTS: IProduct[] = [
 // Product Instances
 // ============================================================================
 
-const createProductInstanceDisplayFlags = (ordinal: number, hide = false) => ({
+const createProductInstanceDisplayFlags = (ordinal: number, hide = false) => createMockProductInstanceDisplayFlags({
   pos: { hide: false, name: '', skip_customization: false },
   menu: {
     ordinal,
@@ -1155,25 +1127,23 @@ const createProductInstanceDisplayFlags = (ordinal: number, hide = false) => ({
   },
 });
 
-export const PI_PLAIN_CHEESE: IProductInstance = {
+export const PI_PLAIN_CHEESE: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_PLAIN_CHEESE,
-  productId: MOCK_IDS.BASIC_PIZZA,
+
   displayName: 'Plain Cheese Pizza',
   shortcode: 'CHZ',
   description: 'Classic cheese pizza',
-  ordinal: 100, // Base product is highest ordinal
   modifiers: [],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(100),
-};
+});
 
-export const PI_PEPPERONI: IProductInstance = {
+export const PI_PEPPERONI: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_PEPPERONI,
-  productId: MOCK_IDS.BASIC_PIZZA,
+
   displayName: 'Pepperoni Pizza',
   shortcode: 'PEP',
   description: 'Pizza with pepperoni',
-  ordinal: 10,
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.TOPPINGS_MT,
@@ -1184,27 +1154,25 @@ export const PI_PEPPERONI: IProductInstance = {
   ],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(10),
-};
+});
 
-export const PI_COMPLEX_BASE: IProductInstance = {
+export const PI_COMPLEX_BASE: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_COMPLEX_BASE,
-  productId: MOCK_IDS.COMPLEX_PIZZA,
+
   displayName: '{Crust} Pizza',
   shortcode: 'CPX',
   description: 'Build your custom pizza with {Crust}',
-  ordinal: 100,
   modifiers: [],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(100),
-};
+});
 
-export const PI_COMPLEX_THIN_CRUST: IProductInstance = {
+export const PI_COMPLEX_THIN_CRUST: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_COMPLEX_THIN_CRUST,
-  productId: MOCK_IDS.COMPLEX_PIZZA,
+
   displayName: 'Thin Crust Pizza',
   shortcode: 'THN',
   description: 'Crispy thin crust pizza',
-  ordinal: 20,
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.CRUST_MT,
@@ -1215,15 +1183,14 @@ export const PI_COMPLEX_THIN_CRUST: IProductInstance = {
   ],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(20),
-};
+});
 
-export const PI_COMPLEX_STUFFED: IProductInstance = {
+export const PI_COMPLEX_STUFFED: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_COMPLEX_STUFFED,
-  productId: MOCK_IDS.COMPLEX_PIZZA,
+
   displayName: 'Stuffed Crust Pizza',
   shortcode: 'STF',
   description: 'Delicious stuffed crust',
-  ordinal: 30,
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.CRUST_MT,
@@ -1234,27 +1201,25 @@ export const PI_COMPLEX_STUFFED: IProductInstance = {
   ],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(30),
-};
+});
 
-export const PI_SPLIT_BASE: IProductInstance = {
+export const PI_SPLIT_BASE: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_SPLIT_BASE,
-  productId: MOCK_IDS.SPLIT_PIZZA,
+
   displayName: 'Split Pizza',
   shortcode: 'SPL',
   description: 'Half and half pizza',
-  ordinal: 100,
   modifiers: [],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(100),
-};
+});
 
-export const PI_SPLIT_HALF_PEPPERONI: IProductInstance = {
+export const PI_SPLIT_HALF_PEPPERONI: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_SPLIT_HALF_PEPPERONI,
-  productId: MOCK_IDS.SPLIT_PIZZA,
+
   displayName: 'Half Pepperoni',
   shortcode: 'HPP',
   description: 'Pepperoni on one half',
-  ordinal: 10,
   modifiers: [
     {
       modifierTypeId: MOCK_IDS.TOPPINGS_MT,
@@ -1265,19 +1230,18 @@ export const PI_SPLIT_HALF_PEPPERONI: IProductInstance = {
   ],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(10),
-};
+});
 
-export const PI_DISABLED_BASE: IProductInstance = {
+export const PI_DISABLED_BASE: IProductInstance = createMockProductInstance({
   id: MOCK_IDS.PI_DISABLED_BASE,
-  productId: MOCK_IDS.DISABLED_PRODUCT,
+
   displayName: 'Unavailable Item',
   shortcode: 'UNA',
   description: 'Currently unavailable',
-  ordinal: 100,
   modifiers: [],
   externalIDs: [],
   displayFlags: createProductInstanceDisplayFlags(100, true), // Hidden
-};
+});
 
 export const ALL_PRODUCT_INSTANCES: IProductInstance[] = [
   PI_PLAIN_CHEESE,
@@ -1297,7 +1261,7 @@ export const ALL_PRODUCT_INSTANCES: IProductInstance[] = [
 /**
  * Product modifiers for a simple cheese pizza (matches PI_PLAIN_CHEESE exactly)
  */
-export const MODIFIERS_PLAIN_CHEESE: ProductModifierEntry[] = [
+export const MODIFIERS_PLAIN_CHEESE: ProductInstanceModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.SIZE_MT,
     options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -1307,7 +1271,7 @@ export const MODIFIERS_PLAIN_CHEESE: ProductModifierEntry[] = [
 /**
  * Product modifiers for a pepperoni pizza (matches PI_PEPPERONI)
  */
-export const MODIFIERS_PEPPERONI: ProductModifierEntry[] = [
+export const MODIFIERS_PEPPERONI: ProductInstanceModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.SIZE_MT,
     options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -1323,7 +1287,7 @@ export const MODIFIERS_PEPPERONI: ProductModifierEntry[] = [
 /**
  * Product modifiers for a split pizza (LEFT pepperoni, RIGHT mushrooms)
  */
-export const MODIFIERS_SPLIT_PIZZA: ProductModifierEntry[] = [
+export const MODIFIERS_SPLIT_PIZZA: ProductInstanceModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.SIZE_MT,
     options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -1340,7 +1304,7 @@ export const MODIFIERS_SPLIT_PIZZA: ProductModifierEntry[] = [
 /**
  * Product modifiers with HEAVY and LITE qualifiers
  */
-export const MODIFIERS_WITH_QUALIFIERS: ProductModifierEntry[] = [
+export const MODIFIERS_WITH_QUALIFIERS: ProductInstanceModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.SIZE_MT,
     options: [{ optionId: MOCK_IDS.SIZE_MEDIUM, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -1358,7 +1322,7 @@ export const MODIFIERS_WITH_QUALIFIERS: ProductModifierEntry[] = [
 /**
  * Product modifiers for complex pizza with all options
  */
-export const MODIFIERS_COMPLEX_PIZZA: ProductModifierEntry[] = [
+export const MODIFIERS_COMPLEX_PIZZA: ProductInstanceModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.SIZE_MT,
     options: [{ optionId: MOCK_IDS.SIZE_LARGE, placement: OptionPlacement.WHOLE, qualifier: OptionQualifier.REGULAR }],
@@ -1385,7 +1349,7 @@ export const MODIFIERS_COMPLEX_PIZZA: ProductModifierEntry[] = [
 /**
  * Product modifiers that are incomplete (missing required size)
  */
-export const MODIFIERS_INCOMPLETE: ProductModifierEntry[] = [
+export const MODIFIERS_INCOMPLETE: ProductInstanceModifierEntry[] = [
   {
     modifierTypeId: MOCK_IDS.TOPPINGS_MT,
     options: [
@@ -1473,19 +1437,19 @@ export const getCustomCatalogSelectors = (catalog: ICatalog): ICatalogSelectors 
 /**
  * Helper to get a category entry by ID from the mock catalog
  */
-export const getMockCategoryEntry = (categoryId: string): CatalogCategoryEntry | undefined =>
+export const getMockCategoryEntry = (categoryId: string): ICategory | undefined =>
   MOCK_CATALOG_SELECTORS.category(categoryId);
 
 /**
  * Helper to get a modifier entry by ID from the mock catalog
  */
-export const getMockModifierEntry = (modifierTypeId: string): CatalogModifierEntry | undefined =>
+export const getMockModifierEntry = (modifierTypeId: string): IOptionType | undefined =>
   MOCK_CATALOG_SELECTORS.modifierEntry(modifierTypeId);
 
 /**
  * Helper to get a product entry by ID from the mock catalog
  */
-export const getMockProductEntry = (productId: string): CatalogProductEntry | undefined =>
+export const getMockProductEntry = (productId: string): IProduct | undefined =>
   MOCK_CATALOG_SELECTORS.productEntry(productId);
 
 /**

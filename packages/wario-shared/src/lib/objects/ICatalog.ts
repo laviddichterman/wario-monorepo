@@ -1,13 +1,6 @@
-// Returns [ category_map, product_map ] list;
-// category_map entries are mapping of catagory_id to { category, children (id list), product (id list) }
-// product_map is mapping from productId to { product, instances (list of instance objects)}
-
 import { ReduceArrayToMapByKey } from '../common';
 import type {
   ICatalog,
-  ICatalogCategories,
-  ICatalogModifiers,
-  ICatalogProducts,
   ICategory,
   IOption,
   IOptionType,
@@ -17,59 +10,46 @@ import type {
   RecordProductInstanceFunctions,
   SEMVER,
 } from '../derived-types';
-import type { ICatalogSelectors } from '../types';
+import type { ICatalogSelectors, IdOrdinalMap } from '../types';
+import type { Selector } from '../utility-types';
 
-// orphan_products is list of orphan product ids
-const CatalogMapGenerator = (
-  categories: ICategory[],
-  products: IProduct[],
-  product_instances: IProductInstance[],
-): [ICatalogCategories, ICatalogProducts] => {
-  const category_map: ICatalogCategories = categories.reduce(
-    (acc, cat) => ({ ...acc, [cat.id]: { category: cat, children: [], products: [] } }),
-    {},
-  );
-  categories.forEach((curr) => {
-    if (curr.parent_id) {
-      if (Object.hasOwn(category_map, curr.parent_id)) {
-        category_map[curr.parent_id].children.push(curr.id);
-      } else {
-        console.error(`Missing category ID ${curr.parent_id} specified by ${JSON.stringify(curr)}`);
-      }
-    }
-  });
-  const product_map: ICatalogProducts = products.reduce((acc, p) => {
-    if (p.category_ids.length !== 0) {
-      p.category_ids.forEach((cid) => {
-        if (Object.hasOwn(category_map, cid)) {
-          category_map[cid].products.push(p.id);
-        } else {
-          console.error(`Category ID ${cid} referenced by Product ${p.id} not found!`);
-        }
-      });
-    }
-    return { ...acc, [p.id]: { product: p, instances: [] } };
-  }, {});
-  product_instances.forEach((curr) => {
-    product_map[curr.productId].instances.push(curr.id);
-  });
-  return [category_map, product_map];
-};
 
-const ModifierTypeMapGenerator = (modifier_types: IOptionType[], options: IOption[]) => {
-  const modifier_types_map = modifier_types.reduce<ICatalogModifiers>(
-    (acc, m) => ({ ...acc, [m.id]: { options: [], modifierType: m } }),
-    {},
-  );
-  options.forEach((o) => {
-    if (Object.hasOwn(modifier_types_map, o.modifierTypeId)) {
-      modifier_types_map[o.modifierTypeId].options.push(o.id);
-    } else {
-      console.error(`Modifier Type ID ${o.modifierTypeId} referenced by ModifierOption ${o.id} not found!`);
+/** 
+ * GenerateCategoryOrderList
+ *
+ * Generate a list of a category id to its overall ordinal position in the catalog hierarchy.
+ *
+ * @param id - id of the category to generate the order list for
+ * @param selector - selector function to fetch the catalog object by id
+ * @param filter - optional filter function to filter out objects, if not provided, no filtering is done (usefull to pass a function that checks for a pre-set fulfillment ID in a category service disable array)
+ * @returns string[] - list of catalog object ids in order
+ */
+export const GenerateCategoryOrderList = (id: string, selector: Selector<ICategory>, filter?: (obj: ICategory) => boolean) => {
+  const GenerateOrderedArray = (inner_id: string): string[] => {
+    const cat = selector(inner_id);
+    if (!cat || (filter && !filter(cat))) {
+      console.error(`ID ${inner_id} not found!`);
+      return [];
     }
-  });
-  return modifier_types_map;
-};
+    return [...cat.children.flatMap((childId: string) => GenerateOrderedArray(childId)), inner_id];
+  }
+  return GenerateOrderedArray(id);
+}
+
+/**
+ * GenerateCategoryOrderMap
+ *
+ * Generate a map of a category id to its overall ordinal position in the category hierarchy.
+ *
+ * @param id - id of the category to generate the order map for
+ * @param selector - selector function to fetch the catalog object by id
+ * @returns Record<string, number> - object mapping catalog object id to its overall ordinal position
+ */
+export const GenerateCategoryOrderMap = (id: string, selector: Selector<ICategory>) => {
+  return Object.fromEntries(GenerateCategoryOrderList(id, selector).map((x, i) => ([x, i] as [string, number])));
+}
+
+export const SortByOrdinalMap = <T extends { id: string }>(xs: T[], idOrdinalMap: IdOrdinalMap) => xs.sort((a, b) => idOrdinalMap[a.id] - idOrdinalMap[b.id]);
 
 export const CatalogGenerator = (
   categories: ICategory[],
@@ -81,14 +61,12 @@ export const CatalogGenerator = (
   orderInstanceFunctions: RecordOrderInstanceFunctions,
   api: SEMVER,
 ): ICatalog => {
-  const modifier_types_map = ModifierTypeMapGenerator(modifier_types, options);
-  const [category_map, product_map] = CatalogMapGenerator(categories, products, product_instances);
   return {
     options: ReduceArrayToMapByKey(options, 'id'),
     productInstances: ReduceArrayToMapByKey(product_instances, 'id'),
-    modifiers: modifier_types_map,
-    categories: category_map,
-    products: product_map,
+    modifiers: ReduceArrayToMapByKey(modifier_types, 'id'),
+    categories: ReduceArrayToMapByKey(categories, 'id'),
+    products: ReduceArrayToMapByKey(products, 'id'),
     productInstanceFunctions: { ...productInstanceFunctions },
     orderInstanceFunctions: { ...orderInstanceFunctions },
     api,

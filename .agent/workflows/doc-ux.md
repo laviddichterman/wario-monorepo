@@ -1,5 +1,9 @@
+---
+description: Write documentation for UX code
+---
 
 ## Documentation Workflow
+
 - Scope first: add a one-line problem statement and primary users (e.g., “Kitchen lead editing menu availability during rush; needs safe, fast updates”) plus a success metric (time-to-complete or error rate).
 - Inventory what to document: components (AppBar/Drawer/DataGrid/Dialog), flows (Filter → Inspect → Edit → Save), states (empty/loading/error/dirty), tokens (palette/spacing/typography/radius/focus).
 - Lay a skeleton before details:

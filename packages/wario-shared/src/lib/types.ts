@@ -11,16 +11,15 @@
 
 import type {
   CashPayment,
-  CatalogCategoryEntry,
-  CatalogModifierEntry,
-  CatalogProductEntry,
   CoreCartEntry,
   CreditPayment,
   EncryptStringLock,
+  ICategory,
   IMoney,
   IOption,
   IOptionState,
   IOptionType,
+  IProduct,
   IProductInstance,
   IProductInstanceFunction,
   IRecurringInterval,
@@ -29,7 +28,7 @@ import type {
   OrderLineDiscountCodeAmount,
   OrderManualAmountDiscount,
   OrderManualPercentDiscount,
-  ProductModifierEntry,
+  ProductInstanceModifierEntry,
   StoreCreditPayment,
   WError,
   WOrderInstance,
@@ -40,6 +39,11 @@ import type { SelectIds, Selector } from './utility-types';
 // =============================================================================
 // Utility & Composition Types (Non-DTO)
 // =============================================================================
+
+/**
+ * A map of IDs to the global order of that thing.
+ */
+export type IdOrdinalMap = Record<string, number>;
 
 /**
  * A version of {@link Interval} that has both start and end resolved to DateType or number.
@@ -67,17 +71,17 @@ export interface AvailabilityInfoMap {
 
 export interface ICatalogModifierSelectors {
   option: Selector<IOption>;
-  modifierEntry: Selector<CatalogModifierEntry>;
+  modifierEntry: Selector<IOptionType>;
 }
 
 export type ICatalogSelectors = ICatalogModifierSelectors & {
   options: SelectIds;
   modifierEntries: SelectIds;
-  category: Selector<CatalogCategoryEntry>;
+  category: Selector<ICategory>;
   categories: SelectIds;
   productInstance: Selector<IProductInstance>;
   productInstances: SelectIds;
-  productEntry: Selector<CatalogProductEntry>;
+  productEntry: Selector<IProduct>;
   productEntries: SelectIds;
   productInstanceFunction: Selector<IProductInstanceFunction>;
   productInstanceFunctions: SelectIds;
@@ -142,7 +146,7 @@ export interface WProductMetadata {
 
 export interface WCPProduct {
   productId: string;
-  modifiers: ProductModifierEntry[];
+  modifiers: ProductInstanceModifierEntry[];
 }
 
 export interface WProduct {
@@ -229,16 +233,16 @@ export type UnresolvedPayment =
   | Omit<StoreCreditPayment, 'amount' | 'tipAmount'>
   | Omit<CreditPayment, 'amount' | 'tipAmount'>
   | (Omit<CashPayment, 'amount' | 'tipAmount' | 'payment'> & {
-      payment: Omit<CashPayment['payment'], 'change'>;
-    });
+    payment: Omit<CashPayment['payment'], 'change'>;
+  });
 
 export type UnresolvedDiscount =
   | (Omit<OrderLineDiscountCodeAmount, 'discount'> & {
-      discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'>;
-    })
+    discount: Omit<OrderLineDiscountCodeAmount['discount'], 'amount'>;
+  })
   | (Omit<OrderManualPercentDiscount, 'discount'> & {
-      discount: Omit<OrderManualPercentDiscount['discount'], 'amount'>;
-    })
+    discount: Omit<OrderManualPercentDiscount['discount'], 'amount'>;
+  })
   | (Omit<OrderManualAmountDiscount, 'discount'> & { discount: Omit<OrderManualAmountDiscount['discount'], 'amount'> });
 
 // =============================================================================

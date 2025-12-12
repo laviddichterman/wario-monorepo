@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/only-throw-error */
 
-import { DisableDataCheck, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from '../common';
+import { DisableDataCheck, IsSomethingDisabledForFulfillment, PRODUCT_NAME_MODIFIER_TEMPLATE_REGEX } from '../common';
 import type {
-  CatalogModifierEntry,
   IMoney,
   IOption,
   IOptionInstance,
+  IOptionType,
   IProduct,
   IProductInstance,
   IProductModifier,
-  ProductModifierEntry,
+  ProductInstanceModifierEntry,
   WCPProductV2,
 } from '../derived-types';
 import {
@@ -161,7 +161,7 @@ const MATCH_MATRIX: [MODIFIER_MATCH, MODIFIER_MATCH, boolean][][] = [
   // [[ NONE ], [ LEFT ], [ RIGHT], [ WHOLE]]
 ];
 
-export function CreateWCPProduct(productId: string, modifiers: ProductModifierEntry[]) {
+export function CreateWCPProduct(productId: string, modifiers: ProductInstanceModifierEntry[]) {
   return { productId: productId, modifiers: structuredClone(modifiers) } as WCPProduct;
 }
 
@@ -183,22 +183,7 @@ export function CreateProductWithMetadataFromV2(
   return { p: wcpProduct, m: productMetadata };
 }
 
-export function SortModifersAndOptions(mMap: ProductModifierEntry[], catModSelectors: ICatalogModifierSelectors) {
-  return mMap
-    .sort(
-      (a, b) =>
-        catModSelectors.modifierEntry(a.modifierTypeId)!.modifierType.ordinal -
-        catModSelectors.modifierEntry(b.modifierTypeId)!.modifierType.ordinal,
-    )
-    .map((modifierEntry) => ({
-      modifierTypeId: modifierEntry.modifierTypeId,
-      options: modifierEntry.options
-        .slice()
-        .sort((a, b) => catModSelectors.option(a.optionId)!.ordinal - catModSelectors.option(b.optionId)!.ordinal),
-    }));
-}
-
-function ProductModifierEntriesGetter(productMods: ProductModifierEntry[]): (mtid: string) => IOptionInstance[] {
+function ProductModifierEntriesGetter(productMods: ProductInstanceModifierEntry[]): (mtid: string) => IOptionInstance[] {
   return (mtid: string) => {
     const foundMod = productMods.find((x) => x.modifierTypeId === mtid);
     return foundMod ? foundMod.options : [];
@@ -229,7 +214,7 @@ function WProductCompareGeneric(
   productModifierDefinition: IProductModifier[],
   aModifiersGetter: ModifierGetter,
   bModifiersGetter: ModifierGetter,
-  selectModifierEntry: Selector<CatalogModifierEntry>,
+  selectModifierEntry: Selector<IOptionType>,
 ) {
   // this is a multi-dim array, in order of the MTID as it exists in the product class definition
   // disabled modifier types and modifier options are all present as they shouldn't contribute to comparison mismatch
@@ -253,8 +238,8 @@ function WProductCompareGeneric(
       return;
     }
     if (
-      CATALOG_MODIFIER_INFO.modifierType.min_selected === 1 &&
-      CATALOG_MODIFIER_INFO.modifierType.max_selected === 1
+      CATALOG_MODIFIER_INFO.min_selected === 1 &&
+      CATALOG_MODIFIER_INFO.max_selected === 1
     ) {
       // CASE: SINGLE select modifier, this logic isn't very well-defined. TODO: rework
       if (first_option_list.length === 1) {
@@ -300,33 +285,13 @@ export function WProductMetadataCompareProducts(
   productClass: IProduct,
   a: MetadataModifierMap,
   b: MetadataModifierMap,
-  selectModifierEntry: Selector<CatalogModifierEntry>,
+  selectModifierEntry: Selector<IOptionType>,
 ) {
   return WProductCompareGeneric(
     productClass.modifiers,
     MetadataModifiersInstanceListGetter(a),
     MetadataModifiersInstanceListGetter(b),
     selectModifierEntry,
-  );
-}
-
-export function WProductCompareToIProductInstance(
-  a: WCPProduct,
-  b: IProductInstance,
-  catalogSelectors: Pick<ICatalogSelectors, 'modifierEntry' | 'productEntry'>,
-) {
-  const productA = catalogSelectors.productEntry(a.productId);
-  // need to compare PIDs of first and other, then use the PID to develop the modifiers matrix since one of the two product instances might not have a value for every modifier.
-  if (a.productId !== b.productId || !productA) {
-    // no match on PID so we need to return 0
-    return { mirror: false, match_matrix: [[], []], match: [NO_MATCH, NO_MATCH] } as WProductCompareResult;
-  }
-
-  return WProductCompareGeneric(
-    productA.product.modifiers,
-    ProductModifierEntriesGetter(a.modifiers),
-    ProductModifierEntriesGetter(b.modifiers),
-    catalogSelectors.modifierEntry,
   );
 }
 
@@ -342,7 +307,7 @@ export function WProductCompare(
     return { mirror: false, match_matrix: [[], []], match: [NO_MATCH, NO_MATCH] } as WProductCompareResult;
   }
   return WProductCompareGeneric(
-    productA.product.modifiers,
+    productA.modifiers,
     ProductModifierEntriesGetter(a.modifiers),
     ProductModifierEntriesGetter(b.modifiers),
     catalogSelectors.modifierEntry,
@@ -404,7 +369,7 @@ const RunTemplating = (product: IProduct, catModSelectors: ICatalogModifierSelec
       console.error(`Cannot find product modifier type ${mtid}`);
       return;
     }
-    const modifier_flags = modifierEntry.modifierType.displayFlags;
+    const modifier_flags = modifierEntry.displayFlags;
     if (modifier_flags.template_string !== '') {
       const template_string_with_braces = `{${modifier_flags.template_string}}`;
       const template_in_name = Object.hasOwn(name_template_match_obj, template_string_with_braces);
@@ -446,7 +411,7 @@ interface IMatchInfo {
 
 export function WCPProductGenerateMetadata(
   productId: string,
-  modifiers: ProductModifierEntry[],
+  modifiers: ProductInstanceModifierEntry[],
   catalogSelectors: ICatalogSelectors,
   service_time: Date | number,
   fulfillmentId: string,
@@ -457,8 +422,6 @@ export function WCPProductGenerateMetadata(
     console.error(errMsg);
     throw errMsg;
   }
-  const PRODUCT_CLASS = PRODUCT_CLASS_ENTRY.product;
-
   const match_info = {
     product: [null, null],
     comparison: [[], []],
@@ -480,19 +443,17 @@ export function WCPProductGenerateMetadata(
   // iterate through menu, until has_left and has_right are true
   // a name can be assigned once an exact or at least match is found for a given side
   // instances_list is ordered by WProductSchema.ordinal and that should arrange products according to how we
-  // want this function to find the appropriate name. Meaning the ordinal for base product has the highest number
-  // and the most modified products have the lowest numbers
-  // SHOULD WE? we pluck out the base product ID and plop it last in the array so we can ensure matching works as intended?
-  PRODUCT_CLASS_ENTRY.instances /*.filter(x=>x !== PRODUCT_CLASS.baseProductId)*/
-    .map((x) => catalogSelectors.productInstance(x)!)
-    .sort((a, b) => a.ordinal - b.ordinal)
+  // want this function to find the appropriate name. Meaning the base product is the first element in the array
+  // and the most modified products are at the end.
+  PRODUCT_CLASS_ENTRY.instances
+    .toReversed().map((x) => catalogSelectors.productInstance(x)!)
     .forEach((comparison_product) => {
       if (match_info.product[LEFT_SIDE] === null || match_info.product[RIGHT_SIDE] === null) {
-        const comparison_info = WProductCompareToIProductInstance(
-          { productId, modifiers },
-          comparison_product,
-          catalogSelectors,
-        );
+        const comparison_info = WProductCompareGeneric(
+          PRODUCT_CLASS_ENTRY.modifiers,
+          ProductModifierEntriesGetter(modifiers),
+          ProductModifierEntriesGetter(comparison_product.modifiers),
+          catalogSelectors.modifierEntry);
         CheckMatchForSide(LEFT_SIDE, comparison_info, comparison_product);
         CheckMatchForSide(RIGHT_SIDE, comparison_info, comparison_product);
       }
@@ -510,7 +471,7 @@ export function WCPProductGenerateMetadata(
   const leftPI = match_info.product[LEFT_SIDE];
   const rightPI = match_info.product[RIGHT_SIDE];
   if (leftPI === null || rightPI === null) {
-    throw `Unable to determine product metadata. Match info for PC_ID ${PRODUCT_CLASS.id} with modifiers of ${JSON.stringify(modifiers)}: ${JSON.stringify(match_info)}.`;
+    throw `Unable to determine product metadata. Match info for PC_ID ${PRODUCT_CLASS_ENTRY.id} with modifiers of ${JSON.stringify(modifiers)}: ${JSON.stringify(match_info)}.`;
   }
 
   const metadata: WProductMetadata = {
@@ -519,7 +480,7 @@ export function WCPProductGenerateMetadata(
     shortname: '',
     pi: [leftPI.id, rightPI.id],
     is_split: false,
-    price: { currency: PRODUCT_CLASS.price.currency, amount: PRODUCT_CLASS.price.amount },
+    price: { currency: PRODUCT_CLASS_ENTRY.price.currency, amount: PRODUCT_CLASS_ENTRY.price.amount },
     incomplete: false,
     modifier_map: {} as MetadataModifierMap,
     advanced_option_eligible: false,
@@ -530,7 +491,7 @@ export function WCPProductGenerateMetadata(
     flavor_count: [0, 0],
   };
   // We need to compute this before the modifier match matrix, otherwise the metadata limits won't be pre-computed
-  modifiers.forEach((modifierEntry: ProductModifierEntry) => {
+  modifiers.forEach((modifierEntry: ProductInstanceModifierEntry) => {
     modifierEntry.options.forEach((opt: IOptionInstance) => {
       const mo = catalogSelectors.option(opt.optionId);
       if (!mo) {
@@ -554,33 +515,33 @@ export function WCPProductGenerateMetadata(
   });
 
   // determine if we're comparing to the base product on the left and right sides
-  const is_compare_to_base = [PRODUCT_CLASS.baseProductId === leftPI.id, PRODUCT_CLASS.baseProductId === rightPI.id];
+  const is_compare_to_base = [PRODUCT_CLASS_ENTRY.instances[0] === leftPI.id, PRODUCT_CLASS_ENTRY.instances[0] === rightPI.id];
 
   // split out options beyond the base product into left additions, right additions, and whole additions
   // each entry in these arrays represents the modifier index on the product class and the option index in that particular modifier
-  PRODUCT_CLASS.modifiers
+  PRODUCT_CLASS_ENTRY.modifiers
     .map((productModifier) => ({
       modifierEntry: catalogSelectors.modifierEntry(productModifier.mtid),
       productModifier,
     })) // get the catalog modifier entry
-    .sort((a, b) => (a.modifierEntry?.modifierType.ordinal ?? 0) - (b.modifierEntry?.modifierType.ordinal ?? 0))
+    .sort((a, b) => (a.modifierEntry?.ordinal ?? 0) - (b.modifierEntry?.ordinal ?? 0))
     .forEach(({ modifierEntry, productModifier }, mtIdX) => {
       const { mtid } = productModifier;
       if (!modifierEntry) {
-        console.error(`Cannot find modifier ID ${mtid} specified in product class ID ${PRODUCT_CLASS.id}`);
+        console.error(`Cannot find modifier ID ${mtid} specified in product class ID ${PRODUCT_CLASS_ENTRY.id}`);
         return;
       }
       const modifier_type_enable_function =
         productModifier.enable !== null ? catalogSelectors.productInstanceFunction(productModifier.enable) : undefined;
       const is_single_select =
-        modifierEntry.modifierType.min_selected === 1 && modifierEntry.modifierType.max_selected === 1;
-      const is_base_product_edge_case = is_single_select && !PRODUCT_CLASS.displayFlags.show_name_of_base_product;
+        modifierEntry.min_selected === 1 && modifierEntry.max_selected === 1;
+      const is_base_product_edge_case = is_single_select && !PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product;
       metadata.modifier_map[mtid] = { has_selectable: false, meets_minimum: false, options: {} };
       const enable_modifier_type:
         | { enable: DISABLE_REASON.ENABLED }
         | { enable: DISABLE_REASON.DISABLED_FUNCTION; functionId: string }
         | { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE; fulfillment: string } =
-        productModifier.serviceDisable.indexOf(fulfillmentId) !== -1
+        IsSomethingDisabledForFulfillment(productModifier, fulfillmentId)
           ? { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE, fulfillment: fulfillmentId }
           : !modifier_type_enable_function ||
             WFunctional.ProcessProductInstanceFunction(modifiers, modifier_type_enable_function, catalogSelectors)
@@ -592,7 +553,7 @@ export function WCPProductGenerateMetadata(
         const option_object = catalogSelectors.option(oId);
         if (!option_object) {
           console.error(
-            `Unable to find modifier option ${oId} of modifier type: ${modifierEntry.modifierType.name} (${mtid})`,
+            `Unable to find modifier option ${oId} of modifier type: ${modifierEntry.name} (${mtid})`,
           );
           return;
         }
@@ -613,6 +574,7 @@ export function WCPProductGenerateMetadata(
               : is_enabled.enable !== DISABLE_REASON.ENABLED
                 ? is_enabled
                 : IsOptionEnabled(
+                  modifierEntry.id,
                   option_object,
                   { productId, modifiers },
                   metadata.bake_count,
@@ -626,6 +588,7 @@ export function WCPProductGenerateMetadata(
               : is_enabled.enable !== DISABLE_REASON.ENABLED
                 ? is_enabled
                 : IsOptionEnabled(
+                  modifierEntry.id,
                   option_object,
                   { productId, modifiers },
                   metadata.bake_count,
@@ -637,6 +600,7 @@ export function WCPProductGenerateMetadata(
             is_enabled.enable !== DISABLE_REASON.ENABLED
               ? is_enabled
               : IsOptionEnabled(
+                modifierEntry.id,
                 option_object,
                 { productId, modifiers },
                 metadata.bake_count,
@@ -655,9 +619,9 @@ export function WCPProductGenerateMetadata(
       });
 
       const num_selected = [0, 0];
-      const foundProductModifierEntry = modifiers.find((x) => x.modifierTypeId === mtid);
-      if (foundProductModifierEntry) {
-        foundProductModifierEntry.options.forEach((placed_option) => {
+      const foundProductInstanceModifierEntry = modifiers.find((x) => x.modifierTypeId === mtid);
+      if (foundProductInstanceModifierEntry) {
+        foundProductInstanceModifierEntry.options.forEach((placed_option) => {
           const moid = placed_option.optionId;
           const location = placed_option.placement;
           const moIdX = modifierEntry.options.indexOf(moid);
@@ -709,8 +673,8 @@ export function WCPProductGenerateMetadata(
           }
         });
       }
-      const EMPTY_DISPLAY_AS = modifierEntry.modifierType.displayFlags.empty_display_as;
-      const MIN_SELECTED = modifierEntry.modifierType.min_selected;
+      const EMPTY_DISPLAY_AS = modifierEntry.displayFlags.empty_display_as;
+      const MIN_SELECTED = modifierEntry.min_selected;
       // we check for an incomplete modifier and add an entry if the empty_display_as flag is anything other than OMIT
       if (num_selected[LEFT_SIDE] < MIN_SELECTED && num_selected[RIGHT_SIDE] < MIN_SELECTED) {
         if (EMPTY_DISPLAY_AS !== DISPLAY_AS.OMIT && metadata.modifier_map[mtid].has_selectable) {
@@ -749,7 +713,7 @@ export function WCPProductGenerateMetadata(
     // wasn't being applied for modified products. the team wanted to see 4 Pepper + ex_mozz instead of F + ex_mozz for now
     metadata.shortname = leftPI.shortcode;
     metadata.description = leftPI.description;
-    return RunTemplating(PRODUCT_CLASS, catalogSelectors, metadata);
+    return RunTemplating(PRODUCT_CLASS_ENTRY, catalogSelectors, metadata);
   }
 
   const additional_options_objects = {
@@ -785,7 +749,7 @@ export function WCPProductGenerateMetadata(
     name_components_list = ComponentsListName(FilterByOmitFromName(additional_options_objects.whole));
     shortname_components_list = ComponentsListShortname(FilterByOmitFromShortname(additional_options_objects.whole));
     if (leftPI.id === rightPI.id) {
-      if (!is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS.displayFlags.show_name_of_base_product) {
+      if (!is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product) {
         name_components_list.unshift(leftPI.displayName);
         shortname_components_list.unshift(leftPI.displayName);
       }
@@ -796,10 +760,10 @@ export function WCPProductGenerateMetadata(
       // split product, different product instance match on each side
       // logical assertion: if name_components for a given side are all false, then it's an exact match
       const names = [
-        !is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS.displayFlags.show_name_of_base_product
+        !is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product
           ? [leftPI.displayName]
           : [],
-        !is_compare_to_base[RIGHT_SIDE] || PRODUCT_CLASS.displayFlags.show_name_of_base_product
+        !is_compare_to_base[RIGHT_SIDE] || PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product
           ? [rightPI.displayName]
           : [],
       ];
@@ -853,7 +817,7 @@ export function WCPProductGenerateMetadata(
     shortname_components_list = ComponentsListShortname(FilterByOmitFromShortname(additional_options_objects.whole));
     // we're using the left side because we know left and right are the same
     // if exact match to base product, no need to show the name
-    if (!is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS.displayFlags.show_name_of_base_product) {
+    if (!is_compare_to_base[LEFT_SIDE] || PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product) {
       name_components_list.unshift(leftPI.displayName);
       shortname_components_list.unshift(leftPI.shortcode);
     }
@@ -862,5 +826,5 @@ export function WCPProductGenerateMetadata(
   metadata.name = name_components_list.join(' + ');
   metadata.shortname =
     shortname_components_list.length === 0 ? leftPI.shortcode : shortname_components_list.join(' + ');
-  return RunTemplating(PRODUCT_CLASS, catalogSelectors, metadata);
+  return RunTemplating(PRODUCT_CLASS_ENTRY, catalogSelectors, metadata);
 }

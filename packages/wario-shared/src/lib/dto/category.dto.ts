@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { CALL_LINE_DISPLAY, CategoryDisplay } from '../enums';
 
@@ -16,6 +16,9 @@ export class CategoryDisplayFlagsDto {
   nesting!: CategoryDisplay;
 }
 
+/**
+ * Base data for creating/updating a category.
+ */
 export class UncommittedCategoryDto {
   @IsString()
   @IsNotEmpty()
@@ -24,14 +27,6 @@ export class UncommittedCategoryDto {
   @IsString()
   @IsOptional()
   description!: string | null;
-
-  @IsInt()
-  @Min(0)
-  ordinal!: number;
-
-  @IsString()
-  @IsOptional()
-  parent_id!: string | null;
 
   @IsString()
   @IsOptional()
@@ -48,6 +43,14 @@ export class UncommittedCategoryDto {
   // list of disabled fulfillmentIds
   @IsString({ each: true })
   serviceDisable!: string[];
+
+  // ordered list of child category IDs
+  @IsString({ each: true })
+  children!: string[];
+
+  // ordered list of product IDs appearing in this category
+  @IsString({ each: true })
+  products!: string[];
 }
 
 export class ICategoryDto extends UncommittedCategoryDto {
