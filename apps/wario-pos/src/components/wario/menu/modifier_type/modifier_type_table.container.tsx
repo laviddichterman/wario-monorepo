@@ -6,7 +6,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import type { GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid-premium';
 
-import type { CatalogModifierEntry } from '@wcp/wario-shared';
+import type { IOptionType } from '@wcp/wario-shared';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -33,13 +33,13 @@ const ModifierTypeTableContainer = () => {
   const apiRef = useGridApiRef();
 
   const getDetailPanelHeight = useCallback(
-    (p: GridRowParams<CatalogModifierEntry>) => (p.row.options.length ? 41 + p.row.options.length * 36 : 0),
+    (p: GridRowParams<IOptionType>) => (p.row.options.length ? 41 + p.row.options.length * 36 : 0),
     [],
   );
 
   const getDetailPanelContent = useCallback(
-    (p: GridRowParams<CatalogModifierEntry>) =>
-      p.row.options.length ? <ModifierOptionTableContainer modifierType={p.row.modifierType} /> : '',
+    (p: GridRowParams<IOptionType>) =>
+      p.row.options.length ? <ModifierOptionTableContainer modifierType={p.row} /> : '',
     [],
   );
 
@@ -48,13 +48,13 @@ const ModifierTypeTableContainer = () => {
       sx={{ minWidth: '750px' }}
       title="Modifier Types & Options"
       apiRef={apiRef}
-      getRowId={(row: CatalogModifierEntry) => row.modifierType.id}
+      getRowId={(row: IOptionType) => row.id}
       columns={[
         {
           headerName: 'Actions',
           field: 'actions',
           type: 'actions',
-          getActions: (params: GridRowParams<CatalogModifierEntry>) => [
+          getActions: (params: GridRowParams<IOptionType>) => [
             <GridActionsCellItem
               icon={
                 <Tooltip title="Edit Modifier Type">
@@ -63,7 +63,7 @@ const ModifierTypeTableContainer = () => {
               }
               label="Edit Modifier Type"
               onClick={() => {
-                openModifierTypeEdit(params.row.modifierType.id);
+                openModifierTypeEdit(params.row.id);
               }}
               key="EDITMT"
             />,
@@ -75,7 +75,7 @@ const ModifierTypeTableContainer = () => {
               }
               label="Add Modifier Option"
               onClick={() => {
-                openModifierOptionAdd(params.row.modifierType.id);
+                openModifierOptionAdd(params.row.id);
               }}
               showInMenu
               key="ADDMO"
@@ -88,7 +88,7 @@ const ModifierTypeTableContainer = () => {
               }
               label="Copy Modifier Type"
               onClick={() => {
-                openModifierTypeCopy(params.row.modifierType.id);
+                openModifierTypeCopy(params.row.id);
               }}
               showInMenu
               key="COPYMT"
@@ -101,7 +101,7 @@ const ModifierTypeTableContainer = () => {
               }
               label="Delete Modifier Type"
               onClick={() => {
-                openModifierTypeDelete(params.row.modifierType.id);
+                openModifierTypeDelete(params.row.id);
               }}
               showInMenu
               key="DELMT"
@@ -112,19 +112,19 @@ const ModifierTypeTableContainer = () => {
           headerName: 'Name',
           sortable: false,
           field: 'Modifier Name',
-          valueGetter: (_v, row: CatalogModifierEntry) => row.modifierType.name,
+          valueGetter: (_v, row: IOptionType) => row.name,
           flex: 10,
         },
         {
           headerName: 'Display Name',
           field: 'displayName',
-          valueGetter: (_v, row: CatalogModifierEntry) => row.modifierType.displayName,
+          valueGetter: (_v, row: IOptionType) => row.displayName,
           flex: 3,
         },
         {
           headerName: 'Ordinal',
           field: 'ordinal',
-          valueGetter: (_v, row: CatalogModifierEntry) => row.modifierType.ordinal,
+          valueGetter: (_v, row: IOptionType) => row.ordinal,
           flex: 1,
         },
         {
@@ -132,8 +132,8 @@ const ModifierTypeTableContainer = () => {
           sortable: false,
           hideable: false,
           field: 'min_max',
-          valueGetter: (_v, row: CatalogModifierEntry) =>
-            `${row.modifierType.min_selected.toString()}/${(row.modifierType.max_selected ?? '').toString()}`,
+          valueGetter: (_v, row: IOptionType) =>
+            `${row.min_selected.toString()}/${(row.max_selected ?? '').toString()}`,
           flex: 2,
         },
       ]}

@@ -78,7 +78,7 @@ const HierarchicalProductImportComponent = (props: HierarchicalProductImportComp
                 props.setParentCategories(v);
               }}
               // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(option) => catalogSelectors?.category(option)?.category.name ?? option}
+              getOptionLabel={(option) => catalogSelectors?.category(option)?.name ?? option}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => <TextField {...params} label="Categories" />}
             />
@@ -248,7 +248,7 @@ input needed:
   ordinal: number;
 
   // applied modifiers for this instance of the product
-  modifiers: ProductModifierEntry[];
+  modifiers: ProductInstanceModifierEntry[];
 
   displayFlags: IProductDisplayFlags,
 

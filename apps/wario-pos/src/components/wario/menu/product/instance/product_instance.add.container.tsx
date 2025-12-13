@@ -3,7 +3,7 @@ import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import type { IProduct } from '@wcp/wario-shared';
-import { useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
+import { useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useAddProductInstanceMutation } from '@/hooks/useProductInstanceMutations';
 
@@ -21,7 +21,7 @@ interface ProductInstanceAddContainerProps {
 }
 
 const ProductInstanceAddContainer = ({ parent_product_id, onCloseCallback }: ProductInstanceAddContainerProps) => {
-  const parent_product = useValueFromProductEntryById(parent_product_id, 'product');
+  const parent_product = useProductById(parent_product_id);
 
   if (!parent_product) {
     return null;

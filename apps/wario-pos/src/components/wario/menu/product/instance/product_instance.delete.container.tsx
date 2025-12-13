@@ -7,11 +7,16 @@ import { useDeleteProductInstanceMutation } from '@/hooks/useProductInstanceMuta
 import ElementDeleteComponent from '../../element.delete.component';
 
 export interface ProductInstanceQuickActionProps {
+  product_id: string;
   product_instance_id: string;
   onCloseCallback: VoidFunction;
 }
 
-const ProductInstanceDeleteContainer = ({ product_instance_id, onCloseCallback }: ProductInstanceQuickActionProps) => {
+const ProductInstanceDeleteContainer = ({
+  product_id,
+  product_instance_id,
+  onCloseCallback,
+}: ProductInstanceQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const product_instance = useProductInstanceById(product_instance_id);
 
@@ -22,7 +27,7 @@ const ProductInstanceDeleteContainer = ({ product_instance_id, onCloseCallback }
 
     deleteMutation.mutate(
       {
-        productId: product_instance.productId,
+        productId: product_id,
         instanceId: product_instance.id,
       },
       {

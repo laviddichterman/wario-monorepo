@@ -23,7 +23,10 @@ const ProductModifierComponent = (props: ProductModifierComponentProps) => {
       {},
     );
     const sorted: IProductModifier[] = mods
-      .sort((a, b) => catalog.modifiers[a].modifierType.ordinal - catalog.modifiers[b].modifierType.ordinal)
+      .sort((a, b) => {
+        const modKeys = Object.keys(catalog.modifiers);
+        return modKeys.indexOf(a) - modKeys.indexOf(b);
+      })
 
       .map((x) => ({
         mtid: x,
@@ -48,7 +51,7 @@ const ProductModifierComponent = (props: ProductModifierComponentProps) => {
             handleSetModifiers(v);
           }}
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(option) => catalog.modifiers[option].modifierType.name ?? 'CORRUPT DATA'}
+          getOptionLabel={(option) => catalog.modifiers[option].name ?? 'CORRUPT DATA'}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Modifiers" />}
         />
@@ -62,7 +65,7 @@ const ProductModifierComponent = (props: ProductModifierComponentProps) => {
           }}
         >
           <Card>
-            <CardHeader title={`Modifier Details: ${catalog.modifiers[modifier.mtid].modifierType.name}`} />
+            <CardHeader title={`Modifier Details: ${catalog.modifiers[modifier.mtid].name}`} />
             <CardContent>
               <Grid container spacing={2}>
                 <Grid size={12}>

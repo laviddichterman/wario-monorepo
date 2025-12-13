@@ -25,11 +25,11 @@ import {
 
 import {
   type ICatalog,
-  type ICatalogModifiers,
   OptionPlacement,
   OptionQualifier,
   PriceDisplay,
-  type ProductModifierEntry,
+  type ProductInstanceModifierEntry,
+  type RecordModifierOptions,
   type UncommittedIProduct,
 } from '@wcp/wario-shared';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
@@ -54,9 +54,9 @@ import {
 
 const normalizeModifiersAndOptions = (
   parent_product: UncommittedIProduct,
-  modifier_types_map: ICatalogModifiers,
-  minimizedModifiers: ProductModifierEntry[],
-): ProductModifierEntry[] =>
+  modifier_types_map: RecordModifierOptions,
+  minimizedModifiers: ProductInstanceModifierEntry[],
+): ProductInstanceModifierEntry[] =>
   parent_product.modifiers.map((modifier_entry) => {
     const modEntry = minimizedModifiers.find((x) => x.modifierTypeId === modifier_entry.mtid);
     const modOptions = modEntry ? modEntry.options : [];
@@ -73,8 +73,8 @@ const normalizeModifiersAndOptions = (
     };
   });
 
-const minimizeModifiers = (normalized_modifiers: ProductModifierEntry[]): ProductModifierEntry[] =>
-  normalized_modifiers.reduce<ProductModifierEntry[]>((acc, modifier) => {
+const minimizeModifiers = (normalized_modifiers: ProductInstanceModifierEntry[]): ProductInstanceModifierEntry[] =>
+  normalized_modifiers.reduce<ProductInstanceModifierEntry[]>((acc, modifier) => {
     const filtered_options = modifier.options.filter((x) => x.placement !== OptionPlacement.NONE);
     return filtered_options.length ? [...acc, { ...modifier, options: filtered_options }] : acc;
   }, []);
@@ -132,7 +132,7 @@ const ProductInstanceFormBodyInner = ({
     [parent_product, form.modifiers, catalog],
   );
 
-  const handleSetModifiers = (mods: ProductModifierEntry[]) => {
+  const handleSetModifiers = (mods: ProductInstanceModifierEntry[]) => {
     updateField('modifiers', minimizeModifiers(mods));
   };
 
@@ -175,7 +175,7 @@ const ProductInstanceFormBodyInner = ({
   };
 
   const renderModifierOptions = (
-    modifier_entry: ProductModifierEntry,
+    modifier_entry: ProductInstanceModifierEntry,
     modifier_types_map: ICatalogModifiers,
     mtid: string,
   ) => {

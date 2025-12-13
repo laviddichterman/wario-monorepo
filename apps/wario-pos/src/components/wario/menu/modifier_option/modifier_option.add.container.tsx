@@ -6,7 +6,7 @@ import { TabContext, TabList } from '@mui/lab';
 import { Button, Tab } from '@mui/material';
 
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
-import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
+import { useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
 import {
   DEFAULT_MODIFIER_OPTION_FORM,
@@ -24,7 +24,7 @@ export interface ModifierOptionAddContainerProps {
 }
 
 export const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: ModifierOptionAddContainerProps) => {
-  const catalogSelectors = useCatalogSelectors();
+  const modifierType = useModifierTypeById(modifierTypeId);
   const setForm = useSetAtom(modifierOptionFormAtom);
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState('identity');
@@ -71,8 +71,7 @@ export const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: 
     }
   };
 
-  const modifierEntry = catalogSelectors?.modifierEntry(modifierTypeId);
-  if (!catalogSelectors || !modifierEntry) return null;
+  if (!modifierType) return null;
 
   return (
     <TabContext value={activeTab}>
@@ -91,7 +90,7 @@ export const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: 
           </TabList>
         </AppDialog.Header>
         <AppDialog.Content>
-          <ModifierOptionFormBody modifierType={modifierEntry.modifierType} />
+          <ModifierOptionFormBody modifierType={modifierType} />
         </AppDialog.Content>
         <AppDialog.Actions>
           <Button onClick={onCloseCallback} disabled={isProcessing}>

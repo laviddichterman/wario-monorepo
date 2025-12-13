@@ -8,7 +8,7 @@ import type { GridRenderCellParams, GridRowId, GridRowParams } from '@mui/x-data
 import { GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid-premium';
 
 import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared';
-import { useCatalogQuery, useProductEntryById, useServerTime } from '@wcp/wario-ux-shared/query';
+import { useCatalogQuery, useProductById, useServerTime } from '@wcp/wario-ux-shared/query';
 
 import { useAuthContext } from '@/hooks/useAuthContext';
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
@@ -55,33 +55,34 @@ const useProductRows = (productIds: string[]) => {
   return useMemo(() => {
     if (!catalog) return [];
     return productIds.map((x) => {
-      const productEntry = catalog.products[x];
+      const product = catalog.products[x];
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!productEntry)
+      if (!product)
         return {
           id: x,
           disableData: { enable: DISABLE_REASON.ENABLED } as ReturnType<typeof DisableDataCheck>,
           name: 'UNDEFINED',
         };
-      const baseProductInstance = catalog.productInstances[productEntry.product.baseProductId];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const baseProductInstanceId = product.instances[0];
+      const baseProductInstance = baseProductInstanceId ? catalog.productInstances[baseProductInstanceId] : null;
+
       const name = baseProductInstance?.displayName ?? 'UNDEFINED';
-      return { id: x, disableData: DisableDataCheck(productEntry.product.disabled, [], currentTime), name };
+      return { id: x, disableData: DisableDataCheck(product.disabled, [], currentTime), name };
     });
   }, [catalog, currentTime, productIds]);
 };
 
 // Hook to replace selectProductModifierList
 const useProductModifierList = (pid: string) => {
-  const productEntry = useProductEntryById(pid);
+  const product = useProductById(pid);
   const { data: catalog } = useCatalogQuery();
 
   return useMemo(() => {
-    if (!productEntry || !catalog) return '';
-    const mods = productEntry.product.modifiers;
+    if (!product || !catalog) return '';
+    const mods = product.modifiers;
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return mods.map((x) => catalog.modifiers[x.mtid]?.modifierType.name || '').join(', ');
-  }, [productEntry, catalog]);
+    return mods.map((x: { mtid: string }) => catalog.modifiers[x.mtid]?.name || '').join(', ');
+  }, [product, catalog]);
 };
 
 const ProductModifierList = (params: GridRenderCellParams<RowType>) => {
@@ -91,17 +92,17 @@ const ProductModifierList = (params: GridRenderCellParams<RowType>) => {
 
 // Hook to replace select ProductPrinterName
 const useProductPrinterName = (productId: string) => {
-  const productEntry = useProductEntryById(productId);
+  const product = useProductById(productId);
   const printerGroups = usePrinterGroupsMap();
 
   return useMemo(() => {
-    if (!productEntry) return '';
-    const pgId = productEntry.product.printerGroup;
+    if (!product) return '';
+    const pgId = product.printerGroup;
     if (!pgId) return '';
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return printerGroups[pgId]?.name ?? '';
-  }, [productEntry, printerGroups]);
+  }, [product, printerGroups]);
 };
 
 const ProductPrinterGroupName = (params: GridRenderCellParams<RowType>) => {
@@ -110,9 +111,8 @@ const ProductPrinterGroupName = (params: GridRenderCellParams<RowType>) => {
 };
 
 const useProductPrice = (pid: string) => {
-  const productEntry = useProductEntryById(pid);
-  if (!productEntry) return '$0.00';
-  return `$${(productEntry.product.price.amount / 100).toFixed(2)}`;
+  const product = useProductById(pid);
+  return `$${(product?.price.amount ?? 0 / 100).toFixed(2)}`;
 };
 
 const ProductPrice = (params: GridRenderCellParams<RowType>) => {
@@ -121,12 +121,13 @@ const ProductPrice = (params: GridRenderCellParams<RowType>) => {
 };
 
 const ProductInstancesDetailPanel = ({ row }: { row: RowType }) => {
-  const productEntry = useProductEntryById(row.id);
-  return productEntry && productEntry.instances.length ? (
+  const product = useProductById(row.id);
+  return product && product.instances.length ? (
     <ProductInstanceTableContainer
-      product_instance_ids={productEntry.instances.map((x) => ({
+      product_id={row.id}
+      product_instance_ids={product.instances.map((x: string, idx: number) => ({
         id: x,
-        base: productEntry.product.baseProductId === x,
+        base: idx === 0,
       }))}
     />
   ) : (

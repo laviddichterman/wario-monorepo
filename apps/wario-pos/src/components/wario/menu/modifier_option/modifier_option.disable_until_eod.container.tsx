@@ -13,6 +13,7 @@ import { ElementActionComponent } from '../element.action.component';
 import type { ModifierOptionQuickActionProps } from './modifier_option.delete.container';
 
 const ModifierOptionDisableUntilEodContainer = ({
+  modifier_type_id,
   modifier_option_id,
   onCloseCallback,
 }: ModifierOptionQuickActionProps) => {
@@ -27,7 +28,7 @@ const ModifierOptionDisableUntilEodContainer = ({
 
     setDisabledMutation.mutate(
       {
-        modifierTypeId: modifier_option.modifierTypeId,
+        modifierTypeId: modifier_type_id,
         option: modifier_option,
         disabled: { start: currentTime, end: getTime(endOfDay(currentTime)) },
       },

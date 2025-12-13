@@ -6,7 +6,7 @@ import { TabContext, TabList } from '@mui/lab';
 import { Button, Tab } from '@mui/material';
 
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
-import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useModifierTypeById, useOptionById } from '@wcp/wario-ux-shared/query';
 
 import {
   fromModifierOptionEntity,
@@ -19,11 +19,13 @@ import { HOST_API } from '@/config';
 import { ModifierOptionFormBody } from './modifier_option.component';
 
 export interface ModifierOptionEditContainerProps {
+  modifier_type_id: string;
   modifier_option_id: string;
   onCloseCallback: VoidFunction;
 }
 
 export const ModifierOptionEditContainer = ({
+  modifier_type_id,
   modifier_option_id,
   onCloseCallback,
 }: ModifierOptionEditContainerProps) => {
@@ -45,17 +47,29 @@ export const ModifierOptionEditContainer = ({
 
   if (!catalogSelectors) return null;
 
-  return <ModifierOptionEditForm modifier_option_id={modifier_option_id} onCloseCallback={onCloseCallback} />;
+  return (
+    <ModifierOptionEditForm
+      modifier_type_id={modifier_type_id}
+      modifier_option_id={modifier_option_id}
+      onCloseCallback={onCloseCallback}
+    />
+  );
 };
 
 interface ModifierOptionEditFormProps {
+  modifier_type_id: string;
   modifier_option_id: string;
   onCloseCallback: VoidFunction;
 }
 
-const ModifierOptionEditForm = ({ modifier_option_id, onCloseCallback }: ModifierOptionEditFormProps) => {
+const ModifierOptionEditForm = ({
+  modifier_type_id,
+  modifier_option_id,
+  onCloseCallback,
+}: ModifierOptionEditFormProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const catalogSelectors = useCatalogSelectors();
+  const modifierType = useModifierTypeById(modifier_type_id);
+  const modifierOption = useOptionById(modifier_option_id);
   const [activeTab, setActiveTab] = useState('identity');
 
   const [form] = useAtom(modifierOptionFormAtom);
@@ -90,11 +104,7 @@ const ModifierOptionEditForm = ({ modifier_option_id, onCloseCallback }: Modifie
     }
   };
 
-  const modifierOption = catalogSelectors?.option(modifier_option_id);
-  const modifierTypeId = modifierOption?.modifierTypeId;
-  const modifierEntry = modifierTypeId ? catalogSelectors?.modifierEntry(modifierTypeId) : null;
-
-  if (!catalogSelectors || !modifierOption || !modifierEntry) return null;
+  if (!modifierOption || !modifierType) return null;
 
   return (
     <TabContext value={activeTab}>
@@ -113,7 +123,7 @@ const ModifierOptionEditForm = ({ modifier_option_id, onCloseCallback }: Modifie
           </TabList>
         </AppDialog.Header>
         <AppDialog.Content>
-          <ModifierOptionFormBody modifierType={modifierEntry.modifierType} />
+          <ModifierOptionFormBody modifierType={modifierType} />
         </AppDialog.Content>
         <AppDialog.Actions>
           <Button onClick={onCloseCallback} disabled={isProcessing}>

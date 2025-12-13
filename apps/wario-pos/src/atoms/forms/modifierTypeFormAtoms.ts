@@ -26,6 +26,7 @@ export interface ModifierTypeFormState {
   nonEmptyGroupPrefix: string;
   nonEmptyGroupSuffix: string;
   is3p: boolean;
+  options: string[];
 }
 
 /** Default values for "Add" mode */
@@ -47,6 +48,7 @@ export const DEFAULT_MODIFIER_TYPE_FORM: ModifierTypeFormState = {
   nonEmptyGroupPrefix: '',
   nonEmptyGroupSuffix: '',
   is3p: false,
+  options: [],
 };
 
 /** Main form atom - null when no form is open */
@@ -88,6 +90,7 @@ export const toModifierTypeApiBody = (form: ModifierTypeFormState): Omit<IOption
     non_empty_group_suffix: form.nonEmptyGroupSuffix || '',
     is3p: form.is3p,
   },
+  options: form.options,
 });
 
 /** Convert API entity to form state */
@@ -109,6 +112,7 @@ export const fromModifierTypeEntity = (entity: IOptionType): ModifierTypeFormSta
   nonEmptyGroupPrefix: entity.displayFlags.non_empty_group_prefix,
   nonEmptyGroupSuffix: entity.displayFlags.non_empty_group_suffix,
   is3p: entity.displayFlags.is3p,
+  options: entity.options,
 });
 
 /**

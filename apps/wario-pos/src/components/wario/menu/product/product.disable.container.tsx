@@ -3,7 +3,7 @@ import { useSnackbar } from 'notistack';
 import { Grid } from '@mui/material';
 
 import type { IProduct } from '@wcp/wario-shared';
-import { useBaseProductNameByProductId, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
+import { useBaseProductNameByProductId, useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useSetProductDisabledMutation } from '@/hooks/useProductMutations';
 
@@ -13,7 +13,7 @@ import type { ProductQuickActionProps } from './product.delete.container';
 
 const ProductDisableContainer = ({ product_id, onCloseCallback }: ProductQuickActionProps) => {
   const productName = useBaseProductNameByProductId(product_id);
-  const product = useValueFromProductEntryById(product_id, 'product');
+  const product = useProductById(product_id);
 
   if (!product || !productName) {
     return null;

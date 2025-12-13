@@ -28,11 +28,6 @@ const ProductInstanceDescription = (params: GridRenderCellParams<RowType>) => {
   return <>{productInstance?.description ?? ''}</>;
 };
 
-const ProductInstanceOrdinal = (params: GridRenderCellParams<RowType>) => {
-  const productInstance = useProductInstanceById(params.row.id);
-  return <>{productInstance?.ordinal ?? 0}</>;
-};
-
 const ProductInstanceOrdinalMenu = (params: GridRenderCellParams<RowType>) => {
   const productInstance = useProductInstanceById(params.row.id);
   return <>{productInstance?.displayFlags.menu.ordinal ?? 0}</>;
@@ -49,10 +44,11 @@ const ProductInstanceShortcode = (params: GridRenderCellParams<RowType>) => {
 };
 
 export interface ProductInstanceTableContainerProps {
+  product_id: string;
   product_instance_ids: RowType[];
 }
 
-const ProductInstanceTableContainer = ({ product_instance_ids }: ProductInstanceTableContainerProps) => {
+const ProductInstanceTableContainer = ({ product_id, product_instance_ids }: ProductInstanceTableContainerProps) => {
   const openProductInstanceEdit = useSetAtom(openProductInstanceEditAtom);
   const openProductInstanceDelete = useSetAtom(openProductInstanceDeleteAtom);
 
@@ -74,7 +70,7 @@ const ProductInstanceTableContainer = ({ product_instance_ids }: ProductInstance
               }
               label="Edit Product Instance"
               onClick={() => {
-                openProductInstanceEdit(params.row.id);
+                openProductInstanceEdit({ productId: product_id, instanceId: params.row.id });
               }}
             />,
             <GridActionsCellItem
@@ -87,7 +83,7 @@ const ProductInstanceTableContainer = ({ product_instance_ids }: ProductInstance
               }
               label="Delete Product Instance"
               onClick={() => {
-                openProductInstanceDelete(params.row.id);
+                openProductInstanceDelete({ productId: product_id, instanceId: params.row.id });
               }}
             />,
           ],
@@ -98,7 +94,6 @@ const ProductInstanceTableContainer = ({ product_instance_ids }: ProductInstance
           renderCell: (params) => <ProductInstanceDisplayName {...params} />,
           flex: 1,
         },
-        { headerName: 'Ordinal', field: 'ordinal', renderCell: (params) => <ProductInstanceOrdinal {...params} /> },
         {
           headerName: 'Menu Ordinal',
           field: 'menuOrdinal',

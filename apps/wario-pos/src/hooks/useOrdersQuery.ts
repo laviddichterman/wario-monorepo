@@ -7,12 +7,14 @@ import {
   type CoreCartEntry,
   CreateProductWithMetadataFromV2,
   EventTitleStringBuilder,
+  GenerateCategoryOrderList,
+  GenerateCategoryOrderMap,
   GroupAndOrderCart,
   RebuildAndSortCart,
   WDateUtils,
   type WOrderInstance,
 } from '@wcp/wario-shared';
-import { useCatalogSelectors, useFulfillmentById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useFulfillmentById, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import axiosInstance from '@/utils/axios';
 import { uuidv4 } from '@/utils/uuidv4';
@@ -258,19 +260,41 @@ export function useGroupedAndSortedCart(order: WOrderInstance | null) {
         order.fulfillment.selectedService,
       ),
     }));
-    return GroupAndOrderCart(coreCart, catalogSelectors.category);
+    // Generate the categoryIdOrdinalMap for a default category (using first entry's categoryId or empty)
+    const firstCategoryId = coreCart.length > 0 ? coreCart[0].categoryId : '';
+    const categoryOrderMap = GenerateCategoryOrderMap(firstCategoryId, catalogSelectors.category);
+    return GroupAndOrderCart(coreCart, categoryOrderMap);
   }, [order, catalogSelectors]);
+}
+
+const useCategoryOrderMapForFullfillment = (fulfillmentId: string) => {
+  const catalogSelectors = useCatalogSelectors();
+  const fulfillmentMainCategory = useValueFromFulfillmentById(fulfillmentId, 'orderBaseCategoryId');
+  const fulfillmentSecondaryCategory = useValueFromFulfillmentById(fulfillmentId, 'orderSupplementaryCategoryId');
+
+  return useMemo(() => {
+    if (!catalogSelectors || !fulfillmentMainCategory) {
+      return {};
+    }
+    const categoryOrderArrayMain = GenerateCategoryOrderList(fulfillmentMainCategory, catalogSelectors.category);
+    const categoryOrderArraySecondary = fulfillmentSecondaryCategory ? GenerateCategoryOrderList(fulfillmentSecondaryCategory, catalogSelectors.category) : [];
+    const categoryOrderMap = Object.fromEntries([...categoryOrderArrayMain, ...categoryOrderArraySecondary].map((x, i) => [x, i]));
+
+    return categoryOrderMap;
+  }, [catalogSelectors, fulfillmentMainCategory, fulfillmentSecondaryCategory]);
 }
 
 export function useEventTitleStringForOrder(order: WOrderInstance | null) {
   const catalogSelectors = useCatalogSelectors();
   const fulfillment = useFulfillmentById(order?.fulfillment.selectedService || null);
+  const orderMap = useCategoryOrderMapForFullfillment(order?.fulfillment.selectedService || '');
   return useMemo(() => {
     if (catalogSelectors && order && fulfillment) {
       const serviceTime = WDateUtils.ComputeServiceDateTime(order.fulfillment);
       const cart = RebuildAndSortCart(order.cart, catalogSelectors, serviceTime, order.fulfillment.selectedService);
       return EventTitleStringBuilder(
         catalogSelectors,
+        orderMap,
         fulfillment,
         `${order.customerInfo.givenName} ${order.customerInfo.familyName}`,
         order.fulfillment,
@@ -279,5 +303,5 @@ export function useEventTitleStringForOrder(order: WOrderInstance | null) {
       );
     }
     return '';
-  }, [catalogSelectors, order, fulfillment]);
+  }, [catalogSelectors, order, fulfillment, orderMap]);
 }

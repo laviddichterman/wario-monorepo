@@ -2,13 +2,13 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
 import type {
-  CreateProductBatchRequest,
+  CreateProductRequest,
   IProduct,
   IProductInstance,
   IWInterval,
   PartialUncommittedProductInstanceDto,
   UncommittedIProductInstance,
-  UpsertProductBatchRequest,
+  UpsertProductRequest,
 } from '@wcp/wario-shared';
 
 import axiosInstance from '@/utils/axios';
@@ -60,7 +60,7 @@ export function useAddProductMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async (req: CreateProductBatchRequest) => {
+    mutationFn: async (req: CreateProductRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
       const response = await axiosInstance.post<IProduct>('/api/v1/menu/product/', req, {
         headers: {
@@ -81,7 +81,7 @@ export function useBatchUpsertProductMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async (products: UpsertProductBatchRequest[]) => {
+    mutationFn: async (products: UpsertProductRequest[]) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
       const response = await axiosInstance.post<BatchUpsertProductResponse>('/api/v1/menu/productbatch/', products, {

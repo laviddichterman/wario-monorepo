@@ -21,7 +21,7 @@ import {
 
 import type { IOption, IOptionType } from '@wcp/wario-shared';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
-import { useCatalogQuery, useModifierEntryById } from '@wcp/wario-ux-shared/query';
+import { useCatalogQuery, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
 import {
   fromModifierOptionEntity,
@@ -51,16 +51,16 @@ export interface ModifierTypeCopyContainerProps {
 }
 
 const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: ModifierTypeCopyContainerProps) => {
-  const modifierTypeEntry = useModifierEntryById(modifierTypeId);
+  const modifierType = useModifierTypeById(modifierTypeId);
   const { data: catalog } = useCatalogQuery();
 
-  if (!modifierTypeEntry || !catalog?.options) {
+  if (!modifierType || !catalog?.options) {
     return null;
   }
 
   return (
     <ModifierTypeCopyContainerInner
-      modifierTypeEntry={modifierTypeEntry}
+      modifierType={modifierType}
       allOptions={catalog.options}
       onCloseCallback={onCloseCallback}
     />
@@ -68,12 +68,12 @@ const ModifierTypeCopyContainer = ({ modifierTypeId, onCloseCallback }: Modifier
 };
 
 interface InnerProps {
-  modifierTypeEntry: NonNullable<ReturnType<typeof useModifierEntryById>>;
+  modifierType: IOptionType;
   allOptions: Record<string, IOption>;
   onCloseCallback: VoidFunction;
 }
 
-const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onCloseCallback }: InnerProps) => {
+const ModifierTypeCopyContainerInner = ({ modifierType, allOptions, onCloseCallback }: InnerProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const { getAccessTokenSilently } = useAuth0();
   const [activeTab, setActiveTab] = useState('rules');
@@ -85,18 +85,18 @@ const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onClose
 
   // ModifierOption count for iteration
   const setCopyCount = useSetAtom(modifierOptionCopyCountAtom);
-  const optionCount = modifierTypeEntry.options.length;
+  const optionCount = modifierType.options.length;
 
   // Initialize all atoms on mount
   useEffect(() => {
-    setModifierTypeForm(fromModifierTypeEntity(modifierTypeEntry.modifierType));
+    setModifierTypeForm(fromModifierTypeEntity(modifierType));
     setCopyCount(optionCount);
 
     return () => {
       setModifierTypeForm(null);
       setCopyCount(0);
     };
-  }, [modifierTypeEntry.modifierType, optionCount, setModifierTypeForm, setCopyCount]);
+  }, [modifierType, optionCount, setModifierTypeForm, setCopyCount]);
 
   const copyModifierTypeAndOptions = async () => {
     if (!modifierTypeForm || isProcessing) return;
@@ -107,12 +107,12 @@ const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onClose
 
       // Collect options to copy - for now using original option data
       // In a full implementation, we'd read from the atomFamily
-      const optionsToCopy = modifierTypeEntry.options.map((optionId) => {
+      const optionsToCopy = modifierType.options.map((optionId: string) => {
         const option = allOptions[optionId];
         return toModifierOptionApiBody(fromModifierOptionEntity(option));
       });
 
-      const body: ReturnType<typeof toModifierTypeApiBody> & { options: Omit<IOption, 'modifierTypeId' | 'id'>[] } = {
+      const body: ReturnType<typeof toModifierTypeApiBody> & { options: Omit<IOption, 'id'>[] } = {
         ...toModifierTypeApiBody(modifierTypeForm),
         options: optionsToCopy,
       };
@@ -163,12 +163,12 @@ const ModifierTypeCopyContainerInner = ({ modifierTypeEntry, allOptions, onClose
           <ModifierTypeFormBody />
           <TabPanel value="options" sx={{ p: 0, pt: 2 }}>
             <Stack spacing={2}>
-              {modifierTypeEntry.options.map((optionId, index) => (
+              {modifierType.options.map((optionId: string, index: number) => (
                 <ModifierOptionCopyEditor
                   key={optionId}
                   index={index}
                   option={allOptions[optionId]}
-                  modifierType={modifierTypeEntry.modifierType}
+                  modifierType={modifierType}
                   isProcessing={isProcessing}
                 />
               ))}

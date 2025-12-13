@@ -293,7 +293,7 @@ HasAnyOfModifierTypeFunctionalComponent = ({ value, setValue }) => {
           onChange={(_, v) => {
             setModifier(v);
           }}
-          getOptionLabel={(o) => catalogSelectors.modifierEntry(o)?.modifierType.name ?? o}
+          getOptionLabel={(o) => catalogSelectors.modifierEntry(o)?.name ?? o}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Modifier" />}
         />
@@ -329,7 +329,7 @@ ModifierPlacementFunctionalComponent = ({ value, setValue }) => {
           onChange={(_, v) => {
             setModifier(v);
           }}
-          getOptionLabel={(o) => catalogSelectors.modifierEntry(o)?.modifierType.name ?? 'CORRUPTED DATA'}
+          getOptionLabel={(o) => catalogSelectors.modifierEntry(o)?.name ?? 'CORRUPTED DATA'}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Modifier" />}
         />

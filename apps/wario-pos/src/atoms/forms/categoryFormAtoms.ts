@@ -10,28 +10,28 @@ import { CALL_LINE_DISPLAY, CategoryDisplay } from '@wcp/wario-shared';
 export interface CategoryFormState {
   name: string;
   description: string;
-  ordinal: number;
   subheading: string;
   footnotes: string;
   callLineName: string;
   serviceDisable: string[];
   callLineDisplay: CALL_LINE_DISPLAY;
   nestedDisplay: CategoryDisplay;
-  parent: string | null;
+  children: string[];
+  products: string[];
 }
 
 /** Default values for "Add" mode */
 export const DEFAULT_CATEGORY_FORM: CategoryFormState = {
   name: '',
   description: '',
-  ordinal: 0,
   subheading: '',
   footnotes: '',
   callLineName: '',
   serviceDisable: [],
   callLineDisplay: CALL_LINE_DISPLAY.SHORTNAME,
   nestedDisplay: CategoryDisplay.TAB,
-  parent: null,
+  children: [],
+  products: [],
 };
 
 /** Main form atom - null when no form is open */
@@ -46,32 +46,30 @@ export const categoryFormIsValidAtom = atom((get) => {
   if (!form) return false;
 
   if (form.name.length === 0) return false;
-  if (form.ordinal < 0) return false;
 
   return true;
 });
 
 /** Convert form state to API request body */
-export const toCategoryApiBody = (form: CategoryFormState): Omit<ICategory, 'id' | 'products' | 'subCategories'> => ({
+export const toCategoryApiBody = (form: CategoryFormState): Omit<ICategory, 'id'> => ({
   name: form.name,
   description: form.description || null,
-  ordinal: form.ordinal,
   subheading: form.subheading || null,
   footnotes: form.footnotes || null,
   serviceDisable: form.serviceDisable,
-  parent_id: form.parent,
   display_flags: {
     call_line_name: form.callLineName,
     call_line_display: form.callLineDisplay,
     nesting: form.nestedDisplay,
   },
+  children: form.children,
+  products: form.products,
 });
 
 /** Convert API entity to form state */
 export const fromCategoryEntity = (entity: ICategory): CategoryFormState => ({
   name: entity.name,
   description: entity.description || '',
-  ordinal: entity.ordinal,
   subheading: entity.subheading || '',
   footnotes: entity.footnotes || '',
   callLineName: entity.display_flags.call_line_name,
@@ -79,5 +77,6 @@ export const fromCategoryEntity = (entity: ICategory): CategoryFormState => ({
   serviceDisable: entity.serviceDisable || [],
   callLineDisplay: entity.display_flags.call_line_display,
   nestedDisplay: entity.display_flags.nesting,
-  parent: entity.parent_id || null,
+  children: entity.children,
+  products: entity.products,
 });

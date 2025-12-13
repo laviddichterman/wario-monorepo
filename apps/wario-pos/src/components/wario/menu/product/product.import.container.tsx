@@ -197,7 +197,7 @@ const ProductImportForm = ({
               onChange={(_e, v) => {
                 updateField('parentCategories', v);
               }}
-              getOptionLabel={(option) => catalogSelectors.category(option)?.category.name ?? option}
+              getOptionLabel={(option) => catalogSelectors.category(option)?.name ?? option}
               isOptionEqualToValue={(o, v) => o === v}
               renderInput={(params) => <TextField {...params} label="Categories" />}
             />

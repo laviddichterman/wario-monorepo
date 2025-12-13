@@ -1,19 +1,16 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import { Box, Button, FormControlLabel, Grid, Switch, Tab } from '@mui/material';
+import { Box, Button, Checkbox, Chip, Tab, Typography } from '@mui/material';
+import type { GridColDef, GridRenderCellParams, GridRowOrderChangeParams } from '@mui/x-data-grid-premium';
+import { DataGridPremium } from '@mui/x-data-grid-premium';
 
-import {
-  type CatalogProductEntry,
-  type CreateProductBatchRequest,
-  type UncommittedIProduct,
-  type UncommittedIProductInstance,
-} from '@wcp/wario-shared';
+import { type CreateProductBatchRequest, type IProduct, type UncommittedIProductInstance } from '@wcp/wario-shared';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
-import { useCatalogSelectors, useProductEntryById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
 
 import {
   fromProductEntity,
@@ -22,14 +19,12 @@ import {
   toProductApiBody,
 } from '@/atoms/forms/productFormAtoms';
 import {
-  productInstanceCopyFlagFamily,
-  productInstanceExpandedFamily,
+  fromProductInstanceEntity,
   productInstanceFormFamily,
   toProductInstanceApiBody,
 } from '@/atoms/forms/productInstanceFormAtoms';
 import { HOST_API } from '@/config';
 
-import { ProductInstanceRow } from './instance/product_instance.row';
 import { ProductFormBody } from './product.component';
 
 export interface ProductCopyContainerProps {
@@ -38,45 +33,42 @@ export interface ProductCopyContainerProps {
 }
 
 export const ProductCopyContainer = ({ product_id, onCloseCallback }: ProductCopyContainerProps) => {
-  const productEntry = useProductEntryById(product_id);
+  const product = useProductById(product_id);
 
-  if (!productEntry) {
+  if (!product) {
     return null;
   }
 
-  return <ProductCopyContainerContent productEntry={productEntry} onCloseCallback={onCloseCallback} />;
+  return <ProductCopyContainerContent product={product} onCloseCallback={onCloseCallback} />;
 };
 
 const ProductCopyContainerContent = ({
-  productEntry,
+  product,
   onCloseCallback,
 }: {
-  productEntry: CatalogProductEntry;
+  product: IProduct;
   onCloseCallback: VoidFunction;
 }) => {
   const catalogSelectors = useCatalogSelectors();
 
-  // We don't need to manually create an array of atoms anymore.
-  // We will initialize the atomFamilies in the Form component or here.
-
   if (!catalogSelectors) return null;
 
-  return (
-    <ProductCopyForm
-      productEntry={productEntry}
-      catalogSelectors={catalogSelectors}
-      onCloseCallback={onCloseCallback}
-    />
-  );
+  return <ProductCopyForm product={product} catalogSelectors={catalogSelectors} onCloseCallback={onCloseCallback} />;
 };
 
 interface ProductCopyFormProps {
-  productEntry: CatalogProductEntry;
+  product: IProduct;
   catalogSelectors: NonNullable<ReturnType<typeof useCatalogSelectors>>;
   onCloseCallback: VoidFunction;
 }
 
-const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: ProductCopyFormProps) => {
+interface InstanceRow {
+  id: string;
+  displayName: string;
+  include: boolean;
+}
+
+const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: ProductCopyFormProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const { getAccessTokenSilently } = useAuth0();
 
@@ -84,41 +76,26 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
   const [isProcessing, setIsProcessing] = useAtom(productFormProcessingAtom);
   const productForm = useAtomValue(productFormAtom);
 
-  const [indexOfBase, setIndexOfBase] = useState(() => {
-    const idx = productEntry.instances.indexOf(productEntry.product.baseProductId);
-    return idx >= 0 ? idx : 0;
-  });
+  // State for ordered instance rows (first is base)
+  const [rows, setRows] = useState<InstanceRow[]>(() =>
+    product.instances.map((id) => {
+      const instance = catalogSelectors.productInstance(id);
+      return {
+        id,
+        displayName: instance?.displayName ?? 'Unknown',
+        include: true, // Default all to included
+      };
+    }),
+  );
 
-  // Initialize Atoms
-  useEffect(() => {
-    // 1. Base Product Form
-    setProductForm(fromProductEntity(productEntry.product));
-
-    // 2. Instance Forms are initialized by ProductInstanceCopyRow components on mount.
-
-    return () => {
-      setProductForm(null);
-      // Cleanup family atoms to prevent memory leaks
-      productEntry.instances.forEach((id) => {
-        productInstanceFormFamily.remove(id);
-        productInstanceCopyFlagFamily.remove(id);
-        productInstanceExpandedFamily.remove(id);
-      });
-    };
-  }, [productEntry, catalogSelectors, setProductForm]);
-
-  // Each ProductInstanceCopyRow initializes its own atom from `catalogSelectors` on mount.
-
-  // Derived atom to read all instance values for submission.
-  // We need to know which instances to read.
-  const instanceIds = productEntry.instances;
+  // Derived atom to read all instance forms for submission
+  const instanceIds = product.instances;
   const allInstancesAtom = useMemo(
     () =>
       atom((get) =>
         instanceIds.map((id) => ({
           id,
           form: get(productInstanceFormFamily(id)),
-          copy: get(productInstanceCopyFlagFamily(id)),
         })),
       ),
     [instanceIds],
@@ -127,6 +104,88 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
 
   const [activeTab, setActiveTab] = useState('settings');
 
+  // Initialize Atoms
+  useEffect(() => {
+    // 1. Base Product Form
+    setProductForm(fromProductEntity(product));
+
+    // 2. Initialize instance form atoms
+    product.instances.forEach((id) => {
+      const instance = catalogSelectors.productInstance(id);
+      if (instance) {
+        productInstanceFormFamily(id);
+        // Set initial value using the store
+        const formFamily = productInstanceFormFamily(id);
+        formFamily.init = fromProductInstanceEntity(instance);
+      }
+    });
+
+    return () => {
+      setProductForm(null);
+      // Cleanup family atoms
+      product.instances.forEach((id) => {
+        productInstanceFormFamily.remove(id);
+      });
+    };
+  }, [product, catalogSelectors, setProductForm]);
+
+  // Handle row reorder
+  const handleRowOrderChange = useCallback((params: GridRowOrderChangeParams) => {
+    setRows((prev) => {
+      const newRows = [...prev];
+      const [movedRow] = newRows.splice(params.oldIndex, 1);
+      newRows.splice(params.targetIndex, 0, movedRow);
+      return newRows;
+    });
+  }, []);
+
+  // Handle include toggle
+  const handleToggleInclude = useCallback((id: string) => {
+    setRows((prev) => prev.map((row) => (row.id === id ? { ...row, include: !row.include } : row)));
+  }, []);
+
+  const columns: GridColDef<InstanceRow>[] = useMemo(
+    () => [
+      {
+        field: 'include',
+        headerName: 'Include',
+        width: 80,
+        renderCell: (params: GridRenderCellParams<InstanceRow>) => {
+          const isBase = rows.findIndex((r) => r.id === params.row.id) === 0;
+          return (
+            <Checkbox
+              checked={params.row.include}
+              disabled={isBase} // Base must always be included
+              onChange={() => {
+                handleToggleInclude(params.row.id);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            />
+          );
+        },
+      },
+      {
+        field: 'displayName',
+        headerName: 'Instance Name',
+        flex: 1,
+        minWidth: 200,
+      },
+      {
+        field: 'base',
+        headerName: '',
+        width: 80,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<InstanceRow>) => {
+          const isBase = rows.findIndex((r) => r.id === params.row.id) === 0;
+          return isBase ? <Chip label="BASE" color="primary" size="small" /> : null;
+        },
+      },
+    ],
+    [rows, handleToggleInclude],
+  );
+
   const copyProduct = async () => {
     if (isProcessing || !productForm) return;
 
@@ -134,28 +193,27 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
     try {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
-      // 1. Get Base Instance
-      // `allInstances` is array of {id, form, copy}
-      if (indexOfBase === -1 || !allInstances[indexOfBase]?.form) {
-        throw new Error('Base Product Instance not selected or valid');
+      // Build instances in order, filtering by include flag
+      const includedRows = rows.filter((row) => row.include);
+
+      if (includedRows.length === 0) {
+        throw new Error('At least one instance must be included');
       }
-      const baseInstanceData = allInstances[indexOfBase];
-      if (!baseInstanceData.form) throw new Error('Base instance form missing');
 
-      const baseInstanceBody = toProductInstanceApiBody(baseInstanceData.form);
-
-      // 2. Get Additional Instances
-      const additionalInstances: UncommittedIProductInstance[] = [];
-
-      allInstances.forEach((item, i) => {
-        if (i === indexOfBase) return;
-        if (!item.copy) return;
-        if (item.form) {
-          additionalInstances.push(toProductInstanceApiBody(item.form));
+      const batchInstances: UncommittedIProductInstance[] = [];
+      for (const row of includedRows) {
+        const instanceData = allInstances.find((i) => i.id === row.id);
+        if (instanceData?.form) {
+          batchInstances.push(toProductInstanceApiBody(instanceData.form));
+        } else {
+          // Fallback: use original instance data from catalog
+          const originalInstance = catalogSelectors.productInstance(row.id);
+          if (originalInstance) {
+            // Use the proper conversion function
+            batchInstances.push(toProductInstanceApiBody(fromProductInstanceEntity(originalInstance)));
+          }
         }
-      });
-
-      const batchInstances = [baseInstanceBody, ...additionalInstances];
+      }
 
       const productBody = toProductApiBody(productForm);
 
@@ -174,14 +232,16 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
       });
 
       if (response.status === 201) {
-        enqueueSnackbar(`Copied product.`);
+        enqueueSnackbar(`Copied product with ${batchInstances.length} instance(s).`);
         onCloseCallback();
       } else {
         enqueueSnackbar('Failed to copy product.', { variant: 'error' });
       }
     } catch (e) {
       console.error(e);
-      enqueueSnackbar('Error copying product', { variant: 'error' });
+      enqueueSnackbar(`Error copying product: ${e instanceof Error ? e.message : 'Unknown error'}`, {
+        variant: 'error',
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -208,19 +268,26 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
             <ProductFormBody />
           </TabPanel>
           <TabPanel value="variations" sx={{ p: 0, pt: 2 }}>
-            <Box>
-              {productEntry.instances.map((instanceId, i) => (
-                <ProductInstanceCopyRow
-                  key={instanceId}
-                  instanceId={instanceId}
-                  catalogSelectors={catalogSelectors}
-                  isBase={indexOfBase === i}
-                  setAsBase={() => {
-                    setIndexOfBase(i);
-                  }}
-                  parentProduct={toProductApiBody(productForm)}
-                />
-              ))}
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                Drag rows to reorder. The first row will be the base product instance.
+              </Typography>
+            </Box>
+            <Box sx={{ height: 400 }}>
+              <DataGridPremium
+                rows={rows}
+                columns={columns}
+                rowReordering
+                onRowOrderChange={handleRowOrderChange}
+                disableRowSelectionOnClick
+                hideFooter
+                getRowId={(row) => row.id}
+                sx={{
+                  '& .MuiDataGrid-row:first-of-type': {
+                    backgroundColor: 'action.selected',
+                  },
+                }}
+              />
             </Box>
           </TabPanel>
         </AppDialog.Content>
@@ -234,71 +301,5 @@ const ProductCopyForm = ({ productEntry, catalogSelectors, onCloseCallback }: Pr
         </AppDialog.Actions>
       </AppDialog.Root>
     </TabContext>
-  );
-};
-
-// ===================================
-// Row Component
-// ===================================
-
-const ProductInstanceCopyRow = ({
-  instanceId,
-  catalogSelectors,
-  isBase,
-  setAsBase,
-  parentProduct,
-}: {
-  instanceId: string;
-  catalogSelectors: NonNullable<ReturnType<typeof useCatalogSelectors>>;
-  isBase: boolean;
-  setAsBase: () => void;
-  parentProduct: UncommittedIProduct;
-}) => {
-  const [copy, setCopy] = useAtom(productInstanceCopyFlagFamily(instanceId));
-
-  return (
-    <ProductInstanceRow
-      instanceId={instanceId}
-      parentProduct={parentProduct}
-      catalogSelectors={catalogSelectors}
-      actions={
-        <Grid container spacing={2} alignItems="center">
-          <Grid size="auto">
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={copy}
-                  onChange={() => {
-                    setCopy(!copy);
-                  }}
-                  disabled={isBase}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                />
-              }
-              label="Copy"
-            />
-          </Grid>
-          <Grid size="auto">
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isBase}
-                  onChange={() => {
-                    setAsBase();
-                  }}
-                  disabled={!copy}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                />
-              }
-              label="Base"
-            />
-          </Grid>
-        </Grid>
-      }
-    />
   );
 };

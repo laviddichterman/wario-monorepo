@@ -1,6 +1,6 @@
 import { useSnackbar } from 'notistack';
 
-import { useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
+import { useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
 import { useDeleteModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
@@ -13,7 +13,7 @@ export interface ModifierTypeModifyUiProps {
 
 const ModifierTypeDeleteContainer = ({ modifier_type_id, onCloseCallback }: ModifierTypeModifyUiProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_type = useValueFromModifierEntryById(modifier_type_id, 'modifierType');
+  const modifier_type = useModifierTypeById(modifier_type_id);
 
   const deleteMutation = useDeleteModifierTypeMutation();
 

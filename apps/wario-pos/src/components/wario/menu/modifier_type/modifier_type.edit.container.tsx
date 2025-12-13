@@ -9,7 +9,7 @@ import { Button, IconButton, Tab, Typography } from '@mui/material';
 
 import type { IOptionType } from '@wcp/wario-shared';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
-import { useCatalogSelectors, useValueFromModifierEntryById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
 import { useEditModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
@@ -27,12 +27,12 @@ import { UnifiedModifierOptionTable } from '../modifier_option/unified_modifier_
 
 import { ModifierTypeFormBody, type ModifierTypeModifyUiProps } from './modifier_type.component';
 
-const useModifierTypeById = (id: string | null) => {
-  return useValueFromModifierEntryById(id ?? '', 'modifierType');
+const useModifierTypeByIdNullable = (id: string | null) => {
+  return useModifierTypeById(id ?? '');
 };
 
 // Create null guard at module level to follow Rules of Hooks
-const ModifierTypeNullGuard = createNullGuard(useModifierTypeById);
+const ModifierTypeNullGuard = createNullGuard(useModifierTypeByIdNullable);
 
 const ModifierTypeEditContainer = ({ modifier_type_id, onCloseCallback }: ModifierTypeModifyUiProps) => {
   return (
@@ -55,16 +55,13 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
   const catalogSelectors = useCatalogSelectors();
   const store = useStore();
 
-  // Fetch options list from Entry because IOptionType doesn't have it
-  const optionsFromEntry = useValueFromModifierEntryById(modifier_type.id, 'options');
-
   const setFormState = useSetAtom(modifierTypeFormAtom);
   const { form, setIsProcessing, isProcessing } = useModifierTypeForm();
 
   const editMutation = useEditModifierTypeMutation();
   const [activeTab, setActiveTab] = useState('rules');
 
-  // Local state for options list
+  // Local state for options list - IOptionType.options is now string[]
   const [optionIds, setOptionIds] = useState<string[]>([]);
   // Drill-down state
   const [editingOptionId, setEditingOptionId] = useState<string | null>(null);
@@ -81,26 +78,24 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
     // 1. Type Form
     setFormState(fromModifierTypeEntity(modifier_type));
 
-    // 2. Option List & Atoms
-    if (optionsFromEntry) {
-      setOptionIds(optionsFromEntry);
+    // 2. Option List & Atoms - IOptionType.options is string[]
+    setOptionIds(modifier_type.options);
 
-      optionsFromEntry.forEach((id) => {
-        const ent = catalogSelectors?.option(id);
-        if (ent) {
-          store.set(modifierOptionFormFamily(id), fromModifierOptionEntity(ent));
-        }
-      });
-    }
+    modifier_type.options.forEach((id: string) => {
+      const ent = catalogSelectors?.option(id);
+      if (ent) {
+        store.set(modifierOptionFormFamily(id), fromModifierOptionEntity(ent));
+      }
+    });
 
     return () => {
       setFormState(null);
       // Cleanup option atoms
-      optionsFromEntry?.forEach((id) => {
+      modifier_type.options.forEach((id: string) => {
         modifierOptionFormFamily.remove(id);
       });
     };
-  }, [modifier_type, setFormState, catalogSelectors, optionsFromEntry, store]);
+  }, [modifier_type, setFormState, catalogSelectors, store]);
 
   const editModifierType = () => {
     if (!form || editMutation.isPending) return;

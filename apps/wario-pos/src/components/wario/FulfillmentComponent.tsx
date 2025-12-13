@@ -366,7 +366,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               onChange={(_, v) => {
                 if (v) props.setMenuCategoryId(v);
               }}
-              getOptionLabel={(option) => catalog.categories[option].category.name}
+              getOptionLabel={(option) => catalog.categories[option].name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Menu Category" />}
             />
@@ -388,7 +388,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               onChange={(_, v) => {
                 if (v) props.setOrderCategoryId(v);
               }}
-              getOptionLabel={(option) => catalog.categories[option].category.name}
+              getOptionLabel={(option) => catalog.categories[option].name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Order Category" />}
             />
@@ -408,7 +408,7 @@ const FulfillmentComponent = (props: FulfillmentComponentProps) => {
               onChange={(_, v) => {
                 if (v) props.setOrderSupplementaryCategoryId(v);
               }}
-              getOptionLabel={(option) => catalog.categories[option].category.name}
+              getOptionLabel={(option) => catalog.categories[option].name}
               isOptionEqualToValue={(option, value) => option === value}
               renderInput={(params) => <TextField {...params} label="Order Supplement Category" />}
             />

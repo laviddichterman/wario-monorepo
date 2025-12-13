@@ -17,12 +17,7 @@ import {
 } from '@mui/material';
 
 import { type IProductModifier } from '@wcp/wario-shared';
-import {
-  useCatalogSelectors,
-  useCategoryIds,
-  useFulfillments,
-  useProductInstanceFunctionIds,
-} from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useFulfillments, useProductInstanceFunctionIds } from '@wcp/wario-ux-shared/query';
 
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
@@ -62,7 +57,6 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
   const [tabValue, setTabValue] = useState(initialTab || 'general');
 
   const catalog = useCatalogSelectors();
-  const categoryIds = useCategoryIds();
   const productInstanceFunctionIds = useProductInstanceFunctionIds();
   const printerGroups = usePrinterGroupsMap();
   const fulfillments = useFulfillments();
@@ -111,21 +105,6 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
       <TabPanel value="general">
         <Grid container spacing={2}>
           {productInstancesContent && <Grid size={12}>{productInstancesContent}</Grid>}
-          <Grid size={12}>
-            <Autocomplete
-              multiple
-              filterSelectedOptions
-              options={categoryIds}
-              value={form.parentCategories}
-              onChange={(_e, v) => {
-                updateField('parentCategories', v);
-              }}
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(option) => catalog?.category(option)?.category.name ?? option}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => <TextField {...params} label="Categories" />}
-            />
-          </Grid>
           <Grid size={12}>
             <Autocomplete
               filterSelectedOptions

@@ -7,7 +7,7 @@ import { Button, Tab } from '@mui/material';
 
 import type { IProduct, IProductInstance } from '@wcp/wario-shared';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
-import { useProductInstanceById, useValueFromProductEntryById } from '@wcp/wario-ux-shared/query';
+import { useProductById, useProductInstanceById } from '@wcp/wario-ux-shared/query';
 
 import { useEditProductInstanceMutation } from '@/hooks/useProductInstanceMutations';
 
@@ -21,14 +21,18 @@ import {
 import { ProductInstanceFormBody } from './product_instance.component';
 
 interface ProductInstanceEditContainerProps {
+  product_id: string;
   product_instance_id: string;
   onCloseCallback: VoidFunction;
 }
 
-const ProductInstanceEditContainer = ({ product_instance_id, onCloseCallback }: ProductInstanceEditContainerProps) => {
+const ProductInstanceEditContainer = ({
+  product_id,
+  product_instance_id,
+  onCloseCallback,
+}: ProductInstanceEditContainerProps) => {
   const product_instance = useProductInstanceById(product_instance_id);
-  const parentProductId = product_instance?.productId ?? '';
-  const parent_product = useValueFromProductEntryById(parentProductId, 'product');
+  const parent_product = useProductById(product_id);
 
   if (!product_instance || !parent_product) {
     return null;

@@ -79,7 +79,7 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
           onChange={(_, v) => {
             updateField('parent', v !== null ? v : null);
           }}
-          getOptionLabel={(o) => category(o)?.category.name ?? 'Undefined'}
+          getOptionLabel={(o) => category(o)?.name ?? 'Undefined'}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Parent Category (Optional)" />}
         />

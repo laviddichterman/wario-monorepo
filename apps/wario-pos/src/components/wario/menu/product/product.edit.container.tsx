@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import { Box, Button } from '@mui/material';
 
-import { type CatalogProductEntry } from '@wcp/wario-shared';
-import { useBaseProductNameByProductId, useCatalogSelectors, useProductEntryById } from '@wcp/wario-ux-shared/query';
+import { type IProduct } from '@wcp/wario-shared';
+import { useBaseProductNameByProductId, useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
 
 import {
   useCreateProductInstanceMutation,
@@ -37,7 +37,7 @@ export interface ProductEditContainerProps {
 
 const ProductEditContainer = ({ product_id, onCloseCallback }: ProductEditContainerProps) => {
   const productName = useBaseProductNameByProductId(product_id);
-  const productEntry = useProductEntryById(product_id);
+  const productEntry = useProductById(product_id);
 
   if (!productEntry || !productName) {
     return null;
@@ -53,7 +53,7 @@ const ProductEditContainer = ({ product_id, onCloseCallback }: ProductEditContai
 };
 
 interface InnerProps {
-  productEntry: CatalogProductEntry;
+  productEntry: IProduct;
   productName: string;
   onCloseCallback: VoidFunction;
 }
@@ -74,7 +74,7 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
   const [instanceIds, setInstanceIds] = useState<string[]>([]);
 
   useEffect(() => {
-    setProductForm(fromProductEntity(productEntry.product));
+    setProductForm(fromProductEntity(productEntry));
     setInstanceIds(productEntry.instances);
     return () => {
       setProductForm(null);
@@ -90,9 +90,6 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
   const handleAddVariation = () => {
     const tempId = `temp_${String(Date.now())}`;
     const newInstance = { ...DEFAULT_PRODUCT_INSTANCE_FORM };
-    // Auto-generate ordinal based on count
-    newInstance.ordinal = instanceIds.length; // 0-indexed or 1-? Usually 0 is fine.
-
     store.set(productInstanceFormFamily(tempId), newInstance);
     // Expand the new row
     store.set(productInstanceExpandedFamily(tempId), true);
@@ -107,7 +104,7 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
 
     try {
       // 1. Update Product
-      await editMutation.mutateAsync({ id: productEntry.product.id, form: productForm });
+      await editMutation.mutateAsync({ id: productEntry.id, form: productForm });
 
       // 2. Process Instances
       const instancePromises = instanceIds.map(async (id) => {
@@ -118,12 +115,12 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
 
         if (id.startsWith('temp_')) {
           await createInstanceMutation.mutateAsync({
-            productId: productEntry.product.id,
+            productId: productEntry.id,
             form: apiBody,
           });
         } else {
           await updateInstanceMutation.mutateAsync({
-            productId: productEntry.product.id,
+            productId: productEntry.id,
             instanceId: id,
             form: apiBody,
           });

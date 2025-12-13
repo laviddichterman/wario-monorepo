@@ -63,7 +63,7 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
                 }
                 label={`Edit ${title}`}
                 onClick={() => {
-                  openModifierOptionEdit(params.row.id);
+                  openModifierOptionEdit({ modifierTypeId: modifierType.id, optionId: params.row.id });
                 }}
               />
             );
@@ -76,7 +76,7 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
                 }
                 label={`Delete ${title}`}
                 onClick={() => {
-                  openModifierOptionDelete(params.row.id);
+                  openModifierOptionDelete({ modifierTypeId: modifierType.id, optionId: params.row.id });
                 }}
                 showInMenu
               />
@@ -90,7 +90,7 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
                 }
                 label={`Enable ${title}`}
                 onClick={() => {
-                  openModifierOptionEnable(params.row.id);
+                  openModifierOptionEnable({ modifierTypeId: modifierType.id, optionId: params.row.id });
                 }}
                 showInMenu
               />
@@ -104,7 +104,7 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
                 }
                 label={`Disable ${title} Until EOD`}
                 onClick={() => {
-                  openModifierOptionDisableUntilEod(params.row.id);
+                  openModifierOptionDisableUntilEod({ modifierTypeId: modifierType.id, optionId: params.row.id });
                 }}
                 showInMenu
               />
@@ -118,7 +118,7 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
                 }
                 label={`Disable ${title}`}
                 onClick={() => {
-                  openModifierOptionDisable(params.row.id);
+                  openModifierOptionDisable({ modifierTypeId: modifierType.id, optionId: params.row.id });
                 }}
                 showInMenu
               />
@@ -138,7 +138,6 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
         { headerName: 'Price', field: 'price', valueGetter: (v: IMoney) => `$${(v.amount / 100).toFixed(2)}` },
         { headerName: 'Shortcode', field: 'shortcode' },
         { headerName: 'Description', field: 'description' },
-        { headerName: 'Ordinal', field: 'ordinal' },
         { headerName: 'FFactor', field: 'metadata.flavor_factor' },
         { headerName: 'BFactor', field: 'metadata.bake_factor' },
         { headerName: 'Can Split?', field: 'metadata.can_split' },
@@ -162,9 +161,7 @@ const ModifierOptionTableContainer = ({ modifierType }: ModifierOptionTableConta
       getRowId={(row: IOption) => row.id}
       rows={
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        modifier_types_map[modifierType.id]?.options
-          .map((x) => modifierOptionsMap[x])
-          .sort((a, b) => a.ordinal - b.ordinal) ?? []
+        modifier_types_map[modifierType.id]?.options.map((x) => modifierOptionsMap[x]).filter(Boolean) ?? []
       }
     />
   );

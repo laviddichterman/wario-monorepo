@@ -42,9 +42,12 @@ const useProductIdsInCategoryAfterDisableFilter = (categoryId: string) => {
     const products = Object.values(catalog.products);
     const filteredProducts = !hideDisabledProducts
       ? products
-      : products.filter((x) => !x.product.disabled || x.product.disabled.start <= x.product.disabled.end);
+      : products.filter((x) => !x.disabled || x.disabled.start <= x.disabled.end);
 
-    return filteredProducts.filter((x) => x.product.category_ids.includes(categoryId)).map((x) => x.product.id);
+    // Find products that are in this category by checking the category's products array
+    const category = catalog.categories[categoryId];
+    const categoryProductIds = category?.products ?? [];
+    return filteredProducts.filter((x) => categoryProductIds.includes(x.id)).map((x) => x.id);
   }, [catalog, hideDisabledProducts, categoryId]);
 };
 
@@ -67,11 +70,6 @@ const DetailPanelContent = (params: GridRowParams<RowType>) => {
 const CategoryCallLineName = (params: GridRenderCellParams<RowType>) => {
   const callLineName = useValueFromCategoryById(params.row.id, 'display_flags')?.call_line_name;
   return <>{callLineName}</>;
-};
-
-const CategoryOrdinal = (params: GridRenderCellParams<RowType>) => {
-  const ordinal = useValueFromCategoryById(params.row.id, 'ordinal');
-  return <>{ordinal}</>;
 };
 
 const CategoryDescription = (params: GridRenderCellParams<RowType>) => {
@@ -103,15 +101,27 @@ const useCategoryIdsWithTreePath = () => {
     if (!catalog) return [];
 
     const pathMap: Record<string, string[]> = {};
+
+    // Build parent lookup: childId -> parentId
+    const parentLookup: Record<string, string | null> = {};
+    Object.entries(catalog.categories).forEach(([catId, cat]) => {
+      // Each category's children array tells us the parent->child relationship
+      cat.children.forEach((childId: string) => {
+        parentLookup[childId] = catId;
+      });
+      // Initialize root categories (those not in any children array)
+      if (!Object.hasOwn(parentLookup, catId)) {
+        parentLookup[catId] = null;
+      }
+    });
+
     const ComputePath: (cId: string) => string[] = (cId) => {
       if (!Object.hasOwn(pathMap, cId)) {
         const cat = catalog.categories[cId];
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!cat) return []; // Should not happen if data is consistent
-        pathMap[cId] =
-          cat.category.parent_id !== null
-            ? [...ComputePath(cat.category.parent_id), cat.category.name]
-            : [cat.category.name];
+        const parentId = parentLookup[cId];
+        pathMap[cId] = parentId !== null ? [...ComputePath(parentId), cat.name] : [cat.name];
       }
       return pathMap[cId];
     };
@@ -197,7 +207,6 @@ const CategoryTableContainer = (props: CategoryTableContainerProps) => {
           field: GRID_TREE_DATA_GROUPING_FIELD,
           flex: 40,
         },
-        { headerName: 'Ordinal', field: 'ordinal', renderCell: (params) => <CategoryOrdinal {...params} />, flex: 3 },
         {
           headerName: 'Call Line Name',
           field: 'category.display_flags.call_line_name',

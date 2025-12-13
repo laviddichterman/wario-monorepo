@@ -3,12 +3,13 @@ import { atom, useAtomValue } from 'jotai';
 
 import type {
   IMoney,
+  IProduct,
   IProductModifier,
   IRecurringInterval,
   IWInterval,
   KeyValue,
   PrepTiming,
-  UncommittedIProduct,
+  UpdateIProductRequest,
 } from '@wcp/wario-shared';
 
 // Removed bad import
@@ -19,14 +20,12 @@ const DEFAULT_MONEY: IMoney = { amount: 0, currency: 'USD' };
  * Flattens the nested structure of product DTOs for easier form handling.
  */
 export interface ProductFormState {
-  baseProductId: string; // Only used in Add, but good to have in state
   price: IMoney;
   externalIds: KeyValue[];
   disabled: IWInterval | null;
   availability: IRecurringInterval[];
   timing: PrepTiming | null;
   serviceDisable: string[];
-
   // Display Flags
   flavorMax: number;
   bakeMax: number;
@@ -36,14 +35,11 @@ export interface ProductFormState {
   orderGuideSuggestionFunctions: string[];
   showNameOfBaseProduct: boolean;
   singularNoun: string;
-
-  parentCategories: string[];
   printerGroup: string | null;
   modifiers: IProductModifier[];
 }
 
 export const DEFAULT_PRODUCT_FORM: ProductFormState = {
-  baseProductId: '',
   price: DEFAULT_MONEY,
   externalIds: [],
   disabled: null,
@@ -58,7 +54,6 @@ export const DEFAULT_PRODUCT_FORM: ProductFormState = {
   orderGuideSuggestionFunctions: [],
   showNameOfBaseProduct: false,
   singularNoun: '',
-  parentCategories: [],
   printerGroup: null,
   modifiers: [],
 };
@@ -78,8 +73,8 @@ export const productFormIsValidAtom = atom((get) => {
   return true;
 });
 
-/** Convert form state to API request body */
-export const toProductApiBody = (form: ProductFormState): UncommittedIProduct => ({
+/** Convert form state to API request body for PATCH/update operations */
+export const toProductApiBody = (form: ProductFormState): Omit<UpdateIProductRequest, 'id'> => ({
   price: form.price,
   externalIDs: form.externalIds,
   disabled: form.disabled,
@@ -94,20 +89,18 @@ export const toProductApiBody = (form: ProductFormState): UncommittedIProduct =>
     order_guide: {
       warnings: form.orderGuideWarningFunctions,
       suggestions: form.orderGuideSuggestionFunctions,
+      errors: [], // Not yet implemented in product management UI
     },
     show_name_of_base_product: form.showNameOfBaseProduct,
     singular_noun: form.singularNoun,
   },
-  category_ids: form.parentCategories,
   printerGroup: form.printerGroup,
   modifiers: form.modifiers,
 });
 
 /** Convert API entity to form state */
 // We need baseProductId from the entity if it's an existing product (IProduct)
-// UncommittedIProduct doesn't have baseProductId or ID
-export const fromProductEntity = (entity: UncommittedIProduct & { baseProductId?: string }): ProductFormState => ({
-  baseProductId: entity.baseProductId ?? '',
+export const fromProductEntity = (entity: IProduct): ProductFormState => ({
   price: entity.price,
   externalIds: entity.externalIDs || [],
   disabled: entity.disabled || null,
@@ -122,7 +115,7 @@ export const fromProductEntity = (entity: UncommittedIProduct & { baseProductId?
   orderGuideSuggestionFunctions: entity.displayFlags?.order_guide?.suggestions || [],
   showNameOfBaseProduct: entity.displayFlags?.show_name_of_base_product ?? false,
   singularNoun: entity.displayFlags?.singular_noun ?? '',
-  parentCategories: entity.category_ids || [],
+
   printerGroup: entity.printerGroup || null,
   modifiers: entity.modifiers || [],
 });

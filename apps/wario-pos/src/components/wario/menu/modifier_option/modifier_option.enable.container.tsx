@@ -11,7 +11,11 @@ import { ElementActionComponent } from '../element.action.component';
 
 import type { ModifierOptionQuickActionProps } from './modifier_option.delete.container';
 
-const ModifierOptionEnableContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionQuickActionProps) => {
+const ModifierOptionEnableContainer = ({
+  modifier_type_id,
+  modifier_option_id,
+  onCloseCallback,
+}: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const modifier_option = useOptionById(modifier_option_id) as IOption | null;
 
@@ -22,7 +26,7 @@ const ModifierOptionEnableContainer = ({ modifier_option_id, onCloseCallback }: 
 
     setDisabledMutation.mutate(
       {
-        modifierTypeId: modifier_option.modifierTypeId,
+        modifierTypeId: modifier_type_id,
         option: modifier_option,
         disabled: null,
       },

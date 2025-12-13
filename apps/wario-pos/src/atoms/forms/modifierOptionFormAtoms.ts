@@ -10,7 +10,6 @@ export interface ModifierOptionFormState {
   displayName: string;
   description: string;
   shortcode: string;
-  ordinal: number;
   price: IMoney;
   externalIds: KeyValue[];
   enableFunction: string | null;
@@ -31,7 +30,6 @@ export const DEFAULT_MODIFIER_OPTION_FORM: ModifierOptionFormState = {
   displayName: '',
   description: '',
   shortcode: '',
-  ordinal: 0,
   price: { amount: 0, currency: 'USD' } as IMoney, // Assuming USD default from shared types/enums if available, or just mocking it. checking imports. IMoney is imported. I need CURRENCY enum.
   externalIds: [],
   enableFunction: null,
@@ -77,7 +75,6 @@ export const fromModifierOptionEntity = (option: IOption): ModifierOptionFormSta
   displayName: option.displayName,
   description: option.description,
   shortcode: option.shortcode,
-  ordinal: option.ordinal,
   price: option.price,
   externalIds: option.externalIDs,
   enableFunction: option.enable ?? null,
@@ -98,7 +95,6 @@ export const toModifierOptionApiBody = (form: ModifierOptionFormState): Omit<IOp
   displayName: form.displayName,
   description: form.description,
   shortcode: form.shortcode,
-  ordinal: form.ordinal,
   price: form.price,
   enable: form.enableFunction,
   externalIDs: form.externalIds,

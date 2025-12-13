@@ -7,11 +7,16 @@ import { useDeleteModifierOptionMutation } from '@/hooks/useModifierOptionMutati
 import ElementDeleteComponent from '../element.delete.component';
 
 export interface ModifierOptionQuickActionProps {
+  modifier_type_id: string;
   modifier_option_id: string;
   onCloseCallback: VoidFunction;
 }
 
-const ModifierOptionDeleteContainer = ({ modifier_option_id, onCloseCallback }: ModifierOptionQuickActionProps) => {
+const ModifierOptionDeleteContainer = ({
+  modifier_type_id,
+  modifier_option_id,
+  onCloseCallback,
+}: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const modifier_option = useOptionById(modifier_option_id);
 
@@ -22,7 +27,7 @@ const ModifierOptionDeleteContainer = ({ modifier_option_id, onCloseCallback }: 
 
     deleteMutation.mutate(
       {
-        modifierTypeId: modifier_option.modifierTypeId,
+        modifierTypeId: modifier_type_id,
         optionId: modifier_option.id,
       },
       {
