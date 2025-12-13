@@ -101,10 +101,15 @@ export class IOptionTypeDisplayFlagsDto {
 }
 
 /**
- * Base data for creating or updating a Modifier Group (Option Type).
- * Contains all fields except the system-generated ID.
+ * Represents a full Modifier Group (Option Type) with its unique ID.
+ * Examples: "Pizza Size", "Toppings", "Dressing".
  */
-export class UncommittedOptionTypeDto {
+export class IOptionTypeDto {
+  /** Unique Identifier for the modifier group. */
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
   /** Internal system name for the modifier group */
   @IsString()
   @IsNotEmpty()
@@ -140,7 +145,7 @@ export class UncommittedOptionTypeDto {
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_selected!: number | null;
+  max_selected?: number | null;
 
   /** UI display configuration. */
   @ValidateNested()
@@ -153,16 +158,6 @@ export class UncommittedOptionTypeDto {
    */
   @IsString({ each: true })
   options!: string[];
-}
-/**
- * Represents a full Modifier Group (Option Type) with its unique ID.
- * Examples: "Pizza Size", "Toppings", "Dressing".
- */
-export class IOptionTypeDto extends UncommittedOptionTypeDto {
-  /** Unique Identifier for the modifier group. */
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
 }
 
 /**
@@ -228,10 +223,15 @@ export class IOptionDisplayFlagsDto {
 }
 
 /**
- * Base data for creating or updating a Modifier Option.
- * Excludes ID.
+ * Represents a specific option that can be selected.
+ * (e.g., "Pepperoni", "Large", "Soy Milk").
  */
-export class UncommittedOptionDto {
+export class IOptionDto {
+  /** Unique Identifier for the option. */
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
   /** Customer-facing name. e.g. "Pepperoni". */
   @IsString()
   @IsNotEmpty()
@@ -263,7 +263,7 @@ export class UncommittedOptionDto {
   @ValidateNested()
   @Type(() => IWIntervalDto)
   @IsOptional()
-  disabled!: IWIntervalDto | null;
+  disabled?: IWIntervalDto | null;
 
   /**
    * Defines recurring availability schedules (e.g. "Breakfast only").
@@ -284,23 +284,12 @@ export class UncommittedOptionDto {
    */
   @IsString()
   @IsOptional()
-  enable!: string | null;
+  enable?: string | null;
 
   /** UI rendering flags. */
   @ValidateNested()
   @Type(() => IOptionDisplayFlagsDto)
   displayFlags!: IOptionDisplayFlagsDto;
-}
-
-/**
- * Represents a specific option that can be selected.
- * (e.g., "Pepperoni", "Large", "Soy Milk").
- */
-export class IOptionDto extends UncommittedOptionDto {
-  /** Unique Identifier for the option. */
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
 }
 /**
  * Describes the state of a selected modifier customization.

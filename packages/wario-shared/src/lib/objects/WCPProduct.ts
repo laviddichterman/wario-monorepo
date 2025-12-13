@@ -536,7 +536,7 @@ export function WCPProductGenerateMetadata(
         return;
       }
       const modifier_type_enable_function =
-        productModifier.enable !== null ? catalogSelectors.productInstanceFunction(productModifier.enable) : undefined;
+        productModifier.enable ? catalogSelectors.productInstanceFunction(productModifier.enable) : undefined;
       const is_single_select = modifierEntry.min_selected === 1 && modifierEntry.max_selected === 1;
       const is_base_product_edge_case = is_single_select && !PRODUCT_CLASS_ENTRY.displayFlags.show_name_of_base_product;
       metadata.modifier_map[mtid] = { has_selectable: false, meets_minimum: false, options: {} };
@@ -544,14 +544,14 @@ export function WCPProductGenerateMetadata(
         | { enable: DISABLE_REASON.ENABLED }
         | { enable: DISABLE_REASON.DISABLED_FUNCTION; functionId: string }
         | { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE; fulfillment: string } = IsSomethingDisabledForFulfillment(
-        productModifier,
-        fulfillmentId,
-      )
-        ? { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE, fulfillment: fulfillmentId }
-        : !modifier_type_enable_function ||
+          productModifier,
+          fulfillmentId,
+        )
+          ? { enable: DISABLE_REASON.DISABLED_FULFILLMENT_TYPE, fulfillment: fulfillmentId }
+          : !modifier_type_enable_function ||
             WFunctional.ProcessProductInstanceFunction(modifiers, modifier_type_enable_function, catalogSelectors)
-          ? { enable: DISABLE_REASON.ENABLED }
-          : { enable: DISABLE_REASON.DISABLED_FUNCTION, functionId: modifier_type_enable_function.id };
+            ? { enable: DISABLE_REASON.ENABLED }
+            : { enable: DISABLE_REASON.DISABLED_FUNCTION, functionId: modifier_type_enable_function.id };
 
       // this is a dangerous swap from menu to catalog where we don't have a contract on if we should be going through filtered modifiers at this point or not
       modifierEntry.options.forEach((oId) => {
@@ -577,40 +577,40 @@ export function WCPProductGenerateMetadata(
               : is_enabled.enable !== DISABLE_REASON.ENABLED
                 ? is_enabled
                 : IsOptionEnabled(
-                    modifierEntry.id,
-                    option_object,
-                    { productId, modifiers },
-                    metadata.bake_count,
-                    metadata.flavor_count,
-                    OptionPlacement.LEFT,
-                    catalogSelectors,
-                  ),
+                  modifierEntry.id,
+                  option_object,
+                  { productId, modifiers },
+                  metadata.bake_count,
+                  metadata.flavor_count,
+                  OptionPlacement.LEFT,
+                  catalogSelectors,
+                ),
           enable_right:
             can_split.enable !== DISABLE_REASON.ENABLED
               ? can_split
               : is_enabled.enable !== DISABLE_REASON.ENABLED
                 ? is_enabled
                 : IsOptionEnabled(
-                    modifierEntry.id,
-                    option_object,
-                    { productId, modifiers },
-                    metadata.bake_count,
-                    metadata.flavor_count,
-                    OptionPlacement.RIGHT,
-                    catalogSelectors,
-                  ),
-          enable_whole:
-            is_enabled.enable !== DISABLE_REASON.ENABLED
-              ? is_enabled
-              : IsOptionEnabled(
                   modifierEntry.id,
                   option_object,
                   { productId, modifiers },
                   metadata.bake_count,
                   metadata.flavor_count,
-                  OptionPlacement.WHOLE,
+                  OptionPlacement.RIGHT,
                   catalogSelectors,
                 ),
+          enable_whole:
+            is_enabled.enable !== DISABLE_REASON.ENABLED
+              ? is_enabled
+              : IsOptionEnabled(
+                modifierEntry.id,
+                option_object,
+                { productId, modifiers },
+                metadata.bake_count,
+                metadata.flavor_count,
+                OptionPlacement.WHOLE,
+                catalogSelectors,
+              ),
         } as MetadataModifierOptionMapEntry;
         const enable_left_or_right =
           option_info.enable_left.enable === DISABLE_REASON.ENABLED ||

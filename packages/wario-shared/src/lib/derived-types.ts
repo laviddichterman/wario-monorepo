@@ -7,16 +7,19 @@
  * Complex types, utility types, and types not based on DTOs belong in types.ts.
  */
 import type {
-  CreateProductBatchRequestDto,
+  CreateIOptionRequestDto,
+  CreateIOptionTypeRequestDto,
+  CreateIProductInstanceRequestDto,
+  CreateIProductRequestDto,
   IssueStoreCreditRequestDto,
-  PartialUncommittedProductInstanceDto,
   PaymentBasePartialDto,
   PurchaseStoreCreditRequestBaseDto,
   PurchaseStoreCreditRequestNoEmailDto,
   PurchaseStoreCreditRequestSendEmailDto,
+  UpdateIOptionRequestDto,
+  UpdateIOptionTypeRequestDto,
+  UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
-  UpdateIProductUpdateIProductInstanceDto,
-  UpdateProductBatchRequestDto,
   ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
 import type { ICatalogDto } from './dto/catalog.dto';
@@ -75,8 +78,6 @@ import type {
   IOptionStateDto,
   IOptionTypeDisplayFlagsDto,
   IOptionTypeDto,
-  UncommittedOptionDto,
-  UncommittedOptionTypeDto,
 } from './dto/modifier.dto';
 import type {
   CashPaymentAllocatedDto,
@@ -128,8 +129,6 @@ import type {
   IProductOrderGuideDto,
   PrepTimingDto,
   ProductInstanceModifierEntryDto,
-  UncommittedIProductDto,
-  UncommittedIProductInstanceDto,
 } from './dto/product.dto';
 import type { SeatingResourceDto, WSeatingInfoDto } from './dto/seating.dto';
 import type { DistributiveOmit } from './utility-types';
@@ -185,10 +184,8 @@ export type FulfillmentConfigMap = Record<string, FulfillmentConfig>;
 // =============================================================================
 
 export type IOptionState = Omit<IOptionStateDto, never>;
-export type UncommittedOptionType = Omit<UncommittedOptionTypeDto, never>;
 export type IOptionType = Omit<IOptionTypeDto, never>;
 export type IOptionTypeDisplayFlags = Omit<IOptionTypeDisplayFlagsDto, never>;
-export type UncommitedOption = Omit<UncommittedOptionDto, never>;
 export type IOption = Omit<IOptionDto, never>;
 export type IOptionDisplayFlags = Omit<IOptionDisplayFlagsDto, never>;
 export type IOptionMetadata = Omit<IOptionMetadataDto, never>;
@@ -391,14 +388,21 @@ export type PurchaseStoreCreditRequest = PurchaseStoreCreditRequestSendEmail | P
  */
 
 export type PaymentBasePartial = Omit<PaymentBasePartialDto, never>;
-export type PartialUncommittedProductInstance = Omit<PartialUncommittedProductInstanceDto, never>;
-export type UncommittedIProduct = Omit<UncommittedIProductDto, never>;
-export type UncommittedIProductInstance = Omit<UncommittedIProductInstanceDto, never>;
-export type CreateProductBatchRequest = Omit<CreateProductBatchRequestDto, never>;
-// UpsertProductBatch types
+// create
+export type CreateIProductInstanceRequest = Omit<CreateIProductInstanceRequestDto, never>;
+export type CreateIProductRequest = Omit<CreateIProductRequestDto, never>;
+// update
+export type UpdateIProductInstanceRequest = Omit<UpdateIProductInstanceRequestDto, never>;
 export type UpdateIProductRequest = Omit<UpdateIProductRequestDto, never>;
-export type UpdateIProductUpdateIProductInstance = Omit<UpdateIProductUpdateIProductInstanceDto, never>;
-export type UpdateProductBatchRequest = Omit<UpdateProductBatchRequestDto, never>;
-export type UpsertProductBatchRequest = CreateProductBatchRequest | UpdateProductBatchRequest;
+// upsert
+export type UpsertIProductRequest = CreateIProductRequest | UpdateIProductRequest;
+
+export type CreateIOptionTypeRequest = Omit<CreateIOptionTypeRequestDto, never>;
+export type UpdateIOptionTypeRequest = Omit<UpdateIOptionTypeRequestDto, never>;
+export type UpsertIOptionTypeRequest = CreateIOptionTypeRequest | UpdateIOptionTypeRequest;
+
+export type CreateIOptionRequest = Omit<CreateIOptionRequestDto, never>;
+export type UpdateIOptionRequest = Omit<UpdateIOptionRequestDto, never>;
+export type UpsertIOptionRequest = CreateIOptionRequest | UpdateIOptionRequest;
 
 // end UpsertProductBatch types

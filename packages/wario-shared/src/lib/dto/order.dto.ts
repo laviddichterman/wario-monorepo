@@ -466,8 +466,18 @@ export class WOrderInstancePartialDto {
   @IsOptional()
   readonly metrics?: MetricsDto;
 
-  // Tip can be either percentage or amount
-  @IsOptional()
+  // Tip can be either percentage or amount, discriminated by isPercentage field
+  @ValidateNested()
+  @Type(() => TipSelectionPercentageDto, {
+    discriminator: {
+      property: 'isPercentage',
+      subTypes: [
+        { value: TipSelectionPercentageDto, name: 'true' },
+        { value: TipSelectionAmountDto, name: 'false' },
+      ],
+    },
+    keepDiscriminatorProperty: true,
+  })
   readonly tip!: TipSelectionPercentageDto | TipSelectionAmountDto;
 
   @IsString()
@@ -538,5 +548,5 @@ export class WOrderInstanceDto extends WOrderInstancePartialDto {
   // null means not locked, string identifies the lock holder
   @IsString()
   @IsOptional()
-  readonly locked!: string | null;
+  readonly locked?: string | null;
 }

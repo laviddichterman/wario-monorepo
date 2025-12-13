@@ -303,7 +303,7 @@ export class DeliveryInfoDto {
   @ValidateNested()
   @Type(() => DeliveryAddressValidateResponseDto)
   @IsOptional()
-  validation!: DeliveryAddressValidateResponseDto | null;
+  validation?: DeliveryAddressValidateResponseDto | null;
 }
 
 /**

@@ -1,29 +1,29 @@
-import { Type } from 'class-transformer';
+import { OmitType, PartialType } from '@nestjs/mapped-types';
+import { plainToInstance, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsEmail,
   IsEnum,
-  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
-  Min,
+  registerDecorator,
   ValidateNested,
+  validateSync,
+  type ValidationOptions,
+  ValidatorConstraint,
+  type ValidatorConstraintInterface,
 } from 'class-validator';
 
-import {
-  IProductDisplayFlagsDto,
-  IProductInstanceDisplayFlagsDto,
-  IProductModifierDto,
-  PrepTimingDto,
-  ProductInstanceModifierEntryDto,
-  UncommittedIProductInstanceDto,
-} from '../..';
 import { PaymentMethod, StoreCreditType } from '../enums';
 
-import { EncryptStringLockDto, IMoneyDto, IRecurringIntervalDto, IWIntervalDto, KeyValueDto } from './common.dto';
-import { UncommittedIProductDto } from './product.dto';
+import { EncryptStringLockDto, IMoneyDto } from './common.dto';
+import { IOptionDto, IOptionTypeDto } from './modifier.dto';
+import {
+  IProductDto,
+  IProductInstanceDto,
+} from './product.dto';
 
 // =============================================================================
 // Store Credit Request DTOs
@@ -79,7 +79,7 @@ export class IssueStoreCreditRequestDto {
   @IsString()
   @IsOptional()
   // look at this method  s@IsDateString()
-  expiration!: string | null;
+  expiration?: string | null;
 }
 
 /**
@@ -161,134 +161,111 @@ export class PaymentBasePartialDto {
   @Type(() => IMoneyDto)
   readonly tipAmount!: IMoneyDto;
 }
-export class CreateProductBatchRequestDto {
-  @ValidateNested()
-  @Type(() => UncommittedIProductDto)
-  product!: UncommittedIProductDto;
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UncommittedIProductInstanceDto)
-  instances!: UncommittedIProductInstanceDto[];
-}
 
 /**
- * Pick<IProduct, 'id'> & Partial<Omit<IProduct, 'id'>>; // PartialProductWithIDs
- * aka PartialType(IProductDto)
+ * DTO for creating a new product instance
  */
-export class UpdateIProductRequestDto {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
+export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) {
 
-  @ValidateNested()
-  @Type(() => IMoneyDto)
-  @IsOptional()
-  price!: IMoneyDto;
-
-  @ValidateNested()
-  @Type(() => IWIntervalDto)
-  @IsOptional()
-  disabled!: IWIntervalDto | null;
-
-  @ValidateNested({ each: true })
-  @Type(() => IRecurringIntervalDto)
-  @IsOptional()
-  availability!: IRecurringIntervalDto[];
-
-  // list of disabled fulfillmentIds
-  @IsString({ each: true })
-  @IsOptional()
-  serviceDisable!: string[];
-
-  @ValidateNested({ each: true })
-  @Type(() => KeyValueDto)
-  @IsOptional()
-  externalIDs!: KeyValueDto[];
-
-  @ValidateNested()
-  @Type(() => IProductDisplayFlagsDto)
-  @IsOptional()
-  displayFlags!: IProductDisplayFlagsDto;
-
-  @ValidateNested()
-  @Type(() => PrepTimingDto)
-  @IsOptional()
-  timing!: PrepTimingDto | null;
-
-  @ValidateNested({ each: true })
-  @Type(() => IProductModifierDto)
-  @IsOptional()
-  modifiers!: IProductModifierDto[];
-
-  @IsString({ each: true })
-  @IsOptional()
-  category_ids!: string[];
-
-  @IsString()
-  @IsOptional()
-  printerGroup!: string | null;
-}
-/**
- * NOTE THIS API NEEDS REVIEW SINCE WE NEED TO THINK ABOUT HOW WE HANDLE UPDATES WITH A NEW INSTANCE OR A REMOVED ONE
- * Partial<Omit<IProductInstance, "id">>
- */
-export class PartialUncommittedProductInstanceDto {
-  @IsInt()
-  @Min(0)
-  @IsOptional()
-  ordinal!: number;
-
-  @ValidateNested({ each: true })
-  @Type(() => ProductInstanceModifierEntryDto)
-  @IsOptional()
-  modifiers!: ProductInstanceModifierEntryDto[];
-
-  @ValidateNested()
-  @Type(() => IProductInstanceDisplayFlagsDto)
-  @IsOptional()
-  displayFlags!: IProductInstanceDisplayFlagsDto;
-
-  @ValidateNested({ each: true })
-  @Type(() => KeyValueDto)
-  @IsOptional()
-  externalIDs!: KeyValueDto[];
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  description!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  displayName!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @IsOptional()
-  shortcode!: string;
 }
 
-/**
- * aka Pick<IProductInstance, 'id'> & Partial<CreateIProductInstance>;
- * UpdateIProductUpdateIProductInstanceDto extends PartialType(UncommittedIProductInstanceDto) {}
- */
-export class UpdateIProductUpdateIProductInstanceDto extends PartialUncommittedProductInstanceDto {
+export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProductInstanceRequestDto) {
   @IsString()
   @IsNotEmpty()
   id!: string;
 }
 
-export class UpdateProductBatchRequestDto {
-  @ValidateNested()
-  @Type(() => UpdateIProductRequestDto)
-  product!: UpdateIProductRequestDto;
+export type UpsertIProductInstanceRequestDto = CreateIProductInstanceRequestDto | UpdateIProductInstanceRequestDto;
+
+/**
+ * Custom validator constraint for validating an array of product instance upsert requests.
+ * Discriminates between Create and Update based on presence of 'id' property.
+ */
+@ValidatorConstraint({ async: false })
+export class IsUpsertProductInstanceArrayConstraint implements ValidatorConstraintInterface {
+  validate(instances: unknown[]): boolean {
+    if (!Array.isArray(instances)) return false;
+
+    for (const instance of instances) {
+      const record = instance as Record<string, unknown>;
+      const hasId = typeof record.id === 'string' && record.id !== '';
+
+      const transformed = hasId
+        ? plainToInstance(UpdateIProductInstanceRequestDto, instance)
+        : plainToInstance(CreateIProductInstanceRequestDto, instance);
+      const errors = validateSync(transformed);
+
+      if (errors.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  defaultMessage(): string {
+    return 'Each instance must be a valid CreateIProductInstanceRequestDto (no id) or UpdateIProductInstanceRequestDto (with id)';
+  }
+}
+
+/**
+ * Decorator for validating an array of UpsertIProductInstanceRequestDto.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs.
+ */
+export function IsUpsertProductInstanceArray(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: IsUpsertProductInstanceArrayConstraint,
+    });
+  };
+}
+
+/**
+ * DTO for creating a single product along with its instances.
+ */
+export class CreateIProductRequestDto extends OmitType(IProductDto, ['id', 'instances']) {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => UpdateIProductUpdateIProductInstanceDto)
-  instances!: (UncommittedIProductInstanceDto | UpdateIProductUpdateIProductInstanceDto)[];
+  @Type(() => CreateIProductInstanceRequestDto)
+  instances!: CreateIProductInstanceRequestDto[];
 }
 
-export type UpsertProductBatchRequestDto = CreateProductBatchRequestDto | UpdateProductBatchRequestDto;
+/**
+ * An update request for a single product with its instances.
+ * Does not support removing instances as part of the update
+ * Can add instances and/or reorder them
+ */
+export class UpdateIProductRequestDto extends PartialType(OmitType(IProductDto, ['id', 'instances'])) {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsArray()
+  @IsUpsertProductInstanceArray()
+  instances!: UpsertIProductInstanceRequestDto[];
+}
+
+
+export type UpsertProductRequestDto = CreateIProductRequestDto | UpdateIProductRequestDto;
+
+
+// Modifier insert/update/upsert DTOs
+export class CreateIOptionTypeRequestDto extends OmitType(IOptionTypeDto, ['id']) {
+
+}
+export class UpdateIOptionTypeRequestDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) {
+
+}
+export type UpsertIOptionTypeRequestDto = CreateIOptionTypeRequestDto | UpdateIOptionTypeRequestDto;
+
+export class CreateIOptionRequestDto extends OmitType(IOptionDto, ['id']) {
+
+}
+export class UpdateIOptionRequestDto extends PartialType(OmitType(IOptionDto, ['id'])) {
+
+}
+export type UpsertIOptionRequestDto = CreateIOptionRequestDto | UpdateIOptionRequestDto;

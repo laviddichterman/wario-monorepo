@@ -26,15 +26,15 @@ export class UncommittedCategoryDto {
 
   @IsString()
   @IsOptional()
-  description!: string | null;
+  description?: string | null;
 
   @IsString()
   @IsOptional()
-  subheading!: string | null;
+  subheading?: string | null;
 
   @IsString()
   @IsOptional()
-  footnotes!: string | null;
+  footnotes?: string | null;
 
   @ValidateNested()
   @Type(() => CategoryDisplayFlagsDto)

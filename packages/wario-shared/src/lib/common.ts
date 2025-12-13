@@ -191,22 +191,22 @@ export const DetermineCartBasedLeadTime = (cart: CoreCartEntry[], productSelecto
     const product = productSelector(cartLine.product.pid);
     return product?.timing
       ? {
-          ...acc,
-          // so we take the max of the base times at a station, then we sum the quantity times
-          [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
-            ? {
-                base: Math.max(
-                  acc[product.timing.prepStationId].base,
-                  product.timing.prepTime - product.timing.additionalUnitPrepTime,
-                ),
-                quant:
-                  acc[product.timing.prepStationId].quant + product.timing.additionalUnitPrepTime * cartLine.quantity,
-              }
-            : {
-                base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
-                quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
-              },
-        }
+        ...acc,
+        // so we take the max of the base times at a station, then we sum the quantity times
+        [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
+          ? {
+            base: Math.max(
+              acc[product.timing.prepStationId].base,
+              product.timing.prepTime - product.timing.additionalUnitPrepTime,
+            ),
+            quant:
+              acc[product.timing.prepStationId].quant + product.timing.additionalUnitPrepTime * cartLine.quantity,
+          }
+          : {
+            base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
+            quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
+          },
+      }
       : acc;
   }, {});
   return Object.values(leadTimeMap).reduce((acc, entry) => Math.max(acc, entry.base + entry.quant), 0);
@@ -285,15 +285,15 @@ export const BLANKET_DISABLED_INTERVAL: IWInterval = { start: 1, end: 0 };
  * - parse errors of rrule result in that availability being treated as unavailable (logged to console).
  */
 export function DisableDataCheck(
-  disable_data: IWInterval | null,
+  disable_data: IWInterval | null | undefined,
   availabilities: IRecurringInterval[],
   order_time: Date | number | string,
 ):
   | (
-      | { enable: DISABLE_REASON.ENABLED }
-      | { enable: DISABLE_REASON.DISABLED_BLANKET }
-      | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
-    )
+    | { enable: DISABLE_REASON.ENABLED }
+    | { enable: DISABLE_REASON.DISABLED_BLANKET }
+    | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
+  )
   | { enable: DISABLE_REASON.DISABLED_AVAILABILITY; availability: IRecurringInterval[] } {
   const orderTimeAsNumber = getTime(order_time);
   if (disable_data) {
@@ -917,7 +917,7 @@ export const RecomputeTotals = function ({
     amount: Object.values(cart).reduce((acc, c) => acc + ComputeCartSubTotal(c).amount, 0),
   };
   const serviceChargeFunction =
-    fulfillment.serviceCharge !== null
+    fulfillment.serviceCharge
       ? config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge)
       : null;
   const serviceFee = {

@@ -147,7 +147,7 @@ export class IProductModifierDto {
    */
   @IsString()
   @IsOptional()
-  enable!: string | null;
+  enable?: string | null;
 
   /**
    * List of Fulfillment IDs where this modifier group is disabled.
@@ -158,12 +158,18 @@ export class IProductModifierDto {
 }
 
 /**
- * Base data for creating or updating a Product.
+ * Represents a full Product entity.
+ * Contains the shared logic and rules for a set of Product Instances.
  * A Product is an item of a given type, that can be potentially modified in some set of ways. But the product itself is like a style of pizza, or a base burger.
  * It will have at least one instance, which will describe the "basic" sellable version of that thing and will include the name and description logic.
  * @see @link IProductInstanceDto for more information about product instances.
  */
-export class UncommittedIProductDto {
+export class IProductDto {
+  /** Unique Product ID. */
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
   //Omit<IProduct, 'id'>;
   /** Base price configuration. */
   @ValidateNested()
@@ -176,7 +182,7 @@ export class UncommittedIProductDto {
   @ValidateNested()
   @Type(() => IWIntervalDto)
   @IsOptional()
-  disabled!: IWIntervalDto | null;
+  disabled?: IWIntervalDto | null;
 
   /**
    * Weekly recurring availability schedule.
@@ -209,7 +215,7 @@ export class UncommittedIProductDto {
   @ValidateNested()
   @Type(() => PrepTimingDto)
   @IsOptional()
-  timing!: PrepTimingDto | null;
+  timing?: PrepTimingDto | null;
 
   /**
    * Available modifier groups for this product.
@@ -224,7 +230,7 @@ export class UncommittedIProductDto {
    */
   @IsString()
   @IsOptional()
-  printerGroup!: string | null;
+  printerGroup?: string | null;
 
   /**
    * List of IDs for Product Instances belonging to this product.
@@ -237,17 +243,6 @@ export class UncommittedIProductDto {
   @IsString({ each: true })
   @ArrayMinSize(1)
   instances!: string[];
-}
-
-/**
- * Represents a full Product entity.
- * Contains the shared logic and rules for a set of Product Instances.
- */
-export class IProductDto extends UncommittedIProductDto {
-  /** Unique Product ID. */
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
 }
 
 /**
@@ -304,8 +299,8 @@ export class IProductInstanceDisplayFlagsMenuDto {
    * HTML/Rich text snippet to display alongside the product (promos, badges).
    */
   @IsString()
-  @IsNotEmpty()
-  adornment!: string;
+  @IsOptional()
+  adornment?: string;
 
   /**
    * If true, prevents automatically listing all available modifiers.
@@ -356,8 +351,8 @@ export class IProductInstanceDisplayFlagsOrderDto {
    * HTML/Rich text snippet for the ordering UI.
    */
   @IsString()
-  @IsNotEmpty()
-  adornment!: string;
+  @IsOptional()
+  adornment?: string;
 
   /**
    * If true, simplifies the display by not listing every single modifier option upfront.
@@ -410,11 +405,16 @@ export class ProductInstanceModifierEntryDto {
 }
 
 /**
+ * Represents a full Product Instance entity.
+ * A specific purchasable variation of a Product.
  * Base data for creating or updating a Product Instance.
  * A Product Instance is a concrete, sellable configuration of a Product (e.g. "Seapine IPA", "Build-Your-Own Deep Dish Pizza", "Beet Salad").
  */
-export class UncommittedIProductInstanceDto {
-  // = Omit<IProductInstance, 'id'>;
+export class IProductInstanceDto {
+  /** Unique Instance ID. */
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
 
   /**
    * Default/Pre-selected modifiers for this instance.
@@ -455,15 +455,4 @@ export class UncommittedIProductInstanceDto {
   @IsString()
   @IsNotEmpty()
   shortcode!: string;
-}
-
-/**
- * Represents a full Product Instance entity.
- * A specific purchasable variation of a Product.
- */
-export class IProductInstanceDto extends UncommittedIProductInstanceDto {
-  /** Unique Instance ID. */
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
 }

@@ -19,7 +19,7 @@ import { DateIntervalEntryDto, OperatingHourSpecificationDto } from './interval.
 export class FulfillmentMessagesDto {
   @IsString()
   @IsOptional()
-  DESCRIPTION!: string | null;
+  DESCRIPTION?: string | null;
 
   @IsString()
   @IsNotEmpty()
@@ -89,7 +89,7 @@ export class FulfillmentConfigDto {
   // optional supplementary category ID for the order page
   @IsString()
   @IsOptional()
-  orderSupplementaryCategoryId!: string | null;
+  orderSupplementaryCategoryId?: string | null;
 
   // whether prepayment is required for this service
   @IsBoolean()
@@ -107,12 +107,12 @@ export class FulfillmentConfigDto {
   @ValidateNested()
   @Type(() => FulfillmentAutogratDto)
   @IsOptional()
-  autograt!: FulfillmentAutogratDto | null;
+  autograt?: FulfillmentAutogratDto | null;
 
   // service charge function reference
   @IsString()
   @IsOptional()
-  serviceCharge!: string | null;
+  serviceCharge?: string | null;
 
   // offset to the lead time in minutes
   @IsNumber()
