@@ -1,7 +1,7 @@
 import { atom } from 'jotai';
 
-import type { ICategory } from '@wcp/wario-shared';
-import { CALL_LINE_DISPLAY, CategoryDisplay } from '@wcp/wario-shared';
+import { CALL_LINE_DISPLAY, CategoryDisplay } from '@wcp/wario-shared/logic';
+import type { ICategory } from '@wcp/wario-shared/types';
 
 /**
  * Form state for Category add/edit operations.

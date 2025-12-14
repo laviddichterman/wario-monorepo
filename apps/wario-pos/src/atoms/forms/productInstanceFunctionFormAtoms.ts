@@ -1,7 +1,7 @@
 import { atom } from 'jotai';
 import { useAtom, useAtomValue } from 'jotai';
 
-import type { IAbstractExpression, IProductInstanceFunction } from '@wcp/wario-shared';
+import type { IAbstractExpression, IProductInstanceFunction } from '@wcp/wario-shared/types';
 
 // =============================================================================
 // FORM STATE

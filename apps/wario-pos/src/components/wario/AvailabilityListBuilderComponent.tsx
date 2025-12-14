@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { Button } from '@mui/material';
 
-import { type IRecurringInterval } from '@wcp/wario-shared';
+import { type IRecurringInterval } from '@wcp/wario-shared/types';
 import { useIndexedState, type ValSetVal, type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 
 import RecurrenceRuleBuilderComponent from './RecurrenceRuleBuilderComponent';

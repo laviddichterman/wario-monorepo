@@ -2,7 +2,7 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
-import type { IProduct } from '@wcp/wario-shared';
+import type { IProduct } from '@wcp/wario-shared/types';
 import { useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useAddProductInstanceMutation } from '@/hooks/useProductInstanceMutations';

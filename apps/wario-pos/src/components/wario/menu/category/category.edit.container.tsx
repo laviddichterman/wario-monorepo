@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { Button } from '@mui/material';
 
-import type { ICategory } from '@wcp/wario-shared';
+import type { ICategory } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCategoryById } from '@wcp/wario-ux-shared/query';
 

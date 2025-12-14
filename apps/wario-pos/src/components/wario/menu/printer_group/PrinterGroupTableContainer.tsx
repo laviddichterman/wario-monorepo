@@ -5,7 +5,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import type { GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid-premium';
 
-import type { PrinterGroup } from '@wcp/wario-shared';
+import type { PrinterGroup } from '@wcp/wario-shared/types';
 import { DialogContainer } from '@wcp/wario-ux-shared/containers';
 
 import { usePrinterGroupsQuery } from '@/hooks/usePrinterGroupsQuery';

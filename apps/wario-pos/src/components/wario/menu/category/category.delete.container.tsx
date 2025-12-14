@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Grid } from '@mui/material';
 
-import type { ICategory } from '@wcp/wario-shared';
+import type { ICategory } from '@wcp/wario-shared/types';
 import { useCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useDeleteCategoryMutation } from '@/hooks/useCategoryMutations';

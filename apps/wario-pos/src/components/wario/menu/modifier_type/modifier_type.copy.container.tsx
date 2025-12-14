@@ -19,7 +19,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import type { IOption, IOptionType } from '@wcp/wario-shared';
+import type { IOption, IOptionType } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogQuery, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 

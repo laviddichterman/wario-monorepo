@@ -1,6 +1,6 @@
 import { Autocomplete, Card, CardContent, CardHeader, Grid, TextField } from '@mui/material';
 
-import { type IProductModifier } from '@wcp/wario-shared';
+import { type IProductModifier } from '@wcp/wario-shared/types';
 import { useCatalogQuery, useFulfillmentsQuery } from '@wcp/wario-ux-shared/query';
 
 interface ProductModifierComponentProps {

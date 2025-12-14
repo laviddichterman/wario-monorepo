@@ -1,8 +1,8 @@
 import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback } from 'react';
 
-import type { IOptionType, KeyValue } from '@wcp/wario-shared';
-import { DISPLAY_AS, MODIFIER_CLASS } from '@wcp/wario-shared';
+import { DISPLAY_AS, MODIFIER_CLASS } from '@wcp/wario-shared/logic';
+import type { IOptionType, KeyValue } from '@wcp/wario-shared/types';
 
 /**
  * Form state for ModifierType add/edit operations.

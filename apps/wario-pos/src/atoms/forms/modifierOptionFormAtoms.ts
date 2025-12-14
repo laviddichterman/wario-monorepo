@@ -1,7 +1,7 @@
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily } from 'jotai-family';
 
-import type { IMoney, IOption, IOptionType, IRecurringInterval, IWInterval, KeyValue } from '@wcp/wario-shared';
+import type { IMoney, IOption, IOptionType, IRecurringInterval, IWInterval, KeyValue } from '@wcp/wario-shared/types';
 
 /**
  * Form state for a single modifier option in the copy flow.

@@ -1,7 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
-import type { IOption, IOptionType } from '@wcp/wario-shared';
+import type { IOption, IOptionType } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 

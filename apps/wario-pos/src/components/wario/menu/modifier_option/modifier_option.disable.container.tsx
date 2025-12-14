@@ -2,7 +2,7 @@ import { useSnackbar } from 'notistack';
 
 import { Grid } from '@mui/material';
 
-import type { IOption } from '@wcp/wario-shared';
+import type { IOption } from '@wcp/wario-shared/types';
 import { useOptionById } from '@wcp/wario-ux-shared/query';
 
 import { useSetModifierOptionDisabledMutation } from '@/hooks/useModifierOptionMutations';

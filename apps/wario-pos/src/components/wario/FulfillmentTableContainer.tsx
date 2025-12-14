@@ -3,7 +3,7 @@ import { AddBox, DeleteOutline, Edit } from '@mui/icons-material';
 import { IconButton, Tooltip } from '@mui/material';
 import { GridActionsCellItem, type GridRowParams, useGridApiRef } from '@mui/x-data-grid-premium';
 
-import { type FulfillmentConfig } from '@wcp/wario-shared';
+import { type FulfillmentConfig } from '@wcp/wario-shared/types';
 import { useFulfillments } from '@wcp/wario-ux-shared/query';
 
 import { TableWrapperComponent } from './table_wrapper.component';

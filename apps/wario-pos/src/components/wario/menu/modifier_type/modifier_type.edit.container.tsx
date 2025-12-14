@@ -7,7 +7,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { Button, IconButton, Tab, Typography } from '@mui/material';
 
-import type { IOptionType } from '@wcp/wario-shared';
+import type { IOptionType } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogSelectors, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 

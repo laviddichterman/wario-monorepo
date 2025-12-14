@@ -6,7 +6,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import type { GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid-premium';
 
-import type { IOptionType } from '@wcp/wario-shared';
+import type { IOptionType } from '@wcp/wario-shared/types';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
 import {

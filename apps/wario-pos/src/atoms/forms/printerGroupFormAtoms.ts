@@ -1,6 +1,6 @@
 import { atom, useAtomValue } from 'jotai';
 
-import type { KeyValue, PrinterGroup } from '@wcp/wario-shared';
+import type { KeyValue, PrinterGroup } from '@wcp/wario-shared/types';
 
 /**
  * Form state for PrinterGroup add/edit operations.

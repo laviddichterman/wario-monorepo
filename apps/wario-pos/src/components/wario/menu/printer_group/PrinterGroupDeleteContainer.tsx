@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Warning } from '@mui/icons-material';
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
-import type { PrinterGroup } from '@wcp/wario-shared';
+import type { PrinterGroup } from '@wcp/wario-shared/types';
 
 import { useDeletePrinterGroupMutation, usePrinterGroupById, usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 

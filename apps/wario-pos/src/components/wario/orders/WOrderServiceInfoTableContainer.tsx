@@ -1,4 +1,4 @@
-import type { WOrderInstance } from '@wcp/wario-shared';
+import type { WOrderInstance } from '@wcp/wario-shared/types';
 import { ServiceInfoTableComponent } from '@wcp/wario-ux-shared/components';
 import { useFulfillmentDisplayName, useFulfillmentMinDuration } from '@wcp/wario-ux-shared/query';
 

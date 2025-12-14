@@ -12,7 +12,6 @@ import {
   type CategoryFormState,
 } from '@/atoms/forms/categoryFormAtoms';
 
-import { IntNumericPropertyComponent } from '../../property-components/IntNumericPropertyComponent';
 import { StringEnumPropertyComponent } from '../../property-components/StringEnumPropertyComponent';
 import { StringPropertyComponent } from '../../property-components/StringPropertyComponent';
 
@@ -74,24 +73,16 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>
         <Autocomplete
+          multiple
+          filterSelectedOptions
           options={categoryIds}
-          value={form.parent}
-          onChange={(_, v) => {
-            updateField('parent', v !== null ? v : null);
+          value={form.children}
+          onChange={(_e, v) => {
+            updateField('children', v);
           }}
-          getOptionLabel={(o) => category(o)?.name ?? 'Undefined'}
-          isOptionEqualToValue={(o, v) => o === v}
-          renderInput={(params) => <TextField {...params} label="Parent Category (Optional)" />}
-        />
-      </Grid>
-      <Grid size={3}>
-        <IntNumericPropertyComponent
-          disabled={isProcessing}
-          label="Ordinal"
-          value={form.ordinal}
-          setValue={(v) => {
-            updateField('ordinal', v);
-          }}
+          getOptionLabel={(option) => category(option)?.name ?? option}
+          isOptionEqualToValue={(option, value) => option === value}
+          renderInput={(params) => <TextField {...params} label="Children" />}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 9 }}>

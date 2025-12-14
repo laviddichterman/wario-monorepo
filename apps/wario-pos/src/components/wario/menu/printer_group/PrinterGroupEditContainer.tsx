@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import { Button } from '@mui/material';
 
-import type { PrinterGroup } from '@wcp/wario-shared';
+import type { PrinterGroup } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useEditPrinterGroupMutation, usePrinterGroupById } from '@/hooks/usePrinterGroupsQuery';

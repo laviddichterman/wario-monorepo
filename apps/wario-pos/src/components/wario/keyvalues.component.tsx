@@ -2,7 +2,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
-import { type KeyValue } from '@wcp/wario-shared';
+import { type KeyValue } from '@wcp/wario-shared/types';
 
 import { HOST_API } from '@/config';
 

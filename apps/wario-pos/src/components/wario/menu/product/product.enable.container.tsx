@@ -2,7 +2,7 @@ import { useSnackbar } from 'notistack';
 
 import { Grid } from '@mui/material';
 
-import type { IProduct } from '@wcp/wario-shared';
+import type { IProduct } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useSetProductDisabledMutation } from '@/hooks/useProductMutations';
