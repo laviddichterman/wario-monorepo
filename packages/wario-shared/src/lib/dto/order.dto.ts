@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -547,6 +548,6 @@ export class WOrderInstanceDto extends WOrderInstancePartialDto {
 
   // null means not locked, string identifies the lock holder
   @IsString()
-  @IsOptional()
-  readonly locked?: string | null;
+  @ValidateIf((o: WOrderInstanceDto) => o.locked !== null)
+  readonly locked!: string | null;
 }

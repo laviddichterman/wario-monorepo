@@ -6,23 +6,26 @@
  * IMPORTANT: This file should ONLY contain types derived directly from DTOs.
  * Complex types, utility types, and types not based on DTOs belong in types.ts.
  */
-import type {
-  CreateIOptionRequestDto,
-  CreateIOptionTypeRequestDto,
-  CreateIProductInstanceRequestDto,
-  CreateIProductRequestDto,
-  IssueStoreCreditRequestDto,
-  PaymentBasePartialDto,
-  PurchaseStoreCreditRequestBaseDto,
-  PurchaseStoreCreditRequestNoEmailDto,
-  PurchaseStoreCreditRequestSendEmailDto,
-  UpdateIOptionRequestDto,
-  UpdateIOptionTypeRequestDto,
-  UpdateIProductInstanceRequestDto,
-  UpdateIProductRequestDto,
-  ValidateLockAndSpendRequestDto,
+
+import {
+  type CreateIOptionPropsDto,
+  type CreateIOptionRequestBodyDto,
+  type CreateIOptionTypeRequestBodyDto,
+  type CreateIProductInstanceRequestDto,
+  type CreateIProductRequestDto,
+  type IssueStoreCreditRequestDto,
+  type PaymentBasePartialDto,
+  type PurchaseStoreCreditRequestBaseDto,
+  type PurchaseStoreCreditRequestNoEmailDto,
+  type PurchaseStoreCreditRequestSendEmailDto,
+  type UpdateIOptionPropsDto,
+  type UpdateIOptionRequestBodyDto,
+  type UpdateIOptionTypePropsDto,
+  type UpdateIOptionTypeRequestBodyDto,
+  type UpdateIProductInstanceRequestDto,
+  type UpdateIProductRequestDto,
+  type ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
-import type { ICatalogDto } from './dto/catalog.dto';
 import type { CategoryDisplayFlagsDto, ICategoryDto, UncommittedCategoryDto } from './dto/category.dto';
 import type {
   AddressComponentDto,
@@ -216,22 +219,6 @@ export type IProductInstance = Omit<IProductInstanceDto, never>;
 export type IProductInstanceDisplayFlags = Omit<IProductInstanceDisplayFlagsDto, never>;
 
 // =============================================================================
-// Catalog Types (from catalog.dto.ts)
-// =============================================================================
-
-export type RecordModifierOptions = Record<string, IOption>;
-export type RecordICategories = Record<string, ICategory>;
-export type RecordIProductInstances = Record<string, IProductInstance>;
-export type RecordIProducts = Record<string, IProduct>;
-export type RecordProductInstanceFunctions = Record<string, IProductInstanceFunction>;
-export type RecordOrderInstanceFunctions = Record<string, OrderInstanceFunction>;
-
-export type ICatalog = Omit<ICatalogDto, 'productInstanceFunctions' | 'orderInstanceFunctions'> & {
-  productInstanceFunctions: RecordProductInstanceFunctions;
-  orderInstanceFunctions: RecordOrderInstanceFunctions;
-};
-
-// =============================================================================
 // Expression Types (from expression.dto.ts)
 // =============================================================================
 
@@ -398,12 +385,17 @@ export type UpdateIProductRequest = Omit<UpdateIProductRequestDto, never>;
 export type UpsertIProductInstanceRequest = CreateIProductInstanceRequest | UpdateIProductInstanceRequest;
 export type UpsertIProductRequest = CreateIProductRequest | UpdateIProductRequest;
 
-export type CreateIOptionTypeRequest = Omit<CreateIOptionTypeRequestDto, never>;
-export type UpdateIOptionTypeRequest = Omit<UpdateIOptionTypeRequestDto, never>;
-export type UpsertIOptionTypeRequest = CreateIOptionTypeRequest | UpdateIOptionTypeRequest;
+// options and option types
+export type CreateIOptionRequestBody = Omit<CreateIOptionRequestBodyDto, never>;
+export type UpdateIOptionRequestBody = Omit<UpdateIOptionRequestBodyDto, never>;
+export type CreateIOptionProps = Omit<CreateIOptionPropsDto, never>;
+export type UpdateIOptionProps = Omit<UpdateIOptionPropsDto, never>;
+export type UpsertIOptionProps = CreateIOptionProps | UpdateIOptionProps;
 
-export type CreateIOptionRequest = Omit<CreateIOptionRequestDto, never>;
-export type UpdateIOptionRequest = Omit<UpdateIOptionRequestDto, never>;
-export type UpsertIOptionRequest = CreateIOptionRequest | UpdateIOptionRequest;
+// Modifier insert/update/upsert DTOs
+export type CreateIOptionTypeRequestBody = Omit<CreateIOptionTypeRequestBodyDto, never>;
+export type UpdateIOptionTypeRequestBody = Omit<UpdateIOptionTypeRequestBodyDto, never>;
+export type UpdateIOptionTypeProps = Omit<UpdateIOptionTypePropsDto, never>;
+export type UpsertIOptionTypeRequestBody = CreateIOptionTypeRequestBody | UpdateIOptionTypeRequestBody;
 
 // end UpsertProductBatch types

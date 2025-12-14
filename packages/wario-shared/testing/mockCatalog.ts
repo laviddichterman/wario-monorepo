@@ -16,7 +16,6 @@
  */
 
 import type {
-  ICatalog,
   ICategory,
   IOption,
   IOptionType,
@@ -25,8 +24,6 @@ import type {
   IProductInstanceFunction,
   OrderInstanceFunction,
   ProductInstanceModifierEntry,
-  RecordOrderInstanceFunctions,
-  RecordProductInstanceFunctions,
 } from '../src/lib/derived-types';
 import {
   CALL_LINE_DISPLAY,
@@ -43,7 +40,12 @@ import {
   ProductInstanceFunctionType,
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
-import type { ICatalogSelectors } from '../src/lib/types';
+import type {
+  ICatalog,
+  ICatalogSelectors,
+  RecordOrderInstanceFunctions,
+  RecordProductInstanceFunctions,
+} from '../src/lib/types';
 import {
   createMockCategory,
   createMockOption,

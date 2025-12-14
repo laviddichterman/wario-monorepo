@@ -61,9 +61,7 @@ function createValidProductInstancePayload(): Omit<CreateIProductInstanceRequest
 /**
  * Creates a valid UpdateIProductRequestDto payload
  */
-function createValidUpdateProductPayload(
-  instances: Array<Record<string, unknown>>,
-): Record<string, unknown> {
+function createValidUpdateProductPayload(instances: Array<Record<string, unknown>>): Record<string, unknown> {
   return {
     id: 'prod_1',
     instances,
@@ -178,12 +176,9 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
 
       it('should return true for mixed bare strings, update objects, and create objects', () => {
         const createInstance = createValidProductInstancePayload();
-        expect(constraint.validate([
-          'pi_1',
-          { id: 'pi_2', displayName: 'Updated' },
-          createInstance,
-          'pi_3',
-        ])).toBe(true);
+        expect(constraint.validate(['pi_1', { id: 'pi_2', displayName: 'Updated' }, createInstance, 'pi_3'])).toBe(
+          true,
+        );
       });
     });
   });
@@ -205,10 +200,7 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
 describe('UpdateIProductRequestDto', () => {
   describe('validation with @IsUpsertProductInstanceArray decorator', () => {
     it('should pass validation with valid update instances', () => {
-      const payload = createValidUpdateProductPayload([
-        { id: 'pi_1' },
-        { id: 'pi_2', displayName: 'Updated Name' },
-      ]);
+      const payload = createValidUpdateProductPayload([{ id: 'pi_1' }, { id: 'pi_2', displayName: 'Updated Name' }]);
 
       const dto = plainToInstance(UpdateIProductRequestDto, payload);
       const errors = validateSync(dto);
@@ -217,9 +209,7 @@ describe('UpdateIProductRequestDto', () => {
     });
 
     it('should pass validation with valid create instances', () => {
-      const payload = createValidUpdateProductPayload([
-        createValidProductInstancePayload(),
-      ]);
+      const payload = createValidUpdateProductPayload([createValidProductInstancePayload()]);
 
       const dto = plainToInstance(UpdateIProductRequestDto, payload);
       const errors = validateSync(dto);
@@ -295,11 +285,9 @@ describe('UpdateIProductRequestDto', () => {
     // Tests for bare string ID support
     describe('bare string ID support', () => {
       it('should pass validation with bare string instance IDs', () => {
-        const payload = createValidUpdateProductPayload([
-          'pi_1',
-          'pi_2',
-          'pi_3',
-        ] as unknown as Array<Record<string, unknown>>);
+        const payload = createValidUpdateProductPayload(['pi_1', 'pi_2', 'pi_3'] as unknown as Array<
+          Record<string, unknown>
+        >);
 
         const dto = plainToInstance(UpdateIProductRequestDto, payload);
         const errors = validateSync(dto);

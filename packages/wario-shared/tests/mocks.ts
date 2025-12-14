@@ -12,7 +12,6 @@ import type {
   AbstractOrderExpressionLogicalExpression,
   CategoryDisplayFlags,
   IAbstractExpression,
-  ICatalog,
   ICategory,
   IConstLiteralExpression,
   IIfElseExpression,
@@ -50,7 +49,7 @@ import {
   ProductInstanceFunctionType,
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
-import type { ICatalogSelectors } from '../src/lib/types';
+import type { ICatalog, ICatalogSelectors } from '../src/lib/types';
 
 // ============================================================================
 // Primitive / Leaf Type Helpers
@@ -237,7 +236,11 @@ export const createMockProductInstance = (overrides: Partial<IProductInstance> =
   shortcode: 'TP',
   description: '',
   modifiers: [],
-  externalIDs: [],
+  // Default Square external IDs so tests properly trigger BatchRetrieveCatalogObjects
+  externalIDs: [
+    { key: 'SQID_ITEM', value: 'FAKE_SQID_ITEM' },
+    { key: 'SQID_ITEM_VARIATION', value: 'FAKE_SQID_ITEM_VARIATION' },
+  ],
   ...overrides,
   displayFlags: createMockProductInstanceDisplayFlags(overrides.displayFlags),
 });

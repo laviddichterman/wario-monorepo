@@ -21,10 +21,7 @@ import { PaymentMethod, StoreCreditType } from '../enums';
 
 import { EncryptStringLockDto, IMoneyDto } from './common.dto';
 import { IOptionDto, IOptionTypeDto } from './modifier.dto';
-import {
-  IProductDto,
-  IProductInstanceDto,
-} from './product.dto';
+import { IProductDto, IProductInstanceDto } from './product.dto';
 
 // =============================================================================
 // Store Credit Request DTOs
@@ -166,9 +163,7 @@ export class PaymentBasePartialDto {
 /**
  * DTO for creating a new product instance
  */
-export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) {
-
-}
+export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) {}
 
 export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProductInstanceRequestDto) {
   @IsString()
@@ -177,7 +172,6 @@ export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProduct
 }
 
 export type UpsertIProductInstanceRequestDto = CreateIProductInstanceRequestDto | UpdateIProductInstanceRequestDto;
-
 
 /**
  * special case for the instances field in UpdateIProductRequestDto where we allow a bare string to be passed in as the id field
@@ -294,7 +288,6 @@ export function IsUpsertProductArray(validationOptions?: ValidationOptions) {
  * DTO for creating a single product along with its instances.
  */
 export class CreateIProductRequestDto extends OmitType(IProductDto, ['id', 'instances']) {
-
   @IsArray()
   @ValidateNested({ each: true })
   @ArrayMinSize(1)
@@ -317,7 +310,6 @@ export class UpdateIProductRequestDto extends PartialType(OmitType(IProductDto, 
   instances!: UpdateIProductRequestInstances[];
 }
 
-
 export type UpsertProductRequestDto = CreateIProductRequestDto | UpdateIProductRequestDto;
 
 /**
@@ -330,19 +322,54 @@ export class BatchUpsertProductRequestDto {
   products!: UpsertProductRequestDto[];
 }
 
+export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) {}
+
+export class CreateIOptionPropsDto {
+  @IsString()
+  @IsNotEmpty()
+  modifierTypeId!: string;
+
+  @ValidateNested()
+  @Type(() => CreateIOptionRequestBodyDto)
+  option!: CreateIOptionRequestBodyDto;
+}
+
+export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) {}
+
+export class UpdateIOptionPropsDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  modifierTypeId!: string;
+
+  @ValidateNested()
+  @Type(() => UpdateIOptionRequestBodyDto)
+  option!: UpdateIOptionRequestBodyDto;
+}
+
+export type UpsertIOptionPropsDto = CreateIOptionPropsDto | UpdateIOptionPropsDto;
+
 // Modifier insert/update/upsert DTOs
-export class CreateIOptionTypeRequestDto extends OmitType(IOptionTypeDto, ['id']) {
-
+export class CreateIOptionTypeRequestBodyDto extends OmitType(IOptionTypeDto, ['id', 'options']) {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateIOptionRequestBodyDto)
+  @IsOptional()
+  options?: CreateIOptionRequestBodyDto[];
 }
-export class UpdateIOptionTypeRequestDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) {
+export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) {}
 
+export class UpdateIOptionTypePropsDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @ValidateNested()
+  @Type(() => UpdateIOptionTypeRequestBodyDto)
+  modifierType!: UpdateIOptionTypeRequestBodyDto;
 }
-export type UpsertIOptionTypeRequestDto = CreateIOptionTypeRequestDto | UpdateIOptionTypeRequestDto;
 
-export class CreateIOptionRequestDto extends OmitType(IOptionDto, ['id']) {
-
-}
-export class UpdateIOptionRequestDto extends PartialType(OmitType(IOptionDto, ['id'])) {
-
-}
-export type UpsertIOptionRequestDto = CreateIOptionRequestDto | UpdateIOptionRequestDto;
+export type UpsertIOptionTypeRequestBodyDto = CreateIOptionTypeRequestBodyDto | UpdateIOptionTypeRequestBodyDto;

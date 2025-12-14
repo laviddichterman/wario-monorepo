@@ -29,6 +29,7 @@ import type {
   OrderManualAmountDiscount,
   OrderManualPercentDiscount,
   ProductInstanceModifierEntry,
+  SEMVER,
   StoreCreditPayment,
   WError,
   WOrderInstance,
@@ -262,3 +263,30 @@ export interface ResponseFailure {
 export type PurchaseStoreCreditResponse = ResponseSuccess<PurchaseStoreCreditResponseSuccess> | ResponseFailure;
 export type CrudOrderResponse = ResponseSuccess<WOrderInstance> | ResponseFailure;
 export type ResponseWithStatusCode<T> = T & { status: number };
+
+export type RecordModifierOptions = Record<string, IOption>;
+export type RecordICategories = Record<string, ICategory>;
+export type RecordIProductInstances = Record<string, IProductInstance>;
+export type RecordIProducts = Record<string, IProduct>;
+export type RecordProductInstanceFunctions = Record<string, IProductInstanceFunction>;
+export type RecordOrderInstanceFunctions = Record<string, OrderInstanceFunction>;
+
+export interface ICatalog {
+  options: Record<string, IOption>;
+
+  modifiers: Record<string, IOptionType>;
+
+  categories: Record<string, ICategory>;
+
+  products: RecordIProducts;
+
+  productInstances: RecordIProductInstances;
+
+  productInstanceFunctions: RecordProductInstanceFunctions;
+
+  orderInstanceFunctions: RecordOrderInstanceFunctions;
+
+  version: string;
+
+  api: SEMVER;
+}

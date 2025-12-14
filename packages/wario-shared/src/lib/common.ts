@@ -191,22 +191,22 @@ export const DetermineCartBasedLeadTime = (cart: CoreCartEntry[], productSelecto
     const product = productSelector(cartLine.product.pid);
     return product?.timing
       ? {
-        ...acc,
-        // so we take the max of the base times at a station, then we sum the quantity times
-        [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
-          ? {
-            base: Math.max(
-              acc[product.timing.prepStationId].base,
-              product.timing.prepTime - product.timing.additionalUnitPrepTime,
-            ),
-            quant:
-              acc[product.timing.prepStationId].quant + product.timing.additionalUnitPrepTime * cartLine.quantity,
-          }
-          : {
-            base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
-            quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
-          },
-      }
+          ...acc,
+          // so we take the max of the base times at a station, then we sum the quantity times
+          [product.timing.prepStationId]: Object.hasOwn(acc, product.timing.prepStationId)
+            ? {
+                base: Math.max(
+                  acc[product.timing.prepStationId].base,
+                  product.timing.prepTime - product.timing.additionalUnitPrepTime,
+                ),
+                quant:
+                  acc[product.timing.prepStationId].quant + product.timing.additionalUnitPrepTime * cartLine.quantity,
+              }
+            : {
+                base: product.timing.prepTime - product.timing.additionalUnitPrepTime,
+                quant: product.timing.additionalUnitPrepTime * cartLine.quantity,
+              },
+        }
       : acc;
   }, {});
   return Object.values(leadTimeMap).reduce((acc, entry) => Math.max(acc, entry.base + entry.quant), 0);
@@ -290,10 +290,10 @@ export function DisableDataCheck(
   order_time: Date | number | string,
 ):
   | (
-    | { enable: DISABLE_REASON.ENABLED }
-    | { enable: DISABLE_REASON.DISABLED_BLANKET }
-    | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
-  )
+      | { enable: DISABLE_REASON.ENABLED }
+      | { enable: DISABLE_REASON.DISABLED_BLANKET }
+      | { enable: DISABLE_REASON.DISABLED_TIME; interval: IWInterval }
+    )
   | { enable: DISABLE_REASON.DISABLED_AVAILABILITY; availability: IRecurringInterval[] } {
   const orderTimeAsNumber = getTime(order_time);
   if (disable_data) {
@@ -916,10 +916,9 @@ export const RecomputeTotals = function ({
     currency: CURRENCY.USD,
     amount: Object.values(cart).reduce((acc, c) => acc + ComputeCartSubTotal(c).amount, 0),
   };
-  const serviceChargeFunction =
-    fulfillment.serviceCharge
-      ? config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge)
-      : null;
+  const serviceChargeFunction = fulfillment.serviceCharge
+    ? config.CATALOG_SELECTORS.orderInstanceFunction(fulfillment.serviceCharge)
+    : null;
   const serviceFee = {
     currency: CURRENCY.USD,
     amount: serviceChargeFunction

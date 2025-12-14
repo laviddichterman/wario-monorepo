@@ -1,16 +1,12 @@
 import { ReduceArrayToMapByKey } from '../common';
+import type { ICategory, IOption, IOptionType, IProduct, IProductInstance, SEMVER } from '../derived-types';
 import type {
   ICatalog,
-  ICategory,
-  IOption,
-  IOptionType,
-  IProduct,
-  IProductInstance,
+  ICatalogSelectors,
+  IdOrdinalMap,
   RecordOrderInstanceFunctions,
   RecordProductInstanceFunctions,
-  SEMVER,
-} from '../derived-types';
-import type { ICatalogSelectors, IdOrdinalMap } from '../types';
+} from '../types';
 import type { Selector } from '../utility-types';
 
 /**
