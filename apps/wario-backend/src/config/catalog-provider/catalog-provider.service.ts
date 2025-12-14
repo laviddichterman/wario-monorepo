@@ -3,6 +3,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   CatalogGenerator,
+  CreateIOptionRequest,
+  CreateIProductRequest,
   DeletePrinterGroupRequest,
   type ICatalog,
   ICatalogSelectorWrapper,
@@ -19,8 +21,11 @@ import {
   type RecordProductInstanceFunctions,
   ReduceArrayToMapByKey,
   SEMVER,
-  UpsertProductBatchRequest,
+  UpdateIProductRequest,
+  type UpsertIProductRequest,
 } from '@wcp/wario-shared';
+
+import { UpdateModifierOptionProps, UpdateModifierTypeProps, UpsertProductInstanceProps } from 'src/config/catalog-provider/catalog.types';
 
 import {
   CATEGORY_REPOSITORY,
@@ -310,11 +315,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     };
   }
 
-  CreateModifierType = async (modifierType: Omit<IOptionType, 'id'>, options: ModifierFns.UncommitedOption[]) => {
+  CreateModifierType = async (modifierType: Omit<IOptionType, 'id'>, options: CreateIOptionRequest[]) => {
     return ModifierFns.createModifierType(this.modifierDeps, modifierType, options);
   };
 
-  UpdateModifierType = async (props: ModifierFns.UpdateModifierTypeProps) => {
+  UpdateModifierType = async (props: UpdateModifierTypeProps) => {
     return ModifierFns.updateModifierType(this.modifierDeps, props);
   };
 
@@ -326,7 +331,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ModifierFns.createOption(this.modifierDeps, modifierTypeId, modifierOption);
   };
 
-  UpdateModifierOption = async (props: ModifierFns.UpdateModifierOptionProps) => {
+  UpdateModifierOption = async (props: UpdateModifierOptionProps) => {
     return ModifierFns.updateModifierOption(this.modifierDeps, props);
   };
 
@@ -336,13 +341,6 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     suppress_catalog_recomputation: boolean = false,
   ) => {
     return ModifierFns.deleteModifierOption(this.modifierDeps, modifierTypeId, mo_id, suppress_catalog_recomputation);
-  };
-
-  ValidateOption = (
-    modifierType: Pick<IOptionType, 'max_selected'>,
-    modifierOption: Partial<ModifierFns.UncommitedOption>,
-  ) => {
-    return ModifierFns.validateOption(modifierType, modifierOption);
   };
 
   // ============================================================================
@@ -374,15 +372,15 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     };
   }
 
-  CreateProduct = async (product: Omit<IProduct, 'id'>, instances: Omit<IProductInstance, 'id'>[]) => {
-    return ProductFns.createProduct(this.productDeps, product, instances);
+  CreateProduct = async (product: CreateIProductRequest) => {
+    return ProductFns.createProduct(this.productDeps, product);
   };
 
-  BatchUpsertProduct = async (batches: UpsertProductBatchRequest[]) => {
+  BatchUpsertProduct = async (batches: UpsertIProductRequest[]) => {
     return ProductFns.batchUpsertProduct(this.productDeps, batches);
   };
 
-  UpdateProduct = async (pid: string, product: Partial<Omit<IProduct, 'id'>>) => {
+  UpdateProduct = async (pid: string, product: UpdateIProductRequest) => {
     return ProductFns.updateProduct(this.productDeps, pid, product);
   };
 
@@ -399,14 +397,14 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   BatchUpdateProductInstance = async (
-    batches: ProductFns.UpdateProductInstanceProps[],
+    batches: UpsertProductInstanceProps[],
     suppress_catalog_recomputation: boolean = false,
   ) => {
     return ProductFns.batchUpdateProductInstance(this.productDeps, batches, suppress_catalog_recomputation);
   };
 
   UpdateProductInstance = async (
-    props: ProductFns.UpdateProductInstanceProps,
+    props: UpsertProductInstanceProps,
     suppress_catalog_recomputation: boolean = false,
   ) => {
     return ProductFns.updateProductInstance(this.productDeps, props, suppress_catalog_recomputation);
@@ -648,7 +646,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     const products = Object.values(this.products).filter((p) => p.modifiers.some((m) => mtids.includes(m.mtid)));
     if (products.length > 0) {
       // update them
-      await this.BatchUpsertProduct(products.map((p) => ({ product: p, instances: [] })));
+      await this.BatchUpsertProduct(products.map((p) => ({ ...p, instances: p.instances.map((i) => ({ id: i })) })));
     }
   };
 
@@ -679,14 +677,15 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
           product: productId ? this.catalog.products[productId] : null,
           productInstance: {
             modifiers: pi.modifiers,
+            id: pi.id,
           },
         };
       })
       .filter((update) => update.product !== null) as Array<{
-      piid: string;
-      product: IProduct;
-      productInstance: { modifiers: IProductInstance['modifiers'] };
-    }>;
+        piid: string;
+        product: IProduct;
+        productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
+      }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();

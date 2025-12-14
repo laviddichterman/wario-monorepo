@@ -1,12 +1,11 @@
-import { Body, Controller, Delete, HttpCode, Param, ParseArrayPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
 import {
-  CreateProductBatchRequestDto,
-  PartialUncommittedProductInstanceDto,
-  UncommittedIProductInstance,
-  UncommittedIProductInstanceDto,
+  BatchUpsertProductRequestDto,
+  CreateIProductInstanceRequestDto,
+  CreateIProductRequestDto,
+  UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
-  UpdateProductBatchRequestDto,
 } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
@@ -24,13 +23,13 @@ export class ProductController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) {}
+  ) { }
 
   @Post()
   @Scopes('write:catalog')
   @HttpCode(201)
-  async postProductClass(@Body() body: CreateProductBatchRequestDto) {
-    const createProductResult = await this.catalogProvider.CreateProduct(body.product, body.instances);
+  async postProductClass(@Body() body: CreateIProductRequestDto) {
+    const createProductResult = await this.catalogProvider.CreateProduct(body);
     if (!createProductResult) {
       throw new CatalogOperationException(
         'create product',
@@ -44,11 +43,8 @@ export class ProductController {
   @Post('batch')
   @Scopes('write:catalog')
   @HttpCode(201)
-  async batchPostProducts(
-    @Body(new ParseArrayPipe({ items: UpdateProductBatchRequestDto }))
-    body: UpdateProductBatchRequestDto[],
-  ) {
-    const createBatchesResult = await this.catalogProvider.BatchUpsertProduct(body);
+  async batchPostProducts(@Body() body: BatchUpsertProductRequestDto) {
+    const createBatchesResult = await this.catalogProvider.BatchUpsertProduct(body.products);
     if (!createBatchesResult) {
       throw new CatalogOperationException(
         'batch create products',
@@ -99,8 +95,8 @@ export class ProductController {
   @Post(':pid')
   @Scopes('write:catalog')
   @HttpCode(201)
-  async postProductInstance(@Param('pid') productId: string, @Body() body: UncommittedIProductInstanceDto) {
-    const doc = await this.catalogProvider.CreateProductInstance(productId, body as UncommittedIProductInstance);
+  async postProductInstance(@Param('pid') productId: string, @Body() body: CreateIProductInstanceRequestDto) {
+    const doc = await this.catalogProvider.CreateProductInstance(productId, body);
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
@@ -113,7 +109,7 @@ export class ProductController {
   async patchProductInstance(
     @Param('pid') productId: string,
     @Param('piid') productInstanceId: string,
-    @Body() body: PartialUncommittedProductInstanceDto,
+    @Body() body: UpdateIProductInstanceRequestDto,
   ) {
     const product = this.catalogProvider.CatalogSelectors.productEntry(productId);
     if (!product) {

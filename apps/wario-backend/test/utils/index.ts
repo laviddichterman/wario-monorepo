@@ -34,6 +34,9 @@ export {
   setupMockCatalog,
 } from './catalog-test-helpers';
 
+// Google mocks
+export * from './google-mocks';
+
 // Auth mocks
 export {
   createDenyingAuthGuard,
@@ -47,6 +50,9 @@ export {
 // Database mocks
 export { createAllMockModelProviders, createMockModel, createMockModelProvider, ModelNames } from './mock-database';
 
+// Product deps mocks
+export { createMockProductDeps, type CreateMockProductDepsOptions } from './mock-product-deps';
+
 // Service mocks
 export {
   mockCatalogProviderService,
@@ -58,6 +64,24 @@ export {
   mockSquareService,
   mockStoreCreditProviderService,
 } from './mock-services';
+
+// Square API mocks
+export {
+  createMockBatchDeleteResponse,
+  createMockBatchRetrieveResponse,
+  createMockBatchUpsertResponse,
+  createMockCatalogIdMapping,
+  createMockIdMappingGenerator,
+  createMockSquareCatalogObject,
+  createMockSquareCategory,
+  createMockSquareItem,
+  createMockSquareItemVariation,
+  createMockSquareModifier,
+  createMockSquareModifierList,
+  createSquareFailureResponse,
+  createSquareSuccessResponse,
+  SquareIdMappingTracker,
+} from './mock-square';
 
 // Order mocks
 export {

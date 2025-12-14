@@ -1,16 +1,14 @@
-import { PartialType } from '@nestjs/mapped-types';
-
 import {
-  type CreateProductBatchRequest,
-  type IOption,
-  type IOptionType,
+  type CreateIProductInstanceRequestDto,
+  type CreateIProductRequestDto,
   type IProduct,
-  type IProductInstance,
   type PrinterGroup,
-  type UncommittedIProductInstance,
-  UncommittedOptionTypeDto,
-  type UpdateIProductUpdateIProductInstance,
-  type UpdateProductBatchRequest,
+  type UpdateIOptionRequest,
+  type UpdateIOptionTypeRequest,
+  type UpdateIProductInstanceRequestDto,
+  type UpdateIProductRequestDto,
+  type UpdateIProductRequestInstances,
+  type UpsertIProductInstanceRequest,
 } from '@wcp/wario-shared';
 
 // Shared helper for determining Square locations based on 3P flag
@@ -21,15 +19,15 @@ export const LocationsConsidering3pFlag = (
   squareLocation3p: string | undefined,
 ): string[] => [squareLocationAlternate, ...(is3p && squareLocation3p ? [squareLocation3p] : [squareLocation])];
 
-export type UpdateProductInstanceProps = {
+export type UpsertProductInstanceProps = {
   piid: string;
   product: Pick<IProduct, 'price' | 'modifiers' | 'printerGroup' | 'disabled' | 'displayFlags'>;
-  productInstance: Partial<Omit<IProductInstance, 'id' | 'productId'>>;
+  productInstance: UpsertIProductInstanceRequest;
 };
 
 export type UpdateModifierTypeProps = {
   id: string;
-  modifierType: Partial<Omit<IOptionType, 'id'>>;
+  modifierType: UpdateIOptionTypeRequest;
 };
 
 export type UpdatePrinterGroupProps = {
@@ -40,21 +38,23 @@ export type UpdatePrinterGroupProps = {
 export type UpdateModifierOptionProps = {
   id: string;
   modifierTypeId: string;
-  modifierOption: Partial<Omit<IOption, 'id' | 'modifierTypeId'>>;
+  modifierOption: UpdateIOptionRequest;
 };
 
-export type UncommitedOption = Omit<IOption, 'modifierTypeId' | 'id'>;
-export type UpsertOption = (Partial<UncommitedOption> & Pick<IOption, 'id'>) | UncommitedOption;
-export class UpdateOption extends PartialType(UncommittedOptionTypeDto) {}
-
 export function isUpdateProduct(
-  batch: CreateProductBatchRequest | UpdateProductBatchRequest,
-): batch is UpdateProductBatchRequest {
-  return 'product' in batch && 'id' in batch.product;
+  batch: CreateIProductRequestDto | UpdateIProductRequestDto,
+): batch is UpdateIProductRequestDto {
+  return 'id' in batch;
 }
 
 export function isUpdateProductInstance(
-  instance: UncommittedIProductInstance | UpdateIProductUpdateIProductInstance,
-): instance is UpdateIProductUpdateIProductInstance {
-  return 'id' in instance;
+  instance: UpdateIProductRequestInstances,
+): instance is UpdateIProductInstanceRequestDto {
+  return typeof instance === 'object' && 'id' in instance;
+}
+
+export function isCreateProductInstance(
+  instance: UpdateIProductRequestInstances,
+): instance is CreateIProductInstanceRequestDto {
+  return typeof instance === 'object' && !('id' in instance);
 }

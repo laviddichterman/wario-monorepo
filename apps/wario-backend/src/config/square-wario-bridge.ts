@@ -660,7 +660,7 @@ export const PrinterGroupToSquareCatalogObjectPlusDummyProduct = (
 export const ProductInstanceToSquareCatalogObject = (
   locationIds: string[],
   product: Pick<IProduct, 'modifiers' | 'price' | 'disabled'>,
-  productInstance: Omit<IProductInstance, 'id' | 'productId'>,
+  productInstance: Omit<IProductInstance, 'id'>,
   printerGroup: PrinterGroup | null,
   catalogSelectors: ICatalogSelectors,
 

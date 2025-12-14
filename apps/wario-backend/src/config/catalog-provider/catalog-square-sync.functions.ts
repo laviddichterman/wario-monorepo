@@ -12,7 +12,7 @@ import type {
   IProductInstance,
   KeyValue,
   PrinterGroup,
-  UpsertProductBatchRequest,
+  UpsertIProductRequest,
 } from '@wcp/wario-shared';
 
 import { GetNonSquareExternalIds, GetSquareExternalIds, GetSquareIdIndexFromExternalIds } from '../square-wario-bridge';
@@ -22,7 +22,7 @@ import type {
   UpdateModifierOptionProps,
   UpdateModifierTypeProps,
   UpdatePrinterGroupProps,
-  UpdateProductInstanceProps,
+  UpsertProductInstanceProps,
 } from './catalog.types';
 
 // ============================================================================
@@ -45,11 +45,11 @@ export interface SquareSyncDeps {
   ) => Promise<(IOptionType | null)[]>;
   batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<(IOption | null)[]>;
   batchUpdateProductInstance: (
-    batches: UpdateProductInstanceProps[],
+    batches: UpsertProductInstanceProps[],
     suppress: boolean,
   ) => Promise<(IProductInstance | null)[]>;
   batchUpsertProduct: (
-    batches: UpsertProductBatchRequest[],
+    batches: UpsertIProductRequest[],
   ) => Promise<{ product: IProduct; instances: IProductInstance[] }[] | null>;
   findAllProducts: () => Promise<IProduct[]>;
   // Sync Hooks
@@ -209,6 +209,7 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
             .map((piid) => ({
               piid,
               product: {
+                id: p.id,
                 modifiers: p.modifiers,
                 price: p.price,
                 printerGroup: p.printerGroup,
@@ -216,6 +217,7 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
                 displayFlags: p.displayFlags,
               },
               productInstance: {
+                id: piid,
                 externalIDs: GetNonSquareExternalIds(deps.catalog.productInstances[piid].externalIDs),
               },
             })),
@@ -246,7 +248,7 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
             disabled: p.disabled,
             displayFlags: p.displayFlags,
           },
-          productInstance: {},
+          productInstance: { id: piid },
         })),
     )
     .flat();
@@ -276,7 +278,7 @@ export const forceSquareCatalogCompleteUpsert = async (deps: SquareSyncDeps) => 
 
   // update all products
   const allProducts = await deps.findAllProducts();
-  await deps.batchUpsertProduct(allProducts.map((p) => ({ product: p, instances: [] })));
+  await deps.batchUpsertProduct(allProducts);
   deps.recomputeCatalog();
 
   void deps.syncModifierTypes();

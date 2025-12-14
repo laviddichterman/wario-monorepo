@@ -4,6 +4,7 @@ import type { CatalogIdMapping, CatalogObject } from 'square';
 
 import {
   type AbstractExpressionModifierPlacementExpression,
+  type CreateIOptionRequest,
   FindHasAnyModifierExpressionsForMTID,
   FindModifierPlacementExpressionsForMTID,
   type ICatalog,
@@ -30,12 +31,9 @@ import type { SquareService } from '../square/square.service';
 
 import {
   LocationsConsidering3pFlag,
-  type UncommitedOption,
   type UpdateModifierOptionProps,
   type UpdateModifierTypeProps,
 } from './catalog.types';
-
-export type { UncommitedOption, UpdateModifierOptionProps, UpdateModifierTypeProps };
 
 // ============================================================================
 // Dependencies Interface
@@ -82,10 +80,10 @@ const getLocationsConsidering3pFlag = (deps: ModifierDeps, is3p: boolean) =>
 
 export const validateOption = (
   modifierType: Pick<IOptionType, 'max_selected'>,
-  modifierOption: Partial<UncommitedOption>,
+  modifierOption: Pick<IOption, 'metadata'>,
 ) => {
   if (modifierType.max_selected === 1) {
-    return !modifierOption.metadata || (!modifierOption.metadata.allowOTS && !modifierOption.metadata.can_split);
+    return (!modifierOption.metadata.allowOTS && !modifierOption.metadata.can_split);
   }
   return true;
 };
@@ -97,7 +95,7 @@ export const validateOption = (
 export const createModifierType = async (
   deps: ModifierDeps,
   modifierType: Omit<IOptionType, 'id'>,
-  options: UncommitedOption[],
+  options: CreateIOptionRequest[],
 ) => {
   // validate options
   options.forEach((opt) => {
