@@ -11,7 +11,7 @@ import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Typography, { type TypographyProps } from '@mui/material/Typography';
 
-import { CategoryDisplay, ShowTemporarilyDisabledProducts, type VisibleProductItem } from '@wcp/wario-shared';
+import { CategoryDisplay, ShowTemporarilyDisabledProducts, type VisibleProductItem } from '@wcp/wario-shared/logic';
 import { scrollToElementOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import {
@@ -58,7 +58,7 @@ function WMenuSection({ categoryId, fulfillmentId }: WMenuDisplayProps) {
 
   return (
     <Box sx={{ pt: 0 }}>
-      {subtitle !== null && <Typography variant="h6" dangerouslySetInnerHTML={{ __html: subtitle }} />}
+      {subtitle && <Typography variant="h6" dangerouslySetInnerHTML={{ __html: subtitle }} />}
       {products.map((item) => (
         <WMenuProductInstanceDisplay item={item} fulfillmentId={fulfillmentId} key={item.productInstance.id} />
       ))}

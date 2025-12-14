@@ -12,7 +12,7 @@ import {
   IsSomethingDisabledForFulfillment,
   MoneyToDisplayString,
   SortAndFilterModifierOptions,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import {
   useCatalogSelectors,
   useModifierTypeById,

@@ -1,5 +1,5 @@
 import { ModifierOptionTooltip as ModifierOptionTooltipBase } from '@wcp/wario-fe-ux-shared';
-import { type ICatalogSelectors, type IOption, type OptionEnableState, type WCPProduct } from '@wcp/wario-shared';
+import { type ICatalogSelectors, type IOption, type OptionEnableState, type WCPProduct } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useFulfillments } from '@wcp/wario-ux-shared/query';
 
 interface ModifierOptionTooltipProps {

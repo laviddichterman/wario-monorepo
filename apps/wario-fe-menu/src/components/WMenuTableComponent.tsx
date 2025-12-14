@@ -7,7 +7,7 @@ import type { GridEventListener, GridFilterModel, GridRowId } from '@mui/x-data-
 import { DataGridPremium } from '@mui/x-data-grid-premium/DataGridPremium';
 import { useKeepGroupedColumnsHidden } from '@mui/x-data-grid-premium/hooks';
 
-import { ShowTemporarilyDisabledProducts } from '@wcp/wario-shared';
+import { ShowTemporarilyDisabledProducts } from '@wcp/wario-shared/logic';
 import { useVisibleProductsInCategory } from '@wcp/wario-ux-shared/query';
 import { Separator, WarioToggleButton } from '@wcp/wario-ux-shared/styled';
 
