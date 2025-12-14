@@ -17,20 +17,22 @@
 
 // Catalog test helpers (wraps @wcp/wario-shared/testing)
 export {
-  asUncommittedOption,
-  asUncommittedOptionType,
-  asUncommittedProduct,
-  asUncommittedProductInstance,
   createCatalogWithModifiers,
   createMinimalCatalogOptions,
   createMockCatalog,
   type CreateMockCatalogOptions,
   createMockCatalogSelectorsFromArrays,
   createMockCategory,
+  createMockCreateOptionRequest,
+  createMockCreateOptionTypeRequest,
+  createMockCreateProductInstanceRequest,
+  createMockCreateProductRequest,
   createMockOption,
   createMockOptionType,
   createMockProduct,
   createMockProductInstance,
+  createMockUpdateProductInstanceRequest,
+  createMockUpdateProductRequest,
   setupMockCatalog,
 } from './catalog-test-helpers';
 

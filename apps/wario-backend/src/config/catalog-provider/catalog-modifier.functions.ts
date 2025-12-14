@@ -1,10 +1,10 @@
 import { chunk } from 'es-toolkit/compat';
-import type { PinoLogger } from 'nestjs-pino';
-import type { CatalogIdMapping, CatalogObject } from 'square';
+import { type PinoLogger } from 'nestjs-pino';
+import type { BatchDeleteCatalogObjectsResponse, CatalogIdMapping, CatalogObject } from 'square';
 
 import {
   type AbstractExpressionModifierPlacementExpression,
-  type CreateIOptionRequest,
+  type CreateIOptionTypeRequestBody,
   FindHasAnyModifierExpressionsForMTID,
   FindModifierPlacementExpressionsForMTID,
   type ICatalog,
@@ -13,7 +13,13 @@ import {
   type IOptionTypeDisplayFlags,
   type IProductInstanceFunction,
   type KeyValue,
+  type UpdateIOptionProps,
+  type UpdateIOptionRequestBody,
+  type UpdateIOptionTypeProps,
+  type UpdateIOptionTypeRequestBody,
 } from '@wcp/wario-shared';
+
+import { type DeleteProductInstanceFunctionResult } from 'src/config/catalog-provider/catalog-function.functions';
 
 import type { IOptionTypeRepository } from '../../repositories/interfaces/option-type.repository.interface';
 import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';
@@ -27,13 +33,9 @@ import {
   IdMappingsToExternalIds,
   ModifierTypeToSquareCatalogObject,
 } from '../square-wario-bridge';
-import type { SquareService } from '../square/square.service';
+import type { SquareProviderApiCallReturnValue, SquareService } from '../square/square.service';
 
-import {
-  LocationsConsidering3pFlag,
-  type UpdateModifierOptionProps,
-  type UpdateModifierTypeProps,
-} from './catalog.types';
+import { LocationsConsidering3pFlag } from './catalog.types';
 
 // ============================================================================
 // Dependencies Interface
@@ -58,12 +60,17 @@ export interface ModifierDeps {
   syncOptions: () => Promise<boolean>;
   syncProductInstances: () => Promise<boolean>;
   recomputeCatalog: () => void;
-  batchDeleteCatalogObjectsFromExternalIds: (ids: KeyValue[]) => Promise<unknown>;
-  updateProductsReferencingModifierTypeId: (ids: string[]) => Promise<unknown>;
-  updateProductInstancesForOptionChanges: (ids: string[]) => Promise<unknown>;
-  removeModifierTypeFromProducts: (mt_id: string) => Promise<unknown>;
-  removeModifierOptionFromProductInstances: (modifierTypeId: string, mo_id: string) => Promise<unknown>;
-  deleteProductInstanceFunction: (pifId: string, suppressRecompute: boolean) => Promise<unknown>;
+  batchDeleteCatalogObjectsFromExternalIds: (
+    ids: KeyValue[],
+  ) => Promise<true | SquareProviderApiCallReturnValue<BatchDeleteCatalogObjectsResponse>>;
+  updateProductsReferencingModifierTypeId: (ids: string[]) => Promise<void>;
+  updateProductInstancesForOptionChanges: (ids: string[]) => Promise<void>;
+  removeModifierTypeFromProducts: (mt_id: string) => Promise<void>;
+  removeModifierOptionFromProductInstances: (modifierTypeId: string, mo_id: string) => Promise<void>;
+  deleteProductInstanceFunction: (
+    pifId: string,
+    suppressRecompute: boolean,
+  ) => Promise<DeleteProductInstanceFunctionResult | null>;
 }
 
 // ============================================================================
@@ -83,7 +90,7 @@ export const validateOption = (
   modifierOption: Pick<IOption, 'metadata'>,
 ) => {
   if (modifierType.max_selected === 1) {
-    return (!modifierOption.metadata.allowOTS && !modifierOption.metadata.can_split);
+    return !modifierOption.metadata.allowOTS && !modifierOption.metadata.can_split;
   }
   return true;
 };
@@ -92,56 +99,54 @@ export const validateOption = (
 // Operations
 // ============================================================================
 
-export const createModifierType = async (
-  deps: ModifierDeps,
-  modifierType: Omit<IOptionType, 'id'>,
-  options: CreateIOptionRequest[],
-) => {
+export const createModifierType = async (deps: ModifierDeps, body: CreateIOptionTypeRequestBody) => {
+  const options = body.options || [];
   // validate options
   options.forEach((opt) => {
-    if (!validateOption(modifierType, opt)) {
+    if (!validateOption(body, opt)) {
       throw Error('Failed validation on modifier option in a single select modifier type');
     }
   });
 
-  const created = await deps.optionTypeRepository.create({
-    ...modifierType,
-    externalIDs: GetNonSquareExternalIds(modifierType.externalIDs),
-  });
-  const modifierTypeId = created.id;
-  await deps.syncModifierTypes();
+  // we need to filter these external IDs because it'll interfere with adding the new modifier to the catalog
+  // Options array order in the request defines the display order
+  const adjustedOptions: Omit<IOption, 'id'>[] = options.map((opt) => ({
+    ...(opt as Omit<IOption, 'id'>),
+    externalIDs: GetNonSquareExternalIds(opt.externalIDs),
+  }));
 
-  if (options.length > 0) {
-    // we need to filter these external IDs because it'll interfere with adding the new modifier to the catalog
-    // Options array order in the request defines the display order
-    const adjustedOptions: Omit<IOption, 'id'>[] = options.map((opt) => ({
-      ...opt,
-      externalIDs: GetNonSquareExternalIds(opt.externalIDs),
-    }));
-
-    const createdOptions = await deps.optionRepository.bulkCreate(adjustedOptions);
-    // Update the modifier type with the new option IDs in order
-    await deps.optionTypeRepository.update(modifierTypeId, {
-      options: createdOptions.map((o) => o.id),
-    });
-    await deps.syncOptions();
-    await deps.syncModifierTypes();
-    deps.recomputeCatalog();
-    await updateModifierType(deps, { id: modifierTypeId, modifierType: {} });
+  const createdOptions = adjustedOptions.length > 0 ? await deps.optionRepository.bulkCreate(adjustedOptions) : [];
+  if (createdOptions.length > 0) {
+    deps.logger.debug(
+      {
+        options: createdOptions,
+      },
+      'Created options',
+    );
   }
+  const optionIds = createdOptions.map((o) => o.id);
+
+  const created = await deps.optionTypeRepository.create({
+    ...(body as Omit<IOptionType, 'id' | 'options'>),
+    options: optionIds,
+    externalIDs: GetNonSquareExternalIds(body.externalIDs),
+  });
+
+  await deps.syncOptions();
+  await deps.syncModifierTypes();
   deps.recomputeCatalog();
   return created;
 };
 
 export const batchUpdateModifierType = async (
   deps: ModifierDeps,
-  batches: UpdateModifierTypeProps[],
+  batches: UpdateIOptionTypeProps[],
   suppressFullRecomputation: boolean,
   updateModifierOptionsAndProducts: boolean,
-): Promise<(IOptionType | null)[]> => {
+): Promise<IOptionType[] | null> => {
   deps.logger.debug(
     {
-      batches: batches.map((x) => ({ id: x.id, changes: x.modifierType })),
+      batches,
     },
     'Updating modifier type(s)',
   );
@@ -149,7 +154,11 @@ export const batchUpdateModifierType = async (
   // 1. Get old modifier type and options
   // create a merged modifier type and determine if we need to update modifier options and products
   const batchData = batches.map((b) => {
-    const oldMT = deps.catalog.modifiers[b.id] as IOptionType;
+    const oldMT = deps.catalog.modifiers[b.id];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!oldMT) {
+      throw Error(`Modifier type ${b.id} not found`);
+    }
     let thisBatchUpdateModifierOptionsAndProducts = updateModifierOptionsAndProducts;
     if (b.modifierType.options) {
       // TODO DETERMINE WHAT THIS MEANS IF THE LIST REMOVES OPTIONS
@@ -170,12 +179,16 @@ export const batchUpdateModifierType = async (
       thisBatchUpdateModifierOptionsAndProducts = true;
     }
     // Get options that belong to this modifier type from its options array
+    const { id: _mtid, ...oldModifierTypeData } = oldMT;
     const optionsForMT = oldMT.options.map((optId) => deps.modifierOptions.find((o) => o.id === optId) as IOption);
     return {
       batch: b,
       oldMT,
-      updatedModifierType: { ...oldMT, ...b.modifierType },
-      updatedOptions: optionsForMT.map((o) => ({ ...o, ...(b.modifierType.displayFlags as IOptionTypeDisplayFlags) })),
+      updatedModifierType: { ...oldModifierTypeData, ...(b.modifierType as UpdateIOptionTypeRequestBody) },
+      updatedOptions: optionsForMT.map((o) => {
+        const { id: oid, ...oldOptionData } = o;
+        return { id: oid, data: { ...oldOptionData, ...(b.modifierType.displayFlags as IOptionTypeDisplayFlags) } };
+      }),
       updateModifierOptionsAndProducts: thisBatchUpdateModifierOptionsAndProducts,
     };
   });
@@ -189,7 +202,7 @@ export const batchUpdateModifierType = async (
   batchData.forEach((b) => {
     existingSquareExternalIds.push(...GetSquareExternalIds(b.oldMT.externalIDs).map((x) => x.value));
     existingSquareExternalIds.push(
-      ...b.updatedOptions.flatMap((o) => GetSquareExternalIds(o.externalIDs)).map((x) => x.value),
+      ...b.updatedOptions.flatMap((o) => GetSquareExternalIds(o.data.externalIDs)).map((x) => x.value),
     );
   });
 
@@ -204,7 +217,7 @@ export const batchUpdateModifierType = async (
         { err: batchRetrieveCatalogObjectsResponse.error },
         'Getting current square CatalogObjects failed',
       );
-      return batches.map((_) => null);
+      return null;
     }
     existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
   }
@@ -216,8 +229,8 @@ export const batchUpdateModifierType = async (
       ModifierTypeToSquareCatalogObject(
         getLocationsConsidering3pFlag(deps, b.updatedModifierType.displayFlags.is3p),
         b.updatedModifierType,
-        i, // modifierTypeOrdinal
-        b.updatedOptions,
+        b.updatedModifierType.ordinal,
+        b.updatedOptions.map((o) => o.data),
         existingSquareObjects,
         ('000' + String(i)).slice(-3),
       ),
@@ -241,6 +254,7 @@ export const batchUpdateModifierType = async (
 
   const updatedWarioObjects = batchData.map((batch, batchId) => {
     return {
+      id: batch.batch.id,
       modifierType: {
         ...batch.updatedModifierType,
         externalIDs: [
@@ -249,33 +263,34 @@ export const batchUpdateModifierType = async (
         ],
       },
       options: batch.updatedOptions.map((opt, i) => ({
-        ...opt,
-        externalIDs: [
-          ...opt.externalIDs,
-          ...IdMappingsToExternalIds(
-            mappings,
-            `${('000' + String(batchId)).slice(-3)}S${('000' + String(i)).slice(-3)}S`,
-          ),
-        ],
+        id: opt.id,
+        data: {
+          ...opt.data,
+          externalIDs: [
+            ...opt.data.externalIDs,
+            ...IdMappingsToExternalIds(
+              mappings,
+              `${('000' + String(batchId)).slice(-3)}S${('000' + String(i)).slice(-3)}S`,
+            ),
+          ],
+        },
       })),
     };
   });
 
-  // Update options using repository
-  await Promise.all(
-    updatedWarioObjects
-      .flatMap((b) => b.options)
-      .map(async (opt) => {
-        return deps.optionRepository.update(opt.id, opt);
-      }),
-  );
+  const newOptions = updatedWarioObjects.flatMap((b) => b.options);
+  const updatedOptionsCount = await deps.optionRepository.bulkUpdate(newOptions);
+  if (updatedOptionsCount !== newOptions.length) {
+    deps.logger.error({ updatedOptionsCount, newOptions }, 'Failed to update options in batch');
+    return null;
+  }
 
-  // Update modifier types using repository
-  const updatedModifierTypes = await Promise.all(
-    updatedWarioObjects.map(async (b) => {
-      return deps.optionTypeRepository.update(b.modifierType.id, b.modifierType);
-    }),
-  );
+  const updatedModifierTypes = updatedWarioObjects.map((x) => ({ id: x.id, data: x.modifierType }));
+  const updatedModifierTypeCount = await deps.optionTypeRepository.bulkUpdate(updatedModifierTypes);
+  if (updatedModifierTypeCount !== updatedModifierTypes.length) {
+    deps.logger.error({ updatedModifierTypeCount, updatedModifierTypes }, 'Failed to update modifier types in batch');
+    return null;
+  }
 
   await deps.syncModifierTypes();
   await deps.syncOptions();
@@ -283,17 +298,18 @@ export const batchUpdateModifierType = async (
   if (!suppressFullRecomputation) {
     deps.recomputeCatalog();
     await deps.updateProductsReferencingModifierTypeId(
-      batchData.filter((x) => x.updateModifierOptionsAndProducts).map((x) => x.updatedModifierType.id),
+      batchData.filter((x) => x.updateModifierOptionsAndProducts).map((x) => x.batch.id),
     );
     await deps.syncProductInstances();
 
     deps.recomputeCatalog();
   }
-  return updatedModifierTypes;
+  return updatedModifierTypes.map((x) => ({ id: x.id, ...x.data }));
 };
 
-export const updateModifierType = async (deps: ModifierDeps, props: UpdateModifierTypeProps) => {
-  return (await batchUpdateModifierType(deps, [props], false, false))[0];
+export const updateModifierType = async (deps: ModifierDeps, props: UpdateIOptionTypeProps) => {
+  const updated = await batchUpdateModifierType(deps, [props], false, false);
+  return updated ? updated[0] : null;
 };
 
 export const deleteModifierType = async (deps: ModifierDeps, mt_id: string) => {
@@ -371,10 +387,10 @@ export const createOption = async (deps: ModifierDeps, modifierTypeId: string, m
   return deps.catalog.options[created.id];
 };
 
-export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: UpdateModifierOptionProps[]) => {
+export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: UpdateIOptionProps[]) => {
   deps.logger.debug(
     {
-      batches: batches.map((b) => ({ id: b.id, updates: b.modifierOption })),
+      batches: batches.map((b) => ({ id: b.id, updates: b.option })),
     },
     'Request to update ModifierOption(s)',
   );
@@ -386,7 +402,8 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
   const batchesInfo = batches.map((batch) => {
     const modifierType = deps.catalog.modifiers[batch.modifierTypeId];
     const oldOption = deps.catalog.options[batch.id];
-    const updatedOption = { ...(oldOption as IOption), ...batch.modifierOption };
+    const { id: _id, ...oldOptionData } = oldOption;
+    const updatedOption = { ...oldOptionData, ...(batch.option as UpdateIOptionRequestBody) };
     return {
       batch,
       modifierType,
@@ -403,29 +420,29 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
       deps.logger.error({ option: b.updatedOption }, errorDetail);
       throw Error(errorDetail);
     }
-    if (b.batch.modifierOption.metadata) {
-      if (!b.batch.modifierOption.metadata.allowHeavy && b.oldOption.metadata.allowHeavy) {
+    if (b.batch.option.metadata) {
+      if (!b.batch.option.metadata.allowHeavy && b.oldOption.metadata.allowHeavy) {
         const kv = b.updatedOption.externalIDs.splice(
           GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_HEAVY'),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kv.value);
       }
-      if (!b.batch.modifierOption.metadata.allowLite && b.oldOption.metadata.allowLite) {
+      if (!b.batch.option.metadata.allowLite && b.oldOption.metadata.allowLite) {
         const kv = b.updatedOption.externalIDs.splice(
           GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_LITE'),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kv.value);
       }
-      if (!b.batch.modifierOption.metadata.allowOTS && b.oldOption.metadata.allowOTS) {
+      if (!b.batch.option.metadata.allowOTS && b.oldOption.metadata.allowOTS) {
         const kv = b.updatedOption.externalIDs.splice(
           GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_OTS'),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kv.value);
       }
-      if (!b.batch.modifierOption.metadata.can_split && b.oldOption.metadata.can_split) {
+      if (!b.batch.option.metadata.can_split && b.oldOption.metadata.can_split) {
         const kvL = b.updatedOption.externalIDs.splice(
           GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_LEFT'),
           1,
@@ -465,7 +482,7 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
         { err: batchRetrieveCatalogObjectsResponse.error },
         'Getting current square CatalogObjects failed',
       );
-      return batches.map((_) => null);
+      return null;
     }
     existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
   }
@@ -496,37 +513,45 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
     );
     if (!upsertResponse.success) {
       deps.logger.error({ err: upsertResponse.error }, 'Failed to update square modifiers');
-      return batches.map((_) => null);
+      return null;
     }
     mappings = upsertResponse.result.idMappings;
   }
 
-  const updated = await Promise.all(
-    batchesInfo.map(async (b, i) => {
-      const updateData = {
-        ...b.batch.modifierOption,
+  const updates = batchesInfo.map((b, i) => {
+    return {
+      ...b,
+      updatedOption: {
+        ...b.updatedOption,
         externalIDs: [
           ...b.updatedOption.externalIDs,
           ...IdMappingsToExternalIds(mappings, ('000' + String(i)).slice(-3)),
         ],
-      };
-      return deps.optionRepository.update(b.batch.id, updateData);
-    }),
+      },
+    };
+  });
+  const updatedCount = await deps.optionRepository.bulkUpdate(
+    updates.map((x) => ({ id: x.batch.id, data: x.updatedOption })),
   );
-
-  const updatedOptions = batchesInfo.map((x) => x.batch.id);
+  if (updatedCount !== updates.length) {
+    deps.logger.error({ updatedCount, updates }, 'Failed to update options in batch');
+    return null;
+  }
   await deps.syncOptions();
-
+  deps.logger.debug({ updatedCount }, 'Updated options in batch');
   // Delegate product instance updates to CatalogProviderService
-  await deps.updateProductInstancesForOptionChanges(updatedOptions);
-
+  const updatedOptionsIds = batchesInfo.map((x) => x.batch.id);
+  await deps.updateProductInstancesForOptionChanges(updatedOptionsIds);
   deps.recomputeCatalog();
-
-  return updated;
+  return updates.map((x) => ({
+    id: x.batch.id,
+    ...x.updatedOption,
+  }));
 };
 
-export const updateModifierOption = async (deps: ModifierDeps, props: UpdateModifierOptionProps) => {
-  return (await batchUpdateModifierOption(deps, [props]))[0];
+export const updateModifierOption = async (deps: ModifierDeps, props: UpdateIOptionProps) => {
+  const updates = await batchUpdateModifierOption(deps, [props]);
+  return updates ? updates[0] : null;
 };
 
 export const deleteModifierOption = async (

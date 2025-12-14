@@ -142,9 +142,16 @@ export const batchUpsertProduct = async (
   const updateBatches = indexedBatches.filter((b) => isUpdateProduct(b.product)) as IndexedUpdateIProductRequest[];
   const updateBatchesWithSplitInstances: IndexedUpdateProductWithSplitInstances[] = updateBatches.map((b) => {
     const indexedInstances = b.product.instances.map((x, i) => ({ instance: x, index: i }));
-    const noOpInstances = indexedInstances.filter((b) => typeof b.instance === 'string') as { instance: string; index: number }[];
-    const updateIProductInstances = indexedInstances.filter((c) => c.instance && isUpdateProductInstance(c.instance)) as { instance: UpdateIProductInstanceRequest; index: number }[];
-    const insertIProductInstances = indexedInstances.filter((c) => c.instance && isCreateProductInstance(c.instance)) as { instance: CreateIProductInstanceRequest; index: number }[];
+    const noOpInstances = indexedInstances.filter((b) => typeof b.instance === 'string') as {
+      instance: string;
+      index: number;
+    }[];
+    const updateIProductInstances = indexedInstances.filter(
+      (c) => c.instance && isUpdateProductInstance(c.instance),
+    ) as { instance: UpdateIProductInstanceRequest; index: number }[];
+    const insertIProductInstances = indexedInstances.filter(
+      (c) => c.instance && isCreateProductInstance(c.instance),
+    ) as { instance: CreateIProductInstanceRequest; index: number }[];
     return {
       ...b,
       noOpInstances,
@@ -154,89 +161,83 @@ export const batchUpsertProduct = async (
   });
   const insertBatches = indexedBatches.filter((b) => !isUpdateProduct(b.product)) as IndexedCreateIProductRequest[];
 
-  // validate everything and error out if needed
-  if (
-    !IsSetOfUniqueStrings(updateBatches.map((x) => x.product.id)) || //an IProduct to update can only appear once, otherwise an error is returned.
-    updateBatchesWithSplitInstances.reduce((acc, b) => {
-      const noOpInstances = b.noOpInstances;
-      const updateIProductInstances = b.updateIProductInstances;
-      const insertInstances = b.insertIProductInstances;
-      const existingProduct = deps.catalog.products[b.product.id];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (existingProduct === undefined) { // check product being updated exists
-        deps.logger.error(`Product ${b.product.id} does not exist`);
-        return false;
-      }
-      const referencedProductInstanceIds = [...updateIProductInstances.map((x) => x.instance.id), ...noOpInstances.map((x) => x.instance)];
-      if (!IsSetOfUniqueStrings(referencedProductInstanceIds)) {
-        deps.logger.error(`Product ${b.product.id} contains duplicate product instance ids`);
-        return false;
-      }
-      const updateInstancesContainsAllExistingProductInstances = referencedProductInstanceIds.every((x) => existingProduct.instances.includes(x));
-      if (!updateInstancesContainsAllExistingProductInstances) {
-        deps.logger.error(`Product ${b.product.id} does not contain all existing product instances`);
-        return false;
-      }
-      if (!referencedProductInstanceIds.reduce((acc, x) => {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-        if (!deps.catalog.productInstances[x]) {
-          deps.logger.error(`Product ${b.product.id} references non-existent product instance ${x}`);
-          return false;
-        }
-        return acc;
-      }, true)) {
-        return false;
-      }
-      if (!updateIProductInstances.reduce(
-        (acc, ins) => {
-          if (!ValidateModifiersForInstance(
-            b.product.modifiers ?? deps.catalog.products[b.product.id].modifiers,
-            ins.instance.modifiers ?? deps.catalog.productInstances[ins.instance.id].modifiers,
-          )) {
-            deps.logger.error(`Product ${b.product.id} has invalid modifiers for instance ${ins.instance.id}`);
-            return false;
-          }
-          return acc;
-        }, false,
-      )) {
-        return false;
-      }
-      if (!insertInstances.reduce(
-        (acc, ins) => {
-          if (!ValidateModifiersForInstance(
-            b.product.modifiers ?? deps.catalog.products[b.product.id].modifiers,
-            ins.instance.modifiers,
-          )) {
-            deps.logger.error({ ins }, `Product ${b.product.id} has invalid modifiers for instance`);
-            return false;
-          }
-          return acc;
-        }, false,
-      )) {
-        return false;
-      }
-      return acc;
-    }, false) ||
-    insertBatches.reduce((acc, b) => {
-      if (b.product.instances.length === 0) {
-        deps.logger.error({ b }, 'Product has no instances');
-        return false;
-      }
-      if (!b.product.instances.reduce(
-        (acc, ins) => {
-          if (!ValidateModifiersForInstance(b.product.modifiers, ins.modifiers)) {
-            deps.logger.error({ instance: ins }, 'Invalid modifiers for instance');
-            return false;
-          }
-          return acc;
-        }, false,
-      )) {
-        return false;
-      }
-      return acc;
-    }, false)) {
+  // validate everything and error out if needed (OR of any failure cases)
+  // validate update batches
+  const updateProductIds = updateBatches.map((x) => x.product.id);
+  if (!IsSetOfUniqueStrings(updateProductIds)) {
+    //an IProduct to update can only appear once, otherwise an error is returned.
+    deps.logger.error({ IDs: updateProductIds }, `Batch request specifies multiple of the same Product ID`);
     return null;
   }
+  for (const b of updateBatchesWithSplitInstances) {
+    const noOpInstances = b.noOpInstances;
+    const updateIProductInstances = b.updateIProductInstances;
+    const insertInstances = b.insertIProductInstances;
+    if (!Object.hasOwn(deps.catalog.products, b.product.id)) {
+      // check product being updated exists
+      deps.logger.error(`Product ${b.product.id} does not exist`);
+      return null;
+    }
+    const referencedProductInstanceIds = [
+      ...updateIProductInstances.map((x) => x.instance.id),
+      ...noOpInstances.map((x) => x.instance),
+    ];
+    if (!IsSetOfUniqueStrings(referencedProductInstanceIds)) {
+      deps.logger.error(`Product ${b.product.id} contains duplicate product instance ids`);
+      return null;
+    }
+    const existingProduct = deps.catalog.products[b.product.id];
+    const updateInstancesContainsAllExistingProductInstances = referencedProductInstanceIds.every((x) =>
+      existingProduct.instances.includes(x),
+    );
+    if (!updateInstancesContainsAllExistingProductInstances) {
+      deps.logger.error(`Product ${b.product.id} does not contain all existing product instances`);
+      return null;
+    }
+    for (const productInstanceId of referencedProductInstanceIds) {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!deps.catalog.productInstances[productInstanceId]) {
+        deps.logger.error(`Product Instance with id ${productInstanceId} does not exist`);
+        return null;
+      }
+    }
+    for (const update of updateIProductInstances) {
+      if (
+        !ValidateModifiersForInstance(
+          b.product.modifiers ?? deps.catalog.products[b.product.id].modifiers,
+          update.instance.modifiers ?? deps.catalog.productInstances[update.instance.id].modifiers,
+        )
+      ) {
+        deps.logger.error(`Product ${b.product.id} has invalid modifiers for instance ${update.instance.id}`);
+        return null;
+      }
+    }
+    for (const insert of insertInstances) {
+      if (
+        !ValidateModifiersForInstance(
+          b.product.modifiers ?? deps.catalog.products[b.product.id].modifiers,
+          insert.instance.modifiers,
+        )
+      ) {
+        deps.logger.error({ instance: insert.instance }, `Product ${b.product.id} has invalid modifiers for instance`);
+        return null;
+      }
+    }
+  }
+  // validate insert product batches
+  for (const b of insertBatches) {
+    if (b.product.instances.length === 0) {
+      deps.logger.error({ b }, 'Product has no instances');
+      return null;
+    }
+    for (const instance of b.product.instances) {
+      if (!ValidateModifiersForInstance(b.product.modifiers, instance.modifiers)) {
+        deps.logger.error({ instance }, 'Invalid modifiers for instance');
+        return null;
+      }
+    }
+  }
+
   // validation passed! on to the work
 
   const catalogObjectsForUpsert: CatalogObject[] = [];
@@ -250,9 +251,7 @@ export const batchUpsertProduct = async (
     const oldProductEntry = deps.catalog.products[b.product.id];
     let removedModifierTypes: string[] = [];
     let addedModifierTypes = false;
-    const adjustedPrice =
-
-      b.product.price && b.product.price !== oldProductEntry.price ? b.product.price : null;
+    const adjustedPrice = b.product.price && b.product.price !== oldProductEntry.price ? b.product.price : null;
     const adjustedPrinterGroup = b.product.printerGroup !== oldProductEntry.printerGroup;
 
     if (b.product.modifiers) {
@@ -261,7 +260,7 @@ export const batchUpsertProduct = async (
       removedModifierTypes = oldModifierTypes.filter((x) => !newModifierTypes.includes(x));
       addedModifierTypes = newModifierTypes.filter((x) => !oldModifierTypes.includes(x)).length > 0;
     }
-    const mergedProduct = { ...(oldProductEntry as IProduct), ...(b.product as UpdateIProductRequest) };
+    const mergedProduct = { ...oldProductEntry, ...(b.product as UpdateIProductRequest) };
 
     const adjustedInsertInstances = b.insertIProductInstances.map((x) => {
       // we need to filter these external IDs because it'll interfere with adding the new product to the catalog
@@ -288,7 +287,7 @@ export const batchUpsertProduct = async (
         ),
     );
 
-    // aggregate implicit updates of product instances, 
+    // aggregate implicit updates of product instances,
     const implicitUpdateInstances: { instance: IProductInstance; index: number }[] = b.noOpInstances
       .map((x) => ({ instance: deps.catalog.productInstances[x.instance], index: x.index }))
       .filter(
@@ -300,7 +299,7 @@ export const batchUpsertProduct = async (
       )
       .map((pi) => ({
         instance: {
-          ...(pi.instance as IProductInstance),
+          ...pi.instance,
           modifiers: pi.instance.modifiers.filter((x) => !removedModifierTypes.includes(x.modifierTypeId)),
         },
         index: pi.index,
@@ -317,9 +316,7 @@ export const batchUpsertProduct = async (
       ...b.updateIProductInstances
         .map((x) =>
           !deps.catalog.productInstances[x.instance.id].displayFlags.pos.hide && x.instance.displayFlags?.pos.hide
-            ? GetSquareExternalIds(
-              x.instance.externalIDs ?? deps.catalog.productInstances[x.instance.id].externalIDs,
-            )
+            ? GetSquareExternalIds(x.instance.externalIDs ?? deps.catalog.productInstances[x.instance.id].externalIDs)
             : [],
         )
         .flat(),
@@ -340,7 +337,7 @@ export const batchUpsertProduct = async (
       if (needToDeleteSquareCatalogItem) {
         externalIdsToDelete.push(...GetSquareExternalIds(mergedExternalIds));
       }
-      return { index: x.index, instance: { ...(oldInstance as IProductInstance), ...x.instance, externalIDs: newExternalIds } };
+      return { index: x.index, instance: { ...oldInstance, ...x.instance, externalIDs: newExternalIds } };
     });
 
     const adjustedUpdatedInstances: { instance: IProductInstance; index: number }[] = [
@@ -385,31 +382,31 @@ export const batchUpsertProduct = async (
         return x.instance.displayFlags.pos.hide
           ? []
           : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              x.instance,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              existingSquareObjects,
-              ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
-            ),
-          ];
+              ProductInstanceToSquareCatalogObject(
+                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+                b.product,
+                x.instance,
+                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+                deps.catalogSelectors,
+                existingSquareObjects,
+                ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
+              ),
+            ];
       });
       const insertCatalogObjects = b.insertInstances.flatMap((x, k) => {
         return x.instance.displayFlags.pos.hide
           ? []
           : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              x.instance,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              [],
-              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
-            ),
-          ];
+              ProductInstanceToSquareCatalogObject(
+                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+                b.product,
+                x.instance,
+                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+                deps.catalogSelectors,
+                [],
+                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
+              ),
+            ];
       });
       return [...updateCatalogObjects, ...insertCatalogObjects];
     }),
@@ -482,45 +479,58 @@ export const batchUpsertProduct = async (
               ...x.instance.externalIDs,
               ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
             ],
-          }
+          },
         };
       }),
     };
-  }) as { index: number; product: IProduct; instances: { index: number; instance: IProductInstance }[]; pureNoOpInstances: { id: string; index: number }[] }[];
+  }) as {
+    index: number;
+    product: IProduct;
+    instances: { index: number; instance: IProductInstance }[];
+    pureNoOpInstances: { id: string; index: number }[];
+  }[];
 
   // Prepare insert instances for update product batches, we need to track the index in the instances array for these
   const updateBatchesInsertInstances: { instance: Omit<IProductInstance, 'id'>; batch: number; index: number }[][] =
-    adjustedUpdateBatches.map((b) => b.insertInstances.map((instance, j) => ({
-      instance: {
-        ...instance.instance,
-        productId: b.product.id,
-        externalIDs: [
-          ...instance.instance.externalIDs,
-          ...IdMappingsToExternalIds(
-            mappings,
-            ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + j)).slice(-7),
-          ),
-        ],
-      },
-      batch: b.index,
-      index: instance.index
-    })));
+    adjustedUpdateBatches.map((b) =>
+      b.insertInstances.map((instance, j) => ({
+        instance: {
+          ...instance.instance,
+          productId: b.product.id,
+          externalIDs: [
+            ...instance.instance.externalIDs,
+            ...IdMappingsToExternalIds(
+              mappings,
+              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + j)).slice(-7),
+            ),
+          ],
+        },
+        batch: b.index,
+        index: instance.index,
+      })),
+    );
 
   // Create instances for insert batches
-  const insertBatchInsertInstances = adjustedInsertBatches.map((b) => b.instances.map((instance, j) => ({
-    ...instance,
-    externalIDs: [
-      ...instance.externalIDs,
-      ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
-    ],
-  })));
+  const insertBatchInsertInstances = adjustedInsertBatches.map((b) =>
+    b.instances.map((instance, j) => ({
+      ...instance,
+      externalIDs: [
+        ...instance.externalIDs,
+        ...IdMappingsToExternalIds(mappings, ('0000000' + (b.batchIter * 1000 + j)).slice(-7)),
+      ],
+    })),
+  );
 
   // merge the insert instances for both create product and update product batches
   // into a single batch
   const insertBatchInsertInstancesFlat = insertBatchInsertInstances.flat();
   const updateBatchInsertInstancesFlat = updateBatchesInsertInstances.flat();
-  const instanceCreateBatchCall = [...insertBatchInsertInstancesFlat, ...updateBatchInsertInstancesFlat.map(x => x.instance)];
-  const createdInstances = instanceCreateBatchCall.length > 0 ? await deps.productInstanceRepository.bulkCreate(instanceCreateBatchCall) : [];
+  const instanceCreateBatchCall = [
+    ...insertBatchInsertInstancesFlat,
+    ...updateBatchInsertInstancesFlat.map((x) => x.instance),
+  ];
+  const createdInstances =
+    instanceCreateBatchCall.length > 0 ? await deps.productInstanceRepository.bulkCreate(instanceCreateBatchCall) : [];
   if (createdInstances.length) {
     deps.logger.debug({ count: createdInstances.length }, 'Instances creation result');
   }
@@ -552,7 +562,8 @@ export const batchUpsertProduct = async (
       instances: insertBatchInsertInstancesByBatch[i].map((x) => x.id),
     } as IProduct;
   });
-  const createdProducts = createProductBatchCall.length > 0 ? await deps.productRepository.bulkCreate(createProductBatchCall) : [];
+  const createdProducts =
+    createProductBatchCall.length > 0 ? await deps.productRepository.bulkCreate(createProductBatchCall) : [];
 
   // collect the results of the insert batches
   const insertBatchResults = adjustedInsertBatches.map((b, i) => ({
@@ -585,24 +596,23 @@ export const batchUpsertProduct = async (
       id: b.product.id,
       data: {
         ...b.product,
-        instances: instancesArray
-      }
+        instances: instancesArray,
+      },
     };
   }) satisfies {
     id: string;
-    data: Partial<Omit<IProduct, "id">>;
+    data: Partial<Omit<IProduct, 'id'>>;
   }[];
   if (updateProductBatchCall.length) {
     await deps.productRepository.bulkUpdate(updateProductBatchCall);
     deps.logger.debug({ count: updateProductBatchCall.length }, 'Bulk update of products successful');
   }
-  const updateProductInstanceBatchCall = bulkUpdate.flatMap((b) => b.instances.map((pi) => ({ id: pi.instance.id, data: pi.instance })));
+  const updateProductInstanceBatchCall = bulkUpdate.flatMap((b) =>
+    b.instances.map((pi) => ({ id: pi.instance.id, data: pi.instance })),
+  );
   if (updateProductInstanceBatchCall.length) {
     await deps.productInstanceRepository.bulkUpdate(updateProductInstanceBatchCall);
-    deps.logger.debug(
-      { count: updateProductInstanceBatchCall.length },
-      'Bulk update of product instances successful',
-    );
+    deps.logger.debug({ count: updateProductInstanceBatchCall.length }, 'Bulk update of product instances successful');
   }
 
   await Promise.all([deps.syncProducts(), deps.syncProductInstances()]);
@@ -628,10 +638,7 @@ export const batchUpsertProduct = async (
       .map((key) => insertedInstancesMap[Number(key)]);
     // Interleave: the instances in reconstructedBatches are already ordered by their original index,
     // so we just concatenate since insertedInstances go at their designated positions
-    reconstructedBatches[batchIndex].instances = [
-      ...reconstructedBatches[batchIndex].instances,
-      ...insertedInstances,
-    ];
+    reconstructedBatches[batchIndex].instances = [...reconstructedBatches[batchIndex].instances, ...insertedInstances];
   });
 
   return Object.values(reconstructedBatches)
@@ -642,10 +649,7 @@ export const batchUpsertProduct = async (
     }));
 };
 
-export const createProduct = async (
-  deps: ProductDeps,
-  product: CreateIProductRequest
-) => {
+export const createProduct = async (deps: ProductDeps, product: CreateIProductRequest) => {
   const result = await batchUpsertProduct(deps, [product]);
   return result ? result[0] : null;
 };
@@ -764,7 +768,7 @@ export const batchUpdateProductInstance = async (
   deps: ProductDeps,
   batches: UpsertProductInstanceProps[],
   suppress_catalog_recomputation: boolean = false,
-): Promise<(IProductInstance | null)[]> => {
+): Promise<IProductInstance[] | null> => {
   deps.logger.debug(
     {
       batches: batches.map((x) => ({ piid: x.piid, changes: x.productInstance })),
@@ -793,32 +797,35 @@ export const batchUpdateProductInstance = async (
         { err: batchRetrieveCatalogObjectsResponse.error },
         'Getting current square CatalogObjects failed',
       );
-      return batches.map((_) => null);
+      return null;
     }
     existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
   }
 
+  // TODO: get the product instances we need to delete from square because the hide flag changed.
+
   const mappings: CatalogIdMapping[] = [];
   const catalogObjects = batches
     .map((b, i) => {
+      const { id: _id, ...oldProductInstanceData } = oldProductInstances[i];
       const mergedInstance = {
-        ...(oldProductInstances[i] as IProductInstance),
+        ...oldProductInstanceData,
         ...b.productInstance,
       };
       return mergedInstance.displayFlags.pos.hide
         ? []
         : [
-          ProductInstanceToSquareCatalogObject(
-            getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-            b.product,
-            mergedInstance,
-            b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-            deps.catalogSelectors,
-            existingSquareObjects,
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              mergedInstance,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              existingSquareObjects,
 
-            ('000' + i).slice(-3),
-          ),
-        ];
+              ('000' + i).slice(-3),
+            ),
+          ];
     })
     .flat();
   if (catalogObjects.length > 0) {
@@ -829,26 +836,32 @@ export const batchUpdateProductInstance = async (
     );
     if (!upsertResponse.success) {
       deps.logger.error({ err: upsertResponse.error }, 'Failed to update square product');
-      return batches.map((_) => null);
+      return null;
     }
     mappings.push(...(upsertResponse.result.idMappings ?? []));
   }
 
-  const updated = await Promise.all(
-    batches.map(async (b, i) => {
-      const updateData = {
-        ...b.productInstance,
-        externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
-      };
-      return deps.productInstanceRepository.update(b.piid, updateData);
-    }),
-  );
+  const updateBulkProps = batches.map((b, i) => ({
+    id: b.piid,
+    data: {
+      ...b.productInstance,
+      externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
+    },
+  }));
+
+  const updatedCount = await deps.productInstanceRepository.bulkUpdate(updateBulkProps);
+  if (updatedCount !== batches.length) {
+    deps.logger.warn({ updatedCount, batchesLength: batches.length }, 'Failed to update product instance(s)');
+    return null;
+  }
 
   if (!suppress_catalog_recomputation) {
     await deps.syncProductInstances();
     deps.recomputeCatalog();
   }
-  return updated;
+  /// HACK doesn't actually work, need to rewrite this method post migration
+
+  return updateBulkProps.map((b) => ({ ...b.data, id: b.id })) as IProductInstance[];
 };
 
 export const updateProductInstance = async (
@@ -856,7 +869,8 @@ export const updateProductInstance = async (
   props: UpsertProductInstanceProps,
   suppress_catalog_recomputation: boolean = false,
 ) => {
-  return (await batchUpdateProductInstance(deps, [props], suppress_catalog_recomputation))[0];
+  const update = await batchUpdateProductInstance(deps, [props], suppress_catalog_recomputation);
+  return update ? update[0] : null;
 };
 
 export const deleteProductInstance = async (

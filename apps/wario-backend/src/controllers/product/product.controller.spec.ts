@@ -15,7 +15,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 
 import {
-  asUncommittedProduct,
+  createMockCreateProductRequest,
   createMockProduct,
   createMockProductInstance,
   mockCatalogProviderService,
@@ -75,10 +75,7 @@ describe('ProductController', () => {
       const mockProduct = createMockProduct({ id: 'prod-new' });
       (mockCatalogService.CreateProduct as jest.Mock).mockResolvedValue(mockProduct);
 
-      const body = {
-        product: asUncommittedProduct(createMockProduct()),
-        instances: [],
-      };
+      const body = createMockCreateProductRequest();
       const result = await controller.postProductClass(body);
 
       expect(result).toEqual(mockProduct);
@@ -88,10 +85,7 @@ describe('ProductController', () => {
     it('should throw CatalogOperationException when creation fails', async () => {
       (mockCatalogService.CreateProduct as jest.Mock).mockResolvedValue(null);
 
-      const body = {
-        product: asUncommittedProduct(createMockProduct()),
-        instances: [],
-      };
+      const body = createMockCreateProductRequest();
       await expect(controller.postProductClass(body)).rejects.toThrow(CatalogOperationException);
     });
   });

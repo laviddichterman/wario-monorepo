@@ -1,8 +1,10 @@
 import { fileURLToPath } from 'node:url';
 
 import react from '@vitejs/plugin-react-swc';
+import { visualizer } from 'rollup-plugin-visualizer';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
+
 export const PORT = 3002;
 export default defineConfig({
   plugins: [
@@ -18,6 +20,12 @@ export default defineConfig({
         position: 'tl',
         initialIsOpen: false,
       },
+    }),
+    visualizer({
+      filename: './dist/stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
     }),
   ],
   build: { target: 'es2022' },

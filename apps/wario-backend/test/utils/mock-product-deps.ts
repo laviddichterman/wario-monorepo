@@ -6,90 +6,90 @@
 
 import type { PinoLogger } from 'nestjs-pino';
 
-import type { ICatalog, ICatalogSelectors, ICategory, IOption, IOptionType, IProduct, IProductInstance, PrinterGroup } from '@wcp/wario-shared';
-import { createMockCatalogSelectorsFromArrays, MOCK_CATALOG } from '@wcp/wario-shared/testing';
+import type { ICatalogSelectors, IOption, IOptionType } from '@wcp/wario-shared';
+import {
+  createMockCatalog,
+  type CreateMockCatalogOptions,
+  createMockCatalogSelectorsFromArrays,
+  MOCK_CATALOG,
+} from '@wcp/wario-shared/testing';
 
-import type { AppConfigService } from '../../src/config/app-config.service';
+import { type AppConfigService } from 'src/config/app-config.service';
+import { type SquareService } from 'src/config/square/square.service';
+
 import type { ProductDeps } from '../../src/config/catalog-provider/catalog-product.functions';
 import type { DataProviderService } from '../../src/config/data-provider/data-provider.service';
-import type { SquareService } from '../../src/config/square/square.service';
 import type { IProductInstanceRepository } from '../../src/repositories/interfaces/product-instance.repository.interface';
 import type { IProductRepository } from '../../src/repositories/interfaces/product.repository.interface';
 
-import { createMock } from './test-utils';
-
 export interface CreateMockProductDepsOptions {
-  catalog?: ICatalog;
-  catalogSelectors?: ICatalogSelectors;
+  catalog?: CreateMockCatalogOptions;
   modifierTypes?: IOptionType[];
-  categories?: Record<string, ICategory>;
-  printerGroups?: Record<string, PrinterGroup>;
-  productInstanceFunctions?: Record<string, unknown>;
-  squareBatchChunkSize?: number;
+  categories?: Record<string, unknown>;
+  printerGroups?: Record<string, unknown>;
 }
 
+const squareBatchChunkSize = 1000;
+const logger = {
+  info: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+} as unknown as PinoLogger;
+
 /**
- * Creates a mock ProductDeps with all dependencies properly mocked.
- *
- * @example
- * ```typescript
- * const deps = createMockProductDeps({
- *   catalog: MOCK_CATALOG,
- *   modifierTypes: [SIZE_MODIFIER_TYPE, TOPPINGS_MODIFIER_TYPE],
- * });
- *
- * // Mock repository responses
- * (deps.productRepository.bulkCreate as jest.Mock).mockResolvedValue([...]);
- * ```
+ * Creates a mock ProductDeps object for testing batchUpsertProduct.
+ * Uses createMockCatalog for proper catalog object creation.
  */
-export function createMockProductDeps(options: CreateMockProductDepsOptions = {}): jest.Mocked<ProductDeps> {
-  const {
-    catalog = MOCK_CATALOG,
-    catalogSelectors = createMockCatalogSelectorsFromArrays({
-      products: Object.values(MOCK_CATALOG.products) as IProduct[],
-      productInstances: Object.values(MOCK_CATALOG.productInstances) as IProductInstance[],
-      categories: Object.values(MOCK_CATALOG.categories),
-      modifierTypes: Object.values(MOCK_CATALOG.modifiers).filter((m) => {
-        // Filter to only get IOptionType objects (those with 'options' property)
-        return 'options' in m && Array.isArray(m.options);
-      }) as IOptionType[],
-      options: Object.values(MOCK_CATALOG.modifiers).filter((m) => {
-        // Filter to only get IOption objects (those without 'options' property)
-        return !('options' in m);
-      }) as IOption[],
-    }),
-    modifierTypes = Object.values(MOCK_CATALOG.modifiers).filter((m) => 'options' in m && Array.isArray(m.options)) as IOptionType[],
-    categories = MOCK_CATALOG.categories,
-    printerGroups = {},
-    productInstanceFunctions = {},
-    squareBatchChunkSize = 1000,
-  } = options;
+export function createMockProductDeps(options: CreateMockProductDepsOptions = {}): ProductDeps {
+  // Use createMockCatalog to generate a proper catalog structure
+  const catalog = options.catalog ? createMockCatalog(options.catalog) : MOCK_CATALOG;
 
-  // Create mocked repositories
-  const productRepository = createMock<IProductRepository>();
-  const productInstanceRepository = createMock<IProductInstanceRepository>();
+  // Extract modifier types and options from the catalog's modifiers object
+  const modifierTypes: IOptionType[] =
+    options.modifierTypes ?? Object.values(catalog.modifiers).filter((m): m is IOptionType => 'options' in m);
 
-  // Create mocked services
-  const squareService = createMock<SquareService>();
-  const dataProviderService = createMock<DataProviderService>();
-  const appConfig = createMock<AppConfigService>();
-  const logger = createMock<PinoLogger>();
+  const modifierOptions: IOption[] = Object.values(catalog.options).filter((m): m is IOption => 'metadata' in m);
 
-  // Mock appConfig.squareBatchChunkSize
-  Object.defineProperty(appConfig, 'squareBatchChunkSize', {
-    get: () => squareBatchChunkSize,
-    configurable: true,
+  const catalogSelectors: ICatalogSelectors = createMockCatalogSelectorsFromArrays({
+    modifierTypes,
+    options: modifierOptions,
   });
 
-  // Mock DataProviderService.KeyValueConfig
-  Object.defineProperty(dataProviderService, 'KeyValueConfig', {
-    get: () => ({
+  // Extract categories and printer groups from options or use empty objects
+  const categories = options.categories ?? {};
+  const printerGroups = options.printerGroups ?? {};
+
+  // Product instance functions map (empty by default)
+  const productInstanceFunctions = {};
+
+  // Mock dependencies using standard Jest mocks
+  const productRepository = {
+    bulkCreate: jest.fn(),
+    bulkUpdate: jest.fn(),
+  } as unknown as jest.Mocked<IProductRepository>;
+
+  const productInstanceRepository = {
+    bulkCreate: jest.fn(),
+    bulkUpdate: jest.fn(),
+  } as unknown as jest.Mocked<IProductInstanceRepository>;
+
+  const squareService = {
+    BatchUpsertCatalogObjects: jest.fn(),
+    BatchRetrieveCatalogObjects: jest.fn(),
+  } as unknown as jest.Mocked<SquareService>;
+
+  const dataProviderService = {
+    KeyValueConfig: {
       SQUARE_LOCATION: 'sq_loc_1',
       SQUARE_LOCATION_ALTERNATE: 'sq_loc_alt',
       SQUARE_LOCATION_3P: 'sq_loc_3p',
-    }),
-    configurable: true,
-  });
+    },
+  } as unknown as jest.Mocked<DataProviderService>;
+
+  const appConfig = {
+    squareBatchChunkSize,
+  } as unknown as jest.Mocked<AppConfigService>;
 
   // Create mock callbacks
   const syncProducts = jest.fn().mockResolvedValue(true);

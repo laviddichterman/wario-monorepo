@@ -122,7 +122,7 @@ export class OrderManagerService {
       this.logger.info(`Locked ${String(lockedCount)} orders with service before ${formatISO(endOfRange)}`);
       const lockedOrders = await this.orderRepository.findByLock(idempotencyKey);
       for (const order of lockedOrders) {
-        await this.printerService.SendLockedOrder(order, true);
+        await this.printerService.SendLockedOrder(order as WOrderInstance & Required<{ locked: string }>, true);
       }
     }
   };
@@ -141,7 +141,7 @@ export class OrderManagerService {
    * @param additionalMessage Additional message for the move ticket
    */
   public SendMoveLockedOrderTicket = async (
-    lockedOrder: WOrderInstance,
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
     destination: string,
     additionalMessage: string,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
@@ -231,7 +231,7 @@ export class OrderManagerService {
    * @param refundToOriginalPayment Whether to refund to the original payment method
    */
   public CancelLockedOrder = async (
-    lockedOrder: WOrderInstance,
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
     reason: string,
     emailCustomer: boolean,
     refundToOriginalPayment: boolean,
@@ -593,7 +593,7 @@ export class OrderManagerService {
    * @param emailCustomer Whether to email the customer about the reschedule
    */
   public AdjustLockedOrderTime = async (
-    lockedOrder: WOrderInstance,
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
     newTime: FulfillmentTime,
     emailCustomer: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
@@ -745,7 +745,7 @@ export class OrderManagerService {
    * @param lockedOrder The order that has been atomically locked
    */
   public ConfirmLockedOrder = async (
-    lockedOrder: WOrderInstance,
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(
       { customerInfo: lockedOrder.customerInfo, orderId: lockedOrder.id },
@@ -919,7 +919,9 @@ export class OrderManagerService {
    * The order must already be locked before calling this method.
    * @param lockedOrder The order that has been atomically locked
    */
-  public SendLockedOrder = async (lockedOrder: WOrderInstance): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
+  public SendLockedOrder = async (
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
+  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     return this.printerService.SendLockedOrder(lockedOrder, true);
   };
 

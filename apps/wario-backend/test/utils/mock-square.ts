@@ -116,10 +116,7 @@ export class SquareIdMappingTracker {
 // Catalog Object Generators
 // ============================================================================
 
-export function createMockSquareCatalogObject(
-  type: string,
-  overrides: Partial<CatalogObject> = {},
-): CatalogObject {
+export function createMockSquareCatalogObject(type: string, overrides: Partial<CatalogObject> = {}): CatalogObject {
   return {
     type,
     id: overrides.id ?? `#temp_${type}_${Math.random().toString(36).substring(7)}`,
@@ -222,18 +219,14 @@ export function createMockBatchUpsertResponse(
   };
 }
 
-export function createMockBatchRetrieveResponse(
-  objects: CatalogObject[],
-): BatchRetrieveCatalogObjectsResponse {
+export function createMockBatchRetrieveResponse(objects: CatalogObject[]): BatchRetrieveCatalogObjectsResponse {
   return {
     objects,
     relatedObjects: [],
   };
 }
 
-export function createMockBatchDeleteResponse(
-  objectIds: string[],
-): BatchDeleteCatalogObjectsResponse {
+export function createMockBatchDeleteResponse(objectIds: string[]): BatchDeleteCatalogObjectsResponse {
   return {
     deletedObjectIds: objectIds,
     deletedAt: new Date().toISOString(),

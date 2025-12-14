@@ -16,8 +16,8 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import type { IOption, IOptionType } from '@wcp/wario-shared';
 
 import {
-  asUncommittedOption,
-  asUncommittedOptionType,
+  createMockCreateOptionRequest,
+  createMockCreateOptionTypeRequest,
   createMockOption,
   createMockOptionType,
   mockCatalogProviderService,
@@ -88,12 +88,10 @@ describe('ModifierController', () => {
       const mockModifierType = createMockOptionType({ id: 'mt-new', name: 'Toppings' });
       (mockCatalogService.CreateModifierType as jest.Mock).mockResolvedValue(mockModifierType);
 
-      const body = {
-        modifierType: asUncommittedOptionType(
-          createMockOptionType({ name: 'Toppings', min_selected: 0, max_selected: 5 }),
-        ),
-        options: [],
-      };
+      const body = createMockCreateOptionTypeRequest(
+        { options: [] },
+        { name: 'Toppings', min_selected: 0, max_selected: 5 },
+      );
       const result = await controller.CreateModifierType(body);
 
       // Verify result satisfies IOptionType interface
@@ -109,11 +107,7 @@ describe('ModifierController', () => {
       const mockModifierType = createMockOptionType({ id: 'mt-123', name: 'Updated Toppings' });
       (mockCatalogService.UpdateModifierType as jest.Mock).mockResolvedValue(mockModifierType);
 
-      const body = {
-        id: 'mt-123',
-        modifierType: { name: 'Updated Toppings' },
-      };
-      const result = await controller.UpdateModifierType(body as Parameters<typeof controller.UpdateModifierType>[0]);
+      const result = await controller.UpdateModifierType('mt-123', { name: 'Updated Toppings' });
 
       // Verify result satisfies IOptionType interface
       assertIsOptionType(result);
@@ -147,7 +141,7 @@ describe('ModifierController', () => {
       const mockOption = createMockOption({ id: 'opt-new', displayName: 'Pepperoni' });
       (mockCatalogService.CreateOption as jest.Mock).mockResolvedValue(mockOption);
 
-      const body = asUncommittedOption(createMockOption({ displayName: 'Pepperoni' }));
+      const body = createMockCreateOptionRequest({ displayName: 'Pepperoni' });
       const modifierTypeId = 'mt-123';
       const result = await controller.CreateOption(body, modifierTypeId);
 
