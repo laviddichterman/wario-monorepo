@@ -14,7 +14,7 @@ import {
   type ICatalogSelectors,
   ShowCurrentlyAvailableProducts,
   type WProduct,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import { scrollToElementOffsetAfterDelay, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import {
   createCategoryShopper,

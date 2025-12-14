@@ -6,7 +6,7 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 
-import { CREDIT_REGEX } from '@wcp/wario-shared';
+import { CREDIT_REGEX } from '@wcp/wario-shared/logic';
 import { StoreCreditInputComponent } from '@wcp/wario-ux-shared/components';
 import { useValidateStoreCreditMutation } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput } from '@wcp/wario-ux-shared/styled';

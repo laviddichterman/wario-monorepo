@@ -2,8 +2,8 @@ import { z } from 'zod';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { DeliveryInfoDto, DineInInfoDto, FulfillmentData, NullablePartial } from '@wcp/wario-shared';
-import { WDateUtils } from '@wcp/wario-shared';
+import { WDateUtils } from '@wcp/wario-shared/logic';
+import type { DeliveryInfo, DineInInfo, FulfillmentData, NullablePartial } from '@wcp/wario-shared/types';
 
 // Schemas
 export const deliveryAddressSchema = z.object({
@@ -25,7 +25,7 @@ export const dineInSchema = z.object({
     .min(1, 'Please specify the size of your party.'),
 });
 
-export type DeliveryInfoFormData = Omit<DeliveryInfoDto, 'validation'> & { fulfillmentId: string };
+export type DeliveryInfoFormData = Omit<DeliveryInfo, 'validation'> & { fulfillmentId: string };
 
 export type DeliveryValidationStatus = 'IDLE' | 'PENDING' | 'VALID' | 'INVALID' | 'OUTSIDE_RANGE';
 
@@ -43,8 +43,8 @@ interface FulfillmentActions {
   setDate: (date: string | null) => void;
   setTime: (time: number | null) => void;
   setHasAgreedToTerms: (agreed: boolean) => void;
-  setDineInInfo: (info: DineInInfoDto | null) => void;
-  setDeliveryInfo: (info: DeliveryInfoDto | null) => void;
+  setDineInInfo: (info: DineInInfo | null) => void;
+  setDeliveryInfo: (info: DeliveryInfo | null) => void;
   setSelectedDateExpired: () => void;
   setSelectedTimeExpired: () => void;
   setDeliveryAddressValidation: (status: DeliveryValidationStatus) => void;

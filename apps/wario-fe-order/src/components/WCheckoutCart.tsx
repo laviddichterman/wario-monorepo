@@ -1,4 +1,4 @@
-import { type ICatalogSelectors } from '@wcp/wario-shared';
+import { type ICatalogSelectors } from '@wcp/wario-shared/types';
 import { WCheckoutCartComponent } from '@wcp/wario-ux-shared/components';
 import { useCatalogSelectors, useTaxRate } from '@wcp/wario-ux-shared/query';
 

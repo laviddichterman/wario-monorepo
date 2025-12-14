@@ -15,7 +15,6 @@ import { formatISO } from 'date-fns';
 import { enqueueSnackbar } from 'notistack';
 import { useEffect, useMemo, useRef } from 'react';
 
-import type { CartEntry, FulfillmentConfig, ICatalogSelectors } from '@wcp/wario-shared';
 import {
   CanThisBeOrderedAtThisTimeAndFulfillmentCatalog,
   DetermineCartBasedLeadTime,
@@ -23,7 +22,8 @@ import {
   IsSomethingDisabledForFulfillment,
   WCPProductGenerateMetadata,
   WDateUtils,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
+import type { CartEntry, FulfillmentConfig, ICatalogSelectors } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useCurrentTime, useFulfillments } from '@wcp/wario-ux-shared/query';
 
 import { useSubmitOrderMutation } from '@/hooks/useSubmitOrderMutation';

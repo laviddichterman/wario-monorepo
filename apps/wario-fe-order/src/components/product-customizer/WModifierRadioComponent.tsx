@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 
-import { DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionType } from '@wcp/wario-shared';
+import { DISABLE_REASON, type ICatalogSelectors, type IOption, type IOptionType } from '@wcp/wario-shared/logic';
 import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 import { CustomizerFormControlLabel } from '@wcp/wario-ux-shared/styled';
 

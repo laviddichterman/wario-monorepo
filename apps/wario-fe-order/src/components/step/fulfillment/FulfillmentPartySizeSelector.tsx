@@ -2,7 +2,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 
-import { FulfillmentType } from '@wcp/wario-shared';
+import { FulfillmentType } from '@wcp/wario-shared/logic';
 import { useFulfillmentMaxGuests, useFulfillmentService } from '@wcp/wario-ux-shared/query';
 
 import { useFulfillmentStore } from '@/stores/useFulfillmentStore';

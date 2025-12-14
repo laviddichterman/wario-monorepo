@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import { type Metrics } from '@wcp/wario-shared';
+import { type Metrics } from '@wcp/wario-shared/types';
 
 import { NUM_STAGES, type STEPPER_STAGE_ENUM } from '@/config';
 

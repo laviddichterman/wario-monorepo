@@ -6,7 +6,7 @@ import {
   type IOptionState,
   type IOptionType,
   OptionPlacement,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import { useCatalogSelectors, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
 import { selectOptionState, useCustomizerStore } from '@/stores/useCustomizerStore';

@@ -18,7 +18,7 @@ import {
   PaymentMethod,
   StoreCreditType,
   TenderBaseStatus,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import { useTaxRate } from '@wcp/wario-ux-shared/query';
 
 import { selectCart, useCartStore } from '@/stores/useCartStore';

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import Grid from '@mui/material/Grid';
 
-import { FulfillmentType, WDateUtils } from '@wcp/wario-shared';
+import { FulfillmentType, WDateUtils } from '@wcp/wario-shared/logic';
 import { useFulfillments, useFulfillmentService } from '@wcp/wario-ux-shared/query';
 import { ErrorResponseOutput, Separator, StageTitle } from '@wcp/wario-ux-shared/styled';
 

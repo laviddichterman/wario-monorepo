@@ -2,7 +2,7 @@ import type * as Square from '@square/web-sdk';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { TipSelection, ValidateAndLockCreditResponseValid } from '@wcp/wario-shared';
+import type { TipSelection, ValidateAndLockCreditResponseValid } from '@wcp/wario-shared/types';
 
 // Types
 export interface StoreCreditValidation {

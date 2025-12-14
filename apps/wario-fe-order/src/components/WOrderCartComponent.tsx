@@ -12,7 +12,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
-import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared';
+import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared/logic';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 
 import { useGroupedAndOrderedCart, useHasSelectableModifiers } from '@/hooks/useDerivedState';

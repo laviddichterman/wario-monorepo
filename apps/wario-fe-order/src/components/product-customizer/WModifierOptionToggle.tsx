@@ -4,7 +4,7 @@ import Circle from '@mui/icons-material/Circle';
 import CircleOutlined from '@mui/icons-material/CircleOutlined';
 import Checkbox from '@mui/material/Checkbox';
 
-import { DISABLE_REASON, type ICatalogSelectors, type IOption, OptionPlacement } from '@wcp/wario-shared';
+import { DISABLE_REASON, type ICatalogSelectors, type IOption, OptionPlacement } from '@wcp/wario-shared/logic';
 import { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 import { CustomizerFormControlLabel } from '@wcp/wario-ux-shared/styled';
 

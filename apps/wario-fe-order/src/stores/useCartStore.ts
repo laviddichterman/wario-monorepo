@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
+import { ComputeCartSubTotal, WProductCompare, WProductEquals } from '@wcp/wario-shared/logic';
 import type {
   CartEntry,
   CoreCartEntry,
@@ -8,10 +9,8 @@ import type {
   IProduct,
   Selector,
   WCPProduct,
-  WCPProductV2Dto,
   WProduct,
-} from '@wcp/wario-shared';
-import { ComputeCartSubTotal, WProductCompare, WProductEquals } from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 
 export interface CartState {
   indexCounter: number;
@@ -207,7 +206,7 @@ export const findDuplicateInCart = (
 /**
  * Convert cart to DTO format for submission
  */
-export const selectCartAsDto = (cart: CartEntry[]): CoreCartEntry<WCPProductV2Dto>[] =>
+export const selectCartAsDto = (cart: CartEntry[]): CoreCartEntry[] =>
   cart.map((x) => ({
     ...x,
     product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId },

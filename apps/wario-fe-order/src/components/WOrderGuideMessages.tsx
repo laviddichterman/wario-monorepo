@@ -5,7 +5,7 @@ import {
   type MetadataModifierMap,
   type ProductInstanceModifierEntry,
   WFunctional,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import {
   useCatalogSelectors,
   useModifierTypeNameById,

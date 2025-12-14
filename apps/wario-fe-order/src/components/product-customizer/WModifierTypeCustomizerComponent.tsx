@@ -4,7 +4,7 @@ import FormControl, { type FormControlProps } from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormLabel from '@mui/material/FormLabel';
 
-import { type IOptionType, type IProductInstance, type WCPProduct } from '@wcp/wario-shared';
+import { type IOptionType, type IProductInstance, type WCPProduct } from '@wcp/wario-shared/types';
 import { useBaseProductByProductId, useModifierTypeById, useModifierTypeNameById } from '@wcp/wario-ux-shared/query';
 
 import { useVisibleModifierOptions } from '@/hooks/useDerivedState';

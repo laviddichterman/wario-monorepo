@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { CustomerInfoData } from '@wcp/wario-shared';
+import type { CustomerInfoData } from '@wcp/wario-shared/types';
 import { ZodEmailSchema } from '@wcp/wario-ux-shared/common';
 import PHONE_METADATA from '@wcp/wario-ux-shared/phone-metadata.custom.json';
 

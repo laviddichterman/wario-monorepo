@@ -7,7 +7,7 @@ import type {
   ResponseFailure,
   ResponseSuccess,
   WOrderInstance,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 import { handleAxiosError, scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 
 import axiosInstance from '@/utils/axios';

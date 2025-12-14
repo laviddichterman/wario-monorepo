@@ -10,7 +10,7 @@ import {
   type IProductDisplayFlags,
   type WProduct,
   type WProductMetadata,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
 import { useAllowAdvanced, useCatalogSelectors, useValueFromProductById } from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle, WarioButton } from '@wcp/wario-ux-shared/styled';

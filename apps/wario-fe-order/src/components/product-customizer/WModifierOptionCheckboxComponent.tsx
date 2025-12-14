@@ -7,7 +7,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 
-import { DISABLE_REASON, type IOption, OptionPlacement, OptionQualifier, type WProduct } from '@wcp/wario-shared';
+import { DISABLE_REASON, type IOption, OptionPlacement, OptionQualifier, type WProduct } from '@wcp/wario-shared/logic';
 import { CustomizerFormControlLabel } from '@wcp/wario-ux-shared/styled';
 
 import { selectShowAdvanced, useCustomizerStore } from '@/stores/useCustomizerStore';

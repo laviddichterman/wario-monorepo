@@ -15,7 +15,7 @@ import {
   PaymentMethod,
   RoundToTwoDecimalPlaces,
   type TipSelection,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import { LoadingScreen } from '@wcp/wario-ux-shared/components';
 import { useSquareAppId, useSquareLocationId, useTipPreamble } from '@wcp/wario-ux-shared/query';
 import {

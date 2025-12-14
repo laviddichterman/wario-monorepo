@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
-import type { CartEntry, IOptionState, MetadataModifierMap, MTID_MOID, WProduct } from '@wcp/wario-shared';
-import { OptionPlacement, OptionQualifier } from '@wcp/wario-shared';
+import { OptionPlacement, OptionQualifier } from '@wcp/wario-shared/logic';
+import type { CartEntry, IOptionState, MetadataModifierMap, MTID_MOID, WProduct } from '@wcp/wario-shared/types';
 
 export interface CustomizerState {
   /** Whether advanced options are allowed for current product */

@@ -3,7 +3,7 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 
-import { type IOption, type MTID_MOID } from '@wcp/wario-shared';
+import { type IOption, type MTID_MOID } from '@wcp/wario-shared/types';
 import { DialogContainer } from '@wcp/wario-ux-shared/containers';
 import { useOptionById } from '@wcp/wario-ux-shared/query';
 

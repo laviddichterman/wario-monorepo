@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
-import type { CreateOrderRequestV2, Metrics, OrderPayment } from '@wcp/wario-shared';
-import { ComputePaymentsApplied, PaymentMethod, TenderBaseStatus, WFulfillmentStatus } from '@wcp/wario-shared';
+import { ComputePaymentsApplied, PaymentMethod, TenderBaseStatus, WFulfillmentStatus } from '@wcp/wario-shared/logic';
+import type { CreateOrderRequestV2, Metrics, OrderPayment } from '@wcp/wario-shared/types';
 import { useServerTime } from '@wcp/wario-ux-shared/query';
 
 import { selectCartAsDto, useCartStore } from '@/stores/useCartStore';
@@ -204,14 +204,14 @@ export function useOrderRequestBuilder() {
       const paymentsProposed =
         balance.amount > 0 && nonce
           ? ComputePaymentsApplied(total, tipAmount, [
-              ...paymentsApplied,
-              {
-                createdAt: Date.now(),
-                t: PaymentMethod.CreditCard,
-                status: TenderBaseStatus.PROPOSED,
-                payment: { sourceId: nonce },
-              },
-            ])
+            ...paymentsApplied,
+            {
+              createdAt: Date.now(),
+              t: PaymentMethod.CreditCard,
+              status: TenderBaseStatus.PROPOSED,
+              payment: { sourceId: nonce },
+            },
+          ])
           : paymentsApplied;
 
       return {

@@ -8,8 +8,8 @@
 
 import { useMemo } from 'react';
 
-import type { MetadataModifierMap } from '@wcp/wario-shared';
-import { IsModifierTypeVisible, WDateUtils } from '@wcp/wario-shared';
+import { IsModifierTypeVisible, WDateUtils } from '@wcp/wario-shared/logic';
+import type { MetadataModifierMap } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useFulfillmentOperatingHours } from '@wcp/wario-ux-shared/query';
 
 /**

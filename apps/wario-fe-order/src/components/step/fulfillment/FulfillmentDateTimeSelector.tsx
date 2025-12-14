@@ -8,7 +8,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker';
 
-import { WDateUtils } from '@wcp/wario-shared';
+import { WDateUtils } from '@wcp/wario-shared/logic';
 import { useServerTime } from '@wcp/wario-ux-shared/query';
 
 import {

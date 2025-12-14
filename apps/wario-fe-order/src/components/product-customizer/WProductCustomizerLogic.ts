@@ -9,7 +9,7 @@ import {
   SortProductModifierEntries,
   WCPProductGenerateMetadata,
   type WProduct,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 
 export const UpdateModifierOptionStateToggleOrRadio = (
   mtId: string,

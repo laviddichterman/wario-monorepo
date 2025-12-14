@@ -11,7 +11,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 
-import { WDateUtils } from '@wcp/wario-shared';
+import { WDateUtils } from '@wcp/wario-shared/logic';
 import { Separator, StageTitle, WarningResponseOutput } from '@wcp/wario-ux-shared/styled';
 
 import { usePropertyFromSelectedFulfillment, useSelectedServiceTimeDisplayString } from '@/hooks/useDerivedState';

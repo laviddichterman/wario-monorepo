@@ -16,7 +16,7 @@ import {
   type ProductInstanceModifierEntry,
   SortAndFilterModifierOptions,
   WDateUtils,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import {
   useCatalogSelectors,
   useDefaultFulfillmentId,
@@ -236,9 +236,9 @@ export function useCartBasedLeadTime() {
   return useMemo(() => {
     return catalogSelectors
       ? DetermineCartBasedLeadTime(
-          cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
-          catalogSelectors.productEntry,
-        )
+        cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
+        catalogSelectors.productEntry,
+      )
       : 0;
   }, [cart, catalogSelectors]);
 }
