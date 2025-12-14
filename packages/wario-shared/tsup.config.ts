@@ -3,6 +3,8 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    logic: 'src/logic.entry.ts',
+    types: 'src/types.entry.ts',
     testing: 'src/testing.ts',
   },
   outDir: 'dist',

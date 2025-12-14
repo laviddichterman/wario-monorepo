@@ -395,6 +395,7 @@ export type CreateIProductRequest = Omit<CreateIProductRequestDto, never>;
 export type UpdateIProductInstanceRequest = Omit<UpdateIProductInstanceRequestDto, never>;
 export type UpdateIProductRequest = Omit<UpdateIProductRequestDto, never>;
 // upsert
+export type UpsertIProductInstanceRequest = CreateIProductInstanceRequest | UpdateIProductInstanceRequest;
 export type UpsertIProductRequest = CreateIProductRequest | UpdateIProductRequest;
 
 export type CreateIOptionTypeRequest = Omit<CreateIOptionTypeRequestDto, never>;

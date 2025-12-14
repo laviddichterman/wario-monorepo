@@ -1,6 +1,7 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { plainToInstance, Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsEmail,
@@ -177,9 +178,16 @@ export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProduct
 
 export type UpsertIProductInstanceRequestDto = CreateIProductInstanceRequestDto | UpdateIProductInstanceRequestDto;
 
+
+/**
+ * special case for the instances field in UpdateIProductRequestDto where we allow a bare string to be passed in as the id field
+ */
+export type UpdateIProductRequestInstances = UpsertIProductInstanceRequestDto | string;
+
 /**
  * Custom validator constraint for validating an array of product instance upsert requests.
  * Discriminates between Create and Update based on presence of 'id' property.
+ * Also accepts bare strings as valid instance IDs (equivalent to { id: 'the_string' }).
  */
 @ValidatorConstraint({ async: false })
 export class IsUpsertProductInstanceArrayConstraint implements ValidatorConstraintInterface {
@@ -187,6 +195,15 @@ export class IsUpsertProductInstanceArrayConstraint implements ValidatorConstrai
     if (!Array.isArray(instances)) return false;
 
     for (const instance of instances) {
+      // Handle bare string case - treat as update with just an ID
+      if (typeof instance === 'string') {
+        if (instance === '') {
+          return false; // Empty string is not a valid ID
+        }
+        // Valid non-empty string ID, continue to next instance
+        continue;
+      }
+
       const record = instance as Record<string, unknown>;
       const hasId = typeof record.id === 'string' && record.id !== '';
 
@@ -203,7 +220,7 @@ export class IsUpsertProductInstanceArrayConstraint implements ValidatorConstrai
   }
 
   defaultMessage(): string {
-    return 'Each instance must be a valid CreateIProductInstanceRequestDto (no id) or UpdateIProductInstanceRequestDto (with id)';
+    return 'Each instance must be a valid CreateIProductInstanceRequestDto (no id), UpdateIProductInstanceRequestDto (with id), or a non-empty string (instance ID)';
   }
 }
 
@@ -224,12 +241,63 @@ export function IsUpsertProductInstanceArray(validationOptions?: ValidationOptio
 }
 
 /**
+ * Custom validator constraint for validating an array of product upsert requests.
+ * Discriminates between Create and Update based on presence of 'id' property.
+ */
+@ValidatorConstraint({ async: false })
+export class IsUpsertProductArrayConstraint implements ValidatorConstraintInterface {
+  validate(products: unknown[]): boolean {
+    if (!Array.isArray(products)) return false;
+
+    for (const product of products) {
+      if (typeof product !== 'object' || product === null) {
+        return false;
+      }
+
+      const record = product as Record<string, unknown>;
+      const hasId = typeof record.id === 'string' && record.id !== '';
+
+      const transformed = hasId
+        ? plainToInstance(UpdateIProductRequestDto, product)
+        : plainToInstance(CreateIProductRequestDto, product);
+      const errors = validateSync(transformed);
+
+      if (errors.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  defaultMessage(): string {
+    return 'Each product must be a valid CreateIProductRequestDto (no id) or UpdateIProductRequestDto (with id)';
+  }
+}
+
+/**
+ * Decorator for validating an array of UpsertProductRequestDto.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs.
+ */
+export function IsUpsertProductArray(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      constraints: [],
+      validator: IsUpsertProductArrayConstraint,
+    });
+  };
+}
+
+/**
  * DTO for creating a single product along with its instances.
  */
 export class CreateIProductRequestDto extends OmitType(IProductDto, ['id', 'instances']) {
 
   @IsArray()
   @ValidateNested({ each: true })
+  @ArrayMinSize(1)
   @Type(() => CreateIProductInstanceRequestDto)
   instances!: CreateIProductInstanceRequestDto[];
 }
@@ -246,12 +314,21 @@ export class UpdateIProductRequestDto extends PartialType(OmitType(IProductDto, 
 
   @IsArray()
   @IsUpsertProductInstanceArray()
-  instances!: UpsertIProductInstanceRequestDto[];
+  instances!: UpdateIProductRequestInstances[];
 }
 
 
 export type UpsertProductRequestDto = CreateIProductRequestDto | UpdateIProductRequestDto;
 
+/**
+ * DTO for batch upsert of products.
+ * Wraps an array validated by IsUpsertProductArray.
+ */
+export class BatchUpsertProductRequestDto {
+  @IsArray()
+  @IsUpsertProductArray()
+  products!: UpsertProductRequestDto[];
+}
 
 // Modifier insert/update/upsert DTOs
 export class CreateIOptionTypeRequestDto extends OmitType(IOptionTypeDto, ['id']) {

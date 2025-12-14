@@ -2,13 +2,16 @@
  * Unit tests for UpdateIProductRequestDto validation.
  * Specifically tests the IsUpsertProductInstanceArrayConstraint custom validator
  * that discriminates between Create and Update DTOs based on presence of 'id'.
+ * Also tests IsUpsertProductArrayConstraint and BatchUpsertProductRequestDto.
  */
 
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 
 import {
+  BatchUpsertProductRequestDto,
   CreateIProductInstanceRequestDto,
+  IsUpsertProductArrayConstraint,
   IsUpsertProductInstanceArrayConstraint,
   UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
@@ -150,6 +153,39 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
 
       expect(constraint.validate([validInstance, invalidInstance])).toBe(false);
     });
+
+    // New tests for bare string ID support
+    describe('bare string ID support', () => {
+      it('should return true for a valid bare string ID', () => {
+        expect(constraint.validate(['pi_123'])).toBe(true);
+      });
+
+      it('should return true for multiple bare string IDs', () => {
+        expect(constraint.validate(['pi_1', 'pi_2', 'pi_3'])).toBe(true);
+      });
+
+      it('should return false for an empty string', () => {
+        expect(constraint.validate([''])).toBe(false);
+      });
+
+      it('should return false if any bare string is empty', () => {
+        expect(constraint.validate(['pi_1', '', 'pi_3'])).toBe(false);
+      });
+
+      it('should return true for mixed bare strings and update objects', () => {
+        expect(constraint.validate(['pi_1', { id: 'pi_2' }, 'pi_3'])).toBe(true);
+      });
+
+      it('should return true for mixed bare strings, update objects, and create objects', () => {
+        const createInstance = createValidProductInstancePayload();
+        expect(constraint.validate([
+          'pi_1',
+          { id: 'pi_2', displayName: 'Updated' },
+          createInstance,
+          'pi_3',
+        ])).toBe(true);
+      });
+    });
   });
 
   describe('defaultMessage()', () => {
@@ -157,6 +193,7 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
       const message = constraint.defaultMessage();
       expect(message).toContain('CreateIProductInstanceRequestDto');
       expect(message).toContain('UpdateIProductInstanceRequestDto');
+      expect(message).toContain('non-empty string');
     });
   });
 });
@@ -254,6 +291,50 @@ describe('UpdateIProductRequestDto', () => {
       const idError = errors.find((e) => e.property === 'id');
       expect(idError).toBeDefined();
     });
+
+    // Tests for bare string ID support
+    describe('bare string ID support', () => {
+      it('should pass validation with bare string instance IDs', () => {
+        const payload = createValidUpdateProductPayload([
+          'pi_1',
+          'pi_2',
+          'pi_3',
+        ] as unknown as Array<Record<string, unknown>>);
+
+        const dto = plainToInstance(UpdateIProductRequestDto, payload);
+        const errors = validateSync(dto);
+
+        expect(errors.length).toBe(0);
+      });
+
+      it('should pass validation with mixed bare strings and objects', () => {
+        const payload = createValidUpdateProductPayload([
+          'pi_1',
+          { id: 'pi_2', displayName: 'Updated' },
+          createValidProductInstancePayload(),
+          'pi_3',
+        ] as unknown as Array<Record<string, unknown>>);
+
+        const dto = plainToInstance(UpdateIProductRequestDto, payload);
+        const errors = validateSync(dto);
+
+        expect(errors.length).toBe(0);
+      });
+
+      it('should fail validation with empty string instance ID', () => {
+        const payload = createValidUpdateProductPayload([
+          'pi_1',
+          '', // Invalid: empty string
+          'pi_3',
+        ] as unknown as Array<Record<string, unknown>>);
+
+        const dto = plainToInstance(UpdateIProductRequestDto, payload);
+        const errors = validateSync(dto);
+
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors[0].property).toBe('instances');
+      });
+    });
   });
 });
 
@@ -341,5 +422,277 @@ describe('UpdateIProductInstanceRequestDto', () => {
     expect(errors.length).toBeGreaterThan(0);
     const idError = errors.find((e) => e.property === 'id');
     expect(idError).toBeDefined();
+  });
+});
+
+// ============================================================================
+// IsUpsertProductArrayConstraint Tests
+// ============================================================================
+
+describe('IsUpsertProductArrayConstraint', () => {
+  let constraint: IsUpsertProductArrayConstraint;
+
+  /**
+   * Creates a valid CreateIProductRequestDto payload (no id)
+   */
+  function createValidCreateProductPayload(): Record<string, unknown> {
+    return {
+      price: { amount: 1000, currency: 'USD' },
+      disabled: null,
+      availability: [],
+      serviceDisable: [],
+      externalIDs: [],
+      modifiers: [],
+      printerGroup: null,
+      timing: null,
+      displayFlags: {
+        is3p: false,
+        flavor_max: 1,
+        bake_max: 1,
+        bake_differential: 1,
+        show_name_of_base_product: true,
+        singular_noun: 'item',
+        order_guide: {
+          warnings: [],
+          suggestions: [],
+          errors: [],
+        },
+      },
+      instances: [createValidProductInstancePayload()],
+    };
+  }
+
+  /**
+   * Creates a valid UpdateIProductRequestDto payload (with id)
+   */
+  function createValidUpdateProductPayloadForProduct(): Record<string, unknown> {
+    return {
+      id: 'prod_1',
+      instances: [{ id: 'pi_existing' }],
+    };
+  }
+
+  beforeEach(() => {
+    constraint = new IsUpsertProductArrayConstraint();
+  });
+
+  describe('validate()', () => {
+    it('should return false for non-array input', () => {
+      expect(constraint.validate('not an array' as unknown as unknown[])).toBe(false);
+      expect(constraint.validate(null as unknown as unknown[])).toBe(false);
+      expect(constraint.validate(undefined as unknown as unknown[])).toBe(false);
+      expect(constraint.validate({} as unknown as unknown[])).toBe(false);
+    });
+
+    it('should return true for empty array', () => {
+      expect(constraint.validate([])).toBe(true);
+    });
+
+    it('should return true for valid create product (no id)', () => {
+      const createProduct = createValidCreateProductPayload();
+      const result = constraint.validate([createProduct]);
+      expect(result).toBe(true);
+    });
+
+    it('should return true for valid update product (with id)', () => {
+      const updateProduct = createValidUpdateProductPayloadForProduct();
+      expect(constraint.validate([updateProduct])).toBe(true);
+    });
+
+    it('should return true for valid update product with partial fields', () => {
+      const updateProduct = {
+        id: 'prod_existing',
+        displayName: 'Updated Name',
+        instances: ['pi_1'],
+      };
+      expect(constraint.validate([updateProduct])).toBe(true);
+    });
+
+    it('should return true for mixed create and update products', () => {
+      const createProduct = createValidCreateProductPayload();
+      const updateProduct = createValidUpdateProductPayloadForProduct();
+
+      expect(constraint.validate([createProduct, updateProduct])).toBe(true);
+    });
+
+    it('should treat empty string id as create (requires all fields)', () => {
+      // With empty id, it's treated as create but missing required fields
+      const productWithEmptyId = {
+        id: '',
+        instances: [{ id: 'pi_1' }],
+      };
+      // This should fail because it's treated as create but missing required fields
+      expect(constraint.validate([productWithEmptyId])).toBe(false);
+    });
+
+    it('should return false for invalid create product (missing required fields)', () => {
+      const invalidCreateProduct = {
+        // Missing displayName, price, instances, etc.
+        shortcode: 'TP',
+      };
+      expect(constraint.validate([invalidCreateProduct])).toBe(false);
+    });
+
+    it('should return false for update product with invalid id type', () => {
+      const invalidUpdateProduct = {
+        id: 123, // id must be string
+        instances: [],
+      };
+      expect(constraint.validate([invalidUpdateProduct])).toBe(false);
+    });
+
+    it('should return false if any product in array is invalid', () => {
+      const validProduct = createValidUpdateProductPayloadForProduct();
+      const invalidProduct = { shortcode: 'X' }; // Missing required fields for create
+
+      expect(constraint.validate([validProduct, invalidProduct])).toBe(false);
+    });
+
+    it('should return false for non-object values in array', () => {
+      expect(constraint.validate(['string_not_product'])).toBe(false);
+      expect(constraint.validate([123])).toBe(false);
+      expect(constraint.validate([null])).toBe(false);
+    });
+
+    it('should return false for create product with empty instances array', () => {
+      const createProductNoInstances = {
+        ...createValidCreateProductPayload(),
+        instances: [], // ArrayMinSize(1) should fail
+      };
+      expect(constraint.validate([createProductNoInstances])).toBe(false);
+    });
+  });
+
+  describe('defaultMessage()', () => {
+    it('should return appropriate error message', () => {
+      const message = constraint.defaultMessage();
+      expect(message).toContain('CreateIProductRequestDto');
+      expect(message).toContain('UpdateIProductRequestDto');
+    });
+  });
+});
+
+// ============================================================================
+// BatchUpsertProductRequestDto Integration Tests
+// ============================================================================
+
+describe('BatchUpsertProductRequestDto', () => {
+  /**
+   * Creates a valid CreateIProductRequestDto payload (no id)
+   */
+  function createValidCreateProductPayloadForBatch(): Record<string, unknown> {
+    return {
+      price: { amount: 1000, currency: 'USD' },
+      disabled: null,
+      availability: [],
+      serviceDisable: [],
+      externalIDs: [],
+      modifiers: [],
+      printerGroup: null,
+      timing: null,
+      displayFlags: {
+        is3p: false,
+        flavor_max: 1,
+        bake_max: 1,
+        bake_differential: 1,
+        show_name_of_base_product: true,
+        singular_noun: 'item',
+        order_guide: {
+          warnings: [],
+          suggestions: [],
+          errors: [],
+        },
+      },
+      instances: [createValidProductInstancePayload()],
+    };
+  }
+
+  describe('validation with @IsUpsertProductArray decorator', () => {
+    it('should pass validation with valid update products', () => {
+      const payload = {
+        products: [
+          { id: 'prod_1', instances: ['pi_1'] },
+          { id: 'prod_2', instances: [{ id: 'pi_2' }] },
+        ],
+      };
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
+    it('should pass validation with valid create products', () => {
+      const payload = {
+        products: [createValidCreateProductPayloadForBatch()],
+      };
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
+    it('should pass validation with mixed create and update products', () => {
+      const payload = {
+        products: [
+          { id: 'prod_existing', instances: ['pi_1'] },
+          createValidCreateProductPayloadForBatch(),
+          { id: 'prod_another', displayName: 'Updated', instances: [{ id: 'pi_2' }] },
+        ],
+      };
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
+    it('should fail validation with invalid products', () => {
+      const payload = {
+        products: [
+          { shortcode: 'X' }, // Invalid: missing required fields for create
+        ],
+      };
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors[0].property).toBe('products');
+    });
+
+    it('should fail validation when products is not an array', () => {
+      const payload = {
+        products: 'not an array',
+      };
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBeGreaterThan(0);
+    });
+
+    it('should pass validation with empty products array', () => {
+      const payload = {
+        products: [],
+      };
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBe(0);
+    });
+
+    it('should fail validation when products is missing', () => {
+      const payload = {};
+
+      const dto = plainToInstance(BatchUpsertProductRequestDto, payload);
+      const errors = validateSync(dto);
+
+      expect(errors.length).toBeGreaterThan(0);
+      const productsError = errors.find((e) => e.property === 'products');
+      expect(productsError).toBeDefined();
+    });
   });
 });

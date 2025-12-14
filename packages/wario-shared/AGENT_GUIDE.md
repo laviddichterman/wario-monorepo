@@ -8,7 +8,35 @@
 - **Dependencies**: Zero heavy dependencies. No React, no NestJS. Pure TypeScript/Zod/date-fns.
 - **Role**: Defines the "Language" of the domain (what is an Order? what is a Product?).
 
-## 2. Technical Architecture
+## 2. Tree-Shakable Entry Points
+
+The package provides multiple entry points to avoid bundling unnecessary dependencies:
+
+| Entry Point                 | Contents            | ESM Size                 | Use Case                                     |
+| --------------------------- | ------------------- | ------------------------ | -------------------------------------------- |
+| `@wcp/wario-shared`         | Everything          | 6KB + 238KB chunk        | Backend (needs DTOs with class-validator)    |
+| `@wcp/wario-shared/logic`   | Types + utilities   | **2.87KB** + 118KB chunk | Frontend (needs functions like `WDateUtils`) |
+| `@wcp/wario-shared/types`   | Interfaces + enums  | **561 bytes**            | Type-only imports                            |
+| `@wcp/wario-shared/testing` | Mock data factories | 48KB                     | Tests                                        |
+
+### Choosing the Right Entry Point
+
+```typescript
+// ✅ Type-only imports (smallest, no runtime code)
+import type { IProduct, ICategory } from '@wcp/wario-shared/types';
+import { FulfillmentType, DISABLE_REASON } from '@wcp/wario-shared/types';
+
+// ✅ Types + utility functions (no class-validator/class-transformer)
+import { WDateUtils, MoneyToDisplayString, WProductEquals } from '@wcp/wario-shared/logic';
+import type { ICatalogSelectors } from '@wcp/wario-shared/logic';
+
+// ✅ Backend DTOs with decorators (only in wario-backend)
+import { CreateOrderRequestV2Dto, UpdateIProductRequestDto } from '@wcp/wario-shared';
+```
+
+> **Important**: Never import decorated DTO classes in frontend code. They pull in `class-validator` and `class-transformer` (~50KB+).
+
+## 3. Technical Architecture
 
 ### Key Components
 
@@ -23,7 +51,7 @@
 - **Validation**: Zod schemas are often co-located here to be used by both Backend (validation pipes) and Frontend (form resolvers).
 - **No Side Effects**: Functions here should be pure.
 
-## 3. Critical workflows
+## 4. Critical workflows
 
 - **Cart Logic**: The logic for "Are these two pizzas identical?" (`WProductEquals`) lives here. This ensures the Frontend cart grouping matches the Backend's expectations.
 
@@ -81,7 +109,7 @@ interface CategoryVisibilityMap {
 }
 ```
 
-## 4. 2025 Schema Updates
+## 5. 2025 Schema Updates
 
 **Important**: See `documentation/DTO_GUIDE.md` for comprehensive breaking changes documentation, including:
 
