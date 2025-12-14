@@ -12,7 +12,7 @@ export class ProductTypeOrmRepository implements IProductRepository {
   constructor(
     @InjectRepository(ProductEntity)
     private readonly repo: Repository<ProductEntity>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<IProduct | null> {
     return this.repo.findOne({ where: { id, validTo: IsNull() } });
@@ -267,9 +267,7 @@ export class ProductTypeOrmRepository implements IProductRepository {
       const affected = await repo
         .createQueryBuilder('prod')
         .where('prod.validTo IS NULL')
-        .andWhere(
-          `(:serviceId = ANY(prod.serviceDisable) OR prod.modifiers @> :pattern::jsonb)`,
-        )
+        .andWhere(`(:serviceId = ANY(prod.serviceDisable) OR prod.modifiers @> :pattern::jsonb)`)
         .setParameter('serviceId', serviceId)
         .setParameter('pattern', JSON.stringify([{ serviceDisable: [serviceId] }]))
         .getMany();

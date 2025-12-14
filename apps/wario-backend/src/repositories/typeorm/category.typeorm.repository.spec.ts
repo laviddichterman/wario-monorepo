@@ -160,11 +160,11 @@ describe('CategoryTypeOrmRepository', () => {
 
       // Override the manager.transaction mock to use our nested repo
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      mockRepo.manager!.transaction = jest.fn().mockImplementation(
-        async (cb: (em: { getRepository: () => typeof mockNestedRepo }) => Promise<unknown>) => {
+      mockRepo.manager!.transaction = jest
+        .fn()
+        .mockImplementation(async (cb: (em: { getRepository: () => typeof mockNestedRepo }) => Promise<unknown>) => {
           return cb({ getRepository: () => mockNestedRepo });
-        },
-      );
+        });
 
       const count = await repository.removeServiceDisableFromAll('s1');
 
@@ -192,11 +192,11 @@ describe('CategoryTypeOrmRepository', () => {
       };
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      mockRepo.manager!.transaction = jest.fn().mockImplementation(
-        async (cb: (em: { getRepository: () => typeof mockNestedRepo }) => Promise<unknown>) => {
+      mockRepo.manager!.transaction = jest
+        .fn()
+        .mockImplementation(async (cb: (em: { getRepository: () => typeof mockNestedRepo }) => Promise<unknown>) => {
           return cb({ getRepository: () => mockNestedRepo });
-        },
-      );
+        });
 
       const count = await repository.removeServiceDisableFromAll('nonexistent');
 

@@ -33,10 +33,7 @@ export const createMockCalendarEvent = (
 /**
  * Creates a mock Google Date object (Schema$EventDateTime).
  */
-export const createMockGoogleDate = (
-  date: Date = new Date(),
-  timeZone = 'UTC',
-): calendar_v3.Schema$EventDateTime => ({
+export const createMockGoogleDate = (date: Date = new Date(), timeZone = 'UTC'): calendar_v3.Schema$EventDateTime => ({
   dateTime: date.toISOString(),
   timeZone,
 });
@@ -54,8 +51,6 @@ export const createMockSheetValues = (
   fillValue: string | number | ((r: number, c: number) => string | number) = (r, c) => `R${String(r)}C${String(c)}`,
 ): (string | number)[][] => {
   return Array.from({ length: rows }, (_, r) =>
-    Array.from({ length: cols }, (_, c) =>
-      typeof fillValue === 'function' ? fillValue(r, c) : fillValue,
-    ),
+    Array.from({ length: cols }, (_, c) => (typeof fillValue === 'function' ? fillValue(r, c) : fillValue)),
   );
 };

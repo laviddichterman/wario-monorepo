@@ -42,7 +42,10 @@ export class OrderController {
   @Scopes('cancel:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putCancelOrder(@LockedOrder() order: WOrderInstance | undefined, @Body() body: CancelOrderRequestDto) {
+  async putCancelOrder(
+    @LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined,
+    @Body() body: CancelOrderRequestDto,
+  ) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -62,7 +65,7 @@ export class OrderController {
   @Scopes('write:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putConfirmOrder(@LockedOrder() order: WOrderInstance | undefined) {
+  async putConfirmOrder(@LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -77,7 +80,10 @@ export class OrderController {
   @Scopes('write:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putMoveOrder(@LockedOrder() order: WOrderInstance | undefined, @Body() body: MoveOrderRequestDto) {
+  async putMoveOrder(
+    @LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined,
+    @Body() body: MoveOrderRequestDto,
+  ) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -96,7 +102,10 @@ export class OrderController {
   @Scopes('write:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putAdjustOrderTime(@LockedOrder() order: WOrderInstance | undefined, @Body() body: RescheduleOrderRequestDto) {
+  async putAdjustOrderTime(
+    @LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined,
+    @Body() body: RescheduleOrderRequestDto,
+  ) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }
@@ -118,7 +127,7 @@ export class OrderController {
   @Scopes('send:order')
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
-  async putSendOrder(@LockedOrder() order: WOrderInstance | undefined) {
+  async putSendOrder(@LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined) {
     if (!order) {
       throw new BadRequestException('Failed to acquire lock on order');
     }

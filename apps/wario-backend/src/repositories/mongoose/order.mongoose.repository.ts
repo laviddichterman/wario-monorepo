@@ -127,20 +127,28 @@ export class OrderMongooseRepository implements IOrderRepository {
     return result.modifiedCount;
   }
 
-  async acquireLock(id: string, status: WOrderStatus, lock: string): Promise<WOrderInstance | null> {
+  async acquireLock(
+    id: string,
+    status: WOrderStatus,
+    lock: string,
+  ): Promise<(WOrderInstance & Required<{ locked: string }>) | null> {
     const updated = await this.model
       .findOneAndUpdate({ _id: id, locked: null, status }, { $set: { locked: lock } }, { new: true })
       .lean()
       .exec();
-    return updated ? { ...updated, id: updated._id.toString() } : null;
+    return updated
+      ? ({ ...updated, id: updated._id.toString() } as WOrderInstance & Required<{ locked: string }>)
+      : null;
   }
 
-  async tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null> {
+  async tryAcquireLock(id: string, lock: string): Promise<(WOrderInstance & Required<{ locked: string }>) | null> {
     const updated = await this.model
       .findOneAndUpdate({ _id: id, locked: null }, { $set: { locked: lock } }, { new: true })
       .lean()
       .exec();
-    return updated ? { ...updated, id: updated._id.toString() } : null;
+    return updated
+      ? ({ ...updated, id: updated._id.toString() } as WOrderInstance & Required<{ locked: string }>)
+      : null;
   }
 
   async unlockAll(): Promise<number> {

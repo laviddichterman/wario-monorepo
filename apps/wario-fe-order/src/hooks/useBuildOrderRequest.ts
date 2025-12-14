@@ -204,14 +204,14 @@ export function useOrderRequestBuilder() {
       const paymentsProposed =
         balance.amount > 0 && nonce
           ? ComputePaymentsApplied(total, tipAmount, [
-            ...paymentsApplied,
-            {
-              createdAt: Date.now(),
-              t: PaymentMethod.CreditCard,
-              status: TenderBaseStatus.PROPOSED,
-              payment: { sourceId: nonce },
-            },
-          ])
+              ...paymentsApplied,
+              {
+                createdAt: Date.now(),
+                t: PaymentMethod.CreditCard,
+                status: TenderBaseStatus.PROPOSED,
+                payment: { sourceId: nonce },
+              },
+            ])
           : paymentsApplied;
 
       return {

@@ -1,8 +1,4 @@
-import {
-  createMockCalendarEvent,
-  createMockGoogleDate,
-  createMockSheetValues,
-} from './google-mocks';
+import { createMockCalendarEvent, createMockGoogleDate, createMockSheetValues } from './google-mocks';
 
 describe('Google Mocks Utilities', () => {
   describe('createMockCalendarEvent', () => {

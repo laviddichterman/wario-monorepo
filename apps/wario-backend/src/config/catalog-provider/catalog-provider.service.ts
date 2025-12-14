@@ -3,7 +3,7 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import {
   CatalogGenerator,
-  CreateIOptionRequest,
+  CreateIOptionTypeRequestBody,
   CreateIProductRequest,
   DeletePrinterGroupRequest,
   type ICatalog,
@@ -21,11 +21,13 @@ import {
   type RecordProductInstanceFunctions,
   ReduceArrayToMapByKey,
   SEMVER,
+  UpdateIOptionProps,
+  UpdateIOptionTypeProps,
   UpdateIProductRequest,
   type UpsertIProductRequest,
 } from '@wcp/wario-shared';
 
-import { UpdateModifierOptionProps, UpdateModifierTypeProps, UpsertProductInstanceProps } from 'src/config/catalog-provider/catalog.types';
+import { UpsertProductInstanceProps } from 'src/config/catalog-provider/catalog.types';
 
 import {
   CATEGORY_REPOSITORY,
@@ -315,11 +317,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     };
   }
 
-  CreateModifierType = async (modifierType: Omit<IOptionType, 'id'>, options: CreateIOptionRequest[]) => {
-    return ModifierFns.createModifierType(this.modifierDeps, modifierType, options);
+  CreateModifierType = async (body: CreateIOptionTypeRequestBody) => {
+    return ModifierFns.createModifierType(this.modifierDeps, body);
   };
 
-  UpdateModifierType = async (props: UpdateModifierTypeProps) => {
+  UpdateModifierType = async (props: UpdateIOptionTypeProps) => {
     return ModifierFns.updateModifierType(this.modifierDeps, props);
   };
 
@@ -331,7 +333,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ModifierFns.createOption(this.modifierDeps, modifierTypeId, modifierOption);
   };
 
-  UpdateModifierOption = async (props: UpdateModifierOptionProps) => {
+  UpdateModifierOption = async (props: UpdateIOptionProps) => {
     return ModifierFns.updateModifierOption(this.modifierDeps, props);
   };
 
@@ -434,19 +436,16 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   DeleteProductInstanceFunction = async (pif_id: string, suppressRecompute = false) => {
-    const { deleted, optionsModified, productsModified } = await FunctionFns.deleteProductInstanceFunction(
-      this.functionDeps,
-      pif_id,
-    );
+    const result = await FunctionFns.deleteProductInstanceFunction(this.functionDeps, pif_id);
 
-    if (!deleted) return null;
+    if (!result.deleted) return null;
 
-    if (optionsModified > 0) await this.SyncOptions();
-    if (productsModified > 0) await this.SyncProducts();
+    if (result.optionsModified) await this.SyncOptions();
+    if (result.productsModified) await this.SyncProducts();
     await this.SyncProductInstanceFunctions();
 
     if (!suppressRecompute) this.RecomputeCatalog();
-    return deleted;
+    return result;
   };
 
   CreateOrderInstanceFunction = async (oif: Omit<OrderInstanceFunction, 'id'>) => {
@@ -682,10 +681,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         };
       })
       .filter((update) => update.product !== null) as Array<{
-        piid: string;
-        product: IProduct;
-        productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
-      }>;
+      piid: string;
+      product: IProduct;
+      productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
+    }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();

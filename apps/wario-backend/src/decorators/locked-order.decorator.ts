@@ -12,7 +12,7 @@ export const LOCKED_ORDER_KEY = 'lockedOrder';
  * Request interface extension for the locked order data.
  */
 export interface LockedOrderRequest {
-  [LOCKED_ORDER_KEY]?: WOrderInstance;
+  [LOCKED_ORDER_KEY]?: WOrderInstance & Required<{ locked: string }>;
 }
 
 /**
@@ -34,7 +34,9 @@ export interface LockedOrderRequest {
  * }
  * ```
  */
-export const LockedOrder = createParamDecorator((_data: unknown, ctx: ExecutionContext): WOrderInstance | undefined => {
-  const request = ctx.switchToHttp().getRequest<LockedOrderRequest>();
-  return request[LOCKED_ORDER_KEY];
-});
+export const LockedOrder = createParamDecorator(
+  (_data: unknown, ctx: ExecutionContext): (WOrderInstance & Required<{ locked: string }>) | undefined => {
+    const request = ctx.switchToHttp().getRequest<LockedOrderRequest>();
+    return request[LOCKED_ORDER_KEY];
+  },
+);

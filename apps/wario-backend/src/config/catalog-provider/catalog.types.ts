@@ -3,8 +3,6 @@ import {
   type CreateIProductRequestDto,
   type IProduct,
   type PrinterGroup,
-  type UpdateIOptionRequest,
-  type UpdateIOptionTypeRequest,
   type UpdateIProductInstanceRequestDto,
   type UpdateIProductRequestDto,
   type UpdateIProductRequestInstances,
@@ -24,21 +22,9 @@ export type UpsertProductInstanceProps = {
   product: Pick<IProduct, 'price' | 'modifiers' | 'printerGroup' | 'disabled' | 'displayFlags'>;
   productInstance: UpsertIProductInstanceRequest;
 };
-
-export type UpdateModifierTypeProps = {
-  id: string;
-  modifierType: UpdateIOptionTypeRequest;
-};
-
 export type UpdatePrinterGroupProps = {
   id: string;
   printerGroup: Partial<Omit<PrinterGroup, 'id'>>;
-};
-
-export type UpdateModifierOptionProps = {
-  id: string;
-  modifierTypeId: string;
-  modifierOption: UpdateIOptionRequest;
 };
 
 export function isUpdateProduct(

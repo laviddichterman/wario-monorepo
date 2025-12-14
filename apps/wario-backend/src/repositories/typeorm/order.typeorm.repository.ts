@@ -80,8 +80,8 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     return this.repo.save(entity);
   }
 
-  async findByLock(lock: string): Promise<WOrderInstance[]> {
-    return this.repo.find({ where: { locked: lock } });
+  async findByLock(lock: string): Promise<(WOrderInstance & Required<{ locked: string }>)[]> {
+    return this.repo.find({ where: { locked: lock } }) as Promise<(WOrderInstance & Required<{ locked: string }>)[]>;
   }
 
   async lockReadyOrders(
@@ -105,16 +105,20 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     return result.affected ?? 0;
   }
 
-  async acquireLock(id: string, status: WOrderStatus, lock: string): Promise<WOrderInstance | null> {
+  async acquireLock(
+    id: string,
+    status: WOrderStatus,
+    lock: string,
+  ): Promise<(WOrderInstance & Required<{ locked: string }>) | null> {
     const result = await this.repo.update({ id, status, locked: IsNull() }, { locked: lock });
     if ((result.affected ?? 0) === 0) return null;
-    return this.findById(id);
+    return this.findById(id) as Promise<(WOrderInstance & Required<{ locked: string }>) | null>;
   }
 
-  async tryAcquireLock(id: string, lock: string): Promise<WOrderInstance | null> {
+  async tryAcquireLock(id: string, lock: string): Promise<(WOrderInstance & Required<{ locked: string }>) | null> {
     const result = await this.repo.update({ id, locked: IsNull() }, { locked: lock });
     if ((result.affected ?? 0) === 0) return null;
-    return this.findById(id);
+    return this.findById(id) as Promise<(WOrderInstance & Required<{ locked: string }>) | null>;
   }
 
   async unlockAll(): Promise<number> {

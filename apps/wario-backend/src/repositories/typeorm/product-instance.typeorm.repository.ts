@@ -12,7 +12,7 @@ export class ProductInstanceTypeOrmRepository implements IProductInstanceReposit
   constructor(
     @InjectRepository(ProductInstanceEntity)
     private readonly repo: Repository<ProductInstanceEntity>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<IProductInstance | null> {
     return this.repo.findOne({ where: { id, validTo: IsNull() } });

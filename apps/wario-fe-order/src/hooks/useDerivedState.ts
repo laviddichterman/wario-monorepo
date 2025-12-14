@@ -9,7 +9,6 @@ import {
   GenerateCategoryOrderList,
   GetNextAvailableServiceDate,
   GroupAndOrderCart,
-  type IOptionType,
   type IProductInstance,
   IsModifierTypeVisible,
   type MetadataModifierMap,
@@ -97,7 +96,7 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
   return useMemo(() => {
     if (!catalogSelectors) return {};
     return Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-      const modifierEntry = catalogSelectors.modifierEntry(k) as IOptionType;
+      const modifierEntry = catalogSelectors.modifierEntry(k);
       return IsModifierTypeVisible(modifierEntry, v.has_selectable) ? { ...acc, [k]: v } : acc;
     }, {});
   }, [mMap, catalogSelectors]);
@@ -154,7 +153,7 @@ export function useVisibleModifierOptions(productId: string, modifiers: ProductI
 
   return useMemo(() => {
     if (!catalogSelectors || !metadata) return [];
-    const modifierTypeEntry = catalogSelectors.modifierEntry(mtId) as IOptionType;
+    const modifierTypeEntry = catalogSelectors.modifierEntry(mtId);
     return SortAndFilterModifierOptions(metadata, modifierTypeEntry, catalogSelectors.option, serviceDateTime);
   }, [metadata, mtId, catalogSelectors, serviceDateTime]);
 }
@@ -172,7 +171,7 @@ export function useSortedVisibleModifiers(productId: string, modifiers: ProductI
       .map((x) => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
 
       .filter((x) => IsModifierTypeVisible(x.entry, x.md.has_selectable))
-      .sort((a, b) => (a.entry as IOptionType).ordinal - (b.entry as IOptionType).ordinal)
+      .sort((a, b) => a.entry.ordinal - b.entry.ordinal)
       .map((x) => x.pm);
   }, [productType, fulfillmentId, metadata, catalogSelectors]);
 }
@@ -236,9 +235,9 @@ export function useCartBasedLeadTime() {
   return useMemo(() => {
     return catalogSelectors
       ? DetermineCartBasedLeadTime(
-        cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
-        catalogSelectors.productEntry,
-      )
+          cart.map((x) => ({ ...x, product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId } })),
+          catalogSelectors.productEntry,
+        )
       : 0;
   }, [cart, catalogSelectors]);
 }

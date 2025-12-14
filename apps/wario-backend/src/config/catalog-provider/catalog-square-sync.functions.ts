@@ -12,18 +12,15 @@ import type {
   IProductInstance,
   KeyValue,
   PrinterGroup,
+  UpdateIOptionProps,
+  UpdateIOptionTypeProps,
   UpsertIProductRequest,
 } from '@wcp/wario-shared';
 
 import { GetNonSquareExternalIds, GetSquareExternalIds, GetSquareIdIndexFromExternalIds } from '../square-wario-bridge';
 import type { SquareService } from '../square/square.service';
 
-import type {
-  UpdateModifierOptionProps,
-  UpdateModifierTypeProps,
-  UpdatePrinterGroupProps,
-  UpsertProductInstanceProps,
-} from './catalog.types';
+import type { UpdatePrinterGroupProps, UpsertProductInstanceProps } from './catalog.types';
 
 // ============================================================================
 // Dependencies Interface
@@ -39,15 +36,15 @@ export interface SquareSyncDeps {
   // Callbacks to other services/operations
   batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<(PrinterGroup | null)[]>;
   batchUpdateModifierType: (
-    batches: UpdateModifierTypeProps[],
+    batches: UpdateIOptionTypeProps[],
     suppress: boolean,
     updateRelated: boolean,
-  ) => Promise<(IOptionType | null)[]>;
-  batchUpdateModifierOption: (batches: UpdateModifierOptionProps[]) => Promise<(IOption | null)[]>;
+  ) => Promise<IOptionType[] | null>;
+  batchUpdateModifierOption: (batches: UpdateIOptionProps[]) => Promise<IOption[] | null>;
   batchUpdateProductInstance: (
     batches: UpsertProductInstanceProps[],
     suppress: boolean,
-  ) => Promise<(IProductInstance | null)[]>;
+  ) => Promise<IProductInstance[] | null>;
   batchUpsertProduct: (
     batches: UpsertIProductRequest[],
   ) => Promise<{ product: IProduct; instances: IProductInstance[] }[] | null>;
@@ -126,7 +123,7 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
     const catalogObjectResponse = await deps.squareService.BatchRetrieveCatalogObjects(squareCatalogObjectIds, false);
     if (catalogObjectResponse.success) {
       const foundObjects = catalogObjectResponse.result.objects as CatalogObject[];
-      const missingSquareCatalogObjectBatches: UpdateModifierTypeProps[] = [];
+      const missingSquareCatalogObjectBatches: UpdateIOptionTypeProps[] = [];
       const optionUpdates: { id: string; modifierTypeId: string; externalIDs: KeyValue[] }[] = [];
       Object.values(deps.catalog.modifiers)
         .filter((mt) =>
@@ -159,7 +156,7 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
           optionUpdates.map((x) => ({
             id: x.id,
             modifierTypeId: x.modifierTypeId,
-            modifierOption: { externalIDs: x.externalIDs },
+            option: { externalIDs: x.externalIDs },
           })),
         );
       }
@@ -179,7 +176,10 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
 
   if (batches.length > 0) {
     const result = await deps.batchUpdateModifierType(batches, false, false);
-    return result.filter((x): x is IOptionType => x !== null).map((x) => x.id);
+    if (!result) {
+      throw new Error('Failed to update modifier types');
+    }
+    return result.map((x) => x.id);
   }
   return [];
 };

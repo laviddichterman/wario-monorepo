@@ -17,6 +17,7 @@ import { ProductEntity } from '../../entities/catalog/product.entity';
 import { ProductTypeOrmRepository } from './product.typeorm.repository';
 
 // Combine query builders for mocking
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type MockQueryBuilder<T extends ObjectLiteral> = MockType<
   SelectQueryBuilder<T> & UpdateQueryBuilder<T> & InsertQueryBuilder<T>
 >;
@@ -82,7 +83,6 @@ describe('ProductTypeOrmRepository', () => {
       expect(mockRepo.update).toHaveBeenCalled(); // Soft delete via SCD2 likely updates validTo
     });
   });
-
 
   describe('bulk operations', () => {
     it('bulkUpdate', async () => {

@@ -46,7 +46,7 @@ const useProductIdsInCategoryAfterDisableFilter = (categoryId: string) => {
 
     // Find products that are in this category by checking the category's products array
     const category = catalog.categories[categoryId];
-    const categoryProductIds = category?.products ?? [];
+    const categoryProductIds = category.products;
     return filteredProducts.filter((x) => categoryProductIds.includes(x.id)).map((x) => x.id);
   }, [catalog, hideDisabledProducts, categoryId]);
 };

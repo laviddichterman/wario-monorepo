@@ -14,7 +14,7 @@ import {
   IgnoreHideDisplayFlags,
   IsModifierTypeVisible,
   WCPProductGenerateMetadata,
-} from '@wcp/wario-shared/logic'
+} from '@wcp/wario-shared/logic';
 import {
   type ICatalog,
   type ICatalogSelectors,
@@ -26,7 +26,6 @@ import {
   type IProductInstanceFunction,
   type MetadataModifierMap,
   type ProductInstanceModifierEntry,
-
 } from '@wcp/wario-shared/types';
 
 import type { ProductCategoryFilter } from '@/common/shared';

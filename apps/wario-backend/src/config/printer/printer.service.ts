@@ -598,7 +598,7 @@ export class PrinterService {
    * Sends a locked order to the printers and updates its status.
    */
   SendLockedOrder = async (
-    lockedOrder: WOrderInstance,
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
     releaseLock: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     this.logger.debug(

@@ -49,8 +49,6 @@ export function useCategoryVisibilityMap(
   }, [catalogSelectors, rootCategoryId, fulfillmentId, orderTime, context, visibilityLogic]);
 }
 
-
-
 /**
  * Result of useCategoryVisibility hook.
  */
@@ -145,4 +143,3 @@ export const useVisibleProductsInCategory = (
     });
   }, [productIdsInCategory, fulfillmentId, orderTime, catalogSelectors, context, visibilityLogic]);
 };
-

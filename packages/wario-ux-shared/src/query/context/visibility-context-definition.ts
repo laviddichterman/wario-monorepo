@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react';
 
-import { type CategoryVisibilityMap } from "@wcp/wario-shared/logic";
+import { type CategoryVisibilityMap } from '@wcp/wario-shared/logic';
 
 /**
  * Context for providing a pre-computed CategoryVisibilityMap to descendant components.
