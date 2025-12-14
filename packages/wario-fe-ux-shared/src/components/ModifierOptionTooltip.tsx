@@ -2,15 +2,14 @@ import { useMemo } from 'react';
 
 import { Tooltip } from '@mui/material';
 
-import {
-  DISABLE_REASON,
-  type FulfillmentConfig,
-  type ICatalogSelectors,
-  type IOption,
-  type OptionEnableState,
-  type WCPProduct,
-  WFunctional,
-} from '@wcp/wario-shared';
+import { DISABLE_REASON, WFunctional } from '@wcp/wario-shared/logic';
+import type {
+  FulfillmentConfig,
+  ICatalogSelectors,
+  IOption,
+  OptionEnableState,
+  WCPProduct,
+} from '@wcp/wario-shared/types';
 
 interface ModifierOptionTooltipProps {
   enableState: OptionEnableState;

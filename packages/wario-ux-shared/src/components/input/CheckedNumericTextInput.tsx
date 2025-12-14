@@ -10,7 +10,7 @@ import {
   type NumberTransformPropsNoEmpty,
   transformValueOnBlur,
   transformValueOnChange,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 
 import { normalizeSlotProps } from '@/common/SxSpreadUtils';
 

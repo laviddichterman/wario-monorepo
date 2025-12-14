@@ -5,7 +5,7 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 
-import type { IWSettings } from '@wcp/wario-shared';
+import type { IWSettings } from '@wcp/wario-shared/types';
 
 import { QUERY_KEYS } from '../types';
 

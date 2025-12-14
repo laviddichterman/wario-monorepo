@@ -11,20 +11,23 @@ import {
   FilterProductUsingCatalog,
   GetMenuHideDisplayFlag,
   GetOrderHideDisplayFlag,
+  IgnoreHideDisplayFlags,
+  IsModifierTypeVisible,
+  WCPProductGenerateMetadata,
+} from '@wcp/wario-shared/logic'
+import {
   type ICatalog,
   type ICatalogSelectors,
   type ICategory,
-  IgnoreHideDisplayFlags,
   type IOption,
   type IOptionType,
   type IProduct,
   type IProductInstance,
   type IProductInstanceFunction,
-  IsModifierTypeVisible,
   type MetadataModifierMap,
   type ProductInstanceModifierEntry,
-  WCPProductGenerateMetadata,
-} from '@wcp/wario-shared';
+
+} from '@wcp/wario-shared/types';
 
 import type { ProductCategoryFilter } from '@/common/shared';
 

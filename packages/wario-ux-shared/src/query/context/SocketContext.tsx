@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
 
-import type { FulfillmentConfig, ICatalog, IWSettings } from '@wcp/wario-shared';
+import type { FulfillmentConfig, ICatalog, IWSettings } from '@wcp/wario-shared/types';
 
 import type { ServerTimeData, SocketStatus } from '../types';
 import { QUERY_KEYS, SOCKET_EVENTS } from '../types';

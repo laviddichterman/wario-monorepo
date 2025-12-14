@@ -9,6 +9,13 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
+import {
+  DiscountMethod,
+  fPercent,
+  MoneyToDisplayString,
+  PaymentMethod,
+  TenderBaseStatus,
+} from '@wcp/wario-shared/logic';
 import type {
   CoreCartEntry,
   ICatalogSelectors,
@@ -16,8 +23,7 @@ import type {
   OrderLineDiscount,
   OrderPayment,
   WProduct,
-} from '@wcp/wario-shared';
-import { DiscountMethod, fPercent, MoneyToDisplayString, PaymentMethod, TenderBaseStatus } from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 
 import { ProductDisplay } from '@/components/WProductComponent';
 

@@ -8,8 +8,8 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
 
-import type { CustomerInfoData, FulfillmentConfig, FulfillmentData } from '@wcp/wario-shared';
-import { ComputeServiceTimeDisplayString, WDateUtils } from '@wcp/wario-shared';
+import { ComputeServiceTimeDisplayString, WDateUtils } from '@wcp/wario-shared/logic';
+import type { CustomerInfoData, FulfillmentConfig, FulfillmentData } from '@wcp/wario-shared/types';
 
 export interface ServiceInfoTableComponentProps {
   customerInfo: CustomerInfoData;

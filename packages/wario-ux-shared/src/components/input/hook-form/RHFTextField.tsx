@@ -9,7 +9,7 @@ import {
   parseDecimal,
   transformValueOnBlur,
   transformValueOnChange,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 
 // ----------------------------------------------------------------------
 

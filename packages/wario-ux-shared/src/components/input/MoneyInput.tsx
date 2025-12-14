@@ -1,4 +1,4 @@
-import { type DistributiveOmit, formatDecimal, parseDecimal } from '@wcp/wario-shared';
+import { type DistributiveOmit, formatDecimal, parseDecimal } from '@wcp/wario-shared/logic';
 
 import { CheckedNumericInput, type CheckedNumericInputProps } from './CheckedNumericTextInput';
 

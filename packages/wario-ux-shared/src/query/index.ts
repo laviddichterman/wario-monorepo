@@ -7,6 +7,8 @@
 export { SocketContext } from './context/socket-context-definition';
 export { SocketProvider } from './context/SocketContext';
 
+export { VisibilityMapProvider } from './context/VisibilityContext';
+
 export * from './create-category-shopper';
 
 // Hooks (queries)
@@ -20,7 +22,6 @@ export * from './provider/WarioQueryProvider';
 
 // Query client
 export * from './queryClient';
-
 // Types
 export * from './types';
 

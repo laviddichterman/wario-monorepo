@@ -4,8 +4,13 @@ import type { BoxProps } from '@mui/material/Box';
 import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 
-import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared';
-import { ComputePotentialPrices, MoneyToDisplayString, PriceDisplay, WProductDisplayOptions } from '@wcp/wario-shared';
+import {
+  ComputePotentialPrices,
+  MoneyToDisplayString,
+  PriceDisplay,
+  WProductDisplayOptions,
+} from '@wcp/wario-shared/logic';
+import type { ICatalogSelectors, WProductMetadata } from '@wcp/wario-shared/types';
 
 import { spreadSx } from '@/common/SxSpreadUtils';
 import { Dots, ProductAdornment, ProductDescription, ProductPrice, ProductTitle } from '@/styled/styled';

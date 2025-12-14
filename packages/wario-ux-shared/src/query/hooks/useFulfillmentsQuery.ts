@@ -5,7 +5,8 @@
 import type { UseQueryOptions } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
 
-import { type FulfillmentConfig, WDateUtils } from '@wcp/wario-shared';
+import { WDateUtils } from '@wcp/wario-shared/logic';
+import { type FulfillmentConfig } from '@wcp/wario-shared/types';
 
 import { QUERY_KEYS } from '../types';
 

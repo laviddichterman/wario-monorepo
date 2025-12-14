@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 
-import type { ValidateAndLockCreditResponse } from '@wcp/wario-shared';
+import type { ValidateAndLockCreditResponse } from '@wcp/wario-shared/types';
 
 import { handleAxiosError } from '@/common/axios';
 

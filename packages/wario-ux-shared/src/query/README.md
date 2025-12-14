@@ -164,10 +164,10 @@ const { data: fulfillment } = useFulfillmentById('delivery-id');
 
 ## Type Safety
 
-All hooks are fully typed using types from `@wcp/wario-shared`:
+All hooks are fully typed using types from `@wcp/wario-shared/types`:
 
 ```typescript
-import type { ICatalog, FulfillmentConfig, IWSettings } from '@wcp/wario-shared';
+import type { ICatalog, FulfillmentConfig, IWSettings } from '@wcp/wario-shared/types';
 
 const { data: catalog } = useCatalogQuery(); // catalog: ICatalog | null
 const { data: fulfillments } = useFulfillmentsQuery(); // fulfillments: FulfillmentConfig[] | null
