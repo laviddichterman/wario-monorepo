@@ -17,7 +17,7 @@ import {
   type PurchaseStoreCreditResponse,
   type ResponseFailure,
   RoundToTwoDecimalPlaces,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
 import { handleAxiosError, ZodEmailSchema } from '@wcp/wario-ux-shared/common';
 import { FormProvider, MoneyInput, RHFCheckbox, RHFMailTextField, RHFTextField } from '@wcp/wario-ux-shared/components';
 import { useSquareAppId, useSquareLocationId } from '@wcp/wario-ux-shared/query';
