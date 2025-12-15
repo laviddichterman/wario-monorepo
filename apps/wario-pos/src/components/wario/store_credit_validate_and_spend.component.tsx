@@ -8,15 +8,13 @@ import { ErrorOutline, PhotoCamera } from '@mui/icons-material';
 import { Button, Card, CardHeader, Divider, Grid, IconButton, List, ListItem, Typography } from '@mui/material';
 
 import { CURRENCY, MoneyToDisplayString, StoreCreditType } from '@wcp/wario-shared/logic';
-import type {
-  IMoney,
-  SpendCreditResponse,
-  ValidateAndLockCreditResponse,
-  ValidateLockAndSpendRequest,
-} from '@wcp/wario-shared/types';
+import type { IMoney } from '@wcp/wario-shared/types';
 import { DialogContainer } from '@wcp/wario-ux-shared/containers';
+import { useValidateStoreCreditMutation } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from '@/config';
+import { useRedeemStoreCreditMutation } from '@/hooks/useStoreCreditMutations';
+
+import axiosInstance from '@/utils/axios';
 
 import { IMoneyPropertyComponent } from './property-components/IMoneyPropertyComponent';
 import { StringPropertyComponent } from './property-components/StringPropertyComponent';
@@ -65,11 +63,15 @@ const StoreCreditValidateAndSpendComponent = () => {
   const [creditCode, setCreditCode] = useState('');
   const [scanCode, setScanCode] = useState(false);
   const [hasCamera, setHasCamera] = useState(false);
-  const [validationResponse, setValidationResponse] = useState<ValidateAndLockCreditResponse | null>(null);
   const [amount, setAmount] = useState<IMoney>({ currency: CURRENCY.USD, amount: 0 });
   const [processedBy, setProcessedBy] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [debitResponse, setDebitResponse] = useState<SpendCreditResponse | null>(null);
+
+  // Use mutation hooks for store credit validation and redemption
+  const validateMutation = useValidateStoreCreditMutation({ axiosInstance });
+  const redeemMutation = useRedeemStoreCreditMutation();
+
+  // Derive validation response from mutation data
+  const validationResponse = validateMutation.data ?? null;
 
   useEffect(() => {
     const CheckForCamera = async () => {
@@ -79,11 +81,15 @@ const StoreCreditValidateAndSpendComponent = () => {
     void CheckForCamera();
   }, []);
 
-  const onScanned = async (qrCode: string) => {
+  const onScanned = (qrCode: string) => {
     setCreditCode(qrCode);
     setScanCode(false);
     if (qrCode.length === 19) {
-      await validateCode(qrCode);
+      validateMutation.mutate(qrCode, {
+        onError: (error) => {
+          enqueueSnackbar(`Unable to validate ${qrCode}. Got error: ${error.message}.`, { variant: 'error' });
+        },
+      });
     }
   };
 
@@ -92,60 +98,39 @@ const StoreCreditValidateAndSpendComponent = () => {
   };
 
   const clearLookup = () => {
-    setIsProcessing(true);
     setCreditCode('');
     setScanCode(false);
-    setValidationResponse(null);
     setAmount({ currency: CURRENCY.USD, amount: 0 });
     setProcessedBy('');
-    setIsProcessing(false);
-    setDebitResponse(null);
+    validateMutation.reset();
+    redeemMutation.reset();
   };
-  const validateCode = async (code: string) => {
-    if (!isProcessing) {
-      setValidationResponse(null);
-      setIsProcessing(true);
-      try {
-        const response = await fetch(
-          `${HOST_API}/api/v1/payments/storecredit/validate/?code=${encodeURIComponent(code)}`,
-          { method: 'GET' },
-        );
-        const response_data = (await response.json()) as ValidateAndLockCreditResponse;
-        setValidationResponse(response_data);
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to validate ${creditCode}. Got error: ${JSON.stringify(error)}.`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
+
+  const validateCode = (code: string) => {
+    if (!validateMutation.isPending) {
+      validateMutation.mutate(code, {
+        onError: (error) => {
+          enqueueSnackbar(`Unable to validate ${creditCode}. Got error: ${error.message}.`, { variant: 'error' });
+        },
+      });
     }
   };
 
-  const processDebit = async () => {
-    if (!isProcessing && validationResponse !== null && validationResponse.valid) {
-      setIsProcessing(true);
-      try {
-        const body: ValidateLockAndSpendRequest = {
+  const processDebit = () => {
+    if (validationResponse !== null && validationResponse.valid) {
+      redeemMutation.mutate(
+        {
           code: creditCode,
           amount,
           lock: validationResponse.lock,
           updatedBy: processedBy,
-        };
-        const response = await fetch(`${HOST_API}/api/v1/payments/storecredit/spend`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        },
+        {
+          onError: (error) => {
+            enqueueSnackbar(`Unable to debit ${creditCode}. Got error: ${error.message}.`, { variant: 'error' });
           },
-          body: JSON.stringify(body),
-        });
-        const response_data = (await response.json()) as SpendCreditResponse;
-        setDebitResponse(response_data);
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to debit ${creditCode}. Got error: ${JSON.stringify(error)}.`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
+        },
+      );
     }
   };
   const scanHTML = hasCamera ? (
@@ -159,7 +144,9 @@ const StoreCreditValidateAndSpendComponent = () => {
         innerComponent={
           <QrCodeScanner
             show={scanCode}
-            onSuccess={(decodedText: string, _result: Html5QrcodeResult) => void onScanned(decodedText)}
+            onSuccess={(decodedText: string, _result: Html5QrcodeResult) => {
+              onScanned(decodedText);
+            }}
             onFailure={onScannedFail}
           />
         }
@@ -176,7 +163,7 @@ const StoreCreditValidateAndSpendComponent = () => {
           onClick={() => {
             setScanCode(true);
           }}
-          disabled={isProcessing || (validationResponse !== null && validationResponse.valid)}
+          disabled={validateMutation.isPending || (validationResponse !== null && validationResponse.valid)}
           size="large"
         >
           <PhotoCamera />
@@ -199,7 +186,7 @@ const StoreCreditValidateAndSpendComponent = () => {
           }}
         >
           <StringPropertyComponent
-            disabled={isProcessing || (validationResponse !== null && validationResponse.valid)}
+            disabled={validateMutation.isPending || (validationResponse !== null && validationResponse.valid)}
             label="Credit Code"
             value={creditCode}
             setValue={setCreditCode}
@@ -213,14 +200,16 @@ const StoreCreditValidateAndSpendComponent = () => {
           }}
         >
           {validationResponse !== null ? (
-            <Button fullWidth onClick={clearLookup} disabled={isProcessing}>
+            <Button fullWidth onClick={clearLookup} disabled={validateMutation.isPending || redeemMutation.isPending}>
               Clear
             </Button>
           ) : (
             <Button
               fullWidth
-              onClick={() => void validateCode(creditCode)}
-              disabled={isProcessing || creditCode.length !== 19}
+              onClick={() => {
+                validateCode(creditCode);
+              }}
+              disabled={validateMutation.isPending || creditCode.length !== 19}
             >
               Validate
             </Button>
@@ -280,7 +269,7 @@ const StoreCreditValidateAndSpendComponent = () => {
               </Grid>
               <Grid size={6}>
                 <IMoneyPropertyComponent
-                  disabled={isProcessing || debitResponse !== null}
+                  disabled={redeemMutation.isPending || redeemMutation.data !== undefined}
                   label="Amount to debit"
                   min={0.01}
                   max={validationResponse.amount.amount / 100}
@@ -290,7 +279,7 @@ const StoreCreditValidateAndSpendComponent = () => {
               </Grid>
               <Grid size={6}>
                 <StringPropertyComponent
-                  disabled={isProcessing || debitResponse !== null}
+                  disabled={redeemMutation.isPending || redeemMutation.data !== undefined}
                   label="Debited by"
                   value={processedBy}
                   setValue={setProcessedBy}
@@ -298,8 +287,13 @@ const StoreCreditValidateAndSpendComponent = () => {
               </Grid>
               <Grid size={12}>
                 <Button
-                  onClick={() => void processDebit()}
-                  disabled={isProcessing || debitResponse !== null || processedBy.length === 0 || amount.amount <= 0}
+                  onClick={processDebit}
+                  disabled={
+                    redeemMutation.isPending ||
+                    redeemMutation.data !== undefined ||
+                    processedBy.length === 0 ||
+                    amount.amount <= 0
+                  }
                 >
                   Debit {MoneyToDisplayString(amount, true)}
                 </Button>
@@ -309,11 +303,11 @@ const StoreCreditValidateAndSpendComponent = () => {
         ) : (
           ''
         )}
-        {debitResponse !== null ? (
-          debitResponse.success ? (
+        {redeemMutation.data !== undefined ? (
+          redeemMutation.data.success ? (
             <Grid size={12}>
               Successfully debited {MoneyToDisplayString(amount, true)}. Balance remaining:{' '}
-              {MoneyToDisplayString(debitResponse.balance, true)}
+              {MoneyToDisplayString(redeemMutation.data.balance, true)}
             </Grid>
           ) : (
             <Grid size={12}>
