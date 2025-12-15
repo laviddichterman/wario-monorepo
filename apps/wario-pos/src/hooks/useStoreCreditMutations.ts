@@ -1,6 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 
-import type { EncryptStringLock, IMoney, SpendCreditResponse, ValidateLockAndSpendRequest } from '@wcp/wario-shared/types';
+import type {
+  EncryptStringLock,
+  IMoney,
+  SpendCreditResponse,
+  ValidateLockAndSpendRequest,
+} from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
@@ -62,4 +67,3 @@ export function useRedeemStoreCreditMutation() {
     },
   });
 }
-

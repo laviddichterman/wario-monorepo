@@ -57,18 +57,18 @@ type CategoryApiBody = Omit<ICategory, 'id'>;
 
 /**
  * Convert form state to API request body.
- * 
+ *
  * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
  * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
  */
 export function toCategoryApiBody(form: CategoryFormState): CategoryApiBody;
 export function toCategoryApiBody(
   form: CategoryFormState,
-  dirtyFields: Set<keyof CategoryFormState>
+  dirtyFields: Set<keyof CategoryFormState>,
 ): Partial<CategoryApiBody>;
 export function toCategoryApiBody(
   form: CategoryFormState,
-  dirtyFields?: Set<keyof CategoryFormState>
+  dirtyFields?: Set<keyof CategoryFormState>,
 ): CategoryApiBody | Partial<CategoryApiBody> {
   const fullBody: CategoryApiBody = {
     name: form.name,
@@ -101,11 +101,7 @@ export function toCategoryApiBody(
 
     // Special handling for display_flags - check all related form fields
     if (apiField === 'display_flags') {
-      return (
-        dirtyFields.has('callLineName') ||
-        dirtyFields.has('callLineDisplay') ||
-        dirtyFields.has('nestedDisplay')
-      );
+      return dirtyFields.has('callLineName') || dirtyFields.has('callLineDisplay') || dirtyFields.has('nestedDisplay');
     }
 
     return false;

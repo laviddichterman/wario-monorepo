@@ -17,10 +17,7 @@
  * const payload = filterToDirtyFields(fullForm, dirty);
  * // Returns: { name: 'John', age: 30 }
  */
-export function filterToDirtyFields<T extends Record<string, unknown>>(
-  obj: T,
-  dirtyFields?: Set<keyof T>
-): Partial<T> {
+export function filterToDirtyFields<T extends Record<string, unknown>>(obj: T, dirtyFields?: Set<keyof T>): Partial<T> {
   // If no dirty tracking, return all fields (e.g., for create/add mode)
   if (!dirtyFields || dirtyFields.size === 0) {
     return obj;
@@ -47,13 +44,13 @@ export function filterToDirtyFields<T extends Record<string, unknown>>(
  * const setForm = useSetAtom(formAtom);
  * const setDirtyFields = useSetAtom(formDirtyFieldsAtom);
  * const updateField = createUpdateFieldWithDirtyTracking(setForm, setDirtyFields);
- * 
+ *
  * // In a form field handler:
  * updateField('displayName', 'New Name');
  */
 export function createUpdateFieldWithDirtyTracking<T extends Record<string, unknown>>(
   setForm: (update: (prev: T | null) => T | null) => void,
-  setDirtyFields: (update: (prev: Set<keyof T>) => Set<keyof T>) => void
+  setDirtyFields: (update: (prev: Set<keyof T>) => Set<keyof T>) => void,
 ) {
   return <K extends keyof T>(field: K, value: T[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));

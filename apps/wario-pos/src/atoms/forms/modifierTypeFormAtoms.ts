@@ -55,7 +55,9 @@ export const DEFAULT_MODIFIER_TYPE_FORM: ModifierTypeFormState = {
 export const modifierTypeFormAtom = atom<ModifierTypeFormState | null>(null);
 
 /** Dirty fields tracking - marks which fields have been modified in edit mode */
-export const modifierTypeFormDirtyFieldsAtom = atom<Set<keyof ModifierTypeFormState>>(new Set<keyof ModifierTypeFormState>());
+export const modifierTypeFormDirtyFieldsAtom = atom<Set<keyof ModifierTypeFormState>>(
+  new Set<keyof ModifierTypeFormState>(),
+);
 
 /** API processing state */
 export const modifierTypeFormProcessingAtom = atom(false);
@@ -76,18 +78,18 @@ type ModifierTypeApiBody = Omit<IOptionType, 'id'>;
 
 /**
  * Convert form state to API request body.
- * 
+ *
  * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
  * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
  */
 export function toModifierTypeApiBody(form: ModifierTypeFormState): ModifierTypeApiBody;
 export function toModifierTypeApiBody(
   form: ModifierTypeFormState,
-  dirtyFields: Set<keyof ModifierTypeFormState>
+  dirtyFields: Set<keyof ModifierTypeFormState>,
 ): Partial<ModifierTypeApiBody>;
 export function toModifierTypeApiBody(
   form: ModifierTypeFormState,
-  dirtyFields?: Set<keyof ModifierTypeFormState>
+  dirtyFields?: Set<keyof ModifierTypeFormState>,
 ): ModifierTypeApiBody | Partial<ModifierTypeApiBody> {
   const fullBody: ModifierTypeApiBody = {
     name: form.name,
@@ -99,7 +101,8 @@ export function toModifierTypeApiBody(
     displayFlags: {
       omit_options_if_not_available: form.omitOptionIfNotAvailable,
       omit_section_if_no_available_options: form.omitSectionIfNoAvailableOptions,
-      use_toggle_if_only_two_options: form.useToggleIfOnlyTwoOptions && form.minSelected === 1 && form.maxSelected === 1,
+      use_toggle_if_only_two_options:
+        form.useToggleIfOnlyTwoOptions && form.minSelected === 1 && form.maxSelected === 1,
       hidden: form.isHiddenDuringCustomization,
       empty_display_as: form.emptyDisplayAs,
       modifier_class: form.modifierClass,

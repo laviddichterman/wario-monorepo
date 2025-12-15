@@ -74,7 +74,9 @@ export const DEFAULT_PRODUCT_INSTANCE_FORM: ProductInstanceFormState = {
 export const productInstanceFormAtom = atom<ProductInstanceFormState | null>(null);
 
 /** Dirty fields tracking - marks which fields have been modified in edit mode */
-export const productInstanceFormDirtyFieldsAtom = atom<Set<keyof ProductInstanceFormState>>(new Set<keyof ProductInstanceFormState>());
+export const productInstanceFormDirtyFieldsAtom = atom<Set<keyof ProductInstanceFormState>>(
+  new Set<keyof ProductInstanceFormState>(),
+);
 
 export const productInstanceFormProcessingAtom = atom(false);
 
@@ -116,18 +118,18 @@ export const productInstanceExpandedFamily = atomFamily((_param: string | number
 
 /**
  * Convert form state to API request body.
- * 
+ *
  * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
  * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
  */
 export function toProductInstanceApiBody(form: ProductInstanceFormState): CreateIProductInstanceRequest;
 export function toProductInstanceApiBody(
   form: ProductInstanceFormState,
-  dirtyFields: Set<keyof ProductInstanceFormState>
+  dirtyFields: Set<keyof ProductInstanceFormState>,
 ): Partial<CreateIProductInstanceRequest>;
 export function toProductInstanceApiBody(
   form: ProductInstanceFormState,
-  dirtyFields?: Set<keyof ProductInstanceFormState>
+  dirtyFields?: Set<keyof ProductInstanceFormState>,
 ): CreateIProductInstanceRequest | Partial<CreateIProductInstanceRequest> {
   const fullBody: CreateIProductInstanceRequest = {
     displayName: form.displayName,

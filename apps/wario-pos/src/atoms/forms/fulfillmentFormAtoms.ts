@@ -3,11 +3,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { useCallback } from 'react';
 
 import { DayOfTheWeek, FulfillmentType } from '@wcp/wario-shared/logic';
-import type {
-  DateIntervalsEntries,
-  FulfillmentConfig,
-  OperatingHourSpecification,
-} from '@wcp/wario-shared/types';
+import type { DateIntervalsEntries, FulfillmentConfig, OperatingHourSpecification } from '@wcp/wario-shared/types';
 
 /**
  * Form state for Fulfillment add/edit operations.

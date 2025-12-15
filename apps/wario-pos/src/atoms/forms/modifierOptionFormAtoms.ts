@@ -49,7 +49,9 @@ export const DEFAULT_MODIFIER_OPTION_FORM: ModifierOptionFormState = {
 export const modifierOptionFormAtom = atom<ModifierOptionFormState | null>(null);
 
 /** Dirty fields tracking - marks which fields have been modified in edit mode */
-export const modifierOptionFormDirtyFieldsAtom = atom<Set<keyof ModifierOptionFormState>>(new Set<keyof ModifierOptionFormState>());
+export const modifierOptionFormDirtyFieldsAtom = atom<Set<keyof ModifierOptionFormState>>(
+  new Set<keyof ModifierOptionFormState>(),
+);
 
 /** API processing state */
 export const modifierOptionFormProcessingAtom = atom(false);
@@ -97,21 +99,21 @@ export type ModifierOptionApiBody = Omit<IOption, 'id' | 'modifierTypeId'>;
 
 /**
  * Convert form state to API request body.
- * 
+ *
  * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
  * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
- * 
+ *
  * Note: For nested objects (metadata, displayFlags), if ANY nested field is dirty,
  * we include the entire parent object.
  */
 export function toModifierOptionApiBody(form: ModifierOptionFormState): ModifierOptionApiBody;
 export function toModifierOptionApiBody(
   form: ModifierOptionFormState,
-  dirtyFields: Set<keyof ModifierOptionFormState>
+  dirtyFields: Set<keyof ModifierOptionFormState>,
 ): Partial<ModifierOptionApiBody>;
 export function toModifierOptionApiBody(
   form: ModifierOptionFormState,
-  dirtyFields?: Set<keyof ModifierOptionFormState>
+  dirtyFields?: Set<keyof ModifierOptionFormState>,
 ): ModifierOptionApiBody | Partial<ModifierOptionApiBody> {
   // Build the full body structure
   const fullBody: ModifierOptionApiBody = {

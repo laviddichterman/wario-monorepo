@@ -68,12 +68,16 @@ export function useBatchUpsertProductMutation() {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
       // Backend expects { products: [...] } matching BatchUpsertProductRequest
-      const response = await axiosInstance.post<BatchUpsertProductResponse>('/api/v1/menu/product/batch/', { products }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await axiosInstance.post<BatchUpsertProductResponse>(
+        '/api/v1/menu/product/batch/',
+        { products },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         },
-      });
+      );
 
       return response.data;
     },
@@ -135,12 +139,16 @@ export function useSetProductDisabledMutation() {
   return useMutation({
     mutationFn: async ({ id, disabled }: SetProductDisabledRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${id}`, { disabled }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+      const response = await axiosInstance.patch<IProduct>(
+        `/api/v1/menu/product/${id}`,
+        { disabled },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         },
-      });
+      );
 
       return response.data;
     },
@@ -203,7 +211,15 @@ export function useUpdateProductInstanceMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ productId, instanceId, body }: { productId: string; instanceId: string; body: UpdateIProductInstanceRequest }) => {
+    mutationFn: async ({
+      productId,
+      instanceId,
+      body,
+    }: {
+      productId: string;
+      instanceId: string;
+      body: UpdateIProductInstanceRequest;
+    }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
       const response = await axiosInstance.patch<IProductInstance>(

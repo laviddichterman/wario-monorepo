@@ -88,18 +88,18 @@ export type ProductApiBodyWithoutInstances = Omit<CreateIProductRequest, 'instan
  * Convert form state to API request body.
  * Note: This does NOT include instances. Callers should add instances separately.
  * The form.instances only contains string IDs, but the API expects full instance objects.
- * 
+ *
  * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
  * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
  */
 export function toProductApiBody(form: ProductFormState): ProductApiBodyWithoutInstances;
 export function toProductApiBody(
   form: ProductFormState,
-  dirtyFields: Set<keyof ProductFormState>
+  dirtyFields: Set<keyof ProductFormState>,
 ): Partial<ProductApiBodyWithoutInstances>;
 export function toProductApiBody(
   form: ProductFormState,
-  dirtyFields?: Set<keyof ProductFormState>
+  dirtyFields?: Set<keyof ProductFormState>,
 ): ProductApiBodyWithoutInstances | Partial<ProductApiBodyWithoutInstances> {
   const fullBody: ProductApiBodyWithoutInstances = {
     price: form.price,
