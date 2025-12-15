@@ -1,5 +1,26 @@
 # @wcp/wario-fe-order
 
+## 1.0.0
+
+### Major Changes
+
+- 8968f41: use new wario-shared, first release with tanstack and friends.
+
+  remove cartValidationListener in favor of CartValidationEffect component
+
+  move some config to environment variables and add typing to vite-env.d.ts
+
+### Patch Changes
+
+- Updated dependencies [1f4cc37]
+- Updated dependencies [b4cbd1d]
+- Updated dependencies [99895f1]
+- Updated dependencies [aaa7803]
+- Updated dependencies [0fa67dc]
+  - @wcp/wario-ux-shared@9.0.0
+  - @wcp/wario-shared@2.0.0
+  - @wcp/wario-fe-ux-shared@6.0.0
+
 ## 0.1.6
 
 ### Patch Changes

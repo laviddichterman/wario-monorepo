@@ -1,5 +1,19 @@
 # @wcp/wario-ux-shared
 
+## 9.0.0
+
+### Minor Changes
+
+- 1f4cc37: consume new wario-shared. add category-shopper
+
+### Patch Changes
+
+- 0fa67dc: consume tree shaken wario-shared lib
+- Updated dependencies [b4cbd1d]
+- Updated dependencies [99895f1]
+- Updated dependencies [aaa7803]
+  - @wcp/wario-shared@2.0.0
+
 ## 8.0.0
 
 ### Patch Changes
