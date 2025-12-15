@@ -1,6 +1,6 @@
 import { Grid } from '@mui/material';
 
-import { WOrderStatus } from '@wcp/wario-shared';
+import { WOrderStatus } from '@wcp/wario-shared/logic';
 
 import { useConfirmOrderMutation, useOrderById } from '@/hooks/useOrdersQuery';
 

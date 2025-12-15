@@ -2,7 +2,8 @@
 
 import Grid from '@mui/material/Grid';
 
-import { type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+import { WOrderStatus } from '@wcp/wario-shared/logic';
+import { type WOrderInstance } from '@wcp/wario-shared/types';
 
 import { paths } from '@/routes/paths';
 

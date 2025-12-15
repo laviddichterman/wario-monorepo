@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Grid, Typography } from '@mui/material';
 
-import { type UncommittedIProduct } from '@wcp/wario-shared';
+import { type IProduct } from '@wcp/wario-shared/types';
 import type { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -14,6 +14,8 @@ import {
 } from '@/atoms/forms/productInstanceFormAtoms';
 
 import { ProductInstanceContainer } from './product_instance.component';
+
+type UncommittedIProduct = Omit<IProduct, 'id' | 'instances'>;
 
 export interface ProductInstanceRowProps {
   instanceId: string;

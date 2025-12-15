@@ -1,4 +1,4 @@
-import { type PrimitiveAtom, useAtom, useAtomValue } from 'jotai';
+import { type PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
 
 import { TabPanel } from '@mui/lab';
@@ -10,7 +10,7 @@ import {
   type IRecurringInterval,
   type IWInterval,
   type KeyValue,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { useCatalogSelectors, useProductInstanceFunctionIds } from '@wcp/wario-ux-shared/query';
 
@@ -19,12 +19,12 @@ import { AvailabilityStatusPropertiesComponent } from '@/components/wario/Availa
 import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
 import { FloatNumericPropertyComponent } from '@/components/wario/property-components/FloatNumericPropertyComponent';
 import { IMoneyPropertyComponent } from '@/components/wario/property-components/IMoneyPropertyComponent';
-import { IntNumericPropertyComponent } from '@/components/wario/property-components/IntNumericPropertyComponent';
 import { StringPropertyComponent } from '@/components/wario/property-components/StringPropertyComponent';
 import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
 import {
   modifierOptionFormAtom,
+  modifierOptionFormDirtyFieldsAtom,
   modifierOptionFormProcessingAtom,
   type ModifierOptionFormState,
   useModifierOptionForm,
@@ -35,7 +35,6 @@ import { ElementActionComponent } from '../element.action.component';
 export type ModifierOptionContainerProps = ValSetValNamed<string, 'displayName'> &
   ValSetValNamed<string, 'description'> &
   ValSetValNamed<string, 'shortcode'> &
-  ValSetValNamed<number, 'ordinal'> &
   ValSetValNamed<IMoney, 'price'> &
   ValSetValNamed<KeyValue[], 'externalIds'> &
   ValSetValNamed<string | null, 'enableFunction'> &
@@ -125,19 +124,6 @@ export const ModifierOptionContainer = (
               label="Price"
               value={props.price}
               setValue={props.setPrice}
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 6,
-              sm: 6,
-            }}
-          >
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              label="Ordinal"
-              value={props.ordinal}
-              setValue={props.setOrdinal}
             />
           </Grid>
         </Grid>
@@ -288,6 +274,7 @@ export const ModifierOptionFormBody = ({
   formAtom?: PrimitiveAtom<ModifierOptionFormState | null>;
 }) => {
   const [form, setForm] = useAtom(formAtom);
+  const setDirtyFields = useSetAtom(modifierOptionFormDirtyFieldsAtom);
   const isProcessing = useAtomValue(modifierOptionFormProcessingAtom);
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
 
@@ -295,6 +282,7 @@ export const ModifierOptionFormBody = ({
 
   const updateField = <K extends keyof ModifierOptionFormState>(field: K, value: ModifierOptionFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setDirtyFields((prev) => new Set(prev).add(field));
   };
 
   return (
@@ -312,10 +300,6 @@ export const ModifierOptionFormBody = ({
       shortcode={form.shortcode}
       setShortcode={(v) => {
         updateField('shortcode', v);
-      }}
-      ordinal={form.ordinal}
-      setOrdinal={(v) => {
-        updateField('ordinal', v);
       }}
       price={form.price}
       setPrice={(v) => {

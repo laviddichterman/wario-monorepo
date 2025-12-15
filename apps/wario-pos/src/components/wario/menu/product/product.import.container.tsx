@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react';
 
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
-import { type CreateProductBatchRequest, type KeyValue, PriceDisplay } from '@wcp/wario-shared';
-import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query';
+import { PriceDisplay } from '@wcp/wario-shared/logic';
+import { type CreateIProductRequest, type KeyValue } from '@wcp/wario-shared/types';
 
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 import { useBatchUpsertProductMutation } from '@/hooks/useProductMutations';
@@ -56,38 +56,36 @@ export const ProductImportContainer = ({ onCloseCallback }: { onCloseCallback: V
     if (!productForm || batchUpsertProductMutation.isPending || isProcessing) return;
 
     setIsProcessing(true);
-    const products: CreateProductBatchRequest[] = data.map((x, i) => {
+    const products: CreateIProductRequest[] = data.map((x, i) => {
       const { Name, Description, Shortname, Price, ...others } = x;
       const externalIds: KeyValue[] = Object.entries(others)
         .filter(([_, value]) => value)
         .map(([key, value]) => ({ key, value }));
 
       return {
-        product: {
-          availability: [],
-          timing: null,
-          disabled: null,
-          externalIDs: [],
-          serviceDisable: [],
-          // Use price from CSV
-          price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
-          displayFlags: {
-            is3p: false,
-            bake_differential: 100,
-            show_name_of_base_product: true,
-            flavor_max: 10,
-            bake_max: 10,
-            singular_noun: '',
-            order_guide: {
-              suggestions: [],
-              warnings: [],
-            },
+        availability: [],
+        timing: null,
+        disabled: null,
+        externalIDs: [],
+        serviceDisable: [],
+        // Use price from CSV
+        price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
+        displayFlags: {
+          is3p: false,
+          bake_differential: 100,
+          show_name_of_base_product: true,
+          flavor_max: 10,
+          bake_max: 10,
+          singular_noun: '',
+          order_guide: {
+            suggestions: [],
+            warnings: [],
+            errors: [],
           },
-          // Use global settings from Atom
-          category_ids: productForm.parentCategories,
-          printerGroup: productForm.printerGroup,
-          modifiers: productForm.modifiers,
         },
+        // Use global settings from Atom
+        printerGroup: productForm.printerGroup,
+        modifiers: productForm.modifiers,
         instances: [
           {
             displayName: Name,
@@ -117,11 +115,10 @@ export const ProductImportContainer = ({ onCloseCallback }: { onCloseCallback: V
                 suppress_exhaustive_modifier_list: false,
               },
             },
-            ordinal: i * 10,
             shortcode: Shortname,
           },
         ],
-      };
+      } satisfies CreateIProductRequest;
     });
 
     batchUpsertProductMutation.mutate(products, {
@@ -167,11 +164,9 @@ const ProductImportForm = ({
   onCloseCallback: VoidFunction;
 }) => {
   const [form, setForm] = useAtom(productFormAtom);
-  const catalogSelectors = useCatalogSelectors();
-  const categories = useCategoryIds();
   const printerGroups = usePrinterGroupsMap();
 
-  if (!form || !catalogSelectors) return null;
+  if (!form) return null;
 
   const updateField = <K extends keyof ProductFormState>(field: K, value: ProductFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
@@ -188,20 +183,6 @@ const ProductImportForm = ({
       disableConfirmOn={isProcessing || data.length === 0}
       body={
         <>
-          <Grid size={6}>
-            <Autocomplete
-              multiple
-              filterSelectedOptions
-              options={Object.keys(categories)}
-              value={form.parentCategories}
-              onChange={(_e, v) => {
-                updateField('parentCategories', v);
-              }}
-              getOptionLabel={(option) => catalogSelectors.category(option)?.name ?? option}
-              isOptionEqualToValue={(o, v) => o === v}
-              renderInput={(params) => <TextField {...params} label="Categories" />}
-            />
-          </Grid>
           <Grid size={6}>
             <Autocomplete
               filterSelectedOptions

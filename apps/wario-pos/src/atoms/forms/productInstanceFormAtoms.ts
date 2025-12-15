@@ -1,24 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-
 import { atom, useAtomValue } from 'jotai';
 import { atomFamily } from 'jotai-family';
 
+import { PriceDisplay } from '@wcp/wario-shared/logic';
 import {
-  type IProductInstanceDisplayFlagsMenuDto,
-  type IProductInstanceDisplayFlagsOrderDto,
-  type IProductInstanceDisplayFlagsPosDto,
+  type CreateIProductInstanceRequest,
+  type IProductInstanceDisplayFlagsMenu,
+  type IProductInstanceDisplayFlagsOrder,
+  type IProductInstanceDisplayFlagsPos,
   type KeyValue,
-  PriceDisplay,
   type ProductInstanceModifierEntry,
-  type UncommittedIProductInstance,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 
 // Type definition for Form State
 export interface ProductInstanceFormState {
   displayName: string;
   description: string;
   shortcode: string;
-  ordinal: number;
   externalIds: KeyValue[];
   modifiers: ProductInstanceModifierEntry[];
 
@@ -48,7 +45,6 @@ export const DEFAULT_PRODUCT_INSTANCE_FORM: ProductInstanceFormState = {
   displayName: '',
   description: '',
   shortcode: '',
-  ordinal: 0,
   externalIds: [],
   modifiers: [],
 
@@ -76,6 +72,10 @@ export const DEFAULT_PRODUCT_INSTANCE_FORM: ProductInstanceFormState = {
 // ===================================
 
 export const productInstanceFormAtom = atom<ProductInstanceFormState | null>(null);
+
+/** Dirty fields tracking - marks which fields have been modified in edit mode */
+export const productInstanceFormDirtyFieldsAtom = atom<Set<keyof ProductInstanceFormState>>(new Set<keyof ProductInstanceFormState>());
+
 export const productInstanceFormProcessingAtom = atom(false);
 
 export const validateProductInstanceForm = (form: ProductInstanceFormState | null) => {
@@ -114,65 +114,130 @@ export const productInstanceExpandedFamily = atomFamily((_param: string | number
 // Converters
 // ===================================
 
-/** Convert form state to API request body */
-export const toProductInstanceApiBody = (form: ProductInstanceFormState): UncommittedIProductInstance => ({
-  displayName: form.displayName,
-  description: form.description,
-  shortcode: form.shortcode,
-  ordinal: form.ordinal,
-  externalIDs: form.externalIds,
-  modifiers: form.modifiers,
-  displayFlags: {
-    pos: {
-      hide: form.posHide,
-      name: form.posName,
-      skip_customization: form.posSkipCustomization,
-    } as IProductInstanceDisplayFlagsPosDto,
-    menu: {
-      ordinal: form.menuOrdinal,
-      hide: form.menuHide,
-      price_display: form.menuPriceDisplay,
-      adornment: form.menuAdornment,
-      suppress_exhaustive_modifier_list: form.menuSuppressExhaustiveModifierList,
-      show_modifier_options: form.menuShowModifierOptions,
-    } as IProductInstanceDisplayFlagsMenuDto,
-    order: {
-      ordinal: form.orderOrdinal,
-      hide: form.orderHide,
-      skip_customization: form.orderSkipCustomization,
-      price_display: form.orderPriceDisplay,
-      adornment: form.orderAdornment,
-      suppress_exhaustive_modifier_list: form.orderSuppressExhaustiveModifierList,
-    } as IProductInstanceDisplayFlagsOrderDto,
-  },
-});
+/**
+ * Convert form state to API request body.
+ * 
+ * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
+ * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
+ */
+export function toProductInstanceApiBody(form: ProductInstanceFormState): CreateIProductInstanceRequest;
+export function toProductInstanceApiBody(
+  form: ProductInstanceFormState,
+  dirtyFields: Set<keyof ProductInstanceFormState>
+): Partial<CreateIProductInstanceRequest>;
+export function toProductInstanceApiBody(
+  form: ProductInstanceFormState,
+  dirtyFields?: Set<keyof ProductInstanceFormState>
+): CreateIProductInstanceRequest | Partial<CreateIProductInstanceRequest> {
+  const fullBody: CreateIProductInstanceRequest = {
+    displayName: form.displayName,
+    description: form.description,
+    shortcode: form.shortcode,
+    externalIDs: form.externalIds,
+    modifiers: form.modifiers,
+    displayFlags: {
+      pos: {
+        hide: form.posHide,
+        name: form.posName,
+        skip_customization: form.posSkipCustomization,
+      } as IProductInstanceDisplayFlagsPos,
+      menu: {
+        ordinal: form.menuOrdinal,
+        hide: form.menuHide,
+        price_display: form.menuPriceDisplay,
+        adornment: form.menuAdornment,
+        suppress_exhaustive_modifier_list: form.menuSuppressExhaustiveModifierList,
+        show_modifier_options: form.menuShowModifierOptions,
+      } as IProductInstanceDisplayFlagsMenu,
+      order: {
+        ordinal: form.orderOrdinal,
+        hide: form.orderHide,
+        skip_customization: form.orderSkipCustomization,
+        price_display: form.orderPriceDisplay,
+        adornment: form.orderAdornment,
+        suppress_exhaustive_modifier_list: form.orderSuppressExhaustiveModifierList,
+      } as IProductInstanceDisplayFlagsOrder,
+    },
+  };
+
+  // If no dirty fields provided, return full body (create mode)
+  if (!dirtyFields) {
+    return fullBody;
+  }
+
+  // If dirty fields is empty, also return full body
+  if (dirtyFields.size === 0) {
+    return fullBody;
+  }
+
+  // Check if field is dirty, including mapping nested fields to their parent
+  const isDirty = (apiField: keyof CreateIProductInstanceRequest): boolean => {
+    if (dirtyFields.has(apiField as keyof ProductInstanceFormState)) return true;
+
+    // Map API field names to form field names
+    if (apiField === 'externalIDs') return dirtyFields.has('externalIds');
+
+    // Special handling for displayFlags - check all related form fields
+    if (apiField === 'displayFlags') {
+      return (
+        dirtyFields.has('posHide') ||
+        dirtyFields.has('posName') ||
+        dirtyFields.has('posSkipCustomization') ||
+        dirtyFields.has('menuOrdinal') ||
+        dirtyFields.has('menuHide') ||
+        dirtyFields.has('menuPriceDisplay') ||
+        dirtyFields.has('menuAdornment') ||
+        dirtyFields.has('menuSuppressExhaustiveModifierList') ||
+        dirtyFields.has('menuShowModifierOptions') ||
+        dirtyFields.has('orderOrdinal') ||
+        dirtyFields.has('orderHide') ||
+        dirtyFields.has('orderSkipCustomization') ||
+        dirtyFields.has('orderPriceDisplay') ||
+        dirtyFields.has('orderAdornment') ||
+        dirtyFields.has('orderSuppressExhaustiveModifierList')
+      );
+    }
+
+    return false;
+  };
+
+  // Filter to only dirty fields
+  const result: Partial<CreateIProductInstanceRequest> = {};
+  for (const key of Object.keys(fullBody)) {
+    if (isDirty(key as keyof CreateIProductInstanceRequest)) {
+      const typedKey = key as keyof CreateIProductInstanceRequest;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+      (result as any)[typedKey] = fullBody[typedKey];
+    }
+  }
+  return result;
+}
 
 /** Convert API entity to form state */
-export const fromProductInstanceEntity = (entity: UncommittedIProductInstance): ProductInstanceFormState => ({
+export const fromProductInstanceEntity = (entity: CreateIProductInstanceRequest): ProductInstanceFormState => ({
   displayName: entity.displayName,
   description: entity.description,
   shortcode: entity.shortcode,
-  ordinal: entity.ordinal,
-  externalIds: entity.externalIDs || [],
-  modifiers: entity.modifiers || [],
+  externalIds: entity.externalIDs,
+  modifiers: entity.modifiers,
 
-  posHide: entity.displayFlags?.pos?.hide ?? false,
-  posName: entity.displayFlags?.pos?.name ?? '',
-  posSkipCustomization: entity.displayFlags?.pos?.skip_customization ?? true,
+  posHide: entity.displayFlags.pos.hide,
+  posName: entity.displayFlags.pos.name,
+  posSkipCustomization: entity.displayFlags.pos.skip_customization,
 
-  menuOrdinal: entity.displayFlags?.menu?.ordinal ?? 0,
-  menuHide: entity.displayFlags?.menu?.hide ?? false,
-  menuPriceDisplay: entity.displayFlags?.menu?.price_display ?? PriceDisplay.ALWAYS,
-  menuAdornment: entity.displayFlags?.menu?.adornment ?? '',
-  menuSuppressExhaustiveModifierList: entity.displayFlags?.menu?.suppress_exhaustive_modifier_list ?? false,
-  menuShowModifierOptions: entity.displayFlags?.menu?.show_modifier_options ?? false,
+  menuOrdinal: entity.displayFlags.menu.ordinal,
+  menuHide: entity.displayFlags.menu.hide,
+  menuPriceDisplay: entity.displayFlags.menu.price_display,
+  menuAdornment: entity.displayFlags.menu.adornment ?? '',
+  menuSuppressExhaustiveModifierList: entity.displayFlags.menu.suppress_exhaustive_modifier_list,
+  menuShowModifierOptions: entity.displayFlags.menu.show_modifier_options,
 
-  orderOrdinal: entity.displayFlags?.order?.ordinal ?? 0,
-  orderHide: entity.displayFlags?.order?.hide ?? false,
-  orderSkipCustomization: entity.displayFlags?.order?.skip_customization ?? true,
-  orderPriceDisplay: entity.displayFlags?.order?.price_display ?? PriceDisplay.ALWAYS,
-  orderAdornment: entity.displayFlags?.order?.adornment ?? '',
-  orderSuppressExhaustiveModifierList: entity.displayFlags?.order?.suppress_exhaustive_modifier_list ?? false,
+  orderOrdinal: entity.displayFlags.order.ordinal,
+  orderHide: entity.displayFlags.order.hide,
+  orderSkipCustomization: entity.displayFlags.order.skip_customization,
+  orderPriceDisplay: entity.displayFlags.order.price_display,
+  orderAdornment: entity.displayFlags.order.adornment ?? '',
+  orderSuppressExhaustiveModifierList: entity.displayFlags.order.suppress_exhaustive_modifier_list,
 });
 
 export const useProductInstanceForm = () => {

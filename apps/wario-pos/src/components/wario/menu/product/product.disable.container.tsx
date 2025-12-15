@@ -2,7 +2,7 @@ import { useSnackbar } from 'notistack';
 
 import { Grid } from '@mui/material';
 
-import type { IProduct } from '@wcp/wario-shared';
+import type { IProduct } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useSetProductDisabledMutation } from '@/hooks/useProductMutations';
@@ -37,7 +37,7 @@ const ProductDisableContainerInner = ({ product, productName, onCloseCallback }:
     if (setDisabledMutation.isPending) return;
 
     setDisabledMutation.mutate(
-      { product, disabled: { start: 1, end: 0 } },
+      { id: product.id, disabled: { start: 1, end: 0 } },
       {
         onSuccess: () => {
           enqueueSnackbar(`Disabled ${productName}.`);

@@ -1,6 +1,6 @@
 import { useSnackbar } from 'notistack';
 
-import type { IProduct } from '@wcp/wario-shared';
+import type { IProduct } from '@wcp/wario-shared/types';
 
 import { useBatchDeleteProductsMutation } from '@/hooks/useProductMutations';
 

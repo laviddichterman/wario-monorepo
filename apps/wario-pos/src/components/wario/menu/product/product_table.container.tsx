@@ -7,7 +7,7 @@ import { Box, InputAdornment, TextField, Tooltip } from '@mui/material';
 import type { GridRenderCellParams, GridRowId, GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid-premium';
 
-import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared';
+import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared/logic';
 import { useCatalogQuery, useProductById, useServerTime } from '@wcp/wario-ux-shared/query';
 
 import { useAuthContext } from '@/hooks/useAuthContext';

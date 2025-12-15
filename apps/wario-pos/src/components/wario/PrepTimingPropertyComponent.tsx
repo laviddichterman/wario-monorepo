@@ -1,6 +1,6 @@
 import { Grid } from '@mui/material';
 
-import { type PrepTiming } from '@wcp/wario-shared';
+import { type PrepTiming } from '@wcp/wario-shared/types';
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 
 import { FloatNumericPropertyComponent } from './property-components/FloatNumericPropertyComponent';

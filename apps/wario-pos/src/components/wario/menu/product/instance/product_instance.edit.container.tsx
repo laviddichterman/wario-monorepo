@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { TabContext, TabList } from '@mui/lab';
 import { Button, Tab } from '@mui/material';
 
-import type { IProduct, IProductInstance } from '@wcp/wario-shared';
+import type { IProduct, IProductInstance } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useProductById, useProductInstanceById } from '@wcp/wario-ux-shared/query';
 

@@ -6,16 +6,14 @@ import { useState } from 'react';
 
 import { Autocomplete, Grid, TextField } from '@mui/material';
 
+import { PriceDisplay } from '@wcp/wario-shared/logic';
 import type {
+  CreateIProductRequest,
   IProductModifier,
   KeyValue,
-  UncommittedIProduct,
-  UncommittedIProductInstance,
   UpdateIProductRequest,
-  UpdateIProductUpdateIProductInstance,
-  UpsertProductBatchRequest,
-} from '@wcp/wario-shared';
-import { PriceDisplay } from '@wcp/wario-shared';
+  UpsertIProductRequest,
+} from '@wcp/wario-shared/types';
 import type { ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query';
 
@@ -355,9 +353,9 @@ function CSVProductToProduct(
   ordinal: number,
   singularNoun: string,
   modifiers: IProductModifier[],
-  parentCategories: string[],
+  _parentCategories: string[],
   printerGroup: string | null,
-): UpsertProductBatchRequest {
+): UpsertIProductRequest {
   // omit Categories to get it inside the externalIds
   const { ID, Description, DisplayName, PosName, Price, Shortname, Disabled, ...others } = prod;
   const externalIds: KeyValue[] = Object.entries(others)
@@ -367,41 +365,36 @@ function CSVProductToProduct(
   console.log({ disabledValue, Disabled });
   if (ID) {
     const [productId, productInstanceId] = ID.split('/');
-    return {
-      product: {
-        id: productId,
-        baseProductId: productInstanceId,
-        externalIDs: [],
-        price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
-        category_ids: parentCategories,
-        printerGroup,
-        modifiers,
-
-        // stuff below is not needed, but the current API requires it
-        disabled: disabledValue,
-        availability: [],
-        timing: null,
-        serviceDisable: [],
-        displayFlags: {
-          is3p: false,
-          bake_differential: 100,
-          show_name_of_base_product: true,
-          flavor_max: 10,
-          bake_max: 10,
-          singular_noun: singularNoun,
-          order_guide: {
-            suggestions: [],
-            warnings: [],
-          },
+    // Update existing product
+    const updateRequest: UpdateIProductRequest = {
+      id: productId,
+      externalIDs: [],
+      price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
+      printerGroup,
+      modifiers,
+      disabled: disabledValue,
+      availability: [],
+      timing: null,
+      serviceDisable: [],
+      displayFlags: {
+        is3p: false,
+        bake_differential: 100,
+        show_name_of_base_product: true,
+        flavor_max: 10,
+        bake_max: 10,
+        singular_noun: singularNoun,
+        order_guide: {
+          suggestions: [],
+          warnings: [],
+          errors: [],
         },
-      } as UpdateIProductRequest,
+      },
       instances: [
         {
           id: productInstanceId,
           displayName: DisplayName,
           description: Description || '',
           externalIDs: externalIds,
-          ordinal,
           shortcode: Shortname,
           modifiers: [],
           displayFlags: {
@@ -427,34 +420,34 @@ function CSVProductToProduct(
               suppress_exhaustive_modifier_list: false,
             },
           },
-        } as UpdateIProductUpdateIProductInstance,
+        },
       ],
     };
+    return updateRequest;
   }
-  return {
-    product: {
-      disabled: disabledValue,
-      availability: [],
-      timing: null,
-      externalIDs: [],
-      serviceDisable: [],
-      price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
-      displayFlags: {
-        is3p: false,
-        bake_differential: 100,
-        show_name_of_base_product: true,
-        flavor_max: 10,
-        bake_max: 10,
-        singular_noun: singularNoun,
-        order_guide: {
-          suggestions: [],
-          warnings: [],
-        },
+  // Create new product
+  const createRequest: CreateIProductRequest = {
+    disabled: disabledValue,
+    availability: [],
+    timing: null,
+    externalIDs: [],
+    serviceDisable: [],
+    price: { amount: Number.parseFloat(Price) * 100, currency: 'USD' },
+    displayFlags: {
+      is3p: false,
+      bake_differential: 100,
+      show_name_of_base_product: true,
+      flavor_max: 10,
+      bake_max: 10,
+      singular_noun: singularNoun,
+      order_guide: {
+        suggestions: [],
+        warnings: [],
+        errors: [],
       },
-      category_ids: parentCategories,
-      printerGroup,
-      modifiers,
-    } as UncommittedIProduct,
+    },
+    printerGroup,
+    modifiers,
     instances: [
       {
         displayName: DisplayName,
@@ -484,11 +477,11 @@ function CSVProductToProduct(
             suppress_exhaustive_modifier_list: false,
           },
         },
-        ordinal,
         shortcode: Shortname,
-      } as UncommittedIProductInstance,
+      },
     ],
-  } as UpsertProductBatchRequest;
+  };
+  return createRequest;
 }
 
 function GenerateProducts(
@@ -496,9 +489,9 @@ function GenerateProducts(
   modifiers: IProductModifier[],
   parentCategories: string[],
   printerGroup: string | null,
-): UpsertProductBatchRequest[] {
+): UpsertIProductRequest[] {
   let ordinal = 0;
-  const ProcessCat = (cat: HierarchicalProductStructure): UpsertProductBatchRequest[] => {
+  const ProcessCat = (cat: HierarchicalProductStructure): UpsertIProductRequest[] => {
     // const categoryPreferenceModifierTypeRequest: Omit<IOptionType, "id"> & { options: Omit<IOption, 'modifierTypeId' | 'id'>[]; } = {
     //   name: `${cat.category} preference`,
     //   displayName: cat.category,

@@ -7,13 +7,13 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { ErrorOutline, PhotoCamera } from '@mui/icons-material';
 import { Button, Card, CardHeader, Divider, Grid, IconButton, List, ListItem, Typography } from '@mui/material';
 
+import { CURRENCY, MoneyToDisplayString, StoreCreditType } from '@wcp/wario-shared/logic';
 import type {
   IMoney,
   SpendCreditResponse,
   ValidateAndLockCreditResponse,
   ValidateLockAndSpendRequest,
-} from '@wcp/wario-shared';
-import { CURRENCY, MoneyToDisplayString, StoreCreditType } from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 import { DialogContainer } from '@wcp/wario-ux-shared/containers';
 
 import { HOST_API } from '@/config';

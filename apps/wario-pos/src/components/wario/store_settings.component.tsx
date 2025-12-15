@@ -2,12 +2,25 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 
-import { type IWSettings } from '@wcp/wario-shared';
+import { type IWSettings } from '@wcp/wario-shared/types';
 import { useSettingsQuery } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from '@/config';
 
 import { KeyValuesContainer, type KeyValuesRowType } from './keyvalues.container';
+
+// Fields that are part of IWSettings that can be edited as key-value pairs
+const SETTINGS_FIELD_KEYS: (keyof IWSettings)[] = [
+  'LOCATION_NAME',
+  'SQUARE_LOCATION',
+  'SQUARE_LOCATION_ALTERNATE',
+  'SQUARE_APPLICATION_ID',
+  'DEFAULT_FULFILLMENTID',
+  'TAX_RATE',
+  'ALLOW_ADVANCED',
+  'TIP_PREAMBLE',
+  'LOCATION_PHONE_NUMBER',
+];
 
 export const StoreSettingsComponent = () => {
   const { enqueueSnackbar } = useSnackbar();
@@ -21,13 +34,10 @@ export const StoreSettingsComponent = () => {
       setIsProcessing(true);
       try {
         const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order_config' } });
-        const body: IWSettings = {
+        // Build the updated settings object from the key-value pairs
+        const body: IWSettings = values.reduce((acc, x) => ({ ...acc, [x.key]: x.value }), {
           ...settings,
-          config: values.reduce(
-            (acc: Record<string, string | number | boolean>, x) => ({ ...acc, [x.key]: x.value }),
-            {},
-          ),
-        };
+        }) as IWSettings;
         const response = await fetch(`${HOST_API}/api/v1/config/settings`, {
           method: 'POST',
           headers: {
@@ -59,7 +69,7 @@ export const StoreSettingsComponent = () => {
         isProcessing={isProcessing}
         onSubmit={(values) => void onSubmit(values)}
         title={'Customer Facing Store Configuration'}
-        values={Object.entries(settings.config).map(([key, value]) => ({ key, value }))}
+        values={SETTINGS_FIELD_KEYS.map((key) => ({ key, value: settings[key] }))}
       />
     )
   );

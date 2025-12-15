@@ -17,17 +17,6 @@ import {
   TextField,
 } from '@mui/material';
 
-import type {
-  IAbstractExpression,
-  ICatalogSelectors,
-  IConstLiteralExpression,
-  IHasAnyOfModifierExpression,
-  IIfElseExpression,
-  ILogicalExpression,
-  IModifierPlacementExpression,
-  IOption,
-  ProductMetadataExpression,
-} from '@wcp/wario-shared';
 import {
   ConstLiteralDiscriminator,
   formatDecimal,
@@ -39,7 +28,18 @@ import {
   PRODUCT_LOCATION,
   ProductInstanceFunctionType,
   WFunctional,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
+import type {
+  IAbstractExpression,
+  ICatalogSelectors,
+  IConstLiteralExpression,
+  IHasAnyOfModifierExpression,
+  IIfElseExpression,
+  ILogicalExpression,
+  IModifierPlacementExpression,
+  IOption,
+  ProductMetadataExpression,
+} from '@wcp/wario-shared/types';
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 import { useCatalogSelectors, useModifierEntryIds } from '@wcp/wario-ux-shared/query';

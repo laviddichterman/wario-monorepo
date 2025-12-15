@@ -55,6 +55,7 @@ describe('CategoryTypeOrmRepository', () => {
     it('should find by multiple ids', async () => {
       mockRepo.find?.mockResolvedValue([]);
       await repository.findByIds(['p1', 'p2']);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       expect(mockRepo.find).toHaveBeenCalledWith({ where: { id: expect.anything(), validTo: IsNull() } });
     });
 

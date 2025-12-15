@@ -47,7 +47,7 @@ const ProductDisableUntilEodContainerInner = ({ product, productName, currentTim
     if (setDisabledMutation.isPending) return;
 
     setDisabledMutation.mutate(
-      { product, disabled: { start: currentTime, end: getTime(endOfDay(currentTime)) } },
+      { id: product.id, disabled: { start: currentTime, end: getTime(endOfDay(currentTime)) } },
       {
         onSuccess: () => {
           enqueueSnackbar(`Disabled ${productName} until EOD.`);

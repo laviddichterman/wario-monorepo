@@ -1,4 +1,4 @@
-import { type IMoney } from '@wcp/wario-shared';
+import { type IMoney } from '@wcp/wario-shared/types';
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 import { MoneyInput } from '@wcp/wario-ux-shared/components';
 

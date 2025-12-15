@@ -20,13 +20,12 @@ import {
 } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 
+import { GetNextAvailableServiceDate, WDateUtils } from '@wcp/wario-shared/logic';
 import {
   type FulfillmentConfig,
-  GetNextAvailableServiceDate,
   type IWInterval,
   type PostBlockedOffToFulfillmentsRequest,
-  WDateUtils,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { useCurrentTime, useFulfillments, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 

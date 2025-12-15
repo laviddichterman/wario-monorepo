@@ -1,5 +1,6 @@
 import { format, setDay } from 'date-fns';
 import type { Polygon } from 'geojson';
+import { useAtom, useAtomValue } from 'jotai';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -15,25 +16,27 @@ import {
   Typography,
 } from '@mui/material';
 
-import {
-  type DateIntervalsEntries,
-  type DayOfTheWeek,
-  formatDecimal,
-  FulfillmentType,
-  type IWInterval,
-  type OperatingHourSpecification,
-  parseInteger,
-  WDateUtils,
-} from '@wcp/wario-shared';
+import { formatDecimal, FulfillmentType, parseInteger, WDateUtils } from '@wcp/wario-shared/logic';
+import { type DayOfTheWeek, type IWInterval, type OperatingHourSpecification } from '@wcp/wario-shared/types';
 import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
+
+import {
+  fulfillmentFormAtom,
+  fulfillmentFormProcessingAtom,
+  type FulfillmentFormState,
+} from '@/atoms/forms/fulfillmentFormAtoms';
 
 import { ElementActionComponent } from './menu/element.action.component';
 import { IntNumericPropertyComponent } from './property-components/IntNumericPropertyComponent';
 import { StringEnumPropertyComponent } from './property-components/StringEnumPropertyComponent';
 import { StringPropertyComponent } from './property-components/StringPropertyComponent';
 import { ToggleBooleanPropertyComponent } from './property-components/ToggleBooleanPropertyComponent';
+
+// =============================================================================
+// Operating Hours Form Components
+// =============================================================================
 
 export interface OperatingHoursIntervalFormProps {
   timeStep: number;
@@ -183,386 +186,373 @@ const OperatingHoursComponent = function (
   );
 };
 
-// const DateIntervalsComponent = function (props: IntervalsComponentBaseProps & ValSetValNamed<DateIntervalEntry[], 'dateIntervals'>) {
+// =============================================================================
+// FulfillmentFormBody - reads/writes directly from Jotai atoms
+// =============================================================================
 
-// }
-
-export type FulfillmentComponentProps = ValSetValNamed<string, 'shortcode'> &
-  ValSetValNamed<string, 'displayName'> &
-  ValSetValNamed<boolean, 'exposeFulfillment'> &
-  ValSetValNamed<number, 'ordinal'> &
-  ValSetValNamed<FulfillmentType, 'service'> &
-  ValSetValNamed<string[], 'terms'> &
-  ValSetValNamed<string, 'fulfillmentDescription'> &
-  ValSetValNamed<string, 'confirmationMessage'> &
-  ValSetValNamed<string, 'instructions'> &
-  ValSetValNamed<string | null, 'menuCategoryId'> &
-  ValSetValNamed<string | null, 'orderCategoryId'> &
-  ValSetValNamed<string | null, 'orderSupplementaryCategoryId'> &
-  ValSetValNamed<boolean, 'requirePrepayment'> &
-  ValSetValNamed<boolean, 'allowPrepayment'> &
-  ValSetValNamed<boolean, 'allowTipping'> &
-  ValSetValNamed<{ function: string; percentage: number } | null, 'autograt'> &
-  ValSetValNamed<string | null, 'serviceChargeFunctionId'> &
-  ValSetValNamed<number, 'leadTime'> &
-  ValSetValNamed<number, 'leadTimeOffset'> &
-  ValSetValNamed<OperatingHourSpecification, 'operatingHours'> &
-  ValSetValNamed<DateIntervalsEntries, 'specialHours'> &
-  ValSetValNamed<DateIntervalsEntries, 'blockedOff'> &
-  ValSetValNamed<number, 'minDuration'> &
-  ValSetValNamed<number, 'maxDuration'> &
-  ValSetValNamed<number, 'timeStep'> &
-  ValSetValNamed<number | null, 'maxGuests'> &
-  ValSetValNamed<Polygon | null, 'serviceArea'> & {
-    onCloseCallback: React.MouseEventHandler<HTMLButtonElement>;
-    onConfirmClick: React.MouseEventHandler<HTMLButtonElement>;
-    isProcessing: boolean;
-    disableConfirmOn: boolean;
-    confirmText: string;
-  };
-
-const FulfillmentComponent = (props: FulfillmentComponentProps) => {
+/**
+ * Inner form body for Fulfillment.
+ * Reads/writes directly from Jotai atoms - no prop drilling needed.
+ */
+export const FulfillmentFormBody = () => {
   const { data: catalog } = useCatalogQuery();
+  const [form, setForm] = useAtom(fulfillmentFormAtom);
+  const isProcessing = useAtomValue(fulfillmentFormProcessingAtom);
+
+  // Local state for service area JSON parsing
   const [isServiceAreaDirty, setIsServiceAreaDirty] = useState(false);
   const [isServiceAreaParsingError, setIsServiceAreaParsingError] = useState(false);
   const [localServiceAreaString, setLocalServiceAreaString] = useState(
-    props.serviceArea ? JSON.stringify(props.serviceArea) : null,
+    form?.serviceArea ? JSON.stringify(form.serviceArea) : null,
   );
 
-  if (!catalog) {
-    return null;
-  }
-  function onSetServiceArea(json: string | null) {
+  if (!catalog || !form) return null;
+
+  const updateField = <K extends keyof FulfillmentFormState>(field: K, value: FulfillmentFormState[K]) => {
+    setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  };
+
+  const onSetServiceArea = (json: string | null) => {
     try {
-      props.setServiceArea(json ? (JSON.parse(json) as Polygon) : null);
+      updateField('serviceArea', json ? (JSON.parse(json) as Polygon) : null);
       setIsServiceAreaParsingError(false);
     } catch {
       setIsServiceAreaParsingError(true);
     }
-  }
+  };
+
   const onChangeLocalServiceAreaString = (val: string) => {
     setIsServiceAreaDirty(true);
     setLocalServiceAreaString(val);
   };
+
+  return (
+    <>
+      <Grid size={12}>
+        <StringEnumPropertyComponent
+          disabled={isProcessing}
+          label="Fulfillment Type"
+          value={form.service}
+          setValue={(v) => {
+            updateField('service', v);
+          }}
+          options={Object.values(FulfillmentType)}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 9 }}>
+        <StringPropertyComponent
+          disabled={isProcessing}
+          label="Display Name"
+          value={form.displayName}
+          setValue={(v) => {
+            updateField('displayName', v);
+          }}
+        />
+      </Grid>
+      <Grid size={{ xs: 6, md: 2 }}>
+        <StringPropertyComponent
+          disabled={isProcessing}
+          label="Short Code"
+          value={form.shortcode}
+          setValue={(v) => {
+            updateField('shortcode', v);
+          }}
+        />
+      </Grid>
+      <Grid size={{ xs: 6, md: 1 }}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          label="Ordinal"
+          value={form.ordinal}
+          setValue={(v) => {
+            updateField('ordinal', v);
+          }}
+        />
+      </Grid>
+      <Grid size={12}>
+        <TextField
+          multiline
+          fullWidth
+          rows={form.terms.length + 1}
+          label="Service Terms (Each line a new bullet point)"
+          type="text"
+          value={form.terms.join('\n')}
+          onChange={(e) => {
+            updateField(
+              'terms',
+              e.target.value
+                .trim()
+                .split('\n')
+                .filter((x) => x.length > 0),
+            );
+          }}
+        />
+      </Grid>
+      <Grid size={12}>
+        <StringPropertyComponent
+          disabled={isProcessing}
+          label="Fulfillment Description"
+          value={form.messageDescription || ''}
+          setValue={(v) => {
+            updateField('messageDescription', v);
+          }}
+        />
+      </Grid>
+      <Grid size={12}>
+        <StringPropertyComponent
+          disabled={isProcessing}
+          label="Order Confirmation Message"
+          value={form.messageConfirmation || ''}
+          setValue={(v) => {
+            updateField('messageConfirmation', v);
+          }}
+        />
+      </Grid>
+      <Grid size={12}>
+        <StringPropertyComponent
+          disabled={isProcessing}
+          label="Order Instructions Message"
+          value={form.messageInstructions || ''}
+          setValue={(v) => {
+            updateField('messageInstructions', v);
+          }}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Autocomplete
+          unselectable="off"
+          disableClearable
+          filterSelectedOptions
+          disabled={isProcessing}
+          options={Object.keys(catalog.categories)}
+          value={form.menuBaseCategoryId ?? undefined}
+          onChange={(_, v) => {
+            if (v) updateField('menuBaseCategoryId', v);
+          }}
+          getOptionLabel={(option) => catalog.categories[option].name}
+          isOptionEqualToValue={(option, value) => option === value}
+          renderInput={(params) => <TextField {...params} label="Menu Category" />}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Autocomplete
+          unselectable="off"
+          disableClearable
+          filterSelectedOptions
+          disabled={isProcessing}
+          options={Object.keys(catalog.categories)}
+          value={form.orderBaseCategoryId ?? undefined}
+          onChange={(_, v) => {
+            if (v) updateField('orderBaseCategoryId', v);
+          }}
+          getOptionLabel={(option) => catalog.categories[option].name}
+          isOptionEqualToValue={(option, value) => option === value}
+          renderInput={(params) => <TextField {...params} label="Order Category" />}
+        />
+      </Grid>
+      <Grid size={{ xs: 12, md: 4 }}>
+        <Autocomplete
+          filterSelectedOptions
+          disabled={isProcessing}
+          options={Object.keys(catalog.categories)}
+          value={form.orderSupplementaryCategoryId ?? undefined}
+          onChange={(_, v) => {
+            updateField('orderSupplementaryCategoryId', v ?? null);
+          }}
+          getOptionLabel={(option) => catalog.categories[option].name}
+          isOptionEqualToValue={(option, value) => option === value}
+          renderInput={(params) => <TextField {...params} label="Order Supplement Category" />}
+        />
+      </Grid>
+      <Grid size={6}>
+        <ToggleBooleanPropertyComponent
+          disabled={isProcessing}
+          label="Allow Pre-Payment"
+          value={form.allowPrepayment}
+          setValue={(v) => {
+            updateField('allowPrepayment', v);
+          }}
+          labelPlacement="end"
+        />
+      </Grid>
+      <Grid size={6}>
+        <ToggleBooleanPropertyComponent
+          disabled={isProcessing || !form.allowPrepayment}
+          label="Require Pre-Payment"
+          value={form.allowPrepayment && form.requirePrepayment}
+          setValue={(v) => {
+            updateField('requirePrepayment', v);
+          }}
+          labelPlacement="end"
+        />
+      </Grid>
+      <Grid size={6}>
+        <ToggleBooleanPropertyComponent
+          disabled={isProcessing}
+          label="Allow Tipping"
+          value={form.allowTipping}
+          setValue={(v) => {
+            updateField('allowTipping', v);
+          }}
+          labelPlacement="end"
+        />
+      </Grid>
+      <Grid size={6}>
+        <ToggleBooleanPropertyComponent
+          disabled={isProcessing}
+          label="Expose Fulfillment"
+          value={form.exposeFulfillment}
+          setValue={(v) => {
+            updateField('exposeFulfillment', v);
+          }}
+          labelPlacement="end"
+        />
+      </Grid>
+      <Grid size={12}>
+        <Autocomplete
+          fullWidth
+          options={Object.keys(catalog.orderInstanceFunctions)}
+          value={form.serviceCharge}
+          onChange={(_e, v) => {
+            updateField('serviceCharge', v);
+          }}
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          getOptionLabel={(option) => catalog.orderInstanceFunctions[option].name ?? 'CORRUPT DATA'}
+          isOptionEqualToValue={(o, v) => o === v}
+          renderInput={(params) => <TextField {...params} label="Service Charge Function" />}
+        />
+      </Grid>
+      <Grid size={12}>
+        <OperatingHoursComponent
+          disabled={isProcessing}
+          label="Operating Hours"
+          operatingHours={form.operatingHours}
+          setOperatingHours={(v) => {
+            updateField('operatingHours', v);
+          }}
+          timeStep={form.timeStep}
+        />
+      </Grid>
+      <Grid size={4}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          label="Lead Time"
+          value={form.leadTime}
+          setValue={(v) => {
+            updateField('leadTime', v);
+          }}
+        />
+      </Grid>
+      <Grid size={4}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          min={-30}
+          max={120}
+          label="Lead Time Offset"
+          value={form.leadTimeOffset}
+          setValue={(v) => {
+            updateField('leadTimeOffset', v);
+          }}
+        />
+      </Grid>
+      <Grid size={4}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          min={1}
+          max={1440}
+          label="Time Step"
+          value={form.timeStep}
+          setValue={(v) => {
+            updateField('timeStep', v);
+          }}
+        />
+      </Grid>
+      <Grid size={4}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          label="Min Duration"
+          max={form.maxDuration}
+          value={form.minDuration}
+          setValue={(v) => {
+            updateField('minDuration', v);
+          }}
+        />
+      </Grid>
+      <Grid size={4}>
+        <IntNumericPropertyComponent
+          disabled={isProcessing}
+          label="Max Duration"
+          min={form.minDuration}
+          value={form.maxDuration}
+          setValue={(v) => {
+            updateField('maxDuration', v);
+          }}
+        />
+      </Grid>
+      <Grid size={4}>
+        <CheckedNumericInput
+          label="Max Guests"
+          fullWidth
+          type="number"
+          inputMode="numeric"
+          step={1}
+          numberProps={{
+            allowEmpty: true,
+            formatFunction: (i) => formatDecimal(i, 2),
+            parseFunction: parseInteger,
+            min: 1,
+          }}
+          pattern="[0-9]*"
+          value={form.maxGuests}
+          disabled={isProcessing}
+          onChange={(e: number | '') => {
+            updateField('maxGuests', e ? e : null);
+          }}
+        />
+      </Grid>
+      <Grid size={12}>
+        <TextField
+          aria-label="textarea"
+          label="Service Area (GeoJSON Polygon)"
+          rows={(isServiceAreaDirty && localServiceAreaString) || form.serviceArea ? 15 : 1}
+          fullWidth
+          multiline
+          value={isServiceAreaDirty ? localServiceAreaString : form.serviceArea ? JSON.stringify(form.serviceArea) : ''}
+          onChange={(e) => {
+            onChangeLocalServiceAreaString(e.target.value);
+          }}
+          onBlur={() => {
+            onSetServiceArea(localServiceAreaString);
+          }}
+          error={isServiceAreaParsingError}
+          helperText={isServiceAreaParsingError ? 'JSON Parsing Error' : ''}
+        />
+      </Grid>
+    </>
+  );
+};
+
+// =============================================================================
+// FulfillmentComponent - wrapper with action props only
+// =============================================================================
+
+export interface FulfillmentComponentProps {
+  onCloseCallback: React.MouseEventHandler<HTMLButtonElement>;
+  onConfirmClick: React.MouseEventHandler<HTMLButtonElement>;
+  isProcessing: boolean;
+  disableConfirmOn: boolean;
+  confirmText: string;
+}
+
+const FulfillmentComponent = (props: FulfillmentComponentProps) => {
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
       onConfirmClick={props.onConfirmClick}
       isProcessing={props.isProcessing}
-      disableConfirmOn={props.disableConfirmOn || isServiceAreaParsingError}
+      disableConfirmOn={props.disableConfirmOn}
       confirmText={props.confirmText}
-      body={
-        <>
-          <Grid size={12}>
-            <StringEnumPropertyComponent
-              disabled={props.isProcessing}
-              label="Fulfillment Type"
-              value={props.service}
-              setValue={props.setService}
-              options={Object.values(FulfillmentType)}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid
-            size={{
-              xs: 12,
-              md: 9,
-            }}
-          >
-            <StringPropertyComponent
-              disabled={props.isProcessing}
-              label="Display Name"
-              value={props.displayName}
-              setValue={props.setDisplayName}
-            />
-          </Grid>
-          {/* xs break */}
-          <Grid
-            size={{
-              xs: 6,
-              md: 2,
-            }}
-          >
-            <StringPropertyComponent
-              disabled={props.isProcessing}
-              label="Short Code"
-              value={props.shortcode}
-              setValue={props.setShortcode}
-            />
-          </Grid>
-          <Grid
-            size={{
-              xs: 6,
-              md: 1,
-            }}
-          >
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              label="Ordinal"
-              value={props.ordinal}
-              setValue={props.setOrdinal}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid size={12}>
-            <TextField
-              multiline
-              fullWidth
-              rows={props.terms.length + 1}
-              label="Service Terms (Each line a new bullet point)"
-              type="text"
-              value={props.terms.join('\n')}
-              onChange={(e) => {
-                props.setTerms(
-                  e.target.value
-                    .trim()
-                    .split('\n')
-                    .filter((x) => x.length > 0),
-                );
-              }}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid size={12}>
-            <StringPropertyComponent
-              disabled={props.isProcessing}
-              label="Fulfillment Description"
-              value={props.fulfillmentDescription || ''}
-              setValue={props.setFulfillmentDescription}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid size={12}>
-            <StringPropertyComponent
-              disabled={props.isProcessing}
-              label="Order Confirmation Message"
-              value={props.confirmationMessage || ''}
-              setValue={props.setConfirmationMessage}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid size={12}>
-            <StringPropertyComponent
-              disabled={props.isProcessing}
-              label="Order Instructions Message"
-              value={props.instructions || ''}
-              setValue={props.setInstructions}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid
-            size={{
-              xs: 12,
-              md: 4,
-            }}
-          >
-            <Autocomplete
-              unselectable="off"
-              disableClearable
-              filterSelectedOptions
-              disabled={props.isProcessing}
-              options={Object.keys(catalog.categories)}
-              value={props.menuCategoryId ? props.menuCategoryId : undefined}
-              onChange={(_, v) => {
-                if (v) props.setMenuCategoryId(v);
-              }}
-              getOptionLabel={(option) => catalog.categories[option].name}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => <TextField {...params} label="Menu Category" />}
-            />
-          </Grid>
-          {/* xs break */}
-          <Grid
-            size={{
-              xs: 12,
-              md: 4,
-            }}
-          >
-            <Autocomplete
-              unselectable="off"
-              disableClearable
-              filterSelectedOptions
-              disabled={props.isProcessing}
-              options={Object.keys(catalog.categories)}
-              value={props.orderCategoryId ? props.orderCategoryId : undefined}
-              onChange={(_, v) => {
-                if (v) props.setOrderCategoryId(v);
-              }}
-              getOptionLabel={(option) => catalog.categories[option].name}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => <TextField {...params} label="Order Category" />}
-            />
-          </Grid>
-          {/* xs break */}
-          <Grid
-            size={{
-              xs: 12,
-              md: 4,
-            }}
-          >
-            <Autocomplete
-              filterSelectedOptions
-              disabled={props.isProcessing}
-              options={Object.keys(catalog.categories)}
-              value={props.orderSupplementaryCategoryId ? props.orderSupplementaryCategoryId : undefined}
-              onChange={(_, v) => {
-                if (v) props.setOrderSupplementaryCategoryId(v);
-              }}
-              getOptionLabel={(option) => catalog.categories[option].name}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => <TextField {...params} label="Order Supplement Category" />}
-            />
-          </Grid>
-          {/* universal break */}
-          <Grid size={6}>
-            <ToggleBooleanPropertyComponent
-              disabled={props.isProcessing}
-              label="Allow Pre-Payment"
-              value={props.allowPrepayment}
-              setValue={props.setAllowPrepayment}
-              labelPlacement="end"
-            />
-          </Grid>
-          <Grid size={6}>
-            <ToggleBooleanPropertyComponent
-              disabled={props.isProcessing || !props.allowPrepayment}
-              label="Require Pre-Payment"
-              value={props.allowPrepayment && props.requirePrepayment}
-              setValue={props.setRequirePrepayment}
-              labelPlacement="end"
-            />
-          </Grid>
-          <Grid size={6}>
-            <ToggleBooleanPropertyComponent
-              disabled={props.isProcessing}
-              label="Allow Tipping"
-              value={props.allowTipping}
-              setValue={props.setAllowTipping}
-              labelPlacement="end"
-            />
-          </Grid>
-          <Grid size={6}>
-            <ToggleBooleanPropertyComponent
-              disabled={props.isProcessing}
-              label="Expose Fulfillment"
-              value={props.exposeFulfillment}
-              setValue={props.setExposeFulfillment}
-              labelPlacement="end"
-            />
-          </Grid>
-          {/* //ValSetValNamed<{ function: string, percentage: number } | null, 'autograt'> & */}
-          <Grid size={12}>
-            <Autocomplete
-              fullWidth
-              options={Object.keys(catalog.orderInstanceFunctions)}
-              value={props.serviceChargeFunctionId}
-              onChange={(_e, v) => {
-                props.setServiceChargeFunctionId(v);
-              }}
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(option) => catalog.orderInstanceFunctions[option].name ?? 'CORRUPT DATA'}
-              isOptionEqualToValue={(o, v) => o === v}
-              renderInput={(params) => <TextField {...params} label="Service Charge Function" />}
-            />
-          </Grid>
-          <Grid size={12}>
-            <OperatingHoursComponent
-              disabled={props.isProcessing}
-              label="Operating Hours"
-              operatingHours={props.operatingHours}
-              setOperatingHours={props.setOperatingHours}
-              timeStep={props.timeStep}
-            />
-          </Grid>
-          <Grid size={4}>
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              label="Lead Time"
-              value={props.leadTime}
-              setValue={props.setLeadTime}
-            />
-          </Grid>
-          <Grid size={4}>
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              min={-30}
-              max={120}
-              label="Lead Time Offset"
-              value={props.leadTimeOffset}
-              setValue={props.setLeadTimeOffset}
-            />
-          </Grid>
-          <Grid size={4}>
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              min={1}
-              max={1440}
-              label="Time Step"
-              value={props.timeStep}
-              setValue={props.setTimeStep}
-            />
-          </Grid>
-          <Grid size={4}>
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              label="Min Duration"
-              max={props.maxDuration}
-              value={props.minDuration}
-              setValue={props.setMinDuration}
-            />
-          </Grid>
-          <Grid size={4}>
-            <IntNumericPropertyComponent
-              disabled={props.isProcessing}
-              label="Max Duration"
-              min={props.minDuration}
-              value={props.maxDuration}
-              setValue={props.setMaxDuration}
-            />
-          </Grid>
-          <Grid size={4}>
-            <CheckedNumericInput
-              label="Max Guests"
-              fullWidth
-              type="number"
-              inputMode="numeric"
-              step={1}
-              numberProps={{
-                allowEmpty: true,
-                formatFunction: (i) => formatDecimal(i, 2),
-                parseFunction: parseInteger,
-                min: 1,
-              }}
-              pattern="[0-9]*"
-              value={props.maxGuests}
-              disabled={props.isProcessing}
-              onChange={(e: number | '') => {
-                props.setMaxGuests(e ? e : null);
-              }}
-            />
-          </Grid>
-          <Grid size={12}>
-            <TextField
-              aria-label="textarea"
-              label="Service Area (GeoJSON Polygon)"
-              rows={(isServiceAreaDirty && localServiceAreaString) || props.serviceArea ? 15 : 1}
-              fullWidth
-              multiline
-              value={
-                isServiceAreaDirty ? localServiceAreaString : props.serviceArea ? JSON.stringify(props.serviceArea) : ''
-              }
-              onChange={(e) => {
-                onChangeLocalServiceAreaString(e.target.value);
-              }}
-              onBlur={() => {
-                onSetServiceArea(localServiceAreaString);
-              }}
-              error={isServiceAreaParsingError}
-              helperText={isServiceAreaParsingError ? 'JSON Parsing Error' : ''}
-            />
-          </Grid>
-        </>
-      }
+      body={<FulfillmentFormBody />}
     />
   );
 };

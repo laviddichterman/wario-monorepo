@@ -1,7 +1,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
-import type { IProductInstance, UncommittedIProductInstance } from '@wcp/wario-shared';
+import type { CreateIProductInstanceRequest, IProductInstance } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
@@ -40,7 +40,7 @@ export function useAddProductInstanceMutation() {
   return useMutation({
     mutationFn: async ({ productId, form }: AddProductInstanceRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body: UncommittedIProductInstance = toProductInstanceApiBody(form);
+      const body: CreateIProductInstanceRequest = toProductInstanceApiBody(form);
 
       const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, body, {
         headers: {

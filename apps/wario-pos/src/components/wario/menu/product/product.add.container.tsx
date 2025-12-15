@@ -52,7 +52,7 @@ const ProductAddContainer = ({ onCloseCallback }: ProductAddContainerProps) => {
     setInstanceProcessing(true);
 
     addMutation.mutate(
-      { instances: [toProductInstanceApiBody(instanceForm)], product: toProductApiBody(productForm) },
+      { ...toProductApiBody(productForm), instances: [toProductInstanceApiBody(instanceForm)] },
       {
         onSuccess: () => {
           enqueueSnackbar(`Created base product ${instanceForm.displayName}`);

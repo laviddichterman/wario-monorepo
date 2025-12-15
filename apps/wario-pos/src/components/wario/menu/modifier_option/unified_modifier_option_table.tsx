@@ -6,7 +6,6 @@ import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-dat
 
 import { modifierOptionFormFamily, type ModifierOptionFormState } from '@/atoms/forms/modifierOptionFormAtoms';
 
-import { FloatNumericPropertyComponent } from '../../property-components/FloatNumericPropertyComponent';
 import { IMoneyPropertyComponent } from '../../property-components/IMoneyPropertyComponent';
 import { StringPropertyComponent } from '../../property-components/StringPropertyComponent';
 
@@ -52,23 +51,6 @@ const MoneyCell = ({ id }: { id: string }) => {
   );
 };
 
-const OrdinalCell = ({ id }: { id: string }) => {
-  const [form, setForm] = useAtom(modifierOptionFormFamily(id));
-  if (!form) return null;
-  return (
-    <FloatNumericPropertyComponent
-      label=""
-      value={form.ordinal}
-      setValue={(v: number) => {
-        setForm({ ...form, ordinal: v });
-      }}
-      disabled={false}
-      size="small"
-      step={1}
-    />
-  );
-};
-
 export const UnifiedModifierOptionTable = ({
   optionIds,
   onAddOption,
@@ -95,12 +77,6 @@ export const UnifiedModifierOptionTable = ({
       headerName: 'Price',
       width: 120,
       renderCell: (params: GridRenderCellParams) => <MoneyCell id={params.id as string} />,
-    },
-    {
-      field: 'ordinal',
-      headerName: 'Ordinal',
-      width: 100,
-      renderCell: (params: GridRenderCellParams) => <OrdinalCell id={params.id as string} />,
     },
     {
       field: 'actions',

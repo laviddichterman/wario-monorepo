@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Typography } from '@mui/material';
 
-import { type IWInterval, type KeyValue } from '@wcp/wario-shared';
+import { type IWInterval, type KeyValue } from '@wcp/wario-shared/types';
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 
 import KeyValuesContainer from './keyvalues.container';

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Add } from '@mui/icons-material';
 import { Box, Button } from '@mui/material';
 
-import { type IProduct } from '@wcp/wario-shared';
+import { type IProduct } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -103,8 +103,8 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
     setIsProcessing(true);
 
     try {
-      // 1. Update Product
-      await editMutation.mutateAsync({ id: productEntry.id, form: productForm });
+      // 1. Update Product (instances are handled separately below)
+      await editMutation.mutateAsync({ id: productEntry.id, instances: [], ...toProductApiBody(productForm) });
 
       // 2. Process Instances
       const instancePromises = instanceIds.map(async (id) => {
@@ -116,13 +116,13 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
         if (id.startsWith('temp_')) {
           await createInstanceMutation.mutateAsync({
             productId: productEntry.id,
-            form: apiBody,
+            body: apiBody,
           });
         } else {
           await updateInstanceMutation.mutateAsync({
             productId: productEntry.id,
             instanceId: id,
-            form: apiBody,
+            body: { ...apiBody, id },
           });
         }
       });

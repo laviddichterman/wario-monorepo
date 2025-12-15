@@ -1,25 +1,20 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
-import type { IOption, IOptionType } from '@wcp/wario-shared/types';
+import type { FulfillmentConfig } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
-import { type ModifierTypeFormState, toModifierTypeApiBody } from '@/atoms/forms/modifierTypeFormAtoms';
+import { type FulfillmentFormState, toFulfillmentApiBody } from '@/atoms/forms/fulfillmentFormAtoms';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface AddModifierTypeRequest {
-  form: ModifierTypeFormState;
-  options: Omit<IOption, 'modifierTypeId' | 'id'>[];
-}
-
-interface EditModifierTypeRequest {
+interface EditFulfillmentRequest {
   id: string;
-  form: ModifierTypeFormState;
-  dirtyFields?: Set<keyof ModifierTypeFormState>;
+  form: FulfillmentFormState;
+  dirtyFields?: Set<keyof FulfillmentFormState>;
 }
 
 // ============================================================================
@@ -27,20 +22,17 @@ interface EditModifierTypeRequest {
 // ============================================================================
 
 /**
- * Mutation hook for adding a modifier type
+ * Mutation hook for adding a fulfillment
  */
-export function useAddModifierTypeMutation() {
+export function useAddFulfillmentMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ form, options }: AddModifierTypeRequest) => {
+    mutationFn: async (form: FulfillmentFormState) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body = {
-        ...toModifierTypeApiBody(form),
-        options,
-      };
+      const body = toFulfillmentApiBody(form);
 
-      const response = await axiosInstance.post<IOptionType>('/api/v1/menu/option/', body, {
+      const response = await axiosInstance.post<FulfillmentConfig>('/api/v1/config/fulfillment/', body, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -53,19 +45,19 @@ export function useAddModifierTypeMutation() {
 }
 
 /**
- * Mutation hook for editing a modifier type.
+ * Mutation hook for editing a fulfillment.
  * If dirtyFields is provided, only the modified fields are sent (partial update).
  */
-export function useEditModifierTypeMutation() {
+export function useEditFulfillmentMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ id, form, dirtyFields }: EditModifierTypeRequest) => {
+    mutationFn: async ({ id, form, dirtyFields }: EditFulfillmentRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
       // Only send dirty fields for PATCH/update
-      const body = dirtyFields ? toModifierTypeApiBody(form, dirtyFields) : toModifierTypeApiBody(form);
+      const body = dirtyFields ? toFulfillmentApiBody(form, dirtyFields) : toFulfillmentApiBody(form);
 
-      const response = await axiosInstance.patch<IOptionType>(`/api/v1/menu/option/${id}`, body, {
+      const response = await axiosInstance.patch<FulfillmentConfig>(`/api/v1/config/fulfillment/${id}`, body, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -78,16 +70,16 @@ export function useEditModifierTypeMutation() {
 }
 
 /**
- * Mutation hook for deleting a modifier type
+ * Mutation hook for deleting a fulfillment
  */
-export function useDeleteModifierTypeMutation() {
+export function useDeleteFulfillmentMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
     mutationFn: async (id: string) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
 
-      const response = await axiosInstance.delete<IOptionType>(`/api/v1/menu/option/${id}`, {
+      const response = await axiosInstance.delete<FulfillmentConfig>(`/api/v1/config/fulfillment/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

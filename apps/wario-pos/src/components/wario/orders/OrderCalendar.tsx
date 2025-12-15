@@ -1,4 +1,4 @@
-import { DateTimeIntervalBuilder, WOrderStatus } from '@wcp/wario-shared';
+import { DateTimeIntervalBuilder, WOrderStatus } from '@wcp/wario-shared/logic';
 import { useServerTime } from '@wcp/wario-ux-shared/query';
 
 import { useOrdersQuery } from '@/hooks/useOrdersQuery';

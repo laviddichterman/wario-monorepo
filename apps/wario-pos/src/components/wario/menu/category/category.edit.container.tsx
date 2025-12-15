@@ -12,7 +12,12 @@ import { useEditCategoryMutation } from '@/hooks/useCategoryMutations';
 
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
-import { categoryFormAtom, categoryFormProcessingAtom, fromCategoryEntity } from '@/atoms/forms/categoryFormAtoms';
+import {
+  categoryFormAtom,
+  categoryFormDirtyFieldsAtom,
+  categoryFormProcessingAtom,
+  fromCategoryEntity,
+} from '@/atoms/forms/categoryFormAtoms';
 
 import { CategoryFormBody } from './category.component';
 
@@ -44,23 +49,26 @@ const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) =
   const setFormState = useSetAtom(categoryFormAtom);
   const [isProcessing, setIsProcessing] = useAtom(categoryFormProcessingAtom);
   const formState = useAtomValue(categoryFormAtom);
+  const [dirtyFields, setDirtyFields] = useAtom(categoryFormDirtyFieldsAtom);
 
   const editMutation = useEditCategoryMutation();
 
-  // Initialize form from existing entity
+  // Initialize form from existing entity and reset dirty fields
   useEffect(() => {
     setFormState(fromCategoryEntity(category));
+    setDirtyFields(new Set());
     return () => {
       setFormState(null);
+      setDirtyFields(new Set());
     };
-  }, [category, setFormState]);
+  }, [category, setFormState, setDirtyFields]);
 
   const editCategory = () => {
     if (!formState || editMutation.isPending) return;
 
     setIsProcessing(true);
     editMutation.mutate(
-      { id: category.id, form: formState },
+      { id: category.id, form: formState, dirtyFields },
       {
         onSuccess: () => {
           enqueueSnackbar(`Updated category: ${formState.name}.`);

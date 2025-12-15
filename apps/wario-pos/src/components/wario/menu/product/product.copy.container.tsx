@@ -8,7 +8,7 @@ import { Box, Button, Checkbox, Chip, Tab, Typography } from '@mui/material';
 import type { GridColDef, GridRenderCellParams, GridRowOrderChangeParams } from '@mui/x-data-grid-premium';
 import { DataGridPremium } from '@mui/x-data-grid-premium';
 
-import { type CreateProductBatchRequest, type IProduct, type UncommittedIProductInstance } from '@wcp/wario-shared';
+import { type CreateIProductInstanceRequest, type CreateIProductRequest, type IProduct } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
 
@@ -82,6 +82,7 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
       const instance = catalogSelectors.productInstance(id);
       return {
         id,
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         displayName: instance?.displayName ?? 'Unknown',
         include: true, // Default all to included
       };
@@ -112,6 +113,7 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
     // 2. Initialize instance form atoms
     product.instances.forEach((id) => {
       const instance = catalogSelectors.productInstance(id);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (instance) {
         productInstanceFormFamily(id);
         // Set initial value using the store
@@ -200,7 +202,7 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
         throw new Error('At least one instance must be included');
       }
 
-      const batchInstances: UncommittedIProductInstance[] = [];
+      const batchInstances: CreateIProductInstanceRequest[] = [];
       for (const row of includedRows) {
         const instanceData = allInstances.find((i) => i.id === row.id);
         if (instanceData?.form) {
@@ -208,6 +210,7 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
         } else {
           // Fallback: use original instance data from catalog
           const originalInstance = catalogSelectors.productInstance(row.id);
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (originalInstance) {
             // Use the proper conversion function
             batchInstances.push(toProductInstanceApiBody(fromProductInstanceEntity(originalInstance)));
@@ -217,8 +220,9 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
 
       const productBody = toProductApiBody(productForm);
 
-      const batchRequest: CreateProductBatchRequest = {
-        product: productBody,
+      // CreateIProductRequest expects a flat structure with instances included
+      const batchRequest: CreateIProductRequest = {
+        ...productBody,
         instances: batchInstances,
       };
 
@@ -232,7 +236,7 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
       });
 
       if (response.status === 201) {
-        enqueueSnackbar(`Copied product with ${batchInstances.length} instance(s).`);
+        enqueueSnackbar(`Copied product with ${batchInstances.length.toString()} instance(s).`);
         onCloseCallback();
       } else {
         enqueueSnackbar('Failed to copy product.', { variant: 'error' });

@@ -16,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { type IProductModifier } from '@wcp/wario-shared';
+import { type IProductModifier } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useFulfillments, useProductInstanceFunctionIds } from '@wcp/wario-ux-shared/query';
 
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';

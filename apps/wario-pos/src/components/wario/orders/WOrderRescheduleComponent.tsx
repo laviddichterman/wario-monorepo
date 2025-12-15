@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Autocomplete, Grid, TextField } from '@mui/material';
 import { StaticDatePicker } from '@mui/x-date-pickers';
 
-import { WDateUtils } from '@wcp/wario-shared';
+import { WDateUtils } from '@wcp/wario-shared/logic';
 import { useCurrentTime, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import { useOrderById, useRescheduleOrderMutation } from '@/hooks/useOrdersQuery';

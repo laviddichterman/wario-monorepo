@@ -115,10 +115,8 @@ export function useSetModifierOptionDisabledMutation() {
   return useMutation({
     mutationFn: async ({ modifierTypeId, option, disabled }: DisableModifierOptionRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body: IOption = {
-        ...option,
-        disabled,
-      };
+      // Only send the fields we want to update (partial update matching UpdateIOptionRequestBody)
+      const body = { disabled };
 
       const response = await axiosInstance.patch<IOption>(`/api/v1/menu/option/${modifierTypeId}/${option.id}`, body, {
         headers: {

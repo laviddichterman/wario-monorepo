@@ -23,15 +23,14 @@ import {
   useTheme,
 } from '@mui/material';
 
+import { OptionPlacement, OptionQualifier, PriceDisplay } from '@wcp/wario-shared/logic';
 import {
   type ICatalog,
-  OptionPlacement,
-  OptionQualifier,
-  PriceDisplay,
+  type IOption,
+  type IOptionType,
+  type IProduct,
   type ProductInstanceModifierEntry,
-  type RecordModifierOptions,
-  type UncommittedIProduct,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/types';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
 import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
@@ -52,20 +51,24 @@ import {
 // Helper Functions
 // =============================================================================
 
+type UncommittedIProduct = Omit<IProduct, 'id' | 'instances'>;
+
 const normalizeModifiersAndOptions = (
   parent_product: UncommittedIProduct,
-  modifier_types_map: RecordModifierOptions,
+  modifier_types_map: Record<string, IOptionType>,
   minimizedModifiers: ProductInstanceModifierEntry[],
 ): ProductInstanceModifierEntry[] =>
   parent_product.modifiers.map((modifier_entry) => {
     const modEntry = minimizedModifiers.find((x) => x.modifierTypeId === modifier_entry.mtid);
     const modOptions = modEntry ? modEntry.options : [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const mtOptions = modifier_types_map[modifier_entry.mtid]?.options ?? [];
     return {
       modifierTypeId: modifier_entry.mtid,
-      options: modifier_types_map[modifier_entry.mtid].options.map((option) => {
-        const foundOptionState = modOptions.find((x) => x.optionId === option);
+      options: mtOptions.map((optionId: string) => {
+        const foundOptionState = modOptions.find((x) => x.optionId === optionId);
         return {
-          optionId: option,
+          optionId,
           placement: foundOptionState ? foundOptionState.placement : OptionPlacement.NONE,
           qualifier: foundOptionState ? foundOptionState.qualifier : OptionQualifier.REGULAR,
         };
@@ -176,11 +179,13 @@ const ProductInstanceFormBodyInner = ({
 
   const renderModifierOptions = (
     modifier_entry: ProductInstanceModifierEntry,
-    modifier_types_map: ICatalogModifiers,
+    modifier_types_map: Record<string, IOptionType>,
+    modifierOptionsMap: Record<string, IOption>,
     mtid: string,
   ) => {
-    const mt = modifier_types_map[mtid].modifierType;
-    const mt_options = modifier_types_map[mtid].options;
+    const mt = modifier_types_map[mtid];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const mt_options = mt?.options ?? [];
 
     if (mt.min_selected === 1 && mt.max_selected === 1) {
       return (
@@ -193,12 +198,13 @@ const ProductInstanceFormBodyInner = ({
             handleRadioChange(mtid, parseInt(e.target.value));
           }}
         >
-          {mt_options.map((oId, oidx) => (
+          {mt_options.map((oId: string, oidx) => (
             <FormControlLabel
               key={oidx}
               control={<Radio disableRipple />}
               value={oidx}
-              label={modifierOptionsMap[oId].displayName}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              label={modifierOptionsMap[oId]?.displayName ?? oId}
             />
           ))}
         </RadioGroup>
@@ -206,7 +212,7 @@ const ProductInstanceFormBodyInner = ({
     } else {
       return (
         <FormGroup row>
-          {mt_options.map((oId, oidx) => (
+          {mt_options.map((oId: string, oidx) => (
             <FormControlLabel
               key={oidx}
               control={
@@ -223,7 +229,8 @@ const ProductInstanceFormBodyInner = ({
                   }}
                 />
               }
-              label={modifierOptionsMap[oId].displayName}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              label={modifierOptionsMap[oId]?.displayName ?? oId}
             />
           ))}
         </FormGroup>
@@ -307,16 +314,6 @@ const ProductInstanceFormBodyInner = ({
             />
           </Grid>
           {/* universal break */}
-          <Grid size={{ xs: 3, sm: 2.5 }}>
-            <IntNumericPropertyComponent
-              disabled={isProcessing}
-              label="Ordinal"
-              value={form.ordinal}
-              setValue={(v) => {
-                updateField('ordinal', v);
-              }}
-            />
-          </Grid>
           <Grid size={{ xs: 9, sm: 9.5 }}>
             <StringPropertyComponent
               disabled={isProcessing}
@@ -527,9 +524,15 @@ const ProductInstanceFormBodyInner = ({
                 <CardContent>
                   <FormControl component="fieldset">
                     <FormLabel component="legend">
-                      {modifier_types_map[modifier_entry.modifierTypeId].modifierType.name}
+                      {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
+                      {modifier_types_map[modifier_entry.modifierTypeId]?.name ?? modifier_entry.modifierTypeId}
                     </FormLabel>
-                    {renderModifierOptions(modifier_entry, modifier_types_map, modifier_entry.modifierTypeId)}
+                    {renderModifierOptions(
+                      modifier_entry,
+                      modifier_types_map,
+                      modifierOptionsMap,
+                      modifier_entry.modifierTypeId,
+                    )}
                   </FormControl>
                 </CardContent>
               </Card>

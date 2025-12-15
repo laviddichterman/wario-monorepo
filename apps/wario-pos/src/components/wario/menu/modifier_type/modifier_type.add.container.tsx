@@ -13,6 +13,7 @@ import { useAddModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
 import {
   DEFAULT_MODIFIER_OPTION_FORM,
+  type ModifierOptionApiBody,
   modifierOptionFormFamily,
   toModifierOptionApiBody,
 } from '@/atoms/forms/modifierOptionFormAtoms';
@@ -66,7 +67,7 @@ const ModifierTypeAddContainer = ({ onCloseCallback }: ModifierTypeUiProps) => {
         if (!optForm) return null;
         return toModifierOptionApiBody(optForm);
       })
-      .filter((x): x is ReturnType<typeof toModifierOptionApiBody> => x !== null);
+      .filter((x): x is ModifierOptionApiBody => x !== null);
 
     setIsProcessing(true);
     addMutation.mutate(

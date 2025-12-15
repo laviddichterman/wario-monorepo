@@ -48,6 +48,9 @@ export const DEFAULT_MODIFIER_OPTION_FORM: ModifierOptionFormState = {
 /** Main form atom - null when no form is open */
 export const modifierOptionFormAtom = atom<ModifierOptionFormState | null>(null);
 
+/** Dirty fields tracking - marks which fields have been modified in edit mode */
+export const modifierOptionFormDirtyFieldsAtom = atom<Set<keyof ModifierOptionFormState>>(new Set<keyof ModifierOptionFormState>());
+
 /** API processing state */
 export const modifierOptionFormProcessingAtom = atom(false);
 
@@ -90,29 +93,106 @@ export const fromModifierOptionEntity = (option: IOption): ModifierOptionFormSta
   availability: option.availability,
 });
 
-/** Convert form state to API request body */
-export const toModifierOptionApiBody = (form: ModifierOptionFormState): Omit<IOption, 'modifierTypeId' | 'id'> => ({
-  displayName: form.displayName,
-  description: form.description,
-  shortcode: form.shortcode,
-  price: form.price,
-  enable: form.enableFunction,
-  externalIDs: form.externalIds,
-  disabled: form.disabled,
-  availability: form.availability,
-  metadata: {
-    flavor_factor: form.flavorFactor,
-    bake_factor: form.bakeFactor,
-    can_split: form.canSplit,
-    allowHeavy: form.allowHeavy,
-    allowLite: form.allowLite,
-    allowOTS: form.allowOTS,
-  },
-  displayFlags: {
-    omit_from_shortname: form.omitFromShortname,
-    omit_from_name: form.omitFromName,
-  },
-});
+export type ModifierOptionApiBody = Omit<IOption, 'id' | 'modifierTypeId'>;
+
+/**
+ * Convert form state to API request body.
+ * 
+ * Overload 1: When dirtyFields is omitted, returns the FULL body (for POST/create).
+ * Overload 2: When dirtyFields is provided, returns only dirty fields (for PATCH/update).
+ * 
+ * Note: For nested objects (metadata, displayFlags), if ANY nested field is dirty,
+ * we include the entire parent object.
+ */
+export function toModifierOptionApiBody(form: ModifierOptionFormState): ModifierOptionApiBody;
+export function toModifierOptionApiBody(
+  form: ModifierOptionFormState,
+  dirtyFields: Set<keyof ModifierOptionFormState>
+): Partial<ModifierOptionApiBody>;
+export function toModifierOptionApiBody(
+  form: ModifierOptionFormState,
+  dirtyFields?: Set<keyof ModifierOptionFormState>
+): ModifierOptionApiBody | Partial<ModifierOptionApiBody> {
+  // Build the full body structure
+  const fullBody: ModifierOptionApiBody = {
+    displayName: form.displayName,
+    description: form.description,
+    shortcode: form.shortcode,
+    price: form.price,
+    enable: form.enableFunction,
+    externalIDs: form.externalIds,
+    disabled: form.disabled,
+    availability: form.availability,
+    metadata: {
+      flavor_factor: form.flavorFactor,
+      bake_factor: form.bakeFactor,
+      can_split: form.canSplit,
+      allowHeavy: form.allowHeavy,
+      allowLite: form.allowLite,
+      allowOTS: form.allowOTS,
+    },
+    displayFlags: {
+      omit_from_shortname: form.omitFromShortname,
+      omit_from_name: form.omitFromName,
+    },
+  };
+
+  // If no dirty fields provided, return full body (create mode)
+  if (!dirtyFields) {
+    return fullBody;
+  }
+
+  // If dirty fields is empty, also return full body
+  if (dirtyFields.size === 0) {
+    return fullBody;
+  }
+
+  // Map form fields to API fields for dirty tracking
+  // This handles cases where multiple form fields map to nested API structures
+  const isDirty = (apiField: keyof ModifierOptionApiBody): boolean => {
+    // Check if the direct field is dirty
+    if (dirtyFields.has(apiField as keyof ModifierOptionFormState)) return true;
+
+    // Special handling for nested objects
+    if (apiField === 'metadata') {
+      return (
+        dirtyFields.has('flavorFactor') ||
+        dirtyFields.has('bakeFactor') ||
+        dirtyFields.has('canSplit') ||
+        dirtyFields.has('allowHeavy') ||
+        dirtyFields.has('allowLite') ||
+        dirtyFields.has('allowOTS')
+      );
+    }
+
+    if (apiField === 'displayFlags') {
+      return dirtyFields.has('omitFromShortname') || dirtyFields.has('omitFromName');
+    }
+
+    // Map enable field
+    if (apiField === 'enable') {
+      return dirtyFields.has('enableFunction');
+    }
+
+    // Map externalIDs field
+    if (apiField === 'externalIDs') {
+      return dirtyFields.has('externalIds');
+    }
+
+    return false;
+  };
+
+  // Filter to only dirty fields
+  const result: Partial<ModifierOptionApiBody> = {};
+  for (const key of Object.keys(fullBody)) {
+    if (isDirty(key as keyof ModifierOptionApiBody)) {
+      const typedKey = key as keyof ModifierOptionApiBody;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+      (result as any)[typedKey] = fullBody[typedKey];
+    }
+  }
+  return result;
+}
 
 // =============================================================================
 // ATOMS FOR COPY/BATCH OPERATIONS

@@ -1,4 +1,4 @@
-import { formatDecimal, parseDecimal } from '@wcp/wario-shared';
+import { formatDecimal, parseDecimal } from '@wcp/wario-shared/logic';
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 

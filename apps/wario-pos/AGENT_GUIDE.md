@@ -49,6 +49,20 @@
 - **Example**: `src/atoms/catalog.ts`.
 - **Usage**: Instead of passing `setIsDialogOpen` down 10 levels, components subscribe to `dialogueStateAtom` and call `openCategoryEditAtom` to trigger actions.
 
+##### Form Atoms Pattern
+
+For catalog entity add/edit operations, use the Form Atoms pattern (`src/atoms/forms/`):
+
+- **Files**: `categoryFormAtoms.ts`, `fulfillmentFormAtoms.ts`, `modifierTypeFormAtoms.ts`, etc.
+- **Structure**:
+  - `*FormState` interface - flat form state
+  - `*formAtom` - main form state atom (`null` when closed)
+  - `*formDirtyFieldsAtom` - tracks modified fields for PATCH
+  - `to*ApiBody(form, dirtyFields?)` - overloaded converter for POST (full) vs PATCH (partial)
+  - `from*Entity(entity)` - API entity to form state converter
+  - `use*Form()` - hook with `updateField()` that auto-tracks dirty fields
+- **Usage in Mutations**: Pass `dirtyFields` to edit mutations for partial updates
+
 #### 3. Global App State (Context/Zustand)
 
 **Session & Singletons**.

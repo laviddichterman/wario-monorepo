@@ -9,7 +9,8 @@ import {
   useGridApiRef,
 } from '@mui/x-data-grid-premium';
 
-import { WDateUtils, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+import { WDateUtils, WOrderStatus } from '@wcp/wario-shared/logic';
+import { type WOrderInstance } from '@wcp/wario-shared/types';
 import { FullScreenPulsingContainer } from '@wcp/wario-ux-shared/containers';
 
 import { useConfirmOrderMutation, useOrdersQuery, useUnlockOrdersMutation } from '@/hooks/useOrdersQuery';

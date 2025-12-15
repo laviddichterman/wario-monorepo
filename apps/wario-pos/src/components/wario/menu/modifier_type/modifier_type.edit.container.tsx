@@ -56,7 +56,7 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
   const store = useStore();
 
   const setFormState = useSetAtom(modifierTypeFormAtom);
-  const { form, setIsProcessing, isProcessing } = useModifierTypeForm();
+  const { form, setIsProcessing, isProcessing, dirtyFields, clearDirtyFields } = useModifierTypeForm();
 
   const editMutation = useEditModifierTypeMutation();
   const [activeTab, setActiveTab] = useState('rules');
@@ -77,6 +77,8 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
   useEffect(() => {
     // 1. Type Form
     setFormState(fromModifierTypeEntity(modifier_type));
+    // Clear dirty fields when loading entity for editing
+    clearDirtyFields();
 
     // 2. Option List & Atoms - IOptionType.options is string[]
     setOptionIds(modifier_type.options);
@@ -90,12 +92,13 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
 
     return () => {
       setFormState(null);
+      clearDirtyFields();
       // Cleanup option atoms
       modifier_type.options.forEach((id: string) => {
         modifierOptionFormFamily.remove(id);
       });
     };
-  }, [modifier_type, setFormState, catalogSelectors, store]);
+  }, [modifier_type, setFormState, catalogSelectors, store, clearDirtyFields]);
 
   const editModifierType = () => {
     if (!form || editMutation.isPending) return;
@@ -104,7 +107,7 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
 
     setIsProcessing(true);
     editMutation.mutate(
-      { id: modifier_type.id, form },
+      { id: modifier_type.id, form, dirtyFields },
       {
         onSuccess: () => {
           enqueueSnackbar(`Updated modifier type: ${form.name}.`);

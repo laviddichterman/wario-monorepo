@@ -37,7 +37,7 @@ const ProductEnableContainerInner = ({ product, productName, onCloseCallback }: 
     if (setDisabledMutation.isPending) return;
 
     setDisabledMutation.mutate(
-      { product, disabled: null },
+      { id: product.id, disabled: null },
       {
         onSuccess: () => {
           enqueueSnackbar(`Enabled ${productName}.`);

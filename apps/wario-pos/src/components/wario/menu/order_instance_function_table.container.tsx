@@ -4,7 +4,8 @@ import { AddBox, DeleteOutline, Edit } from '@mui/icons-material';
 import { IconButton, Tooltip } from '@mui/material';
 import { GridActionsCellItem, type GridRenderCellParams, type GridRowParams } from '@mui/x-data-grid-premium';
 
-import { type ICatalogSelectors, OrderFunctional } from '@wcp/wario-shared';
+import { OrderFunctional } from '@wcp/wario-shared/logic';
+import { type ICatalogSelectors } from '@wcp/wario-shared/types';
 import {
   useCatalogSelectors,
   useOrderInstanceFunctionById,

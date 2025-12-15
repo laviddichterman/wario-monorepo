@@ -1,6 +1,6 @@
 import type { EventInput } from '@fullcalendar/core';
 
-import type { InferType } from '@wcp/wario-shared';
+import type { InferType } from '@wcp/wario-shared/logic';
 
 import type { IDatePickerControl } from '@/types/common';
 

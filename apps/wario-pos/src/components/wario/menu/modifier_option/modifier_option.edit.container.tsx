@@ -1,4 +1,4 @@
-import { useAtom, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +11,7 @@ import { useCatalogSelectors, useModifierTypeById, useOptionById } from '@wcp/wa
 import {
   fromModifierOptionEntity,
   modifierOptionFormAtom,
+  modifierOptionFormDirtyFieldsAtom,
   modifierOptionFormProcessingAtom,
   toModifierOptionApiBody,
 } from '@/atoms/forms/modifierOptionFormAtoms';
@@ -31,6 +32,7 @@ export const ModifierOptionEditContainer = ({
 }: ModifierOptionEditContainerProps) => {
   const catalogSelectors = useCatalogSelectors();
   const setForm = useSetAtom(modifierOptionFormAtom);
+  const setDirtyFields = useSetAtom(modifierOptionFormDirtyFieldsAtom);
 
   useEffect(() => {
     if (catalogSelectors) {
@@ -38,12 +40,15 @@ export const ModifierOptionEditContainer = ({
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (ent) {
         setForm(fromModifierOptionEntity(ent));
+        // Clear dirty fields when loading a new entity for editing
+        setDirtyFields(new Set());
       }
     }
     return () => {
       setForm(null);
+      setDirtyFields(new Set());
     };
-  }, [catalogSelectors, modifier_option_id, setForm]);
+  }, [catalogSelectors, modifier_option_id, setForm, setDirtyFields]);
 
   if (!catalogSelectors) return null;
 
@@ -73,14 +78,16 @@ const ModifierOptionEditForm = ({
   const [activeTab, setActiveTab] = useState('identity');
 
   const [form] = useAtom(modifierOptionFormAtom);
+  const dirtyFields = useAtomValue(modifierOptionFormDirtyFieldsAtom);
   const [isProcessing, setIsProcessing] = useAtom(modifierOptionFormProcessingAtom);
 
   const save = async () => {
     if (!form) return;
     setIsProcessing(true);
     try {
+      // Only send dirty fields for PATCH/update
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any = toModifierOptionApiBody(form);
+      const body: any = toModifierOptionApiBody(form, dirtyFields);
 
       const response = await fetch(`${HOST_API}/api/v1/menu/modifier_option/${modifier_option_id}`, {
         method: 'PUT',
@@ -91,7 +98,7 @@ const ModifierOptionEditForm = ({
       });
 
       if (response.status === 200) {
-        enqueueSnackbar('Saved modifier option');
+        enqueueSnackbar('Saved modifier option ');
         onCloseCallback();
       } else {
         enqueueSnackbar('Failed to save modifier option', { variant: 'error' });

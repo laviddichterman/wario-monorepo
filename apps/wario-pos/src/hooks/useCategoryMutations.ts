@@ -14,6 +14,7 @@ import { type CategoryFormState, toCategoryApiBody } from '@/atoms/forms/categor
 interface EditCategoryRequest {
   id: string;
   form: CategoryFormState;
+  dirtyFields?: Set<keyof CategoryFormState>;
 }
 
 interface DeleteCategoryRequest {
@@ -50,15 +51,17 @@ export function useAddCategoryMutation() {
 }
 
 /**
- * Mutation hook for editing a category
+ * Mutation hook for editing a category.
+ * If dirtyFields is provided, only the modified fields are sent (partial update).
  */
 export function useEditCategoryMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ id, form }: EditCategoryRequest) => {
+    mutationFn: async ({ id, form, dirtyFields }: EditCategoryRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body = toCategoryApiBody(form);
+      // Only send dirty fields for PATCH/update
+      const body = dirtyFields ? toCategoryApiBody(form, dirtyFields) : toCategoryApiBody(form);
 
       const response = await axiosInstance.patch<ICategory>(`/api/v1/menu/category/${id}`, body, {
         headers: {

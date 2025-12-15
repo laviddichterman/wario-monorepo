@@ -2,7 +2,6 @@ import { useSnackbar } from 'notistack';
 
 import { Grid } from '@mui/material';
 
-import type { IOption } from '@wcp/wario-shared/types';
 import { useOptionById } from '@wcp/wario-ux-shared/query';
 
 import { useSetModifierOptionDisabledMutation } from '@/hooks/useModifierOptionMutations';
@@ -17,7 +16,7 @@ const ModifierOptionDisableContainer = ({
   onCloseCallback,
 }: ModifierOptionQuickActionProps) => {
   const { enqueueSnackbar } = useSnackbar();
-  const modifier_option = useOptionById(modifier_option_id) as IOption | null;
+  const modifier_option = useOptionById(modifier_option_id);
 
   const setDisabledMutation = useSetModifierOptionDisabledMutation();
 

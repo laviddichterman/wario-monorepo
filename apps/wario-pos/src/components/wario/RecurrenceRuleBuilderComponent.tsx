@@ -27,7 +27,8 @@ import {
 } from '@mui/material';
 import { DateTimePicker, TimePicker } from '@mui/x-date-pickers';
 
-import { formatDecimal, type IRecurringInterval, type IWInterval, parseInteger, WDateUtils } from '@wcp/wario-shared';
+import { formatDecimal, parseInteger, WDateUtils } from '@wcp/wario-shared/logic';
+import { type IRecurringInterval, type IWInterval } from '@wcp/wario-shared/types';
 import { type ValSetVal, type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 

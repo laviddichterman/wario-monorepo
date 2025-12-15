@@ -112,9 +112,9 @@ const ModifierTypeCopyContainerInner = ({ modifierType, allOptions, onCloseCallb
         return toModifierOptionApiBody(fromModifierOptionEntity(option));
       });
 
-      const body: ReturnType<typeof toModifierTypeApiBody> & { options: Omit<IOption, 'id'>[] } = {
+      const body: Omit<ReturnType<typeof toModifierTypeApiBody>, 'options'> & { options: Omit<IOption, 'id'>[] } = {
         ...toModifierTypeApiBody(modifierTypeForm),
-        options: optionsToCopy,
+        options: optionsToCopy as Omit<IOption, 'id'>[],
       };
 
       const response = await fetch(`${HOST_API}/api/v1/menu/option/`, {
@@ -300,10 +300,6 @@ const ModifierOptionCopyEditor = ({ index, option, modifierType, isProcessing }:
                 shortcode={formState.shortcode}
                 setShortcode={(v) => {
                   updateField('shortcode', v);
-                }}
-                ordinal={formState.ordinal}
-                setOrdinal={(v) => {
-                  updateField('ordinal', v);
                 }}
                 price={formState.price}
                 setPrice={(v) => {

@@ -4,7 +4,6 @@ import { useSnackbar } from 'notistack';
 import { useMemo } from 'react';
 
 import {
-  type CoreCartEntry,
   CreateProductWithMetadataFromV2,
   EventTitleStringBuilder,
   GenerateCategoryOrderList,
@@ -12,8 +11,8 @@ import {
   GroupAndOrderCart,
   RebuildAndSortCart,
   WDateUtils,
-  type WOrderInstance,
-} from '@wcp/wario-shared';
+} from '@wcp/wario-shared/logic';
+import { type CoreCartEntry, type WOrderInstance } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useFulfillmentById, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import axiosInstance from '@/utils/axios';
@@ -277,12 +276,16 @@ const useCategoryOrderMapForFullfillment = (fulfillmentId: string) => {
       return {};
     }
     const categoryOrderArrayMain = GenerateCategoryOrderList(fulfillmentMainCategory, catalogSelectors.category);
-    const categoryOrderArraySecondary = fulfillmentSecondaryCategory ? GenerateCategoryOrderList(fulfillmentSecondaryCategory, catalogSelectors.category) : [];
-    const categoryOrderMap = Object.fromEntries([...categoryOrderArrayMain, ...categoryOrderArraySecondary].map((x, i) => [x, i]));
+    const categoryOrderArraySecondary = fulfillmentSecondaryCategory
+      ? GenerateCategoryOrderList(fulfillmentSecondaryCategory, catalogSelectors.category)
+      : [];
+    const categoryOrderMap = Object.fromEntries(
+      [...categoryOrderArrayMain, ...categoryOrderArraySecondary].map((x, i) => [x, i]),
+    );
 
     return categoryOrderMap;
   }, [catalogSelectors, fulfillmentMainCategory, fulfillmentSecondaryCategory]);
-}
+};
 
 export function useEventTitleStringForOrder(order: WOrderInstance | null) {
   const catalogSelectors = useCatalogSelectors();

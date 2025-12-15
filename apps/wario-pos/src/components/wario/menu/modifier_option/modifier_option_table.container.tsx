@@ -6,8 +6,8 @@ import Tooltip from '@mui/material/Tooltip';
 import type { GridRenderCellParams, GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem } from '@mui/x-data-grid-premium';
 
-import type { IMoney, IOption, IOptionType, IWInterval } from '@wcp/wario-shared';
-import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared';
+import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared/logic';
+import type { IMoney, IOption, IOptionType, IWInterval } from '@wcp/wario-shared/types';
 import { useCatalogQuery, useServerTime, useValueFromProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
 import {

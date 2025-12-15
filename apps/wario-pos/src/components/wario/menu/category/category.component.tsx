@@ -2,7 +2,8 @@ import { useAtom, useAtomValue } from 'jotai';
 
 import { Autocomplete, Grid, TextField, Typography } from '@mui/material';
 
-import { CALL_LINE_DISPLAY, CategoryDisplay, type ICatalogSelectors } from '@wcp/wario-shared';
+import { CALL_LINE_DISPLAY, CategoryDisplay } from '@wcp/wario-shared/logic';
+import { type ICatalogSelectors } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useCategoryIds, useFulfillments } from '@wcp/wario-ux-shared/query';
 
 import {

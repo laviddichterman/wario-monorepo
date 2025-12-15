@@ -7,14 +7,8 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { Button, Card, CardHeader, Divider, Grid, IconButton } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 
-import {
-  CURRENCY,
-  type IMoney,
-  type IssueStoreCreditRequest,
-  MoneyToDisplayString,
-  StoreCreditType,
-  WDateUtils,
-} from '@wcp/wario-shared';
+import { CURRENCY, MoneyToDisplayString, StoreCreditType, WDateUtils } from '@wcp/wario-shared/logic';
+import { type IMoney, type IssueStoreCreditRequest } from '@wcp/wario-shared/types';
 import { useCurrentTime } from '@wcp/wario-ux-shared/query';
 
 import { HOST_API } from '@/config';

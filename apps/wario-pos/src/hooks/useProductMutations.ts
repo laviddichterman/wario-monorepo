@@ -2,30 +2,24 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
 import type {
-  CreateProductRequest,
+  CreateIProductInstanceRequest,
+  CreateIProductRequest,
   IProduct,
   IProductInstance,
   IWInterval,
-  PartialUncommittedProductInstanceDto,
-  UncommittedIProductInstance,
-  UpsertProductRequest,
-} from '@wcp/wario-shared';
+  UpdateIProductInstanceRequest,
+  UpdateIProductRequest,
+  UpsertIProductRequest,
+} from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
-
-import { type ProductFormState, toProductApiBody } from '@/atoms/forms/productFormAtoms';
 
 // ============================================================================
 // Types
 // ============================================================================
 
-interface EditProductRequest {
-  id: string;
-  form: ProductFormState;
-}
-
 interface SetProductDisabledRequest {
-  product: IProduct;
+  id: string;
   disabled: IWInterval | null;
 }
 
@@ -38,17 +32,6 @@ export type BatchUpsertProductResponse = {
   instances: IProductInstance[];
 }[];
 
-interface CreateProductInstanceRequest {
-  productId: string;
-  form: UncommittedIProductInstance;
-}
-
-interface UpdateProductInstanceRequest {
-  productId: string;
-  instanceId: string;
-  form: PartialUncommittedProductInstanceDto;
-}
-
 // ============================================================================
 // Mutations
 // ============================================================================
@@ -60,7 +43,7 @@ export function useAddProductMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async (req: CreateProductRequest) => {
+    mutationFn: async (req: CreateIProductRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
       const response = await axiosInstance.post<IProduct>('/api/v1/menu/product/', req, {
         headers: {
@@ -81,10 +64,11 @@ export function useBatchUpsertProductMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async (products: UpsertProductRequest[]) => {
+    mutationFn: async (products: UpsertIProductRequest[]) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
-      const response = await axiosInstance.post<BatchUpsertProductResponse>('/api/v1/menu/productbatch/', products, {
+      // Backend expects { products: [...] } matching BatchUpsertProductRequest
+      const response = await axiosInstance.post<BatchUpsertProductResponse>('/api/v1/menu/product/batch/', { products }, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -103,11 +87,11 @@ export function useEditProductMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ id, form }: EditProductRequest) => {
+    mutationFn: async (props: UpdateIProductRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body = toProductApiBody(form);
-
-      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${id}`, body, {
+      // Destructure id from props - it goes in URL, not body
+      const { id, ...updateFields } = props;
+      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${id}`, updateFields, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -149,14 +133,9 @@ export function useSetProductDisabledMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ product, disabled }: SetProductDisabledRequest) => {
+    mutationFn: async ({ id, disabled }: SetProductDisabledRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body: IProduct = {
-        ...product,
-        disabled,
-      };
-
-      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${product.id}`, body, {
+      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${id}`, { disabled }, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -203,9 +182,9 @@ export function useCreateProductInstanceMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ productId, form }: CreateProductInstanceRequest) => {
+    mutationFn: async ({ productId, body }: { productId: string; body: CreateIProductInstanceRequest }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, form, {
+      const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, body, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -224,12 +203,12 @@ export function useUpdateProductInstanceMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ productId, instanceId, form }: UpdateProductInstanceRequest) => {
+    mutationFn: async ({ productId, instanceId, body }: { productId: string; instanceId: string; body: UpdateIProductInstanceRequest }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
       const response = await axiosInstance.patch<IProductInstance>(
         `/api/v1/menu/product/${productId}/${instanceId}`,
-        form,
+        body,
         {
           headers: {
             Authorization: `Bearer ${token}`,

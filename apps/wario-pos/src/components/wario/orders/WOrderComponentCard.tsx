@@ -5,7 +5,12 @@ import { TabContext, TabList, TabPanel } from '@mui/lab';
 import { Avatar, Box, Card, CardHeader, type CardProps, type SxProps, Tab, Typography } from '@mui/material';
 import { red } from '@mui/material/colors';
 
-import { ComputeServiceTimeDisplayString, DateTimeIntervalBuilder, WDateUtils, WOrderStatus } from '@wcp/wario-shared';
+import {
+  ComputeServiceTimeDisplayString,
+  DateTimeIntervalBuilder,
+  WDateUtils,
+  WOrderStatus,
+} from '@wcp/wario-shared/logic';
 import { useFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import { useOrderById } from '@/hooks/useOrdersQuery';

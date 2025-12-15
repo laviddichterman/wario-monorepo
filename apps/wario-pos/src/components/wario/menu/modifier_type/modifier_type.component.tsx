@@ -3,7 +3,7 @@ import { snakeCase, startCase } from 'es-toolkit/compat';
 import { TabPanel } from '@mui/lab';
 import { FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup } from '@mui/material';
 
-import { DISPLAY_AS, formatDecimal, MODIFIER_CLASS, parseInteger } from '@wcp/wario-shared';
+import { DISPLAY_AS, formatDecimal, MODIFIER_CLASS, parseInteger } from '@wcp/wario-shared/logic';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 
 import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';

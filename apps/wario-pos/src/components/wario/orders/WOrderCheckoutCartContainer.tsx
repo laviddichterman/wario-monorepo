@@ -1,12 +1,7 @@
 import { useMemo } from 'react';
 
-import {
-  ComputeCartSubTotal,
-  ComputeTaxAmount,
-  ComputeTipBasis,
-  ComputeTipValue,
-  type WOrderInstance,
-} from '@wcp/wario-shared';
+import { ComputeCartSubTotal, ComputeTaxAmount, ComputeTipBasis, ComputeTipValue } from '@wcp/wario-shared/logic';
+import { type WOrderInstance } from '@wcp/wario-shared/types';
 import { WCheckoutCartComponent } from '@wcp/wario-ux-shared/components';
 import { useCatalogSelectors, useTaxRate } from '@wcp/wario-ux-shared/query';
 

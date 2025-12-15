@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { FormControl, Grid, InputLabel, MenuItem, Select } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 
-import type { IWInterval } from '@wcp/wario-shared';
+import type { IWInterval } from '@wcp/wario-shared/types';
 import { type ValSetVal } from '@wcp/wario-ux-shared/common';
 import { useCurrentTime } from '@wcp/wario-ux-shared/query';
 
