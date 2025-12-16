@@ -1,5 +1,12 @@
 # @wcp/wario-backend
 
+## 0.6.12
+
+### Patch Changes
+
+- Updated dependencies [9084066]
+  - @wcp/wario-shared@2.0.1
+
 ## 0.6.11
 
 ### Patch Changes

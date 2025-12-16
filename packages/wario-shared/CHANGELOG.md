@@ -1,5 +1,11 @@
 # @wcp/wario-shared
 
+## 2.0.1
+
+### Patch Changes
+
+- 9084066: remove need for a root category ID
+
 ## 2.0.0
 
 ### Major Changes
