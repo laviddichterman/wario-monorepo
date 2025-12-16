@@ -67,7 +67,7 @@ describe('themeOptions', () => {
     expect(buttonStyles).toBeDefined();
 
     // The root hover should have the brand gold color
-    const root = buttonStyles.root as Record<string, unknown>;
+    const root = buttonStyles?.root as Record<string, unknown>;
     const hover = root['&:hover'] as Record<string, string>;
     expect(hover.backgroundColor).toBe('#c59d5f');
   });

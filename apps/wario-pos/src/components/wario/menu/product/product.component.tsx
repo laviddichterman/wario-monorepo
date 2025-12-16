@@ -103,45 +103,9 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
          ============================== */}
       <TabPanel value="general">
         <Grid container spacing={2}>
-          {productInstancesContent && <Grid size={12}>{productInstancesContent}</Grid>}
-          <Grid size={12}>
-            <Autocomplete
-              filterSelectedOptions
-              options={Object.keys(printerGroups)}
-              value={form.printerGroup}
-              onChange={(_e, v) => {
-                updateField('printerGroup', v);
-              }}
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              getOptionLabel={(pgId) => printerGroups[pgId]?.name ?? 'Undefined'}
-              isOptionEqualToValue={(option, value) => option === value}
-              renderInput={(params) => <TextField {...params} label="Printer Group" />}
-            />
-          </Grid>
-          <Grid size={6}>
-            <IMoneyPropertyComponent
-              disabled={isProcessing}
-              label="Price"
-              value={form.price}
-              setValue={(v) => {
-                updateField('price', v);
-              }}
-            />
-          </Grid>
-          <Grid size={6}>
-            <StringPropertyComponent
-              disabled={isProcessing}
-              label="Singular Noun"
-              value={form.singularNoun}
-              setValue={(v) => {
-                updateField('singularNoun', v);
-              }}
-            />
-          </Grid>
-
           {/* Availability & Timing Section */}
           <Grid size={12}>
-            <Typography variant="overline" color="text.secondary" sx={{ mt: 2, display: 'block', width: '100%' }}>
+            <Typography variant="overline" color="text.secondary" sx={{ display: 'block', width: '100%' }}>
               Availability & Timing
             </Typography>
           </Grid>
@@ -211,6 +175,16 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
               )}
             </Stack>
           </Grid>
+
+          {/* Product Instances */}
+          {productInstancesContent && (
+            <Grid size={12} sx={{ mt: 2 }}>
+              <Typography variant="overline" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                Variations
+              </Typography>
+              {productInstancesContent}
+            </Grid>
+          )}
         </Grid>
       </TabPanel>
 
@@ -219,6 +193,44 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
          ============================== */}
       <TabPanel value="config">
         <Grid container spacing={3}>
+          {/* ==============================
+              Basic Configuration
+             ============================== */}
+          <Grid size={12}>
+            <Autocomplete
+              filterSelectedOptions
+              options={Object.keys(printerGroups)}
+              value={form.printerGroup}
+              onChange={(_e, v) => {
+                updateField('printerGroup', v);
+              }}
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+              getOptionLabel={(pgId) => printerGroups[pgId]?.name ?? 'Undefined'}
+              isOptionEqualToValue={(option, value) => option === value}
+              renderInput={(params) => <TextField {...params} label="Printer Group" />}
+            />
+          </Grid>
+          <Grid size={6}>
+            <IMoneyPropertyComponent
+              disabled={isProcessing}
+              label="Price"
+              value={form.price}
+              setValue={(v) => {
+                updateField('price', v);
+              }}
+            />
+          </Grid>
+          <Grid size={6}>
+            <StringPropertyComponent
+              disabled={isProcessing}
+              label="Singular Noun"
+              value={form.singularNoun}
+              setValue={(v) => {
+                updateField('singularNoun', v);
+              }}
+            />
+          </Grid>
+
           {/* ==============================
               Advanced Settings
              ============================== */}

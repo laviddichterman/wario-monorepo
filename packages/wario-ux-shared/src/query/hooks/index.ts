@@ -4,6 +4,7 @@
 
 export * from './use-visibility';
 export * from './useCatalogQuery';
+export * from './useCategoryIdHasCycle';
 export * from './useFulfillmentsQuery';
 export * from './useIsSocketDataLoaded';
 export * from './useServerTime';

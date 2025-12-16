@@ -2,9 +2,6 @@ import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
-import { Add } from '@mui/icons-material';
-import { Box, Button } from '@mui/material';
-
 import { type IProduct } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
 
@@ -22,13 +19,12 @@ import {
   toProductApiBody,
 } from '@/atoms/forms/productFormAtoms';
 import {
-  DEFAULT_PRODUCT_INSTANCE_FORM,
   productInstanceExpandedFamily,
   productInstanceFormFamily,
   toProductInstanceApiBody,
 } from '@/atoms/forms/productInstanceFormAtoms';
 
-import { ProductInstanceRow } from './instance/product_instance.row';
+import { ProductInstancesDataGrid } from './instance/product_instances_datagrid.component';
 import { ProductComponent } from './product.component';
 
 export interface ProductEditContainerProps {
@@ -92,16 +88,6 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
     };
   }, [productEntry, setProductForm, setDirtyFields]);
 
-  const handleAddVariation = () => {
-    const tempId = `temp_${String(Date.now())}`;
-    const newInstance = { ...DEFAULT_PRODUCT_INSTANCE_FORM };
-    store.set(productInstanceFormFamily(tempId), newInstance);
-    // Expand the new row
-    store.set(productInstanceExpandedFamily(tempId), true);
-
-    setInstanceIds((prev) => [...prev, tempId]);
-  };
-
   const editProduct = async () => {
     if (!productForm || editMutation.isPending) return;
 
@@ -157,22 +143,12 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
       }}
       disableConfirm={dirtyFields.size === 0}
       productInstancesContent={
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Box>
-            {instanceIds.map((instanceId, index) => (
-              <ProductInstanceRow
-                key={instanceId}
-                instanceId={instanceId}
-                parentProduct={toProductApiBody(productForm)}
-                catalogSelectors={catalogSelectors}
-                defaultExpanded={index === 0}
-              />
-            ))}
-          </Box>
-          <Button startIcon={<Add />} onClick={handleAddVariation} fullWidth variant="outlined">
-            Add Variation
-          </Button>
-        </Box>
+        <ProductInstancesDataGrid
+          instanceIds={instanceIds}
+          setInstanceIds={setInstanceIds}
+          parentProduct={toProductApiBody(productForm)}
+          catalogSelectors={catalogSelectors}
+        />
       }
     />
   );
