@@ -102,6 +102,12 @@ describe('SquareService', () => {
         SQUARE_LOCATION_ALTERNATE: '',
         SQUARE_LOCATION_3P: '',
       } as Record<string, string>,
+      getKeyValueConfig: jest.fn().mockReturnValue({
+        SQUARE_TOKEN: 'test-token',
+        SQUARE_LOCATION: 'test-location',
+        SQUARE_LOCATION_ALTERNATE: '',
+        SQUARE_LOCATION_3P: '',
+      }),
     };
 
     mockMigrationFlags = {
@@ -160,8 +166,13 @@ describe('SquareService', () => {
     });
 
     it('should not initialize when Square token is missing', async () => {
-      // @ts-expect-error - Testing missing token scenario
-      mockdataProvider.getKeyValueConfig().SQUARE_TOKEN = undefined;
+      // Override the mock to return undefined token for this test
+      mockDataProvider.getKeyValueConfig = jest.fn().mockReturnValue({
+        SQUARE_TOKEN: undefined,
+        SQUARE_LOCATION: 'test-location',
+        SQUARE_LOCATION_ALTERNATE: '',
+        SQUARE_LOCATION_3P: '',
+      });
 
       await service.onModuleInit();
 

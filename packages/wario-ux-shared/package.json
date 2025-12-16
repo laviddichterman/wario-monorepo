@@ -63,6 +63,8 @@
     "build": "vite build",
     "generate:metadata": "libphonenumber-metadata-generator src/generated/phone-metadata.custom.json --countries US,CA --extended --types mobile,fixed_line,voip",
     "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {

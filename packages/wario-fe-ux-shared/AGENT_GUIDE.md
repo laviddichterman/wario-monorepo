@@ -15,3 +15,18 @@
 ## 3. Conventions
 
 - **Styling**: This package defines the "Look and Feel". If you need to change the primary brand color, you change it here.
+
+## 4. Testing
+
+This package uses **Vitest** for unit testing.
+
+```bash
+pnpm test         # Run tests
+pnpm test:watch   # Watch mode
+```
+
+- Test files: `src/**/*.{test,spec}.{ts,tsx}`
+- Setup: `vitest.setup.ts` (jest-dom matchers)
+- Utilities: Use `@wcp/wario-test-utils` for `renderWithProviders`, mock generators
+
+See `/.agent/workflows/react-testing.md` for testing workflow guidance.

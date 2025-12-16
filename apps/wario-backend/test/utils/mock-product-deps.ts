@@ -85,6 +85,11 @@ export function createMockProductDeps(options: CreateMockProductDepsOptions = {}
       SQUARE_LOCATION_ALTERNATE: 'sq_loc_alt',
       SQUARE_LOCATION_3P: 'sq_loc_3p',
     },
+    getKeyValueConfig: jest.fn().mockReturnValue({
+      SQUARE_LOCATION: 'sq_loc_1',
+      SQUARE_LOCATION_ALTERNATE: 'sq_loc_alt',
+      SQUARE_LOCATION_3P: 'sq_loc_3p',
+    }),
   } as unknown as jest.Mocked<DataProviderService>;
 
   const appConfig = {

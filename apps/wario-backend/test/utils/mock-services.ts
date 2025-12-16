@@ -14,25 +14,29 @@ import { createMock, MockResponses } from './test-utils';
 export function mockCatalogProviderService(
   overrides: Partial<CatalogProviderService> = {},
 ): jest.Mocked<CatalogProviderService> {
+  const catalogSelectorsValue = {
+    productEntry: jest.fn(),
+    productInstanceEntry: jest.fn(),
+    category: jest.fn(),
+    option: jest.fn(),
+    options: jest.fn(),
+    optionType: jest.fn(),
+    optionTypes: jest.fn(),
+    printerGroup: jest.fn(),
+    printerGroups: jest.fn(),
+    productInstanceFunction: jest.fn(),
+    orderInstanceFunction: jest.fn(),
+    settings: jest.fn(),
+    catalog: jest.fn(),
+  };
+
   const mock = createMock<CatalogProviderService>({
-    CatalogSelectors: {
-      productEntry: jest.fn(),
-      productInstanceEntry: jest.fn(),
-      category: jest.fn(),
-      option: jest.fn(),
-      options: jest.fn(),
-      optionType: jest.fn(),
-      optionTypes: jest.fn(),
-      printerGroup: jest.fn(),
-      printerGroups: jest.fn(),
-      productInstanceFunction: jest.fn(),
-      orderInstanceFunction: jest.fn(),
-      settings: jest.fn(),
-      catalog: jest.fn(),
-    },
-    PrinterGroups: {},
+    // Method that OrderValidationService uses to access selectors
+    getCatalogSelectors: jest.fn().mockReturnValue(catalogSelectorsValue),
     ...overrides,
-  });
+  } as Parameters<typeof createMock<CatalogProviderService>>[0]);
+  // Set CatalogSelectors as a property for tests that access it directly
+  (mock as unknown as { CatalogSelectors: typeof catalogSelectorsValue }).CatalogSelectors = catalogSelectorsValue;
   return mock;
 }
 

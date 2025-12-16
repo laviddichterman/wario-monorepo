@@ -45,10 +45,14 @@ describe('OrderPaymentService', () => {
     mockStoreCreditSvc = mockStoreCreditProviderService();
     mockDataProvider = mockDataProviderService();
 
-    // Setup KeyValueConfig
+    // Setup KeyValueConfig property and method
     Object.defineProperty(mockDataProvider, 'KeyValueConfig', {
       get: () => ({ SQUARE_LOCATION: 'test-location-id' }),
       configurable: true,
+    });
+    // The service calls getKeyValueConfig() method, not the property directly
+    (mockDataProvider.getKeyValueConfig as jest.Mock).mockReturnValue({
+      SQUARE_LOCATION: 'test-location-id',
     });
 
     const module: TestingModule = await Test.createTestingModule({

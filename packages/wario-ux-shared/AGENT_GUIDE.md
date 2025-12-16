@@ -31,3 +31,18 @@ The catalog data structure has been updated. See `src/query/IMPLEMENTATION_SUMMA
 - Ordering is now embedded in parent entities (e.g., `IOptionType.options`, `ICategory.children/products`, `IProduct.instances`)
 - Intermediate Entry types (`CatalogModifierEntry`, etc.) still exist in the codebase for backward compatibility, but new code should use the ordering arrays on parent types directly
 - Use `IdOrdinalMap` for sorting instead of selector functions where possible
+
+## 5. Testing
+
+This package uses **Vitest** for unit testing.
+
+```bash
+pnpm test         # Run tests
+pnpm test:watch   # Watch mode
+```
+
+- Test files: `src/**/*.{test,spec}.{ts,tsx}`
+- Setup: `vitest.setup.ts` (jest-dom matchers)
+- Utilities: Use `@wcp/wario-test-utils` for `renderWithProviders`, mock generators
+
+See `/.agent/workflows/react-testing.md` for testing workflow guidance.

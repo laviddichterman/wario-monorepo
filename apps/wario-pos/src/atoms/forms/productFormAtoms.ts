@@ -75,8 +75,6 @@ export const productFormIsValidAtom = atom((get) => {
 
   // Basic validation rules
   if (form.price.amount < 0) return false;
-  // singularNoun might be required? DTO says @IsNotEmpty
-  if (!form.singularNoun) return false;
 
   return true;
 });

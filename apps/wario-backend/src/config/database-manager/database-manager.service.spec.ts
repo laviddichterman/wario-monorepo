@@ -12,6 +12,7 @@ import {
 import { AppConfigService } from '../app-config.service';
 
 import { DatabaseManagerService } from './database-manager.service';
+import { MongooseToNewMigrator } from './mongoose-to-newmongoose';
 import { MongooseToPostgresMigrator } from './mongoose-to-postgres.migrator';
 
 // Mock package.json version
@@ -68,6 +69,13 @@ describe('DatabaseManagerService', () => {
           provide: MongooseToPostgresMigrator,
           useValue: {
             migrateAll: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        // MongooseToNewMigrator mock (2025 schema migration)
+        {
+          provide: MongooseToNewMigrator,
+          useValue: {
+            migrate2025Schema: jest.fn().mockResolvedValue(undefined),
           },
         },
         // Legacy Mongoose dependencies
