@@ -1,6 +1,5 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
 import { useMemo } from 'react';
 
 import {
@@ -17,6 +16,8 @@ import { useCatalogSelectors, useFulfillmentById, useValueFromFulfillmentById } 
 
 import axiosInstance from '@/utils/axios';
 import { uuidv4 } from '@/utils/uuidv4';
+
+import { toast } from '@/components/snackbar';
 
 // Fetch orders function
 const fetchOrders = async (token: string, date: string | null): Promise<Record<string, WOrderInstance>> => {
@@ -53,7 +54,6 @@ export function useOrderById(orderId: string) {
 export function useConfirmOrderMutation() {
   const queryClient = useQueryClient();
   const { getAccessTokenSilently } = useAuth0();
-  const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
     mutationFn: async ({ orderId, additionalMessage }: { orderId: string; additionalMessage?: string }) => {
@@ -70,11 +70,11 @@ export function useConfirmOrderMutation() {
       );
     },
     onSuccess: async () => {
-      enqueueSnackbar('Order confirmed successfully', { variant: 'success' });
+      toast.success('Order confirmed successfully');
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Failed to confirm order', { variant: 'error' });
+      toast.error('Failed to confirm order');
       console.error(error);
     },
   });
@@ -83,7 +83,6 @@ export function useConfirmOrderMutation() {
 export function useCancelOrderMutation() {
   const queryClient = useQueryClient();
   const { getAccessTokenSilently } = useAuth0();
-  const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
     mutationFn: async ({
@@ -108,11 +107,11 @@ export function useCancelOrderMutation() {
       );
     },
     onSuccess: async () => {
-      enqueueSnackbar('Order canceled successfully', { variant: 'success' });
+      toast.success('Order canceled successfully');
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Failed to cancel order', { variant: 'error' });
+      toast.error('Failed to cancel order');
       console.error(error);
     },
   });
@@ -121,7 +120,6 @@ export function useCancelOrderMutation() {
 export function useRescheduleOrderMutation() {
   const queryClient = useQueryClient();
   const { getAccessTokenSilently } = useAuth0();
-  const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
     mutationFn: async ({ orderId, newDate, newTime }: { orderId: string; newDate: string; newTime: number }) => {
@@ -138,11 +136,11 @@ export function useRescheduleOrderMutation() {
       );
     },
     onSuccess: async () => {
-      enqueueSnackbar('Order rescheduled successfully', { variant: 'success' });
+      toast.success('Order rescheduled successfully');
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Failed to reschedule order', { variant: 'error' });
+      toast.error('Failed to reschedule order');
       console.error(error);
     },
   });
@@ -151,7 +149,6 @@ export function useRescheduleOrderMutation() {
 export function useMoveOrderMutation() {
   const queryClient = useQueryClient();
   const { getAccessTokenSilently } = useAuth0();
-  const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
     mutationFn: async ({
@@ -176,11 +173,11 @@ export function useMoveOrderMutation() {
       );
     },
     onSuccess: async () => {
-      enqueueSnackbar('Order moved successfully', { variant: 'success' });
+      toast.success('Order moved successfully');
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Failed to move order', { variant: 'error' });
+      toast.error('Failed to move order');
       console.error(error);
     },
   });
@@ -189,7 +186,6 @@ export function useMoveOrderMutation() {
 export function useForceSendOrderMutation() {
   const queryClient = useQueryClient();
   const { getAccessTokenSilently } = useAuth0();
-  const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
     mutationFn: async ({ orderId }: { orderId: string }) => {
@@ -206,11 +202,11 @@ export function useForceSendOrderMutation() {
       );
     },
     onSuccess: async () => {
-      enqueueSnackbar('Order sent successfully', { variant: 'success' });
+      toast.success('Order sent successfully');
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Failed to send order', { variant: 'error' });
+      toast.error('Failed to send order');
       console.error(error);
     },
   });
@@ -219,7 +215,6 @@ export function useForceSendOrderMutation() {
 export function useUnlockOrdersMutation() {
   const queryClient = useQueryClient();
   const { getAccessTokenSilently } = useAuth0();
-  const { enqueueSnackbar } = useSnackbar();
 
   return useMutation({
     mutationFn: async () => {
@@ -233,11 +228,11 @@ export function useUnlockOrdersMutation() {
       );
     },
     onSuccess: async () => {
-      enqueueSnackbar('Orders unlocked successfully', { variant: 'success' });
+      toast.success('Orders unlocked successfully');
       await queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Failed to unlock orders', { variant: 'error' });
+      toast.error('Failed to unlock orders');
       console.error(error);
     },
   });

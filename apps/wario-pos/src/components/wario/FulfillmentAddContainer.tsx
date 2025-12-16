@@ -1,8 +1,9 @@
 import { useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import { useAddFulfillmentMutation } from '@/hooks/useFulfillmentMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_FULFILLMENT_FORM,
@@ -14,8 +15,6 @@ import {
 import FulfillmentComponent from './FulfillmentComponent';
 
 const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFunction }) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setFormState = useSetAtom(fulfillmentFormAtom);
   const setDirtyFields = useSetAtom(fulfillmentFormDirtyFieldsAtom);
 
@@ -39,14 +38,12 @@ const FulfillmentAddContainer = ({ onCloseCallback }: { onCloseCallback: VoidFun
     setIsProcessing(true);
     addMutation.mutate(form, {
       onSuccess: () => {
-        enqueueSnackbar(`Added new fulfillment: ${form.displayName}.`);
+        toast.success(`Added new fulfillment: ${form.displayName}.`);
         setFormState({ ...DEFAULT_FULFILLMENT_FORM });
         setDirtyFields(new Set());
       },
       onError: (error) => {
-        enqueueSnackbar(`Unable to add fulfillment: ${form.displayName}. Got error: ${JSON.stringify(error)}.`, {
-          variant: 'error',
-        });
+        toast.error(`Unable to add fulfillment: ${form.displayName}. Got error: ${JSON.stringify(error)}.`);
         console.error(error);
       },
       onSettled: () => {

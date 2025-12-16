@@ -1,5 +1,4 @@
 import { useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { TabContext, TabList } from '@mui/lab';
@@ -8,6 +7,8 @@ import { Button, Tab } from '@mui/material';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useAddProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_PRODUCT_INSTANCE_FUNCTION_FORM,
@@ -22,7 +23,6 @@ interface ProductInstanceFunctionAddContainerProps {
 }
 
 const ProductInstanceFunctionAddContainer = ({ onCloseCallback }: ProductInstanceFunctionAddContainerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const addMutation = useAddProductInstanceFunctionMutation();
 
   const setForm = useSetAtom(productInstanceFunctionFormAtom);
@@ -45,12 +45,11 @@ const ProductInstanceFunctionAddContainer = ({ onCloseCallback }: ProductInstanc
       { form },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Added product instance function: ${form.functionName}.`);
+          toast.success(`Added product instance function: ${form.functionName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(
+          toast.error(
             `Unable to add product instance function: ${form.functionName}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' },
           );
           console.error(error);
         },

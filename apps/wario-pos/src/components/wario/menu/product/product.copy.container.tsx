@@ -1,6 +1,4 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { TabContext, TabList, TabPanel } from '@mui/lab';
@@ -11,6 +9,10 @@ import { DataGridPremium } from '@mui/x-data-grid-premium';
 import { type CreateIProductInstanceRequest, type CreateIProductRequest, type IProduct } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
+
+import { useAddProductMutation } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   fromProductEntity,
@@ -23,7 +25,6 @@ import {
   productInstanceFormFamily,
   toProductInstanceApiBody,
 } from '@/atoms/forms/productInstanceFormAtoms';
-import { HOST_API } from '@/config';
 
 import { ProductFormBody } from './product.component';
 
@@ -69,8 +70,7 @@ interface InstanceRow {
 }
 
 const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: ProductCopyFormProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
+  const addMutation = useAddProductMutation();
 
   const setProductForm = useSetAtom(productFormAtom);
   const [isProcessing, setIsProcessing] = useAtom(productFormProcessingAtom);
@@ -188,67 +188,57 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
     [rows, handleToggleInclude],
   );
 
-  const copyProduct = async () => {
+  const copyProduct = () => {
     if (isProcessing || !productForm) return;
 
     setIsProcessing(true);
-    try {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
-      // Build instances in order, filtering by include flag
-      const includedRows = rows.filter((row) => row.include);
+    // Build instances in order, filtering by include flag
+    const includedRows = rows.filter((row) => row.include);
 
-      if (includedRows.length === 0) {
-        throw new Error('At least one instance must be included');
-      }
+    if (includedRows.length === 0) {
+      toast.error('At least one instance must be included');
+      setIsProcessing(false);
+      return;
+    }
 
-      const batchInstances: CreateIProductInstanceRequest[] = [];
-      for (const row of includedRows) {
-        const instanceData = allInstances.find((i) => i.id === row.id);
-        if (instanceData?.form) {
-          batchInstances.push(toProductInstanceApiBody(instanceData.form));
-        } else {
-          // Fallback: use original instance data from catalog
-          const originalInstance = catalogSelectors.productInstance(row.id);
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          if (originalInstance) {
-            // Use the proper conversion function
-            batchInstances.push(toProductInstanceApiBody(fromProductInstanceEntity(originalInstance)));
-          }
+    const batchInstances: CreateIProductInstanceRequest[] = [];
+    for (const row of includedRows) {
+      const instanceData = allInstances.find((i) => i.id === row.id);
+      if (instanceData?.form) {
+        batchInstances.push(toProductInstanceApiBody(instanceData.form));
+      } else {
+        // Fallback: use original instance data from catalog
+        const originalInstance = catalogSelectors.productInstance(row.id);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (originalInstance) {
+          // Use the proper conversion function
+          batchInstances.push(toProductInstanceApiBody(fromProductInstanceEntity(originalInstance)));
         }
       }
-
-      const productBody = toProductApiBody(productForm);
-
-      // CreateIProductRequest expects a flat structure with instances included
-      const batchRequest: CreateIProductRequest = {
-        ...productBody,
-        instances: batchInstances,
-      };
-
-      const response = await fetch(`${HOST_API}/api/v1/menu/product/`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(batchRequest),
-      });
-
-      if (response.status === 201) {
-        enqueueSnackbar(`Copied product with ${batchInstances.length.toString()} instance(s).`);
-        onCloseCallback();
-      } else {
-        enqueueSnackbar('Failed to copy product.', { variant: 'error' });
-      }
-    } catch (e) {
-      console.error(e);
-      enqueueSnackbar(`Error copying product: ${e instanceof Error ? e.message : 'Unknown error'}`, {
-        variant: 'error',
-      });
-    } finally {
-      setIsProcessing(false);
     }
+
+    const productBody = toProductApiBody(productForm);
+
+    // CreateIProductRequest expects a flat structure with instances included
+    const batchRequest: CreateIProductRequest = {
+      ...productBody,
+      instances: batchInstances,
+    };
+
+    addMutation.mutate(batchRequest, {
+      onSuccess: () => {
+        toast.success(`Copied product with ${batchInstances.length.toString()} instance(s).`);
+        onCloseCallback();
+      },
+      onError: (e) => {
+        console.error(e);
+        toast.error(`Error copying product: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      },
+      onSettled: () => {
+        setIsProcessing(false);
+      },
+    });
   };
 
   if (!productForm) return null;
@@ -299,7 +289,13 @@ const ProductCopyForm = ({ product, catalogSelectors, onCloseCallback }: Product
           <Button onClick={onCloseCallback} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={() => void copyProduct()} disabled={isProcessing} variant="contained">
+          <Button
+            onClick={() => {
+              copyProduct();
+            }}
+            disabled={isProcessing}
+            variant="contained"
+          >
             Copy
           </Button>
         </AppDialog.Actions>

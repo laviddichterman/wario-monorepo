@@ -1,11 +1,12 @@
 import { useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import type { IProduct } from '@wcp/wario-shared/types';
 import { useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useAddProductInstanceMutation } from '@/hooks/useProductInstanceMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_PRODUCT_INSTANCE_FORM,
@@ -36,8 +37,6 @@ interface InnerProps {
 }
 
 const ProductInstanceAddContainerInner = ({ parent_product, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setFormState = useSetAtom(productInstanceFormAtom);
   const setIsProcessing = useSetAtom(productInstanceFormProcessingAtom);
   const formState = useAtomValue(productInstanceFormAtom);
@@ -59,13 +58,10 @@ const ProductInstanceAddContainerInner = ({ parent_product, onCloseCallback }: I
       { productId: parent_product.id, form: formState },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Added ${formState.displayName}.`);
+          toast.success(`Added ${formState.displayName}.`);
         },
         onError: (error: unknown) => {
-          enqueueSnackbar(
-            `Unable to add product instance: ${formState.displayName}. Got error ${JSON.stringify(error)}`,
-            { variant: 'error' },
-          );
+          toast.error(`Unable to add product instance: ${formState.displayName}. Got error ${JSON.stringify(error)}`);
           console.error(error);
         },
         onSettled: () => {

@@ -1,11 +1,11 @@
-import { useSnackbar } from 'notistack';
-
 import { Grid } from '@mui/material';
 
 import type { IProduct } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useSetProductDisabledMutation } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import { ElementActionComponent } from '../element.action.component';
 
@@ -29,8 +29,6 @@ interface InnerProps {
 }
 
 const ProductDisableContainerInner = ({ product, productName, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setDisabledMutation = useSetProductDisabledMutation();
 
   const disableProduct = () => {
@@ -40,12 +38,10 @@ const ProductDisableContainerInner = ({ product, productName, onCloseCallback }:
       { id: product.id, disabled: { start: 1, end: 0 } },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Disabled ${productName}.`);
+          toast.success(`Disabled ${productName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`);
           console.error(error);
         },
         onSettled: () => {

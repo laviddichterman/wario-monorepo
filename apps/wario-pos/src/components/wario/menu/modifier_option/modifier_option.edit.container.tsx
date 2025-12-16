@@ -1,5 +1,4 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { TabContext, TabList } from '@mui/lab';
@@ -8,14 +7,16 @@ import { Button, Tab } from '@mui/material';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogSelectors, useModifierTypeById, useOptionById } from '@wcp/wario-ux-shared/query';
 
+import { useEditModifierOptionMutation } from '@/hooks/useModifierOptionMutations';
+
+import { toast } from '@/components/snackbar';
+
 import {
   fromModifierOptionEntity,
   modifierOptionFormAtom,
   modifierOptionFormDirtyFieldsAtom,
   modifierOptionFormProcessingAtom,
-  toModifierOptionApiBody,
 } from '@/atoms/forms/modifierOptionFormAtoms';
-import { HOST_API } from '@/config';
 
 import { ModifierOptionFormBody } from './modifier_option.component';
 
@@ -72,7 +73,7 @@ const ModifierOptionEditForm = ({
   modifier_option_id,
   onCloseCallback,
 }: ModifierOptionEditFormProps) => {
-  const { enqueueSnackbar } = useSnackbar();
+  // const { enqueueSnackbar } = useSnackbar();
   const modifierType = useModifierTypeById(modifier_type_id);
   const modifierOption = useOptionById(modifier_option_id);
   const [activeTab, setActiveTab] = useState('identity');
@@ -81,34 +82,28 @@ const ModifierOptionEditForm = ({
   const dirtyFields = useAtomValue(modifierOptionFormDirtyFieldsAtom);
   const [isProcessing, setIsProcessing] = useAtom(modifierOptionFormProcessingAtom);
 
-  const save = async () => {
+  const editMutation = useEditModifierOptionMutation();
+
+  const save = () => {
     if (!form) return;
     setIsProcessing(true);
-    try {
-      // Only send dirty fields for PATCH/update
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any = toModifierOptionApiBody(form, dirtyFields);
 
-      const response = await fetch(`${HOST_API}/api/v1/menu/modifier_option/${modifier_option_id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+    editMutation.mutate(
+      { modifierTypeId: modifier_type_id, optionId: modifier_option_id, form, dirtyFields },
+      {
+        onSuccess: () => {
+          toast.success('Saved modifier option');
+          onCloseCallback();
         },
-        body: JSON.stringify(body),
-      });
-
-      if (response.status === 200) {
-        enqueueSnackbar('Saved modifier option ');
-        onCloseCallback();
-      } else {
-        enqueueSnackbar('Failed to save modifier option', { variant: 'error' });
-      }
-    } catch (e) {
-      console.error(e);
-      enqueueSnackbar('Failed to save modifier option', { variant: 'error' });
-    } finally {
-      setIsProcessing(false);
-    }
+        onError: (e) => {
+          console.error(e);
+          toast.error('Failed to save modifier option');
+        },
+        onSettled: () => {
+          setIsProcessing(false);
+        },
+      },
+    );
   };
 
   if (!modifierOption || !modifierType) return null;
@@ -136,7 +131,13 @@ const ModifierOptionEditForm = ({
           <Button onClick={onCloseCallback} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={() => void save()} disabled={isProcessing || dirtyFields.size === 0} variant="contained">
+          <Button
+            onClick={() => {
+              save();
+            }}
+            disabled={isProcessing || dirtyFields.size === 0}
+            variant="contained"
+          >
             Save
           </Button>
         </AppDialog.Actions>

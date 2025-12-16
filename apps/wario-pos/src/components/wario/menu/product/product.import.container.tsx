@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import type { ParseResult } from 'papaparse';
 import { useEffect, useState } from 'react';
 
@@ -11,6 +10,8 @@ import { type CreateIProductRequest, type KeyValue } from '@wcp/wario-shared/typ
 
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 import { useBatchUpsertProductMutation } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_PRODUCT_FORM,
@@ -33,8 +34,6 @@ interface CSVProduct {
 }
 
 export const ProductImportContainer = ({ onCloseCallback }: { onCloseCallback: VoidFunction }) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   // Use Product Form Atoms for global settings
   const setProductForm = useSetAtom(productFormAtom);
   const [isProcessing, setIsProcessing] = useAtom(productFormProcessingAtom);
@@ -123,10 +122,10 @@ export const ProductImportContainer = ({ onCloseCallback }: { onCloseCallback: V
 
     batchUpsertProductMutation.mutate(products, {
       onSuccess: () => {
-        enqueueSnackbar(`Imported ${products.length.toString()} products.`);
+        toast.success(`Imported ${products.length.toString()} products.`);
       },
       onError: (error: unknown) => {
-        enqueueSnackbar(`Unable to import batch. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: 'error' });
+        toast.error(`Unable to import batch. Got error: ${JSON.stringify(error, null, 2)}.`);
         console.error(error);
       },
       onSettled: () => {

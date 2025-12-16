@@ -1,4 +1,3 @@
-import { useSnackbar } from 'notistack';
 import type { ParseResult } from 'papaparse';
 import { unparse } from 'papaparse';
 import type { Dispatch, SetStateAction } from 'react';
@@ -19,6 +18,8 @@ import { useCatalogSelectors, useCategoryIds } from '@wcp/wario-ux-shared/query'
 
 import { usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 import { type BatchUpsertProductResponse, useBatchUpsertProductMutation } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import GenericCsvImportComponent from '../../generic_csv_import.component';
 import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
@@ -565,7 +566,6 @@ const DownloadCSV = (data: BatchUpsertProductResponse, fileName: string) => {
 };
 
 const HierarchicalProductImportContainer = ({ onCloseCallback }: { onCloseCallback: VoidFunction }) => {
-  const { enqueueSnackbar } = useSnackbar();
   const [parentCategories, setParentCategories] = useState<string[]>([]);
   const [printerGroup, setPrinterGroup] = useState<string | null>(null);
   const [createCategories, setCreateCategories] = useState(true);
@@ -587,14 +587,14 @@ const HierarchicalProductImportContainer = ({ onCloseCallback }: { onCloseCallba
 
     batchUpsertProductMutation.mutate(products, {
       onSuccess: (response) => {
-        enqueueSnackbar(`Imported ${products.length.toString()} products.`);
+        toast.success(`Imported ${products.length.toString()} products.`);
         if (downloadCSV) {
           // read response body as BatchUpsertProductResponse
           DownloadCSV(response, 'import_results');
         }
       },
       onError: (error) => {
-        enqueueSnackbar(`Unable to import batch. Got error: ${JSON.stringify(error, null, 2)}.`, { variant: 'error' });
+        toast.error(`Unable to import batch. Got error: ${JSON.stringify(error, null, 2)}.`);
         console.error(error);
       },
       onSettled: () => {

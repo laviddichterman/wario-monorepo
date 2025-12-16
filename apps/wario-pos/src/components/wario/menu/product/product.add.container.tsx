@@ -1,8 +1,9 @@
 import { useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import { useAddProductMutation } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_PRODUCT_FORM,
@@ -25,8 +26,6 @@ interface ProductAddContainerProps {
 }
 
 const ProductAddContainer = ({ onCloseCallback }: ProductAddContainerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setProductForm = useSetAtom(productFormAtom);
   const setProductProcessing = useSetAtom(productFormProcessingAtom);
   const productForm = useAtomValue(productFormAtom);
@@ -55,13 +54,10 @@ const ProductAddContainer = ({ onCloseCallback }: ProductAddContainerProps) => {
       { ...toProductApiBody(productForm), instances: [toProductInstanceApiBody(instanceForm)] },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Created base product ${instanceForm.displayName}`);
+          toast.success(`Created base product ${instanceForm.displayName}`);
         },
         onError: (error) => {
-          enqueueSnackbar(
-            `Unable to create ${instanceForm.displayName}. Got error: ${JSON.stringify(error, null, 2)}.`,
-            { variant: 'error' },
-          );
+          toast.error(`Unable to create ${instanceForm.displayName}. Got error: ${JSON.stringify(error, null, 2)}.`);
           console.error(error);
         },
         onSettled: () => {

@@ -1,5 +1,4 @@
 import { useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { TabContext, TabList } from '@mui/lab';
@@ -10,6 +9,8 @@ import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useProductById, useProductInstanceById } from '@wcp/wario-ux-shared/query';
 
 import { useEditProductInstanceMutation } from '@/hooks/useProductInstanceMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   fromProductInstanceEntity,
@@ -55,8 +56,6 @@ interface InnerProps {
 }
 
 const ProductInstanceEditContainerInner = ({ product_instance, parent_product, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setFormState = useSetAtom(productInstanceFormAtom);
   const setDirtyFields = useSetAtom(productInstanceFormDirtyFieldsAtom);
   const setIsProcessing = useSetAtom(productInstanceFormProcessingAtom);
@@ -88,12 +87,10 @@ const ProductInstanceEditContainerInner = ({ product_instance, parent_product, o
       },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Updated ${formState.displayName}.`);
+          toast.success(`Updated ${formState.displayName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to update ${formState.displayName}. Got error: ${JSON.stringify(error)}.`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to update ${formState.displayName}. Got error: ${JSON.stringify(error)}.`);
           console.error(error);
         },
         onSettled: () => {

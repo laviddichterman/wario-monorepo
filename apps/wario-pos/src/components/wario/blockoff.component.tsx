@@ -1,6 +1,4 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { add, format, formatISO, parseISO, startOfDay } from 'date-fns';
-import { useSnackbar } from 'notistack';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Done, HighlightOff } from '@mui/icons-material';
@@ -29,7 +27,9 @@ import {
 import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { useCurrentTime, useFulfillments, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from '@/config';
+import { useBlockOffMutation, useRemoveBlockOffMutation } from '@/hooks/useConfigMutations';
+
+import { toast } from '@/components/snackbar';
 
 const TrimOptionsBeforeDisabled = function <T extends { disabled: boolean }>(opts: T[]) {
   const idx = opts.findIndex((elt: T) => elt.disabled);
@@ -103,50 +103,39 @@ function useOptionsForDate(isoDate: string | null, selectedServices: string[]) {
 
 type FulfillmentBlockOffListProps = { fId: string } & ValSetValNamed<boolean, 'isProcessing'>;
 const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
   const filteredFulfillments = useFulfillmentsWithOperatingHours();
   const fulfillmentName = useValueFromFulfillmentById(props.fId, 'displayName') ?? '';
   const fulfillmentBlockOffArray = useValueFromFulfillmentById(props.fId, 'blockedOff') ?? [];
-  const deleteBlockedOff = async (fulfillmentId: string, isoDate: string, interval: IWInterval) => {
-    try {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order_config' } });
-      const body: PostBlockedOffToFulfillmentsRequest = {
-        date: isoDate,
-        fulfillmentIds: [fulfillmentId],
-        interval: interval,
-      };
-      const response = await fetch(`${HOST_API}/api/v1/config/timing/blockoff`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      });
-      if (response.status === 201) {
-        enqueueSnackbar(`
+  const removeMutation = useRemoveBlockOffMutation();
+
+  const deleteBlockedOff = (fulfillmentId: string, isoDate: string, interval: IWInterval) => {
+    removeMutation.mutate(
+      { fulfillmentId, date: isoDate, interval },
+      {
+        onSuccess: () => {
+          toast.success(`
             Removed ${IntervalToString(interval)} block on
             ${format(parseISO(isoDate), WDateUtils.ServiceDateDisplayFormat)}
             for ${fulfillmentName}`);
-      }
-    } catch (error) {
-      enqueueSnackbar(`Unable to update blocked off intervals. Got error: ${JSON.stringify(error)}.`, {
-        variant: 'error',
-      });
-      console.error(error);
-    }
+          props.setIsProcessing(false);
+        },
+        onError: (error) => {
+          toast.error(`Unable to update blocked off intervals. Got error: ${JSON.stringify(error)}.`);
+          console.error(error);
+          props.setIsProcessing(false);
+        },
+      },
+    );
   };
 
-  const removeBlockedOffForDate = async (fulfillmentId: string, isoDate: string) => {
-    return removeBlockedOffInterval(fulfillmentId, isoDate, { start: 0, end: 1440 });
+  const removeBlockedOffForDate = (fulfillmentId: string, isoDate: string) => {
+    removeBlockedOffInterval(fulfillmentId, isoDate, { start: 0, end: 1440 });
   };
 
-  const removeBlockedOffInterval = async (fulfillmentId: string, isoDate: string, interval: IWInterval) => {
+  const removeBlockedOffInterval = (fulfillmentId: string, isoDate: string, interval: IWInterval) => {
     if (!props.isProcessing) {
       props.setIsProcessing(true);
-      await deleteBlockedOff(fulfillmentId, isoDate, interval);
-      props.setIsProcessing(false);
+      deleteBlockedOff(fulfillmentId, isoDate, interval);
     }
   };
   return fulfillmentBlockOffArray.length > 0 ? (
@@ -173,7 +162,9 @@ const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
                     size="small"
                     disabled={props.isProcessing}
                     aria-label="delete"
-                    onClick={() => void removeBlockedOffForDate(props.fId, entry.key)}
+                    onClick={() => {
+                      removeBlockedOffForDate(props.fId, entry.key);
+                    }}
                   >
                     <HighlightOff />
                   </IconButton>
@@ -192,7 +183,9 @@ const FulfillmentBlockOffList = (props: FulfillmentBlockOffListProps) => {
                           size="small"
                           disabled={props.isProcessing}
                           aria-label="delete"
-                          onClick={() => void removeBlockedOffInterval(props.fId, entry.key, interval)}
+                          onClick={() => {
+                            removeBlockedOffInterval(props.fId, entry.key, interval);
+                          }}
                         >
                           <HighlightOff />
                         </IconButton>
@@ -262,8 +255,6 @@ const DateSelector = ({
 };
 
 export const BlockOffComp = () => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const fulfillmentIdsAndNames = useFulfillmentsWithOperatingHours();
   const [selectedServices, setSelectedServices] = useState<string[]>(fulfillmentIdsAndNames.map((x) => x.id));
   const nextAvailableDate = useNextAvailableServiceDate(selectedServices);
@@ -284,7 +275,6 @@ export const BlockOffComp = () => {
   );
 
   const [isProcessing, setIsProcessing] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();
 
   const handleSetSelectedDate = useCallback(
     (date: string | null) => {
@@ -327,40 +317,33 @@ export const BlockOffComp = () => {
     }
   }, [endTimeOptions, endTime, startTime]);
 
-  const postBlockedOff = async () => {
+  const blockOffMutation = useBlockOffMutation();
+
+  const postBlockedOff = () => {
     if (!isProcessing && selectedDate !== null && startTime !== null && endTime !== null) {
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order_config' } });
-        const interval = {
-          start: startTime,
-          end: endTime,
-        };
-        const body: PostBlockedOffToFulfillmentsRequest = {
-          date: selectedDate,
-          fulfillmentIds: selectedServices,
-          interval,
-        };
-        const response = await fetch(`${HOST_API}/api/v1/config/timing/blockoff`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-        if (response.status === 201) {
-          enqueueSnackbar(`Blocked off ${IntervalToString(interval)} on
+      const interval = {
+        start: startTime,
+        end: endTime,
+      };
+      const body: PostBlockedOffToFulfillmentsRequest = {
+        date: selectedDate,
+        fulfillmentIds: selectedServices,
+        interval,
+      };
+
+      blockOffMutation.mutate(body, {
+        onSuccess: () => {
+          toast.success(`Blocked off ${IntervalToString(interval)} on
               ${format(parseISO(selectedDate), WDateUtils.ServiceDateDisplayFormat)} 
               for services: ${selectedServices.map((fId) => fulfillmentIdsAndNames.find((x) => x.id === fId)?.displayName).join(', ')}`);
           setStartTime(null);
           setEndTime(null);
-        }
-      } catch (error) {
-        enqueueSnackbar(`Unable to update blocked off intervals. Got error: ${JSON.stringify(error)}.`, {
-          variant: 'error',
-        });
-        console.error(error);
-      }
+        },
+        onError: (error) => {
+          toast.error(`Unable to update blocked off intervals. Got error: ${JSON.stringify(error)}.`);
+          console.error(error);
+        },
+      });
     }
   };
 
@@ -472,7 +455,9 @@ export const BlockOffComp = () => {
               >
                 <Button
                   sx={{ m: 'auto', width: '100%', height: '100%' }}
-                  onClick={() => void postBlockedOff()}
+                  onClick={() => {
+                    postBlockedOff();
+                  }}
                   disabled={!canPostBlockedOff || isProcessing}
                 >
                   Add

@@ -1,5 +1,4 @@
 import { useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { TabContext, TabList } from '@mui/lab';
@@ -10,6 +9,8 @@ import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useProductInstanceFunctionById } from '@wcp/wario-ux-shared/query';
 
 import { useEditProductInstanceFunctionMutation } from '@/hooks/useProductInstanceFunctionMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   fromProductInstanceFunctionEntity,
@@ -49,7 +50,6 @@ const ProductInstanceFunctionEditContainerInner = ({
   productInstanceFunction: IProductInstanceFunction;
   onCloseCallback: VoidFunction;
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
   const editMutation = useEditProductInstanceFunctionMutation();
 
   const setForm = useSetAtom(productInstanceFunctionFormAtom);
@@ -72,12 +72,11 @@ const ProductInstanceFunctionEditContainerInner = ({
       { id: productInstanceFunction.id, form },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Updated product instance function: ${form.functionName}.`);
+          toast.success(`Updated product instance function: ${form.functionName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(
+          toast.error(
             `Unable to edit product instance function: ${form.functionName}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' },
           );
           console.error(error);
         },

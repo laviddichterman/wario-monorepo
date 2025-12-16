@@ -1,5 +1,4 @@
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { type IProduct } from '@wcp/wario-shared/types';
@@ -10,6 +9,8 @@ import {
   useEditProductMutation,
   useUpdateProductInstanceMutation,
 } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   fromProductEntity,
@@ -56,7 +57,6 @@ interface InnerProps {
 }
 
 const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const store = useStore();
   const catalogSelectors = useCatalogSelectors();
 
@@ -120,13 +120,11 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
 
       await Promise.all(instancePromises);
 
-      enqueueSnackbar(`Updated ${productName}.`);
+      toast.success(`Updated ${productName}.`);
       onCloseCallback();
     } catch (error) {
       console.error(error);
-      enqueueSnackbar(`Unable to update ${productName}. Error details in console.`, {
-        variant: 'error',
-      });
+      toast.error(`Unable to update ${productName}. Error details in console.`);
     } finally {
       setIsProcessing(false);
     }

@@ -1,19 +1,16 @@
-import { useAuth0 } from '@auth0/auth0-react';
-import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Card, CardHeader, Grid } from '@mui/material';
 
 import { useFulfillments } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from '@/config';
+import { useUpdateLeadTimeMutation } from '@/hooks/useConfigMutations';
+
+import { toast } from '@/components/snackbar';
 
 import { IntNumericPropertyComponent } from './property-components/IntNumericPropertyComponent';
 
 export const LeadTimesComp = () => {
-  const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
-
   const fulfillments = useFulfillments();
 
   const [dirty, setDirty] = useState<Record<string, boolean>>({});
@@ -57,21 +54,14 @@ export const LeadTimesComp = () => {
     }
   };
 
-  const onSubmit = async () => {
+  const updateMutation = useUpdateLeadTimeMutation();
+
+  const onSubmit = () => {
     if (!isProcessing) {
       setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order_config' } });
-        const response = await fetch(`${HOST_API}/api/v1/config/timing/leadtime`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(leadtimesToUpdate),
-        });
-        if (response.status === 201) {
-          enqueueSnackbar(
+      updateMutation.mutate(leadtimesToUpdate, {
+        onSuccess: () => {
+          toast.success(
             `
               Updated lead time(s): ${Object.entries(leadtimesToUpdate)
                 .map(
@@ -83,12 +73,13 @@ export const LeadTimesComp = () => {
           );
 
           setDirty(fulfillments.reduce((acc, fulfillment) => ({ ...acc, [fulfillment.id]: false }), {}));
-        }
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Failed to update leadtimes with error: ${JSON.stringify(error)}`, { variant: 'error' });
-        setIsProcessing(false);
-      }
+          setIsProcessing(false);
+        },
+        onError: (error) => {
+          toast.error(`Failed to update leadtimes with error: ${JSON.stringify(error)}`);
+          setIsProcessing(false);
+        },
+      });
     }
   };
   return (
@@ -139,7 +130,9 @@ export const LeadTimesComp = () => {
             <Button
               sx={{ mx: 3, px: 1, py: 2 }}
               disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0}
-              onClick={() => void onSubmit()}
+              onClick={() => {
+                onSubmit();
+              }}
             >
               Push Changes
             </Button>

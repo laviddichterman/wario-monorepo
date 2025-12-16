@@ -1,8 +1,10 @@
+import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
 import type {
   EncryptStringLock,
   IMoney,
+  IssueStoreCreditRequest,
   SpendCreditResponse,
   ValidateLockAndSpendRequest,
 } from '@wcp/wario-shared/types';
@@ -62,6 +64,29 @@ export function useRedeemStoreCreditMutation() {
       };
 
       const response = await axiosInstance.post<SpendCreditResponse>('/api/v1/payments/storecredit/spend', body);
+
+      return response.data;
+    },
+  });
+}
+
+/**
+ * Mutation hook for issuing store credit.
+ */
+export function useIssueStoreCreditMutation() {
+  const { getAccessTokenSilently } = useAuth0();
+
+  return useMutation({
+    mutationKey: ['storeCredit', 'issue'],
+    mutationFn: async (body: IssueStoreCreditRequest) => {
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'edit:store_credit' } });
+
+      const response = await axiosInstance.post<unknown>('/api/v1/payments/storecredit/issue', body, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
       return response.data;
     },

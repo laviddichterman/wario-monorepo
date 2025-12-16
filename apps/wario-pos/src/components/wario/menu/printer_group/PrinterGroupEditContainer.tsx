@@ -1,5 +1,4 @@
 import { useAtom, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import { Button } from '@mui/material';
@@ -9,6 +8,7 @@ import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useEditPrinterGroupMutation, usePrinterGroupById } from '@/hooks/usePrinterGroupsQuery';
 
+import { toast } from '@/components/snackbar';
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
 import {
@@ -47,7 +47,6 @@ const PrinterGroupEditContainerInner = ({
   printerGroup: PrinterGroup;
   onCloseCallback: () => void;
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
   const editMutation = useEditPrinterGroupMutation();
 
   const setFormState = useSetAtom(printerGroupFormAtom);
@@ -74,13 +73,10 @@ const PrinterGroupEditContainerInner = ({
         { ...body, id: printerGroup.id },
         {
           onSuccess: () => {
-            enqueueSnackbar(`Updated printer group: ${current.name}.`);
+            toast.success(`Updated printer group: ${current.name}.`);
           },
           onError: (error) => {
-            enqueueSnackbar(
-              `Unable to update printer group: ${current.name}. Got error ${JSON.stringify(error, null, 2)}`,
-              { variant: 'error' },
-            );
+            toast.error(`Unable to update printer group: ${current.name}. Got error ${JSON.stringify(error, null, 2)}`);
             console.error(error);
           },
           onSettled: () => {

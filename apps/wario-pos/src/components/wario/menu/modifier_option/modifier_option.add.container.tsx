@@ -1,5 +1,4 @@
 import { useAtom, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { TabContext, TabList } from '@mui/lab';
@@ -8,13 +7,15 @@ import { Button, Tab } from '@mui/material';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
+import { useAddModifierOptionMutation } from '@/hooks/useModifierOptionMutations';
+
+import { toast } from '@/components/snackbar';
+
 import {
   DEFAULT_MODIFIER_OPTION_FORM,
   modifierOptionFormAtom,
   modifierOptionFormProcessingAtom,
-  toModifierOptionApiBody,
 } from '@/atoms/forms/modifierOptionFormAtoms';
-import { HOST_API } from '@/config';
 
 import { ModifierOptionFormBody } from './modifier_option.component';
 
@@ -26,7 +27,7 @@ export interface ModifierOptionAddContainerProps {
 export const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: ModifierOptionAddContainerProps) => {
   const modifierType = useModifierTypeById(modifierTypeId);
   const setForm = useSetAtom(modifierOptionFormAtom);
-  const { enqueueSnackbar } = useSnackbar();
+
   const [activeTab, setActiveTab] = useState('identity');
 
   const [form] = useAtom(modifierOptionFormAtom);
@@ -39,36 +40,28 @@ export const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: 
     };
   }, [setForm]);
 
-  const save = async () => {
+  const addMutation = useAddModifierOptionMutation();
+
+  const save = () => {
     if (!form) return;
     setIsProcessing(true);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any = {
-        ...toModifierOptionApiBody(form),
-        modifierTypeId,
-      };
 
-      const response = await fetch(`${HOST_API}/api/v1/menu/modifier_option`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    addMutation.mutate(
+      { modifierTypeId, form },
+      {
+        onSuccess: () => {
+          toast.success('Created modifier option');
+          onCloseCallback();
         },
-        body: JSON.stringify(body),
-      });
-
-      if (response.status === 201) {
-        enqueueSnackbar('Created modifier option');
-        onCloseCallback();
-      } else {
-        enqueueSnackbar('Failed to create modifier option', { variant: 'error' });
-      }
-    } catch (e) {
-      console.error(e);
-      enqueueSnackbar('Failed to create modifier option', { variant: 'error' });
-    } finally {
-      setIsProcessing(false);
-    }
+        onError: (e) => {
+          console.error(e);
+          toast.error('Failed to create modifier option');
+        },
+        onSettled: () => {
+          setIsProcessing(false);
+        },
+      },
+    );
   };
 
   if (!modifierType) return null;
@@ -96,7 +89,13 @@ export const ModifierOptionAddContainer = ({ modifierTypeId, onCloseCallback }: 
           <Button onClick={onCloseCallback} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={() => void save()} disabled={isProcessing} variant="contained">
+          <Button
+            onClick={() => {
+              save();
+            }}
+            disabled={isProcessing}
+            variant="contained"
+          >
             Save
           </Button>
         </AppDialog.Actions>

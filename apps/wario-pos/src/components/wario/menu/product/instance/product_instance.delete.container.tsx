@@ -1,8 +1,8 @@
-import { useSnackbar } from 'notistack';
-
 import { useProductInstanceById } from '@wcp/wario-ux-shared/query';
 
 import { useDeleteProductInstanceMutation } from '@/hooks/useProductInstanceMutations';
+
+import { toast } from '@/components/snackbar';
 
 import ElementDeleteComponent from '../../element.delete.component';
 
@@ -17,7 +17,6 @@ const ProductInstanceDeleteContainer = ({
   product_instance_id,
   onCloseCallback,
 }: ProductInstanceQuickActionProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const product_instance = useProductInstanceById(product_instance_id);
 
   const deleteMutation = useDeleteProductInstanceMutation();
@@ -32,12 +31,10 @@ const ProductInstanceDeleteContainer = ({
       },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Deleted product: ${product_instance.displayName}.`);
+          toast.success(`Deleted product: ${product_instance.displayName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to delete ${product_instance.displayName}. Got error: ${JSON.stringify(error)}.`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to delete ${product_instance.displayName}. Got error: ${JSON.stringify(error)}.`);
           console.error(error);
         },
         onSettled: () => {

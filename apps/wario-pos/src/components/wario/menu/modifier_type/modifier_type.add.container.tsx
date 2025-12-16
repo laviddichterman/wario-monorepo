@@ -1,5 +1,4 @@
 import { useSetAtom, useStore } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 
 import { ArrowBack } from '@mui/icons-material';
@@ -10,6 +9,8 @@ import type { IOptionType } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useAddModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_MODIFIER_OPTION_FORM,
@@ -30,7 +31,6 @@ import { UnifiedModifierOptionTable } from '../modifier_option/unified_modifier_
 import { ModifierTypeFormBody, type ModifierTypeUiProps } from './modifier_type.component';
 
 const ModifierTypeAddContainer = ({ onCloseCallback }: ModifierTypeUiProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const store = useStore();
 
   const setFormState = useSetAtom(modifierTypeFormAtom);
@@ -74,12 +74,10 @@ const ModifierTypeAddContainer = ({ onCloseCallback }: ModifierTypeUiProps) => {
       { form, options: optionsPayload },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Added new modifier type: ${form.name}.`);
+          toast.success(`Added new modifier type: ${form.name}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to add modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to add modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`);
           console.error(error);
         },
         onSettled: () => {

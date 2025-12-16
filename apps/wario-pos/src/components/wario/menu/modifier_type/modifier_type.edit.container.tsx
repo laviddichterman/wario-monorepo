@@ -1,6 +1,5 @@
 import { useStore } from 'jotai';
 import { useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 
 import { ArrowBack } from '@mui/icons-material';
@@ -13,6 +12,7 @@ import { useCatalogSelectors, useModifierTypeById } from '@wcp/wario-ux-shared/q
 
 import { useEditModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
 
+import { toast } from '@/components/snackbar';
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
 import {
@@ -51,7 +51,6 @@ interface InnerProps {
 }
 
 const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const catalogSelectors = useCatalogSelectors();
   const store = useStore();
 
@@ -110,12 +109,10 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
       { id: modifier_type.id, form, dirtyFields },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Updated modifier type: ${form.name}.`);
+          toast.success(`Updated modifier type: ${form.name}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to edit modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to edit modifier type: ${form.name}. Got error ${JSON.stringify(error, null, 2)}`);
           console.error(error);
         },
         onSettled: () => {

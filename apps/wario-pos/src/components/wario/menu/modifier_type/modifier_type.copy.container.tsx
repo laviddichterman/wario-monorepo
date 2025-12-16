@@ -1,6 +1,4 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useAtom, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 
 import { ExpandMore } from '@mui/icons-material';
@@ -23,6 +21,10 @@ import type { IOption, IOptionType } from '@wcp/wario-shared/types';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 import { useCatalogQuery, useModifierTypeById } from '@wcp/wario-ux-shared/query';
 
+import { useAddModifierTypeMutation } from '@/hooks/useModifierTypeMutations';
+
+import { toast } from '@/components/snackbar';
+
 import {
   fromModifierOptionEntity,
   modifierOptionCopyCountAtom,
@@ -36,10 +38,8 @@ import {
   fromModifierTypeEntity,
   modifierTypeFormAtom,
   modifierTypeFormProcessingAtom,
-  toModifierTypeApiBody,
   useModifierTypeForm,
 } from '@/atoms/forms/modifierTypeFormAtoms';
-import { HOST_API } from '@/config';
 
 import { ModifierOptionContainer } from '../modifier_option/modifier_option.component';
 
@@ -74,8 +74,6 @@ interface InnerProps {
 }
 
 const ModifierTypeCopyContainerInner = ({ modifierType, allOptions, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
   const [activeTab, setActiveTab] = useState('rules');
 
   // ModifierType form state (reusing Phase 1 atoms)
@@ -98,50 +96,41 @@ const ModifierTypeCopyContainerInner = ({ modifierType, allOptions, onCloseCallb
     };
   }, [modifierType, optionCount, setModifierTypeForm, setCopyCount]);
 
-  const copyModifierTypeAndOptions = async () => {
+  const addMutation = useAddModifierTypeMutation();
+
+  const copyModifierTypeAndOptions = () => {
     if (!modifierTypeForm || isProcessing) return;
 
     setIsProcessing(true);
-    try {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
 
-      // Collect options to copy - for now using original option data
-      // In a full implementation, we'd read from the atomFamily
-      const optionsToCopy = modifierType.options.map((optionId: string) => {
-        const option = allOptions[optionId];
-        return toModifierOptionApiBody(fromModifierOptionEntity(option));
-      });
+    // Collect options to copy - for now using original option data
+    // In a full implementation, we'd read from the atomFamily
+    const optionsToCopy = modifierType.options.map((optionId: string) => {
+      const option = allOptions[optionId];
+      return toModifierOptionApiBody(fromModifierOptionEntity(option));
+    });
 
-      const body: Omit<ReturnType<typeof toModifierTypeApiBody>, 'options'> & { options: Omit<IOption, 'id'>[] } = {
-        ...toModifierTypeApiBody(modifierTypeForm),
-        options: optionsToCopy as Omit<IOption, 'id'>[],
-      };
-
-      const response = await fetch(`${HOST_API}/api/v1/menu/option/`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
+    addMutation.mutate(
+      { form: modifierTypeForm, options: optionsToCopy as Omit<IOption, 'modifierTypeId' | 'id'>[] },
+      {
+        onSuccess: () => {
+          toast.success(`Added new modifier type: ${modifierTypeForm.name}.`);
+          toast.success(
+            `Added options to ${modifierTypeForm.name}: ${optionsToCopy.map((o) => o.displayName).join(', ')}.`,
+          );
+          onCloseCallback();
         },
-        body: JSON.stringify(body),
-      });
-
-      if (response.status === 201) {
-        enqueueSnackbar(`Added new modifier type: ${modifierTypeForm.name}.`);
-        enqueueSnackbar(
-          `Added options to ${modifierTypeForm.name}: ${optionsToCopy.map((o) => o.displayName).join(', ')}.`,
-        );
-        onCloseCallback();
-      }
-    } catch (error) {
-      enqueueSnackbar(
-        `Unable to add modifier type: ${modifierTypeForm.name}. Got error ${JSON.stringify(error, null, 2)}`,
-        { variant: 'error' },
-      );
-      console.error(error);
-    } finally {
-      setIsProcessing(false);
-    }
+        onError: (error) => {
+          toast.error(
+            `Unable to add modifier type: ${modifierTypeForm.name}. Got error ${JSON.stringify(error, null, 2)}`,
+          );
+          console.error(error);
+        },
+        onSettled: () => {
+          setIsProcessing(false);
+        },
+      },
+    );
   };
 
   return (
@@ -181,7 +170,7 @@ const ModifierTypeCopyContainerInner = ({ modifierType, allOptions, onCloseCallb
           </Button>
           <Button
             onClick={() => {
-              void copyModifierTypeAndOptions();
+              copyModifierTypeAndOptions();
             }}
             disabled={!isModifierTypeValid || isProcessing}
             variant="contained"

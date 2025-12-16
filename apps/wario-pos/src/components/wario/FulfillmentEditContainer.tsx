@@ -1,10 +1,11 @@
 import { useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import type { FulfillmentConfig } from '@wcp/wario-shared/types';
 
 import { useEditFulfillmentMutation } from '@/hooks/useFulfillmentMutations';
+
+import { toast } from '@/components/snackbar';
 
 import {
   fromFulfillmentEntity,
@@ -22,8 +23,6 @@ const FulfillmentEditContainer = ({
   fulfillment: FulfillmentConfig;
   onCloseCallback: VoidFunction;
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setFormState = useSetAtom(fulfillmentFormAtom);
   const setDirtyFields = useSetAtom(fulfillmentFormDirtyFieldsAtom);
 
@@ -49,12 +48,10 @@ const FulfillmentEditContainer = ({
       { id: fulfillment.id, form, dirtyFields },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Updated fulfillment ${form.displayName}.`);
+          toast.success(`Updated fulfillment ${form.displayName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to update fulfillment ${form.displayName}. Got error: ${JSON.stringify(error)}.`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to update fulfillment ${form.displayName}. Got error: ${JSON.stringify(error)}.`);
           console.error(error);
         },
         onSettled: () => {

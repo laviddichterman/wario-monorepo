@@ -20,6 +20,7 @@ interface EditModifierOptionRequest {
   modifierTypeId: string;
   optionId: string;
   form: ModifierOptionFormState;
+  dirtyFields?: Set<keyof ModifierOptionFormState>;
 }
 
 interface DeleteModifierOptionRequest {
@@ -67,9 +68,9 @@ export function useEditModifierOptionMutation() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useMutation({
-    mutationFn: async ({ modifierTypeId, optionId, form }: EditModifierOptionRequest) => {
+    mutationFn: async ({ modifierTypeId, optionId, form, dirtyFields }: EditModifierOptionRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
-      const body = toModifierOptionApiBody(form);
+      const body = toModifierOptionApiBody(form, dirtyFields || new Set());
 
       const response = await axiosInstance.patch<IOption>(`/api/v1/menu/option/${modifierTypeId}/${optionId}`, body, {
         headers: {

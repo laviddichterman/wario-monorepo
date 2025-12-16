@@ -1,5 +1,4 @@
 import { useAtom, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import { Button } from '@mui/material';
@@ -7,6 +6,8 @@ import { Button } from '@mui/material';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useAddPrinterGroupMutation } from '@/hooks/usePrinterGroupsQuery';
+
+import { toast } from '@/components/snackbar';
 
 import {
   DEFAULT_PRINTER_GROUP_FORM,
@@ -22,7 +23,6 @@ export interface PrinterGroupAddContainerProps {
 }
 
 const PrinterGroupAddContainer = ({ onCloseCallback }: PrinterGroupAddContainerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const addMutation = useAddPrinterGroupMutation();
 
   const setFormState = useSetAtom(printerGroupFormAtom);
@@ -44,13 +44,10 @@ const PrinterGroupAddContainer = ({ onCloseCallback }: PrinterGroupAddContainerP
 
       addMutation.mutate(body, {
         onSuccess: () => {
-          enqueueSnackbar(`Added new printer group: ${current.name}.`);
+          toast.success(`Added new printer group: ${current.name}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(
-            `Unable to add printer group: ${current.name}. Got error: ${JSON.stringify(error, null, 2)}.`,
-            { variant: 'error' },
-          );
+          toast.error(`Unable to add printer group: ${current.name}. Got error: ${JSON.stringify(error, null, 2)}.`);
           console.error(error);
         },
         onSettled: () => {

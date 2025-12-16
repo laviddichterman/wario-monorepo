@@ -1,4 +1,3 @@
-import { useSnackbar } from 'notistack';
 import { useMemo, useState } from 'react';
 
 import { Warning } from '@mui/icons-material';
@@ -8,6 +7,7 @@ import type { PrinterGroup } from '@wcp/wario-shared/types';
 
 import { useDeletePrinterGroupMutation, usePrinterGroupById, usePrinterGroupsMap } from '@/hooks/usePrinterGroupsQuery';
 
+import { toast } from '@/components/snackbar';
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
 import { ToggleBooleanPropertyComponent } from '../../property-components/ToggleBooleanPropertyComponent';
@@ -39,7 +39,6 @@ const PrinterGroupDeleteContainerInner = ({
   printerGroup: PrinterGroup;
   onCloseCallback: () => void;
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
   const printerGroups = usePrinterGroupsMap();
   const deleteMutation = useDeletePrinterGroupMutation();
 
@@ -73,13 +72,10 @@ const PrinterGroupDeleteContainerInner = ({
       },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Deleted printer group: ${printerGroup.name}.`);
+          toast.success(`Deleted printer group: ${printerGroup.name}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(
-            `Unable to delete category: ${printerGroup.name}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' },
-          );
+          toast.error(`Unable to delete category: ${printerGroup.name}. Got error ${JSON.stringify(error, null, 2)}`);
           console.error(error);
         },
         onSettled: () => {

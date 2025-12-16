@@ -1,5 +1,4 @@
 import { endOfDay, getTime } from 'date-fns';
-import { useSnackbar } from 'notistack';
 
 import { Grid } from '@mui/material';
 
@@ -7,6 +6,8 @@ import type { IProduct } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useCurrentTime, useProductById } from '@wcp/wario-ux-shared/query';
 
 import { useSetProductDisabledMutation } from '@/hooks/useProductMutations';
+
+import { toast } from '@/components/snackbar';
 
 import { ElementActionComponent } from '../element.action.component';
 
@@ -39,8 +40,6 @@ interface InnerProps {
 }
 
 const ProductDisableUntilEodContainerInner = ({ product, productName, currentTime, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setDisabledMutation = useSetProductDisabledMutation();
 
   const disableProduct = () => {
@@ -50,12 +49,10 @@ const ProductDisableUntilEodContainerInner = ({ product, productName, currentTim
       { id: product.id, disabled: { start: currentTime, end: getTime(endOfDay(currentTime)) } },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Disabled ${productName} until EOD.`);
+          toast.success(`Disabled ${productName} until EOD.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to update ${productName}. Got error: ${JSON.stringify(error, null, 2)}.`);
           console.error(error);
         },
         onSettled: () => {

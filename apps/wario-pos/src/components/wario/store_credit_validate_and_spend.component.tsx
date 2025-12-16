@@ -1,7 +1,6 @@
 import { uniqueId } from 'es-toolkit/compat';
 import { Html5Qrcode, Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import type { Html5QrcodeResult, QrcodeErrorCallback, QrcodeSuccessCallback } from 'html5-qrcode/core';
-import { useSnackbar } from 'notistack';
 import { useEffect, useLayoutEffect, useState } from 'react';
 
 import { ErrorOutline, PhotoCamera } from '@mui/icons-material';
@@ -15,6 +14,8 @@ import { useValidateStoreCreditMutation } from '@wcp/wario-ux-shared/query';
 import { useRedeemStoreCreditMutation } from '@/hooks/useStoreCreditMutations';
 
 import axiosInstance from '@/utils/axios';
+
+import { toast } from '@/components/snackbar';
 
 import { IMoneyPropertyComponent } from './property-components/IMoneyPropertyComponent';
 import { StringPropertyComponent } from './property-components/StringPropertyComponent';
@@ -58,8 +59,6 @@ const QrCodeScanner = ({ show, onSuccess, onFailure }: QrCodeScannerProps) => {
 };
 
 const StoreCreditValidateAndSpendComponent = () => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const [creditCode, setCreditCode] = useState('');
   const [scanCode, setScanCode] = useState(false);
   const [hasCamera, setHasCamera] = useState(false);
@@ -87,7 +86,7 @@ const StoreCreditValidateAndSpendComponent = () => {
     if (qrCode.length === 19) {
       validateMutation.mutate(qrCode, {
         onError: (error) => {
-          enqueueSnackbar(`Unable to validate ${qrCode}. Got error: ${error.message}.`, { variant: 'error' });
+          toast.error(`Unable to validate ${qrCode}. Got error: ${error.message}.`);
         },
       });
     }
@@ -110,7 +109,7 @@ const StoreCreditValidateAndSpendComponent = () => {
     if (!validateMutation.isPending) {
       validateMutation.mutate(code, {
         onError: (error) => {
-          enqueueSnackbar(`Unable to validate ${creditCode}. Got error: ${error.message}.`, { variant: 'error' });
+          toast.error(`Unable to validate ${creditCode}. Got error: ${error.message}.`);
         },
       });
     }
@@ -127,7 +126,7 @@ const StoreCreditValidateAndSpendComponent = () => {
         },
         {
           onError: (error) => {
-            enqueueSnackbar(`Unable to debit ${creditCode}. Got error: ${error.message}.`, { variant: 'error' });
+            toast.error(`Unable to debit ${creditCode}. Got error: ${error.message}.`);
           },
         },
       );

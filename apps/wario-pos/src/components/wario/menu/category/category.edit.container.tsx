@@ -1,5 +1,4 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import { Button } from '@mui/material';
@@ -10,6 +9,7 @@ import { useCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useEditCategoryMutation } from '@/hooks/useCategoryMutations';
 
+import { toast } from '@/components/snackbar';
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 
 import {
@@ -44,8 +44,6 @@ interface InnerProps {
 }
 
 const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
-
   const setFormState = useSetAtom(categoryFormAtom);
   const [isProcessing, setIsProcessing] = useAtom(categoryFormProcessingAtom);
   const formState = useAtomValue(categoryFormAtom);
@@ -71,12 +69,10 @@ const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) =
       { id: category.id, form: formState, dirtyFields },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Updated category: ${formState.name}.`);
+          toast.success(`Updated category: ${formState.name}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to update category: ${formState.name}. Got error ${JSON.stringify(error, null, 2)}`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to update category: ${formState.name}. Got error ${JSON.stringify(error, null, 2)}`);
           console.error(error);
         },
         onSettled: () => {

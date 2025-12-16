@@ -1,10 +1,10 @@
-import { useSnackbar } from 'notistack';
-
 import { Grid } from '@mui/material';
 
 import { useOptionById } from '@wcp/wario-ux-shared/query';
 
 import { useSetModifierOptionDisabledMutation } from '@/hooks/useModifierOptionMutations';
+
+import { toast } from '@/components/snackbar';
 
 import { ElementActionComponent } from '../element.action.component';
 
@@ -15,7 +15,6 @@ const ModifierOptionDisableContainer = ({
   modifier_option_id,
   onCloseCallback,
 }: ModifierOptionQuickActionProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const modifier_option = useOptionById(modifier_option_id);
 
   const setDisabledMutation = useSetModifierOptionDisabledMutation();
@@ -31,12 +30,11 @@ const ModifierOptionDisableContainer = ({
       },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Disabled modifier option: ${modifier_option.displayName}.`);
+          toast.success(`Disabled modifier option: ${modifier_option.displayName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(
+          toast.error(
             `Unable to update modifier option: ${modifier_option.displayName}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' },
           );
           console.error(error);
         },

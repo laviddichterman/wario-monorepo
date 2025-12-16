@@ -1,5 +1,4 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useSnackbar } from 'notistack';
 import { useEffect } from 'react';
 
 import { Button } from '@mui/material';
@@ -7,6 +6,8 @@ import { Button } from '@mui/material';
 import { AppDialog } from '@wcp/wario-ux-shared/containers';
 
 import { useAddCategoryMutation } from '@/hooks/useCategoryMutations';
+
+import { toast } from '@/components/snackbar';
 
 import { categoryFormAtom, categoryFormProcessingAtom, DEFAULT_CATEGORY_FORM } from '@/atoms/forms/categoryFormAtoms';
 
@@ -17,7 +18,6 @@ export interface CategoryAddContainerProps {
 }
 
 const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const setFormState = useSetAtom(categoryFormAtom);
   const [isProcessing, setIsProcessing] = useAtom(categoryFormProcessingAtom);
   const formState = useAtomValue(categoryFormAtom);
@@ -37,12 +37,10 @@ const CategoryAddContainer = ({ onCloseCallback }: CategoryAddContainerProps) =>
     setIsProcessing(true);
     addMutation.mutate(formState, {
       onSuccess: () => {
-        enqueueSnackbar(`Added new category: ${formState.name}.`);
+        toast.success(`Added new category: ${formState.name}.`);
       },
       onError: (error) => {
-        enqueueSnackbar(`Unable to add category: ${formState.name}. Got error: ${JSON.stringify(error, null, 2)}.`, {
-          variant: 'error',
-        });
+        toast.error(`Unable to add category: ${formState.name}. Got error: ${JSON.stringify(error, null, 2)}.`);
         console.error(error);
       },
       onSettled: () => {

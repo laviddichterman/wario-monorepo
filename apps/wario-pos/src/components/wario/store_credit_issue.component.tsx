@@ -1,6 +1,4 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { addDays, parseISO } from 'date-fns';
-import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -11,7 +9,9 @@ import { CURRENCY, MoneyToDisplayString, StoreCreditType, WDateUtils } from '@wc
 import { type IMoney, type IssueStoreCreditRequest } from '@wcp/wario-shared/types';
 import { useCurrentTime } from '@wcp/wario-ux-shared/query';
 
-import { HOST_API } from '@/config';
+import { useIssueStoreCreditMutation } from '@/hooks/useStoreCreditMutations';
+
+import { toast } from '@/components/snackbar';
 
 import { IMoneyPropertyComponent } from './property-components/IMoneyPropertyComponent';
 import { StringPropertyComponent } from './property-components/StringPropertyComponent';
@@ -20,8 +20,6 @@ import { ToggleBooleanPropertyComponent } from './property-components/ToggleBool
 const DEFAULT_MONEY = { amount: 500, currency: CURRENCY.USD };
 
 export const StoreCreditIssueComponent = () => {
-  const { enqueueSnackbar } = useSnackbar();
-  const { getAccessTokenSilently } = useAuth0();
   const current_time = useCurrentTime();
   const [amount, setAmount] = useState<IMoney>(DEFAULT_MONEY);
   const [creditType, setCreditType] = useState(StoreCreditType.DISCOUNT);
@@ -39,47 +37,44 @@ export const StoreCreditIssueComponent = () => {
   //   // TODO: use yup.isEmail
   // }
 
-  const handleSubmit = async () => {
+  const issueMutation = useIssueStoreCreditMutation();
+
+  const handleSubmit = () => {
     if (!isProcessing) {
       setIsProcessing(true);
-      try {
-        const token = await getAccessTokenSilently({ authorizationParams: { scope: 'edit:store_credit' } });
-        const body: IssueStoreCreditRequest = {
-          amount,
-          addedBy,
-          reason,
-          expiration,
-          creditType,
-          recipientEmail,
-          recipientNameFirst: firstName,
-          recipientNameLast: lastName,
-        };
-        await fetch(`${HOST_API}/api/v1/payments/storecredit/issue`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-        enqueueSnackbar(
-          `Successfully sent ${firstName} ${lastName} ${creditType} credit for ${MoneyToDisplayString(amount, true)}.`,
-        );
-        setAddedBy('');
-        setAmount(DEFAULT_MONEY);
-        setCreditType(StoreCreditType.DISCOUNT);
-        setReason('');
-        setFirstName('');
-        setLastName('');
-        setRecipientEmail('');
-        setRecipientEmailError(false);
-        setExpiration(WDateUtils.formatISODate(addDays(current_time, 60)));
-        setIsProcessing(false);
-      } catch (error) {
-        enqueueSnackbar(`Unable to issue store credit. Got error: ${JSON.stringify(error)}.`, { variant: 'error' });
-        console.error(error);
-        setIsProcessing(false);
-      }
+      const body: IssueStoreCreditRequest = {
+        amount,
+        addedBy,
+        reason,
+        expiration,
+        creditType,
+        recipientEmail,
+        recipientNameFirst: firstName,
+        recipientNameLast: lastName,
+      };
+
+      issueMutation.mutate(body, {
+        onSuccess: () => {
+          toast.success(
+            `Successfully sent ${firstName} ${lastName} ${creditType} credit for ${MoneyToDisplayString(amount, true)}.`,
+          );
+          setAddedBy('');
+          setAmount(DEFAULT_MONEY);
+          setCreditType(StoreCreditType.DISCOUNT);
+          setReason('');
+          setFirstName('');
+          setLastName('');
+          setRecipientEmail('');
+          setRecipientEmailError(false);
+          setExpiration(WDateUtils.formatISODate(addDays(current_time, 60)));
+          setIsProcessing(false);
+        },
+        onError: (error) => {
+          toast.error(`Unable to issue store credit. Got error: ${JSON.stringify(error)}.`);
+          console.error(error);
+          setIsProcessing(false);
+        },
+      });
     }
   };
   return (
@@ -225,7 +220,9 @@ export const StoreCreditIssueComponent = () => {
         >
           <Button
             sx={{ m: 'auto', width: '100%' }}
-            onClick={() => void handleSubmit()}
+            onClick={() => {
+              handleSubmit();
+            }}
             disabled={
               !(
                 !isProcessing &&

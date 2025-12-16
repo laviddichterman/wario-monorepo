@@ -1,4 +1,3 @@
-import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 
 import { Grid } from '@mui/material';
@@ -8,6 +7,7 @@ import { useCategoryById } from '@wcp/wario-ux-shared/query';
 
 import { useDeleteCategoryMutation } from '@/hooks/useCategoryMutations';
 
+import { toast } from '@/components/snackbar';
 import { createNullGuard } from '@/components/wario/catalog-null-guard';
 import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
@@ -36,7 +36,6 @@ interface CategoryDeleteContainerProps {
 }
 
 const CategoryDeleteContainerInner = ({ category, onCloseCallback }: CategoryDeleteContainerProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const [deleteContainedProducts, setDeleteContainedProducts] = useState(false);
 
   const deleteMutation = useDeleteCategoryMutation();
@@ -48,14 +47,12 @@ const CategoryDeleteContainerInner = ({ category, onCloseCallback }: CategoryDel
       { id: category.id, deleteContainedProducts },
       {
         onSuccess: () => {
-          enqueueSnackbar(
+          toast.success(
             `Deleted category: ${category.name}${deleteContainedProducts ? ' and contained products' : ''}.`,
           );
         },
         onError: (error) => {
-          enqueueSnackbar(`Unable to delete category: ${category.name}. Got error ${JSON.stringify(error, null, 2)}`, {
-            variant: 'error',
-          });
+          toast.error(`Unable to delete category: ${category.name}. Got error ${JSON.stringify(error, null, 2)}`);
           console.error(error);
         },
         onSettled: () => {

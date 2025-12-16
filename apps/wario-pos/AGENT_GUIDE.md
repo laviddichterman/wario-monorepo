@@ -35,9 +35,11 @@
 
 **Primary Source of Truth**.
 
-- **Pattern**: Custom hooks wrapping `useQuery`.
-- **Example**: `useOrdersQuery.ts`.
+- **Pattern**: Custom hooks wrapping `useQuery` for fetching and `useMutation` for modifying data.
+- **Example**: `useOrdersQuery.ts`, `useConfirmOrderMutation.ts`.
 - **Key behaviors**:
+  - **Fetching**: Use custom hooks (e.g., `useKeyValueStoreQuery`) instead of manual `fetch`.
+  - **Mutations**: Use custom hooks (e.g., `useUpdateSettingsMutation`) for all create/update/delete operations.
   - **Polling**: Auto-refetches every 30s (`refetchInterval`).
   - **Idempotency**: Mutations (like `useConfirmOrderMutation`) **MUST** send an `Idempotency-Key` header with a UUID.
 
@@ -216,7 +218,7 @@ export const theme = createTheme({
 - CRUD flows: Inline “Add” above tables; edits in side drawer with two-column layout on laptop, single-column on tablet/mobile using drawer or full-screen sheet. Confirm destructive actions with explicit summaries; on mobile use bottom sheet or modal. POS-specific: comp/void require reason and user stamp; substitutions should show price deltas clearly.
 - Tables: Support column sorting, visibility, density toggle, CSV/JSON export, and row selection with bulk actions. On tablet allow horizontal scroll; on mobile collapse rows into cards with prioritized fields and an overflow menu for actions. Empty state should offer primary action (e.g., “Create menu item” or “Add ingredient”) and a link to docs.
 - Forms: Group related controls; show section titles; use helper text over placeholders. Provide live validation, optimistic UI where safe, and an unsaved-changes guard. Sticky submit bar on mobile to avoid scroll-to-submit. POS-specific: ingredient-level inventory edits should surface current stock, par levels, and recent adjustments inline.
-- Feedback: Use toasts/snackbars for transient success; inline for errors; global banners for outages or degraded state. On mobile, anchor toasts to bottom with safe-area padding. Show order-level alerts for delayed tickets; surface sync errors for menu pushes.
+- **Feedback**: Use `toast.success/error` from `@/components/snackbar` for transient messages. Do **not** use `window.alert` or `console.error` for user feedback. Inline errors on forms; global banners for outages. On mobile, anchor toasts to bottom with safe-area padding.
 - Keyboard: Ensure tab order matches visual order; provide shortcuts for common flows (e.g., `/` to focus search, `?` to open shortcuts help).
 
 ## Accessibility & Content

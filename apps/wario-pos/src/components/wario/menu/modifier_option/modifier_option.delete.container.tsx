@@ -1,8 +1,8 @@
-import { useSnackbar } from 'notistack';
-
 import { useOptionById } from '@wcp/wario-ux-shared/query';
 
 import { useDeleteModifierOptionMutation } from '@/hooks/useModifierOptionMutations';
+
+import { toast } from '@/components/snackbar';
 
 import ElementDeleteComponent from '../element.delete.component';
 
@@ -17,7 +17,6 @@ const ModifierOptionDeleteContainer = ({
   modifier_option_id,
   onCloseCallback,
 }: ModifierOptionQuickActionProps) => {
-  const { enqueueSnackbar } = useSnackbar();
   const modifier_option = useOptionById(modifier_option_id);
 
   const deleteMutation = useDeleteModifierOptionMutation();
@@ -32,12 +31,11 @@ const ModifierOptionDeleteContainer = ({
       },
       {
         onSuccess: () => {
-          enqueueSnackbar(`Deleted modifier option: ${modifier_option.displayName}.`);
+          toast.success(`Deleted modifier option: ${modifier_option.displayName}.`);
         },
         onError: (error) => {
-          enqueueSnackbar(
+          toast.error(
             `Unable to delete modifier option: ${modifier_option.displayName}. Got error ${JSON.stringify(error, null, 2)}`,
-            { variant: 'error' },
           );
           console.error(error);
         },
