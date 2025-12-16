@@ -18,6 +18,7 @@ import {
   type PurchaseStoreCreditRequestBaseDto,
   type PurchaseStoreCreditRequestNoEmailDto,
   type PurchaseStoreCreditRequestSendEmailDto,
+  type UncommittedICategoryDto,
   type UpdateIOptionPropsDto,
   type UpdateIOptionRequestBodyDto,
   type UpdateIOptionTypePropsDto,
@@ -399,3 +400,6 @@ export type UpdateIOptionTypeProps = Omit<UpdateIOptionTypePropsDto, never>;
 export type UpsertIOptionTypeRequestBody = CreateIOptionTypeRequestBody | UpdateIOptionTypeRequestBody;
 
 // end UpsertProductBatch types
+
+// Category DTOs
+export type UncommittedICategory = Omit<UncommittedICategoryDto, never>;

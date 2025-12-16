@@ -60,14 +60,6 @@ The following breaking changes were introduced to simplify ordering and eliminat
 
 Where possible, use a sorting map (type `IdOrdinalMap`) instead of selector functions for ordering lookups.
 
-### Root Category Requirement
-
-> [!IMPORTANT]
-> A **root category node** is required at the top of the category hierarchy. All other categories must be descendants of this root.
->
-> - The root category's `children` array contains the top-level category IDs
-> - Database initialization must create this root category (typically named "Root" or similar)
-
 ## File Structure
 
 ```
