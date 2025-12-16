@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import axios from '@/utils/axios';
 
-import type { UserType } from '@/auth/types';
+import type { AuthContextValue, UserType } from '@/auth/types';
 
 import { CONFIG } from '@/config';
 
@@ -123,8 +123,8 @@ function AuthProviderContainer({ children }: Props) {
   }, [tokenClaims]);
 
   // Helper functions to check scopes/permissions
-  const checkHasScopes = useCallback(
-    (requiredScopes: string[] | string, requireAll = true) => {
+  const checkHasScopes: AuthContextValue['hasScopes'] = useCallback(
+    (requiredScopes, requireAll = true) => {
       if (Array.isArray(requiredScopes) && requiredScopes.length === 0) return true;
       if (!tokenClaims) return false;
       return hasScopes(tokenClaims, Array.isArray(requiredScopes) ? requiredScopes : [requiredScopes], !requireAll);
@@ -132,8 +132,8 @@ function AuthProviderContainer({ children }: Props) {
     [tokenClaims],
   );
 
-  const checkHasPermissions = useCallback(
-    (requiredPermissions: string[] | string, requireAll = true) => {
+  const checkHasPermissions: AuthContextValue['hasPermissions'] = useCallback(
+    (requiredPermissions, requireAll = true) => {
       if (Array.isArray(requiredPermissions) && requiredPermissions.length === 0) return true;
       if (!tokenClaims) return false;
       const perms = Array.isArray(requiredPermissions) ? requiredPermissions : [requiredPermissions];

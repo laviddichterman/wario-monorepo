@@ -29,7 +29,7 @@ const CustomToolbar = ({
   showQuickFilter,
   quickFilterProps,
   title,
-  actions = [],
+  actions,
 }: GridToolbarProps & ToolbarPropsOverrides) => {
   const actionSizeSum = actions.reduce((acc, x) => acc + x.size, 0);
   return (
