@@ -301,7 +301,7 @@ describe('UpdateIProductRequestDto', () => {
           { id: 'pi_2', displayName: 'Updated' },
           createValidProductInstancePayload(),
           'pi_3',
-        ] as unknown as Array<Record<string, unknown>>);
+        ] as Array<Record<string, unknown>>);
 
         const dto = plainToInstance(UpdateIProductRequestDto, payload);
         const errors = validateSync(dto);

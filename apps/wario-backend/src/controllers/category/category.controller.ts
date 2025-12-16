@@ -13,14 +13,14 @@ export class CategoryController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @Scopes('write:catalog')
   @HttpCode(201)
   async postCategory(@Body() body: UncommittedICategoryDto) {
     const doc = await this.catalogProvider.CreateCategory(body);
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -32,7 +32,7 @@ export class CategoryController {
     if (!doc) {
       throw new CategoryNotFoundException(catid);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -44,7 +44,7 @@ export class CategoryController {
     if (!doc) {
       throw new CategoryNotFoundException(catid);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 }

@@ -72,14 +72,14 @@ export class PrinterService {
    * This is a workaround until direct printing is implemented.
    */
   get PrinterLocation(): string {
-    return this.dataProvider.KeyValueConfig.SQUARE_LOCATION_ALTERNATE;
+    return this.dataProvider.getKeyValueConfig().SQUARE_LOCATION_ALTERNATE;
   }
 
   /**
    * Gets the 3rd party Square location (if configured).
    */
   get ThirdPartyLocation(): string | undefined {
-    return this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P;
+    return this.dataProvider.getKeyValueConfig().SQUARE_LOCATION_3P;
   }
 
   /**
@@ -87,8 +87,8 @@ export class PrinterService {
    * This includes the alternate (printing) location and optionally the 3P location.
    */
   get CleanupLocations(): string[] {
-    return this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P
-      ? [this.PrinterLocation, this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P]
+    return this.dataProvider.getKeyValueConfig().SQUARE_LOCATION_3P
+      ? [this.PrinterLocation, this.dataProvider.getKeyValueConfig().SQUARE_LOCATION_3P]
       : [this.PrinterLocation];
   }
 
@@ -124,12 +124,7 @@ export class PrinterService {
           pickupAt: promisedTime.start,
           note: order.specialInstructions ?? undefined,
         },
-        {
-          Catalog: this.catalogProviderService.Catalog,
-          ReverseMappings: this.catalogProviderService.ReverseMappings,
-          PrinterGroups: this.catalogProviderService.PrinterGroups,
-          CatalogSelectors: this.catalogProviderService.CatalogSelectors,
-        },
+        this.catalogProviderService,
       );
 
       const squareOrderIds: string[] = [];
@@ -181,10 +176,10 @@ export class PrinterService {
 
       const categoryIdOrdinalMap = GenerateCategoryOrderMap(
         fulfillmentConfig.orderBaseCategoryId,
-        this.catalogProviderService.CatalogSelectors.category,
+        this.catalogProviderService.getCatalogSelectors().category,
       );
       const eventTitle = EventTitleStringBuilder(
-        this.catalogProviderService.CatalogSelectors,
+        this.catalogProviderService.getCatalogSelectors(),
         categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
@@ -194,7 +189,7 @@ export class PrinterService {
       );
 
       // Find expo printers
-      const expoPrinters = Object.values(this.catalogProviderService.PrinterGroups).filter((x) => x.isExpo);
+      const expoPrinters = Object.values(this.catalogProviderService.getPrinterGroups()).filter((x) => x.isExpo);
       if (expoPrinters.length === 0) {
         return {
           success: true,
@@ -267,7 +262,7 @@ export class PrinterService {
     try {
       const messageOrder = CreateOrderForMessages(this.PrinterLocation, referenceId, ticketName, messages, {
         displayName,
-        emailAddress: this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
+        emailAddress: this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS,
         phoneNumber: '',
         pickupAt: new Date(),
       });
@@ -300,7 +295,7 @@ export class PrinterService {
    * Expo printers display tickets for expediting orders.
    */
   GetExpoPrinters(): { id: string; name: string; squareItemVariationId: string | null }[] {
-    return Object.entries(this.catalogProviderService.PrinterGroups)
+    return Object.entries(this.catalogProviderService.getPrinterGroups())
       .filter(([_, pg]) => pg.isExpo)
       .map(([id, pg]) => ({
         id,
@@ -313,7 +308,7 @@ export class PrinterService {
    * Gets all printer groups.
    */
   GetAllPrinters(): { id: string; name: string; isExpo: boolean; squareItemVariationId: string | null }[] {
-    return Object.entries(this.catalogProviderService.PrinterGroups).map(([id, pg]) => ({
+    return Object.entries(this.catalogProviderService.getPrinterGroups()).map(([id, pg]) => ({
       id,
       name: pg.name,
       isExpo: pg.isExpo,
@@ -391,10 +386,10 @@ export class PrinterService {
 
       const categoryIdOrdinalMap = GenerateCategoryOrderMap(
         fulfillmentConfig.orderBaseCategoryId,
-        this.catalogProviderService.CatalogSelectors.category,
+        this.catalogProviderService.getCatalogSelectors().category,
       );
       const eventTitle = EventTitleStringBuilder(
-        this.catalogProviderService.CatalogSelectors,
+        this.catalogProviderService.getCatalogSelectors(),
         categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
@@ -406,10 +401,11 @@ export class PrinterService {
       const flatCart = Object.values(rebuiltCart).flat();
 
       const messages: PrinterMessage[] = Object.entries(
-        CartByPrinterGroup(flatCart, this.catalogProviderService.CatalogSelectors.productEntry),
+        CartByPrinterGroup(flatCart, this.catalogProviderService.getCatalogSelectors().productEntry),
       )
         .map(([pgId, entries]) => {
-          const pg = this.catalogProviderService.PrinterGroups[pgId];
+          const pg = this.catalogProviderService.getPrinterGroups()[pgId];
+
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (!pg) return null;
 
@@ -473,10 +469,10 @@ export class PrinterService {
 
       const categoryIdOrdinalMap = GenerateCategoryOrderMap(
         fulfillmentConfig.orderBaseCategoryId,
-        this.catalogProviderService.CatalogSelectors.category,
+        this.catalogProviderService.getCatalogSelectors().category,
       );
       const eventTitle = EventTitleStringBuilder(
-        this.catalogProviderService.CatalogSelectors,
+        this.catalogProviderService.getCatalogSelectors(),
         categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,
@@ -488,10 +484,11 @@ export class PrinterService {
       const flatCart = Object.values(rebuiltCart).flat();
 
       const messages: PrinterMessage[] = Object.entries(
-        CartByPrinterGroup(flatCart, this.catalogProviderService.CatalogSelectors.productEntry),
+        CartByPrinterGroup(flatCart, this.catalogProviderService.getCatalogSelectors().productEntry),
       )
         .map(([pgId, entries]) => {
-          const pg = this.catalogProviderService.PrinterGroups[pgId];
+          const pg = this.catalogProviderService.getPrinterGroups()[pgId];
+
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (!pg) return null;
 
@@ -607,20 +604,20 @@ export class PrinterService {
     );
     try {
       const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
-      const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+      const fulfillmentConfig = this.dataProvider.getFulfillments()[lockedOrder.fulfillment.selectedService];
       const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
       const rebuiltCart = RebuildAndSortCart(
         lockedOrder.cart,
-        this.catalogProviderService.CatalogSelectors,
+        this.catalogProviderService.getCatalogSelectors(),
         promisedTime.start,
         fulfillmentConfig.id,
       );
       const categoryIdOrdinalMap = GenerateCategoryOrderMap(
         fulfillmentConfig.orderBaseCategoryId,
-        this.catalogProviderService.CatalogSelectors.category,
+        this.catalogProviderService.getCatalogSelectors().category,
       );
       const eventTitle = EventTitleStringBuilder(
-        this.catalogProviderService.CatalogSelectors,
+        this.catalogProviderService.getCatalogSelectors(),
         categoryIdOrdinalMap,
         fulfillmentConfig,
         customerName,

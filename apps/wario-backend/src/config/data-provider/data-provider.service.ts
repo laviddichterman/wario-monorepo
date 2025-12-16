@@ -21,6 +21,7 @@ import type { IFulfillmentRepository } from '../../repositories/interfaces/fulfi
 import type { IKeyValueRepository, KeyValueEntry } from '../../repositories/interfaces/key-value.repository.interface';
 import type { ISeatingResourceRepository } from '../../repositories/interfaces/seating-resource.repository.interface';
 import type { ISettingsRepository } from '../../repositories/interfaces/settings.repository.interface';
+import { DatabaseManagerService } from '../database-manager/database-manager.service';
 
 @Injectable()
 export class DataProviderService implements OnModuleInit {
@@ -38,6 +39,9 @@ export class DataProviderService implements OnModuleInit {
     private fulfillmentRepository: IFulfillmentRepository,
     @Inject(SEATING_RESOURCE_REPOSITORY)
     private seatingResourceRepository: ISeatingResourceRepository,
+    // injected for the dependency bootstrap requirement
+    @Inject(DatabaseManagerService)
+    private _databaseManager: DatabaseManagerService,
     @InjectPinoLogger(DataProviderService.name)
     private readonly logger: PinoLogger,
   ) {
@@ -100,19 +104,19 @@ export class DataProviderService implements OnModuleInit {
     this.logger.debug('Done Bootstrapping DataProvider');
   };
 
-  get Settings(): IWSettings | null {
+  getSettings(): IWSettings | null {
     return this.settings;
   }
 
-  get Fulfillments() {
+  getFulfillments(): Record<string, FulfillmentConfig> {
     return this.fulfillments;
   }
 
-  get SeatingResources() {
+  getSeatingResources(): Record<string, SeatingResource> {
     return this.seatingResources;
   }
 
-  get KeyValueConfig() {
+  getKeyValueConfig(): Record<string, string> {
     return this.keyvalueconfig;
   }
 

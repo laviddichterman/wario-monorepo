@@ -74,11 +74,11 @@ export class OrderNotificationService {
   CreateExternalConfirmationEmail = async (order: WOrderInstance) => {
     const NOTE_PREPAID =
       "You've already paid, so unless there's an issue with the order or you need to add something, there's no need to handle payment from this point forward.";
-    const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
-    const STORE_ADDRESS = this.dataProvider.KeyValueConfig.STORE_ADDRESS;
-    const EMAIL_ADDRESS = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProvider.getKeyValueConfig().STORE_NAME;
+    const STORE_ADDRESS = this.dataProvider.getKeyValueConfig().STORE_ADDRESS;
+    const EMAIL_ADDRESS = this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS;
 
-    const fulfillmentConfig = this.dataProvider.Fulfillments[order.fulfillment.selectedService];
+    const fulfillmentConfig = this.dataProvider.getFulfillments()[order.fulfillment.selectedService];
     const dateTimeInterval = DateTimeIntervalBuilder(order.fulfillment, fulfillmentConfig.maxDuration);
     const display_time = DateTimeIntervalToDisplayServiceInterval(dateTimeInterval);
     const customer_name = [order.customerInfo.givenName, order.customerInfo.familyName].join(' ');
@@ -109,10 +109,10 @@ export class OrderNotificationService {
   };
 
   CreateExternalCancelationEmail = async (order: WOrderInstance, message: string) => {
-    const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
-    const EMAIL_ADDRESS = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProvider.getKeyValueConfig().STORE_NAME;
+    const EMAIL_ADDRESS = this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS;
 
-    const fulfillmentConfig = this.dataProvider.Fulfillments[order.fulfillment.selectedService];
+    const fulfillmentConfig = this.dataProvider.getFulfillments()[order.fulfillment.selectedService];
     const dateTimeInterval = DateTimeIntervalBuilder(order.fulfillment, fulfillmentConfig.maxDuration);
     const display_time = DateTimeIntervalToDisplayServiceInterval(dateTimeInterval);
     const customer_name = [order.customerInfo.givenName, order.customerInfo.familyName].join(' ');
@@ -136,10 +136,10 @@ export class OrderNotificationService {
   };
 
   CreateExternalEmail = async (order: WOrderInstance, service_title: string, cart: CategorizedRebuiltCart) => {
-    const EMAIL_ADDRESS = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
-    const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
-    const ORDER_RESPONSE_PREAMBLE = this.dataProvider.KeyValueConfig.ORDER_RESPONSE_PREAMBLE;
-    const LOCATION_INFO = this.dataProvider.KeyValueConfig.LOCATION_INFO;
+    const EMAIL_ADDRESS = this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProvider.getKeyValueConfig().STORE_NAME;
+    const ORDER_RESPONSE_PREAMBLE = this.dataProvider.getKeyValueConfig().ORDER_RESPONSE_PREAMBLE;
+    const LOCATION_INFO = this.dataProvider.getKeyValueConfig().LOCATION_INFO;
     const delivery_section = order.fulfillment.deliveryInfo
       ? this.GenerateDeliverySection(order.fulfillment.deliveryInfo, true)
       : '';
@@ -187,14 +187,15 @@ export class OrderNotificationService {
       `${customerInfo.givenName} ${customerInfo.familyName}`,
       dateTimeInterval,
     );
-    const EMAIL_ADDRESS = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
-    const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
+    const EMAIL_ADDRESS = this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProvider.getKeyValueConfig().STORE_NAME;
     const newTimeString = DateTimeIntervalToDisplayServiceInterval(dateTimeInterval);
+    const locationPhoneNumber = this.dataProvider.getSettings()?.LOCATION_PHONE_NUMBER;
     const emailbody = `<p>${customerInfo.givenName},</p> 
     We're letting you know that we've updated your order time.<br />
     The new time is ${newTimeString}.<br />
     ${additionalMessage ? `<p>${additionalMessage}</p>` : ''}
-    If you have any questions, please feel free to reach out to us by responding to this email${this.dataProvider.Settings?.LOCATION_PHONE_NUMBER ? ` or via text message at ${this.dataProvider.Settings.LOCATION_PHONE_NUMBER}` : ''}.`;
+    If you have any questions, please feel free to reach out to us by responding to this email${locationPhoneNumber ? ` or via text message at ${locationPhoneNumber}` : ''}.`;
     return await this.googleService.SendEmail(
       {
         name: STORE_NAME,
@@ -343,7 +344,7 @@ export class OrderNotificationService {
       .flat(1);
 
   GenerateCartTextFromFullCart = (cart: CategorizedRebuiltCart): { category_name: string; products: string[] }[] => {
-    const catalogCategories = this.catalogProviderService.Catalog.categories;
+    const catalogCategories = this.catalogProviderService.getCatalog().categories;
     return Object.entries(cart)
       .filter(([_, cart]) => cart.length > 0)
       .map(([catid, category_cart]) => {

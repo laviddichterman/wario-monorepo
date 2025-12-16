@@ -70,8 +70,8 @@ export class StoreCreditProviderService {
     creditCode: string,
     qr_code_fs: Stream.PassThrough,
   ) => {
-    const EMAIL_ADDRESS = this.dataProviderService.KeyValueConfig.EMAIL_ADDRESS;
-    const STORE_NAME = this.dataProviderService.KeyValueConfig.STORE_NAME;
+    const EMAIL_ADDRESS = this.dataProviderService.getKeyValueConfig().EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProviderService.getKeyValueConfig().STORE_NAME;
     const amountString = MoneyToDisplayString(amount, true);
     const recipient = `${recipientNameFirst} ${recipientNameLast}`;
     const emailbody = `<h2>Thanks for thinking of Windy City Pie for someone close to you!</h2>
@@ -105,8 +105,8 @@ export class StoreCreditProviderService {
     creditCode: string,
     qr_code_fs: Stream.PassThrough,
   ) => {
-    const EMAIL_ADDRESS = this.dataProviderService.KeyValueConfig.EMAIL_ADDRESS;
-    const STORE_NAME = this.dataProviderService.KeyValueConfig.STORE_NAME;
+    const EMAIL_ADDRESS = this.dataProviderService.getKeyValueConfig().EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProviderService.getKeyValueConfig().STORE_NAME;
     const amountString = MoneyToDisplayString(amount, true);
     const recipient = `${recipientNameFirst} ${recipientNameLast}`;
     const sender_message =
@@ -136,8 +136,8 @@ export class StoreCreditProviderService {
     creditCode: string,
     qr_code_fs: Stream.PassThrough,
   ) => {
-    const EMAIL_ADDRESS = this.dataProviderService.KeyValueConfig.EMAIL_ADDRESS;
-    const STORE_NAME = this.dataProviderService.KeyValueConfig.STORE_NAME;
+    const EMAIL_ADDRESS = this.dataProviderService.getKeyValueConfig().EMAIL_ADDRESS;
+    const STORE_NAME = this.dataProviderService.getKeyValueConfig().STORE_NAME;
     const amountString = MoneyToDisplayString(amount, true);
     const recipient = `${recipientNameFirst} ${recipientNameLast}`;
     const creditTypeString = creditType === StoreCreditType.DISCOUNT ? 'discount' : 'digital gift';
@@ -193,7 +193,7 @@ export class StoreCreditProviderService {
       '',
     ];
     return await this.googleService.AppendToSheet(
-      this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+      this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
       `${ACTIVE_SHEET}!A1:M1`,
       fields,
     );
@@ -201,7 +201,7 @@ export class StoreCreditProviderService {
 
   ValidateAndLockCode = async (credit_code: string): Promise<ValidateAndLockCreditResponse> => {
     const values_promise = this.googleService.GetValuesFromSheet(
-      this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+      this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
       ACTIVE_RANGE,
     );
     const lock = aes256gcm.encrypt(credit_code);
@@ -231,7 +231,7 @@ export class StoreCreditProviderService {
     ];
     const new_range = `${ACTIVE_SHEET}!${(2 + i).toString()}:${(2 + i).toString()}`;
     const update_promise = this.googleService.UpdateValuesInSheet(
-      this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+      this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
       new_range,
       new_entry,
     );
@@ -257,7 +257,7 @@ export class StoreCreditProviderService {
   }: ValidateLockAndSpendRequest): Promise<{ success: false } | ValidateLockAndSpendSuccess> => {
     const beginningOfToday = startOfDay(Date.now());
     const values = await this.googleService.GetValuesFromSheet(
-      this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+      this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
       ACTIVE_RANGE,
     );
     for (let i = 0; i < values.values!.length; ++i) {
@@ -302,7 +302,7 @@ export class StoreCreditProviderService {
         ];
         const new_range = `${ACTIVE_SHEET}!${(2 + i).toString()}:${(2 + i).toString()}`;
         await this.googleService.UpdateValuesInSheet(
-          this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+          this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
           new_range,
           new_entry,
         );
@@ -319,7 +319,7 @@ export class StoreCreditProviderService {
   CheckAndRefundStoreCredit = async (old_entry: unknown[], index: number) => {
     const new_range = `${ACTIVE_SHEET}!${(2 + index).toString()}:${(2 + index).toString()}`;
     await this.googleService.UpdateValuesInSheet(
-      this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+      this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
       new_range,
       old_entry,
     );
@@ -333,7 +333,7 @@ export class StoreCreditProviderService {
   ): Promise<{ success: false } | ValidateLockAndSpendSuccess> => {
     const beginningOfToday = startOfDay(Date.now());
     const values = await this.googleService.GetValuesFromSheet(
-      this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+      this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
       ACTIVE_RANGE,
     );
     const creditCodeIndex = values.values!.findIndex((x) => x[7] == code);
@@ -366,7 +366,7 @@ export class StoreCreditProviderService {
       const new_range = `${ACTIVE_SHEET}!${(2 + creditCodeIndex).toString()}:${(2 + creditCodeIndex).toString()}`;
       try {
         await this.googleService.UpdateValuesInSheet(
-          this.dataProviderService.KeyValueConfig.STORE_CREDIT_SHEET,
+          this.dataProviderService.getKeyValueConfig().STORE_CREDIT_SHEET,
           new_range,
           new_entry,
         );
@@ -412,7 +412,7 @@ export class StoreCreditProviderService {
 
     const create_order_response = await this.squareService.CreateOrder(
       CreateOrderStoreCredit(
-        this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
+        this.dataProviderService.getKeyValueConfig().SQUARE_LOCATION,
         referenceId,
         request.amount,
         `Purchase of store credit code: ${creditCode}`,
@@ -424,7 +424,7 @@ export class StoreCreditProviderService {
       const squareOrderId = squareOrder.id as string;
       this.logger.info(`For internal id ${referenceId} created Square Order ID: ${squareOrderId} for ${amountString}`);
       const payment_response = await this.squareService.ProcessPayment({
-        locationId: this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
+        locationId: this.dataProviderService.getKeyValueConfig().SQUARE_LOCATION,
         sourceId: nonce,
         amount: request.amount,
         referenceId,
@@ -473,7 +473,7 @@ export class StoreCreditProviderService {
       } else {
         this.logger.error('Failed to process payment: %o', payment_response);
         await this.squareService.OrderStateChange(
-          this.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
+          this.dataProviderService.getKeyValueConfig().SQUARE_LOCATION,
           squareOrderId,
           squareOrderVersion,
           'CANCELED',

@@ -53,7 +53,7 @@ export const createPrinterGroup = async (deps: PrinterGroupDeps, printerGroup: O
   const upsertResponse = await deps.squareService.BatchUpsertCatalogObjects([
     {
       objects: PrinterGroupToSquareCatalogObjectPlusDummyProduct(
-        [deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE], // this ONLY goes to the alternate location since we can't purchase messages
+        [deps.dataProviderService.getKeyValueConfig().SQUARE_LOCATION_ALTERNATE], // this ONLY goes to the alternate location since we can't purchase messages
         printerGroup,
         [],
         '',
@@ -103,7 +103,7 @@ export const batchUpdatePrinterGroup = async (
 
   const catalogObjects = batches.map((b, i) =>
     PrinterGroupToSquareCatalogObjectPlusDummyProduct(
-      [deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE], // message only needs to go to the alternate location
+      [deps.dataProviderService.getKeyValueConfig().SQUARE_LOCATION_ALTERNATE], // message only needs to go to the alternate location
       { ...oldPGs[i], ...b.printerGroup },
       existingSquareObjects,
       ('000' + i).slice(-3),

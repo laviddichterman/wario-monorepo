@@ -54,7 +54,7 @@ export class GoogleService implements OnModuleInit {
     // 6. Click "Exchange authorization code for tokens"
     // In the future, this should be changed to handle Oauth2 via the UI or to use a service account.
     this.logger.debug('Bootstrapping GoogleProvider');
-    const cfg = this.dataProvider.KeyValueConfig;
+    const cfg = this.dataProvider.getKeyValueConfig();
     this.oauth2Client = new OAuth2(
       cfg.GOOGLE_CLIENTID,
       cfg.GOOGLE_CLIENT_SECRET,

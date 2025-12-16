@@ -18,8 +18,8 @@ export class SettingsController {
     try {
       await this.dataProvider.postBlockedOffToFulfillments(body);
       await this.dataProvider.syncFulfillments();
-      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
-      return this.dataProvider.Fulfillments;
+      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.getFulfillments());
+      return this.dataProvider.getFulfillments();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -30,8 +30,8 @@ export class SettingsController {
     try {
       await this.dataProvider.deleteBlockedOffFromFulfillments(body);
       await this.dataProvider.syncFulfillments();
-      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
-      return this.dataProvider.Fulfillments;
+      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.getFulfillments());
+      return this.dataProvider.getFulfillments();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -43,8 +43,8 @@ export class SettingsController {
     try {
       await this.dataProvider.setLeadTimes(body);
       await this.dataProvider.syncFulfillments();
-      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
-      return this.dataProvider.Fulfillments;
+      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.getFulfillments());
+      return this.dataProvider.getFulfillments();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
@@ -55,8 +55,8 @@ export class SettingsController {
   async setSettings(@Body() body: IWSettingsDto) {
     try {
       await this.dataProvider.updateSettings(body);
-      this.socketIoService.server.emit('WCP_SETTINGS', this.dataProvider.Settings);
-      return this.dataProvider.Settings;
+      this.socketIoService.server.emit('WCP_SETTINGS', this.dataProvider.getSettings());
+      return this.dataProvider.getSettings();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

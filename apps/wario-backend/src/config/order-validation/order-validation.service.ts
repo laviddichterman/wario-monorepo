@@ -36,7 +36,7 @@ export class OrderValidationService {
     noLongerAvailable: CoreCartEntry<WProduct>[];
     rebuiltCart: CategorizedRebuiltCart;
   } => {
-    const catalogSelectors = this.catalogProviderService.CatalogSelectors;
+    const catalogSelectors = this.catalogProviderService.getCatalogSelectors();
     const reachableProducts = GenerateProductsReachableAndNotDisabledFromFulfillment(fulfillment, catalogSelectors);
     const rebuiltCart = RebuildAndSortCart(cart, catalogSelectors, service_time, fulfillment.id);
     // Check which products are no longer available at this time/fulfillment

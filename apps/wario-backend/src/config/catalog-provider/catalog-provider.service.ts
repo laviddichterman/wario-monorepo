@@ -65,6 +65,7 @@ import {
 } from '../../repositories/interfaces/product.repository.interface';
 import { AppConfigService } from '../app-config.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
+import { DatabaseManagerService } from '../database-manager/database-manager.service';
 import { MigrationFlagsService } from '../migration-flags.service';
 import { GenerateSquareReverseMapping, ICatalogContext } from '../square-wario-bridge';
 import { SquareService } from '../square/square.service';
@@ -113,58 +114,71 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     @Inject(DataProviderService) private dataProviderService: DataProviderService,
     @Inject(MigrationFlagsService) private migrationFlags: MigrationFlagsService,
     @Inject(SquareService) private squareService: SquareService,
+    // NEEDED to enforce database migrations before loading catalog data
+    @Inject(DatabaseManagerService)
+    private databaseManager: DatabaseManagerService,
     @InjectPinoLogger(CatalogProviderService.name)
     private readonly _logger: PinoLogger,
   ) {
-    this.apiver = { major: 0, minor: 0, patch: 0 };
+    // Initialize all fields to prevent undefined getter access issues
+    this.categories = {};
+    this.printerGroups = {};
+    this.modifier_types = [];
+    this.options = [];
+    this.products = [];
+    this.product_instances = [];
+    this.product_instance_functions = {};
+    this.orderInstanceFunctions = {};
+    this.catalog = {} as ICatalog;
     this.squareIdToWarioIdMapping = {};
+    this.apiver = { major: 0, minor: 0, patch: 0 };
   }
 
-  public get logger(): PinoLogger {
+  public getLogger(): PinoLogger {
     return this._logger;
   }
 
-  get PrinterGroups() {
+  public getPrinterGroups() {
     return this.printerGroups;
   }
 
-  get Categories() {
+  public getCategories() {
     return this.categories;
   }
 
-  get ModifierTypes() {
+  public getModifierTypes() {
     return this.modifier_types;
   }
 
-  get ModifierOptions() {
+  public getModifierOptions() {
     return this.options;
   }
 
-  get Products() {
+  public getProducts() {
     return this.products;
   }
 
-  get ProductInstances() {
+  public getProductInstances() {
     return this.product_instances;
   }
 
-  get ProductInstanceFunctions() {
+  public getProductInstanceFunctions() {
     return this.product_instance_functions;
   }
 
-  get OrderInstanceFunctions() {
+  public getOrderInstanceFunctions() {
     return this.orderInstanceFunctions;
   }
 
-  get Catalog() {
+  public getCatalog() {
     return this.catalog;
   }
 
-  get ReverseMappings(): Readonly<Record<string, string>> {
+  public getReverseMappings(): Readonly<Record<string, string>> {
     return this.squareIdToWarioIdMapping;
   }
 
-  get CatalogSelectors() {
+  public getCatalogSelectors() {
     return ICatalogSelectorWrapper(this.catalog);
   }
 
@@ -183,7 +197,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       categoryRepository: this.categoryRepository,
       productRepository: this.productRepository,
       logger: this._logger,
-      fulfillments: this.dataProviderService.Fulfillments,
+      fulfillments: this.dataProviderService.getFulfillments(),
       categories: this.categories,
       catalog: this.catalog,
       batchDeleteProducts: async (pids, suppress) => this.BatchDeleteProduct(pids, suppress),
@@ -300,7 +314,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       catalog: this.catalog,
       modifierTypes: this.modifier_types,
       modifierOptions: this.options,
-      productInstanceFunctions: this.ProductInstanceFunctions,
+      productInstanceFunctions: this.getProductInstanceFunctions(),
 
       syncModifierTypes: () => this.SyncModifierTypes(),
       syncOptions: () => this.SyncOptions(),
@@ -360,11 +374,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       appConfig: this.appConfig,
 
       catalog: this.catalog,
-      catalogSelectors: this.CatalogSelectors,
+      catalogSelectors: this.getCatalogSelectors(),
       modifierTypes: this.modifier_types,
       categories: this.categories,
       printerGroups: this.printerGroups,
-      productInstanceFunctions: this.ProductInstanceFunctions,
+      productInstanceFunctions: this.getProductInstanceFunctions(),
 
       syncProducts: () => this.SyncProducts(),
       syncProductInstances: () => this.SyncProductInstances(),
@@ -473,7 +487,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncCategories = async () => {
-    this.logger.debug(`Syncing Categories.`);
+    this._logger.debug(`Syncing Categories.`);
     try {
       this.categories = ReduceArrayToMapByKey(await this.categoryRepository.findAll(), 'id');
     } catch (err: unknown) {
@@ -484,7 +498,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncPrinterGroups = async () => {
-    this.logger.debug(`Syncing Printer Groups.`);
+    this._logger.debug(`Syncing Printer Groups.`);
     try {
       const results = await this.printerGroupRepository.findAll();
       this.printerGroups = ReduceArrayToMapByKey(results, 'id');
@@ -496,7 +510,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncModifierTypes = async () => {
-    this.logger.debug(`Syncing Modifier Types.`);
+    this._logger.debug(`Syncing Modifier Types.`);
     try {
       this.modifier_types = await this.optionTypeRepository.findAll();
     } catch (err: unknown) {
@@ -507,7 +521,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncOptions = async () => {
-    this.logger.debug(`Syncing Modifier Options.`);
+    this._logger.debug(`Syncing Modifier Options.`);
     try {
       this.options = await this.optionRepository.findAll();
     } catch (err: unknown) {
@@ -518,7 +532,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncProducts = async () => {
-    this.logger.debug(`Syncing Products.`);
+    this._logger.debug(`Syncing Products.`);
     try {
       this.products = await this.productRepository.findAll();
     } catch (err: unknown) {
@@ -529,7 +543,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncProductInstances = async () => {
-    this.logger.debug(`Syncing Product Instances.`);
+    this._logger.debug(`Syncing Product Instances.`);
     try {
       this.product_instances = await this.productInstanceRepository.findAll();
     } catch (err: unknown) {
@@ -540,7 +554,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncProductInstanceFunctions = async () => {
-    this.logger.debug(`Syncing Product Instance Functions.`);
+    this._logger.debug(`Syncing Product Instance Functions.`);
     try {
       this.product_instance_functions = ReduceArrayToMapByKey(
         await this.productInstanceFunctionRepository.findAll(),
@@ -554,7 +568,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   SyncOrderInstanceFunctions = async () => {
-    this.logger.debug(`Syncing Order Instance Functions.`);
+    this._logger.debug(`Syncing Order Instance Functions.`);
     try {
       this.orderInstanceFunctions = ReduceArrayToMapByKey(await this.orderInstanceFunctionRepository.findAll(), 'id');
     } catch (err: unknown) {
@@ -565,7 +579,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   RecomputeCatalog = () => {
-    this.logger.warn('Recomputing catalog');
+    this._logger.warn('Recomputing catalog');
     this.catalog = CatalogGenerator(
       Object.values(this.categories),
       this.modifier_types,
@@ -576,12 +590,15 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this.orderInstanceFunctions,
       this.apiver,
     );
-    this.logger.warn({ api: this.catalog.api, products: this.catalog.products.length }, 'Recomputed catalog');
+    this._logger.warn(
+      { api: this.catalog.api, productCount: Object.keys(this.catalog.products).length },
+      'Recomputed catalog',
+    );
     this.squareIdToWarioIdMapping = GenerateSquareReverseMapping(this.catalog);
   };
 
   async onModuleInit() {
-    this.logger.info(`Starting Bootstrap of CatalogProvider, Loading catalog from database...`);
+    this._logger.info(`Starting Bootstrap of CatalogProvider, Loading catalog from database...`);
 
     const newVer = await this.dbVersionRepository.get();
     this.apiver = newVer as SEMVER;
@@ -602,11 +619,11 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     const shouldSuppressSquareSync = this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
     if (shouldSuppressSquareSync) {
       if (!this.squareService.isInitialized) {
-        this.logger.warn(
+        this._logger.warn(
           'Square service not yet initialized, skipping Square Catalog Sync. Will sync on next catalog update.',
         );
       } else {
-        this.logger.warn('Suppressing Square Catalog Sync at launch. Catalog skew may result.');
+        this._logger.warn('Suppressing Square Catalog Sync at launch. Catalog skew may result.');
       }
     } else {
       await SquareSyncFns.checkAllPrinterGroupsSquareIdsAndFixIfNeeded(this.squareSyncDeps);
@@ -616,7 +633,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this.RecomputeCatalog();
       await SquareSyncFns.checkAllProductsHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
       if (modifierTypeIdsUpdated.length > 0) {
-        this.logger.info(
+        this._logger.info(
           `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsUpdated.length.toString()} modifier types`,
         );
         await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsUpdated);
@@ -630,9 +647,9 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
     }
 
-    this.logger.info(
+    this._logger.info(
       {
-        catalog: this.Catalog.api,
+        catalog: this.getCatalog().api,
         productCount: this.products.length,
         modifierTypeCount: this.modifier_types.length,
         categoryCount: Object.keys(this.categories).length,
@@ -654,7 +671,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     const products_update = await this.productRepository.removeModifierTypeFromAll(mt_id);
     if (products_update > 0) {
       const product_instance_update = await this.productInstanceRepository.removeModifierTypeSelectionsFromAll(mt_id);
-      this.logger.debug(
+      this._logger.debug(
         `Removed ModifierType ID from ${products_update.toString()} products, ${product_instance_update.toString()} product instances.`,
       );
       await this.SyncProducts();
@@ -700,7 +717,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       [mo_id],
     );
     if (product_instance_options_delete > 0) {
-      this.logger.debug(`Removed ${product_instance_options_delete.toString()} Options from Product Instances.`);
+      this._logger.debug(`Removed ${product_instance_options_delete.toString()} Options from Product Instances.`);
       // TODO: run query for any modifiers.options.length === 0
       await this.SyncProductInstances();
     }
@@ -711,17 +728,17 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
    * performed BEFORE a fulfillment is deleted from the DataProvider
    *  */
   BackfillRemoveFulfillment = async (id: string) => {
-    this.logger.debug(`Removing fulfillment ID ${id} references, if any exist.`);
+    this._logger.debug(`Removing fulfillment ID ${id} references, if any exist.`);
     const products_update = await this.productRepository.removeServiceDisableFromAll(id);
     if (products_update > 0) {
-      this.logger.debug(
+      this._logger.debug(
         `Removed serviceDisable fulfillment ID from ${products_update.toString()} products and modifiers.`,
       );
       await this.SyncProducts();
     }
     const category_update = await this.categoryRepository.removeServiceDisableFromAll(id);
     if (category_update > 0) {
-      this.logger.debug(`Removed serviceDisable fulfillment ID from ${category_update.toString()} categories.`);
+      this._logger.debug(`Removed serviceDisable fulfillment ID from ${category_update.toString()} categories.`);
       await this.SyncCategories();
     }
     if (products_update > 0 || category_update > 0) {

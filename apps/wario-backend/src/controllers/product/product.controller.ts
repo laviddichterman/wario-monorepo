@@ -36,7 +36,7 @@ export class ProductController {
         'Unable to satisfy prerequisites to create Product and instances',
       );
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return createProductResult;
   }
 
@@ -51,7 +51,7 @@ export class ProductController {
         'Unable to satisfy prerequisites to create Product(s) and instance(s)',
       );
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return createBatchesResult;
   }
 
@@ -62,7 +62,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -73,7 +73,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -88,7 +88,7 @@ export class ProductController {
         `Unable to delete Products: ${body.pids.join(', ')}`,
       );
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -100,7 +100,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -111,7 +111,7 @@ export class ProductController {
     @Param('piid') productInstanceId: string,
     @Body() body: UpdateIProductInstanceRequestDto,
   ) {
-    const product = this.catalogProvider.CatalogSelectors.productEntry(productId);
+    const product = this.catalogProvider.getCatalogSelectors().productEntry(productId);
     if (!product) {
       throw new ProductNotFoundException(productId);
     }
@@ -123,7 +123,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductInstanceNotFoundException(productInstanceId);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -134,7 +134,7 @@ export class ProductController {
     if (!doc) {
       throw new ProductInstanceNotFoundException(productInstanceId);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 }

@@ -29,7 +29,7 @@ export class ProductInstanceFunctionController {
   @HttpCode(201)
   async postPIF(@Body() body: CreateProductInstanceFunctionDto) {
     try {
-      WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.CatalogSelectors);
+      WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.getCatalogSelectors());
     } catch {
       throw new BadRequestException('Expression invalid');
     }
@@ -37,7 +37,7 @@ export class ProductInstanceFunctionController {
       name: body.name,
       expression: body.expression as IAbstractExpression,
     });
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -45,7 +45,7 @@ export class ProductInstanceFunctionController {
   async patchPIF(@Param('fxnid') fxnid: string, @Body() body: UpdateProductInstanceFunctionDto) {
     if (body.expression) {
       try {
-        WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.CatalogSelectors);
+        WFunctional.AbstractExpressionStatementToString(body.expression, this.catalogProvider.getCatalogSelectors());
       } catch {
         throw new BadRequestException('Expression invalid');
       }
@@ -55,7 +55,7 @@ export class ProductInstanceFunctionController {
     if (!doc) {
       throw new NotFoundException(`Unable to update ProductInstanceFunction: ${fxnid}`);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -65,7 +65,7 @@ export class ProductInstanceFunctionController {
     if (!doc) {
       throw new NotFoundException(`Unable to delete ProductInstanceFunction: ${fxnid}`);
     }
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 }

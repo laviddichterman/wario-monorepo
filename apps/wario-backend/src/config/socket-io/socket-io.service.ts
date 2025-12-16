@@ -47,16 +47,16 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     });
 
     // Emit current application state
-    const fulfillmentCount = Object.keys(this.dataProvider.Fulfillments).length;
-    const seatingCount = Object.keys(this.dataProvider.SeatingResources).length;
+    const fulfillmentCount = Object.keys(this.dataProvider.getFulfillments()).length;
+    const seatingCount = Object.keys(this.dataProvider.getSeatingResources()).length;
     this.logger.trace({ fulfillmentCount, seatingCount }, 'Emitting initial data provider state');
-    this.EmitFulfillmentsTo(client, this.dataProvider.Fulfillments);
+    this.EmitFulfillmentsTo(client, this.dataProvider.getFulfillments());
     // incorrectly type cast to IWSettings so we can not worry about types during the migration
     // @TODO: fix this when we can remove the IWSettingsDto.config field
-    this.EmitSettingsTo(client, this.dataProvider.Settings as IWSettings);
-    this.EmitSeatingResourcesTo(client, this.dataProvider.SeatingResources);
+    this.EmitSettingsTo(client, this.dataProvider.getSettings() as IWSettings);
+    this.EmitSeatingResourcesTo(client, this.dataProvider.getSeatingResources());
 
-    const catalog = this.catalogProvider.Catalog;
+    const catalog = this.catalogProvider.getCatalog();
     const categoryCount = Object.keys(catalog.categories).length;
     const productCount = Object.keys(catalog.products).length;
     this.logger.trace({ categoryCount, productCount }, 'Emitting initial catalog');

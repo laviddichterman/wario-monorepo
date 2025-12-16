@@ -9,13 +9,13 @@ export class KeyValueStoreController {
 
   @Get()
   getKvStore() {
-    return this.dataProvider.KeyValueConfig;
+    return this.dataProvider.getKeyValueConfig();
   }
 
   @Post()
   @HttpCode(201)
   async setKvStore(@Body() body: KeyValueConfigDto) {
     await this.dataProvider.updateKeyValueConfig(body);
-    return this.dataProvider.KeyValueConfig;
+    return this.dataProvider.getKeyValueConfig();
   }
 }

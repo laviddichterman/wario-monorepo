@@ -16,8 +16,8 @@ export class DeliveryAddressController {
 
   @Get()
   async validateAddress(@Body() body: DeliveryAddressValidateRequest) {
-    const GOOGLE_GEOCODE_KEY = this.dataProvider.KeyValueConfig.GOOGLE_GEOCODE_KEY;
-    const serviceArea = this.dataProvider.Fulfillments[body.fulfillmentId].serviceArea;
+    const GOOGLE_GEOCODE_KEY = this.dataProvider.getKeyValueConfig().GOOGLE_GEOCODE_KEY;
+    const serviceArea = this.dataProvider.getFulfillments()[body.fulfillmentId].serviceArea;
     if (!serviceArea) {
       throw new NotFoundException(`Unable to find delivery area for fulfillment: ${body.fulfillmentId} `);
     }

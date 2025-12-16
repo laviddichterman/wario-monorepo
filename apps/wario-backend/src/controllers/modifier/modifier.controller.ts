@@ -23,7 +23,7 @@ export class ModifierController {
   @Scopes('write:catalog')
   async CreateModifierType(@Body() body: CreateIOptionTypeRequestBodyDto) {
     const doc = await this.catalogProvider.CreateModifierType(body);
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -34,7 +34,7 @@ export class ModifierController {
       id,
       modifierType: body,
     });
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -42,7 +42,7 @@ export class ModifierController {
   @Scopes('delete:catalog')
   async DeleteModifierType(@Param('id') id: string) {
     const doc = await this.catalogProvider.DeleteModifierType(id);
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -50,7 +50,7 @@ export class ModifierController {
   @Scopes('write:catalog')
   async CreateOption(@Body() body: CreateIOptionRequestBodyDto, @Param('mtid') mtid: string) {
     const doc = await this.catalogProvider.CreateOption(mtid, body);
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -62,7 +62,7 @@ export class ModifierController {
       modifierTypeId: mtid,
       option: body,
     });
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 
@@ -70,7 +70,7 @@ export class ModifierController {
   @Scopes('delete:catalog')
   async DeleteModifierOption(@Param('id') id: string, @Param('mtid') mtid: string) {
     const doc = await this.catalogProvider.DeleteModifierOption(mtid, id);
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 }

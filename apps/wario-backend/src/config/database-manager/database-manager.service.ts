@@ -20,6 +20,7 @@ interface ILegacyMigrationFunctionObject {
   [index: string]: [SEMVER, () => Promise<void>];
 }
 
+import { MongooseToNewMigrator } from './mongoose-to-newmongoose';
 import { MongooseToPostgresMigrator } from './mongoose-to-postgres.migrator';
 
 @Injectable()
@@ -32,13 +33,10 @@ export class DatabaseManagerService implements OnModuleInit {
     // TypeORM connection for Postgres
     private dataSource: DataSource,
     private migrator: MongooseToPostgresMigrator,
+    private mongooseMigrator: MongooseToNewMigrator,
     @InjectPinoLogger(DatabaseManagerService.name)
     private readonly logger: PinoLogger,
-  ) {}
-
-  private initializationPromise: Promise<void> | null = null;
-  private resolveInitialization: (() => void) | null = null;
-  private rejectInitialization: ((err: unknown) => void) | null = null;
+  ) { }
 
   private semverToString(version: SEMVER): string {
     return `${String(version.major)}.${String(version.minor)}.${String(version.patch)}`;
@@ -51,28 +49,8 @@ export class DatabaseManagerService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    this.initializationPromise = new Promise((resolve, reject) => {
-      this.resolveInitialization = resolve;
-      this.rejectInitialization = reject;
-    });
-    // Start bootstrap but don't await usage here to allow async init chain
-    this.Bootstrap()
-      .then(() => {
-        this.resolveInitialization?.();
-        return;
-      })
-      .catch((err: unknown) => {
-        this.logger.error({ err }, 'Database Bootstrap Failed');
-        this.rejectInitialization?.(err);
-      });
-
-    // Satisfy linter that we aren't awaiting anything (intentional fire-and-forget for bootstrap)
-    return Promise.resolve();
-  }
-
-  public async ensureInitialized() {
-    if (!this.initializationPromise) return;
-    await this.initializationPromise;
+    // MAKE SURE TO AWAIT
+    await this.Bootstrap()
   }
 
   public async runDataMigration() {
@@ -115,7 +93,18 @@ export class DatabaseManagerService implements OnModuleInit {
    * WE DO NOT MIGRATE MONGOOSE SCHEMA ANYMORE.
    */
   private LEGACY_MONGOOSE_MIGRATIONS: ILegacyMigrationFunctionObject = {
-    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => {}],
+    '0.6.4': [{ major: 0, minor: 6, patch: 8 }, async () => { }],
+    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => { }],
+    '0.6.6': [{ major: 0, minor: 6, patch: 7 }, async () => { }],
+    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => { }],
+    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => { }],
+    '0.6.9': [
+      { major: 0, minor: 6, patch: 10 },
+      async () => {
+        // 2025 Schema Migration: backfills children[], products[], options[], instances[]
+        await this.mongooseMigrator.migrate2025Schema();
+      },
+    ],
   };
 
   /**

@@ -64,10 +64,10 @@ export class AccountingController {
   //   const CategorySalesMapMerger = (sales_map: CategorySalesMap, cart: CoreCartEntry<WProduct>[]): CategorySalesMap => {
   //     return cart.reduce((acc, e) => {
   //       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  //       const product = this.catalogProvider.CatalogSelectors.productEntry(e.product.p.productId)!;
+  //       const product = this.catalogProvider.getCatalogSelectors().productEntry(e.product.p.productId)!;
   //       const printerGroupId = product.product.printerGroup;
   //       const printerGroupName = printerGroupId
-  //         ? this.catalogProvider.PrinterGroups[printerGroupId].name
+  //         ? this.catalogProvider.getPrinterGroups()[printerGroupId].name
   //         : 'No Category';
   //       const pgIdOrNONE = printerGroupId ?? 'NONE';
   //       const price = e.quantity * e.product.m.price.amount;
@@ -106,7 +106,7 @@ export class AccountingController {
   //           quantity: x.quantity,
   //           product: CreateProductWithMetadataFromV2(
   //             x.product,
-  //             this.catalogProvider.CatalogSelectors,
+  //             this.catalogProvider.getCatalogSelectors(),
   //             service_time,
   //             o.fulfillment.selectedService,
   //           ),

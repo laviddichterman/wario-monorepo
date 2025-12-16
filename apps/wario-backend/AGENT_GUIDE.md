@@ -117,7 +117,7 @@ The `DatabaseManagerService` handles the initial setup of the PostgreSQL databas
 
 ### Legacy Support
 
-`LEGACY_MONGOOSE_MIGRATIONS` exists for historical support but is **frozen**. All new schema changes should target PostgreSQL.
+`LEGACY_MONGOOSE_MIGRATIONS` exists for historical support. While generally frozen, it is currently being used for the **2025 Schema Migration Phase 1** (Version 0.6.9) to update Mongoose data structures (e.g. inverting category trees) before the eventual PostgreSQL transition.
 
 ### Testing
 

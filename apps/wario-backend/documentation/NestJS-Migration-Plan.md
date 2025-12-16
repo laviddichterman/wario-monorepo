@@ -713,7 +713,7 @@ export class ReadOnlyGateway implements OnGatewayConnection, OnGatewayDisconnect
 
   // Copy methods from SocketIoProvider verbatim
   emitFulfillmentsTo(dest: Socket | Namespace) {
-    return dest.emit('WCP_FULFILLMENTS', this.dataProvider.Fulfillments);
+    return dest.emit('WCP_FULFILLMENTS', this.dataProvider.getFulfillments());
   }
 
   emitFulfillments() {
@@ -721,7 +721,7 @@ export class ReadOnlyGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   emitSettingsTo(dest: Socket | Namespace) {
-    return dest.emit('WCP_SETTINGS', this.dataProvider.Settings);
+    return dest.emit('WCP_SETTINGS', this.dataProvider.getSettings());
   }
 
   emitSettings() {
@@ -737,7 +737,7 @@ export class ReadOnlyGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   emitSeatingResourcesTo(dest: Socket | Namespace) {
-    return dest.emit('WCP_SEATING_RESOURCES', this.dataProvider.SeatingResources);
+    return dest.emit('WCP_SEATING_RESOURCES', this.dataProvider.getSeatingResources());
   }
 
   emitSeatingResources() {

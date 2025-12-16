@@ -157,12 +157,12 @@ export class OrderManagerService {
     );
     try {
       // send order to alternate location
-      const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+      const fulfillmentConfig = this.dataProvider.getFulfillments()[lockedOrder.fulfillment.selectedService];
 
       const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
       const rebuiltCart = RebuildAndSortCart(
         lockedOrder.cart,
-        this.catalogService.CatalogSelectors,
+        this.catalogService.getCatalogSelectors(),
         promisedTime.start,
         fulfillmentConfig.id,
       );
@@ -242,7 +242,7 @@ export class OrderManagerService {
     );
     const errors: WError[] = [];
     try {
-      const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+      const fulfillmentConfig = this.dataProvider.getFulfillments()[lockedOrder.fulfillment.selectedService];
       const is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
       const squareOrderId = lockedOrder.metadata.find((x) => x.key === 'SQORDER')!.value;
 
@@ -327,9 +327,9 @@ export class OrderManagerService {
         // maybe this should result in some more sophisticated cleanup, but we haven't seen a failure here yet
         this.logger.error('Got errors when refunding payments. Sending email to the big giant head');
         void this.googleService.SendEmail(
-          this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
+          this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS,
           {
-            name: this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
+            name: this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS,
             address: 'dave@windycitypie.com',
           },
           'ERROR IN REFUND PROCESSING. CONTACT DAVE IMMEDIATELY',
@@ -354,7 +354,7 @@ export class OrderManagerService {
         const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
         const rebuiltCart = RebuildAndSortCart(
           lockedOrder.cart,
-          this.catalogService.CatalogSelectors,
+          this.catalogService.getCatalogSelectors(),
           promisedTime.start,
           fulfillmentConfig.id,
         );
@@ -386,7 +386,7 @@ export class OrderManagerService {
       // cancel square fulfillment(s) and the order if it's not paid
       if (squareOrder.state === 'OPEN') {
         const updateSquareOrderResponse = await this.squareService.OrderUpdate(
-          this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+          this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
           squareOrderId,
           orderVersion,
           {
@@ -490,10 +490,10 @@ export class OrderManagerService {
     >,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     const updatedOrder = { ...lockedOrder, ...orderUpdate };
-    const fulfillmentConfig = this.dataProvider.Fulfillments[updatedOrder.fulfillment.selectedService];
+    const fulfillmentConfig = this.dataProvider.getFulfillments()[updatedOrder.fulfillment.selectedService];
     const categoryOrderMap = GenerateCategoryOrderMapForOrder(
       fulfillmentConfig,
-      this.catalogService.CatalogSelectors.category,
+      this.catalogService.getCatalogSelectors().category,
     );
 
     const _is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
@@ -505,12 +505,12 @@ export class OrderManagerService {
     const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
     const rebuiltCart = RebuildAndSortCart(
       lockedOrder.cart,
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       promisedTime.start,
       fulfillmentConfig.id,
     );
     const eventTitle = EventTitleStringBuilder(
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       categoryOrderMap,
       fulfillmentConfig,
       customerName,
@@ -530,8 +530,8 @@ export class OrderManagerService {
       config: {
         SERVICE_CHARGE: 0,
         AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
-        TAX_RATE: this.dataProvider.Settings?.TAX_RATE || 0.1025,
-        CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
+        TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE || 0.1025,
+        CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
       },
     });
 
@@ -597,10 +597,10 @@ export class OrderManagerService {
     newTime: FulfillmentTime,
     emailCustomer: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+    const fulfillmentConfig = this.dataProvider.getFulfillments()[lockedOrder.fulfillment.selectedService];
     const categoryOrderMap = GenerateCategoryOrderMapForOrder(
       fulfillmentConfig,
-      this.catalogService.CatalogSelectors.category,
+      this.catalogService.getCatalogSelectors().category,
     );
     const is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
     const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
@@ -611,12 +611,12 @@ export class OrderManagerService {
     const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
     const rebuiltCart = RebuildAndSortCart(
       lockedOrder.cart,
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       promisedTime.start,
       fulfillmentConfig.id,
     );
     const eventTitle = EventTitleStringBuilder(
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       categoryOrderMap,
       fulfillmentConfig,
       customerName,
@@ -650,7 +650,7 @@ export class OrderManagerService {
     if (retrieveSquareOrderResponse.success) {
       const squareOrder = retrieveSquareOrderResponse.result.order!;
       const _updateSquareOrderResponse = await this.squareService.OrderUpdate(
-        this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+        this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
         squareOrderId,
         squareOrder.version!,
         {
@@ -698,8 +698,8 @@ export class OrderManagerService {
           config: {
             SERVICE_CHARGE: 0,
             AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
-            TAX_RATE: this.dataProvider.Settings?.TAX_RATE || 0.1035,
-            CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
+            TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE || 0.1035,
+            CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
           },
         }),
       );
@@ -755,21 +755,21 @@ export class OrderManagerService {
     const _emailResponse = await this.orderNotificationService.CreateExternalConfirmationEmail(lockedOrder);
 
     // create calendar entry
-    const fulfillmentConfig = this.dataProvider.Fulfillments[lockedOrder.fulfillment.selectedService];
+    const fulfillmentConfig = this.dataProvider.getFulfillments()[lockedOrder.fulfillment.selectedService];
     const categoryOrderMap = GenerateCategoryOrderMapForOrder(
       fulfillmentConfig,
-      this.catalogService.CatalogSelectors.category,
+      this.catalogService.getCatalogSelectors().category,
     );
     const dateTimeInterval = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
     const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
     const rebuiltCart = RebuildAndSortCart(
       lockedOrder.cart,
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       dateTimeInterval.start,
       fulfillmentConfig.id,
     );
     const eventTitle = EventTitleStringBuilder(
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       categoryOrderMap,
       fulfillmentConfig,
       customerName,
@@ -791,8 +791,8 @@ export class OrderManagerService {
         config: {
           SERVICE_CHARGE: 0,
           AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
-          TAX_RATE: this.dataProvider.Settings?.TAX_RATE || 0.1035,
-          CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
+          TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE || 0.1035,
+          CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
         },
       }),
     );
@@ -934,7 +934,7 @@ export class OrderManagerService {
     this.logger.debug({ createOrderRequest, ipAddress }, 'Create Order Request');
 
     // 1. get the fulfillment and other needed constants from the DataProvider, generate a reference ID, quick computations
-    if (!Object.hasOwn(this.dataProvider.Fulfillments, createOrderRequest.fulfillment.selectedService)) {
+    if (!Object.hasOwn(this.dataProvider.getFulfillments(), createOrderRequest.fulfillment.selectedService)) {
       return {
         status: 404,
         success: false,
@@ -943,12 +943,12 @@ export class OrderManagerService {
         ],
       };
     }
-    const fulfillmentConfig = this.dataProvider.Fulfillments[createOrderRequest.fulfillment.selectedService];
+    const fulfillmentConfig = this.dataProvider.getFulfillments()[createOrderRequest.fulfillment.selectedService];
     const categoryOrderMap = GenerateCategoryOrderMapForOrder(
       fulfillmentConfig,
-      this.catalogService.CatalogSelectors.category,
+      this.catalogService.getCatalogSelectors().category,
     );
-    const STORE_NAME = this.dataProvider.KeyValueConfig.STORE_NAME;
+    const STORE_NAME = this.dataProvider.getKeyValueConfig().STORE_NAME;
     const referenceId = requestTime.toString(36).toUpperCase();
     const dateTimeInterval = DateTimeIntervalBuilder(createOrderRequest.fulfillment, fulfillmentConfig.maxDuration);
     const customerName = [createOrderRequest.customerInfo.givenName, createOrderRequest.customerInfo.familyName].join(
@@ -985,7 +985,7 @@ export class OrderManagerService {
     }
 
     const shorthandEventTitle = EventTitleStringBuilder(
-      this.catalogService.CatalogSelectors,
+      this.catalogService.getCatalogSelectors(),
       categoryOrderMap,
       fulfillmentConfig,
       customerName,
@@ -1024,8 +1024,8 @@ export class OrderManagerService {
       config: {
         SERVICE_CHARGE: 0,
         AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
-        TAX_RATE: this.dataProvider.Settings?.TAX_RATE ?? 0.1035,
-        CATALOG_SELECTORS: this.catalogService.CatalogSelectors,
+        TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE ?? 0.1035,
+        CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
       },
     });
     if (recomputedTotals.balanceAfterPayments.amount > 0) {
@@ -1051,10 +1051,10 @@ export class OrderManagerService {
     // 4. check the availability of the requested service date/time
     const cartLeadTime = DetermineCartBasedLeadTime(
       createOrderRequest.cart,
-      this.catalogService.CatalogSelectors.productEntry,
+      this.catalogService.getCatalogSelectors().productEntry,
     );
     const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation(
-      [this.dataProvider.Fulfillments[createOrderRequest.fulfillment.selectedService]],
+      [this.dataProvider.getFulfillments()[createOrderRequest.fulfillment.selectedService]],
       createOrderRequest.fulfillment.selectedDate,
       cartLeadTime,
     );
@@ -1119,7 +1119,7 @@ export class OrderManagerService {
       // Payment Part B: make an order
       const squareOrderResponse = await this.squareService.CreateOrder(
         CreateOrderFromCart(
-          this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+          this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
           referenceId,
           discounts,
           [{ amount: recomputedTotals.taxAmount }],
@@ -1149,7 +1149,7 @@ export class OrderManagerService {
         switch (payment.t) {
           case PaymentMethod.CreditCard: {
             const squarePaymentResponse = await this.squareService.CreatePayment({
-              locationId: this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+              locationId: this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
               sourceId: payment.payment.sourceId,
               amount: payment.amount,
               tipAmount: payment.tipAmount,
@@ -1194,7 +1194,7 @@ export class OrderManagerService {
             }
             storeCreditResponses.push(response);
             const squareMoneyCreditPaymentResponse = await this.squareService.CreatePayment({
-              locationId: this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+              locationId: this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
               sourceId: 'EXTERNAL',
               storeCreditPayment: payment,
               amount: payment.amount,
@@ -1282,7 +1282,7 @@ export class OrderManagerService {
     try {
       if (squareOrder !== null) {
         await this.squareService.OrderStateChange(
-          this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+          this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
           squareOrder.id!,
           squareOrderVersion,
           'CANCELED',

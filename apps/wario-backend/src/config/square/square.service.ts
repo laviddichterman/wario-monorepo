@@ -200,10 +200,10 @@ export class SquareService implements OnModuleInit {
 
   async onModuleInit() {
     this.logger.info('Starting Bootstrap of SquareService');
-    if (this.dataProvider.KeyValueConfig.SQUARE_TOKEN) {
+    if (this.dataProvider.getKeyValueConfig().SQUARE_TOKEN) {
       this.client = new Client({
         environment: this.appConfig.isProduction ? Environment.Production : Environment.Sandbox,
-        accessToken: this.dataProvider.KeyValueConfig.SQUARE_TOKEN,
+        accessToken: this.dataProvider.getKeyValueConfig().SQUARE_TOKEN,
         httpClientOptions: {
           retryConfig: SQUARE_RETRY_CONFIG,
         },
@@ -245,7 +245,7 @@ export class SquareService implements OnModuleInit {
     let response: SquareProviderApiCallReturnValue<SearchCatalogItemsResponse>;
     do {
       response = await this.SearchCatalogItems({
-        enabledLocationIds: [this.dataProvider.KeyValueConfig.SQUARE_LOCATION],
+        enabledLocationIds: [this.dataProvider.getKeyValueConfig().SQUARE_LOCATION],
         ...(cursor ? { cursor } : {}),
       });
       if (!response.success) {
@@ -269,7 +269,7 @@ export class SquareService implements OnModuleInit {
       }
       foundItems.push(
         ...(response.result.objects ?? [])
-          .filter((x) => x.presentAtLocationIds?.includes(this.dataProvider.KeyValueConfig.SQUARE_LOCATION))
+          .filter((x) => x.presentAtLocationIds?.includes(this.dataProvider.getKeyValueConfig().SQUARE_LOCATION))
           .map((x) => x.id),
       );
       cursor = response.result.cursor ?? undefined;

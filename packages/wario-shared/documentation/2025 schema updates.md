@@ -10,13 +10,17 @@
 >
 > The following types use these new patterns. See `DTO_GUIDE.md` for the full breaking changes table.
 
-## Root Category Requirement
+## Category Tree Structure
 
-**CRITICAL**: The 2025 schema requires a **root category node** at the top of the category hierarchy.
+The 2025 schema inverts the category tree:
 
-- All categories must be descendants of this root category
-- The root category's `children` array defines the ordering of top-level categories
-- Database initialization on an empty install **must create this root category** (typically named "Root")
+- Each `ICategory` has `children[]` (ordered child category IDs) and `products[]` (ordered product IDs)
+- `ordinal` and `parent_id` fields are removed
+- **No global root category is required**
+- Each fulfillment defines its own `orderBaseCategoryId` as the menu root for that fulfillment
+- Top-level categories (`parent_id=null`) remain as independent category trees
+
+## Schema Changes
 
 Update the documentation throughout the codebase to reflect the following changes to the wario-shared package:
 

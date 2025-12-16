@@ -54,7 +54,7 @@ export class OrderPaymentService {
     // refund to store credit
     const create_order_store_credit = await this.squareService.CreateOrder(
       CreateOrderStoreCreditForRefund(
-        this.dataProvider.KeyValueConfig.SQUARE_LOCATION,
+        this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
         squareOrder.referenceId as string,
         amount,
         `Refund for order ${squareOrder.id as string} cancellation`,

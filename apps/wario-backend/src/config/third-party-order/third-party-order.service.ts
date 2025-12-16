@@ -54,14 +54,14 @@ export class ThirdPartyOrderService {
    */
   Query3pOrders = async () => {
     // Skip if no 3P location configured
-    if (!this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P) {
+    if (!this.dataProvider.getKeyValueConfig().SQUARE_LOCATION_3P) {
       return;
     }
 
     try {
       const timeSpanAgo = subMinutes(new UTCDate(), 10);
       const recentlyUpdatedOrdersResponse = await this.squareService.SearchOrders(
-        [this.dataProvider.KeyValueConfig.SQUARE_LOCATION_3P],
+        [this.dataProvider.getKeyValueConfig().SQUARE_LOCATION_3P],
         {
           filter: {
             dateTimeFilter: {
@@ -77,7 +77,7 @@ export class ThirdPartyOrderService {
       }
 
       const fulfillmentConfig =
-        this.dataProvider.Fulfillments[this.dataProvider.KeyValueConfig.THIRD_PARTY_FULFILLMENT];
+        this.dataProvider.getFulfillments()[this.dataProvider.getKeyValueConfig().THIRD_PARTY_FULFILLMENT];
       const ordersToInspect = (recentlyUpdatedOrdersResponse.result.orders ?? []).filter(
         (x) => x.lineItems && x.lineItems.length > 0 && x.fulfillments?.length === 1,
       );
@@ -107,17 +107,12 @@ export class ThirdPartyOrderService {
 
         try {
           // Generate the WARIO cart from the square order
-          const cart = LineItemsToOrderInstanceCart(squareOrder.lineItems!, {
-            Catalog: this.catalogProviderService.Catalog,
-            ReverseMappings: this.catalogProviderService.ReverseMappings,
-            PrinterGroups: this.catalogProviderService.PrinterGroups,
-            CatalogSelectors: this.catalogProviderService.CatalogSelectors,
-          });
+          const cart = LineItemsToOrderInstanceCart(squareOrder.lineItems!, this.catalogProviderService);
 
           // Determine what available time we have for this order
           const cartLeadTime = DetermineCartBasedLeadTime(
             cart,
-            this.catalogProviderService.CatalogSelectors.productEntry,
+            this.catalogProviderService.getCatalogSelectors().productEntry,
           );
           const availabilityMap = WDateUtils.GetInfoMapForAvailabilityComputation(
             [fulfillmentConfig],
@@ -147,7 +142,7 @@ export class ThirdPartyOrderService {
 
           orderInstances.push({
             customerInfo: {
-              email: this.dataProvider.KeyValueConfig.EMAIL_ADDRESS,
+              email: this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS,
               givenName,
               familyName: familyFirstLetter,
               mobileNum: fulfillmentDetails.pickupDetails?.recipient?.phoneNumber ?? '2064864743',
@@ -157,7 +152,7 @@ export class ThirdPartyOrderService {
             fulfillment: {
               selectedDate: requestedFulfillmentTime.selectedDate,
               selectedTime: adjustedFulfillmentTime,
-              selectedService: this.dataProvider.KeyValueConfig.THIRD_PARTY_FULFILLMENT,
+              selectedService: this.dataProvider.getKeyValueConfig().THIRD_PARTY_FULFILLMENT,
               status: WFulfillmentStatus.PROPOSED,
               thirdPartyInfo: {
                 squareId: squareOrder.id!,

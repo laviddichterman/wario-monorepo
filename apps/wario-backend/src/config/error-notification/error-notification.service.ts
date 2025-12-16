@@ -39,7 +39,7 @@ export class ErrorNotificationService {
    */
   async sendCriticalErrorEmail(context: ErrorContext, errors: WError[], statusCode: number): Promise<void> {
     try {
-      const emailAddress = this.dataProvider.KeyValueConfig.EMAIL_ADDRESS;
+      const emailAddress = this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS;
       if (!emailAddress) {
         this.logger.warn('Cannot send error notification: EMAIL_ADDRESS not configured');
         return;

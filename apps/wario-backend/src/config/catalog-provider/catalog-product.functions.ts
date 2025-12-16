@@ -87,9 +87,9 @@ export interface ProductDeps {
 const getLocationsConsidering3pFlag = (deps: ProductDeps, is3p: boolean) =>
   LocationsConsidering3pFlag(
     is3p,
-    deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION_ALTERNATE,
-    deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION,
-    deps.dataProviderService.KeyValueConfig.SQUARE_LOCATION_3P,
+    deps.dataProviderService.getKeyValueConfig().SQUARE_LOCATION_ALTERNATE,
+    deps.dataProviderService.getKeyValueConfig().SQUARE_LOCATION,
+    deps.dataProviderService.getKeyValueConfig().SQUARE_LOCATION_3P,
   );
 
 const ValidateProductModifiersFunctionsCategoriesPrinterGroups = function (

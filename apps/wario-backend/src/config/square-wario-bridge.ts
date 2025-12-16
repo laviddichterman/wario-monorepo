@@ -45,12 +45,12 @@ import { IS_PRODUCTION } from '../utils/utils';
 
 // Interface to replace direct dependency on CatalogProviderInstance
 export interface ICatalogContext {
-  Catalog: ICatalog;
+  getCatalog(): ICatalog;
   // TODO: investigate if we can also store the product ID along with the product Instance ID to speed up lookups
-  ReverseMappings: Record<string, string>;
-  PrinterGroups: Record<string, PrinterGroup>;
-  CatalogSelectors: ICatalogSelectors;
-  logger?: PinoLogger;
+  getReverseMappings(): Record<string, string>;
+  getPrinterGroups(): Record<string, PrinterGroup>;
+  getCatalogSelectors(): ICatalogSelectors;
+  getLogger(): PinoLogger | undefined;
 }
 
 // * add note to payment or whatever so the SQ receipt makes some sense, see https://squareup.com/receipt/preview/jXnAjUa3wdk6al0EofHUg8PUZzFZY
@@ -134,34 +134,34 @@ export const LineItemsToOrderInstanceCart = (
     return lineItems
       .filter((line) => line.itemType === 'ITEM')
       .map((line) => {
-        const pIId = catalogContext.ReverseMappings[line.catalogObjectId!];
+        const pIId = catalogContext.getReverseMappings()[line.catalogObjectId!];
         if (!pIId) {
-          catalogContext.logger?.error('Unable to find matching product instance ID for square item variation');
+          catalogContext.getLogger()?.error('Unable to find matching product instance ID for square item variation');
         }
 
         // Thankfully this is only used on 3p integrations. But this is very slow now that we don't store a direct mapping back to the product ID from the instance.
-        const _warioProductInstance = catalogContext.Catalog.productInstances[pIId];
+        const _warioProductInstance = catalogContext.getCatalog().productInstances[pIId];
         // Find the product that contains this instance
-        const productId = Object.keys(catalogContext.Catalog.products).find((pid) =>
-          catalogContext.Catalog.products[pid].instances.includes(pIId),
+        const productId = Object.keys(catalogContext.getCatalog().products).find((pid) =>
+          catalogContext.getCatalog().products[pid].instances.includes(pIId),
         );
         if (!productId) {
-          catalogContext.logger?.error('Unable to find matching product ID for product instance');
+          catalogContext.getLogger()?.error('Unable to find matching product ID for product instance');
           throw new Error('Product not found for instance');
         }
 
-        const _warioProduct = catalogContext.Catalog.products[productId];
+        const _warioProduct = catalogContext.getCatalog().products[productId];
         const modifiers: ProductInstanceModifierEntry[] = Object.values(
           (line.modifiers ?? []).reduce((acc: Record<string, ProductInstanceModifierEntry>, lineMod) => {
-            const oId = catalogContext.ReverseMappings[lineMod.catalogObjectId!];
+            const oId = catalogContext.getReverseMappings()[lineMod.catalogObjectId!];
 
-            const _warioModifierOption = catalogContext.Catalog.options[oId];
+            const _warioModifierOption = catalogContext.getCatalog().options[oId];
             // Find the modifier type that contains this option
-            const mTId = Object.keys(catalogContext.Catalog.modifiers).find((mtid) =>
-              catalogContext.Catalog.modifiers[mtid].options.includes(oId),
+            const mTId = Object.keys(catalogContext.getCatalog().modifiers).find((mtid) =>
+              catalogContext.getCatalog().modifiers[mtid].options.includes(oId),
             );
             if (!mTId) {
-              catalogContext.logger?.error('Unable to find matching modifier type ID for option');
+              catalogContext.getLogger()?.error('Unable to find matching modifier type ID for option');
               throw new Error('Modifier type not found for option');
             }
             return {
@@ -183,20 +183,20 @@ export const LineItemsToOrderInstanceCart = (
         )
           // now sort it by the order of modifier types in the catalog (using index in Object.keys as ordinal)
           .sort((a, b) => {
-            const modifierTypeIds = Object.keys(catalogContext.Catalog.modifiers);
+            const modifierTypeIds = Object.keys(catalogContext.getCatalog().modifiers);
             return modifierTypeIds.indexOf(a.modifierTypeId) - modifierTypeIds.indexOf(b.modifierTypeId);
           })
           .map((x) => ({
             ...x,
             options: x.options.sort((a, b) => {
               // Sort by position in the modifier type's options array
-              const modifierType = catalogContext.Catalog.modifiers[x.modifierTypeId];
+              const modifierType = catalogContext.getCatalog().modifiers[x.modifierTypeId];
               return modifierType.options.indexOf(a.optionId) - modifierType.options.indexOf(b.optionId);
             }),
           }));
         // Find a category that contains this product
-        const category = Object.keys(catalogContext.Catalog.categories).find((cid) =>
-          catalogContext.Catalog.categories[cid].products.includes(productId),
+        const category = Object.keys(catalogContext.getCatalog().categories).find((cid) =>
+          catalogContext.getCatalog().categories[cid].products.includes(productId),
         );
         return {
           categoryId: category ?? '',
@@ -209,7 +209,7 @@ export const LineItemsToOrderInstanceCart = (
       });
   } catch (err: unknown) {
     const errorDetail = `Got error when attempting to ingest 3p line items (${JSON.stringify(lineItems)}) got error: ${JSON.stringify(err, Object.getOwnPropertyNames(err), 2)}`;
-    catalogContext.logger?.error({ err, lineItems }, 'Got error when attempting to ingest 3p line items');
+    catalogContext.getLogger()?.error({ err, lineItems }, 'Got error when attempting to ingest 3p line items');
     // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw errorDetail;
   }
@@ -356,12 +356,12 @@ export const CreateOrdersForPrintingFromCart = (
 ): Order[] => {
   const carts: CoreCartEntry<WProduct>[][] = [];
   // split out the items we need to get printed
-  const cartEntriesByPrinterGroup = CartByPrinterGroup(cart, catalogContext.CatalogSelectors.productEntry);
+  const cartEntriesByPrinterGroup = CartByPrinterGroup(cart, catalogContext.getCatalogSelectors().productEntry);
   // this checks if there's anything left in the queue
   while (Object.values(cartEntriesByPrinterGroup).reduce((acc, x) => acc || x.length > 0, false)) {
     const orderEntries: CoreCartEntry<WProduct>[] = [];
     Object.entries(cartEntriesByPrinterGroup).forEach(([pgId, cartEntryList]) => {
-      if (catalogContext.PrinterGroups[pgId].singleItemPerTicket) {
+      if (catalogContext.getPrinterGroups()[pgId].singleItemPerTicket) {
         const { product, categoryId, quantity } = cartEntryList[cartEntryList.length - 1];
         if (quantity === 1) {
           orderEntries.push(cartEntryList.pop()!);
@@ -450,16 +450,17 @@ const WProductModifiersToSquareModifiers = (
   const acc: OrderLineItemModifier[] = [];
   // NOTE: only supports whole pizzas, needs work to support split pizzas
   product.p.modifiers.forEach((mod) => {
-    const modifierType = catalogContext.Catalog.modifiers[mod.modifierTypeId];
+    const modifierType = catalogContext.getCatalog().modifiers[mod.modifierTypeId];
     const baseProductInstanceSelectedOptionsForModifierType =
-      catalogContext.Catalog.productInstances[product.m.pi[0]].modifiers.find(
-        (x) => x.modifierTypeId === mod.modifierTypeId,
-      )?.options ?? [];
+      catalogContext
+        .getCatalog()
+        .productInstances[product.m.pi[0]].modifiers.find((x) => x.modifierTypeId === mod.modifierTypeId)?.options ??
+      [];
     mod.options.forEach((option) => {
-      const catalogOption = catalogContext.Catalog.options[option.optionId];
+      const catalogOption = catalogContext.getCatalog().options[option.optionId];
       const squareModifierId = GetSquareIdFromExternalIds(
         catalogOption.externalIDs,
-        OptionInstanceToSquareIdSpecifier(option, catalogContext.logger),
+        OptionInstanceToSquareIdSpecifier(option, catalogContext.getLogger()),
       );
       if (
         modifierType.max_selected === 1 ||
@@ -498,14 +499,15 @@ export const CreateOrderFromCart = (
   return {
     referenceId,
     lineItems: Object.values(cart).map((x) => {
-      const catalogProductInstance = catalogContext.Catalog.productInstances[x.product.m.pi[PRODUCT_LOCATION.LEFT]];
-      const catalogProduct = catalogContext.CatalogSelectors.productEntry(x.product.p.productId)!;
+      const catalogProductInstance =
+        catalogContext.getCatalog().productInstances[x.product.m.pi[PRODUCT_LOCATION.LEFT]];
+      const catalogProduct = catalogContext.getCatalogSelectors().productEntry(x.product.p.productId)!;
       const squareItemVariationId = GetSquareIdFromExternalIds(catalogProductInstance.externalIDs, 'ITEM_VARIATION');
       // // left and right catalog product instance are the same,
       // if (x.product.m.pi[PRODUCT_LOCATION.LEFT] === x.product.m.pi[PRODUCT_LOCATION.RIGHT]) {
 
       //   const wholeModifiers: OrderLineItemModifier[] = x.product.m.exhaustive_modifiers.whole.map(mtid_moid => {
-      //     const catalogOption = catalogContext.Catalog.options[mtid_moid[1]];
+      //     const catalogOption = catalogContext.getCatalog().options[mtid_moid[1]];
       //     return { basePriceMoney: IMoneyToBigIntMoney(catalogOption.price), name: catalogOption.displayName }
       //   })
       // } else {

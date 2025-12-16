@@ -19,7 +19,7 @@ export class PrinterGroupController {
 
   @Get()
   getPrinterGroups() {
-    return Object.values(this.catalogProvider.PrinterGroups);
+    return Object.values(this.catalogProvider.getPrinterGroups());
   }
 
   @Post()
@@ -52,7 +52,7 @@ export class PrinterGroupController {
   @Delete(':pgId')
   async deletePrinterGroup(@Param('pgId') pgId: string, @Body() body: DeletePrinterGroupRequestDto) {
     const doc = await this.catalogProvider.DeletePrinterGroup({ id: pgId, ...(body as DeletePrinterGroupRequest) });
-    this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
+    this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }
 }

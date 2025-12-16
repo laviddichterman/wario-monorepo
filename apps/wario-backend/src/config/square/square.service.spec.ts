@@ -161,7 +161,7 @@ describe('SquareService', () => {
 
     it('should not initialize when Square token is missing', async () => {
       // @ts-expect-error - Testing missing token scenario
-      mockDataProvider.KeyValueConfig.SQUARE_TOKEN = undefined;
+      mockdataProvider.getKeyValueConfig().SQUARE_TOKEN = undefined;
 
       await service.onModuleInit();
 

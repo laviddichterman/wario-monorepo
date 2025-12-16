@@ -6,7 +6,13 @@
  */
 import type { PinoLogger } from 'nestjs-pino';
 
-import { CategoryIdHasCycleIfChildOfProposedCategoryId, type FulfillmentConfig, type ICatalog, type ICategory, type UncommittedICategory } from '@wcp/wario-shared';
+import {
+  CategoryIdHasCycleIfChildOfProposedCategoryId,
+  type FulfillmentConfig,
+  type ICatalog,
+  type ICategory,
+  type UncommittedICategory,
+} from '@wcp/wario-shared';
 
 import type { ICategoryRepository } from '../../repositories/interfaces/category.repository.interface';
 import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
@@ -37,8 +43,6 @@ export async function createCategory(deps: CategoryDeps, category: UncommittedIC
   return deps.categoryRepository.create(category);
 }
 
-
-
 /**
  * Update a category.
  * Note: With 2025 schema, parent-child relationships are managed via the parent's children[] array,
@@ -56,7 +60,9 @@ export async function updateCategory(
 
   if (category.children) {
     for (const childId of category.children) {
-      if (CategoryIdHasCycleIfChildOfProposedCategoryId(categoryId, childId, (id: string) => deps.catalog.categories[id])) {
+      if (
+        CategoryIdHasCycleIfChildOfProposedCategoryId(categoryId, childId, (id: string) => deps.catalog.categories[id])
+      ) {
         throw Error(`Category ${categoryId} has a cycle if making ${childId} a child`);
       }
     }

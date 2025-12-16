@@ -27,7 +27,7 @@ export class SeatingResourceController {
   async postSeatingResource(@Body() body: CreateSeatingResourceDto) {
     const newSeatingResource = await this.dataProvider.setSeatingResource(body);
     await this.dataProvider.syncSeatingResources();
-    this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
+    this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.getSeatingResources());
     return newSeatingResource;
   }
 
@@ -36,7 +36,7 @@ export class SeatingResourceController {
     try {
       const updatedSeatingResource = await this.dataProvider.updateSeatingResource(seatingResourceId, body);
       await this.dataProvider.syncSeatingResources();
-      this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
+      this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.getSeatingResources());
       return updatedSeatingResource;
     } catch (error) {
       throw new NotFoundException(error);
@@ -48,7 +48,7 @@ export class SeatingResourceController {
     try {
       const doc = await this.dataProvider.deleteSeatingResource(seatingResourceId);
       await this.dataProvider.syncSeatingResources();
-      this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.SeatingResources);
+      this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.getSeatingResources());
       return doc;
     } catch (error) {
       throw new BadRequestException(error);

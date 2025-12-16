@@ -10,6 +10,7 @@ import { AppConfigurationModule } from './app-configuration.module';
 import { CatalogProviderService } from './catalog-provider/catalog-provider.service';
 import { DataProviderService } from './data-provider/data-provider.service';
 import { DatabaseManagerService } from './database-manager/database-manager.service';
+import { MongooseToNewMigrator } from './database-manager/mongoose-to-newmongoose';
 import { MongooseToPostgresMigrator } from './database-manager/mongoose-to-postgres.migrator';
 import { ErrorNotificationService } from './error-notification/error-notification.service';
 import { GoogleService } from './google/google.service';
@@ -46,6 +47,7 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     StoreCreditProviderService,
     DatabaseManagerService,
     MongooseToPostgresMigrator,
+    MongooseToNewMigrator,
   ],
   exports: [
     MigrationFlagsService,

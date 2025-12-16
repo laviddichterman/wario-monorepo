@@ -175,7 +175,7 @@ export const createMockSettingsEntity = (overrides: Partial<SettingsEntity> = {}
   return {
     ...defaults,
     ...overrides,
-  } as unknown as SettingsEntity;
+  } as SettingsEntity;
 };
 
 export const createMockPrinterGroupEntity = (overrides: Partial<PrinterGroupEntity> = {}): PrinterGroupEntity => {
@@ -188,7 +188,7 @@ export const createMockPrinterGroupEntity = (overrides: Partial<PrinterGroupEnti
   return {
     ...defaults,
     ...overrides,
-  } as unknown as PrinterGroupEntity;
+  } as PrinterGroupEntity;
 };
 
 export const createMockFulfillmentEntity = (overrides: Partial<FulfillmentEntity> = {}): FulfillmentEntity => {
@@ -200,7 +200,7 @@ export const createMockFulfillmentEntity = (overrides: Partial<FulfillmentEntity
   return {
     ...defaults,
     ...overrides,
-  } as unknown as FulfillmentEntity;
+  } as FulfillmentEntity;
 };
 
 export const createMockDbVersionEntity = (overrides: Partial<DBVersionEntity> = {}): DBVersionEntity => {
@@ -215,7 +215,7 @@ export const createMockDbVersionEntity = (overrides: Partial<DBVersionEntity> = 
   return {
     ...defaults,
     ...overrides,
-  } as unknown as DBVersionEntity;
+  } as DBVersionEntity;
 };
 
 export const createMockSeatingResourceEntity = (
@@ -230,7 +230,7 @@ export const createMockSeatingResourceEntity = (
   return {
     ...defaults,
     ...overrides,
-  } as unknown as SeatingResourceEntity;
+  } as SeatingResourceEntity;
 };
 
 export const createMockKeyValueEntity = (overrides: Partial<KeyValueEntity> = {}): KeyValueEntity => {
@@ -241,5 +241,5 @@ export const createMockKeyValueEntity = (overrides: Partial<KeyValueEntity> = {}
   return {
     ...defaults,
     ...overrides,
-  } as unknown as KeyValueEntity;
+  } as KeyValueEntity;
 };

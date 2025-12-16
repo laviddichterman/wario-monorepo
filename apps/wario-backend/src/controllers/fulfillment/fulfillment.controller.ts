@@ -31,7 +31,7 @@ export class FulfillmentController {
     try {
       const newFulfillment = await this.dataProvider.setFulfillment(body);
       await this.dataProvider.syncFulfillments();
-      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
+      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.getFulfillments());
       return newFulfillment;
     } catch (error) {
       throw new BadRequestException(error);
@@ -46,7 +46,7 @@ export class FulfillmentController {
       // Note: UpdateFulfillmentDto is partial, but the code constructs a full object.
       const updatedFulfillment = await this.dataProvider.updateFulfillment(fulfillmentId, body);
       await this.dataProvider.syncFulfillments();
-      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
+      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.getFulfillments());
       return updatedFulfillment;
     } catch (error) {
       throw new NotFoundException(error);
@@ -61,8 +61,8 @@ export class FulfillmentController {
       const doc = await this.dataProvider.deleteFulfillment(fulfillmentId);
       await this.dataProvider.syncFulfillments();
       // emit the catalog as we removed its dependencies earlier and we want to avoid having the catalogProvider need to have socketio as a dependency
-      this.socketIoService.EmitCatalogTo(this.socketIoService.server, this.catalogProvider.Catalog);
-      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.Fulfillments);
+      this.socketIoService.EmitCatalogTo(this.socketIoService.server, this.catalogProvider.getCatalog());
+      this.socketIoService.EmitFulfillmentsTo(this.socketIoService.server, this.dataProvider.getFulfillments());
       return doc;
     } catch (error) {
       throw new BadRequestException(error);
