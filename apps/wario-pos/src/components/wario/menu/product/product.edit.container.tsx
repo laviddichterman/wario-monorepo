@@ -17,6 +17,7 @@ import {
 import {
   fromProductEntity,
   productFormAtom,
+  productFormDirtyFieldsAtom,
   productFormProcessingAtom,
   toProductApiBody,
 } from '@/atoms/forms/productFormAtoms';
@@ -64,8 +65,10 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
   const catalogSelectors = useCatalogSelectors();
 
   const setProductForm = useSetAtom(productFormAtom);
+  const setDirtyFields = useSetAtom(productFormDirtyFieldsAtom);
   const setIsProcessing = useSetAtom(productFormProcessingAtom);
   const productForm = useAtomValue(productFormAtom);
+  const dirtyFields = useAtomValue(productFormDirtyFieldsAtom);
 
   const editMutation = useEditProductMutation();
   const createInstanceMutation = useCreateProductInstanceMutation();
@@ -75,9 +78,11 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
 
   useEffect(() => {
     setProductForm(fromProductEntity(productEntry));
+    setDirtyFields(new Set());
     setInstanceIds(productEntry.instances);
     return () => {
       setProductForm(null);
+      setDirtyFields(new Set());
       // Cleanup family atoms
       // Cleanup loaded instances
       productEntry.instances.forEach((id) => {
@@ -85,7 +90,7 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
         productInstanceExpandedFamily.remove(id);
       });
     };
-  }, [productEntry, setProductForm]);
+  }, [productEntry, setProductForm, setDirtyFields]);
 
   const handleAddVariation = () => {
     const tempId = `temp_${String(Date.now())}`;
@@ -150,6 +155,7 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
       onConfirmClick={() => {
         void editProduct();
       }}
+      disableConfirm={dirtyFields.size === 0}
       productInstancesContent={
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box>

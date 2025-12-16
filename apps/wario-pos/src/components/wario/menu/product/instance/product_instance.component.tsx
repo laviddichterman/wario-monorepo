@@ -1,4 +1,4 @@
-import { type PrimitiveAtom, useAtom, useAtomValue } from 'jotai';
+import { type PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useMemo, useState } from 'react';
 
 import { CallSplit, Link as LinkIcon } from '@mui/icons-material';
@@ -42,6 +42,7 @@ import { ToggleBooleanPropertyComponent } from '@/components/wario/property-comp
 
 import {
   productInstanceFormAtom,
+  productInstanceFormDirtyFieldsAtom,
   productInstanceFormProcessingAtom,
   type ProductInstanceFormState,
   useProductInstanceForm,
@@ -120,6 +121,7 @@ const ProductInstanceFormBodyInner = ({
   catalog: ICatalog;
 }) => {
   const isProcessing = useAtomValue(productInstanceFormProcessingAtom);
+  const setDirtyFields = useSetAtom(productInstanceFormDirtyFieldsAtom);
   const theme = useTheme();
   const useToggleEndLabel = !useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
@@ -128,6 +130,7 @@ const ProductInstanceFormBodyInner = ({
 
   const updateField = <K extends keyof ProductInstanceFormState>(field: K, value: ProductInstanceFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setDirtyFields((prev) => new Set(prev).add(field));
   };
 
   const normalizedModifers = useMemo(

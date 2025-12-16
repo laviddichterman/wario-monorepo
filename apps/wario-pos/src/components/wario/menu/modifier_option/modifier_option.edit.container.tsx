@@ -136,7 +136,7 @@ const ModifierOptionEditForm = ({
           <Button onClick={onCloseCallback} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={() => void save()} disabled={isProcessing} variant="contained">
+          <Button onClick={() => void save()} disabled={isProcessing || dirtyFields.size === 0} variant="contained">
             Save
           </Button>
         </AppDialog.Actions>

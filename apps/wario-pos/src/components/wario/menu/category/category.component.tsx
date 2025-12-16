@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 
 import { Autocomplete, Grid, TextField, Typography } from '@mui/material';
 
@@ -8,6 +8,7 @@ import { useCatalogSelectors, useCategoryIds, useFulfillments } from '@wcp/wario
 
 import {
   categoryFormAtom,
+  categoryFormDirtyFieldsAtom,
   categoryFormIsValidAtom,
   categoryFormProcessingAtom,
   type CategoryFormState,
@@ -39,6 +40,7 @@ interface CategoryFormBodyProps {
 export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) => {
   const [form, setForm] = useAtom(categoryFormAtom);
   const isProcessing = useAtomValue(categoryFormProcessingAtom);
+  const setDirtyFields = useSetAtom(categoryFormDirtyFieldsAtom);
   const { category } = useCatalogSelectors() as ICatalogSelectors;
   const fulfillments = useFulfillments();
   const allCategoryIds = useCategoryIds();
@@ -50,6 +52,7 @@ export const CategoryFormBody = ({ excludeCategoryId }: CategoryFormBodyProps) =
 
   const updateField = <K extends keyof CategoryFormState>(field: K, value: CategoryFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setDirtyFields((prev) => new Set(prev).add(field));
   };
 
   return (

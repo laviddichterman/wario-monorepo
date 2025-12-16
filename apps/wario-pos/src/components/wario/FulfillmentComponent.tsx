@@ -1,6 +1,6 @@
 import { format, setDay } from 'date-fns';
 import type { Polygon } from 'geojson';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtomValue } from 'jotai';
 import React, { useMemo, useState } from 'react';
 
 import {
@@ -22,11 +22,7 @@ import { type ValSetValNamed } from '@wcp/wario-ux-shared/common';
 import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
 
-import {
-  fulfillmentFormAtom,
-  fulfillmentFormProcessingAtom,
-  type FulfillmentFormState,
-} from '@/atoms/forms/fulfillmentFormAtoms';
+import { fulfillmentFormProcessingAtom, useFulfillmentForm } from '@/atoms/forms/fulfillmentFormAtoms';
 
 import { ElementActionComponent } from './menu/element.action.component';
 import { IntNumericPropertyComponent } from './property-components/IntNumericPropertyComponent';
@@ -196,7 +192,7 @@ const OperatingHoursComponent = function (
  */
 export const FulfillmentFormBody = () => {
   const { data: catalog } = useCatalogQuery();
-  const [form, setForm] = useAtom(fulfillmentFormAtom);
+  const { form, updateField } = useFulfillmentForm();
   const isProcessing = useAtomValue(fulfillmentFormProcessingAtom);
 
   // Local state for service area JSON parsing
@@ -207,10 +203,6 @@ export const FulfillmentFormBody = () => {
   );
 
   if (!catalog || !form) return null;
-
-  const updateField = <K extends keyof FulfillmentFormState>(field: K, value: FulfillmentFormState[K]) => {
-    setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
-  };
 
   const onSetServiceArea = (json: string | null) => {
     try {

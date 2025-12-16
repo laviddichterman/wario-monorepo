@@ -99,7 +99,7 @@ const CategoryEditContainerInner = ({ category, onCloseCallback }: InnerProps) =
         <Button onClick={onCloseCallback} disabled={isProcessing}>
           Cancel
         </Button>
-        <Button onClick={editCategory} disabled={isProcessing} variant="contained">
+        <Button onClick={editCategory} disabled={isProcessing || dirtyFields.size === 0} variant="contained">
           Save
         </Button>
       </AppDialog.Actions>

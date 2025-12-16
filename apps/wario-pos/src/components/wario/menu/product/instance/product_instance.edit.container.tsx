@@ -14,6 +14,7 @@ import { useEditProductInstanceMutation } from '@/hooks/useProductInstanceMutati
 import {
   fromProductInstanceEntity,
   productInstanceFormAtom,
+  productInstanceFormDirtyFieldsAtom,
   productInstanceFormProcessingAtom,
   useProductInstanceForm,
 } from '@/atoms/forms/productInstanceFormAtoms';
@@ -57,8 +58,10 @@ const ProductInstanceEditContainerInner = ({ product_instance, parent_product, o
   const { enqueueSnackbar } = useSnackbar();
 
   const setFormState = useSetAtom(productInstanceFormAtom);
+  const setDirtyFields = useSetAtom(productInstanceFormDirtyFieldsAtom);
   const setIsProcessing = useSetAtom(productInstanceFormProcessingAtom);
   const formState = useAtomValue(productInstanceFormAtom);
+  const dirtyFields = useAtomValue(productInstanceFormDirtyFieldsAtom);
   const [activeTab, setActiveTab] = useState('identity');
   const { isValid, isProcessing } = useProductInstanceForm();
 
@@ -66,10 +69,12 @@ const ProductInstanceEditContainerInner = ({ product_instance, parent_product, o
 
   useEffect(() => {
     setFormState(fromProductInstanceEntity(product_instance));
+    setDirtyFields(new Set());
     return () => {
       setFormState(null);
+      setDirtyFields(new Set());
     };
-  }, [setFormState, product_instance]);
+  }, [setFormState, setDirtyFields, product_instance]);
 
   const editProductInstance = () => {
     if (!formState || editMutation.isPending) return;
@@ -137,7 +142,11 @@ const ProductInstanceEditContainerInner = ({ product_instance, parent_product, o
           <Button onClick={onCloseCallback} color="inherit" disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={editProductInstance} variant="contained" disabled={!isValid || isProcessing}>
+          <Button
+            onClick={editProductInstance}
+            variant="contained"
+            disabled={!isValid || isProcessing || dirtyFields.size === 0}
+          >
             Save
           </Button>
         </AppDialog.Actions>

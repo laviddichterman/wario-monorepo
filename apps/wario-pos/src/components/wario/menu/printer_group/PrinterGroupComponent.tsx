@@ -1,9 +1,10 @@
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 
 import { Grid, Typography } from '@mui/material';
 
 import {
   printerGroupFormAtom,
+  printerGroupFormDirtyFieldsAtom,
   printerGroupFormProcessingAtom,
   type PrinterGroupFormState,
 } from '@/atoms/forms/printerGroupFormAtoms';
@@ -15,11 +16,13 @@ import { ToggleBooleanPropertyComponent } from '../../property-components/Toggle
 export const PrinterGroupFormBody = () => {
   const [form, setForm] = useAtom(printerGroupFormAtom);
   const isProcessing = useAtomValue(printerGroupFormProcessingAtom);
+  const setDirtyFields = useSetAtom(printerGroupFormDirtyFieldsAtom);
 
   if (!form) return null;
 
   const updateField = <K extends keyof PrinterGroupFormState>(field: K, value: PrinterGroupFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setDirtyFields((prev) => new Set(prev).add(field));
   };
 
   return (

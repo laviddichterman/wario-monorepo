@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
 
 import { ExpandMore } from '@mui/icons-material';
@@ -32,6 +32,7 @@ import { ToggleBooleanPropertyComponent } from '@/components/wario/property-comp
 
 import {
   productFormAtom,
+  productFormDirtyFieldsAtom,
   productFormProcessingAtom,
   type ProductFormState,
   useProductForm,
@@ -53,6 +54,7 @@ export interface ProductFormBodyProps {
 export const ProductFormBody = ({ productInstancesContent, initialTab }: ProductFormBodyProps) => {
   const [form, setForm] = useAtom(productFormAtom);
   const isProcessing = useAtomValue(productFormProcessingAtom);
+  const setDirtyFields = useSetAtom(productFormDirtyFieldsAtom);
   const [availabilityIsValid, setAvailabilityIsValid] = useState(true);
   const [tabValue, setTabValue] = useState(initialTab || 'general');
 
@@ -65,15 +67,11 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
 
   const updateField = <K extends keyof ProductFormState>(field: K, value: ProductFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+    setDirtyFields((prev) => new Set(prev).add(field));
   };
 
   const handleSetModifiers = (mods: IProductModifier[]) => {
     // Logic from original component: if mods empty and not showing name of base product, set show name to true
-    // Wait, original logic:
-    // if (mods.length === 0 && !props.showNameOfBaseProduct) { props.setShowNameOfBaseProduct(true); }
-    // However, here we are inside the setModifiers handler.
-    // If we update modifiers, we might also need to update showNameOfBaseProduct
-
     setForm((prev) => {
       if (!prev) return prev;
       let updates: Partial<ProductFormState> = { modifiers: mods };
@@ -82,6 +80,7 @@ export const ProductFormBody = ({ productInstancesContent, initialTab }: Product
       }
       return { ...prev, ...updates };
     });
+    setDirtyFields((prev) => new Set(prev).add('modifiers'));
   };
 
   return (

@@ -233,7 +233,7 @@ const ModifierTypeEditContainerInner = ({ onCloseCallback, modifier_type }: Inne
           <Button onClick={onCloseCallback} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={editModifierType} disabled={isProcessing} variant="contained">
+          <Button onClick={editModifierType} disabled={isProcessing || dirtyFields.size === 0} variant="contained">
             Save
           </Button>
         </AppDialog.Actions>

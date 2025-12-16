@@ -14,6 +14,7 @@ import { createNullGuard } from '@/components/wario/catalog-null-guard';
 import {
   fromPrinterGroupEntity,
   printerGroupFormAtom,
+  printerGroupFormDirtyFieldsAtom,
   printerGroupFormProcessingAtom,
   toPrinterGroupApiBody,
 } from '@/atoms/forms/printerGroupFormAtoms';
@@ -50,14 +51,17 @@ const PrinterGroupEditContainerInner = ({
   const editMutation = useEditPrinterGroupMutation();
 
   const setFormState = useSetAtom(printerGroupFormAtom);
+  const [dirtyFields, setDirtyFields] = useAtom(printerGroupFormDirtyFieldsAtom);
   const [isProcessing, setIsProcessing] = useAtom(printerGroupFormProcessingAtom);
 
   useEffect(() => {
     setFormState(fromPrinterGroupEntity(printerGroup));
+    setDirtyFields(new Set());
     return () => {
       setFormState(null);
+      setDirtyFields(new Set());
     };
-  }, [printerGroup, setFormState]);
+  }, [printerGroup, setFormState, setDirtyFields]);
 
   const editPrinterGroup = () => {
     setFormState((current) => {
@@ -99,7 +103,7 @@ const PrinterGroupEditContainerInner = ({
         <Button onClick={onCloseCallback} disabled={isProcessing}>
           Cancel
         </Button>
-        <Button onClick={editPrinterGroup} disabled={isProcessing} variant="contained">
+        <Button onClick={editPrinterGroup} disabled={isProcessing || dirtyFields.size === 0} variant="contained">
           Save
         </Button>
       </AppDialog.Actions>

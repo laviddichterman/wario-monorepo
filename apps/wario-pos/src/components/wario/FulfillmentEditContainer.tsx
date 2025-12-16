@@ -75,7 +75,7 @@ const FulfillmentEditContainer = ({
         editFulfillment();
       }}
       isProcessing={isProcessing}
-      disableConfirmOn={!isValid}
+      disableConfirmOn={!isValid || dirtyFields.size === 0}
     />
   );
 };
