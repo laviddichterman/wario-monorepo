@@ -218,7 +218,7 @@ export const TIME_DISABLED_CATEGORY: ICategory = createMockCategory({
   children: [],
   products: [],
 });
-export const ROOT_CATEGORY: ICategory = createMockCategory({
+export const MENU_ROOT_CATEGORY: ICategory = createMockCategory({
   id: MOCK_IDS.ROOT_CATEGORY,
   name: 'Menu',
   description: 'Root menu category',
@@ -235,7 +235,7 @@ export const ROOT_CATEGORY: ICategory = createMockCategory({
 });
 
 export const ALL_CATEGORIES: ICategory[] = [
-  ROOT_CATEGORY,
+  MENU_ROOT_CATEGORY,
   PIZZA_CATEGORY,
   DRINKS_CATEGORY,
   DISABLED_CATEGORY,

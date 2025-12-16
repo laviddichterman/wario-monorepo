@@ -116,9 +116,7 @@ interface CategoryVisibilityMap {
 - Removed DTOs and fields
 - New ordering patterns (ordering embedded in parent entities)
 - Changed utility function signatures
-- **Root category requirement**: A root category must exist at the top of the hierarchy. All categories are its descendants. Database init must create it.
-
-Key files updated:
+  Key files updated:
 
 - `documentation/DTO_GUIDE.md` - Full breaking changes table
 - `documentation/2025 schema updates.md` - Original change specification
