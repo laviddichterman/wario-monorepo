@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
-import { UncommittedCategoryDto } from '@wcp/wario-shared';
+import { UncommittedICategoryDto } from '@wcp/wario-shared';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
 import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
@@ -13,12 +13,12 @@ export class CategoryController {
   constructor(
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) {}
+  ) { }
 
   @Post()
   @Scopes('write:catalog')
   @HttpCode(201)
-  async postCategory(@Body() body: UncommittedCategoryDto) {
+  async postCategory(@Body() body: UncommittedICategoryDto) {
     const doc = await this.catalogProvider.CreateCategory(body);
     this.socketIoService.EmitCatalog(this.catalogProvider.Catalog);
     return doc;

@@ -6,7 +6,7 @@
  */
 import type { PinoLogger } from 'nestjs-pino';
 
-import type { FulfillmentConfig, ICatalog, ICategory } from '@wcp/wario-shared';
+import { CategoryIdHasCycleIfChildOfProposedCategoryId, type FulfillmentConfig, type ICatalog, type ICategory, type UncommittedICategory } from '@wcp/wario-shared';
 
 import type { ICategoryRepository } from '../../repositories/interfaces/category.repository.interface';
 import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
@@ -33,9 +33,11 @@ export interface CategoryDeps {
 // Category Operations
 // ============================================================================
 
-export async function createCategory(deps: CategoryDeps, category: Omit<ICategory, 'id'>): Promise<ICategory> {
+export async function createCategory(deps: CategoryDeps, category: UncommittedICategory): Promise<ICategory> {
   return deps.categoryRepository.create(category);
 }
+
+
 
 /**
  * Update a category.
@@ -49,21 +51,22 @@ export async function updateCategory(
   category: Partial<Omit<ICategory, 'id'>>,
 ): Promise<ICategory | null> {
   if (!Object.hasOwn(deps.categories, categoryId)) {
-    // not found
-    return null;
+    throw Error(`Category ${categoryId} not found`);
+  }
+
+  if (category.children) {
+    for (const childId of category.children) {
+      if (CategoryIdHasCycleIfChildOfProposedCategoryId(categoryId, childId, (id: string) => deps.catalog.categories[id])) {
+        throw Error(`Category ${categoryId} has a cycle if making ${childId} a child`);
+      }
+    }
   }
 
   const response = await deps.categoryRepository.update(categoryId, category);
   return response;
 }
 
-export async function deleteCategory(
-  deps: CategoryDeps,
-  categoryId: string,
-  deleteContainedProducts: boolean,
-): Promise<{ deleted: ICategory | null; productsModified: boolean }> {
-  deps.logger.debug(`Removing ${categoryId}`);
-
+function DeleteCategoryValidation(deps: CategoryDeps, categoryId: string, _deleteContainedProducts: boolean) {
   // 1. Validation: make sure this isn't used in a fulfillment
   Object.values(deps.fulfillments).forEach((x) => {
     if (x.menuBaseCategoryId === categoryId) {
@@ -78,6 +81,19 @@ export async function deleteCategory(
       );
     }
   });
+  return true;
+}
+
+export async function deleteCategory(
+  deps: CategoryDeps,
+  categoryId: string,
+  deleteContainedProducts: boolean,
+): Promise<{ deleted: ICategory | null; productsModified: boolean }> {
+  deps.logger.debug(`Removing ${categoryId}`);
+
+  if (!DeleteCategoryValidation(deps, categoryId, deleteContainedProducts)) {
+    return { deleted: null, productsModified: false };
+  }
 
   // 2. Get the category before deletion
   const existing = await deps.categoryRepository.findById(categoryId);

@@ -21,6 +21,7 @@ import {
   type RecordProductInstanceFunctions,
   ReduceArrayToMapByKey,
   SEMVER,
+  UncommittedICategory,
   UpdateIOptionProps,
   UpdateIOptionTypeProps,
   UpdateIProductRequest,
@@ -219,7 +220,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   // Category Orchestration Methods
   // ============================================================================
 
-  CreateCategory = async (category: Omit<ICategory, 'id'>) => {
+  CreateCategory = async (category: UncommittedICategory) => {
     const doc = await CategoryFns.createCategory(this.categoryDeps, category);
     await this.SyncCategories();
     this.RecomputeCatalog();
@@ -681,10 +682,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         };
       })
       .filter((update) => update.product !== null) as Array<{
-      piid: string;
-      product: IProduct;
-      productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
-    }>;
+        piid: string;
+        product: IProduct;
+        productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
+      }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();
