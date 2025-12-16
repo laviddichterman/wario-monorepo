@@ -37,7 +37,7 @@
     "react-phone-number-input": "^3.4.14",
     "react-square-web-payments-sdk": "3.2.4-beta.1",
     "socket.io-client": "^4.8.1",
-    "zod": "^4.2.0",
+    "zod": "^4.2.1",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
