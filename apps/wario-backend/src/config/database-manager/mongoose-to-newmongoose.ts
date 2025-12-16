@@ -24,7 +24,7 @@ export class MongooseToNewMigrator {
     @InjectConnection() private readonly mongoConnection: Connection,
     @InjectPinoLogger(MongooseToNewMigrator.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   // ========== Helper Functions ==========
 
@@ -357,7 +357,7 @@ export class MongooseToNewMigrator {
       if (typeof displayFlags.empty_display_as !== 'string') displayFlags.empty_display_as = 'OMIT';
       if (typeof displayFlags.modifier_class !== 'string') displayFlags.modifier_class = 'ADD';
       if (typeof displayFlags.template_string !== 'string') displayFlags.template_string = '';
-      if (typeof displayFlags.multiple_item_separator !== 'string') displayFlags.multiple_item_separator = ', ';
+      if (typeof displayFlags.multiple_item_separator !== 'string') displayFlags.multiple_item_separator = ' + ';
       if (typeof displayFlags.non_empty_group_prefix !== 'string') displayFlags.non_empty_group_prefix = '';
       if (typeof displayFlags.non_empty_group_suffix !== 'string') displayFlags.non_empty_group_suffix = '';
 
