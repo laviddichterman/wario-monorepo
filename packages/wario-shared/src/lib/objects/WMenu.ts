@@ -255,7 +255,7 @@ export const CheckRequiredModifiersAreAvailable = (
           acc &&
           modifierOption !== undefined &&
           DisableDataCheck(modifierOption.disabled, modifierOption.availability, order_time).enable ===
-          DISABLE_REASON.ENABLED
+            DISABLE_REASON.ENABLED
         );
       }, true);
   });
@@ -412,7 +412,7 @@ export function FilterProductSelector(
               (mo.placement === OptionPlacement.WHOLE &&
                 mdModifier.options[mo.optionId].enable_whole.enable === DISABLE_REASON.ENABLED)) &&
             DisableDataCheck(modifierOption.disabled, modifierOption.availability, order_time).enable ===
-            DISABLE_REASON.ENABLED
+              DISABLE_REASON.ENABLED
           );
         }, true)
       );
@@ -459,12 +459,16 @@ export const SortByOrderingArray = <T>(items: T[], ordering: string[], idGetter:
 /**
  * Checks if a category has a cycle if it were to be made a child of another category.
  * Useful for checking if a category can be moved to another parent.
- * @param categoryId 
- * @param proposedCategoryId 
- * @param categorySelector 
+ * @param categoryId
+ * @param proposedCategoryId
+ * @param categorySelector
  * @returns true only if there would be a cycle if the category were to be made a child of the proposed category
  */
-export const CategoryIdHasCycleIfChildOfProposedCategoryId = (categoryId: string, proposedCategoryId: string, categorySelector: Selector<ICategory>): boolean => {
+export const CategoryIdHasCycleIfChildOfProposedCategoryId = (
+  categoryId: string,
+  proposedCategoryId: string,
+  categorySelector: Selector<ICategory>,
+): boolean => {
   if (categoryId === proposedCategoryId) {
     return true;
   }
@@ -472,5 +476,7 @@ export const CategoryIdHasCycleIfChildOfProposedCategoryId = (categoryId: string
   if (category === undefined || category.children.length === 0) {
     return false;
   }
-  return category.children.some((childId) => CategoryIdHasCycleIfChildOfProposedCategoryId(childId, proposedCategoryId, categorySelector));
+  return category.children.some((childId) =>
+    CategoryIdHasCycleIfChildOfProposedCategoryId(childId, proposedCategoryId, categorySelector),
+  );
 };

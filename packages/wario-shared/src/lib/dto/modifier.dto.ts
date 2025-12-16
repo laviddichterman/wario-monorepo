@@ -73,7 +73,6 @@ export class IOptionTypeDisplayFlagsDto {
    * @example if template_string is "FOO" then a product name of "{FOO} Pizza" and a selection of Pepperoni will be "Pepperoni Pizza"
    */
   @IsString()
-  @IsNotEmpty()
   template_string!: string;
 
   /**
@@ -89,14 +88,12 @@ export class IOptionTypeDisplayFlagsDto {
    * Prefix text displayed when the group has active selections.
    */
   @IsString()
-  @IsNotEmpty()
   non_empty_group_prefix!: string;
 
   /**
    * Suffix text displayed when the group has active selections.
    */
   @IsString()
-  @IsNotEmpty()
   non_empty_group_suffix!: string;
 }
 
@@ -239,7 +236,6 @@ export class IOptionDto {
 
   /** Description or tooltip text. */
   @IsString()
-  @IsNotEmpty()
   description!: string;
 
   /** Abbreviated code for receipts or kitchen display. */

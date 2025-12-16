@@ -5,7 +5,6 @@ import { CALL_LINE_DISPLAY, CategoryDisplay } from '../enums';
 
 export class CategoryDisplayFlagsDto {
   @IsString()
-  @IsNotEmpty()
   call_line_name!: string;
 
   @IsEnum(CALL_LINE_DISPLAY)

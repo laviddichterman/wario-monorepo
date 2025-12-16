@@ -164,7 +164,7 @@ export class PaymentBasePartialDto {
 /**
  * DTO for creating a new product instance
  */
-export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) { }
+export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) {}
 
 export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProductInstanceRequestDto) {
   @IsString()
@@ -323,7 +323,7 @@ export class BatchUpsertProductRequestDto {
   products!: UpsertProductRequestDto[];
 }
 
-export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) { }
+export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) {}
 
 export class CreateIOptionPropsDto {
   @IsString()
@@ -335,7 +335,7 @@ export class CreateIOptionPropsDto {
   option!: CreateIOptionRequestBodyDto;
 }
 
-export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) { }
+export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) {}
 
 export class UpdateIOptionPropsDto {
   @IsString()
@@ -361,7 +361,7 @@ export class CreateIOptionTypeRequestBodyDto extends OmitType(IOptionTypeDto, ['
   @IsOptional()
   options?: CreateIOptionRequestBodyDto[];
 }
-export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) { }
+export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) {}
 
 export class UpdateIOptionTypePropsDto {
   @IsString()
@@ -375,4 +375,4 @@ export class UpdateIOptionTypePropsDto {
 
 export type UpsertIOptionTypeRequestBodyDto = CreateIOptionTypeRequestBodyDto | UpdateIOptionTypeRequestBodyDto;
 
-export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) { }
+export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) {}
