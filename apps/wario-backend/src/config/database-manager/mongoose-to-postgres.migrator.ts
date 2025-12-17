@@ -125,15 +125,34 @@ export class MongooseToPostgresMigrator {
 
   private async migrateSettings(manager: EntityManager) {
     this.logger.info('Migrating Settings...');
-    const collection = this.mongoConnection.collection('settings');
+    const collection = this.mongoConnection.collection('settingsschemas');
     const doc = await collection.findOne({});
 
     if (doc) {
-      const { _id, __v, ...data } = doc;
-      // We only ever have one settings row in PG (rowId will be generated)
+      const { _id, __v, config = {}, ...data } = doc;
+
+      // Flatten config fields to top-level if not already present
+      // The 2025 schema expects these at the top level, not nested in config
+      const getVal = (key: string): unknown => {
+        // Prefer top-level, fallback to config
+        const topLevel = (data as Record<string, unknown>)[key];
+        if (topLevel !== undefined && topLevel !== null && topLevel !== '') {
+          return topLevel;
+        }
+        return (config as Record<string, unknown>)[key];
+      };
+
       const entity = manager.create(SettingsEntity, {
-        ...data,
-        config: data.config || {},
+        LOCATION_NAME: getVal('LOCATION_NAME') as string,
+        SQUARE_LOCATION: getVal('SQUARE_LOCATION') as string,
+        SQUARE_LOCATION_ALTERNATE: (getVal('SQUARE_LOCATION_ALTERNATE') as string) || '',
+        SQUARE_APPLICATION_ID: getVal('SQUARE_APPLICATION_ID') as string,
+        DEFAULT_FULFILLMENTID: getVal('DEFAULT_FULFILLMENTID') as string,
+        TAX_RATE: getVal('TAX_RATE') as number,
+        ALLOW_ADVANCED: !!getVal('ALLOW_ADVANCED'),
+        TIP_PREAMBLE: (getVal('TIP_PREAMBLE') as string) || '',
+        LOCATION_PHONE_NUMBER: (getVal('LOCATION_PHONE_NUMBER') as string) || '',
+        config: config as Record<string, string | number | boolean>,
       });
       await manager.save(SettingsEntity, entity);
       this.stats.settings = 1;
@@ -142,6 +161,7 @@ export class MongooseToPostgresMigrator {
       this.logger.warn('No Settings found in MongoDB.');
     }
   }
+
 
   private async migrateKeyValue(manager: EntityManager) {
     this.logger.info('Migrating KeyValue configs...');

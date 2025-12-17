@@ -12,7 +12,6 @@ import {
 } from 'src/entities';
 
 import { AppModule } from '../src/app.module';
-import { DatabaseManagerService } from '../src/config/database-manager/database-manager.service';
 import type { SettingsEntity } from '../src/entities/settings/settings.entity';
 
 import {
@@ -131,11 +130,7 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    await app.init(); // This triggers DatabaseManagerService.onModuleInit -> migrateAll
-
-    // CRITICAL: Wait for database initialization (migration) to complete
-    const dbManager = app.get(DatabaseManagerService);
-    await dbManager.ensureInitialized();
+    await app.init(); // This awaits DatabaseManagerService.onModuleInit -> Bootstrap -> migrateAll
 
     dataSource = app.get<DataSource>(getDataSourceToken());
   });
