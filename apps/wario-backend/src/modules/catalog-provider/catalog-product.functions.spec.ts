@@ -19,7 +19,7 @@ import {
   createSquareFailureResponse,
   createSquareSuccessResponse,
   SquareIdMappingTracker,
-} from '../../../test/utils';
+} from 'test/utils';
 
 import { batchUpsertProduct } from './catalog-product.functions';
 

@@ -7,8 +7,9 @@ import * as nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
-import { ExponentialBackoff } from '../../utils/exponential-backoff';
-import { DataProviderService } from '../data-provider/data-provider.service';
+import { ExponentialBackoff } from 'src/utils/exponential-backoff';
+
+import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 
 const OAuth2 = google.auth.OAuth2;
 

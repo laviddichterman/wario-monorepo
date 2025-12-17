@@ -6,8 +6,8 @@ import {
   type PrinterGroupDto,
 } from '@wcp/wario-shared';
 
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { SocketIoService } from '../../config/socket-io/socket-io.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { PrinterGroupNotFoundException, PrinterGroupOperationException } from '../../exceptions';
 
 @Controller('api/v1/menu/printergroup')

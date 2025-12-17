@@ -4,7 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 
 import type { IWSettings } from '@wcp/wario-shared';
 
-import { SettingsEntity } from '../../entities/settings/settings.entity';
+import { SettingsEntity } from 'src/entities/settings/settings.entity';
 import type { ISettingsRepository } from '../interfaces/settings.repository.interface';
 
 @Injectable()

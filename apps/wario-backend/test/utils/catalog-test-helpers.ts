@@ -18,7 +18,7 @@ import {
   createMockProductInstance,
 } from '@wcp/wario-shared/testing';
 
-import type { CatalogProviderService } from '../../src/config/catalog-provider/catalog-provider.service';
+import type { CatalogProviderService } from '../../src/modules/catalog-provider/catalog-provider.service';
 
 // Re-export for convenience
 export {

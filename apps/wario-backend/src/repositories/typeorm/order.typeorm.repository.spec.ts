@@ -5,9 +5,9 @@ import { IsNull, type Repository } from 'typeorm';
 
 import { WFulfillmentStatus, WOrderStatus } from '@wcp/wario-shared';
 
-import { createMockOrderEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockQueryBuilder, type MockType } from '../../../test/utils/mock-typeorm';
-import { OrderEntity } from '../../entities/order/order.entity';
+import { createMockOrderEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockQueryBuilder, type MockType } from 'test/utils/mock-typeorm';
+import { OrderEntity } from 'src/entities/order/order.entity';
 
 import { OrderTypeOrmRepository } from './order.typeorm.repository';
 

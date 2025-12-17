@@ -22,9 +22,9 @@ import {
   createMockOptionType,
   mockCatalogProviderService,
   mockSocketIoService,
-} from '../../../test/utils';
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { SocketIoService } from '../../config/socket-io/socket-io.service';
+} from 'test/utils';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 
 import { ModifierController } from './modifier.controller';
 

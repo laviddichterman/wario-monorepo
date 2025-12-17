@@ -4,7 +4,7 @@ import { IsNull, Repository } from 'typeorm';
 
 import type { IProductInstanceFunction } from '@wcp/wario-shared';
 
-import { ProductInstanceFunctionEntity } from '../../entities/catalog/product-instance-function.entity';
+import { ProductInstanceFunctionEntity } from 'src/entities/catalog/product-instance-function.entity';
 import type { IProductInstanceFunctionRepository } from '../interfaces/product-instance-function.repository.interface';
 
 @Injectable()

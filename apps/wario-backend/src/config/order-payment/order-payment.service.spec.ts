@@ -19,9 +19,9 @@ import {
   mockDataProviderService,
   mockSquareService,
   mockStoreCreditProviderService,
-} from '../../../test/utils';
+} from 'test/utils';
 import { DataProviderService } from '../data-provider/data-provider.service';
-import { SquareService } from '../square/square.service';
+import { SquareService } from 'src/modules/integrations/square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
 
 import { OrderPaymentService } from './order-payment.service';

@@ -43,19 +43,19 @@ import {
   WOrderStatus,
 } from '@wcp/wario-shared';
 
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { GoogleService } from 'src/modules/integrations/google/google.service';
+import { SquareError, SquareService } from 'src/modules/integrations/square/square.service';
 import type { IOrderRepository } from '../../repositories/interfaces';
 import { ORDER_REPOSITORY } from '../../repositories/interfaces';
 import { AppConfigService } from '../app-config.service';
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
-import { GoogleService } from '../google/google.service';
 import { OrderCalendarService } from '../order-calendar/order-calendar.service';
 import { OrderNotificationService } from '../order-notification/order-notification.service';
 import { OrderPaymentService } from '../order-payment/order-payment.service';
 import { OrderValidationService } from '../order-validation/order-validation.service';
 import { PrinterService } from '../printer/printer.service';
 import { CreateOrderFromCart } from '../square-wario-bridge';
-import { SquareError, SquareService } from '../square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
 
 const DateTimeIntervalToDisplayServiceInterval = (interval: Interval) => {
@@ -96,7 +96,7 @@ export class OrderManagerService {
     @Inject(PrinterService) private printerService: PrinterService,
     @InjectPinoLogger(OrderManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Sends orders that are ready for fulfillment.
@@ -282,10 +282,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-              success: false;
-              result: null;
-              error: SquareError[];
-            };
+                success: false;
+                result: null;
+                error: SquareError[];
+              };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit

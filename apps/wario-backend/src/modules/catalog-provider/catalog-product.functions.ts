@@ -24,8 +24,8 @@ import {
 import type { IProductInstanceRepository } from '../../repositories/interfaces/product-instance.repository.interface';
 import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
 import { IsSetOfUniqueStrings } from '../../utils/utils';
-import type { AppConfigService } from '../app-config.service';
-import type { DataProviderService } from '../data-provider/data-provider.service';
+import type { AppConfigService } from 'src/config/app-config.service';
+import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
   GetNonSquareExternalIds,
   GetSquareExternalIds,
@@ -33,8 +33,8 @@ import {
   ProductInstanceToSquareCatalogObject,
   ProductInstanceUpdateMergeExternalIds,
   ValidateModifiersForInstance,
-} from '../square-wario-bridge';
-import type { SquareService } from '../square/square.service';
+} from 'src/config/square-wario-bridge';
+import type { SquareService } from '../integrations/square/square.service';
 
 import {
   isCreateProductInstance,

@@ -2,9 +2,9 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull, type Repository } from 'typeorm';
 
-import { createMockProductInstanceFunctionEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { ProductInstanceFunctionEntity } from '../../entities/catalog/product-instance-function.entity';
+import { createMockProductInstanceFunctionEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { ProductInstanceFunctionEntity } from 'src/entities/catalog/product-instance-function.entity';
 
 import { ProductInstanceFunctionTypeOrmRepository } from './product-instance-function.typeorm.repository';
 

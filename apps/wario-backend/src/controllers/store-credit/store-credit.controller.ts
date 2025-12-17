@@ -12,7 +12,7 @@ import {
 import { Public } from 'src/auth/decorators/public.decorator';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { StoreCreditProviderService } from '../../config/store-credit-provider/store-credit-provider.service';
+import { StoreCreditProviderService } from 'src/config/store-credit-provider/store-credit-provider.service';
 import { InsufficientCreditException, StoreCreditNotFoundException } from '../../exceptions';
 
 @Controller('api/v1/payments/storecredit')

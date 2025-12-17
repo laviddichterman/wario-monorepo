@@ -58,11 +58,12 @@ import {
   StoreCreditPaymentData,
 } from '@wcp/wario-shared';
 
-import { ExponentialBackoffWaitFunction } from '../../utils/exponential-backoff';
-import { AppConfigService } from '../app-config.service';
-import { DataProviderService } from '../data-provider/data-provider.service';
-import { MigrationFlagsService } from '../migration-flags.service';
-import { BigIntMoneyToIntMoney, IMoneyToBigIntMoney, MapPaymentStatus } from '../square-wario-bridge';
+import { ExponentialBackoffWaitFunction } from 'src/utils/exponential-backoff';
+
+import { AppConfigService } from 'src/config/app-config.service';
+import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+import { MigrationFlagsService } from 'src/config/migration-flags.service';
+import { BigIntMoneyToIntMoney, IMoneyToBigIntMoney, MapPaymentStatus } from 'src/config/square-wario-bridge';
 
 export type SquareProviderApiCallReturnSuccess<T> = {
   success: true;

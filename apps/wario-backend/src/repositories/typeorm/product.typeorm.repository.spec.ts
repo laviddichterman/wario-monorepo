@@ -10,9 +10,9 @@ import {
   type UpdateQueryBuilder,
 } from 'typeorm';
 
-import { createMockProductEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { ProductEntity } from '../../entities/catalog/product.entity';
+import { createMockProductEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { ProductEntity } from 'src/entities/catalog/product.entity';
 
 import { ProductTypeOrmRepository } from './product.typeorm.repository';
 

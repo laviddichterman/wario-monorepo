@@ -4,9 +4,9 @@ import { IsNull, type Repository } from 'typeorm';
 
 import { type PrinterGroup } from '@wcp/wario-shared';
 
-import { createMockPrinterGroupEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { PrinterGroupEntity } from '../../entities/settings/printer-group.entity';
+import { createMockPrinterGroupEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { PrinterGroupEntity } from 'src/entities/settings/printer-group.entity';
 
 import { PrinterGroupTypeOrmRepository } from './printer-group.typeorm.repository';
 

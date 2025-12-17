@@ -27,11 +27,11 @@ import { CatalogModule } from '../models/catalog/catalog.module';
 import { OrdersModule } from '../models/orders/orders.module';
 import { QueryModule } from '../models/query/query.module';
 import { SettingsModule } from '../models/settings/settings.module';
+import { DatabaseManagerModule } from '../modules/database-manager/database-manager.module';
 
 // Interface tokens
 import {
   CATEGORY_REPOSITORY,
-  DB_VERSION_REPOSITORY,
   FULFILLMENT_REPOSITORY,
   KEY_VALUE_REPOSITORY,
   OPTION_REPOSITORY,
@@ -141,6 +141,7 @@ const mongooseRepos = [
 @Module({
   imports: [
     AppConfigurationModule,
+    DatabaseManagerModule, // Must be first - ensures DB initialization before repos
     TypeOrmModule.forFeature(entities),
     CatalogModule,
     SettingsModule,
@@ -162,15 +163,7 @@ const mongooseRepos = [
       ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
       inject: [AppConfigService, CategoryTypeOrmRepository, CategoryMongooseRepository],
     },
-    {
-      provide: DB_VERSION_REPOSITORY,
-      useFactory: (
-        appConfig: AppConfigService,
-        pgRepo: DBVersionTypeOrmRepository,
-        mongoRepo: DBVersionMongooseRepository,
-      ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
-      inject: [AppConfigService, DBVersionTypeOrmRepository, DBVersionMongooseRepository],
-    },
+    // DB_VERSION_REPOSITORY comes from DatabaseManagerModule
     {
       provide: OPTION_TYPE_REPOSITORY,
       useFactory: (
@@ -279,7 +272,7 @@ const mongooseRepos = [
   ],
   exports: [
     CATEGORY_REPOSITORY,
-    DB_VERSION_REPOSITORY,
+    // DB_VERSION_REPOSITORY is re-exported from DatabaseManagerModule
     FULFILLMENT_REPOSITORY,
     KEY_VALUE_REPOSITORY,
     OPTION_REPOSITORY,

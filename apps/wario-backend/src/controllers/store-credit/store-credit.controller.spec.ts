@@ -13,8 +13,8 @@ import { Test, type TestingModule } from '@nestjs/testing';
 
 import { CURRENCY, StoreCreditType } from '@wcp/wario-shared';
 
-import { mockStoreCreditProviderService } from '../../../test/utils';
-import { StoreCreditProviderService } from '../../config/store-credit-provider/store-credit-provider.service';
+import { mockStoreCreditProviderService } from 'test/utils';
+import { StoreCreditProviderService } from 'src/config/store-credit-provider/store-credit-provider.service';
 import { InsufficientCreditException, StoreCreditNotFoundException } from '../../exceptions';
 
 import { StoreCreditController } from './store-credit.controller';

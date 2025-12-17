@@ -15,7 +15,7 @@ import {
 import {
   type SquareProviderApiCallReturnSuccess,
   type SquareProviderApiCallReturnValue,
-} from '../../src/config/square/square.service';
+} from '../../src/modules/integrations/square/square.service';
 
 // ============================================================================
 // ID Mapping Types & Helpers

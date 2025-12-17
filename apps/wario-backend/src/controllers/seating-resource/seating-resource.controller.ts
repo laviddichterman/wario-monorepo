@@ -12,8 +12,8 @@ import {
 
 import { CreateSeatingResourceDto, UpdateSeatingResourceDto } from 'src/dtos/seating-resource.dto';
 
-import { DataProviderService } from '../../config/data-provider/data-provider.service';
-import { SocketIoService } from '../../config/socket-io/socket-io.service';
+import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 
 @Controller('api/v1/config/seating')
 export class SeatingResourceController {

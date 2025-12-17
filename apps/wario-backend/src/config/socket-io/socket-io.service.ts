@@ -13,7 +13,7 @@ import {
 } from '@wcp/wario-shared';
 
 import { AppConfigService } from '../app-config.service';
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 
 @WebSocketGateway({

@@ -16,9 +16,9 @@ import { Client } from 'square';
 
 import { CURRENCY, type IMoney } from '@wcp/wario-shared';
 
-import { AppConfigService } from '../app-config.service';
-import { DataProviderService } from '../data-provider/data-provider.service';
-import { MigrationFlagsService } from '../migration-flags.service';
+import { AppConfigService } from 'src/config/app-config.service';
+import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+import { MigrationFlagsService } from 'src/config/migration-flags.service';
 
 import { SquareService } from './square.service';
 

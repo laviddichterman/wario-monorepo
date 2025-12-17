@@ -17,7 +17,7 @@ export class KeyValueMongooseRepository implements IKeyValueRepository {
   constructor(
     @InjectModel('KeyValueSchema')
     private readonly model: Model<KeyValueStoreDoc>,
-  ) { }
+  ) {}
 
   async findByKey(key: string): Promise<string | null> {
     const doc = await this.model.findOne({}).lean().exec();
@@ -65,4 +65,3 @@ export class KeyValueMongooseRepository implements IKeyValueRepository {
     return false;
   }
 }
-

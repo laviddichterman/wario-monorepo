@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 
 import type { SeatingResource } from '@wcp/wario-shared';
 
-import { SeatingResourceEntity } from '../../entities/settings/seating-resource.entity';
+import { SeatingResourceEntity } from 'src/entities/settings/seating-resource.entity';
 import type { ISeatingResourceRepository } from '../interfaces/seating-resource.repository.interface';
 
 @Injectable()

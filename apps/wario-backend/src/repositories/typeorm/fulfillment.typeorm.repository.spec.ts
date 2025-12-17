@@ -4,9 +4,9 @@ import { IsNull, type Repository } from 'typeorm';
 
 import { FulfillmentType } from '@wcp/wario-shared';
 
-import { createMockFulfillmentEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { FulfillmentEntity } from '../../entities/settings/fulfillment.entity';
+import { createMockFulfillmentEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { FulfillmentEntity } from 'src/entities/settings/fulfillment.entity';
 
 import { FulfillmentTypeOrmRepository } from './fulfillment.typeorm.repository';
 

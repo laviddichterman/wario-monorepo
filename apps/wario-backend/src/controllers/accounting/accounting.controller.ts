@@ -1,17 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { addDays, formatRFC3339, parseISO, startOfDay } from 'date-fns';
 
-// import {
-//   CoreCartEntry,
-//   CreateProductWithMetadataFromV2,
-//   RoundToTwoDecimalPlaces,
-//   WDateUtils,
-//   WOrderStatus,
-//   WProduct,
-// } from '@wcp/wario-shared';
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { GoogleService } from '../../config/google/google.service';
-import { OrderManagerService } from '../../config/order-manager/order-manager.service';
+import { OrderManagerService } from 'src/config/order-manager/order-manager.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { GoogleService } from 'src/modules/integrations/google/google.service';
 
 const tipsregex = /Tip Amount: \\$([0-9]+(?:\\.[0-9]{1,2})?)/;
 

@@ -28,8 +28,14 @@ import {
   type UpsertIProductRequest,
 } from '@wcp/wario-shared';
 
-import { UpsertProductInstanceProps } from 'src/config/catalog-provider/catalog.types';
+import { UpsertProductInstanceProps } from 'src/modules/catalog-provider/catalog.types';
 
+import { AppConfigService } from 'src/config/app-config.service';
+import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+import { MigrationFlagsService } from 'src/config/migration-flags.service';
+import { GenerateSquareReverseMapping, ICatalogContext } from 'src/config/square-wario-bridge';
+import { DatabaseManagerService } from '../database-manager/database-manager.service';
+import { SquareService } from '../integrations/square/square.service';
 import {
   CATEGORY_REPOSITORY,
   type ICategoryRepository,
@@ -63,12 +69,6 @@ import {
   type IProductRepository,
   PRODUCT_REPOSITORY,
 } from '../../repositories/interfaces/product.repository.interface';
-import { AppConfigService } from '../app-config.service';
-import { DataProviderService } from '../data-provider/data-provider.service';
-import { DatabaseManagerService } from '../database-manager/database-manager.service';
-import { MigrationFlagsService } from '../migration-flags.service';
-import { GenerateSquareReverseMapping, ICatalogContext } from '../square-wario-bridge';
-import { SquareService } from '../square/square.service';
 
 import * as CategoryFns from './catalog-category.functions';
 import * as FunctionFns from './catalog-function.functions';
@@ -616,7 +616,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
     this.RecomputeCatalog();
 
-    const shouldSuppressSquareSync = this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
+    const shouldSuppressSquareSync = true; //this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (shouldSuppressSquareSync) {
       if (!this.squareService.isInitialized) {
         this._logger.warn(
@@ -699,10 +700,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         };
       })
       .filter((update) => update.product !== null) as Array<{
-        piid: string;
-        product: IProduct;
-        productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
-      }>;
+      piid: string;
+      product: IProduct;
+      productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
+    }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();

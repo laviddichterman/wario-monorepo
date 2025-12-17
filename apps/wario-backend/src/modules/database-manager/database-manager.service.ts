@@ -7,10 +7,10 @@ import { DataSource, EntityManager } from 'typeorm';
 import { SEMVER } from '@wcp/wario-shared';
 
 import PACKAGE_JSON from '../../../package.json';
-import { DBVersionEntity, SettingsEntity } from '../../entities';
+import { AppConfigService } from 'src/config/app-config.service';
+import { DBVersionEntity, SettingsEntity } from 'src/entities';
 import { DB_VERSION_REPOSITORY } from '../../repositories/interfaces/db-version.repository.interface';
 import type { IDBVersionRepository } from '../../repositories/interfaces/db-version.repository.interface';
-import { AppConfigService } from '../app-config.service';
 
 interface IMigrationFunctionObject {
   [index: string]: [SEMVER, (manager: EntityManager) => Promise<void>];
@@ -36,7 +36,7 @@ export class DatabaseManagerService implements OnModuleInit {
     private mongooseMigrator: MongooseToNewMigrator,
     @InjectPinoLogger(DatabaseManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   private semverToString(version: SEMVER): string {
     return `${String(version.major)}.${String(version.minor)}.${String(version.patch)}`;
@@ -50,7 +50,8 @@ export class DatabaseManagerService implements OnModuleInit {
 
   async onModuleInit() {
     // MAKE SURE TO AWAIT
-    await this.Bootstrap()
+    await this.Bootstrap();
+    this.logger.info('DatabaseManagerService initialized');
   }
 
   public async runDataMigration() {
@@ -93,11 +94,11 @@ export class DatabaseManagerService implements OnModuleInit {
    * WE DO NOT MIGRATE MONGOOSE SCHEMA ANYMORE.
    */
   private LEGACY_MONGOOSE_MIGRATIONS: ILegacyMigrationFunctionObject = {
-    '0.6.4': [{ major: 0, minor: 6, patch: 8 }, async () => { }],
-    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => { }],
-    '0.6.6': [{ major: 0, minor: 6, patch: 7 }, async () => { }],
-    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => { }],
-    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => { }],
+    '0.6.4': [{ major: 0, minor: 6, patch: 8 }, async () => {}],
+    '0.6.5': [{ major: 0, minor: 6, patch: 6 }, async () => {}],
+    '0.6.6': [{ major: 0, minor: 6, patch: 7 }, async () => {}],
+    '0.6.7': [{ major: 0, minor: 6, patch: 8 }, async () => {}],
+    '0.6.8': [{ major: 0, minor: 6, patch: 9 }, async () => {}],
     '0.6.9': [
       { major: 0, minor: 6, patch: 10 },
       async () => {

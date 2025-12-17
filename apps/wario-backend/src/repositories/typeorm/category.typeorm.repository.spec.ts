@@ -2,9 +2,9 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull, type Repository } from 'typeorm';
 
-import { createMockCategoryEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { CategoryEntity } from '../../entities/catalog/category.entity';
+import { createMockCategoryEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { CategoryEntity } from 'src/entities/catalog/category.entity';
 
 import { CategoryTypeOrmRepository } from './category.typeorm.repository';
 

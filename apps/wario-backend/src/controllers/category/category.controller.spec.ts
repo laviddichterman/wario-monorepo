@@ -8,12 +8,13 @@
  * - DELETE /api/v1/menu/category/:catid
  */
 
+import { createMockCategory, mockCatalogProviderService, mockSocketIoService } from 'test/utils';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 
-import { createMockCategory, mockCatalogProviderService, mockSocketIoService } from '../../../test/utils';
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { SocketIoService } from '../../config/socket-io/socket-io.service';
-import { CategoryNotFoundException } from '../../exceptions';
+import { SocketIoService } from 'src/config/socket-io/socket-io.service';
+import { CategoryNotFoundException } from 'src/exceptions';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 import { CategoryController } from './category.controller';
 

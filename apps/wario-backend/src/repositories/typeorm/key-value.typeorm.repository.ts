@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { KeyValueEntity } from '../../entities/settings/key-value.entity';
+import { KeyValueEntity } from 'src/entities/settings/key-value.entity';
 import type { IKeyValueRepository, KeyValueEntry } from '../interfaces/key-value.repository.interface';
 
 @Injectable()

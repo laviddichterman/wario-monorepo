@@ -25,7 +25,7 @@ import {
   ProductInstanceFunctionEntity,
   SeatingResourceEntity,
   SettingsEntity,
-} from '../../entities';
+} from 'src/entities';
 
 @Injectable()
 export class MongooseToPostgresMigrator {
@@ -34,7 +34,7 @@ export class MongooseToPostgresMigrator {
     private readonly dataSource: DataSource,
     @InjectPinoLogger(MongooseToPostgresMigrator.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   // Migration statistics for summary
   private stats = {
@@ -161,7 +161,6 @@ export class MongooseToPostgresMigrator {
       this.logger.warn('No Settings found in MongoDB.');
     }
   }
-
 
   private async migrateKeyValue(manager: EntityManager) {
     this.logger.info('Migrating KeyValue configs...');

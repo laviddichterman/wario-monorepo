@@ -4,7 +4,7 @@ import { IsNull, Repository } from 'typeorm';
 
 import type { PrinterGroup } from '@wcp/wario-shared';
 
-import { PrinterGroupEntity } from '../../entities/settings/printer-group.entity';
+import { PrinterGroupEntity } from 'src/entities/settings/printer-group.entity';
 import type { IPrinterGroupRepository } from '../interfaces/printer-group.repository.interface';
 
 @Injectable()

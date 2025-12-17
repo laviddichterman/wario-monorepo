@@ -12,8 +12,8 @@ import { Test, type TestingModule } from '@nestjs/testing';
 
 import type { FulfillmentConfig } from '@wcp/wario-shared';
 
-import { mockCatalogProviderService } from '../../../test/utils';
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
+import { mockCatalogProviderService } from 'test/utils';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 import { OrderValidationService } from './order-validation.service';
 

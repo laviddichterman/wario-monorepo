@@ -2,11 +2,12 @@ import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/
 
 import { UncommittedICategoryDto } from '@wcp/wario-shared';
 
-import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { SocketIoService } from '../../config/socket-io/socket-io.service';
-import { DeleteCategoryDto, UpdateCategoryDto } from '../../dtos/category.dto';
-import { CategoryNotFoundException } from '../../exceptions';
+import { Scopes } from 'src/auth/decorators/scopes.decorator';
+
+import { SocketIoService } from 'src/config/socket-io/socket-io.service';
+import { DeleteCategoryDto, UpdateCategoryDto } from 'src/dtos/category.dto';
+import { CategoryNotFoundException } from 'src/exceptions';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 @Controller('api/v1/menu/category')
 export class CategoryController {

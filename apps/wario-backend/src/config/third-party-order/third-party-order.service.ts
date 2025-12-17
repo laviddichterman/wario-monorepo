@@ -17,10 +17,10 @@ import {
 } from '@wcp/wario-shared';
 
 import { type IOrderRepository, ORDER_REPOSITORY } from '../../repositories/interfaces/order.repository.interface';
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { BigIntMoneyToIntMoney, LineItemsToOrderInstanceCart } from '../square-wario-bridge';
-import { SquareService } from '../square/square.service';
+import { SquareService } from 'src/modules/integrations/square/square.service';
 
 /**
  * Service responsible for ingesting orders from 3rd party platforms (DoorDash, UberEats).

@@ -17,8 +17,12 @@ import type {
   UpsertIProductRequest,
 } from '@wcp/wario-shared';
 
-import { GetNonSquareExternalIds, GetSquareExternalIds, GetSquareIdIndexFromExternalIds } from '../square-wario-bridge';
-import type { SquareService } from '../square/square.service';
+import {
+  GetNonSquareExternalIds,
+  GetSquareExternalIds,
+  GetSquareIdIndexFromExternalIds,
+} from 'src/config/square-wario-bridge';
+import type { SquareService } from '../integrations/square/square.service';
 
 import type { UpdatePrinterGroupProps, UpsertProductInstanceProps } from './catalog.types';
 

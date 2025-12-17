@@ -10,7 +10,7 @@ import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { UpdateOptionDto } from 'src/dtos/modifier.dto';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 @Controller('api/v1/menu/option')
 export class ModifierController {

@@ -11,6 +11,7 @@ import {
   WDateUtils,
 } from '@wcp/wario-shared';
 
+import { DatabaseManagerService } from 'src/modules/database-manager/database-manager.service';
 import {
   FULFILLMENT_REPOSITORY,
   KEY_VALUE_REPOSITORY,
@@ -21,7 +22,6 @@ import type { IFulfillmentRepository } from '../../repositories/interfaces/fulfi
 import type { IKeyValueRepository, KeyValueEntry } from '../../repositories/interfaces/key-value.repository.interface';
 import type { ISeatingResourceRepository } from '../../repositories/interfaces/seating-resource.repository.interface';
 import type { ISettingsRepository } from '../../repositories/interfaces/settings.repository.interface';
-import { DatabaseManagerService } from '../database-manager/database-manager.service';
 
 @Injectable()
 export class DataProviderService implements OnModuleInit {

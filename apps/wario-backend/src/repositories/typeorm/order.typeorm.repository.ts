@@ -4,7 +4,7 @@ import { Between, IsNull, Repository } from 'typeorm';
 
 import type { WFulfillmentStatus, WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 
-import { OrderEntity } from '../../entities/order/order.entity';
+import { OrderEntity } from 'src/entities/order/order.entity';
 import type { IOrderRepository } from '../interfaces/order.repository.interface';
 
 @Injectable()

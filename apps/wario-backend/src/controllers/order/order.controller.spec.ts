@@ -23,8 +23,8 @@ import {
   createMockWOrderInstance,
   mockOrderManagerService,
   resetOrderIdCounter,
-} from '../../../test/utils';
-import { OrderManagerService } from '../../config/order-manager/order-manager.service';
+} from 'test/utils';
+import { OrderManagerService } from 'src/config/order-manager/order-manager.service';
 import { OrderNotFoundException } from '../../exceptions';
 import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor';
 

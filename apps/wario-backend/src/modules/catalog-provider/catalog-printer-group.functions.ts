@@ -11,13 +11,13 @@ import type { DeletePrinterGroupRequest, KeyValue, PrinterGroup } from '@wcp/war
 import { PrinterGroupNotFoundException } from 'src/exceptions';
 
 import type { IPrinterGroupRepository } from '../../repositories/interfaces/printer-group.repository.interface';
-import type { DataProviderService } from '../data-provider/data-provider.service';
+import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
   GetSquareExternalIds,
   IdMappingsToExternalIds,
   PrinterGroupToSquareCatalogObjectPlusDummyProduct,
-} from '../square-wario-bridge';
-import type { SquareProviderApiCallReturnValue, SquareService } from '../square/square.service';
+} from 'src/config/square-wario-bridge';
+import type { SquareProviderApiCallReturnValue, SquareService } from '../integrations/square/square.service';
 
 import type { UpdatePrinterGroupProps } from './catalog.types';
 

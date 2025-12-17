@@ -24,7 +24,7 @@ export class MongooseToNewMigrator {
     @InjectConnection() private readonly mongoConnection: Connection,
     @InjectPinoLogger(MongooseToNewMigrator.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   // ========== Helper Functions ==========
 

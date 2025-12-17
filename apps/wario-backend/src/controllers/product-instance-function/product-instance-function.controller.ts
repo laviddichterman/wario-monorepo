@@ -15,8 +15,8 @@ import { WFunctional } from '@wcp/wario-shared';
 
 import { CreateProductInstanceFunctionDto, UpdateProductInstanceFunctionDto } from 'src/dtos/expression.dto';
 
-import { CatalogProviderService } from '../../config/catalog-provider/catalog-provider.service';
-import { SocketIoService } from '../../config/socket-io/socket-io.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 
 @Controller('api/v1/query/language/productinstancefunction')
 export class ProductInstanceFunctionController {

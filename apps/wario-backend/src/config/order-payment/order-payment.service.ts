@@ -15,7 +15,7 @@ import {
 
 import { DataProviderService } from '../data-provider/data-provider.service';
 import { CreateOrderStoreCreditForRefund } from '../square-wario-bridge';
-import { SquareError, SquareService } from '../square/square.service';
+import { SquareError, SquareService } from 'src/modules/integrations/square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
 
 @Injectable()

@@ -10,18 +10,18 @@ import { type PinoLogger } from 'nestjs-pino';
 
 import { WOrderStatus } from '@wcp/wario-shared';
 
-import { createMock, createMockWOrderInstance, resetOrderIdCounter } from '../../../test/utils';
+import { createMock, createMockWOrderInstance, resetOrderIdCounter } from 'test/utils';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { GoogleService } from 'src/modules/integrations/google/google.service';
+import { SquareService } from 'src/modules/integrations/square/square.service';
 import { ORDER_REPOSITORY } from '../../repositories/interfaces';
 import { AppConfigService } from '../app-config.service';
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
 import { DataProviderService } from '../data-provider/data-provider.service';
-import { GoogleService } from '../google/google.service';
 import { OrderCalendarService } from '../order-calendar/order-calendar.service';
 import { OrderNotificationService } from '../order-notification/order-notification.service';
 import { OrderPaymentService } from '../order-payment/order-payment.service';
 import { OrderValidationService } from '../order-validation/order-validation.service';
 import { PrinterService } from '../printer/printer.service';
-import { SquareService } from '../square/square.service';
 import { StoreCreditProviderService } from '../store-credit-provider/store-credit-provider.service';
 
 import { OrderManagerService } from './order-manager.service';
@@ -155,7 +155,11 @@ describe('OrderManagerService', () => {
       ];
       mockOrderRepository.findByDateRange.mockResolvedValue(mockOrders);
 
-      const result = await service.GetOrders({ date: '2024-01-15', endDate: '2024-01-17', status: WOrderStatus.CONFIRMED });
+      const result = await service.GetOrders({
+        date: '2024-01-15',
+        endDate: '2024-01-17',
+        status: WOrderStatus.CONFIRMED,
+      });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);

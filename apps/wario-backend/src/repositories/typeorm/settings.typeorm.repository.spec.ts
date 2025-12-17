@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { createMockSettingsEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, MockDataSourceProvider, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, type EntityManager, type Repository } from 'typeorm';
 
-import { createMockSettingsEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, MockDataSourceProvider, type MockType } from '../../../test/utils/mock-typeorm';
-import { SettingsEntity } from '../../entities/settings/settings.entity';
+import { SettingsEntity } from 'src/entities/settings/settings.entity';
 
 import { SettingsTypeOrmRepository } from './settings.typeorm.repository';
 

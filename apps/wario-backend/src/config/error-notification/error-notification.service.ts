@@ -7,8 +7,9 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { WError } from '@wcp/wario-shared';
 
+import { GoogleService } from 'src/modules/integrations/google/google.service';
+
 import { DataProviderService } from '../data-provider/data-provider.service';
-import { GoogleService } from '../google/google.service';
 
 export interface ErrorContext {
   path: string;

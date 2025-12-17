@@ -3,9 +3,9 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull, type Repository } from 'typeorm';
 
-import { createMockOptionEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { OptionEntity } from '../../entities/catalog/option.entity';
+import { createMockOptionEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { OptionEntity } from 'src/entities/catalog/option.entity';
 
 import { OptionTypeOrmRepository } from './option.typeorm.repository';
 

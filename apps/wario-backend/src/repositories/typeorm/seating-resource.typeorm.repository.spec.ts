@@ -2,9 +2,9 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 
-import { createMockSeatingResourceEntity } from '../../../test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from '../../../test/utils/mock-typeorm';
-import { SeatingResourceEntity } from '../../entities/settings/seating-resource.entity';
+import { createMockSeatingResourceEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+import { SeatingResourceEntity } from 'src/entities/settings/seating-resource.entity';
 
 import { SeatingResourceTypeOrmRepository } from './seating-resource.typeorm.repository';
 

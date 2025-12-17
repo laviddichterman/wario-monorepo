@@ -22,7 +22,7 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { OrdersModule } from './models/orders/orders.module';
 import { QueryModule } from './models/query/query.module';
 import { SettingsModule } from './models/settings/settings.module';
-import { TasksModule } from './tasks/tasks.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
   imports: [

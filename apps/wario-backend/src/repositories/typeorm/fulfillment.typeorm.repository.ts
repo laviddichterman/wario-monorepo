@@ -4,7 +4,7 @@ import { IsNull, Repository } from 'typeorm';
 
 import type { FulfillmentConfig } from '@wcp/wario-shared';
 
-import { FulfillmentEntity } from '../../entities/settings/fulfillment.entity';
+import { FulfillmentEntity } from 'src/entities/settings/fulfillment.entity';
 import type { IFulfillmentRepository } from '../interfaces/fulfillment.repository.interface';
 
 @Injectable()

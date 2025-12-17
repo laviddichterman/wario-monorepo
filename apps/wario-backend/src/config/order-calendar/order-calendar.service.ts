@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { calendar_v3 } from 'googleapis';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
-import { GoogleService } from '../google/google.service';
+import { GoogleService } from 'src/modules/integrations/google/google.service';
 
 /**
  * Service responsible for managing Google Calendar events for orders.

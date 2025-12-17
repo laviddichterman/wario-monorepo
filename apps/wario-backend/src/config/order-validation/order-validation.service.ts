@@ -11,7 +11,7 @@ import {
   WProduct,
 } from '@wcp/wario-shared';
 
-import { CatalogProviderService } from '../catalog-provider/catalog-provider.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 /**
  * Service responsible for validating order components.
