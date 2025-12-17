@@ -20,14 +20,27 @@
 ### Directory Structure (`src/`)
 
 - `app.module.ts`: Root module.
-- `config/`: **CRITICAL**. Despite the name, this contains the **Domain Services** (Business Logic).
-  - `order-manager/`: Core order logic (state machine, transitions).
-  - `square/`: Wrappers for Square API interaction.
-  - `catalog-provider/`: Source of truth for menu items.
+- `config/`: Configuration and remaining services.
+  - `app-config.service.ts`: Environment variables.
+  - `data-provider/`: Data access coordination.
+  - `square-wario-bridge.ts`: Square integration helpers.
+  - `store-credit-provider/`: Store credit business logic.
+- `domain/`: **Business logic layer** (extracted from config/).
+  - `order/`: Core order domain services.
+    - `order-manager/`: Order lifecycle and state machine.
+    - `order-validation/`: Order validation rules.
+    - `order-notification/`: Email notifications.
+    - `order-payment/`: Payment processing.
+    - `order-calendar/`: Scheduling logic.
+    - `third-party-order/`: Third-party order ingestion.
+- `infrastructure/`: **Technical concerns**.
+  - `database/`: Database layer.
+    - `mongoose/models/`: Mongoose schemas (catalog, orders, query, settings).
+    - `typeorm/`: TypeORM entities.
+  - `messaging/socket-io/`: WebSocket gateway.
+  - `printing/printer/`: Print service (Square workaround).
 - `controllers/`: REST endpoints.
-  - `order/`: Endpoints for manipulating orders (`POST /api/v1/order`).
-- `models/`: Mongoose Schemas & DTOs.
-  - `orders/`: `WOrderInstance` schema.
+- `repositories/`: Repository interfaces and implementations.
 - `auth/`: JWT strategies and Guards.
 
 ### Key Design Patterns
@@ -50,7 +63,7 @@
 
 #### 3. Square Service Wrapper
 
-**File:** `src/config/square/square.service.ts`
+**File:** `src/modules/integrations/square/square.service.ts`
 **Concept:** A robust wrapper around the official Square SDK.
 
 - **Features:**
@@ -236,7 +249,11 @@ src/entities/
 │   ├── fulfillment.entity.ts
 │   ├── key-value.entity.ts
 │   ├── printer-group.entity.ts  # Temporal (extends TemporalEntity)
+│   ├── seating-floor.entity.ts
+│   ├── seating-layout.entity.ts
+│   ├── seating-placement.entity.ts
 │   ├── seating-resource.entity.ts
+│   ├── seating-section.entity.ts
 │   └── settings.entity.ts
 └── index.ts
 ```
@@ -267,18 +284,23 @@ WHERE id = ? AND validFrom <= ? AND (validTo IS NULL OR validTo > ?)
 
 All entities implement their `wario-shared` interfaces:
 
-| Entity                          | Implements                 |
-| ------------------------------- | -------------------------- |
-| `CategoryEntity`                | `ICategory`                |
-| `OptionTypeEntity`              | `IOptionType`              |
-| `OptionEntity`                  | `IOption`                  |
-| `ProductEntity`                 | `IProduct`                 |
-| `ProductInstanceEntity`         | `IProductInstance`         |
-| `FulfillmentEntity`             | `FulfillmentConfig`        |
-| `SettingsEntity`                | `IWSettings`               |
-| `OrderEntity`                   | `WOrderInstance`           |
-| `ProductInstanceFunctionEntity` | `IProductInstanceFunction` |
-| `OrderInstanceFunctionEntity`   | `OrderInstanceFunction`    |
+| Entity                          | Implements                  |
+| ------------------------------- | --------------------------- |
+| `CategoryEntity`                | `ICategory`                 |
+| `OptionTypeEntity`              | `IOptionType`               |
+| `OptionEntity`                  | `IOption`                   |
+| `ProductEntity`                 | `IProduct`                  |
+| `ProductInstanceEntity`         | `IProductInstance`          |
+| `FulfillmentEntity`             | `FulfillmentConfig`         |
+| `SettingsEntity`                | `IWSettings`                |
+| `OrderEntity`                   | `WOrderInstance`            |
+| `ProductInstanceFunctionEntity` | `IProductInstanceFunction`  |
+| `OrderInstanceFunctionEntity`   | `OrderInstanceFunction`     |
+| `SeatingFloorEntity`            | `SeatingFloor`              |
+| `SeatingSectionEntity`          | `SeatingLayoutSection`      |
+| `SeatingResourceEntity`         | `SeatingResource`           |
+| `SeatingPlacementEntity`        | `SeatingPlacement`          |
+| `SeatingLayoutEntity`           | `SeatingLayout` (aggregate) |
 
 ### Discriminated Unions as JSONB
 
@@ -356,7 +378,11 @@ Use Symbol tokens for injection (not class names):
 | `PRODUCT_REPOSITORY`                   | `IProductRepository`                 |
 | `PRODUCT_INSTANCE_REPOSITORY`          | `IProductInstanceRepository`         |
 | `PRODUCT_INSTANCE_FUNCTION_REPOSITORY` | `IProductInstanceFunctionRepository` |
+| `SEATING_FLOOR_REPOSITORY`             | `ISeatingFloorRepository`            |
+| `SEATING_LAYOUT_REPOSITORY`            | `ISeatingLayoutRepository`           |
+| `SEATING_PLACEMENT_REPOSITORY`         | `ISeatingPlacementRepository`        |
 | `SEATING_RESOURCE_REPOSITORY`          | `ISeatingResourceRepository`         |
+| `SEATING_SECTION_REPOSITORY`           | `ISeatingSectionRepository`          |
 | `SETTINGS_REPOSITORY`                  | `ISettingsRepository`                |
 
 ### TypeORM SCD2 Pattern

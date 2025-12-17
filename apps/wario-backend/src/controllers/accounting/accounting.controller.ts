@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { addDays, formatRFC3339, parseISO, startOfDay } from 'date-fns';
 
-import { OrderManagerService } from 'src/config/order-manager/order-manager.service';
+import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
 
@@ -22,7 +22,7 @@ export class AccountingController {
     private readonly catalogProvider: CatalogProviderService,
     private readonly googleService: GoogleService,
     private readonly orderManager: OrderManagerService,
-  ) {}
+  ) { }
 
   @Get('tips')
   async getTips(@Query('date') date: string) {

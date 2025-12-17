@@ -8,10 +8,11 @@ import {
   UpdateIProductRequestDto,
 } from '@wcp/wario-shared';
 
-import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { BatchDeleteProductClassDto } from 'src/dtos/product.dto';
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+
+import { Scopes } from '../../auth/decorators/scopes.decorator';
 import {
   CatalogOperationException,
   ProductInstanceNotFoundException,

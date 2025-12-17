@@ -23,11 +23,12 @@ import {
   WDateUtils,
 } from '@wcp/wario-shared';
 
+import { GoogleService } from 'src/modules/integrations/google/google.service';
+import { SquareService } from 'src/modules/integrations/square/square.service';
+
 import aes256gcm from '../crypto-aes-256-gcm';
 import { DataProviderService } from '../data-provider/data-provider.service';
-import { GoogleService } from 'src/modules/integrations/google/google.service';
 import { CreateOrderStoreCredit } from '../square-wario-bridge';
-import { SquareService } from 'src/modules/integrations/square/square.service';
 
 const ACTIVE_SHEET = 'CurrentWARIO';
 const ACTIVE_RANGE = `${ACTIVE_SHEET}!A2:M`;

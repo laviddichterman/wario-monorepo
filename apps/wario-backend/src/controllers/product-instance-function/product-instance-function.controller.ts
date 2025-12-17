@@ -14,9 +14,8 @@ import { IAbstractExpression } from '@wcp/wario-shared';
 import { WFunctional } from '@wcp/wario-shared';
 
 import { CreateProductInstanceFunctionDto, UpdateProductInstanceFunctionDto } from 'src/dtos/expression.dto';
-
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 
 @Controller('api/v1/query/language/productinstancefunction')
 export class ProductInstanceFunctionController {

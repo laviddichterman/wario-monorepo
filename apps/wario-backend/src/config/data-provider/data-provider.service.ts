@@ -12,6 +12,7 @@ import {
 } from '@wcp/wario-shared';
 
 import { DatabaseManagerService } from 'src/modules/database-manager/database-manager.service';
+
 import {
   FULFILLMENT_REPOSITORY,
   KEY_VALUE_REPOSITORY,

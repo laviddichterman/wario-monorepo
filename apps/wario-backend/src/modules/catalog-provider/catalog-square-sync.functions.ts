@@ -22,6 +22,7 @@ import {
   GetSquareExternalIds,
   GetSquareIdIndexFromExternalIds,
 } from 'src/config/square-wario-bridge';
+
 import type { SquareService } from '../integrations/square/square.service';
 
 import type { UpdatePrinterGroupProps, UpsertProductInstanceProps } from './catalog.types';

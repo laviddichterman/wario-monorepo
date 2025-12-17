@@ -10,11 +10,12 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 import { DataProviderService } from 'src/config/data-provider/data-provider.service';
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { CreateFulfillmentDto, UpdateFulfillmentDto } from 'src/dtos/fulfillment.dto';
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+
+import { Scopes } from '../../auth/decorators/scopes.decorator';
 
 @Controller('api/v1/config/fulfillment')
 export class FulfillmentController {

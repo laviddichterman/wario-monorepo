@@ -6,8 +6,6 @@
  * explicit updates, insert new instances), validation failures, and Square API failures.
  */
 
-import { type UpdateIProductRequest } from '@wcp/wario-shared';
-
 import {
   createMockBatchUpsertResponse,
   createMockCreateProductInstanceRequest,
@@ -20,6 +18,8 @@ import {
   createSquareSuccessResponse,
   SquareIdMappingTracker,
 } from 'test/utils';
+
+import { type UpdateIProductRequest } from '@wcp/wario-shared';
 
 import { batchUpsertProduct } from './catalog-product.functions';
 

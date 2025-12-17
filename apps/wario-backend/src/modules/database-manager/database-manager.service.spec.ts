@@ -1,15 +1,17 @@
+import { createMockModelProvider } from 'test/utils/mock-database';
+import { MockDataSourceProvider, type MockType } from 'test/utils/mock-typeorm';
+
 import { getConnectionToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getLoggerToken } from 'nestjs-pino';
 import { DataSource } from 'typeorm';
 
-import { createMockModelProvider } from 'test/utils/mock-database';
-import { MockDataSourceProvider, type MockType } from 'test/utils/mock-typeorm';
+import { AppConfigService } from 'src/config/app-config.service';
+
 import {
   DB_VERSION_REPOSITORY,
   type IDBVersionRepository,
 } from '../../repositories/interfaces/db-version.repository.interface';
-import { AppConfigService } from 'src/config/app-config.service';
 
 import { DatabaseManagerService } from './database-manager.service';
 import { MongooseToNewMigrator } from './mongoose-to-newmongoose';

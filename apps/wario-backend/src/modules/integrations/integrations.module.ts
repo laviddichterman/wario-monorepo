@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { AppConfigurationModule } from 'src/config/app-configuration.module';
 import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import { MigrationFlagsService } from 'src/config/migration-flags.service';
+
 import { RepositoryModule } from '../../repositories/repository.module';
 import { DatabaseManagerModule } from '../database-manager/database-manager.module';
 

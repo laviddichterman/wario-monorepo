@@ -4,8 +4,9 @@ import * as turf from '@turf/turf';
 
 import type { DeliveryAddressValidateRequest, DeliveryAddressValidateResponse } from '@wcp/wario-shared';
 
-import { Public } from '../../auth/decorators/public.decorator';
 import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+
+import { Public } from '../../auth/decorators/public.decorator';
 
 const client = new Client({});
 

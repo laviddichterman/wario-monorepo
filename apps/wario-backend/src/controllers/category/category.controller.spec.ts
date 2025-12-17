@@ -12,8 +12,8 @@ import { createMockCategory, mockCatalogProviderService, mockSocketIoService } f
 
 import { Test, type TestingModule } from '@nestjs/testing';
 
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { CategoryNotFoundException } from 'src/exceptions';
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 import { CategoryController } from './category.controller';

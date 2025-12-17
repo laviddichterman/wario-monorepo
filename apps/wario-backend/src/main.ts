@@ -4,7 +4,7 @@ import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
 import { AppConfigService } from './config/app-config.service';
-import { SocketIoAdapter } from './config/socket-io/socket-io.adapter';
+import { SocketIoAdapter } from './infrastructure/messaging/socket-io/socket-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

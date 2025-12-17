@@ -17,8 +17,8 @@ import {
 import { type AppConfigService } from 'src/config/app-config.service';
 import { type SquareService } from 'src/modules/integrations/square/square.service';
 
-import type { ProductDeps } from '../../src/modules/catalog-provider/catalog-product.functions';
 import type { DataProviderService } from '../../src/config/data-provider/data-provider.service';
+import type { ProductDeps } from '../../src/modules/catalog-provider/catalog-product.functions';
 import type { IProductInstanceRepository } from '../../src/repositories/interfaces/product-instance.repository.interface';
 import type { IProductRepository } from '../../src/repositories/interfaces/product.repository.interface';
 

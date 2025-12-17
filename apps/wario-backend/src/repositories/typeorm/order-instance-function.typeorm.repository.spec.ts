@@ -1,10 +1,11 @@
+import { createMockOrderInstanceFunctionEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull, type Repository } from 'typeorm';
 
-import { createMockOrderInstanceFunctionEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
-import { OrderInstanceFunctionEntity } from 'src/entities/catalog/order-instance-function.entity';
+import { OrderInstanceFunctionEntity } from 'src/infrastructure/database/typeorm/catalog/order-instance-function.entity';
 
 import { OrderInstanceFunctionTypeOrmRepository } from './order-instance-function.typeorm.repository';
 

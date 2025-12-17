@@ -1,0 +1,28 @@
+import path from 'path';
+
+import mongoose, { Schema } from 'mongoose';
+
+import { type SeatingResource, SeatingShape } from '@wcp/wario-shared';
+
+type MT = Omit<SeatingResource, 'id'>;
+export const SeatingResourceSchema = new Schema<MT>(
+  {
+    name: { type: String, required: true },
+    capacity: {
+      type: Number,
+      required: true,
+    },
+    shape: { type: String, enum: SeatingShape, required: true },
+    sectionId: { type: String, required: true },
+
+    shapeDimX: { type: Number, required: true },
+    shapeDimY: { type: Number, required: true },
+    disabled: { type: Boolean, default: false },
+  },
+  { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
+);
+
+export const SeatingResourceModel = mongoose.model<SeatingResource>(
+  path.basename(__filename).replace(path.extname(__filename), ''),
+  SeatingResourceSchema,
+);

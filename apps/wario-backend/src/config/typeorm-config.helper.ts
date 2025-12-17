@@ -48,7 +48,7 @@ export interface TypeOrmConfigOptions {
 /**
  * Default glob patterns for entities when running from compiled output (CLI).
  */
-const DEFAULT_ENTITIES_COMPILED = ['dist/src/entities/**/*.entity.js'];
+const DEFAULT_ENTITIES_COMPILED = ['dist/src/infrastructure/database/typeorm/**/*.entity.js'];
 
 /**
  * Default glob patterns for migrations when running from compiled output (CLI).

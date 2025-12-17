@@ -11,10 +11,6 @@
  * - DELETE /api/v1/menu/option/option/:id (delete option)
  */
 
-import { Test, type TestingModule } from '@nestjs/testing';
-
-import type { IOption, IOptionType } from '@wcp/wario-shared';
-
 import {
   createMockCreateOptionRequest,
   createMockCreateOptionTypeRequest,
@@ -23,8 +19,13 @@ import {
   mockCatalogProviderService,
   mockSocketIoService,
 } from 'test/utils';
+
+import { Test, type TestingModule } from '@nestjs/testing';
+
+import type { IOption, IOptionType } from '@wcp/wario-shared';
+
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 
 import { ModifierController } from './modifier.controller';
 

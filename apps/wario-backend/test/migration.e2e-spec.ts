@@ -9,10 +9,10 @@ import {
   type DBVersionEntity,
   type OptionTypeEntity,
   type ProductEntity,
-} from 'src/entities';
+} from 'src/infrastructure/database/typeorm';
 
 import { AppModule } from '../src/app.module';
-import type { SettingsEntity } from '../src/entities/settings/settings.entity';
+import type { SettingsEntity } from '../src/infrastructure/database/typeorm/settings/settings.entity';
 
 import {
   createMockOptionTypeEntity,

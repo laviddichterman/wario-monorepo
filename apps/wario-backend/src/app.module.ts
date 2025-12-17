@@ -6,7 +6,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule, PinoLogger } from 'nestjs-pino';
 
-import { CatalogModule } from 'src/models/catalog/catalog.module';
+import { CatalogModule } from 'src/infrastructure/database/mongoose/models/catalog/catalog.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -19,9 +19,9 @@ import { ErrorNotificationService } from './config/error-notification/error-noti
 import { buildTypeOrmConfig } from './config/typeorm-config.helper';
 import { ControllersModule } from './controllers/controllers.module';
 import { AllExceptionsFilter } from './filters/all-exceptions.filter';
-import { OrdersModule } from './models/orders/orders.module';
-import { QueryModule } from './models/query/query.module';
-import { SettingsModule } from './models/settings/settings.module';
+import { OrdersModule } from './infrastructure/database/mongoose/models/orders/orders.module';
+import { QueryModule } from './infrastructure/database/mongoose/models/query/query.module';
+import { SettingsModule } from './infrastructure/database/mongoose/models/settings/settings.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
@@ -130,4 +130,4 @@ import { TasksModule } from './modules/tasks/tasks.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

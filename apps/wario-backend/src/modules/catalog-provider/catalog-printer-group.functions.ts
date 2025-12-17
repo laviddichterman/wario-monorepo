@@ -8,15 +8,15 @@ import type { BatchDeleteCatalogObjectsResponse } from 'square';
 
 import type { DeletePrinterGroupRequest, KeyValue, PrinterGroup } from '@wcp/wario-shared';
 
-import { PrinterGroupNotFoundException } from 'src/exceptions';
-
-import type { IPrinterGroupRepository } from '../../repositories/interfaces/printer-group.repository.interface';
 import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
   GetSquareExternalIds,
   IdMappingsToExternalIds,
   PrinterGroupToSquareCatalogObjectPlusDummyProduct,
 } from 'src/config/square-wario-bridge';
+import { PrinterGroupNotFoundException } from 'src/exceptions';
+
+import type { IPrinterGroupRepository } from '../../repositories/interfaces/printer-group.repository.interface';
 import type { SquareProviderApiCallReturnValue, SquareService } from '../integrations/square/square.service';
 
 import type { UpdatePrinterGroupProps } from './catalog.types';

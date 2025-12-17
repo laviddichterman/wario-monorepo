@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { createMockProductInstanceEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
@@ -10,9 +13,7 @@ import {
   type UpdateQueryBuilder,
 } from 'typeorm';
 
-import { createMockProductInstanceEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
-import { ProductInstanceEntity } from 'src/entities/catalog/product-instance.entity';
+import { ProductInstanceEntity } from 'src/infrastructure/database/typeorm/catalog/product-instance.entity';
 
 import { ProductInstanceTypeOrmRepository } from './product-instance.typeorm.repository';
 

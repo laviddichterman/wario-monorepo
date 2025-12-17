@@ -19,11 +19,6 @@ import {
   type UpdateIOptionTypeRequestBody,
 } from '@wcp/wario-shared';
 
-import { type DeleteProductInstanceFunctionResult } from 'src/modules/catalog-provider/catalog-function.functions';
-
-import type { IOptionTypeRepository } from '../../repositories/interfaces/option-type.repository.interface';
-import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';
-import { IsSetOfUniqueStrings } from '../../utils/utils';
 import type { AppConfigService } from 'src/config/app-config.service';
 import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
@@ -33,6 +28,11 @@ import {
   IdMappingsToExternalIds,
   ModifierTypeToSquareCatalogObject,
 } from 'src/config/square-wario-bridge';
+import { type DeleteProductInstanceFunctionResult } from 'src/modules/catalog-provider/catalog-function.functions';
+
+import type { IOptionTypeRepository } from '../../repositories/interfaces/option-type.repository.interface';
+import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';
+import { IsSetOfUniqueStrings } from '../../utils/utils';
 import type { SquareProviderApiCallReturnValue, SquareService } from '../integrations/square/square.service';
 
 import { LocationsConsidering3pFlag } from './catalog.types';

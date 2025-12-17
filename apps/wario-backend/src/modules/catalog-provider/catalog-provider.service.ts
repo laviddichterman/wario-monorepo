@@ -28,14 +28,12 @@ import {
   type UpsertIProductRequest,
 } from '@wcp/wario-shared';
 
-import { UpsertProductInstanceProps } from 'src/modules/catalog-provider/catalog.types';
-
 import { AppConfigService } from 'src/config/app-config.service';
 import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import { MigrationFlagsService } from 'src/config/migration-flags.service';
 import { GenerateSquareReverseMapping, ICatalogContext } from 'src/config/square-wario-bridge';
-import { DatabaseManagerService } from '../database-manager/database-manager.service';
-import { SquareService } from '../integrations/square/square.service';
+import { UpsertProductInstanceProps } from 'src/modules/catalog-provider/catalog.types';
+
 import {
   CATEGORY_REPOSITORY,
   type ICategoryRepository,
@@ -69,6 +67,8 @@ import {
   type IProductRepository,
   PRODUCT_REPOSITORY,
 } from '../../repositories/interfaces/product.repository.interface';
+import { DatabaseManagerService } from '../database-manager/database-manager.service';
+import { SquareService } from '../integrations/square/square.service';
 
 import * as CategoryFns from './catalog-category.functions';
 import * as FunctionFns from './catalog-function.functions';

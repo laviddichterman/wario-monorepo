@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 
-import { IntegrationsModule } from '../integrations/integrations.module';
 import { RepositoryModule } from '../../repositories/repository.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
 
 import { CatalogProviderService } from './catalog-provider.service';
 

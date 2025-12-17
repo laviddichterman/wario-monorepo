@@ -6,7 +6,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, type EntityManager, type Repository } from 'typeorm';
 
-import { SettingsEntity } from 'src/entities/settings/settings.entity';
+import { SettingsEntity } from 'src/infrastructure/database/typeorm/settings/settings.entity';
 
 import { SettingsTypeOrmRepository } from './settings.typeorm.repository';
 

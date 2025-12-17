@@ -4,9 +4,9 @@ import { UncommittedICategoryDto } from '@wcp/wario-shared';
 
 import { Scopes } from 'src/auth/decorators/scopes.decorator';
 
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { DeleteCategoryDto, UpdateCategoryDto } from 'src/dtos/category.dto';
 import { CategoryNotFoundException } from 'src/exceptions';
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 @Controller('api/v1/menu/category')

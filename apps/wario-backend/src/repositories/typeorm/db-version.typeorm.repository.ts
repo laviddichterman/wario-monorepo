@@ -4,7 +4,8 @@ import { Repository } from 'typeorm';
 
 import type { SEMVER } from '@wcp/wario-shared';
 
-import { DBVersionEntity } from 'src/entities/settings/db-version.entity';
+import { DBVersionEntity } from 'src/infrastructure/database/typeorm/settings/db-version.entity';
+
 import type { IDBVersionRepository } from '../interfaces/db-version.repository.interface';
 
 @Injectable()

@@ -4,7 +4,8 @@ import { IsNull, Repository } from 'typeorm';
 
 import type { OrderInstanceFunction } from '@wcp/wario-shared';
 
-import { OrderInstanceFunctionEntity } from 'src/entities/catalog/order-instance-function.entity';
+import { OrderInstanceFunctionEntity } from 'src/infrastructure/database/typeorm/catalog/order-instance-function.entity';
+
 import type { IOrderInstanceFunctionRepository } from '../interfaces/order-instance-function.repository.interface';
 
 @Injectable()

@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { createMockOrderEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockQueryBuilder, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull, type Repository } from 'typeorm';
 
 import { WFulfillmentStatus, WOrderStatus } from '@wcp/wario-shared';
 
-import { createMockOrderEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockQueryBuilder, type MockType } from 'test/utils/mock-typeorm';
-import { OrderEntity } from 'src/entities/order/order.entity';
+import { OrderEntity } from 'src/infrastructure/database/typeorm/order/order.entity';
 
 import { OrderTypeOrmRepository } from './order.typeorm.repository';
 

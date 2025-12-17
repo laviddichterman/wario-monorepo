@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { OrdersModule } from '../models/orders/orders.module';
+import { OrdersModule } from '../infrastructure/database/mongoose/models/orders/orders.module';
 import { RepositoryModule } from '../repositories/repository.module';
 
 import { AccountingController } from './accounting/accounting.controller';
@@ -35,4 +35,4 @@ import { StoreCreditController } from './store-credit/store-credit.controller';
     SeatingResourceController,
   ],
 })
-export class ControllersModule {}
+export class ControllersModule { }

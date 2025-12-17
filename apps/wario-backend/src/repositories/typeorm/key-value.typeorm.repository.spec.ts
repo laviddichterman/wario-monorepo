@@ -1,10 +1,11 @@
+import { createMockKeyValueEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 
-import { createMockKeyValueEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
-import { KeyValueEntity } from 'src/entities/settings/key-value.entity';
+import { KeyValueEntity } from 'src/infrastructure/database/typeorm/settings/key-value.entity';
 
 import { KeyValueTypeOrmRepository } from './key-value.typeorm.repository';
 

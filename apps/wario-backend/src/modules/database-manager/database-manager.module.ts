@@ -4,8 +4,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppConfigService } from 'src/config/app-config.service';
 import { AppConfigurationModule } from 'src/config/app-configuration.module';
-import { DBVersionEntity } from 'src/entities/settings/db-version.entity';
-import DBVersionModel from '../../models/DBVersionSchema';
+import { DBVersionEntity } from 'src/infrastructure/database/typeorm/settings/db-version.entity';
+
+import DBVersionModel from '../../infrastructure/database/mongoose/models/DBVersionSchema';
 import { DB_VERSION_REPOSITORY } from '../../repositories/interfaces';
 import { DBVersionMongooseRepository } from '../../repositories/mongoose/db-version.mongoose.repository';
 import { DBVersionTypeOrmRepository } from '../../repositories/typeorm/db-version.typeorm.repository';

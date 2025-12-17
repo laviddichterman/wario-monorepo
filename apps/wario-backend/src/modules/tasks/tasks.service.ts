@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
-import { OrderManagerService } from 'src/config/order-manager/order-manager.service';
-import { PrinterService } from 'src/config/printer/printer.service';
-import { ThirdPartyOrderService } from 'src/config/third-party-order/third-party-order.service';
+import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
+import { ThirdPartyOrderService } from 'src/domain/order/third-party-order/third-party-order.service';
+import { PrinterService } from 'src/infrastructure/printing/printer/printer.service';
 
 @Injectable()
 export class TasksService {
@@ -14,7 +14,7 @@ export class TasksService {
     private readonly thirdPartyOrderService: ThirdPartyOrderService,
     @InjectPinoLogger(TasksService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleSendOrders() {

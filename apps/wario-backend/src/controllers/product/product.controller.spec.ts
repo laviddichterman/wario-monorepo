@@ -12,8 +12,6 @@
  * - DELETE /api/v1/menu/product/:pid/:piid (delete instance)
  */
 
-import { Test, type TestingModule } from '@nestjs/testing';
-
 import {
   createMockCreateProductRequest,
   createMockProduct,
@@ -21,8 +19,12 @@ import {
   mockCatalogProviderService,
   mockSocketIoService,
 } from 'test/utils';
+
+import { Test, type TestingModule } from '@nestjs/testing';
+
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
+
 import {
   CatalogOperationException,
   ProductInstanceNotFoundException,

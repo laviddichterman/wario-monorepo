@@ -25,7 +25,7 @@ import {
   ProductInstanceFunctionEntity,
   SeatingResourceEntity,
   SettingsEntity,
-} from 'src/entities';
+} from 'src/infrastructure/database/typeorm';
 
 @Injectable()
 export class MongooseToPostgresMigrator {

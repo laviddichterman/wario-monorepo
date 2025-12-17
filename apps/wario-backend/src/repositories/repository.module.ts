@@ -3,6 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { AppConfigService } from '../config/app-config.service';
 import { AppConfigurationModule } from '../config/app-configuration.module';
+import { CatalogModule } from '../infrastructure/database/mongoose/models/catalog/catalog.module';
+import { OrdersModule } from '../infrastructure/database/mongoose/models/orders/orders.module';
+import { QueryModule } from '../infrastructure/database/mongoose/models/query/query.module';
+import { SettingsModule } from '../infrastructure/database/mongoose/models/settings/settings.module';
 // Entities
 import {
   CatalogVersionEntity,
@@ -13,20 +17,20 @@ import {
   ProductEntity,
   ProductInstanceEntity,
   ProductInstanceFunctionEntity,
-} from '../entities/catalog';
-import { OrderEntity, OrderHistoryEntity } from '../entities/order';
+} from '../infrastructure/database/typeorm/catalog';
+import { OrderEntity, OrderHistoryEntity } from '../infrastructure/database/typeorm/order';
 import {
   DBVersionEntity,
   FulfillmentEntity,
   KeyValueEntity,
   PrinterGroupEntity,
+  SeatingFloorEntity,
+  SeatingLayoutEntity,
+  SeatingPlacementEntity,
   SeatingResourceEntity,
+  SeatingSectionEntity,
   SettingsEntity,
-} from '../entities/settings';
-import { CatalogModule } from '../models/catalog/catalog.module';
-import { OrdersModule } from '../models/orders/orders.module';
-import { QueryModule } from '../models/query/query.module';
-import { SettingsModule } from '../models/settings/settings.module';
+} from '../infrastructure/database/typeorm/settings';
 import { DatabaseManagerModule } from '../modules/database-manager/database-manager.module';
 
 // Interface tokens
@@ -42,7 +46,11 @@ import {
   PRODUCT_INSTANCE_FUNCTION_REPOSITORY,
   PRODUCT_INSTANCE_REPOSITORY,
   PRODUCT_REPOSITORY,
+  SEATING_FLOOR_REPOSITORY,
+  SEATING_LAYOUT_REPOSITORY,
+  SEATING_PLACEMENT_REPOSITORY,
   SEATING_RESOURCE_REPOSITORY,
+  SEATING_SECTION_REPOSITORY,
   SETTINGS_REPOSITORY,
 } from './interfaces';
 // Mongoose repositories
@@ -59,7 +67,11 @@ import {
   ProductInstanceFunctionMongooseRepository,
   ProductInstanceMongooseRepository,
   ProductMongooseRepository,
+  SeatingFloorMongooseRepository,
+  SeatingLayoutMongooseRepository,
+  SeatingPlacementMongooseRepository,
   SeatingResourceMongooseRepository,
+  SeatingSectionMongooseRepository,
   SettingsMongooseRepository,
 } from './mongoose';
 // TypeORM repositories
@@ -76,7 +88,11 @@ import {
   ProductInstanceFunctionTypeOrmRepository,
   ProductInstanceTypeOrmRepository,
   ProductTypeOrmRepository,
+  SeatingFloorTypeOrmRepository,
+  SeatingLayoutTypeOrmRepository,
+  SeatingPlacementTypeOrmRepository,
   SeatingResourceTypeOrmRepository,
+  SeatingSectionTypeOrmRepository,
   SettingsTypeOrmRepository,
 } from './typeorm';
 
@@ -95,7 +111,11 @@ const entities = [
   ProductEntity,
   ProductInstanceEntity,
   ProductInstanceFunctionEntity,
+  SeatingFloorEntity,
+  SeatingLayoutEntity,
+  SeatingPlacementEntity,
   SeatingResourceEntity,
+  SeatingSectionEntity,
   SettingsEntity,
 ];
 
@@ -112,7 +132,11 @@ const typeOrmRepos = [
   ProductInstanceFunctionTypeOrmRepository,
   ProductInstanceTypeOrmRepository,
   ProductTypeOrmRepository,
+  SeatingFloorTypeOrmRepository,
+  SeatingLayoutTypeOrmRepository,
+  SeatingPlacementTypeOrmRepository,
   SeatingResourceTypeOrmRepository,
+  SeatingSectionTypeOrmRepository,
   SettingsTypeOrmRepository,
 ];
 
@@ -129,7 +153,11 @@ const mongooseRepos = [
   ProductInstanceFunctionMongooseRepository,
   ProductInstanceMongooseRepository,
   ProductMongooseRepository,
+  SeatingFloorMongooseRepository,
+  SeatingLayoutMongooseRepository,
+  SeatingPlacementMongooseRepository,
   SeatingResourceMongooseRepository,
+  SeatingSectionMongooseRepository,
   SettingsMongooseRepository,
 ];
 
@@ -269,6 +297,42 @@ const mongooseRepos = [
       ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
       inject: [AppConfigService, SeatingResourceTypeOrmRepository, SeatingResourceMongooseRepository],
     },
+    {
+      provide: SEATING_FLOOR_REPOSITORY,
+      useFactory: (
+        appConfig: AppConfigService,
+        pgRepo: SeatingFloorTypeOrmRepository,
+        mongoRepo: SeatingFloorMongooseRepository,
+      ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
+      inject: [AppConfigService, SeatingFloorTypeOrmRepository, SeatingFloorMongooseRepository],
+    },
+    {
+      provide: SEATING_SECTION_REPOSITORY,
+      useFactory: (
+        appConfig: AppConfigService,
+        pgRepo: SeatingSectionTypeOrmRepository,
+        mongoRepo: SeatingSectionMongooseRepository,
+      ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
+      inject: [AppConfigService, SeatingSectionTypeOrmRepository, SeatingSectionMongooseRepository],
+    },
+    {
+      provide: SEATING_PLACEMENT_REPOSITORY,
+      useFactory: (
+        appConfig: AppConfigService,
+        pgRepo: SeatingPlacementTypeOrmRepository,
+        mongoRepo: SeatingPlacementMongooseRepository,
+      ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
+      inject: [AppConfigService, SeatingPlacementTypeOrmRepository, SeatingPlacementMongooseRepository],
+    },
+    {
+      provide: SEATING_LAYOUT_REPOSITORY,
+      useFactory: (
+        appConfig: AppConfigService,
+        pgRepo: SeatingLayoutTypeOrmRepository,
+        mongoRepo: SeatingLayoutMongooseRepository,
+      ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
+      inject: [AppConfigService, SeatingLayoutTypeOrmRepository, SeatingLayoutMongooseRepository],
+    },
   ],
   exports: [
     CATEGORY_REPOSITORY,
@@ -283,8 +347,12 @@ const mongooseRepos = [
     PRODUCT_INSTANCE_FUNCTION_REPOSITORY,
     PRODUCT_INSTANCE_REPOSITORY,
     PRODUCT_REPOSITORY,
+    SEATING_FLOOR_REPOSITORY,
+    SEATING_LAYOUT_REPOSITORY,
+    SEATING_PLACEMENT_REPOSITORY,
     SEATING_RESOURCE_REPOSITORY,
+    SEATING_SECTION_REPOSITORY,
     SETTINGS_REPOSITORY,
   ],
 })
-export class RepositoryModule {}
+export class RepositoryModule { }

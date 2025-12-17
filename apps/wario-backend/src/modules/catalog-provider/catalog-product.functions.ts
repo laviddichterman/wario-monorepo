@@ -21,9 +21,6 @@ import {
   type UpdateIProductRequestDto,
 } from '@wcp/wario-shared';
 
-import type { IProductInstanceRepository } from '../../repositories/interfaces/product-instance.repository.interface';
-import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
-import { IsSetOfUniqueStrings } from '../../utils/utils';
 import type { AppConfigService } from 'src/config/app-config.service';
 import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
@@ -34,6 +31,10 @@ import {
   ProductInstanceUpdateMergeExternalIds,
   ValidateModifiersForInstance,
 } from 'src/config/square-wario-bridge';
+
+import type { IProductInstanceRepository } from '../../repositories/interfaces/product-instance.repository.interface';
+import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
+import { IsSetOfUniqueStrings } from '../../utils/utils';
 import type { SquareService } from '../integrations/square/square.service';
 
 import {

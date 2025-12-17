@@ -6,11 +6,11 @@ import {
   UpdateIOptionTypeRequestBodyDto,
 } from '@wcp/wario-shared';
 
-import { SocketIoService } from 'src/config/socket-io/socket-io.service';
 import { UpdateOptionDto } from 'src/dtos/modifier.dto';
+import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
+import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 import { Scopes } from '../../auth/decorators/scopes.decorator';
-import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 
 @Controller('api/v1/menu/option')
 export class ModifierController {

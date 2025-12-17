@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { createMockProductEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
@@ -10,9 +13,7 @@ import {
   type UpdateQueryBuilder,
 } from 'typeorm';
 
-import { createMockProductEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
-import { ProductEntity } from 'src/entities/catalog/product.entity';
+import { ProductEntity } from 'src/infrastructure/database/typeorm/catalog/product.entity';
 
 import { ProductTypeOrmRepository } from './product.typeorm.repository';
 

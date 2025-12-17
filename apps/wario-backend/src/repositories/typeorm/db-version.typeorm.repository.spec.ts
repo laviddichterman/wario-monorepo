@@ -1,10 +1,11 @@
+import { createMockDbVersionEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import type { Repository } from 'typeorm';
 
-import { createMockDbVersionEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
-import { DBVersionEntity } from 'src/entities/settings/db-version.entity';
+import { DBVersionEntity } from 'src/infrastructure/database/typeorm/settings/db-version.entity';
 
 import { DBVersionTypeOrmRepository } from './db-version.typeorm.repository';
 

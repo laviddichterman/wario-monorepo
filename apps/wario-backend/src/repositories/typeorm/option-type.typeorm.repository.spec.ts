@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import { createMockOptionTypeEntity } from 'test/utils/mock-entities';
+import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
+
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { IsNull, type Repository } from 'typeorm';
 
-import { createMockOptionTypeEntity } from 'test/utils/mock-entities';
-import { createMockTypeOrmRepository, type MockType } from 'test/utils/mock-typeorm';
-import { OptionTypeEntity } from 'src/entities/catalog/option-type.entity';
+import { OptionTypeEntity } from 'src/infrastructure/database/typeorm/catalog/option-type.entity';
 
 import { OptionTypeTypeOrmRepository } from './option-type.typeorm.repository';
 

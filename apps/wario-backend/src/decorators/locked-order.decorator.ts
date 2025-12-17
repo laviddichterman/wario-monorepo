@@ -1,6 +1,6 @@
 import { createParamDecorator, type ExecutionContext } from '@nestjs/common';
 
-import type { WOrderInstance } from '../models/orders/WOrderInstance';
+import type { WOrderInstance } from '../infrastructure/database/mongoose/models/orders/WOrderInstance';
 
 /**
  * Metadata key for storing the locked order on the request context.

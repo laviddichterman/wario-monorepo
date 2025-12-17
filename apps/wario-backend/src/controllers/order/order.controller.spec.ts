@@ -10,13 +10,6 @@
  * Use integration tests for full lock behavior testing.
  */
 
-import { BadRequestException, HttpException } from '@nestjs/common';
-import { APP_INTERCEPTOR, Reflector } from '@nestjs/core';
-import { getModelToken } from '@nestjs/mongoose';
-import { Test, type TestingModule } from '@nestjs/testing';
-
-import { WOrderStatus } from '@wcp/wario-shared';
-
 import {
   createMock,
   createMockModel,
@@ -24,7 +17,16 @@ import {
   mockOrderManagerService,
   resetOrderIdCounter,
 } from 'test/utils';
-import { OrderManagerService } from 'src/config/order-manager/order-manager.service';
+
+import { BadRequestException, HttpException } from '@nestjs/common';
+import { APP_INTERCEPTOR, Reflector } from '@nestjs/core';
+import { getModelToken } from '@nestjs/mongoose';
+import { Test, type TestingModule } from '@nestjs/testing';
+
+import { WOrderStatus } from '@wcp/wario-shared';
+
+import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
+
 import { OrderNotFoundException } from '../../exceptions';
 import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor';
 

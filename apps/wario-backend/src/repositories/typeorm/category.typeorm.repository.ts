@@ -4,7 +4,8 @@ import { In, IsNull, Repository } from 'typeorm';
 
 import type { ICategory } from '@wcp/wario-shared';
 
-import { CategoryEntity } from 'src/entities/catalog/category.entity';
+import { CategoryEntity } from 'src/infrastructure/database/typeorm/catalog/category.entity';
+
 import type { ICategoryRepository } from '../interfaces/category.repository.interface';
 
 @Injectable()

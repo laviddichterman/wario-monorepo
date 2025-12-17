@@ -4,7 +4,8 @@ import { In, IsNull, Repository } from 'typeorm';
 
 import type { IOption } from '@wcp/wario-shared';
 
-import { OptionEntity } from 'src/entities/catalog/option.entity';
+import { OptionEntity } from 'src/infrastructure/database/typeorm/catalog/option.entity';
+
 import type { IOptionRepository } from '../interfaces/option.repository.interface';
 
 @Injectable()
