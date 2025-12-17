@@ -25,7 +25,7 @@ import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor'
 
 @Controller('api/v1/order')
 export class OrderController {
-  constructor(private readonly orderManager: OrderManagerService) {}
+  constructor(private readonly orderManager: OrderManagerService) { }
 
   @Post()
   @Scopes('write:order')
@@ -150,10 +150,19 @@ export class OrderController {
 
   @Get()
   @Scopes('read:order')
-  async getOrders(@Query('date') date: string, @Query('status') status: string) {
+  async getOrders(
+    @Query('date') date: string,
+    @Query('endDate') endDate: string,
+    @Query('status') status: string,
+  ) {
     const queryDate = date ? date : null;
+    const queryEndDate = endDate ? endDate : null;
     const queryStatus = status ? WOrderStatus[status as keyof typeof WOrderStatus] : null;
-    const response = await this.orderManager.GetOrders({ date: queryDate, status: queryStatus });
+    const response = await this.orderManager.GetOrders({
+      date: queryDate,
+      endDate: queryEndDate,
+      status: queryStatus,
+    });
     return response;
   }
 }

@@ -34,7 +34,7 @@ export class MongooseToPostgresMigrator {
     private readonly dataSource: DataSource,
     @InjectPinoLogger(MongooseToPostgresMigrator.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   // Migration statistics for summary
   private stats = {
@@ -145,19 +145,26 @@ export class MongooseToPostgresMigrator {
 
   private async migrateKeyValue(manager: EntityManager) {
     this.logger.info('Migrating KeyValue configs...');
-    const collection = this.mongoConnection.collection('keyvalues');
-    const docs = await collection.find({}).toArray();
+    // Mongoose model is KeyValueSchema -> collection is 'keyvalueschemas'
+    // Data is stored as single document: { settings: [{key, value}, ...] }
+    const collection = this.mongoConnection.collection('keyvalueschemas');
+    const doc = await collection.findOne({});
 
-    if (docs.length > 0) {
-      const entities = docs.map((doc) => {
-        return manager.create(KeyValueEntity, {
-          key: doc.key,
-          value: doc.value,
+    if (doc?.settings && Array.isArray(doc.settings)) {
+      const entries = doc.settings as { key: string; value: string }[];
+      if (entries.length > 0) {
+        const entities = entries.map((entry) => {
+          return manager.create(KeyValueEntity, {
+            key: entry.key,
+            value: entry.value,
+          });
         });
-      });
-      await manager.save(KeyValueEntity, entities);
-      this.stats.keyValues = docs.length;
-      this.logger.info(`Migrated ${docs.length} KeyValue entries.`);
+        await manager.save(KeyValueEntity, entities);
+        this.stats.keyValues = entries.length;
+        this.logger.info(`Migrated ${entries.length} KeyValue entries.`);
+      }
+    } else {
+      this.logger.warn('No KeyValue settings found in MongoDB.');
     }
   }
 

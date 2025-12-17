@@ -44,6 +44,7 @@ const createMockOrderRepository = () => ({
   update: jest.fn(),
   delete: jest.fn(),
   findByThirdPartySquareIds: jest.fn(),
+  findByDateRange: jest.fn(), // NEW
   bulkCreate: jest.fn(),
   acquireLock: jest.fn(),
 });
@@ -125,11 +126,51 @@ describe('OrderManagerService', () => {
   // =========================================================================
 
   describe('GetOrders', () => {
+    it('should return orders filtered by date range', async () => {
+      const fulfillment = createMockWOrderInstance().fulfillment;
+      fulfillment.selectedDate = '2024-01-15';
+      const order1 = createMockWOrderInstance({ id: 'order-1', fulfillment });
+
+      const fulfillment2 = createMockWOrderInstance().fulfillment;
+      fulfillment2.selectedDate = '2024-01-16';
+      const order2 = createMockWOrderInstance({ id: 'order-2', fulfillment: fulfillment2 });
+
+      const mockOrders = [order1, order2];
+      mockOrderRepository.findByDateRange.mockResolvedValue(mockOrders);
+
+      const result = await service.GetOrders({ date: '2024-01-15', endDate: '2024-01-17', status: null });
+
+      expect(result.status).toBe(200);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result).toHaveLength(2);
+      }
+      expect(mockOrderRepository.findByDateRange).toHaveBeenCalledWith('2024-01-15', '2024-01-17');
+    });
+
+    it('should filter by date range and status', async () => {
+      const mockOrders = [
+        createMockWOrderInstance({ id: 'order-1', status: WOrderStatus.CONFIRMED }),
+        createMockWOrderInstance({ id: 'order-2', status: WOrderStatus.OPEN }),
+      ];
+      mockOrderRepository.findByDateRange.mockResolvedValue(mockOrders);
+
+      const result = await service.GetOrders({ date: '2024-01-15', endDate: '2024-01-17', status: WOrderStatus.CONFIRMED });
+
+      expect(result.status).toBe(200);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.result).toHaveLength(1);
+        expect(result.result[0].status).toBe(WOrderStatus.CONFIRMED);
+      }
+      expect(mockOrderRepository.findByDateRange).toHaveBeenCalledWith('2024-01-15', '2024-01-17');
+    });
+
     it('should return orders filtered by date', async () => {
       const mockOrders = [createMockWOrderInstance({ id: 'order-1' }), createMockWOrderInstance({ id: 'order-2' })];
       mockOrderRepository.findByFulfillmentDate.mockResolvedValue(mockOrders);
 
-      const result = await service.GetOrders({ date: '2024-01-15', status: null });
+      const result = await service.GetOrders({ date: '2024-01-15', endDate: null, status: null });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);
@@ -143,7 +184,7 @@ describe('OrderManagerService', () => {
       const mockOrders = [createMockWOrderInstance({ id: 'order-1' })];
       mockOrderRepository.findByStatus.mockResolvedValue(mockOrders);
 
-      const result = await service.GetOrders({ date: null, status: WOrderStatus.OPEN });
+      const result = await service.GetOrders({ date: null, endDate: null, status: WOrderStatus.OPEN });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);
@@ -154,7 +195,7 @@ describe('OrderManagerService', () => {
     });
 
     it('should return empty array when no filters provided', async () => {
-      const result = await service.GetOrders({ date: null, status: null });
+      const result = await service.GetOrders({ date: null, endDate: null, status: null });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);
@@ -170,7 +211,7 @@ describe('OrderManagerService', () => {
       ];
       mockOrderRepository.findByFulfillmentDate.mockResolvedValue(mockOrders);
 
-      const result = await service.GetOrders({ date: '2024-01-15', status: WOrderStatus.CONFIRMED });
+      const result = await service.GetOrders({ date: '2024-01-15', endDate: null, status: WOrderStatus.CONFIRMED });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);
@@ -184,7 +225,7 @@ describe('OrderManagerService', () => {
     it('should return 500 on database error', async () => {
       mockOrderRepository.findByFulfillmentDate.mockRejectedValue(new Error('Database error'));
 
-      const result = await service.GetOrders({ date: '2024-01-15', status: null });
+      const result = await service.GetOrders({ date: '2024-01-15', endDate: null, status: null });
 
       expect(result.status).toBe(500);
       expect(result.success).toBe(false);

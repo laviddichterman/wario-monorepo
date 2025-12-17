@@ -96,7 +96,7 @@ export class OrderManagerService {
     @Inject(PrinterService) private printerService: PrinterService,
     @InjectPinoLogger(OrderManagerService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   /**
    * Sends orders that are ready for fulfillment.
@@ -282,10 +282,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-                success: false;
-                result: null;
-                error: SquareError[];
-              };
+              success: false;
+              result: null;
+              error: SquareError[];
+            };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit
@@ -864,25 +864,39 @@ export class OrderManagerService {
 
   GetOrders = async ({
     date,
+    endDate,
     status,
   }: {
     date: string | null;
+    endDate: string | null;
     status: WOrderStatus | null;
   }): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
     try {
       let orders: WOrderInstance[];
-      if (date && status) {
-        // Both filters - need to filter in memory since we don't have a combined method
-        const dateOrders = await this.orderRepository.findByFulfillmentDate(date);
-        orders = dateOrders.filter((o) => o.status === status);
-      } else if (date) {
+
+      // Range Query (Priority 1)
+      if (date && endDate) {
+        orders = await this.orderRepository.findByDateRange(date, endDate);
+        if (status) {
+          orders = orders.filter((o) => o.status === status);
+        }
+      }
+      // Single Date Query (Priority 2 - Legacy)
+      else if (date) {
         orders = await this.orderRepository.findByFulfillmentDate(date);
-      } else if (status) {
+        if (status) {
+          orders = orders.filter((o) => o.status === status);
+        }
+      }
+      // Status Only Query (Priority 3)
+      else if (status) {
         orders = await this.orderRepository.findByStatus(status);
-      } else {
-        // No filters - return empty for now (or could add findAll method)
+      }
+      // Fallback
+      else {
         orders = [];
       }
+
       return {
         status: 200,
         success: true as const,
