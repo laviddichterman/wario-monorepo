@@ -13,7 +13,7 @@ export class SeatingSectionTypeOrmRepository implements ISeatingSectionRepositor
   constructor(
     @InjectRepository(SeatingSectionEntity)
     private readonly repo: Repository<SeatingSectionEntity>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingLayoutSection | null> {
     return this.repo.findOne({ where: { id } });

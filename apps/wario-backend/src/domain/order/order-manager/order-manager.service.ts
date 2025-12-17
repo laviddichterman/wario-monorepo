@@ -97,7 +97,7 @@ export class OrderManagerService {
     @Inject(PrinterService) private printerService: PrinterService,
     @InjectPinoLogger(OrderManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Sends orders that are ready for fulfillment.
@@ -283,10 +283,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-              success: false;
-              result: null;
-              error: SquareError[];
-            };
+                success: false;
+                result: null;
+                error: SquareError[];
+              };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit
@@ -873,30 +873,10 @@ export class OrderManagerService {
     status: WOrderStatus | null;
   }): Promise<ResponseWithStatusCode<ResponseSuccess<WOrderInstance[]> | ResponseFailure>> => {
     try {
-      let orders: WOrderInstance[];
+      const sanitizedDate = date ? date.slice(0, 10) : null;
+      const sanitizedEndDate = endDate ? endDate.slice(0, 10) : null;
 
-      // Range Query (Priority 1)
-      if (date && endDate) {
-        orders = await this.orderRepository.findByDateRange(date, endDate);
-        if (status) {
-          orders = orders.filter((o) => o.status === status);
-        }
-      }
-      // Single Date Query (Priority 2 - Legacy)
-      else if (date) {
-        orders = await this.orderRepository.findByFulfillmentDate(date);
-        if (status) {
-          orders = orders.filter((o) => o.status === status);
-        }
-      }
-      // Status Only Query (Priority 3)
-      else if (status) {
-        orders = await this.orderRepository.findByStatus(status);
-      }
-      // Fallback
-      else {
-        orders = [];
-      }
+      const orders = await this.orderRepository.findBy({ date: sanitizedDate, endDate: sanitizedEndDate, status });
 
       return {
         status: 200,

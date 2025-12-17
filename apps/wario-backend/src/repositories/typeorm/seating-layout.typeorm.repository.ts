@@ -27,7 +27,7 @@ export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository 
     private readonly resourceRepo: Repository<SeatingResourceEntity>,
     @InjectRepository(SeatingPlacementEntity)
     private readonly placementRepo: Repository<SeatingPlacementEntity>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingLayout | null> {
     const layout = await this.layoutRepo.findOne({ where: { id } });

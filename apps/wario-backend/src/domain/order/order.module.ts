@@ -39,4 +39,4 @@ import { ThirdPartyOrderService } from './third-party-order/third-party-order.se
     ThirdPartyOrderService,
   ],
 })
-export class OrderModule { }
+export class OrderModule {}

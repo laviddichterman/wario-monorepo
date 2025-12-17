@@ -10,9 +10,10 @@ import {
   GroupAndOrderCart,
   RebuildAndSortCart,
   WDateUtils,
+  WOrderStatus,
 } from '@wcp/wario-shared/logic';
 import { type CoreCartEntry, type WOrderInstance } from '@wcp/wario-shared/types';
-import { useCatalogSelectors, useFulfillmentById, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
+import { useCatalogSelectors, useCurrentTime, useFulfillmentById, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
 
 import axiosInstance from '@/utils/axios';
 import { uuidv4 } from '@/utils/uuidv4';
@@ -24,7 +25,7 @@ const fetchOrders = async (
   token: string,
   date: string | null,
   endDate: string | null,
-  status: string | null,
+  status: WOrderStatus | null,
 ): Promise<Record<string, WOrderInstance>> => {
   const params: Record<string, string> = {};
   if (date) params.date = date;
@@ -42,10 +43,12 @@ const fetchOrders = async (
 export type OrderQueryOptions = {
   date?: string | null;
   endDate?: string | null;
-  status?: string | null;
+  status?: WOrderStatus | null;
 };
 
+
 // Hook to get orders
+// Requires at least one constraint (date, endDate, or status) to prevent unbounded queries
 export function useOrdersQuery(options: OrderQueryOptions | null = null) {
   const { getAccessTokenSilently } = useAuth0();
 
@@ -53,34 +56,58 @@ export function useOrdersQuery(options: OrderQueryOptions | null = null) {
   const endDate = options?.endDate ?? null;
   const status = options?.status ?? null;
 
+  // Require at least one constraint to prevent fetching all orders
+  const hasConstraints = date !== null || endDate !== null || status !== null;
+
   return useQuery({
     queryKey: ['orders', date, endDate, status],
     queryFn: async () => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
       return fetchOrders(token, date, endDate, status);
     },
-    // No polling for main query
+    // Disable query if no constraints provided - prevents unbounded queries
+    enabled: hasConstraints,
   });
 }
 
 export function usePendingOrdersQuery() {
   const { getAccessTokenSilently } = useAuth0();
-
+  const currentDate = useCurrentTime();
+  const currentDateStr = WDateUtils.formatISODate(currentDate);
   return useQuery({
-    queryKey: ['orders', 'pending'],
+    queryKey: ['orders', 'pending', currentDateStr],
     queryFn: async () => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
-      return fetchOrders(token, null, null, 'OPEN');
+      return fetchOrders(token, currentDateStr, null, WOrderStatus.OPEN);
     },
     refetchInterval: 30000,
     refetchIntervalInBackground: true,
   });
 }
 
-// Hook to get a single order by ID
-export function useOrderById(orderId: string) {
-  const { data: orders } = useOrdersQuery(null); // Assuming null fetches relevant orders (e.g. today/all)
-  return orders ? orders[orderId] : null;
+// Fetch a single order by ID
+const fetchOrderById = async (token: string, orderId: string): Promise<WOrderInstance> => {
+  const response = await axiosInstance.get<{ success: boolean; result: WOrderInstance }>(`/api/v1/order/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return response.data.result;
+};
+
+// Hook to get a single order by ID using dedicated API endpoint
+export function useOrderById(orderId: string | null): WOrderInstance | null {
+  const { getAccessTokenSilently } = useAuth0();
+
+  const { data } = useQuery({
+    queryKey: ['order', orderId],
+    queryFn: async () => {
+      // orderId is guaranteed non-null when queryFn runs due to enabled check
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
+      return fetchOrderById(token, orderId as string);
+    },
+    enabled: orderId !== null,
+  });
+
+  return data ?? null;
 }
 
 // Mutation hooks

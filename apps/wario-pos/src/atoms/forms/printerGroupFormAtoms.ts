@@ -24,7 +24,9 @@ export const DEFAULT_PRINTER_GROUP_FORM: PrinterGroupFormState = {
 export const printerGroupFormAtom = atom<PrinterGroupFormState | null>(null);
 
 /** Dirty fields tracking - marks which fields have been modified in edit mode */
-export const printerGroupFormDirtyFieldsAtom = atom<Set<keyof PrinterGroupFormState>>(new Set<keyof PrinterGroupFormState>());
+export const printerGroupFormDirtyFieldsAtom = atom<Set<keyof PrinterGroupFormState>>(
+  new Set<keyof PrinterGroupFormState>(),
+);
 
 /** API processing state */
 export const printerGroupFormProcessingAtom = atom(false);

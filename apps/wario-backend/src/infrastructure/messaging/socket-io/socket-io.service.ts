@@ -33,7 +33,7 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     @Inject(DataProviderService) private dataProvider: DataProviderService,
     @InjectPinoLogger(SocketIoService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   handleConnection(client: Socket) {
     ++this.clientCount;

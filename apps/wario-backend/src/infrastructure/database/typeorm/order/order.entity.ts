@@ -42,10 +42,6 @@ export class OrderEntity implements WOrderInstance {
   @Column('jsonb')
   fulfillment!: FulfillmentData;
 
-  @Index()
-  @Column({ type: 'varchar', length: 10 })
-  fulfillmentDate!: string;
-
   @Column('jsonb', { default: [] })
   cart!: CoreCartEntry[];
 

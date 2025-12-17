@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, IsNull, Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 
 import type { WFulfillmentStatus, WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 
@@ -19,18 +19,36 @@ export class OrderTypeOrmRepository implements IOrderRepository {
     return this.repo.findOne({ where: { id } });
   }
 
-  async findByStatus(status: WOrderStatus): Promise<WOrderInstance[]> {
-    return this.repo.find({ where: { status } });
-  }
-
-  async findByFulfillmentDate(date: string): Promise<WOrderInstance[]> {
-    return this.repo.find({ where: { fulfillmentDate: date } });
+  async findBy({
+    date,
+    endDate,
+    status,
+  }: {
+    date: string | null;
+    endDate: string | null;
+    status: WOrderStatus | null;
+  }): Promise<WOrderInstance[]> {
+    if (date) {
+      let builder = this.repo.createQueryBuilder('order');
+      if (!endDate) builder = builder.where(["order.fulfillment->>'selectedDate' = :date", { date }]);
+      else {
+        builder = builder
+          .where(["order.fulfillment->>'selectedDate' = :date", { date }])
+          .andWhere(["order.fulfillment->>'selectedDate' <= :endDate", { endDate }]);
+      }
+      if (status) builder = builder.andWhere(['order.status = :status', { status }]);
+      return builder.getMany();
+    }
+    if (status) return this.repo.find({ where: { status } });
+    return this.repo.find();
   }
 
   async findByDateRange(startDate: string, endDate: string): Promise<WOrderInstance[]> {
-    return this.repo.find({
-      where: { fulfillmentDate: Between(startDate, endDate) },
-    });
+    return this.repo
+      .createQueryBuilder('order')
+      .where("order.fulfillment->>'selectedDate' >= :startDate", { startDate })
+      .andWhere("order.fulfillment->>'selectedDate' <= :endDate", { endDate })
+      .getMany();
   }
 
   async save(order: WOrderInstance): Promise<WOrderInstance> {
@@ -72,12 +90,20 @@ export class OrderTypeOrmRepository implements IOrderRepository {
   }
 
   async bulkCreate(orders: Omit<WOrderInstance, 'id'>[]): Promise<WOrderInstance[]> {
-    const entities = orders.map((o) => this.repo.create({ ...o, id: crypto.randomUUID() }));
+    const entities = orders.map((o) =>
+      this.repo.create({
+        ...o,
+        id: crypto.randomUUID(),
+      }),
+    );
     return this.repo.save(entities);
   }
 
   async create(order: Omit<WOrderInstance, 'id'>): Promise<WOrderInstance> {
-    const entity = this.repo.create({ ...order, id: crypto.randomUUID() });
+    const entity = this.repo.create({
+      ...order,
+      id: crypto.randomUUID(),
+    });
     return this.repo.save(entity);
   }
 

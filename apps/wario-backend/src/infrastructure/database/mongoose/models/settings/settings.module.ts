@@ -30,5 +30,4 @@ import { SettingsModel } from './SettingsSchema';
   ],
   exports: [MongooseModule],
 })
-export class SettingsModule { }
-
+export class SettingsModule {}

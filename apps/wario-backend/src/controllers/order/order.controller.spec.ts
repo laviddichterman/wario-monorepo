@@ -105,12 +105,10 @@ describe('OrderController', () => {
         result: mockOrders,
       });
 
-      const result = await controller.getOrders('', '');
+      const result = await controller.getOrders('', '', '');
 
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.result).toHaveLength(2);
-      }
+      // Controller now returns the result array directly, not the wrapped response
+      expect(result).toHaveLength(2);
     });
 
     it('should filter by status when provided', async () => {
@@ -120,9 +118,19 @@ describe('OrderController', () => {
         result: [],
       });
 
-      await controller.getOrders('', 'OPEN');
+      await controller.getOrders('', '', 'OPEN');
 
       expect(mockOrderManager.GetOrders).toHaveBeenCalledWith(expect.objectContaining({ status: WOrderStatus.OPEN }));
+    });
+
+    it('should throw HttpException on service failure', async () => {
+      mockOrderManager.GetOrders.mockResolvedValue({
+        status: 500,
+        success: false,
+        error: [{ category: 'API_ERROR', code: 'INTERNAL_SERVER_ERROR', detail: 'error' }],
+      });
+
+      await expect(controller.getOrders('', '', '')).rejects.toThrow(HttpException);
     });
   });
 

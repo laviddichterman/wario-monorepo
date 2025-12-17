@@ -2,18 +2,26 @@ import { type INestApplication } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import mongoose from 'mongoose';
-import { type DataSource } from 'typeorm';
+import { DataSource } from 'typeorm';
 
-import {
-  type CatalogVersionEntity,
-  type DBVersionEntity,
-  type OptionTypeEntity,
-  type ProductEntity,
+import type {
+  CatalogVersionEntity,
+  DBVersionEntity,
+  OptionTypeEntity,
+  ProductEntity,
 } from 'src/infrastructure/database/typeorm';
 
 import { AppModule } from '../src/app.module';
 import type { SettingsEntity } from '../src/infrastructure/database/typeorm/settings/settings.entity';
 
+import {
+  E2E_MONGO_URI,
+  E2E_POSTGRES_DB,
+  E2E_POSTGRES_HOST,
+  E2E_POSTGRES_PASSWORD,
+  E2E_POSTGRES_PORT,
+  E2E_POSTGRES_USER,
+} from './e2e-config';
 import {
   createMockOptionTypeEntity,
   createMockProductEntity,
@@ -32,22 +40,39 @@ type LegacySettingsSeed = Partial<SettingsEntity>;
   let dataSource: DataSource | undefined;
   let mongoConn: mongoose.Connection | undefined;
 
-  const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/wario_test';
-
   // Test IDs for cross-reference verification
   const TEST_PRODUCT_ID = 'test-product-id';
   const TEST_PRODUCT_INSTANCE_ID = 'test-product-instance-id';
   const TEST_OPTION_TYPE_ID = 'test-option-type-id';
 
   beforeAll(async () => {
-    // 1. Seed MongoDB directly before App Start
-    mongoConn = await mongoose.createConnection(MONGO_URI).asPromise();
+    // 0. Clear Postgres database first to force fresh migration
+    // This requires a standalone connection since the app hasn't started yet
+    const pgDataSource = new DataSource({
+      type: 'postgres',
+      host: E2E_POSTGRES_HOST,
+      port: E2E_POSTGRES_PORT,
+      username: E2E_POSTGRES_USER,
+      password: E2E_POSTGRES_PASSWORD,
+      database: E2E_POSTGRES_DB,
+      entities: [],
+      synchronize: false,
+    });
+    await pgDataSource.initialize();
+    // Use dropDatabase() to clear ALL objects including enum types
+    // This is more thorough than synchronize(true) and doesn't require schema ownership
+    await pgDataSource.dropDatabase();
+    await pgDataSource.destroy();
 
-    // SAFETY: Only drop if explicitly a test database or localhost to prevent production accidents
-    if (MONGO_URI.includes('test') || MONGO_URI.includes('localhost') || MONGO_URI.includes('127.0.0.1')) {
+    // 1. Seed MongoDB directly before App Start
+    mongoConn = await mongoose.createConnection(E2E_MONGO_URI).asPromise();
+
+    // SAFETY: E2E_MONGO_URI is configured in e2e-config.ts as wario_e2e
+    // Additional check to prevent accidental use of production database
+    if (E2E_MONGO_URI.includes('wario_e2e') || E2E_MONGO_URI.includes('test')) {
       await mongoConn.dropDatabase(); // Clean start
     } else {
-      console.warn(`[WARN] Skipping dropDatabase for safety. URI: ${MONGO_URI}`);
+      throw new Error(`REFUSING to drop database - E2E_MONGO_URI does not look like a test database: ${E2E_MONGO_URI}`);
     }
 
     // Seed ProductInstance first

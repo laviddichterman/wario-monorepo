@@ -120,13 +120,17 @@ import { TasksModule } from './modules/tasks/tasks.module';
       },
       inject: [PinoLogger, ErrorNotificationService],
     },
+    // Guards are added as direct providers first, then referenced via useExisting
+    // This pattern allows tests to use overrideProvider(JwtAuthGuard) effectively
+    JwtAuthGuard,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard,
+      useExisting: JwtAuthGuard,
     },
+    ScopesGuard,
     {
       provide: APP_GUARD,
-      useClass: ScopesGuard,
+      useExisting: ScopesGuard,
     },
   ],
 })

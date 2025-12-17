@@ -41,17 +41,43 @@ describe('OrderTypeOrmRepository', () => {
       expect(mockRepo.findOne).toHaveBeenCalledWith({ where: { id: 'o1' } });
     });
 
-    it('should find by status', async () => {
-      await repository.findByStatus(WOrderStatus.OPEN);
+    it('should find by status only using findBy', async () => {
+      await repository.findBy({ date: null, endDate: null, status: WOrderStatus.OPEN });
       expect(mockRepo.find).toHaveBeenCalledWith({
         where: { status: WOrderStatus.OPEN },
       });
     });
 
-    it('should find by date range', async () => {
-      await repository.findByDateRange('2023-01-01', '2023-01-02');
+    it('should find by date using findBy with query builder', async () => {
+      if (mockRepo.createQueryBuilder === undefined) {
+        throw new Error('createQueryBuilder is undefined');
+      }
+      const qb = mockRepo.createQueryBuilder();
 
-      expect(mockRepo.find).toHaveBeenCalled();
+      await repository.findBy({ date: '2023-01-01', endDate: null, status: null });
+
+      expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('order');
+      expect(qb.where).toHaveBeenCalled();
+      expect(qb.getMany).toHaveBeenCalled();
+    });
+
+    it('should find by date range using findBy with query builder', async () => {
+      if (mockRepo.createQueryBuilder === undefined) {
+        throw new Error('createQueryBuilder is undefined');
+      }
+      const qb = mockRepo.createQueryBuilder();
+
+      await repository.findBy({ date: '2023-01-01', endDate: '2023-01-02', status: null });
+
+      expect(mockRepo.createQueryBuilder).toHaveBeenCalledWith('order');
+      expect(qb.where).toHaveBeenCalled();
+      expect(qb.andWhere).toHaveBeenCalled();
+      expect(qb.getMany).toHaveBeenCalled();
+    });
+
+    it('should find all when no filters provided', async () => {
+      await repository.findBy({ date: null, endDate: null, status: null });
+      expect(mockRepo.find).toHaveBeenCalledWith();
     });
 
     it('findByThirdPartySquareIds should use query builder', async () => {

@@ -58,7 +58,7 @@ export class OrderNotificationService {
     @Inject(GoogleService) private googleService: GoogleService,
     @Inject(CatalogProviderService) private catalogProviderService: CatalogProviderService,
     @Inject(DataProviderService) private dataProvider: DataProviderService,
-  ) { }
+  ) {}
 
   // Public methods
 
@@ -261,12 +261,13 @@ export class OrderNotificationService {
         } else {
           return `Received payment of ${MoneyToDisplayString(payment.amount, true)} from credit card ending in ${payment.payment.last4}.
           ${lineBreak}
-          ${payment.payment.receiptUrl
+          ${
+            payment.payment.receiptUrl
               ? isHtml
                 ? `<a href="${payment.payment.receiptUrl}">Receipt link</a>${lineBreak}`
                 : `Receipt: ${payment.payment.receiptUrl}${lineBreak}`
               : ''
-            }`;
+          }`;
         }
       case PaymentMethod.StoreCredit:
         return `Applied store credit value ${MoneyToDisplayString(payment.amount, true)} using code ${payment.payment.code}.${lineBreak}`;

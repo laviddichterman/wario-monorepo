@@ -36,6 +36,9 @@ export {
   setupMockCatalog,
 } from './catalog-test-helpers';
 
+// E2E test helpers
+export { createE2EClient, type E2EClient, expectError, expectSuccess, overrideE2EAuth } from './e2e-helpers';
+
 // Google mocks
 export * from './google-mocks';
 

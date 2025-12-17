@@ -22,7 +22,7 @@ export class AccountingController {
     private readonly catalogProvider: CatalogProviderService,
     private readonly googleService: GoogleService,
     private readonly orderManager: OrderManagerService,
-  ) { }
+  ) {}
 
   @Get('tips')
   async getTips(@Query('date') date: string) {

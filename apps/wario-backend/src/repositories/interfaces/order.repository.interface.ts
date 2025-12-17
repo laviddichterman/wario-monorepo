@@ -2,9 +2,15 @@ import type { WFulfillmentStatus, WOrderInstance, WOrderStatus } from '@wcp/wari
 
 export interface IOrderRepository {
   findById(id: string): Promise<WOrderInstance | null>;
-  findByStatus(status: WOrderStatus): Promise<WOrderInstance[]>;
-  findByFulfillmentDate(date: string): Promise<WOrderInstance[]>;
-  findByDateRange(startDate: string, endDate: string): Promise<WOrderInstance[]>;
+  findBy({
+    date,
+    endDate,
+    status,
+  }: {
+    date: string | null;
+    endDate: string | null;
+    status: WOrderStatus | null;
+  }): Promise<WOrderInstance[]>;
   save(order: WOrderInstance): Promise<WOrderInstance>;
   updateStatus(id: string, status: WOrderStatus): Promise<WOrderInstance | null>;
   delete(id: string): Promise<boolean>;

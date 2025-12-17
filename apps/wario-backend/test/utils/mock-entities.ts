@@ -258,9 +258,7 @@ export const createMockSeatingFloorEntity = (overrides: Partial<SeatingFloorEnti
   } as SeatingFloorEntity;
 };
 
-export const createMockSeatingSectionEntity = (
-  overrides: Partial<SeatingSectionEntity> = {},
-): SeatingSectionEntity => {
+export const createMockSeatingSectionEntity = (overrides: Partial<SeatingSectionEntity> = {}): SeatingSectionEntity => {
   const defaults = {
     id: 'sec1',
     floorId: 'floor1',
@@ -295,9 +293,7 @@ export const createMockSeatingPlacementEntity = (
   } as SeatingPlacementEntity;
 };
 
-export const createMockSeatingLayoutEntity = (
-  overrides: Partial<SeatingLayoutEntity> = {},
-): SeatingLayoutEntity => {
+export const createMockSeatingLayoutEntity = (overrides: Partial<SeatingLayoutEntity> = {}): SeatingLayoutEntity => {
   const defaults = {
     id: 'layout1',
     name: 'Default Layout',

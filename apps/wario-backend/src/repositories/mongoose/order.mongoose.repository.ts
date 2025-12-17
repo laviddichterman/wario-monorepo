@@ -18,20 +18,23 @@ export class OrderMongooseRepository implements IOrderRepository {
     return doc ? { ...doc, id: doc._id.toString() } : null;
   }
 
-  async findByStatus(status: WOrderStatus): Promise<WOrderInstance[]> {
-    const docs = await this.model.find({ status }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
-  }
-
-  async findByFulfillmentDate(date: string): Promise<WOrderInstance[]> {
-    const docs = await this.model.find({ 'fulfillment.selectedDate': date }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
-  }
-
-  async findByDateRange(startDate: string, endDate: string): Promise<WOrderInstance[]> {
+  async findBy({
+    date,
+    endDate,
+    status,
+  }: {
+    date: string | null;
+    endDate: string | null;
+    status: WOrderStatus | null;
+  }): Promise<WOrderInstance[]> {
     const docs = await this.model
       .find({
-        'fulfillment.selectedDate': { $gte: startDate, $lte: endDate },
+        ...(status ? { status } : {}),
+        ...(date
+          ? endDate
+            ? { 'fulfillment.selectedDate': { $gte: date, $lte: endDate } }
+            : { 'fulfillment.selectedDate': date }
+          : {}),
       })
       .lean()
       .exec();

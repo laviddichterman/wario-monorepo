@@ -26,7 +26,7 @@ import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor'
 
 @Controller('api/v1/order')
 export class OrderController {
-  constructor(private readonly orderManager: OrderManagerService) { }
+  constructor(private readonly orderManager: OrderManagerService) {}
 
   @Post()
   @Scopes('write:order')
@@ -160,6 +160,9 @@ export class OrderController {
       endDate: queryEndDate,
       status: queryStatus,
     });
-    return response;
+    if (!response.success) {
+      throw new HttpException(response, response.status);
+    }
+    return response.result;
   }
 }

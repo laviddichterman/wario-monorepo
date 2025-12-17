@@ -128,7 +128,6 @@ export const useVisibleProductsInCategory = (
 
     return productIdsInCategory.flatMap((productId): VisibleProductItem[] => {
       const product = catalogSelectors.productEntry(productId);
-
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!product) return [];
 

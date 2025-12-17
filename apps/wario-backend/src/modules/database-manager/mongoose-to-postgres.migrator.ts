@@ -335,14 +335,17 @@ export class MongooseToPostgresMigrator {
     const docs = await collection.find({}).toArray();
 
     if (docs.length > 0) {
-      const entities = docs.map((doc) => {
+      const entities = docs.map((doc, index) => {
         return manager.create(OptionTypeEntity, {
           id: doc._id.toString(),
           name: doc.name,
           displayName: doc.displayName,
-          options: doc.options, // Array of strings (Logic ID refs)
-          min: doc.min,
-          max: doc.max,
+          options: doc.options || [], // Array of strings (Logic ID refs)
+          ordinal: doc.ordinal ?? index, // Use index as fallback if not in MongoDB
+          min_selected: doc.min ?? doc.min_selected ?? 0,
+          max_selected: doc.max ?? doc.max_selected ?? null,
+          displayFlags: doc.displayFlags || {},
+          externalIDs: doc.externalIDs || [],
           // Temporal
           rowId: randomUUID(),
           validFrom: new Date(0),
@@ -396,17 +399,16 @@ export class MongooseToPostgresMigrator {
 
       const entity = manager.create(ProductEntity, {
         id: doc._id.toString(),
-        baseProductId: doc.baseProductId || doc._id.toString(), // Copy from MongoDB, fallback to product ID
         price: doc.price,
         disabled: doc.disabled || null,
         externalIDs: doc.externalIDs || [],
         serviceDisable: doc.serviceDisable || [],
-        displayFlags: doc.displayFlags,
+        displayFlags: doc.displayFlags || {},
         timing: doc.timing || null,
         availability: doc.availability || [],
         modifiers: doc.modifiers || [],
-        category_ids: doc.category_ids || [],
         printerGroup: doc.printerGroup || null,
+        instances: doc.instances || [], // Array of product instance IDs
         // Temporal
         rowId: randomUUID(),
         validFrom: new Date(0),
@@ -454,10 +456,6 @@ export class MongooseToPostgresMigrator {
         status: doc.status,
         customerInfo: doc.customerInfo || doc.customer, // Handle field rename
         fulfillment: doc.fulfillment,
-        fulfillmentDate:
-          doc.fulfillmentDate ||
-          (doc.fulfillment as { selectedDate?: string } | undefined)?.selectedDate ||
-          '1970-01-01',
         cart: doc.cart || doc.items || [],
         discounts: doc.discounts || [],
         payments: doc.payments || doc.payment ? [doc.payment] : [],

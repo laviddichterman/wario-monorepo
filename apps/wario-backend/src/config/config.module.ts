@@ -64,4 +64,4 @@ import { StoreCreditProviderService } from './store-credit-provider/store-credit
     StoreCreditProviderService,
   ],
 })
-export class ConfigModule { }
+export class ConfigModule {}

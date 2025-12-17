@@ -34,21 +34,20 @@ const createMockLogger = () => createMock<PinoLogger>();
 // Create mock repository
 const createMockOrderRepository = () => ({
   findById: jest.fn(),
-  findByStatus: jest.fn(),
-  findByFulfillmentDate: jest.fn(),
-  create: jest.fn(),
-  updateWithLock: jest.fn(),
-  releaseLock: jest.fn(),
-  lockReadyOrders: jest.fn(),
-  findByLock: jest.fn(),
-  unlockAll: jest.fn(),
-  findAll: jest.fn(),
-  update: jest.fn(),
+  findBy: jest.fn(), // Consolidated query method accepting { date, endDate, status }
+  save: jest.fn(),
+  updateStatus: jest.fn(),
   delete: jest.fn(),
   findByThirdPartySquareIds: jest.fn(),
-  findByDateRange: jest.fn(), // NEW
+  updateWithLock: jest.fn(),
+  releaseLock: jest.fn(),
   bulkCreate: jest.fn(),
+  create: jest.fn(),
+  findByLock: jest.fn(),
+  lockReadyOrders: jest.fn(),
   acquireLock: jest.fn(),
+  tryAcquireLock: jest.fn(),
+  unlockAll: jest.fn(),
 });
 
 describe('OrderManagerService', () => {
@@ -138,7 +137,7 @@ describe('OrderManagerService', () => {
       const order2 = createMockWOrderInstance({ id: 'order-2', fulfillment: fulfillment2 });
 
       const mockOrders = [order1, order2];
-      mockOrderRepository.findByDateRange.mockResolvedValue(mockOrders);
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
 
       const result = await service.GetOrders({ date: '2024-01-15', endDate: '2024-01-17', status: null });
 
@@ -147,15 +146,16 @@ describe('OrderManagerService', () => {
       if (result.success) {
         expect(result.result).toHaveLength(2);
       }
-      expect(mockOrderRepository.findByDateRange).toHaveBeenCalledWith('2024-01-15', '2024-01-17');
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: '2024-01-15',
+        endDate: '2024-01-17',
+        status: null,
+      });
     });
 
     it('should filter by date range and status', async () => {
-      const mockOrders = [
-        createMockWOrderInstance({ id: 'order-1', status: WOrderStatus.CONFIRMED }),
-        createMockWOrderInstance({ id: 'order-2', status: WOrderStatus.OPEN }),
-      ];
-      mockOrderRepository.findByDateRange.mockResolvedValue(mockOrders);
+      const mockOrders = [createMockWOrderInstance({ id: 'order-1', status: WOrderStatus.CONFIRMED })];
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
 
       const result = await service.GetOrders({
         date: '2024-01-15',
@@ -169,12 +169,16 @@ describe('OrderManagerService', () => {
         expect(result.result).toHaveLength(1);
         expect(result.result[0].status).toBe(WOrderStatus.CONFIRMED);
       }
-      expect(mockOrderRepository.findByDateRange).toHaveBeenCalledWith('2024-01-15', '2024-01-17');
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: '2024-01-15',
+        endDate: '2024-01-17',
+        status: WOrderStatus.CONFIRMED,
+      });
     });
 
-    it('should return orders filtered by date', async () => {
+    it('should return orders filtered by date only', async () => {
       const mockOrders = [createMockWOrderInstance({ id: 'order-1' }), createMockWOrderInstance({ id: 'order-2' })];
-      mockOrderRepository.findByFulfillmentDate.mockResolvedValue(mockOrders);
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
 
       const result = await service.GetOrders({ date: '2024-01-15', endDate: null, status: null });
 
@@ -183,12 +187,16 @@ describe('OrderManagerService', () => {
       if (result.success) {
         expect(result.result).toHaveLength(2);
       }
-      expect(mockOrderRepository.findByFulfillmentDate).toHaveBeenCalledWith('2024-01-15');
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: '2024-01-15',
+        endDate: null,
+        status: null,
+      });
     });
 
-    it('should return orders filtered by status', async () => {
-      const mockOrders = [createMockWOrderInstance({ id: 'order-1' })];
-      mockOrderRepository.findByStatus.mockResolvedValue(mockOrders);
+    it('should return orders filtered by status only', async () => {
+      const mockOrders = [createMockWOrderInstance({ id: 'order-1', status: WOrderStatus.OPEN })];
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
 
       const result = await service.GetOrders({ date: null, endDate: null, status: WOrderStatus.OPEN });
 
@@ -197,39 +205,73 @@ describe('OrderManagerService', () => {
       if (result.success) {
         expect(result.result).toHaveLength(1);
       }
-      expect(mockOrderRepository.findByStatus).toHaveBeenCalledWith(WOrderStatus.OPEN);
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: null,
+        endDate: null,
+        status: WOrderStatus.OPEN,
+      });
     });
 
-    it('should return empty array when no filters provided', async () => {
+    it('should return all orders when no filters provided', async () => {
+      const mockOrders = [createMockWOrderInstance({ id: 'order-1' }), createMockWOrderInstance({ id: 'order-2' })];
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
+
       const result = await service.GetOrders({ date: null, endDate: null, status: null });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.result).toHaveLength(0);
+        expect(result.result).toHaveLength(2);
       }
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: null,
+        endDate: null,
+        status: null,
+      });
     });
 
     it('should filter by both date and status when both provided', async () => {
-      const mockOrders = [
-        createMockWOrderInstance({ id: 'order-1', status: WOrderStatus.CONFIRMED }),
-        createMockWOrderInstance({ id: 'order-2', status: WOrderStatus.OPEN }),
-      ];
-      mockOrderRepository.findByFulfillmentDate.mockResolvedValue(mockOrders);
+      const mockOrders = [createMockWOrderInstance({ id: 'order-1', status: WOrderStatus.CONFIRMED })];
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
 
       const result = await service.GetOrders({ date: '2024-01-15', endDate: null, status: WOrderStatus.CONFIRMED });
 
       expect(result.status).toBe(200);
       expect(result.success).toBe(true);
       if (result.success) {
-        // Should filter to only CONFIRMED orders
         expect(result.result).toHaveLength(1);
         expect(result.result[0].status).toBe(WOrderStatus.CONFIRMED);
       }
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: '2024-01-15',
+        endDate: null,
+        status: WOrderStatus.CONFIRMED,
+      });
+    });
+
+    it('should handle ISO date strings with time components by truncating to YYYY-MM-DD', async () => {
+      const mockOrders = [createMockWOrderInstance({ id: 'order-1' })];
+      mockOrderRepository.findBy.mockResolvedValue(mockOrders);
+
+      // Pass ISO strings with time
+      const result = await service.GetOrders({
+        date: '2024-01-15T10:00:00.000Z',
+        endDate: '2024-01-17T15:30:00.000Z',
+        status: null,
+      });
+
+      expect(result.status).toBe(200);
+      expect(result.success).toBe(true);
+      // Verify repository was called with simple date strings (truncated)
+      expect(mockOrderRepository.findBy).toHaveBeenCalledWith({
+        date: '2024-01-15',
+        endDate: '2024-01-17',
+        status: null,
+      });
     });
 
     it('should return 500 on database error', async () => {
-      mockOrderRepository.findByFulfillmentDate.mockRejectedValue(new Error('Database error'));
+      mockOrderRepository.findBy.mockRejectedValue(new Error('Database error'));
 
       const result = await service.GetOrders({ date: '2024-01-15', endDate: null, status: null });
 

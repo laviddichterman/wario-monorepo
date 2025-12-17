@@ -135,7 +135,10 @@ The `DatabaseManagerService` handles the initial setup of the PostgreSQL databas
 ### Testing
 
 - **Unit Tests:** `*.spec.ts` files next to the source.
-- **E2E Tests:** Located in `test/`. Run via `pnpm output backend:test:e2e`.
+- **E2E Tests:** Located in `test/`. Run via `pnpm backend:test:e2e`.
+  - Use `overrideE2EAuth()` to bypass JWT validation
+  - Use `createE2EClient()` for authenticated requests
+  - See `test/utils/e2e-helpers.ts` for full API
 
 ### Testing Norms
 

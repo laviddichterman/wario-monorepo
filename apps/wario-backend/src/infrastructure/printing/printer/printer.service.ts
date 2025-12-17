@@ -66,7 +66,7 @@ export class PrinterService {
     private catalogProviderService: CatalogProviderService,
     @InjectPinoLogger(PrinterService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Gets the alternate Square location used for printing.

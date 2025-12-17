@@ -11,7 +11,7 @@ export class SeatingSectionMongooseRepository implements ISeatingSectionReposito
   constructor(
     @InjectModel('SeatingSection')
     private readonly model: Model<SeatingLayoutSection>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingLayoutSection | null> {
     const doc = await this.model.findById(id).lean().exec();

@@ -11,7 +11,7 @@ export class SeatingFloorMongooseRepository implements ISeatingFloorRepository {
   constructor(
     @InjectModel('SeatingFloor')
     private readonly model: Model<SeatingFloor>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingFloor | null> {
     const doc = await this.model.findById(id).lean().exec();

@@ -14,7 +14,7 @@ export class TasksService {
     private readonly thirdPartyOrderService: ThirdPartyOrderService,
     @InjectPinoLogger(TasksService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async handleSendOrders() {

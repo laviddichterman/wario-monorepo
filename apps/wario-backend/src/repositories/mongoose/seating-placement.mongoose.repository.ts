@@ -11,7 +11,7 @@ export class SeatingPlacementMongooseRepository implements ISeatingPlacementRepo
   constructor(
     @InjectModel('SeatingPlacement')
     private readonly model: Model<SeatingPlacement>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingPlacement | null> {
     const doc = await this.model.findById(id).lean().exec();
