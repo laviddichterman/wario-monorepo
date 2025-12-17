@@ -134,7 +134,14 @@ import type {
   PrepTimingDto,
   ProductInstanceModifierEntryDto,
 } from './dto/product.dto';
-import type { SeatingResourceDto, WSeatingInfoDto } from './dto/seating.dto';
+import type {
+  SeatingFloorDto,
+  SeatingLayoutDto,
+  SeatingLayoutSectionDto,
+  SeatingPlacementDto,
+  SeatingResourceDto,
+  WSeatingInfoDto,
+} from './dto/seating.dto';
 import type { DistributiveOmit } from './utility-types';
 
 // =============================================================================
@@ -300,6 +307,10 @@ export type DeletePrinterGroupRequest = DeletePrinterGroupNoReassignRequest | De
 // =============================================================================
 
 export type SeatingResource = Omit<SeatingResourceDto, never>;
+export type SeatingPlacement = Omit<SeatingPlacementDto, never>;
+export type SeatingFloor = Omit<SeatingFloorDto, never>;
+export type SeatingLayoutSection = Omit<SeatingLayoutSectionDto, never>;
+export type SeatingLayout = Omit<SeatingLayoutDto, never>;
 export type WSeatingInfo = Omit<WSeatingInfoDto, never>;
 export type DineInInfo = Omit<DineInInfoDto, never>;
 export type ThirdPartyInfo = Omit<ThirdPartyInfoDto, never>;

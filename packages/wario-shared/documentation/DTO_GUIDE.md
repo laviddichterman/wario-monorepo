@@ -251,10 +251,110 @@ Complete catalog structure:
 
 Orders, payments, and discounts:
 
-#### Seating
+#### Seating Layout DTOs
 
-- `SeatingResourceDto` - Seating resource
-- `WSeatingInfoDto` - Seating information
+Seating layout DTOs represent the physical table configuration of a restaurant. See [SEATING_LAYOUT_STORE.md](./SEATING_LAYOUT_STORE.md) for higher-level usage patterns.
+
+##### `SeatingFloorDto`
+
+Represents a floor in the restaurant (e.g., "Main Floor", "Patio").
+
+| Field      | Type      | Required | Validation          | Description                       |
+| ---------- | --------- | -------- | ------------------- | --------------------------------- |
+| `id`       | `string`  | Yes      | `@IsNotEmpty`       | Unique identifier                 |
+| `name`     | `string`  | Yes      | `@IsNotEmpty`       | Display name (e.g., "Main Floor") |
+| `ordinal`  | `number`  | Yes      | `@IsInt`, `@Min(0)` | Sort order (0-indexed)            |
+| `disabled` | `boolean` | Yes      | `@IsBoolean`        | If true, floor is hidden in UI    |
+
+##### `SeatingLayoutSectionDto`
+
+Represents a section within a floor (e.g., "Dining Room", "Bar Area").
+
+| Field      | Type      | Required | Validation          | Description                                  |
+| ---------- | --------- | -------- | ------------------- | -------------------------------------------- |
+| `id`       | `string`  | Yes      | `@IsNotEmpty`       | Unique identifier                            |
+| `floorId`  | `string`  | Yes      | `@IsNotEmpty`       | Parent floor ID (FK to `SeatingFloorDto.id`) |
+| `name`     | `string`  | Yes      | `@IsNotEmpty`       | Display name (e.g., "Dining Room")           |
+| `ordinal`  | `number`  | Yes      | `@IsInt`, `@Min(0)` | Sort order within floor                      |
+| `disabled` | `boolean` | Yes      | `@IsNotEmpty`       | If true, section is hidden in UI             |
+
+##### `SeatingResourceDto`
+
+Represents a table or seating resource (the definition, not placement).
+
+| Field       | Type           | Required | Validation              | Description                                                          |
+| ----------- | -------------- | -------- | ----------------------- | -------------------------------------------------------------------- |
+| `id`        | `string`       | Yes      | `@IsNotEmpty`           | Unique identifier                                                    |
+| `name`      | `string`       | Yes      | `@IsNotEmpty`           | Display name (e.g., "Table 1", "Booth A")                            |
+| `capacity`  | `number`       | Yes      | `@IsInt`, `@Min(0)`     | Recommended guest count (soft limit)                                 |
+| `shape`     | `SeatingShape` | Yes      | `@IsEnum(SeatingShape)` | Shape: `'RECTANGLE'` \| `'ELLIPSE'`                                  |
+| `sectionId` | `string`       | Yes      | `@IsNotEmpty`           | Parent section ID (FK to `SeatingLayoutSectionDto.id`)               |
+| `shapeDimX` | `number`       | Yes      | `@IsInt`, `@Min(0)`     | X dimension (half-width for rect, x-radius for ellipse), pre-rotate  |
+| `shapeDimY` | `number`       | Yes      | `@IsInt`, `@Min(0)`     | Y dimension (half-height for rect, y-radius for ellipse), pre-rotate |
+| `disabled`  | `boolean`      | Yes      | `@IsBoolean`            | If true, resource is hidden in UI                                    |
+
+##### `SeatingPlacementDto`
+
+Represents where a resource is positioned on the canvas.
+
+| Field       | Type     | Required | Validation          | Description                               |
+| ----------- | -------- | -------- | ------------------- | ----------------------------------------- |
+| `id`        | `string` | Yes      | `@IsNotEmpty`       | Unique identifier                         |
+| `name`      | `string` | Yes      | `@IsNotEmpty`       | Display name (typically matches resource) |
+| `sectionId` | `string` | Yes      | `@IsNotEmpty`       | Parent section ID                         |
+| `centerX`   | `number` | Yes      | `@IsInt`, `@Min(0)` | X coordinate of center (layout units)     |
+| `centerY`   | `number` | Yes      | `@IsInt`, `@Min(0)` | Y coordinate of center (layout units)     |
+| `rotation`  | `number` | Yes      | `@IsInt`, `@Min(0)` | Rotation in degrees (clockwise from 0)    |
+
+##### `SeatingLayoutDto`
+
+Aggregate containing all layout components.
+
+| Field        | Type                        | Required | Validation        | Description                          |
+| ------------ | --------------------------- | -------- | ----------------- | ------------------------------------ |
+| `id`         | `string`                    | Yes      | `@IsNotEmpty`     | Unique identifier                    |
+| `name`       | `string`                    | Yes      | `@IsNotEmpty`     | Layout name (e.g., "Default Layout") |
+| `floors`     | `SeatingFloorDto[]`         | Yes      | `@ValidateNested` | All floors in layout                 |
+| `sections`   | `SeatingLayoutSectionDto[]` | Yes      | `@ValidateNested` | All sections in layout               |
+| `resources`  | `SeatingResourceDto[]`      | Yes      | `@ValidateNested` | All table definitions                |
+| `placements` | `SeatingPlacementDto[]`     | Yes      | `@ValidateNested` | All table positions                  |
+
+##### `WSeatingInfoDto`
+
+Seating information attached to an order.
+
+| Field     | Type             | Required | Validation              | Description                            |
+| --------- | ---------------- | -------- | ----------------------- | -------------------------------------- |
+| `tableId` | `string[]`       | Yes      | `@IsArray`, `@IsString` | Resource IDs assigned to order         |
+| `status`  | `WSeatingStatus` | Yes      | `@IsEnum`               | Status: `PENDING`, `SEATED`, `CLEARED` |
+| `mtime`   | `number`         | Yes      | `@IsNumber`             | Modification timestamp (epoch ms)      |
+
+##### Example
+
+```typescript
+const layout: SeatingLayoutDto = {
+  id: 'layout-1',
+  name: 'Main Restaurant',
+  floors: [{ id: 'f1', name: 'Main Floor', ordinal: 0, disabled: false }],
+  sections: [{ id: 's1', floorId: 'f1', name: 'Dining Room', ordinal: 0, disabled: false }],
+  resources: [
+    {
+      id: 'r1',
+      name: 'Table 1',
+      capacity: 4,
+      shape: 'RECTANGLE',
+      sectionId: 's1',
+      shapeDimX: 30,
+      shapeDimY: 20,
+      disabled: false,
+    },
+  ],
+  placements: [{ id: 'p1', name: 'Table 1', sectionId: 's1', centerX: 100, centerY: 100, rotation: 0 }],
+};
+```
+
+#### Seating Info DTOs
+
 - `DineInInfoDto` - Dine-in information
 
 #### Fulfillment
@@ -335,23 +435,6 @@ Function expressions for business logic:
 
 - `AbstractOrderExpressionConstLiteralDto`
 - `OrderInstanceFunctionDto` - Order instance function
-
-## Validation Decorators Used
-
-The DTOs use the following class-validator decorators:
-
-- `@IsString()` - Validates string type
-- `@IsNumber()` - Validates number type
-- `@IsInt()` - Validates integer type
-- `@IsBoolean()` - Validates boolean type
-- `@IsEnum()` - Validates enum value
-- `@IsArray()` - Validates array type
-- `@IsObject()` - Validates object type
-- `@IsNotEmpty()` - Ensures not empty
-- `@IsOptional()` - Makes field optional
-- `@Min()` - Minimum value validation
-- `@ValidateNested()` - Validates nested objects
-- `@Type()` - Class-transformer type hint
 
 ## Important Notes
 
