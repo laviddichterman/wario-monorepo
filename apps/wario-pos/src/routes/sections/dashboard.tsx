@@ -23,6 +23,9 @@ const CatalogPrinterGroupsPage = lazy(() => import('@/pages/dashboard/catalog/pr
 const CatalogModifiersPage = lazy(() => import('@/pages/dashboard/catalog/modifiers'));
 const CatalogProductFunctionsPage = lazy(() => import('@/pages/dashboard/catalog/product-functions'));
 
+// Settings
+const SettingsPage = lazy(() => import('@/pages/dashboard/settings'));
+
 // User
 // const UserProfilePage = lazy(() => import('@/pages/dashboard/user/profile'));
 // const UserCardsPage = lazy(() => import('@/pages/dashboard/user/cards'));
@@ -102,6 +105,7 @@ export const dashboardRoutes: RouteObject[] = [
           { path: 'product-functions', element: <CatalogProductFunctionsPage /> },
         ],
       },
+      { path: 'settings', element: <SettingsPage /> },
     ],
   },
 ];

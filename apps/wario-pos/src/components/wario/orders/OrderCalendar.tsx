@@ -4,6 +4,7 @@ import { useServerTime } from '@wcp/wario-ux-shared/query';
 import { useOrdersQuery } from '@/hooks/useOrdersQuery';
 
 import { CalendarComponent } from '@/components/calendar/calendar-component';
+import { useCalendar } from '@/components/calendar/hooks/use-calendar';
 import type { ICalendarEvent, ICalendarView } from '@/components/calendar/types';
 import { WOrderComponentCard } from '@/components/wario/orders/WOrderComponentCard';
 
@@ -15,7 +16,21 @@ export type OrderCalendarProps = {
 export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendarProps) {
   const currentTime = useServerTime();
 
-  const { data: ordersMap = {} } = useOrdersQuery(null);
+  const {
+    // ... other props
+    onDatesSet,
+    activeRange,
+    // ...
+  } = useCalendar({ defaultDesktopView: initialView, defaultMobileView: initialView });
+
+  const queryOptions = activeRange
+    ? {
+        date: new Date(activeRange.start).toISOString(),
+        endDate: new Date(activeRange.end).toISOString(),
+      }
+    : null;
+
+  const { data: ordersMap = {} } = useOrdersQuery(queryOptions);
 
   const ordersAsEvents: ICalendarEvent[] = Object.values(ordersMap)
     .filter((order) => order.status !== WOrderStatus.CANCELED)
@@ -53,6 +68,7 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
           )
         );
       }}
+      datesSet={onDatesSet} // NEW
     />
   );
 }

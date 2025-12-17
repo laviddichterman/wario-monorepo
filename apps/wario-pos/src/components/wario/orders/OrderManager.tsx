@@ -13,7 +13,11 @@ import { WDateUtils, WOrderStatus } from '@wcp/wario-shared/logic';
 import { type WOrderInstance } from '@wcp/wario-shared/types';
 import { FullScreenPulsingContainer } from '@wcp/wario-ux-shared/containers';
 
-import { useConfirmOrderMutation, useOrdersQuery, useUnlockOrdersMutation } from '@/hooks/useOrdersQuery';
+import {
+  useConfirmOrderMutation,
+  usePendingOrdersQuery, // NEW
+  useUnlockOrdersMutation,
+} from '@/hooks/useOrdersQuery';
 
 import { TableWrapperComponent } from '../table_wrapper.component';
 
@@ -34,7 +38,7 @@ const EventTitle = (params: GridRenderCellParams<RowType>) => {
 
 export const OrderManagerComponent = ({ handleConfirmOrder }: OrderManagerComponentProps) => {
   const apiRef = useGridApiRef();
-  const { data: ordersMap = {} } = useOrdersQuery(null); // Fetch for today/default
+  const { data: ordersMap = {} } = usePendingOrdersQuery(); // Use polling hook for pending orders
   const unlockMutation = useUnlockOrdersMutation();
   const confirmMutation = useConfirmOrderMutation();
 

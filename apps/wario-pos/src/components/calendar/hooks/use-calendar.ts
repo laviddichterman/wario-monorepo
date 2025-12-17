@@ -1,4 +1,4 @@
-import type { CalendarApi, DateSelectArg, EventClickArg, ViewApi } from '@fullcalendar/core';
+import type { CalendarApi, DateSelectArg, DatesSetArg, EventClickArg, ViewApi } from '@fullcalendar/core';
 import type FullCalendar from '@fullcalendar/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -17,6 +17,7 @@ export type UseCalendarReturn = {
   title: ViewApi['title'];
   selectedEventId: string;
   selectedRange: ICalendarRange | null;
+  activeRange: ICalendarRange | null; // NEW
   calendarRef: React.RefObject<FullCalendar | null>;
   onOpenForm: () => void;
   onCloseForm: () => void;
@@ -26,6 +27,7 @@ export type UseCalendarReturn = {
   onChangeView: (view: ICalendarView) => void;
   onClickEventInFilters: (eventId: string) => void;
   onDateNavigation: (action: DateNavigationAction) => void;
+  onDatesSet: (arg: DatesSetArg) => void; // NEW
 };
 
 export type UseCalendarProps = {
@@ -45,6 +47,7 @@ export function useCalendar({
   const [openForm, setOpenForm] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [selectedRange, setSelectedRange] = useState<ICalendarRange>(null);
+  const [activeRange, setActiveRange] = useState<ICalendarRange>(null); // NEW
 
   const [title, setTitle] = useState<ViewApi['title']>('');
   const [view, setView] = useState<ICalendarView>(defaultDesktopView);
@@ -162,6 +165,10 @@ export function useCalendar({
     [onOpenForm],
   );
 
+  const onDatesSet = useCallback((arg: DatesSetArg) => {
+    setActiveRange({ start: arg.start, end: arg.end });
+  }, []);
+
   return {
     calendarRef,
     getCalendarApi,
@@ -173,6 +180,7 @@ export function useCalendar({
     onChangeView,
     onSelectRange,
     onDateNavigation,
+    onDatesSet, // NEW
     /********/
     openForm,
     onOpenForm,
@@ -180,6 +188,7 @@ export function useCalendar({
     /********/
     selectedRange,
     selectedEventId,
+    activeRange, // NEW
     /********/
     onClickEventInFilters,
   };

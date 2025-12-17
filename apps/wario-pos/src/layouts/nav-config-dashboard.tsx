@@ -61,7 +61,7 @@ export const navData: NavSectionProps['data'] = [
           { title: 'Product Instance Functions', path: paths.dashboard.catalog.productfunctions, icon: ICONS.params },
         ],
       },
-      // { title: 'Settings', path: paths.dashboard.settings, icon: ICONS.dashboard },
+      { title: 'Settings', path: paths.dashboard.general.settings, icon: ICONS.params },
     ],
   },
   // /**

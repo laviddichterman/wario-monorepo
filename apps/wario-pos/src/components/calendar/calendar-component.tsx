@@ -1,4 +1,4 @@
-import type { BusinessHoursInput } from '@fullcalendar/core/';
+import type { BusinessHoursInput, DatesSetArg } from '@fullcalendar/core/';
 import esLocale from '@fullcalendar/core/locales/es';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -40,6 +40,7 @@ export type CalendarProps = {
   }>;
   updateEvent: (event: Partial<ICalendarEvent>) => void;
   businessHours?: BusinessHoursInput;
+  datesSet?: (arg: DatesSetArg) => void;
 };
 
 export function CalendarComponent({
@@ -50,6 +51,7 @@ export function CalendarComponent({
   CalendarForm,
   eventById,
   businessHours,
+  datesSet, // NEW
 }: CalendarProps) {
   const theme = useTheme();
   // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
@@ -180,6 +182,7 @@ export function CalendarComponent({
             select={onSelectRange}
             eventClick={onClickEvent}
             businessHours={businessHours}
+            datesSet={datesSet}
             // eventDrop={(arg) => {
             //   startTransition(() => {
             //     onDropEvent(arg, updateEvent);

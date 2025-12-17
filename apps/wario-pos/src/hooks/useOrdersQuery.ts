@@ -20,33 +20,66 @@ import { uuidv4 } from '@/utils/uuidv4';
 import { toast } from '@/components/snackbar';
 
 // Fetch orders function
-const fetchOrders = async (token: string, date: string | null): Promise<Record<string, WOrderInstance>> => {
-  const params = date ? { date } : {};
-  const response = await axiosInstance.get<Record<string, WOrderInstance>>('/api/v1/order', {
+const fetchOrders = async (
+  token: string,
+  date: string | null,
+  endDate: string | null,
+  status: string | null,
+): Promise<Record<string, WOrderInstance>> => {
+  const params: Record<string, string> = {};
+  if (date) params.date = date;
+  if (endDate) params.endDate = endDate;
+  if (status) params.status = status;
+
+  const response = await axiosInstance.get<WOrderInstance[]>('/api/v1/order', {
     headers: { Authorization: `Bearer ${token}` },
     params,
   });
-  return response.data;
+  // Convert array to record for frontend compatibility
+  return response.data.reduce((acc, order) => ({ ...acc, [order.id]: order }), {});
+};
+
+export type OrderQueryOptions = {
+  date?: string | null;
+  endDate?: string | null;
+  status?: string | null;
 };
 
 // Hook to get orders
-export function useOrdersQuery(date: string | null = null) {
+export function useOrdersQuery(options: OrderQueryOptions | null = null) {
+  const { getAccessTokenSilently } = useAuth0();
+
+  const date = options?.date ?? null;
+  const endDate = options?.endDate ?? null;
+  const status = options?.status ?? null;
+
+  return useQuery({
+    queryKey: ['orders', date, endDate, status],
+    queryFn: async () => {
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
+      return fetchOrders(token, date, endDate, status);
+    },
+    // No polling for main query
+  });
+}
+
+export function usePendingOrdersQuery() {
   const { getAccessTokenSilently } = useAuth0();
 
   return useQuery({
-    queryKey: ['orders', date],
+    queryKey: ['orders', 'pending'],
     queryFn: async () => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
-      return fetchOrders(token, date);
+      return fetchOrders(token, null, null, 'OPEN');
     },
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: 30000,
     refetchIntervalInBackground: true,
   });
 }
 
 // Hook to get a single order by ID
 export function useOrderById(orderId: string) {
-  const { data: orders } = useOrdersQuery(null); // Assuming null fetches relevant orders (e.g. today)
+  const { data: orders } = useOrdersQuery(null); // Assuming null fetches relevant orders (e.g. today/all)
   return orders ? orders[orderId] : null;
 }
 
