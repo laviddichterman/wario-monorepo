@@ -13,7 +13,7 @@ export class OrderTypeOrmRepository implements IOrderRepository {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly repo: Repository<OrderEntity>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<WOrderInstance | null> {
     return this.repo.findOne({ where: { id } });
@@ -30,13 +30,13 @@ export class OrderTypeOrmRepository implements IOrderRepository {
   }): Promise<WOrderInstance[]> {
     if (date) {
       let builder = this.repo.createQueryBuilder('order');
-      if (!endDate) builder = builder.where(["order.fulfillment->>'selectedDate' = :date", { date }]);
+      if (!endDate) builder = builder.where("order.fulfillment->>'selectedDate' = :date", { date });
       else {
         builder = builder
-          .where(["order.fulfillment->>'selectedDate' = :date", { date }])
-          .andWhere(["order.fulfillment->>'selectedDate' <= :endDate", { endDate }]);
+          .where("order.fulfillment->>'selectedDate' >= :date", { date })
+          .andWhere("order.fulfillment->>'selectedDate' <= :endDate", { endDate });
       }
-      if (status) builder = builder.andWhere(['order.status = :status', { status }]);
+      if (status) builder = builder.andWhere('order.status = :status', { status });
       return builder.getMany();
     }
     if (status) return this.repo.find({ where: { status } });

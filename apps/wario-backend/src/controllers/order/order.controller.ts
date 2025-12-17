@@ -11,8 +11,9 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { isValid, parseISO } from 'date-fns';
 
-import { CreateOrderRequestV2Dto, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+import { CreateOrderRequestV2Dto, WDateUtils, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 
 import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
 import { CancelOrderRequestDto, MoveOrderRequestDto, RescheduleOrderRequestDto } from 'src/dtos/order.dto';
@@ -24,9 +25,20 @@ import { RealIp } from '../../decorators/real-ip.decorator';
 import { OrderNotFoundException } from '../../exceptions';
 import { OrderLockInterceptor } from '../../interceptors/order-lock.interceptor';
 
+function parseAndNormalizeDate(date: string | null | undefined) {
+  if (!date) {
+    return null;
+  }
+  const parsedDate = parseISO(date);
+  if (!isValid(parsedDate)) {
+    return null;
+  }
+  return WDateUtils.formatISODate(parsedDate);
+}
+
 @Controller('api/v1/order')
 export class OrderController {
-  constructor(private readonly orderManager: OrderManagerService) {}
+  constructor(private readonly orderManager: OrderManagerService) { }
 
   @Post()
   @Scopes('write:order')
@@ -149,11 +161,13 @@ export class OrderController {
     return response;
   }
 
+
+
   @Get()
   @Scopes('read:order')
   async getOrders(@Query('date') date: string, @Query('endDate') endDate: string, @Query('status') status: string) {
-    const queryDate = date ? date : null;
-    const queryEndDate = endDate ? endDate : null;
+    const queryDate = parseAndNormalizeDate(date);
+    const queryEndDate = parseAndNormalizeDate(endDate);
     const queryStatus = status ? WOrderStatus[status as keyof typeof WOrderStatus] : null;
     const response = await this.orderManager.GetOrders({
       date: queryDate,

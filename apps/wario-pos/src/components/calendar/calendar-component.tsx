@@ -183,6 +183,7 @@ export function CalendarComponent({
             eventClick={onClickEvent}
             businessHours={businessHours}
             datesSet={datesSet}
+            scrollTimeReset={false}
             // eventDrop={(arg) => {
             //   startTransition(() => {
             //     onDropEvent(arg, updateEvent);
