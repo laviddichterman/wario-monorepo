@@ -201,7 +201,7 @@ When you encounter `UnknownDependenciesException` or initialization order issues
 
 1. **Check if it's just for setting flags** - Use `MigrationFlagsService`
 2. **Check if it's for reading config** - Use `AppConfigService`
-3. **Only use `forwardRef`** for true bidirectional runtime calls between services
+3. **NEVER use `forwardRef`** Restructure the code instead.
 4. **Consider if the dependency is even needed** - Often services are injected but never used
 
 ## 7. PostgreSQL Entities (TypeORM)
