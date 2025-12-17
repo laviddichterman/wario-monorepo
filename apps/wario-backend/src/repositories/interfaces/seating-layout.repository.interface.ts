@@ -8,7 +8,7 @@ import type { SeatingLayout } from '@wcp/wario-shared';
 export interface ISeatingLayoutRepository {
   findById(id: string): Promise<SeatingLayout | null>;
   findAll(): Promise<Array<Omit<SeatingLayout, 'floors' | 'sections' | 'resources' | 'placements'>>>;
-  create(layout: Omit<SeatingLayout, 'floors' | 'sections' | 'resources' | 'placements'>): Promise<SeatingLayout>;
+  create(layout: Omit<SeatingLayout, 'id' | 'floors' | 'sections' | 'resources' | 'placements'>): Promise<SeatingLayout>;
   update(
     id: string,
     partial: Partial<Omit<SeatingLayout, 'id' | 'floors' | 'sections' | 'resources' | 'placements'>>,

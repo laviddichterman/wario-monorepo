@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 
 import { OrdersModule } from '../infrastructure/database/mongoose/models/orders/orders.module';
+import { SeatingModule } from '../modules/seating/seating.module';
 import { RepositoryModule } from '../repositories/repository.module';
 
 import { AccountingController } from './accounting/accounting.controller';
@@ -13,12 +14,16 @@ import { OrderController } from './order/order.controller';
 import { PrinterGroupController } from './printer-group/printer-group.controller';
 import { ProductInstanceFunctionController } from './product-instance-function/product-instance-function.controller';
 import { ProductController } from './product/product.controller';
+import { SeatingFloorController } from './seating-floor/seating-floor.controller';
+import { SeatingLayoutController } from './seating-layout/seating-layout.controller';
+import { SeatingPlacementController } from './seating-placement/seating-placement.controller';
 import { SeatingResourceController } from './seating-resource/seating-resource.controller';
+import { SeatingSectionController } from './seating-section/seating-section.controller';
 import { SettingsController } from './settings/settings.controller';
 import { StoreCreditController } from './store-credit/store-credit.controller';
 
 @Module({
-  imports: [OrdersModule, RepositoryModule],
+  imports: [OrdersModule, RepositoryModule, SeatingModule],
   controllers: [
     OrderController,
     ProductController,
@@ -33,6 +38,10 @@ import { StoreCreditController } from './store-credit/store-credit.controller';
     ProductInstanceFunctionController,
     PrinterGroupController,
     SeatingResourceController,
+    SeatingFloorController,
+    SeatingLayoutController,
+    SeatingPlacementController,
+    SeatingSectionController,
   ],
 })
-export class ControllersModule {}
+export class ControllersModule { }

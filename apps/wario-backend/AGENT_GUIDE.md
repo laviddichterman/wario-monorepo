@@ -33,6 +33,8 @@
     - `order-payment/`: Payment processing.
     - `order-calendar/`: Scheduling logic.
     - `third-party-order/`: Third-party order ingestion.
+  - `seating/`: **Seating Domain**.
+    - `seating.service.ts`: Seating CRUD and real-time updates.
 - `infrastructure/`: **Technical concerns**.
   - `database/`: Database layer.
     - `mongoose/models/`: Mongoose schemas (catalog, orders, query, settings).

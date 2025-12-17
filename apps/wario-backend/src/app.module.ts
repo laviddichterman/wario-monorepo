@@ -22,6 +22,7 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { OrdersModule } from './infrastructure/database/mongoose/models/orders/orders.module';
 import { QueryModule } from './infrastructure/database/mongoose/models/query/query.module';
 import { SettingsModule } from './infrastructure/database/mongoose/models/settings/settings.module';
+import { SeatingModule } from './modules/seating/seating.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
@@ -109,6 +110,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
     ControllersModule,
     AuthModule,
     TasksModule,
+    SeatingModule,
   ],
   controllers: [AppController],
   providers: [
