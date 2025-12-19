@@ -20,6 +20,28 @@ import type {
 // Simple ID generator using crypto API
 const generateId = (): string => crypto.randomUUID();
 
+// ---------- Undo/Redo Constants ----------
+const MAX_UNDO_STACK_SIZE = 50;
+const MAX_REDO_STACK_SIZE = 50;
+
+/** Deep clone a LayoutState for undo/redo snapshots */
+const cloneLayoutState = (layout: LayoutState): LayoutState => ({
+  id: layout.id,
+  name: layout.name,
+  floorsById: { ...layout.floorsById },
+  floorIds: [...layout.floorIds],
+  sectionsById: { ...layout.sectionsById },
+  sectionIdsByFloorId: Object.fromEntries(
+    Object.entries(layout.sectionIdsByFloorId).map(([k, v]) => [k, [...v]]),
+  ),
+  resourcesById: Object.fromEntries(
+    Object.entries(layout.resourcesById).map(([k, v]) => [k, { ...v }]),
+  ),
+  resourceIdsBySectionId: Object.fromEntries(
+    Object.entries(layout.resourceIdsBySectionId).map(([k, v]) => [k, [...v]]),
+  ),
+});
+
 // ---------- Types ----------
 
 export interface SeatingResourceRenderModel {
@@ -92,6 +114,12 @@ interface EditorState {
   snapToGrid: boolean;
 }
 
+/** Snapshot of layout state for undo/redo */
+interface UndoRedoSnapshot {
+  layout: LayoutState;
+  label: string;
+}
+
 export interface SeatingBuilderState {
   // Flattened layout data - stable references
   layout: LayoutState;
@@ -104,6 +132,10 @@ export interface SeatingBuilderState {
   serverEntityIds: Set<string>;
   temporaryMerges: TemporaryMergeGroup[];
   interactionMode: 'SELECT' | 'PAN' | 'ADD_TABLE';
+
+  // Undo/Redo stacks
+  undoStack: UndoRedoSnapshot[];
+  redoStack: UndoRedoSnapshot[];
 
   // Actions
   loadLayout: (layout: SeatingLayout) => void;
@@ -120,11 +152,24 @@ export interface SeatingBuilderState {
   updateResource: (id: string, updates: UpdateResourceParams) => void;
   updatePlacement: (id: string, updates: UpdatePlacementParams) => void;
   deleteResources: (ids: string[]) => void;
+  deleteSection: (sectionId: string) => void;
+  deleteFloor: (floorId: string) => void;
+  resetToDefaultLayout: () => void;
   rotateResources: (ids: string[], degrees: number) => void;
   setInteractionMode: (mode: 'SELECT' | 'PAN' | 'ADD_TABLE') => void;
   /** Returns layout for API - new entities have no id, existing have id */
   /** Returns layout for API - new entities have no id, existing have id */
   toLayout: () => UpsertSeatingLayoutRequest;
+
+  // Undo/Redo actions
+  /** Push current state to undo stack with a label describing the action about to happen */
+  pushUndoCheckpoint: (label: string) => void;
+  /** Undo the last action, returns the label of the undone action or null if nothing to undo */
+  undo: () => string | null;
+  /** Redo the last undone action, returns the label of the redone action or null if nothing to redo */
+  redo: () => string | null;
+  /** Clear undo/redo history (called on layout load) */
+  clearHistory: () => void;
 
   // Helper functions for quick-add
   getNextTableNumber: () => number;
@@ -177,6 +222,8 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     serverEntityIds: new Set<string>(),
     temporaryMerges: [],
     interactionMode: 'SELECT',
+    undoStack: [],
+    redoStack: [],
 
     loadLayout: (apiLayout) => {
       // Sort arrays by ordinal
@@ -241,6 +288,8 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
         originalLayoutId: apiLayout.id,
         serverEntityIds,
         temporaryMerges: [],
+        undoStack: [],
+        redoStack: [],
       });
     },
 
@@ -272,6 +321,8 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
         isDirty: true,
         originalLayoutId: null,
         temporaryMerges: [],
+        undoStack: [],
+        redoStack: [],
       });
     },
 
@@ -340,6 +391,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     },
 
     addFloor: (name) => {
+      get().pushUndoCheckpoint(`Add floor "${name}"`);
       const id = generateId();
       const floor: SeatingFloor = { id, name, ordinal: get().layout.floorIds.length, disabled: false };
 
@@ -359,6 +411,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     },
 
     addSection: (floorId, name) => {
+      get().pushUndoCheckpoint(`Add section "${name}"`);
       const id = generateId();
       const currentSections = get().layout.sectionIdsByFloorId[floorId] ?? [];
       const section: SeatingLayoutSection = { id, floorId, name, ordinal: currentSections.length, disabled: false };
@@ -382,6 +435,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     },
 
     addResource: (params) => {
+      get().pushUndoCheckpoint(`Add ${params.name}`);
       const id = generateId();
       const resource: SeatingResource = {
         id,
@@ -411,6 +465,9 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     },
 
     updateResource: (id, updates) => {
+      const existing = get().layout.resourcesById[id] as { name: string } | undefined;
+      const resourceName = existing?.name ?? 'table';
+      get().pushUndoCheckpoint(`Update ${resourceName}`);
       set((s) => {
         const existing = s.layout.resourcesById[id];
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -457,6 +514,8 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     },
 
     deleteResources: (ids) => {
+      const count = ids.length;
+      get().pushUndoCheckpoint(`Delete ${String(count)} table${count > 1 ? 's' : ''}`);
       set((s) => {
         const idsToDelete = new Set(ids);
 
@@ -486,7 +545,179 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
       });
     },
 
+    deleteSection: (sectionId) => {
+      const state = get();
+      const section = state.layout.sectionsById[sectionId] as { floorId: string; name: string } | undefined;
+
+      if (!section) return;
+
+      // Don't allow deleting the last section on a floor
+      const floorSections = state.layout.sectionIdsByFloorId[section.floorId] ?? [];
+      if (floorSections.length <= 1) return;
+
+      // Get resource count for label
+      const resourceIds = state.layout.resourceIdsBySectionId[sectionId] ?? [];
+      const resourceCount = resourceIds.length;
+      const label = resourceCount > 0
+        ? `Delete section "${section.name}" (${String(resourceCount)} table${resourceCount > 1 ? 's' : ''})`
+        : `Delete section "${section.name}"`;
+
+      get().pushUndoCheckpoint(label);
+
+      set((s) => {
+        const floorId = section.floorId;
+
+        // Remove all resources in this section
+        const resourcesToDelete = new Set(s.layout.resourceIdsBySectionId[sectionId] ?? []);
+        const newResourcesById = Object.fromEntries(
+          Object.entries(s.layout.resourcesById).filter(([id]) => !resourcesToDelete.has(id)),
+        );
+
+        // Remove section from sectionsById
+        const { [sectionId]: _removed, ...newSectionsById } = s.layout.sectionsById;
+
+        // Remove section from floor's section list
+        const newSectionIdsByFloorId = {
+          ...s.layout.sectionIdsByFloorId,
+          [floorId]: (s.layout.sectionIdsByFloorId[floorId] ?? []).filter((id) => id !== sectionId),
+        };
+
+        // Remove section's resource list
+        const { [sectionId]: _removedResources, ...newResourceIdsBySectionId } = s.layout.resourceIdsBySectionId;
+
+        // If active section was deleted, switch to first remaining section on floor
+        const remainingSections = newSectionIdsByFloorId[floorId] ?? [];
+        const newActiveSectionId = s.editor.activeSectionId === sectionId
+          ? (remainingSections[0] ?? null)
+          : s.editor.activeSectionId;
+
+        return {
+          layout: {
+            ...s.layout,
+            sectionsById: newSectionsById,
+            sectionIdsByFloorId: newSectionIdsByFloorId,
+            resourcesById: newResourcesById,
+            resourceIdsBySectionId: newResourceIdsBySectionId,
+          },
+          editor: {
+            ...s.editor,
+            activeSectionId: newActiveSectionId,
+            selectedResourceIds: s.editor.selectedResourceIds.filter((id) => !resourcesToDelete.has(id)),
+          },
+          isDirty: true,
+        };
+      });
+    },
+
+    deleteFloor: (floorId) => {
+      const state = get();
+      const floor = state.layout.floorsById[floorId] as { name: string } | undefined;
+
+      if (!floor) return;
+
+      // Don't allow deleting the last floor
+      if (state.layout.floorIds.length <= 1) return;
+
+      // Get counts for label
+      const sectionIds = state.layout.sectionIdsByFloorId[floorId] ?? [];
+      const sectionCount = sectionIds.length;
+      let resourceCount = 0;
+      for (const sectionId of sectionIds) {
+        resourceCount += (state.layout.resourceIdsBySectionId[sectionId] ?? []).length;
+      }
+
+      let label = `Delete floor "${floor.name}"`;
+      const details: string[] = [];
+      if (sectionCount > 0) details.push(`${String(sectionCount)} section${sectionCount > 1 ? 's' : ''}`);
+      if (resourceCount > 0) details.push(`${String(resourceCount)} table${resourceCount > 1 ? 's' : ''}`);
+      if (details.length > 0) label += ` (${details.join(', ')})`;
+
+      get().pushUndoCheckpoint(label);
+
+      set((s) => {
+        // Collect all sections and resources to delete
+        const sectionsToDelete = new Set(s.layout.sectionIdsByFloorId[floorId] ?? []);
+        const resourcesToDelete = new Set<string>();
+        for (const sectionId of sectionsToDelete) {
+          for (const resourceId of (s.layout.resourceIdsBySectionId[sectionId] ?? [])) {
+            resourcesToDelete.add(resourceId);
+          }
+        }
+
+        // Remove resources
+        const newResourcesById = Object.fromEntries(
+          Object.entries(s.layout.resourcesById).filter(([id]) => !resourcesToDelete.has(id)),
+        );
+
+        // Remove sections
+        const newSectionsById = Object.fromEntries(
+          Object.entries(s.layout.sectionsById).filter(([id]) => !sectionsToDelete.has(id)),
+        );
+
+        // Remove floor
+        const { [floorId]: _removedFloor, ...newFloorsById } = s.layout.floorsById;
+        const newFloorIds = s.layout.floorIds.filter((id) => id !== floorId);
+
+        // Remove floor's section list
+        const { [floorId]: _removedSections, ...newSectionIdsByFloorId } = s.layout.sectionIdsByFloorId;
+
+        // Remove all deleted sections' resource lists
+        const newResourceIdsBySectionId = Object.fromEntries(
+          Object.entries(s.layout.resourceIdsBySectionId).filter(([id]) => !sectionsToDelete.has(id)),
+        );
+
+        // If active floor was deleted, switch to first remaining floor
+        const newActiveFloorId = s.editor.activeFloorId === floorId
+          ? (newFloorIds[0] ?? null)
+          : s.editor.activeFloorId;
+
+        // Update active section if floor changed
+        let newActiveSectionId = s.editor.activeSectionId;
+        if (newActiveFloorId !== s.editor.activeFloorId) {
+          const firstSectionIds = newActiveFloorId ? (newSectionIdsByFloorId[newActiveFloorId] ?? []) : [];
+          newActiveSectionId = firstSectionIds[0] ?? null;
+        } else if (sectionsToDelete.has(s.editor.activeSectionId ?? '')) {
+          newActiveSectionId = null;
+        }
+
+        return {
+          layout: {
+            ...s.layout,
+            floorsById: newFloorsById,
+            floorIds: newFloorIds,
+            sectionsById: newSectionsById,
+            sectionIdsByFloorId: newSectionIdsByFloorId,
+            resourcesById: newResourcesById,
+            resourceIdsBySectionId: newResourceIdsBySectionId,
+          },
+          editor: {
+            ...s.editor,
+            activeFloorId: newActiveFloorId,
+            activeSectionId: newActiveSectionId,
+            selectedResourceIds: s.editor.selectedResourceIds.filter((id) => !resourcesToDelete.has(id)),
+          },
+          isDirty: true,
+        };
+      });
+    },
+
+    resetToDefaultLayout: () => {
+      const initial = createInitialLayout();
+      set({
+        layout: initial.layout,
+        editor: initial.editor,
+        isDirty: false,
+        originalLayoutId: null,
+        serverEntityIds: new Set<string>(),
+        temporaryMerges: [],
+        undoStack: [],
+        redoStack: [],
+      });
+    },
+
     rotateResources: (ids, degrees) => {
+      const count = ids.length;
+      get().pushUndoCheckpoint(`Rotate ${String(count)} table${count > 1 ? 's' : ''}`);
       set((s) => {
         const newResourcesById = { ...s.layout.resourcesById };
 
@@ -571,6 +802,73 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
       return num;
     },
 
+    pushUndoCheckpoint: (label) => {
+      set((s) => {
+        const snapshot = { layout: cloneLayoutState(s.layout), label };
+        const newUndoStack = [...s.undoStack, snapshot];
+        // Limit stack size
+        if (newUndoStack.length > MAX_UNDO_STACK_SIZE) {
+          newUndoStack.shift();
+        }
+        return {
+          undoStack: newUndoStack,
+          redoStack: [], // Clear redo stack on new mutation
+        };
+      });
+    },
+
+    undo: () => {
+      const { undoStack, layout } = get();
+      if (undoStack.length === 0) return null;
+
+      const snapshot = undoStack[undoStack.length - 1];
+      const newUndoStack = undoStack.slice(0, -1);
+
+      // Push current state to redo stack
+      const redoSnapshot = { layout: cloneLayoutState(layout), label: snapshot.label };
+      const newRedoStack = [redoSnapshot, ...get().redoStack];
+      if (newRedoStack.length > MAX_REDO_STACK_SIZE) {
+        newRedoStack.pop();
+      }
+
+      set({
+        layout: snapshot.layout,
+        undoStack: newUndoStack,
+        redoStack: newRedoStack,
+        isDirty: true,
+      });
+
+      return snapshot.label;
+    },
+
+    redo: () => {
+      const { redoStack, layout } = get();
+      if (redoStack.length === 0) return null;
+
+      const snapshot = redoStack[0];
+      const newRedoStack = redoStack.slice(1);
+
+      // Push current state to undo stack
+      const undoSnapshot = { layout: cloneLayoutState(layout), label: snapshot.label };
+      const newUndoStack = [...get().undoStack, undoSnapshot];
+      if (newUndoStack.length > MAX_UNDO_STACK_SIZE) {
+        newUndoStack.shift();
+      }
+
+      set({
+        layout: snapshot.layout,
+        undoStack: newUndoStack,
+        redoStack: newRedoStack,
+        isDirty: true,
+      });
+
+      return snapshot.label;
+    },
+
+    clearHistory: () => {
+      set({ undoStack: [], redoStack: [] });
+    },
+
     findAvailablePosition: (sectionId, gridSize = 100) => {
       const { layout } = get();
       const resourceIds = layout.resourceIdsBySectionId[sectionId] ?? [];
@@ -624,6 +922,8 @@ export const useSelectedResourceIds = () => useSeatingBuilderStore((s) => s.edit
 export const useIsDirty = () => useSeatingBuilderStore((s) => s.isDirty);
 export const useInteractionMode = () => useSeatingBuilderStore((s) => s.interactionMode);
 export const useTemporaryMerges = () => useSeatingBuilderStore((s) => s.temporaryMerges);
+export const useCanUndo = () => useSeatingBuilderStore((s) => s.undoStack.length > 0);
+export const useCanRedo = () => useSeatingBuilderStore((s) => s.redoStack.length > 0);
 
 // Array selectors - these now return stable arrays from Zustand state
 export const useFloors = () =>

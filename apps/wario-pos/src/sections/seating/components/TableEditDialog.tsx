@@ -19,9 +19,8 @@ import { toast } from '@/components/snackbar';
 
 import { type UpdateResourceParams, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
-// Canvas dimensions for max size limit
-const CANVAS_WIDTH = 1200;
-const CANVAS_HEIGHT = 800;
+import { CANVAS_HEIGHT, CANVAS_WIDTH, clampCenterToCanvas } from '../utils/bounding-utils';
+
 // Max table dimension: round(1/sqrt(2), 2) * min(width, height) ≈ 0.71 * 800 = 566
 const MAX_TABLE_DIM = (Math.round((1 / Math.sqrt(2)) * 100) / 100) * Math.min(CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -41,6 +40,8 @@ interface FormState {
   width: number;
   height: number;
   rotation: number;
+  centerX: number;
+  centerY: number;
 }
 
 export const TableEditDialog = memo(function TableEditDialog({ resourceId, open, onClose }: TableEditDialogProps) {
@@ -56,6 +57,8 @@ export const TableEditDialog = memo(function TableEditDialog({ resourceId, open,
     width: 40,
     height: 40,
     rotation: 0,
+    centerX: 100,
+    centerY: 100,
   });
 
   // Sync form state when dialog opens with a resource
@@ -68,6 +71,8 @@ export const TableEditDialog = memo(function TableEditDialog({ resourceId, open,
         width: resource.shapeDimX,
         height: resource.shapeDimY,
         rotation: resource.rotation,
+        centerX: resource.centerX,
+        centerY: resource.centerY,
       });
     }
   }, [resource]);
@@ -84,13 +89,29 @@ export const TableEditDialog = memo(function TableEditDialog({ resourceId, open,
   const handleSave = useCallback(() => {
     if (!resourceId) return;
 
+    // Calculate final dimensions
+    const shapeDimX = Math.min(form.width, MAX_TABLE_DIM / 2);
+    const shapeDimY = Math.min(form.height, MAX_TABLE_DIM / 2);
+
+    // Clamp center position to keep table within canvas bounds
+    const clampedCenter = clampCenterToCanvas({
+      centerX: form.centerX,
+      centerY: form.centerY,
+      shapeDimX,
+      shapeDimY,
+      rotation: form.rotation,
+      shape: form.shape,
+    });
+
     const updates: UpdateResourceParams = {
       name: form.name,
       capacity: form.capacity,
       shape: form.shape,
-      shapeDimX: Math.min(form.width, MAX_TABLE_DIM / 2),
-      shapeDimY: Math.min(form.height, MAX_TABLE_DIM / 2),
+      shapeDimX,
+      shapeDimY,
       rotation: form.rotation,
+      centerX: clampedCenter.x,
+      centerY: clampedCenter.y,
     };
 
     updateResource(resourceId, updates);
@@ -179,6 +200,31 @@ export const TableEditDialog = memo(function TableEditDialog({ resourceId, open,
             helperText="0-359°"
             fullWidth
           />
+
+          <Stack direction="row" spacing={2}>
+            <TextField
+              label="Center X"
+              type="number"
+              value={Math.round(form.centerX)}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, centerX: Number(e.target.value) }));
+              }}
+              slotProps={{ htmlInput: { min: 0, max: CANVAS_WIDTH, step: 10 } }}
+              helperText="Position is auto-clamped on save"
+              fullWidth
+            />
+            <TextField
+              label="Center Y"
+              type="number"
+              value={Math.round(form.centerY)}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, centerY: Number(e.target.value) }));
+              }}
+              slotProps={{ htmlInput: { min: 0, max: CANVAS_HEIGHT, step: 10 } }}
+              helperText="Position is auto-clamped on save"
+              fullWidth
+            />
+          </Stack>
         </Stack>
       </AppDialog.Content>
       <AppDialog.Actions>

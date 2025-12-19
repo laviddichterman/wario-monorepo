@@ -40,7 +40,7 @@ Edit the YAML frontmatter (between the `---` lines) to list the packages you mod
 ```
 
 > [!TIP]
-> If you are unsure which packages to include, check `git diff --name-only` to see where your changes live.
+> If you are unsure which packages to include, check `git diff --name-only --cached` to see which files are staged for commit.
 
 ## 4. Write Description
 

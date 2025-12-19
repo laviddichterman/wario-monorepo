@@ -30,6 +30,8 @@ export interface DraggableResourceProps {
   scaleY: number;
   /** Live resize preview during drag (from SeatingCanvas) */
   resizePreview?: ResizePreview | null;
+  /** Clamped delta for visual feedback during drag (keeps resource within canvas bounds) */
+  clampedDelta?: { dx: number; dy: number } | null;
   /** Click handler for selection */
   onClick?: (id: string, shiftKey: boolean) => void;
   /** Double-click handler for edit dialog */
@@ -41,6 +43,7 @@ export const DraggableResource = memo(function DraggableResource({
   scaleX,
   scaleY,
   resizePreview,
+  clampedDelta,
   onClick,
   onDoubleClick,
 }: DraggableResourceProps) {
@@ -66,8 +69,11 @@ export const DraggableResource = memo(function DraggableResource({
   // Compute drag-adjusted position in SVG coordinates
   // The transform values from dnd-kit are in screen pixels.
   // scaleX/scaleY = SVG units per screen pixel, so we MULTIPLY to convert.
-  const adjustedX = model.centerX + (transform?.x ?? 0) * scaleX;
-  const adjustedY = model.centerY + (transform?.y ?? 0) * scaleY;
+  // If clampedDelta is provided, use it instead for visual clamping at canvas edges.
+  const rawDx = (transform?.x ?? 0) * scaleX;
+  const rawDy = (transform?.y ?? 0) * scaleY;
+  const adjustedX = model.centerX + (clampedDelta ? clampedDelta.dx : rawDx);
+  const adjustedY = model.centerY + (clampedDelta ? clampedDelta.dy : rawDy);
 
   // Use preview dimensions if resizing, otherwise use model dimensions
   const displayWidth = resizePreview ? resizePreview.previewWidth : model.shapeDimX;

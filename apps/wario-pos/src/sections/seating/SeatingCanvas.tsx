@@ -31,10 +31,15 @@ import {
 import { DraggableResource } from './components/DraggableResource';
 import { GridBackground } from './components/GridBackground';
 import { TableEditDialog } from './components/TableEditDialog';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  clampDeltaForGroup,
+  clampResizeDimensions,
+  type ResourceBounds,
+} from './utils/bounding-utils';
 
-// Canvas dimensions (layout units)
-const CANVAS_WIDTH = 1200;
-const CANVAS_HEIGHT = 800;
+// Canvas dimensions (layout units) - imported from bounding-utils for single source of truth
 const DEFAULT_GRID_SIZE = 20;
 
 /**
@@ -62,6 +67,9 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
     previewWidth: number;
     previewHeight: number;
   } | null>(null);
+
+  // State for clamped drag delta during move operations (for visual feedback)
+  const [clampedDragDelta, setClampedDragDelta] = useState<{ dx: number; dy: number } | null>(null);
 
   // Track SVG size for accurate coordinate conversion
   // Using generic resizing detection (could use ResizeObserver)
@@ -143,6 +151,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
   const clearSelection = useSeatingBuilderStore((s) => s.clearSelection);
   const moveResources = useSeatingBuilderStore((s) => s.moveResources);
   const updateResource = useSeatingBuilderStore((s) => s.updateResource);
+  const pushUndoCheckpoint = useSeatingBuilderStore((s) => s.pushUndoCheckpoint);
   const gridSize = useSeatingBuilderStore((s) => s.editor.gridSize);
 
   // Viewport state for pan/zoom
@@ -184,12 +193,24 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
     [readOnly, selectResources, selectedResourceIds],
   );
 
-  // Handle drag start - no selection changes here, just let the drag happen
-  // Selection is handled by click events, not drag events
-  const handleDragStart = useCallback((_event: DragStartEvent) => {
-    // Intentionally empty - we don't want to change selection when dragging
-    // This prevents conflicts between move drags and resize handle drags
-  }, []);
+  // Handle drag start - select the dragged resource if not already part of selection
+  // This ensures the dragged table is included in selectedResourceIds when handleDragEnd runs
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const { active } = event;
+      const dragData = active.data.current as { type?: string } | undefined;
+
+      // Skip selection change for resize handle drags
+      if (dragData?.type === 'resize') return;
+
+      // If the dragged resource is not in the current selection, replace selection with it
+      const draggedId = String(active.id);
+      if (!selectedResourceIds.includes(draggedId)) {
+        selectResources([draggedId]);
+      }
+    },
+    [selectedResourceIds, selectResources],
+  );
 
   // Handle drag end (move or resize)
   const handleDragEnd = useCallback(
@@ -258,44 +279,69 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
         // Max table dimension: round(1/sqrt(2), 2) * min(width, height)
         const maxDim = ((Math.round((1 / Math.sqrt(2)) * 100) / 100) * Math.min(CANVAS_WIDTH, CANVAS_HEIGHT)) / 2;
 
-        // Snap to grid and clamp to max
+        // Snap to grid and clamp to max table dimension
         const snappedWidth = Math.min(SnapToGrid(newWidth, gridSize), maxDim);
         const snappedHeight = Math.min(SnapToGrid(newHeight, gridSize), maxDim);
 
+        // Clamp dimensions to keep bounding box within canvas bounds
+        const clampedDims = clampResizeDimensions(
+          {
+            centerX: resource.centerX,
+            centerY: resource.centerY,
+            shapeDimX: resource.shapeDimX,
+            shapeDimY: resource.shapeDimY,
+            rotation: resource.rotation,
+            shape: resource.shape,
+          },
+          snappedWidth,
+          snappedHeight,
+        );
+
         updateResource(resourceId, {
-          shapeDimX: snappedWidth,
-          shapeDimY: snappedHeight,
+          shapeDimX: clampedDims.width,
+          shapeDimY: clampedDims.height,
         });
       } else {
         // Standard move operation
         const snappedDx = SnapToGrid(scaledDx, gridSize);
         const snappedDy = SnapToGrid(scaledDy, gridSize);
 
-        moveResources(selectedResourceIds, snappedDx, snappedDy);
+        // Gather selected resources for boundary clamping
+        const selectedResources: ResourceBounds[] = selectedResourceIds
+          .map((id) => resourcesById[id])
+          .filter(Boolean)
+          .map((r) => ({
+            centerX: r.centerX,
+            centerY: r.centerY,
+            shapeDimX: r.shapeDimX,
+            shapeDimY: r.shapeDimY,
+            rotation: r.rotation,
+            shape: r.shape,
+          }));
+
+        // Clamp delta to keep entire group within canvas bounds
+        const { dx: clampedDx, dy: clampedDy } = clampDeltaForGroup(selectedResources, snappedDx, snappedDy);
+
+        // Only push checkpoint and move if there's actual movement
+        if (clampedDx !== 0 || clampedDy !== 0) {
+          const count = selectedResourceIds.length;
+          pushUndoCheckpoint(`Move ${String(count)} table${count > 1 ? 's' : ''}`);
+          moveResources(selectedResourceIds, clampedDx, clampedDy);
+        }
       }
 
-      // Clear resize preview
+      // Clear resize preview and clamped delta
       setResizePreview(null);
+      setClampedDragDelta(null);
     },
-    [gridSize, selectedResourceIds, moveResources, updateResource, resourcesById, viewBox],
+    [gridSize, selectedResourceIds, moveResources, updateResource, pushUndoCheckpoint, resourcesById, viewBox],
   );
 
-  // Handle drag move (live resize preview)
+  // Handle drag move (live clamping preview)
   const handleDragMove = useCallback(
     (event: DragMoveEvent) => {
       const { delta, active } = event;
       const dragData = active.data.current as { type?: string; resourceId?: string; handle?: string } | undefined;
-
-      // Only show preview for resize operations
-      if (dragData?.type !== 'resize' || !dragData.resourceId || !dragData.handle) {
-        if (resizePreview) setResizePreview(null);
-        return;
-      }
-
-      const { resourceId, handle } = dragData;
-      const resource = resourcesById[resourceId];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!resource) return;
 
       // Scale delta to SVG coordinates
       const svgRect = svgRef.current?.getBoundingClientRect();
@@ -304,52 +350,99 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
       const scaledDx = delta.x * scaleFactorX;
       const scaledDy = delta.y * scaleFactorY;
 
-      let newWidth = resource.shapeDimX;
-      let newHeight = resource.shapeDimY;
+      // Check if this is a resize or move operation
+      if (dragData?.type === 'resize' && dragData.resourceId && dragData.handle) {
+        // Resize operation
+        const { resourceId, handle } = dragData;
+        const resource = resourcesById[resourceId];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!resource) return;
 
-      // Calculate preview dimensions based on handle
-      // Use screen-space deltas directly since handles are at rotated positions
-      switch (handle) {
-        case 't':
-          newHeight = Math.max(20, resource.shapeDimY - scaledDy / 2);
-          break;
-        case 'b':
-          newHeight = Math.max(20, resource.shapeDimY + scaledDy / 2);
-          break;
-        case 'l':
-          newWidth = Math.max(20, resource.shapeDimX - scaledDx / 2);
-          break;
-        case 'r':
-          newWidth = Math.max(20, resource.shapeDimX + scaledDx / 2);
-          break;
-        case 'tl':
-          newWidth = Math.max(20, resource.shapeDimX - scaledDx / 2);
-          newHeight = Math.max(20, resource.shapeDimY - scaledDy / 2);
-          break;
-        case 'tr':
-          newWidth = Math.max(20, resource.shapeDimX + scaledDx / 2);
-          newHeight = Math.max(20, resource.shapeDimY - scaledDy / 2);
-          break;
-        case 'bl':
-          newWidth = Math.max(20, resource.shapeDimX - scaledDx / 2);
-          newHeight = Math.max(20, resource.shapeDimY + scaledDy / 2);
-          break;
-        case 'br':
-          newWidth = Math.max(20, resource.shapeDimX + scaledDx / 2);
-          newHeight = Math.max(20, resource.shapeDimY + scaledDy / 2);
-          break;
+        // Clear move delta state for resize
+        if (clampedDragDelta) setClampedDragDelta(null);
+
+        let newWidth = resource.shapeDimX;
+        let newHeight = resource.shapeDimY;
+
+        // Calculate preview dimensions based on handle
+        switch (handle) {
+          case 't':
+            newHeight = Math.max(20, resource.shapeDimY - scaledDy / 2);
+            break;
+          case 'b':
+            newHeight = Math.max(20, resource.shapeDimY + scaledDy / 2);
+            break;
+          case 'l':
+            newWidth = Math.max(20, resource.shapeDimX - scaledDx / 2);
+            break;
+          case 'r':
+            newWidth = Math.max(20, resource.shapeDimX + scaledDx / 2);
+            break;
+          case 'tl':
+            newWidth = Math.max(20, resource.shapeDimX - scaledDx / 2);
+            newHeight = Math.max(20, resource.shapeDimY - scaledDy / 2);
+            break;
+          case 'tr':
+            newWidth = Math.max(20, resource.shapeDimX + scaledDx / 2);
+            newHeight = Math.max(20, resource.shapeDimY - scaledDy / 2);
+            break;
+          case 'bl':
+            newWidth = Math.max(20, resource.shapeDimX - scaledDx / 2);
+            newHeight = Math.max(20, resource.shapeDimY + scaledDy / 2);
+            break;
+          case 'br':
+            newWidth = Math.max(20, resource.shapeDimX + scaledDx / 2);
+            newHeight = Math.max(20, resource.shapeDimY + scaledDy / 2);
+            break;
+        }
+
+        // Max table dimension for preview
+        const maxDim = ((Math.round((1 / Math.sqrt(2)) * 100) / 100) * Math.min(CANVAS_WIDTH, CANVAS_HEIGHT)) / 2;
+        const clampedMaxWidth = Math.min(newWidth, maxDim);
+        const clampedMaxHeight = Math.min(newHeight, maxDim);
+
+        // Apply boundary clamping to resize preview
+        const clampedDims = clampResizeDimensions(
+          {
+            centerX: resource.centerX,
+            centerY: resource.centerY,
+            shapeDimX: resource.shapeDimX,
+            shapeDimY: resource.shapeDimY,
+            rotation: resource.rotation,
+            shape: resource.shape,
+          },
+          clampedMaxWidth,
+          clampedMaxHeight,
+        );
+
+        setResizePreview({
+          resourceId,
+          previewWidth: clampedDims.width,
+          previewHeight: clampedDims.height,
+        });
+      } else {
+        // Move operation - compute clamped delta for visual feedback
+        if (resizePreview) setResizePreview(null);
+
+        // Gather selected resources for boundary clamping
+        const selectedResources: ResourceBounds[] = selectedResourceIds
+          .map((id) => resourcesById[id])
+          .filter(Boolean)
+          .map((r) => ({
+            centerX: r.centerX,
+            centerY: r.centerY,
+            shapeDimX: r.shapeDimX,
+            shapeDimY: r.shapeDimY,
+            rotation: r.rotation,
+            shape: r.shape,
+          }));
+
+        // Compute clamped delta to keep group within canvas bounds
+        const clamped = clampDeltaForGroup(selectedResources, scaledDx, scaledDy);
+        setClampedDragDelta(clamped);
       }
-
-      // Max table dimension for preview
-      const maxDim = ((Math.round((1 / Math.sqrt(2)) * 100) / 100) * Math.min(CANVAS_WIDTH, CANVAS_HEIGHT)) / 2;
-
-      setResizePreview({
-        resourceId,
-        previewWidth: Math.min(newWidth, maxDim),
-        previewHeight: Math.min(newHeight, maxDim),
-      });
     },
-    [resourcesById, viewBox, resizePreview],
+    [resourcesById, viewBox, resizePreview, clampedDragDelta, selectedResourceIds],
   );
 
   // Handle background click (deselect)
@@ -478,6 +571,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
                   scaleX={scaleX}
                   scaleY={scaleY}
                   resizePreview={resizePreview?.resourceId === model.id ? resizePreview : null}
+                  clampedDelta={clampedDragDelta && selectedResourceIds.includes(model.id) ? clampedDragDelta : null}
                   onClick={readOnly ? undefined : handleResourceClick}
                   onDoubleClick={
                     readOnly

@@ -8,9 +8,11 @@ import { memo, useCallback } from 'react';
 
 import CircleOutlined from '@mui/icons-material/CircleOutlined';
 import Delete from '@mui/icons-material/Delete';
+import Redo from '@mui/icons-material/Redo';
 import RotateRight from '@mui/icons-material/RotateRight';
 import Save from '@mui/icons-material/Save';
 import SquareOutlined from '@mui/icons-material/SquareOutlined';
+import Undo from '@mui/icons-material/Undo';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
@@ -25,6 +27,8 @@ import { toast } from '@/components/snackbar';
 
 import {
   useActiveSectionId,
+  useCanRedo,
+  useCanUndo,
   useIsDirty,
   useSeatingBuilderStore,
   useSelectedResourceIds,
@@ -38,6 +42,8 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
   const activeSectionId = useActiveSectionId();
   const selectedResourceIds = useSelectedResourceIds();
   const isDirty = useIsDirty();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
 
   const addResource = useSeatingBuilderStore((s) => s.addResource);
   const deleteResources = useSeatingBuilderStore((s) => s.deleteResources);
@@ -47,6 +53,8 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
   const toLayout = useSeatingBuilderStore((s) => s.toLayout);
   const markClean = useSeatingBuilderStore((s) => s.markClean);
   const originalLayoutId = useSeatingBuilderStore((s) => s.originalLayoutId);
+  const undo = useSeatingBuilderStore((s) => s.undo);
+  const redo = useSeatingBuilderStore((s) => s.redo);
 
   const createMutation = useCreateSeatingLayoutMutation();
   const updateMutation = useUpdateSeatingLayoutMutation();
@@ -107,6 +115,20 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
     toast.success('Rotated 90°');
   }, [selectedResourceIds, rotateResources]);
 
+  const handleUndo = useCallback(() => {
+    const label = undo();
+    if (label) {
+      toast.info(`Undo: ${label}`);
+    }
+  }, [undo]);
+
+  const handleRedo = useCallback(() => {
+    const label = redo();
+    if (label) {
+      toast.info(`Redo: ${label}`);
+    }
+  }, [redo]);
+
   const handleSave = useCallback(async () => {
     const layout = toLayout();
     const loadLayout = useSeatingBuilderStore.getState().loadLayout;
@@ -114,7 +136,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
     try {
       if (originalLayoutId) {
         await updateMutation.mutateAsync({ id: originalLayoutId, layout });
-        toast.success('Layout saved');
+        toast.success('Changes committed');
         markClean();
       } else {
         // Create new layout and reload server response to get server-generated IDs
@@ -124,7 +146,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
         // loadLayout already marks as clean and sets originalLayoutId
       }
     } catch {
-      toast.error('Failed to save layout');
+      toast.error('Failed to save changes');
     }
   }, [toLayout, originalLayoutId, updateMutation, createMutation, markClean]);
 
@@ -152,6 +174,24 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
 
       <Divider orientation="vertical" flexItem />
 
+      {/* Undo */}
+      <Tooltip title="Undo (Ctrl+Z)">
+        <span>
+          <IconButton onClick={handleUndo} disabled={!canUndo}>
+            <Undo />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      {/* Redo */}
+      <Tooltip title="Redo (Ctrl+Shift+Z)">
+        <span>
+          <IconButton onClick={handleRedo} disabled={!canRedo}>
+            <Redo />
+          </IconButton>
+        </span>
+      </Tooltip>
+
       {/* Rotate */}
       <Tooltip title="Rotate 90°">
         <span>
@@ -173,7 +213,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
       {/* Spacer */}
       <Stack sx={{ flexGrow: 1 }} />
 
-      {/* Save Button */}
+      {/* Commit/Create Button */}
       <Button
         variant="contained"
         startIcon={<Save />}
@@ -182,7 +222,13 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
         }}
         disabled={!isDirty || isSaving}
       >
-        {isSaving ? 'Saving...' : 'Save Layout'}
+        {isSaving
+          ? originalLayoutId
+            ? 'Saving...'
+            : 'Creating...'
+          : originalLayoutId
+            ? 'Commit Changes'
+            : 'Create Layout'}
       </Button>
     </Stack>
   );

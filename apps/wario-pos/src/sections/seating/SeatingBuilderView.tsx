@@ -8,25 +8,41 @@
  * - Toolbar for CRUD operations
  */
 
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Add from '@mui/icons-material/Add';
+import Delete from '@mui/icons-material/Delete';
+import MoreVert from '@mui/icons-material/MoreVert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
+import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import { useSeatingLayoutQuery, useSeatingLayoutsQuery } from '@/hooks/useSeatingLayoutQuery';
+import {
+  useCreateSeatingLayoutMutation,
+  useDeleteSeatingLayoutMutation,
+  useSeatingLayoutQuery,
+  useSeatingLayoutsQuery,
+  useUpdateSeatingLayoutMutation,
+} from '@/hooks/useSeatingLayoutQuery';
+
+import { toast } from '@/components/snackbar';
 
 import { useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
+import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
+import { UnsavedChangesDialog } from './components/UnsavedChangesDialog';
 import { FloorTabs } from './FloorTabs';
 import { SeatingCanvas } from './SeatingCanvas';
 import { SeatingToolbar } from './SeatingToolbar';
@@ -34,18 +50,43 @@ import { SectionTabs } from './SectionTabs';
 
 export function SeatingBuilderView() {
   const { data: layouts, isLoading: isLoadingList, error } = useSeatingLayoutsQuery();
+  const deleteLayoutMutation = useDeleteSeatingLayoutMutation();
 
   const loadLayout = useSeatingBuilderStore((s) => s.loadLayout);
   const createEmptyLayout = useSeatingBuilderStore((s) => s.createEmptyLayout);
+  const resetToDefaultLayout = useSeatingBuilderStore((s) => s.resetToDefaultLayout);
   const originalLayoutId = useSeatingBuilderStore((s) => s.originalLayoutId);
+  const undo = useSeatingBuilderStore((s) => s.undo);
+  const redo = useSeatingBuilderStore((s) => s.redo);
+  const layoutName = useSeatingBuilderStore((s) => s.layout.name);
+  const floorIds = useSeatingBuilderStore((s) => s.layout.floorIds);
+  const sectionIdsByFloorId = useSeatingBuilderStore((s) => s.layout.sectionIdsByFloorId);
+  const resourceIdsBySectionId = useSeatingBuilderStore((s) => s.layout.resourceIdsBySectionId);
+  const isDirty = useSeatingBuilderStore((s) => s.isDirty);
+  const toLayout = useSeatingBuilderStore((s) => s.toLayout);
+  const markClean = useSeatingBuilderStore((s) => s.markClean);
   // Store starts with a default layout, so this is always true initially
   const layoutId = useSeatingBuilderStore((s) => s.layout.id);
 
   // Track which layout ID to fetch fully
-  const [selectedLayoutId, setSelectedLayoutId] = React.useState<string | null>(null);
+  const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(null);
+  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ type: 'switch'; layoutId: string } | { type: 'new' } | null>(
+    null,
+  );
+
+  // Mutations for save & switch
+  const createMutation = useCreateSeatingLayoutMutation();
+  const updateMutation = useUpdateSeatingLayoutMutation();
 
   // Fetch full layout data when a layout is selected
-  const { data: fullLayout, isLoading: _isLoadingLayout } = useSeatingLayoutQuery(selectedLayoutId);
+  const {
+    data: fullLayout,
+    isLoading: _isLoadingLayout,
+    refetch: _refetchLayout,
+  } = useSeatingLayoutQuery(selectedLayoutId);
 
   // When layouts list loads, select first layout if none selected
   useEffect(() => {
@@ -65,13 +106,153 @@ export function SeatingBuilderView() {
     }
   }, [fullLayout, loadLayout]);
 
-  const handleLayoutChange = useCallback((newLayoutId: string) => {
-    setSelectedLayoutId(newLayoutId);
-  }, []);
+  const handleLayoutChange = useCallback(
+    (newLayoutId: string) => {
+      if (isDirty) {
+        setPendingAction({ type: 'switch', layoutId: newLayoutId });
+        setUnsavedDialogOpen(true);
+      } else {
+        setSelectedLayoutId(newLayoutId);
+      }
+    },
+    [isDirty],
+  );
 
   const handleCreateNew = useCallback(() => {
-    createEmptyLayout('New Layout');
-  }, [createEmptyLayout]);
+    if (isDirty) {
+      setPendingAction({ type: 'new' });
+      setUnsavedDialogOpen(true);
+    } else {
+      createEmptyLayout('New Layout');
+    }
+  }, [isDirty, createEmptyLayout]);
+
+  const handleUnsavedDiscard = useCallback(() => {
+    setUnsavedDialogOpen(false);
+    if (pendingAction?.type === 'switch') {
+      setSelectedLayoutId(pendingAction.layoutId);
+    } else if (pendingAction?.type === 'new') {
+      createEmptyLayout('New Layout');
+    }
+    setPendingAction(null);
+  }, [pendingAction, createEmptyLayout]);
+
+  const handleUnsavedCancel = useCallback(() => {
+    setUnsavedDialogOpen(false);
+    setPendingAction(null);
+  }, []);
+
+  const handleSaveAndProceed = useCallback(async () => {
+    const layout = toLayout();
+
+    try {
+      if (originalLayoutId) {
+        await updateMutation.mutateAsync({ id: originalLayoutId, layout });
+        markClean();
+      } else {
+        const created = await createMutation.mutateAsync(layout);
+        loadLayout(created);
+      }
+
+      setUnsavedDialogOpen(false);
+
+      // Now proceed with pending action
+      if (pendingAction?.type === 'switch') {
+        setSelectedLayoutId(pendingAction.layoutId);
+      } else if (pendingAction?.type === 'new') {
+        createEmptyLayout('New Layout');
+      }
+      setPendingAction(null);
+    } catch {
+      toast.error('Failed to save changes');
+    }
+  }, [
+    toLayout,
+    originalLayoutId,
+    updateMutation,
+    createMutation,
+    markClean,
+    loadLayout,
+    pendingAction,
+    createEmptyLayout,
+  ]);
+
+  // Compute layout counts for delete warning
+  const deleteWarningItems = useMemo(() => {
+    const items: string[] = [];
+    const floorCount = floorIds.length;
+    let sectionCount = 0;
+    let tableCount = 0;
+    for (const floorId of floorIds) {
+      const sectionIds = sectionIdsByFloorId[floorId] ?? [];
+      sectionCount += sectionIds.length;
+      for (const sectionId of sectionIds) {
+        tableCount += (resourceIdsBySectionId[sectionId] ?? []).length;
+      }
+    }
+    if (floorCount > 0) items.push(`${String(floorCount)} floor${floorCount > 1 ? 's' : ''}`);
+    if (sectionCount > 0) items.push(`${String(sectionCount)} section${sectionCount > 1 ? 's' : ''}`);
+    if (tableCount > 0) items.push(`${String(tableCount)} table${tableCount > 1 ? 's' : ''}`);
+    return items;
+  }, [floorIds, sectionIdsByFloorId, resourceIdsBySectionId]);
+
+  const handleDeleteLayout = useCallback(async () => {
+    if (!originalLayoutId) return;
+
+    try {
+      await deleteLayoutMutation.mutateAsync(originalLayoutId);
+      setDeleteDialogOpen(false);
+      setMenuAnchorEl(null);
+      toast.success(`Deleted layout "${layoutName}"`);
+
+      // Load another layout or reset to default
+      const remainingLayouts = layouts?.filter((l) => l.id !== originalLayoutId);
+      if (remainingLayouts && remainingLayouts.length > 0) {
+        setSelectedLayoutId(remainingLayouts[0].id);
+      } else {
+        resetToDefaultLayout();
+      }
+    } catch {
+      toast.error('Failed to delete layout');
+    }
+  }, [originalLayoutId, deleteLayoutMutation, layoutName, layouts, resetToDefaultLayout]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd (Mac) or Ctrl (Windows/Linux)
+      // Use userAgentData if available (modern browsers), fallback to userAgent
+      const isMac =
+        (navigator as Navigator & { userAgentData?: { platform: string } }).userAgentData?.platform === 'macOS' ||
+        navigator.userAgent.toUpperCase().includes('MAC');
+      const cmdKey = isMac ? e.metaKey : e.ctrlKey;
+
+      if (!cmdKey) return;
+
+      // Undo: Cmd/Ctrl + Z (without Shift)
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        const label = undo();
+        if (label) {
+          toast.info(`Undo: ${label}`);
+        }
+      }
+
+      // Redo: Cmd/Ctrl + Shift + Z OR Cmd/Ctrl + Y
+      if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+        e.preventDefault();
+        const label = redo();
+        if (label) {
+          toast.info(`Redo: ${label}`);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [undo, redo]);
 
   // Loading state - only show during initial list fetch
   if (isLoadingList) {
@@ -127,6 +308,35 @@ export function SeatingBuilderView() {
                 New
               </Button>
 
+              {/* Layout overflow menu */}
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  setMenuAnchorEl(e.currentTarget);
+                }}
+              >
+                <MoreVert />
+              </IconButton>
+              <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={() => {
+                  setMenuAnchorEl(null);
+                }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    setDeleteDialogOpen(true);
+                  }}
+                  disabled={!originalLayoutId}
+                >
+                  <ListItemIcon>
+                    <Delete fontSize="small" color="error" />
+                  </ListItemIcon>
+                  <ListItemText primary="Delete Layout" />
+                </MenuItem>
+              </Menu>
+
               <Divider orientation="vertical" flexItem />
 
               {/* Floor tabs inline */}
@@ -156,6 +366,34 @@ export function SeatingBuilderView() {
           <CircularProgress />
         </Box>
       )}
+
+      {/* Delete Layout Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setMenuAnchorEl(null);
+        }}
+        onConfirm={() => {
+          void handleDeleteLayout();
+        }}
+        title="Delete Layout"
+        entityName={layoutName}
+        warningItems={deleteWarningItems.length > 0 ? deleteWarningItems : undefined}
+        isPending={deleteLayoutMutation.isPending}
+      />
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <UnsavedChangesDialog
+        open={unsavedDialogOpen}
+        layoutName={layoutName}
+        onDiscard={handleUnsavedDiscard}
+        onCancel={handleUnsavedCancel}
+        onSaveAndProceed={() => {
+          void handleSaveAndProceed();
+        }}
+        isSaving={createMutation.isPending || updateMutation.isPending}
+      />
     </Stack>
   );
 }
