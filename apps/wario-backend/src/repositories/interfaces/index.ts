@@ -13,7 +13,6 @@ export * from './product-instance.repository.interface';
 export * from './product.repository.interface';
 export * from './seating-floor.repository.interface';
 export * from './seating-layout.repository.interface';
-export * from './seating-placement.repository.interface';
 export * from './seating-resource.repository.interface';
 export * from './seating-section.repository.interface';
 export * from './settings.repository.interface';

@@ -13,7 +13,6 @@ export * from './product-instance.mongoose.repository';
 export * from './product.mongoose.repository';
 export * from './seating-floor.mongoose.repository';
 export * from './seating-layout.mongoose.repository';
-export * from './seating-placement.mongoose.repository';
 export * from './seating-resource.mongoose.repository';
 export * from './seating-section.mongoose.repository';
 export * from './settings.mongoose.repository';

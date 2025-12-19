@@ -1,11 +1,11 @@
 import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import type { KeyValueConfigDto } from 'src/dtos/key-value-store.dto';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 @Controller('api/v1/config/kvstore')
 export class KeyValueStoreController {
-  constructor(private readonly dataProvider: DataProviderService) {}
+  constructor(private readonly dataProvider: DataProviderService) { }
 
   @Get()
   getKvStore() {

@@ -13,9 +13,9 @@ import {
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import { AppConfigService } from '../../../config/app-config.service';
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 
 @WebSocketGateway({
   namespace: 'nsRO',
@@ -33,7 +33,7 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     @Inject(DataProviderService) private dataProvider: DataProviderService,
     @InjectPinoLogger(SocketIoService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   handleConnection(client: Socket) {
     ++this.clientCount;

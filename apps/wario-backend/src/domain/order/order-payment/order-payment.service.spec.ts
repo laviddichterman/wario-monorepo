@@ -21,9 +21,9 @@ import { Test, type TestingModule } from '@nestjs/testing';
 
 import { CURRENCY, TenderBaseStatus, type ValidateLockAndSpendSuccess } from '@wcp/wario-shared';
 
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
 
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import { StoreCreditProviderService } from '../../../config/store-credit-provider/store-credit-provider.service';
 
 import { OrderPaymentService } from './order-payment.service';

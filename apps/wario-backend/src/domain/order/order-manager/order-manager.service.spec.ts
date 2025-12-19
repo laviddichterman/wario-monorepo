@@ -13,11 +13,11 @@ import { type PinoLogger } from 'nestjs-pino';
 import { WOrderStatus } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
 
 import { AppConfigService } from '../../../config/app-config.service';
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import { StoreCreditProviderService } from '../../../config/store-credit-provider/store-credit-provider.service';
 import { PrinterService } from '../../../infrastructure/printing/printer/printer.service';
 import { ORDER_REPOSITORY } from '../../../repositories/interfaces';

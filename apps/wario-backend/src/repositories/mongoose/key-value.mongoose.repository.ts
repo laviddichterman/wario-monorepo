@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { KeyValue } from '@wcp/wario-shared';
 
@@ -17,7 +18,9 @@ export class KeyValueMongooseRepository implements IKeyValueRepository {
   constructor(
     @InjectModel('KeyValueSchema')
     private readonly model: Model<KeyValueStoreDoc>,
-  ) {}
+    @InjectPinoLogger(KeyValueMongooseRepository.name)
+    private readonly logger: PinoLogger,
+  ) { }
 
   async findByKey(key: string): Promise<string | null> {
     const doc = await this.model.findOne({}).lean().exec();

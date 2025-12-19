@@ -26,6 +26,9 @@ const CatalogProductFunctionsPage = lazy(() => import('@/pages/dashboard/catalog
 // Settings
 const SettingsPage = lazy(() => import('@/pages/dashboard/settings'));
 
+// Seating
+const SeatingBuilderPage = lazy(() => import('@/pages/dashboard/seating-builder'));
+
 // User
 // const UserProfilePage = lazy(() => import('@/pages/dashboard/user/profile'));
 // const UserCardsPage = lazy(() => import('@/pages/dashboard/user/cards'));
@@ -106,6 +109,7 @@ export const dashboardRoutes: RouteObject[] = [
         ],
       },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'seating-builder', element: <SeatingBuilderPage /> },
     ],
   },
 ];

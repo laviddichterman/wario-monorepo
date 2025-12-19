@@ -8,7 +8,6 @@ import { FulfillmentModel } from './FulfillmentSchema';
 import { KeyValueModel } from './KeyValueSchema';
 import { SeatingFloorModel } from './SeatingFloorSchema';
 import { SeatingLayoutModel } from './SeatingLayoutSchema';
-import { SeatingPlacementModel } from './SeatingPlacementSchema';
 import { SeatingResourceModel } from './SeatingResourceSchema';
 import { SeatingSectionModel } from './SeatingSectionSchema';
 import { SettingsModel } from './SettingsSchema';
@@ -23,11 +22,10 @@ import { SettingsModel } from './SettingsSchema';
       { name: 'DBVersionSchema', schema: DBVersionModel.schema },
       { name: 'SeatingFloor', schema: SeatingFloorModel.schema },
       { name: 'SeatingLayout', schema: SeatingLayoutModel.schema },
-      { name: 'SeatingPlacement', schema: SeatingPlacementModel.schema },
       { name: 'SeatingResource', schema: SeatingResourceModel.schema },
       { name: 'SeatingSection', schema: SeatingSectionModel.schema },
     ]),
   ],
   exports: [MongooseModule],
 })
-export class SettingsModule {}
+export class SettingsModule { }

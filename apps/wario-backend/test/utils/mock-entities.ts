@@ -26,7 +26,6 @@ import type { KeyValueEntity } from '../../src/infrastructure/database/typeorm/s
 import type { PrinterGroupEntity } from '../../src/infrastructure/database/typeorm/settings/printer-group.entity';
 import type { SeatingFloorEntity } from '../../src/infrastructure/database/typeorm/settings/seating-floor.entity';
 import type { SeatingLayoutEntity } from '../../src/infrastructure/database/typeorm/settings/seating-layout.entity';
-import type { SeatingPlacementEntity } from '../../src/infrastructure/database/typeorm/settings/seating-placement.entity';
 import type { SeatingResourceEntity } from '../../src/infrastructure/database/typeorm/settings/seating-resource.entity';
 import type { SeatingSectionEntity } from '../../src/infrastructure/database/typeorm/settings/seating-section.entity';
 import type { SettingsEntity } from '../../src/infrastructure/database/typeorm/settings/settings.entity';
@@ -233,6 +232,9 @@ export const createMockSeatingResourceEntity = (
     shape: 'RECTANGLE',
     shapeDimX: 30,
     shapeDimY: 20,
+    centerX: 100,
+    centerY: 100,
+    rotation: 0,
     disabled: false,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -272,25 +274,6 @@ export const createMockSeatingSectionEntity = (overrides: Partial<SeatingSection
     ...defaults,
     ...overrides,
   } as SeatingSectionEntity;
-};
-
-export const createMockSeatingPlacementEntity = (
-  overrides: Partial<SeatingPlacementEntity> = {},
-): SeatingPlacementEntity => {
-  const defaults = {
-    id: 'placement1',
-    name: 'Table 1',
-    sectionId: 'sec1',
-    centerX: 100,
-    centerY: 100,
-    rotation: 0,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  return {
-    ...defaults,
-    ...overrides,
-  } as SeatingPlacementEntity;
 };
 
 export const createMockSeatingLayoutEntity = (overrides: Partial<SeatingLayoutEntity> = {}): SeatingLayoutEntity => {

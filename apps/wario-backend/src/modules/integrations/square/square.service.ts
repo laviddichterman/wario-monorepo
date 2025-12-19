@@ -1,9 +1,11 @@
 import crypto from 'crypto';
 
+import type { RetryConfiguration } from '@apimatic/core-interfaces';
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { parseISO } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import {
+  ApiResponse,
   BatchDeleteCatalogObjectsRequest,
   BatchDeleteCatalogObjectsResponse,
   BatchRetrieveCatalogObjectsRequest,
@@ -43,9 +45,8 @@ import {
   UpdateOrderRequest,
   UpdateOrderResponse,
   UpsertCatalogObjectRequest,
-  UpsertCatalogObjectResponse,
-} from 'square';
-import { ApiResponse, RetryConfiguration } from 'square/dist/types/core';
+  UpsertCatalogObjectResponse
+} from 'square/legacy';
 
 export { SquareError };
 
@@ -61,9 +62,9 @@ import {
 import { ExponentialBackoffWaitFunction } from 'src/utils/exponential-backoff';
 
 import { AppConfigService } from 'src/config/app-config.service';
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import { MigrationFlagsService } from 'src/config/migration-flags.service';
 import { BigIntMoneyToIntMoney, IMoneyToBigIntMoney, MapPaymentStatus } from 'src/config/square-wario-bridge';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 export type SquareProviderApiCallReturnSuccess<T> = {
   success: true;
@@ -201,10 +202,11 @@ export class SquareService implements OnModuleInit {
 
   async onModuleInit() {
     this.logger.info('Starting Bootstrap of SquareService');
-    if (this.dataProvider.getKeyValueConfig().SQUARE_TOKEN) {
+    if (this.dataProvider.getKeyValueConfig()['SQUARE_TOKEN']) {
+      this.logger.info({ isProduction: this.appConfig.isProduction }, 'Square Token found, creating client');
       this.client = new Client({
         environment: this.appConfig.isProduction ? Environment.Production : Environment.Sandbox,
-        accessToken: this.dataProvider.getKeyValueConfig().SQUARE_TOKEN,
+        accessToken: this.dataProvider.getKeyValueConfig()['SQUARE_TOKEN'],
         httpClientOptions: {
           retryConfig: SQUARE_RETRY_CONFIG,
         },
@@ -409,18 +411,18 @@ export class SquareService implements OnModuleInit {
       sourceId: storeCreditPayment ? 'EXTERNAL' : sourceId,
       externalDetails: storeCreditPayment
         ? {
-            type: 'STORED_BALANCE',
-            source: 'WARIO',
-            sourceId: storeCreditPayment.payment.code,
-          }
+          type: 'STORED_BALANCE',
+          source: 'WARIO',
+          sourceId: storeCreditPayment.payment.code,
+        }
         : undefined,
       ...(sourceId === 'CASH'
         ? {
-            cashDetails: {
-              buyerSuppliedMoney: IMoneyToBigIntMoney(amount),
-              changeBackMoney: { amount: 0n, currency: amount.currency },
-            },
-          }
+          cashDetails: {
+            buyerSuppliedMoney: IMoneyToBigIntMoney(amount),
+            changeBackMoney: { amount: 0n, currency: amount.currency },
+          },
+        }
         : {}),
       amountMoney: IMoneyToBigIntMoney({
         currency: amount.currency,
@@ -449,50 +451,50 @@ export class SquareService implements OnModuleInit {
         success: true,
         result: storeCreditPayment
           ? {
-              ...storeCreditPayment,
-              status: paymentStatus,
-              processorId,
-              payment: {
-                ...(storeCreditPayment.payment as StoreCreditPaymentData),
-              },
-            }
+            ...storeCreditPayment,
+            status: paymentStatus,
+            processorId,
+            payment: {
+              ...(storeCreditPayment.payment as StoreCreditPaymentData),
+            },
+          }
           : response.result.payment.sourceType === 'CASH'
             ? {
-                t: PaymentMethod.Cash,
-                createdAt,
-                processorId,
-                amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
-                tipAmount: tipMoney,
-                status: paymentStatus,
-                payment: {
-                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  amountTendered: BigIntMoneyToIntMoney(response.result.payment.cashDetails!.buyerSuppliedMoney),
-                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  change: response.result.payment.cashDetails!.changeBackMoney
-                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      BigIntMoneyToIntMoney(response.result.payment.cashDetails!.changeBackMoney)
-                    : { currency: amount.currency, amount: 0 },
-                },
-              }
-            : {
-                t: PaymentMethod.CreditCard,
-                createdAt,
-                processorId,
-                amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
-                tipAmount: tipMoney,
-                status: paymentStatus,
-                payment: {
-                  processor: 'SQUARE',
-                  billingZip: response.result.payment.billingAddress?.postalCode ?? undefined,
-                  cardBrand: response.result.payment.cardDetails?.card?.cardBrand ?? undefined,
-                  expYear: response.result.payment.cardDetails?.card?.expYear?.toString(),
-                  last4: response.result.payment.cardDetails?.card?.last4 ?? '',
-                  receiptUrl:
-                    response.result.payment.receiptUrl ??
-                    `https://squareup.com/receipt/preview/${response.result.payment.id as string}`,
-                  cardholderName: response.result.payment.cardDetails?.card?.cardholderName ?? undefined,
-                },
+              t: PaymentMethod.Cash,
+              createdAt,
+              processorId,
+              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
+              tipAmount: tipMoney,
+              status: paymentStatus,
+              payment: {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                amountTendered: BigIntMoneyToIntMoney(response.result.payment.cashDetails!.buyerSuppliedMoney),
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                change: response.result.payment.cashDetails!.changeBackMoney
+                  ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  BigIntMoneyToIntMoney(response.result.payment.cashDetails!.changeBackMoney)
+                  : { currency: amount.currency, amount: 0 },
               },
+            }
+            : {
+              t: PaymentMethod.CreditCard,
+              createdAt,
+              processorId,
+              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
+              tipAmount: tipMoney,
+              status: paymentStatus,
+              payment: {
+                processor: 'SQUARE',
+                billingZip: response.result.payment.billingAddress?.postalCode ?? undefined,
+                cardBrand: response.result.payment.cardDetails?.card?.cardBrand ?? undefined,
+                expYear: response.result.payment.cardDetails?.card?.expYear?.toString(),
+                last4: response.result.payment.cardDetails?.card?.last4 ?? '',
+                receiptUrl:
+                  response.result.payment.receiptUrl ??
+                  `https://squareup.com/receipt/preview/${response.result.payment.id as string}`,
+                cardholderName: response.result.payment.cardDetails?.card?.cardholderName ?? undefined,
+              },
+            },
         error: [],
       };
     }
@@ -665,12 +667,16 @@ export class SquareService implements OnModuleInit {
         this.logger.debug({ request_body }, 'sending catalog upsert batch');
         return await catalogApi.batchUpsertCatalogObjects(request_body);
       };
-      const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
-      if (!response.success) {
-        return response;
+      try {
+        const response = await SquareCallFxnWrapper(callFxn, 0, this.logger);
+        if (!response.success) {
+          return response;
+        }
+        remainingObjects = leftovers;
+        responses.push(response);
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Failed to upsert catalog objects');
       }
-      remainingObjects = leftovers;
-      responses.push(response);
     } while (remainingObjects.length > 0);
     return {
       error: responses.flatMap((x) => x.error),

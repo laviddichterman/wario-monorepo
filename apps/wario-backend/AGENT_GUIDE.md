@@ -304,7 +304,6 @@ All entities implement their `wario-shared` interfaces:
 | `SeatingFloorEntity`            | `SeatingFloor`              |
 | `SeatingSectionEntity`          | `SeatingLayoutSection`      |
 | `SeatingResourceEntity`         | `SeatingResource`           |
-| `SeatingPlacementEntity`        | `SeatingPlacement`          |
 | `SeatingLayoutEntity`           | `SeatingLayout` (aggregate) |
 
 ### Discriminated Unions as JSONB
@@ -385,7 +384,6 @@ Use Symbol tokens for injection (not class names):
 | `PRODUCT_INSTANCE_FUNCTION_REPOSITORY` | `IProductInstanceFunctionRepository` |
 | `SEATING_FLOOR_REPOSITORY`             | `ISeatingFloorRepository`            |
 | `SEATING_LAYOUT_REPOSITORY`            | `ISeatingLayoutRepository`           |
-| `SEATING_PLACEMENT_REPOSITORY`         | `ISeatingPlacementRepository`        |
 | `SEATING_RESOURCE_REPOSITORY`          | `ISeatingResourceRepository`         |
 | `SEATING_SECTION_REPOSITORY`           | `ISeatingSectionRepository`          |
 | `SETTINGS_REPOSITORY`                  | `ISettingsRepository`                |

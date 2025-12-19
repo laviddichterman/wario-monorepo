@@ -280,7 +280,7 @@ Represents a section within a floor (e.g., "Dining Room", "Bar Area").
 
 ##### `SeatingResourceDto`
 
-Represents a table or seating resource (the definition, not placement).
+Represents a table or seating resource with its position on the canvas.
 
 | Field       | Type           | Required | Validation              | Description                                                          |
 | ----------- | -------------- | -------- | ----------------------- | -------------------------------------------------------------------- |
@@ -291,33 +291,22 @@ Represents a table or seating resource (the definition, not placement).
 | `sectionId` | `string`       | Yes      | `@IsNotEmpty`           | Parent section ID (FK to `SeatingLayoutSectionDto.id`)               |
 | `shapeDimX` | `number`       | Yes      | `@IsInt`, `@Min(0)`     | X dimension (half-width for rect, x-radius for ellipse), pre-rotate  |
 | `shapeDimY` | `number`       | Yes      | `@IsInt`, `@Min(0)`     | Y dimension (half-height for rect, y-radius for ellipse), pre-rotate |
+| `centerX`   | `number`       | Yes      | `@IsInt`, `@Min(0)`     | X coordinate of center (layout units)                                |
+| `centerY`   | `number`       | Yes      | `@IsInt`, `@Min(0)`     | Y coordinate of center (layout units)                                |
+| `rotation`  | `number`       | Yes      | `@IsInt`, `@Min(0)`     | Rotation in degrees (clockwise from 0)                               |
 | `disabled`  | `boolean`      | Yes      | `@IsBoolean`            | If true, resource is hidden in UI                                    |
-
-##### `SeatingPlacementDto`
-
-Represents where a resource is positioned on the canvas.
-
-| Field       | Type     | Required | Validation          | Description                               |
-| ----------- | -------- | -------- | ------------------- | ----------------------------------------- |
-| `id`        | `string` | Yes      | `@IsNotEmpty`       | Unique identifier                         |
-| `name`      | `string` | Yes      | `@IsNotEmpty`       | Display name (typically matches resource) |
-| `sectionId` | `string` | Yes      | `@IsNotEmpty`       | Parent section ID                         |
-| `centerX`   | `number` | Yes      | `@IsInt`, `@Min(0)` | X coordinate of center (layout units)     |
-| `centerY`   | `number` | Yes      | `@IsInt`, `@Min(0)` | Y coordinate of center (layout units)     |
-| `rotation`  | `number` | Yes      | `@IsInt`, `@Min(0)` | Rotation in degrees (clockwise from 0)    |
 
 ##### `SeatingLayoutDto`
 
 Aggregate containing all layout components.
 
-| Field        | Type                        | Required | Validation        | Description                          |
-| ------------ | --------------------------- | -------- | ----------------- | ------------------------------------ |
-| `id`         | `string`                    | Yes      | `@IsNotEmpty`     | Unique identifier                    |
-| `name`       | `string`                    | Yes      | `@IsNotEmpty`     | Layout name (e.g., "Default Layout") |
-| `floors`     | `SeatingFloorDto[]`         | Yes      | `@ValidateNested` | All floors in layout                 |
-| `sections`   | `SeatingLayoutSectionDto[]` | Yes      | `@ValidateNested` | All sections in layout               |
-| `resources`  | `SeatingResourceDto[]`      | Yes      | `@ValidateNested` | All table definitions                |
-| `placements` | `SeatingPlacementDto[]`     | Yes      | `@ValidateNested` | All table positions                  |
+| Field       | Type                        | Required | Validation        | Description                           |
+| ----------- | --------------------------- | -------- | ----------------- | ------------------------------------- |
+| `id`        | `string`                    | Yes      | `@IsNotEmpty`     | Unique identifier                     |
+| `name`      | `string`                    | Yes      | `@IsNotEmpty`     | Layout name (e.g., "Default Layout")  |
+| `floors`    | `SeatingFloorDto[]`         | Yes      | `@ValidateNested` | All floors in layout                  |
+| `sections`  | `SeatingLayoutSectionDto[]` | Yes      | `@ValidateNested` | All sections in layout                |
+| `resources` | `SeatingResourceDto[]`      | Yes      | `@ValidateNested` | All tables with position and rotation |
 
 ##### `WSeatingInfoDto`
 
@@ -346,10 +335,12 @@ const layout: SeatingLayoutDto = {
       sectionId: 's1',
       shapeDimX: 30,
       shapeDimY: 20,
+      centerX: 100,
+      centerY: 100,
+      rotation: 0,
       disabled: false,
     },
   ],
-  placements: [{ id: 'p1', name: 'Table 1', sectionId: 's1', centerX: 100, centerY: 100, rotation: 0 }],
 };
 ```
 

@@ -6,13 +6,12 @@ import type { SeatingLayout } from '@wcp/wario-shared';
 
 import { SeatingFloorEntity } from 'src/infrastructure/database/typeorm/settings/seating-floor.entity';
 import { SeatingLayoutEntity } from 'src/infrastructure/database/typeorm/settings/seating-layout.entity';
-import { SeatingPlacementEntity } from 'src/infrastructure/database/typeorm/settings/seating-placement.entity';
 import { SeatingResourceEntity } from 'src/infrastructure/database/typeorm/settings/seating-resource.entity';
 import { SeatingSectionEntity } from 'src/infrastructure/database/typeorm/settings/seating-section.entity';
 
 import type { ISeatingLayoutRepository } from '../interfaces/seating-layout.repository.interface';
 
-type LayoutMetadata = Omit<SeatingLayout, 'floors' | 'sections' | 'resources' | 'placements'>;
+type LayoutMetadata = Omit<SeatingLayout, 'floors' | 'sections' | 'resources'>;
 
 @Injectable()
 export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository {
@@ -25,9 +24,7 @@ export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository 
     private readonly sectionRepo: Repository<SeatingSectionEntity>,
     @InjectRepository(SeatingResourceEntity)
     private readonly resourceRepo: Repository<SeatingResourceEntity>,
-    @InjectRepository(SeatingPlacementEntity)
-    private readonly placementRepo: Repository<SeatingPlacementEntity>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<SeatingLayout | null> {
     const layout = await this.layoutRepo.findOne({ where: { id } });
@@ -69,11 +66,10 @@ export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository 
   }
 
   private async assembleLayout(layoutEntity: SeatingLayoutEntity): Promise<SeatingLayout> {
-    const [floors, sections, resources, placements] = await Promise.all([
+    const [floors, sections, resources] = await Promise.all([
       this.floorRepo.find({ order: { ordinal: 'ASC' } }),
       this.sectionRepo.find({ order: { ordinal: 'ASC' } }),
       this.resourceRepo.find(),
-      this.placementRepo.find(),
     ]);
 
     return {
@@ -82,7 +78,7 @@ export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository 
       floors,
       sections,
       resources,
-      placements,
     };
   }
 }
+

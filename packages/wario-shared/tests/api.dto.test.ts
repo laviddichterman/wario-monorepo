@@ -6,12 +6,13 @@
  */
 
 import { plainToInstance } from 'class-transformer';
-import { validateSync } from 'class-validator';
+import { validateSync, type ValidationArguments } from 'class-validator';
 
 import {
   BatchUpsertProductRequestDto,
   CreateIProductInstanceRequestDto,
-  IsUpsertProductArrayConstraint,
+  CreateIProductRequestDto,
+  IsUpsertArrayConstraint,
   IsUpsertProductInstanceArrayConstraint,
   UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
@@ -417,8 +418,11 @@ describe('UpdateIProductInstanceRequestDto', () => {
 // IsUpsertProductArrayConstraint Tests
 // ============================================================================
 
-describe('IsUpsertProductArrayConstraint', () => {
-  let constraint: IsUpsertProductArrayConstraint;
+describe('IsUpsertArrayConstraint (for Products)', () => {
+  let constraint: IsUpsertArrayConstraint;
+  const mockArgs = {
+    constraints: [CreateIProductRequestDto, UpdateIProductRequestDto],
+  } as unknown as ValidationArguments;
 
   /**
    * Creates a valid CreateIProductRequestDto payload (no id)
@@ -461,30 +465,30 @@ describe('IsUpsertProductArrayConstraint', () => {
   }
 
   beforeEach(() => {
-    constraint = new IsUpsertProductArrayConstraint();
+    constraint = new IsUpsertArrayConstraint();
   });
 
   describe('validate()', () => {
     it('should return false for non-array input', () => {
-      expect(constraint.validate('not an array' as unknown as unknown[])).toBe(false);
-      expect(constraint.validate(null as unknown as unknown[])).toBe(false);
-      expect(constraint.validate(undefined as unknown as unknown[])).toBe(false);
-      expect(constraint.validate({} as unknown as unknown[])).toBe(false);
+      expect(constraint.validate('not an array' as unknown as unknown[], mockArgs)).toBe(false);
+      expect(constraint.validate(null as unknown as unknown[], mockArgs)).toBe(false);
+      expect(constraint.validate(undefined as unknown as unknown[], mockArgs)).toBe(false);
+      expect(constraint.validate({} as unknown as unknown[], mockArgs)).toBe(false);
     });
 
     it('should return true for empty array', () => {
-      expect(constraint.validate([])).toBe(true);
+      expect(constraint.validate([], mockArgs)).toBe(true);
     });
 
     it('should return true for valid create product (no id)', () => {
       const createProduct = createValidCreateProductPayload();
-      const result = constraint.validate([createProduct]);
+      const result = constraint.validate([createProduct], mockArgs);
       expect(result).toBe(true);
     });
 
     it('should return true for valid update product (with id)', () => {
       const updateProduct = createValidUpdateProductPayloadForProduct();
-      expect(constraint.validate([updateProduct])).toBe(true);
+      expect(constraint.validate([updateProduct], mockArgs)).toBe(true);
     });
 
     it('should return true for valid update product with partial fields', () => {
@@ -493,14 +497,14 @@ describe('IsUpsertProductArrayConstraint', () => {
         displayName: 'Updated Name',
         instances: ['pi_1'],
       };
-      expect(constraint.validate([updateProduct])).toBe(true);
+      expect(constraint.validate([updateProduct], mockArgs)).toBe(true);
     });
 
     it('should return true for mixed create and update products', () => {
       const createProduct = createValidCreateProductPayload();
       const updateProduct = createValidUpdateProductPayloadForProduct();
 
-      expect(constraint.validate([createProduct, updateProduct])).toBe(true);
+      expect(constraint.validate([createProduct, updateProduct], mockArgs)).toBe(true);
     });
 
     it('should treat empty string id as create (requires all fields)', () => {
@@ -510,7 +514,7 @@ describe('IsUpsertProductArrayConstraint', () => {
         instances: [{ id: 'pi_1' }],
       };
       // This should fail because it's treated as create but missing required fields
-      expect(constraint.validate([productWithEmptyId])).toBe(false);
+      expect(constraint.validate([productWithEmptyId], mockArgs)).toBe(false);
     });
 
     it('should return false for invalid create product (missing required fields)', () => {
@@ -518,7 +522,7 @@ describe('IsUpsertProductArrayConstraint', () => {
         // Missing displayName, price, instances, etc.
         shortcode: 'TP',
       };
-      expect(constraint.validate([invalidCreateProduct])).toBe(false);
+      expect(constraint.validate([invalidCreateProduct], mockArgs)).toBe(false);
     });
 
     it('should return false for update product with invalid id type', () => {
@@ -526,20 +530,20 @@ describe('IsUpsertProductArrayConstraint', () => {
         id: 123, // id must be string
         instances: [],
       };
-      expect(constraint.validate([invalidUpdateProduct])).toBe(false);
+      expect(constraint.validate([invalidUpdateProduct], mockArgs)).toBe(false);
     });
 
     it('should return false if any product in array is invalid', () => {
       const validProduct = createValidUpdateProductPayloadForProduct();
       const invalidProduct = { shortcode: 'X' }; // Missing required fields for create
 
-      expect(constraint.validate([validProduct, invalidProduct])).toBe(false);
+      expect(constraint.validate([validProduct, invalidProduct], mockArgs)).toBe(false);
     });
 
     it('should return false for non-object values in array', () => {
-      expect(constraint.validate(['string_not_product'])).toBe(false);
-      expect(constraint.validate([123])).toBe(false);
-      expect(constraint.validate([null])).toBe(false);
+      expect(constraint.validate(['string_not_product'], mockArgs)).toBe(false);
+      expect(constraint.validate([123], mockArgs)).toBe(false);
+      expect(constraint.validate([null], mockArgs)).toBe(false);
     });
 
     it('should return false for create product with empty instances array', () => {
@@ -547,13 +551,13 @@ describe('IsUpsertProductArrayConstraint', () => {
         ...createValidCreateProductPayload(),
         instances: [], // ArrayMinSize(1) should fail
       };
-      expect(constraint.validate([createProductNoInstances])).toBe(false);
+      expect(constraint.validate([createProductNoInstances], mockArgs)).toBe(false);
     });
   });
 
   describe('defaultMessage()', () => {
     it('should return appropriate error message', () => {
-      const message = constraint.defaultMessage();
+      const message = constraint.defaultMessage(mockArgs);
       expect(message).toContain('CreateIProductRequestDto');
       expect(message).toContain('UpdateIProductRequestDto');
     });

@@ -17,9 +17,9 @@ import {
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
 
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import { BigIntMoneyToIntMoney, LineItemsToOrderInstanceCart } from '../../../config/square-wario-bridge';
 import { type IOrderRepository, ORDER_REPOSITORY } from '../../../repositories/interfaces/order.repository.interface';
 
@@ -37,7 +37,7 @@ export class ThirdPartyOrderService {
     private dataProvider: DataProviderService,
     @InjectPinoLogger(ThirdPartyOrderService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   /**
    * Maps a 3rd party source name to a short code.

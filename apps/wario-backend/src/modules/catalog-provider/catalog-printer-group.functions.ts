@@ -3,18 +3,17 @@
  * Pure functions for printer group CRUD operations.
  */
 import type { PinoLogger } from 'nestjs-pino';
-import type { CatalogObject } from 'square';
-import type { BatchDeleteCatalogObjectsResponse } from 'square';
+import type { BatchDeleteCatalogObjectsResponse, CatalogObject } from 'square/legacy';
 
 import type { DeletePrinterGroupRequest, KeyValue, PrinterGroup } from '@wcp/wario-shared';
 
-import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
   GetSquareExternalIds,
   IdMappingsToExternalIds,
   PrinterGroupToSquareCatalogObjectPlusDummyProduct,
 } from 'src/config/square-wario-bridge';
 import { PrinterGroupNotFoundException } from 'src/exceptions';
+import type { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import type { IPrinterGroupRepository } from '../../repositories/interfaces/printer-group.repository.interface';
 import type { SquareProviderApiCallReturnValue, SquareService } from '../integrations/square/square.service';

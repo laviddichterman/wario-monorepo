@@ -166,45 +166,6 @@ export class SeatingResourceDto {
   @Min(0)
   shapeDimY!: number;
 
-  /** If true, resource is hidden from views but retained in data */
-  @IsBoolean()
-  disabled!: boolean;
-}
-
-/**
- * Represents the physical placement of a resource on the floor canvas.
- *
- * Stores the center position and rotation of a table within its section.
- * Coordinates are in layout units (typically pixels at 1:1 scale).
- *
- * @example
- * ```ts
- * const placement: SeatingPlacement = {
- *   id: 'placement-1',
- *   name: 'Table 1',
- *   sectionId: 'sec-1',
- *   centerX: 150,
- *   centerY: 200,
- *   rotation: 45, // 45 degrees clockwise
- * };
- * ```
- */
-export class SeatingPlacementDto {
-  /** Unique identifier for the placement */
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-
-  /** Display name (typically matches the associated resource) */
-  @IsString()
-  @IsNotEmpty()
-  name!: string;
-
-  /** Parent section ID */
-  @IsString()
-  @IsNotEmpty()
-  sectionId!: string;
-
   /** X coordinate of center point in layout units */
   @IsInt()
   @Min(0)
@@ -218,8 +179,14 @@ export class SeatingPlacementDto {
   /** Rotation angle in degrees (clockwise from 0°) */
   @IsInt()
   @Min(0)
-  rotation!: number; // degrees
+  rotation!: number;
+
+  /** If true, resource is hidden from views but retained in data */
+  @IsBoolean()
+  disabled!: boolean;
 }
+
+
 
 /**
  * Aggregate DTO containing a complete seating layout configuration.
@@ -262,17 +229,11 @@ export class SeatingLayoutDto {
   @Type(() => SeatingLayoutSectionDto)
   sections!: SeatingLayoutSectionDto[];
 
-  /** All table/resource definitions */
+  /** All table/resource definitions (includes position and rotation) */
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SeatingResourceDto)
   resources!: SeatingResourceDto[];
-
-  /** All resource placements (positions on canvas) */
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SeatingPlacementDto)
-  placements!: SeatingPlacementDto[];
 }
 
 /**

@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { format, formatISO, formatRFC3339, Interval, isSameMinute } from 'date-fns';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { Order, Order as SquareOrder } from 'square';
+import { Order, Order as SquareOrder } from 'square/legacy';
 
 import {
   CreateOrderRequestV2,
@@ -44,11 +44,11 @@ import {
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
 import { SquareError, SquareService } from 'src/modules/integrations/square/square.service';
 
 import { AppConfigService } from '../../../config/app-config.service';
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import { CreateOrderFromCart } from '../../../config/square-wario-bridge';
 import { StoreCreditProviderService } from '../../../config/store-credit-provider/store-credit-provider.service';
 import { PrinterService } from '../../../infrastructure/printing/printer/printer.service';
@@ -653,7 +653,7 @@ export class OrderManagerService {
       const _updateSquareOrderResponse = await this.squareService.OrderUpdate(
         this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
         squareOrderId,
-        squareOrder.version!,
+        squareOrder.version as number,
         {
           fulfillments:
             squareOrder.fulfillments?.map((x) => ({
@@ -1275,7 +1275,7 @@ export class OrderManagerService {
       if (squareOrder !== null) {
         await this.squareService.OrderStateChange(
           this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
-          squareOrder.id!,
+          squareOrder.id as string,
           squareOrderVersion,
           'CANCELED',
         );

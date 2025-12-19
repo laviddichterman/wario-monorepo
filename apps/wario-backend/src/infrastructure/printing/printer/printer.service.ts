@@ -20,9 +20,9 @@ import {
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
 
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import {
   CreateOrderForMessages,
   CreateOrdersForPrintingFromCart,
@@ -66,7 +66,7 @@ export class PrinterService {
     private catalogProviderService: CatalogProviderService,
     @InjectPinoLogger(PrinterService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   /**
    * Gets the alternate Square location used for printing.

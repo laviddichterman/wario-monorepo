@@ -11,7 +11,7 @@ export class OptionMongooseRepository implements IOptionRepository {
   constructor(
     @InjectModel('WOptionSchema')
     private readonly model: Model<IOption>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<IOption | null> {
     const doc = await this.model.findById(id).lean().exec();
@@ -20,10 +20,11 @@ export class OptionMongooseRepository implements IOptionRepository {
 
   async findByIds(ids: string[]): Promise<IOption[]> {
     if (!ids.length) return [];
-    return this.model
+    const found = await this.model
       .find({ _id: { $in: ids } })
       .lean()
       .exec();
+    return found.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
   async findAll(): Promise<IOption[]> {

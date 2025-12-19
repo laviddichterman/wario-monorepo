@@ -2,9 +2,9 @@ import { Client, GeocodingAddressComponentType } from '@googlemaps/google-maps-s
 import { Body, Controller, Get, NotFoundException } from '@nestjs/common';
 import * as turf from '@turf/turf';
 
-import type { DeliveryAddressValidateRequest, DeliveryAddressValidateResponse } from '@wcp/wario-shared';
+import { DeliveryAddressValidateRequestDto, type DeliveryAddressValidateResponse } from '@wcp/wario-shared';
 
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import { Public } from '../../auth/decorators/public.decorator';
 
@@ -13,10 +13,10 @@ const client = new Client({});
 @Controller('api/v1/addresses')
 @Public()
 export class DeliveryAddressController {
-  constructor(private readonly dataProvider: DataProviderService) {}
+  constructor(private readonly dataProvider: DataProviderService) { }
 
   @Get()
-  async validateAddress(@Body() body: DeliveryAddressValidateRequest) {
+  async validateAddress(@Body() body: DeliveryAddressValidateRequestDto) {
     const GOOGLE_GEOCODE_KEY = this.dataProvider.getKeyValueConfig().GOOGLE_GEOCODE_KEY;
     const serviceArea = this.dataProvider.getFulfillments()[body.fulfillmentId].serviceArea;
     if (!serviceArea) {
@@ -45,7 +45,7 @@ export class DeliveryAddressController {
   }
 
   @Get('validate')
-  async validateAddressAlt(@Body() body: DeliveryAddressValidateRequest) {
+  async validateAddressAlt(@Body() body: DeliveryAddressValidateRequestDto) {
     return this.validateAddress(body);
   }
 }

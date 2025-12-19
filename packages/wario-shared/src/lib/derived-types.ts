@@ -13,6 +13,7 @@ import {
   type CreateIOptionTypeRequestBodyDto,
   type CreateIProductInstanceRequestDto,
   type CreateIProductRequestDto,
+  type CreateSeatingLayoutRequestDto,
   type IssueStoreCreditRequestDto,
   type PaymentBasePartialDto,
   type PurchaseStoreCreditRequestBaseDto,
@@ -25,6 +26,7 @@ import {
   type UpdateIOptionTypeRequestBodyDto,
   type UpdateIProductInstanceRequestDto,
   type UpdateIProductRequestDto,
+  type UpdateSeatingLayoutRequestDto,
   type ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
 import type { CategoryDisplayFlagsDto, ICategoryDto, UncommittedCategoryDto } from './dto/category.dto';
@@ -138,7 +140,6 @@ import type {
   SeatingFloorDto,
   SeatingLayoutDto,
   SeatingLayoutSectionDto,
-  SeatingPlacementDto,
   SeatingResourceDto,
   WSeatingInfoDto,
 } from './dto/seating.dto';
@@ -307,7 +308,6 @@ export type DeletePrinterGroupRequest = DeletePrinterGroupNoReassignRequest | De
 // =============================================================================
 
 export type SeatingResource = Omit<SeatingResourceDto, never>;
-export type SeatingPlacement = Omit<SeatingPlacementDto, never>;
 export type SeatingFloor = Omit<SeatingFloorDto, never>;
 export type SeatingLayoutSection = Omit<SeatingLayoutSectionDto, never>;
 export type SeatingLayout = Omit<SeatingLayoutDto, never>;
@@ -414,3 +414,9 @@ export type UpsertIOptionTypeRequestBody = CreateIOptionTypeRequestBody | Update
 
 // Category DTOs
 export type UncommittedICategory = Omit<UncommittedICategoryDto, never>;
+
+// Seating Layout DTOs
+export type CreateSeatingLayoutRequest = Omit<CreateSeatingLayoutRequestDto, never>;
+export type UpdateSeatingLayoutRequest = Omit<UpdateSeatingLayoutRequestDto, never>;
+export type UpsertSeatingLayoutRequest = CreateSeatingLayoutRequest | UpdateSeatingLayoutRequest;
+

@@ -13,7 +13,6 @@ export * from './product-instance.typeorm.repository';
 export * from './product.typeorm.repository';
 export * from './seating-floor.typeorm.repository';
 export * from './seating-layout.typeorm.repository';
-export * from './seating-placement.typeorm.repository';
 export * from './seating-resource.typeorm.repository';
 export * from './seating-section.typeorm.repository';
 export * from './settings.typeorm.repository';

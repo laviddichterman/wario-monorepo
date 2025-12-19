@@ -84,5 +84,8 @@ export const paths = {
       productfunctions: `${ROOTS.DASHBOARD}/catalog/product-functions`,
       printergroups: `${ROOTS.DASHBOARD}/catalog/printer-groups`,
     },
+    seating: {
+      builder: `${ROOTS.DASHBOARD}/seating-builder`,
+    },
   },
 };

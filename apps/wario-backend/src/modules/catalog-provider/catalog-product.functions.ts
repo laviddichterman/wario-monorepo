@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 import { chunk } from 'es-toolkit/compat';
 import type { PinoLogger } from 'nestjs-pino';
-import type { CatalogIdMapping, CatalogObject } from 'square';
+import type { CatalogIdMapping, CatalogObject } from 'square/legacy';
 
 import {
   type CreateIProductInstanceRequest,
@@ -22,7 +22,6 @@ import {
 } from '@wcp/wario-shared';
 
 import type { AppConfigService } from 'src/config/app-config.service';
-import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
   GetNonSquareExternalIds,
   GetSquareExternalIds,
@@ -31,6 +30,7 @@ import {
   ProductInstanceUpdateMergeExternalIds,
   ValidateModifiersForInstance,
 } from 'src/config/square-wario-bridge';
+import type { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import type { IProductInstanceRepository } from '../../repositories/interfaces/product-instance.repository.interface';
 import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
@@ -383,31 +383,31 @@ export const batchUpsertProduct = async (
         return x.instance.displayFlags.pos.hide
           ? []
           : [
-              ProductInstanceToSquareCatalogObject(
-                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-                b.product,
-                x.instance,
-                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-                deps.catalogSelectors,
-                existingSquareObjects,
-                ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
-              ),
-            ];
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              x.instance,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              existingSquareObjects,
+              ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
+            ),
+          ];
       });
       const insertCatalogObjects = b.insertInstances.flatMap((x, k) => {
         return x.instance.displayFlags.pos.hide
           ? []
           : [
-              ProductInstanceToSquareCatalogObject(
-                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-                b.product,
-                x.instance,
-                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-                deps.catalogSelectors,
-                [],
-                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
-              ),
-            ];
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              x.instance,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              [],
+              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
+            ),
+          ];
       });
       return [...updateCatalogObjects, ...insertCatalogObjects];
     }),
@@ -816,17 +816,17 @@ export const batchUpdateProductInstance = async (
       return mergedInstance.displayFlags.pos.hide
         ? []
         : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              mergedInstance,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              existingSquareObjects,
+          ProductInstanceToSquareCatalogObject(
+            getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+            b.product,
+            mergedInstance,
+            b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+            deps.catalogSelectors,
+            existingSquareObjects,
 
-              ('000' + i).slice(-3),
-            ),
-          ];
+            ('000' + i).slice(-3),
+          ),
+        ];
     })
     .flat();
   if (catalogObjects.length > 0) {

@@ -26,7 +26,6 @@ import {
   PrinterGroupEntity,
   SeatingFloorEntity,
   SeatingLayoutEntity,
-  SeatingPlacementEntity,
   SeatingResourceEntity,
   SeatingSectionEntity,
   SettingsEntity,
@@ -48,7 +47,6 @@ import {
   PRODUCT_REPOSITORY,
   SEATING_FLOOR_REPOSITORY,
   SEATING_LAYOUT_REPOSITORY,
-  SEATING_PLACEMENT_REPOSITORY,
   SEATING_RESOURCE_REPOSITORY,
   SEATING_SECTION_REPOSITORY,
   SETTINGS_REPOSITORY,
@@ -69,7 +67,6 @@ import {
   ProductMongooseRepository,
   SeatingFloorMongooseRepository,
   SeatingLayoutMongooseRepository,
-  SeatingPlacementMongooseRepository,
   SeatingResourceMongooseRepository,
   SeatingSectionMongooseRepository,
   SettingsMongooseRepository,
@@ -90,7 +87,6 @@ import {
   ProductTypeOrmRepository,
   SeatingFloorTypeOrmRepository,
   SeatingLayoutTypeOrmRepository,
-  SeatingPlacementTypeOrmRepository,
   SeatingResourceTypeOrmRepository,
   SeatingSectionTypeOrmRepository,
   SettingsTypeOrmRepository,
@@ -113,7 +109,6 @@ const entities = [
   ProductInstanceFunctionEntity,
   SeatingFloorEntity,
   SeatingLayoutEntity,
-  SeatingPlacementEntity,
   SeatingResourceEntity,
   SeatingSectionEntity,
   SettingsEntity,
@@ -134,7 +129,6 @@ const typeOrmRepos = [
   ProductTypeOrmRepository,
   SeatingFloorTypeOrmRepository,
   SeatingLayoutTypeOrmRepository,
-  SeatingPlacementTypeOrmRepository,
   SeatingResourceTypeOrmRepository,
   SeatingSectionTypeOrmRepository,
   SettingsTypeOrmRepository,
@@ -155,7 +149,6 @@ const mongooseRepos = [
   ProductMongooseRepository,
   SeatingFloorMongooseRepository,
   SeatingLayoutMongooseRepository,
-  SeatingPlacementMongooseRepository,
   SeatingResourceMongooseRepository,
   SeatingSectionMongooseRepository,
   SettingsMongooseRepository,
@@ -316,15 +309,6 @@ const mongooseRepos = [
       inject: [AppConfigService, SeatingSectionTypeOrmRepository, SeatingSectionMongooseRepository],
     },
     {
-      provide: SEATING_PLACEMENT_REPOSITORY,
-      useFactory: (
-        appConfig: AppConfigService,
-        pgRepo: SeatingPlacementTypeOrmRepository,
-        mongoRepo: SeatingPlacementMongooseRepository,
-      ) => (appConfig.usePostgres ? pgRepo : mongoRepo),
-      inject: [AppConfigService, SeatingPlacementTypeOrmRepository, SeatingPlacementMongooseRepository],
-    },
-    {
       provide: SEATING_LAYOUT_REPOSITORY,
       useFactory: (
         appConfig: AppConfigService,
@@ -349,10 +333,9 @@ const mongooseRepos = [
     PRODUCT_REPOSITORY,
     SEATING_FLOOR_REPOSITORY,
     SEATING_LAYOUT_REPOSITORY,
-    SEATING_PLACEMENT_REPOSITORY,
     SEATING_RESOURCE_REPOSITORY,
     SEATING_SECTION_REPOSITORY,
     SETTINGS_REPOSITORY,
   ],
 })
-export class RepositoryModule {}
+export class RepositoryModule { }

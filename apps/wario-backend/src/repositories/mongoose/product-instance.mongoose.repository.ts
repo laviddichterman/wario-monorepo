@@ -11,7 +11,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
   constructor(
     @InjectModel('WProductInstanceSchema')
     private readonly model: Model<IProductInstance>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<IProductInstance | null> {
     const doc = await this.model.findById(id).lean().exec();
@@ -20,10 +20,11 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
 
   async findByIds(ids: string[]): Promise<IProductInstance[]> {
     if (!ids.length) return [];
-    return this.model
+    const found = await this.model
       .find({ _id: { $in: ids } })
       .lean()
       .exec();
+    return found.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
   async findAll(): Promise<IProductInstance[]> {

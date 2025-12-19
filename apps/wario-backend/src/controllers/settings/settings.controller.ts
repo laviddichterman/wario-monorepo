@@ -1,16 +1,16 @@
 import { Body, Controller, Delete, HttpCode, InternalServerErrorException, Post } from '@nestjs/common';
 
-import type { IWSettingsDto, PostBlockedOffToFulfillmentsRequestDto, SetLeadTimesRequest } from '@wcp/wario-shared';
+import { IWSettingsDto, PostBlockedOffToFulfillmentsRequestDto, type SetLeadTimesRequest } from '@wcp/wario-shared';
 
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 @Controller('api/v1/config')
 export class SettingsController {
   constructor(
     private readonly dataProvider: DataProviderService,
     private readonly socketIoService: SocketIoService,
-  ) {}
+  ) { }
 
   @Post('timing/blockoff')
   @HttpCode(201)

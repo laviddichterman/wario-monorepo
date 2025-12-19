@@ -7,9 +7,8 @@ import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { WError } from '@wcp/wario-shared';
 
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
-
-import { DataProviderService } from '../data-provider/data-provider.service';
 
 export interface ErrorContext {
   path: string;
@@ -28,7 +27,7 @@ export class ErrorNotificationService {
     private readonly dataProvider: DataProviderService,
     @InjectPinoLogger(ErrorNotificationService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   /**
    * Send an email notification for critical errors.
@@ -104,16 +103,15 @@ export class ErrorNotificationService {
               <td style="padding: 8px; border: 1px solid #ddd;"><strong>Path</strong></td>
               <td style="padding: 8px; border: 1px solid #ddd;">${context.path}</td>
             </tr>
-            ${
-              context.ip
-                ? `
+            ${context.ip
+        ? `
             <tr>
               <td style="padding: 8px; border: 1px solid #ddd;"><strong>Client IP</strong></td>
               <td style="padding: 8px; border: 1px solid #ddd;">${context.ip}</td>
             </tr>
             `
-                : ''
-            }
+        : ''
+      }
           </table>
 
           <h2>Errors</h2>
@@ -121,27 +119,25 @@ export class ErrorNotificationService {
 ${JSON.stringify(errors, null, 2)}
           </pre>
 
-          ${
-            context.body
-              ? `
+          ${context.body
+        ? `
           <h2>Request Body</h2>
           <pre style="background: #f5f5f5; padding: 15px; overflow-x: auto;">
 ${JSON.stringify(context.body, null, 2)}
           </pre>
           `
-              : ''
-          }
+        : ''
+      }
 
-          ${
-            context.params && Object.keys(context.params).length > 0
-              ? `
+          ${context.params && Object.keys(context.params).length > 0
+        ? `
           <h2>URL Parameters</h2>
           <pre style="background: #f5f5f5; padding: 15px; overflow-x: auto;">
 ${JSON.stringify(context.params, null, 2)}
           </pre>
           `
-              : ''
-          }
+        : ''
+      }
         </body>
       </html>
     `;

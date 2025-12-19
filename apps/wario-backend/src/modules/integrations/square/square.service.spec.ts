@@ -12,18 +12,20 @@
  */
 
 import { Test, type TestingModule } from '@nestjs/testing';
-import { Client } from 'square';
+import { Client } from 'square/legacy';
 
 import { CURRENCY, type IMoney } from '@wcp/wario-shared';
 
 import { AppConfigService } from 'src/config/app-config.service';
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import { MigrationFlagsService } from 'src/config/migration-flags.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import { SquareService } from './square.service';
 
-// Mock the Square Client
-jest.mock('square', () => {
+// Mock the Square Client - Note: Jest hoists mock() calls to the top of the file,
+// so we create the mock objects INSIDE the factory function. To access them in tests,
+// we also export them from the mock module and retrieve them via require().
+jest.mock('square/legacy', () => {
   const mockOrdersApi = {
     createOrder: jest.fn(),
     updateOrder: jest.fn(),
@@ -64,14 +66,26 @@ jest.mock('square', () => {
       Production: 'production',
       Sandbox: 'sandbox',
     },
+    // Export mock APIs for test access
+    __mockOrdersApi: mockOrdersApi,
+    __mockPaymentsApi: mockPaymentsApi,
+    __mockRefundsApi: mockRefundsApi,
+    __mockCatalogApi: mockCatalogApi,
   };
 });
 
-// Helper to get mocked APIs
-const getMockClient = () => {
-  const MockClient = Client as jest.MockedClass<typeof Client>;
-  return new MockClient({});
+// Get mock APIs from the mocked module
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const squareMock = require('square/legacy') as {
+  __mockOrdersApi: { createOrder: jest.Mock; retrieveOrder: jest.Mock };
+  __mockPaymentsApi: { cancelPayment: jest.Mock };
+  __mockRefundsApi: { refundPayment: jest.Mock };
+  __mockCatalogApi: { catalogInfo: jest.Mock; batchDeleteCatalogObjects: jest.Mock };
 };
+const mockOrdersApi = squareMock.__mockOrdersApi;
+const mockPaymentsApi = squareMock.__mockPaymentsApi;
+const mockRefundsApi = squareMock.__mockRefundsApi;
+const mockCatalogApi = squareMock.__mockCatalogApi;
 
 describe('SquareService', () => {
   let service: SquareService;
@@ -96,16 +110,10 @@ describe('SquareService', () => {
     };
 
     mockDataProvider = {
-      KeyValueConfig: {
-        SQUARE_TOKEN: 'test-token',
-        SQUARE_LOCATION: 'test-location',
-        SQUARE_LOCATION_ALTERNATE: '',
-        SQUARE_LOCATION_3P: '',
-      } as Record<string, string>,
       getKeyValueConfig: jest.fn().mockReturnValue({
         SQUARE_TOKEN: 'test-token',
         SQUARE_LOCATION: 'test-location',
-        SQUARE_LOCATION_ALTERNATE: '',
+        SQUARE_LOCATION_ALTERNATE: 'test-alternate',
         SQUARE_LOCATION_3P: '',
       }),
     };
@@ -115,8 +123,7 @@ describe('SquareService', () => {
     };
 
     // Setup catalog info response for onModuleInit
-    const mockClient = getMockClient();
-    (mockClient.catalogApi.catalogInfo as jest.Mock).mockResolvedValue({
+    mockCatalogApi.catalogInfo.mockResolvedValue({
       statusCode: 200,
       result: {
         limits: {
@@ -187,8 +194,7 @@ describe('SquareService', () => {
     });
 
     it('should create order successfully', async () => {
-      const mockClient = getMockClient();
-      (mockClient.ordersApi.createOrder as jest.Mock).mockResolvedValue({
+      mockOrdersApi.createOrder.mockResolvedValue({
         statusCode: 200,
         result: {
           order: { id: 'order-123', locationId: 'test-location' },
@@ -205,8 +211,7 @@ describe('SquareService', () => {
     });
 
     it('should return failure when Square API returns errors', async () => {
-      const mockClient = getMockClient();
-      (mockClient.ordersApi.createOrder as jest.Mock).mockResolvedValue({
+      mockOrdersApi.createOrder.mockResolvedValue({
         statusCode: 200,
         result: {
           errors: [{ category: 'INVALID_REQUEST_ERROR', code: 'BAD_REQUEST', detail: 'Invalid order' }],
@@ -226,8 +231,7 @@ describe('SquareService', () => {
     });
 
     it('should refund payment successfully', async () => {
-      const mockClient = getMockClient();
-      (mockClient.refundsApi.refundPayment as jest.Mock).mockResolvedValue({
+      mockRefundsApi.refundPayment.mockResolvedValue({
         statusCode: 200,
         result: {
           refund: { id: 'refund-123', status: 'COMPLETED' },
@@ -244,8 +248,7 @@ describe('SquareService', () => {
     });
 
     it('should return failure when refund is rejected', async () => {
-      const mockClient = getMockClient();
-      (mockClient.refundsApi.refundPayment as jest.Mock).mockResolvedValue({
+      mockRefundsApi.refundPayment.mockResolvedValue({
         statusCode: 200,
         result: {
           refund: { id: 'refund-123', status: 'REJECTED' },
@@ -259,8 +262,7 @@ describe('SquareService', () => {
     });
 
     it('should return failure when refund fails', async () => {
-      const mockClient = getMockClient();
-      (mockClient.refundsApi.refundPayment as jest.Mock).mockResolvedValue({
+      mockRefundsApi.refundPayment.mockResolvedValue({
         statusCode: 200,
         result: {
           refund: { id: 'refund-123', status: 'FAILED' },
@@ -280,8 +282,7 @@ describe('SquareService', () => {
     });
 
     it('should cancel payment successfully', async () => {
-      const mockClient = getMockClient();
-      (mockClient.paymentsApi.cancelPayment as jest.Mock).mockResolvedValue({
+      mockPaymentsApi.cancelPayment.mockResolvedValue({
         statusCode: 200,
         result: {
           payment: { id: 'payment-123', status: 'CANCELED' },
@@ -297,8 +298,7 @@ describe('SquareService', () => {
     });
 
     it('should return failure when cancellation fails', async () => {
-      const mockClient = getMockClient();
-      (mockClient.paymentsApi.cancelPayment as jest.Mock).mockResolvedValue({
+      mockPaymentsApi.cancelPayment.mockResolvedValue({
         statusCode: 200,
         result: {
           payment: { id: 'payment-123', status: 'COMPLETED' }, // Not canceled
@@ -317,8 +317,7 @@ describe('SquareService', () => {
     });
 
     it('should delete catalog objects successfully', async () => {
-      const mockClient = getMockClient();
-      (mockClient.catalogApi.batchDeleteCatalogObjects as jest.Mock).mockResolvedValue({
+      mockCatalogApi.batchDeleteCatalogObjects.mockResolvedValue({
         statusCode: 200,
         result: {
           deletedObjectIds: ['obj-1', 'obj-2'],
@@ -336,8 +335,7 @@ describe('SquareService', () => {
     });
 
     it('should handle empty object list', async () => {
-      const mockClient = getMockClient();
-      (mockClient.catalogApi.batchDeleteCatalogObjects as jest.Mock).mockResolvedValue({
+      mockCatalogApi.batchDeleteCatalogObjects.mockResolvedValue({
         statusCode: 200,
         result: {
           deletedObjectIds: [],
@@ -357,8 +355,7 @@ describe('SquareService', () => {
     });
 
     it('should retrieve order successfully', async () => {
-      const mockClient = getMockClient();
-      (mockClient.ordersApi.retrieveOrder as jest.Mock).mockResolvedValue({
+      mockOrdersApi.retrieveOrder.mockResolvedValue({
         statusCode: 200,
         result: {
           order: { id: 'order-123', state: 'OPEN' },

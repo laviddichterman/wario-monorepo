@@ -4,8 +4,8 @@ import type { SeatingResource, SeatingShape } from '@wcp/wario-shared';
 
 /**
  * SeatingResource entity - represents a table or seating resource definition.
- * This defines the table's properties (name, capacity, shape, dimensions).
- * Location/rotation is stored in SeatingPlacementEntity.
+ * This defines the table's properties (name, capacity, shape, dimensions)
+ * as well as its position and rotation on the floor canvas.
  * Non-temporal as seating resources are configuration.
  */
 @Entity('seating_resource')
@@ -30,6 +30,15 @@ export class SeatingResourceEntity implements SeatingResource {
 
   @Column('int')
   shapeDimY!: number;
+
+  @Column('int', { default: 0 })
+  centerX!: number;
+
+  @Column('int', { default: 0 })
+  centerY!: number;
+
+  @Column('int', { default: 0 })
+  rotation!: number;
 
   @Column('boolean', { default: false })
   disabled!: boolean;

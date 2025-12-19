@@ -9,7 +9,7 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 import { ExponentialBackoff } from 'src/utils/exponential-backoff';
 
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 const OAuth2 = google.auth.OAuth2;
 

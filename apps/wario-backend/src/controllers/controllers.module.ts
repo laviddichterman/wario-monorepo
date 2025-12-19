@@ -16,7 +16,6 @@ import { ProductInstanceFunctionController } from './product-instance-function/p
 import { ProductController } from './product/product.controller';
 import { SeatingFloorController } from './seating-floor/seating-floor.controller';
 import { SeatingLayoutController } from './seating-layout/seating-layout.controller';
-import { SeatingPlacementController } from './seating-placement/seating-placement.controller';
 import { SeatingResourceController } from './seating-resource/seating-resource.controller';
 import { SeatingSectionController } from './seating-section/seating-section.controller';
 import { SettingsController } from './settings/settings.controller';
@@ -40,7 +39,6 @@ import { StoreCreditController } from './store-credit/store-credit.controller';
     SeatingResourceController,
     SeatingFloorController,
     SeatingLayoutController,
-    SeatingPlacementController,
     SeatingSectionController,
   ],
 })

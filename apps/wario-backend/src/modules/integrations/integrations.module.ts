@@ -1,40 +1,29 @@
 import { Global, Module } from '@nestjs/common';
 
-import { AppConfigurationModule } from 'src/config/app-configuration.module';
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
-import { MigrationFlagsService } from 'src/config/migration-flags.service';
+import { DataProviderModule } from '../data-provider/data-provider.module';
 
-import { RepositoryModule } from '../../repositories/repository.module';
-import { DatabaseManagerModule } from '../database-manager/database-manager.module';
-
-import { GoogleService } from './google/google.service';
-import { SquareService } from './square/square.service';
+import { GoogleModule } from './google/google.module';
+import { SquareModule } from './square/square.module';
 
 /**
- * IntegrationsModule encapsulates third-party service integrations.
+ * IntegrationsModule is a facade that re-exports Square and Google modules.
  *
- * Initialization Order:
- * 1. DatabaseManagerModule.onModuleInit() - migrations complete
- * 2. RepositoryModule - DB repos ready
- * 3. DataProviderService.onModuleInit() - settings loaded (if in this module)
- * 4. SquareService.onModuleInit() - Square client initialized
- * 5. GoogleService.onModuleInit() - Google APIs initialized
+ * Initialization Order (guaranteed by NestJS module imports):
+ * 1. DataProviderModule (DataProviderService.onModuleInit()) - settings loaded
+ * 2. SquareModule (SquareService.onModuleInit()) - Square client initialized
+ * 3. GoogleModule (GoogleService.onModuleInit()) - Google APIs initialized
  *
- * Services that depend on Square/Google should import this module.
+ * Each sub-module (SquareModule, GoogleModule) imports DataProviderModule,
+ * which guarantees DataProviderService.onModuleInit() completes BEFORE
+ * their respective service onModuleInit() hooks run.
  */
 @Global()
 @Module({
   imports: [
-    DatabaseManagerModule, // Ensures DB init complete before Square/Google
-    RepositoryModule, // Provides repository tokens for DataProviderService
-    AppConfigurationModule,
+    DataProviderModule, // Re-export for convenience
+    SquareModule,
+    GoogleModule,
   ],
-  providers: [
-    MigrationFlagsService,
-    DataProviderService, // Required by both Square and Google
-    SquareService,
-    GoogleService,
-  ],
-  exports: [MigrationFlagsService, DataProviderService, SquareService, GoogleService],
+  exports: [DataProviderModule, SquareModule, GoogleModule],
 })
-export class IntegrationsModule {}
+export class IntegrationsModule { }

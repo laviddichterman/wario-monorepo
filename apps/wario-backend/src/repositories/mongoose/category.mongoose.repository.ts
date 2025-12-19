@@ -11,7 +11,7 @@ export class CategoryMongooseRepository implements ICategoryRepository {
   constructor(
     @InjectModel('WCategorySchema')
     private readonly model: Model<ICategory>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<ICategory | null> {
     const doc = await this.model.findById(id).lean().exec();
@@ -25,10 +25,11 @@ export class CategoryMongooseRepository implements ICategoryRepository {
 
   async findByIds(ids: string[]): Promise<ICategory[]> {
     if (!ids.length) return [];
-    return this.model
+    const found = await this.model
       .find({ _id: { $in: ids } })
       .lean()
       .exec();
+    return found.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 
   async create(category: Omit<ICategory, 'id'>): Promise<ICategory> {

@@ -1,0 +1,189 @@
+/**
+ * SeatingToolbar - Toolbar for table add/rotate/delete and save actions.
+ *
+ * Quick-add buttons for Round (80x80 ellipse) and Square (80x80 rectangle) tables.
+ */
+
+import { memo, useCallback } from 'react';
+
+import CircleOutlined from '@mui/icons-material/CircleOutlined';
+import Delete from '@mui/icons-material/Delete';
+import RotateRight from '@mui/icons-material/RotateRight';
+import Save from '@mui/icons-material/Save';
+import SquareOutlined from '@mui/icons-material/SquareOutlined';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
+
+import { SeatingShape } from '@wcp/wario-shared/types';
+
+import { useCreateSeatingLayoutMutation, useUpdateSeatingLayoutMutation } from '@/hooks/useSeatingLayoutQuery';
+
+import { toast } from '@/components/snackbar';
+
+import {
+  useActiveSectionId,
+  useIsDirty,
+  useSeatingBuilderStore,
+  useSelectedResourceIds,
+} from '@/stores/useSeatingBuilderStore';
+
+// Default size for quick-add tables (80x80 total, so 40 radius)
+const QUICK_ADD_SIZE = 40;
+const QUICK_ADD_CAPACITY = 2;
+
+export const SeatingToolbar = memo(function SeatingToolbar() {
+  const activeSectionId = useActiveSectionId();
+  const selectedResourceIds = useSelectedResourceIds();
+  const isDirty = useIsDirty();
+
+  const addResource = useSeatingBuilderStore((s) => s.addResource);
+  const deleteResources = useSeatingBuilderStore((s) => s.deleteResources);
+  const rotateResources = useSeatingBuilderStore((s) => s.rotateResources);
+  const getNextTableNumber = useSeatingBuilderStore((s) => s.getNextTableNumber);
+  const findAvailablePosition = useSeatingBuilderStore((s) => s.findAvailablePosition);
+  const toLayout = useSeatingBuilderStore((s) => s.toLayout);
+  const markClean = useSeatingBuilderStore((s) => s.markClean);
+  const originalLayoutId = useSeatingBuilderStore((s) => s.originalLayoutId);
+
+  const createMutation = useCreateSeatingLayoutMutation();
+  const updateMutation = useUpdateSeatingLayoutMutation();
+
+  // Selection state helpers
+  const hasSelection = selectedResourceIds.length > 0;
+
+  // Quick-add handlers
+  const handleAddRoundTable = useCallback(() => {
+    if (!activeSectionId) return;
+
+    const tableNum = getNextTableNumber();
+    const position = findAvailablePosition(activeSectionId);
+
+    addResource({
+      sectionId: activeSectionId,
+      name: `Table ${String(tableNum)}`,
+      capacity: QUICK_ADD_CAPACITY,
+      shape: SeatingShape.ELLIPSE,
+      shapeDimX: QUICK_ADD_SIZE,
+      shapeDimY: QUICK_ADD_SIZE,
+      centerX: position.x,
+      centerY: position.y,
+    });
+
+    toast.success('Round table added');
+  }, [activeSectionId, addResource, getNextTableNumber, findAvailablePosition]);
+
+  const handleAddSquareTable = useCallback(() => {
+    if (!activeSectionId) return;
+
+    const tableNum = getNextTableNumber();
+    const position = findAvailablePosition(activeSectionId);
+
+    addResource({
+      sectionId: activeSectionId,
+      name: `Table ${String(tableNum)}`,
+      capacity: QUICK_ADD_CAPACITY,
+      shape: SeatingShape.RECTANGLE,
+      shapeDimX: QUICK_ADD_SIZE,
+      shapeDimY: QUICK_ADD_SIZE,
+      centerX: position.x,
+      centerY: position.y,
+    });
+
+    toast.success('Square table added');
+  }, [activeSectionId, addResource, getNextTableNumber, findAvailablePosition]);
+
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedResourceIds.length === 0) return;
+    deleteResources(selectedResourceIds);
+    toast.success(`Deleted ${String(selectedResourceIds.length)} table(s)`);
+  }, [selectedResourceIds, deleteResources]);
+
+  const handleRotateSelected = useCallback(() => {
+    if (selectedResourceIds.length === 0) return;
+    rotateResources(selectedResourceIds, 90);
+    toast.success('Rotated 90°');
+  }, [selectedResourceIds, rotateResources]);
+
+  const handleSave = useCallback(async () => {
+    const layout = toLayout();
+    const loadLayout = useSeatingBuilderStore.getState().loadLayout;
+
+    try {
+      if (originalLayoutId) {
+        await updateMutation.mutateAsync({ id: originalLayoutId, layout });
+        toast.success('Layout saved');
+        markClean();
+      } else {
+        // Create new layout and reload server response to get server-generated IDs
+        const created = await createMutation.mutateAsync(layout);
+        loadLayout(created);
+        toast.success('Layout created');
+        // loadLayout already marks as clean and sets originalLayoutId
+      }
+    } catch {
+      toast.error('Failed to save layout');
+    }
+  }, [toLayout, originalLayoutId, updateMutation, createMutation, markClean]);
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  return (
+    <Stack direction="row" alignItems="center" spacing={1} sx={{ py: 1 }}>
+      {/* Quick-Add Round Table */}
+      <Tooltip title="Add Round Table (80×80)">
+        <span>
+          <IconButton color="primary" onClick={handleAddRoundTable} disabled={!activeSectionId}>
+            <CircleOutlined />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      {/* Quick-Add Square Table */}
+      <Tooltip title="Add Square Table (80×80)">
+        <span>
+          <IconButton color="primary" onClick={handleAddSquareTable} disabled={!activeSectionId}>
+            <SquareOutlined />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      <Divider orientation="vertical" flexItem />
+
+      {/* Rotate */}
+      <Tooltip title="Rotate 90°">
+        <span>
+          <IconButton onClick={handleRotateSelected} disabled={!hasSelection}>
+            <RotateRight />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      {/* Delete */}
+      <Tooltip title="Delete Selected">
+        <span>
+          <IconButton onClick={handleDeleteSelected} disabled={!hasSelection} color="error">
+            <Delete />
+          </IconButton>
+        </span>
+      </Tooltip>
+
+      {/* Spacer */}
+      <Stack sx={{ flexGrow: 1 }} />
+
+      {/* Save Button */}
+      <Button
+        variant="contained"
+        startIcon={<Save />}
+        onClick={() => {
+          void handleSave();
+        }}
+        disabled={!isDirty || isSaving}
+      >
+        {isSaving ? 'Saving...' : 'Save Layout'}
+      </Button>
+    </Stack>
+  );
+});

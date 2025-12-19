@@ -1,6 +1,6 @@
 import { chunk } from 'es-toolkit/compat';
 import { type PinoLogger } from 'nestjs-pino';
-import type { BatchDeleteCatalogObjectsResponse, CatalogIdMapping, CatalogObject } from 'square';
+import type { BatchDeleteCatalogObjectsResponse, CatalogIdMapping, CatalogObject } from 'square/legacy';
 
 import {
   type AbstractExpressionModifierPlacementExpression,
@@ -20,7 +20,6 @@ import {
 } from '@wcp/wario-shared';
 
 import type { AppConfigService } from 'src/config/app-config.service';
-import type { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import {
   GetNonSquareExternalIds,
   GetSquareExternalIds,
@@ -29,6 +28,7 @@ import {
   ModifierTypeToSquareCatalogObject,
 } from 'src/config/square-wario-bridge';
 import { type DeleteProductInstanceFunctionResult } from 'src/modules/catalog-provider/catalog-function.functions';
+import type { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import type { IOptionTypeRepository } from '../../repositories/interfaces/option-type.repository.interface';
 import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';

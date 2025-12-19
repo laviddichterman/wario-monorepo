@@ -29,10 +29,10 @@ import {
 } from '@wcp/wario-shared';
 
 import { AppConfigService } from 'src/config/app-config.service';
-import { DataProviderService } from 'src/config/data-provider/data-provider.service';
 import { MigrationFlagsService } from 'src/config/migration-flags.service';
 import { GenerateSquareReverseMapping, ICatalogContext } from 'src/config/square-wario-bridge';
 import { UpsertProductInstanceProps } from 'src/modules/catalog-provider/catalog.types';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import {
   CATEGORY_REPOSITORY,
@@ -579,7 +579,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
   };
 
   RecomputeCatalog = () => {
-    this._logger.warn('Recomputing catalog');
+    this._logger.debug('Recomputing catalog');
     this.catalog = CatalogGenerator(
       Object.values(this.categories),
       this.modifier_types,
@@ -590,7 +590,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       this.orderInstanceFunctions,
       this.apiver,
     );
-    this._logger.warn(
+    this._logger.debug(
       { api: this.catalog.api, productCount: Object.keys(this.catalog.products).length },
       'Recomputed catalog',
     );
@@ -616,8 +616,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
 
     this.RecomputeCatalog();
 
-    const shouldSuppressSquareSync = true; //this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const shouldSuppressSquareSync = this.appConfig.suppressSquareInitSync || !this.squareService.isInitialized;
     if (shouldSuppressSquareSync) {
       if (!this.squareService.isInitialized) {
         this._logger.warn(
@@ -628,24 +627,41 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       }
     } else {
       await SquareSyncFns.checkAllPrinterGroupsSquareIdsAndFixIfNeeded(this.squareSyncDeps);
-      const modifierTypeIdsUpdated = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(
-        this.squareSyncDeps,
-      );
-      this.RecomputeCatalog();
-      await SquareSyncFns.checkAllProductsHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
-      if (modifierTypeIdsUpdated.length > 0) {
-        this._logger.info(
-          `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsUpdated.length.toString()} modifier types`,
+      try {
+        const modifierTypeIdsUpdated = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(
+          this.squareSyncDeps,
         );
-        await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsUpdated);
+        this.RecomputeCatalog();
+        try {
+          await SquareSyncFns.checkAllProductsHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
+        } catch (err: unknown) {
+          this._logger.error({ err }, 'Failed checking all products for consistency. Check that the Square token is correct.');
+        }
+        if (modifierTypeIdsUpdated.length > 0) {
+          this._logger.info(
+            `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsUpdated.length.toString()} modifier types`,
+          );
+          try {
+            await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsUpdated);
+          } catch (err: unknown) {
+            this._logger.error({ err }, 'Failed updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call');
+          }
+        }
+      } catch (err: unknown) {
+        this._logger.error({ err }, 'Failed checking all modifier types for consistency. Check that the Square token is correct.');
       }
+
     }
 
-    if (this.migrationFlags.requireSquareRebuild && this.squareService.isInitialized) {
-      this._logger.info('Forcing Square catalog rebuild on load');
-      await SquareSyncFns.forceSquareCatalogCompleteUpsert(this.squareSyncDeps);
-    } else if (this.migrationFlags.requireSquareRebuild) {
-      this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
+    try {
+      if (this.migrationFlags.requireSquareRebuild && this.squareService.isInitialized) {
+        this._logger.info('Forcing Square catalog rebuild on load');
+        await SquareSyncFns.forceSquareCatalogCompleteUpsert(this.squareSyncDeps);
+      } else if (this.migrationFlags.requireSquareRebuild) {
+        this._logger.warn('Square catalog rebuild requested but Square is not initialized, skipping.');
+      }
+    } catch (err: unknown) {
+      this._logger.error({ err }, 'Failed forcing Square catalog rebuild on load');
     }
 
     this._logger.info(
@@ -700,10 +716,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         };
       })
       .filter((update) => update.product !== null) as Array<{
-      piid: string;
-      product: IProduct;
-      productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
-    }>;
+        piid: string;
+        product: IProduct;
+        productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
+      }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();

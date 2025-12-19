@@ -4,7 +4,6 @@ export * from './key-value.entity';
 export * from './printer-group.entity';
 export * from './seating-floor.entity';
 export * from './seating-layout.entity';
-export * from './seating-placement.entity';
 export * from './seating-resource.entity';
 export * from './seating-section.entity';
 export * from './settings.entity';

@@ -62,6 +62,7 @@ export const navData: NavSectionProps['data'] = [
         ],
       },
       { title: 'Settings', path: paths.dashboard.general.settings, icon: ICONS.params },
+      { title: 'Seating Builder', path: paths.dashboard.seating.builder, icon: ICONS.kanban },
     ],
   },
   // /**

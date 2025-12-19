@@ -6,13 +6,12 @@ import type {
   SeatingFloor,
   SeatingLayout,
   SeatingLayoutSection,
-  SeatingPlacement,
   SeatingResource,
 } from '@wcp/wario-shared';
 
 import type { ISeatingLayoutRepository } from '../interfaces/seating-layout.repository.interface';
 
-type LayoutMetadata = Omit<SeatingLayout, 'floors' | 'sections' | 'resources' | 'placements'>;
+type LayoutMetadata = Omit<SeatingLayout, 'floors' | 'sections' | 'resources'>;
 
 @Injectable()
 export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository {
@@ -25,15 +24,14 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
     private readonly sectionModel: Model<SeatingLayoutSection>,
     @InjectModel('SeatingResource')
     private readonly resourceModel: Model<SeatingResource>,
-    @InjectModel('SeatingPlacement')
-    private readonly placementModel: Model<SeatingPlacement>,
-  ) {}
+  ) { }
 
   async findById(id: string): Promise<SeatingLayout | null> {
-    const layout = await this.layoutModel.findById(id).lean().exec();
+    const layout = await this.layoutModel.findById(id).exec();
     if (!layout) {
       return null;
     }
+    // Map Mongoose _id to id
     return this.assembleLayout(layout);
   }
 
@@ -43,7 +41,9 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
   }
 
   async create(layoutData: LayoutMetadata): Promise<SeatingLayout> {
-    const created = await this.layoutModel.create(layoutData);
+    // Only pass name - let Mongoose generate _id, don't use client-provided id
+    const { name } = layoutData;
+    const created = await this.layoutModel.create({ name });
     const doc = created.toObject();
     return this.assembleLayout({ id: doc._id.toString(), name: doc.name });
   }
@@ -62,11 +62,10 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
   }
 
   private async assembleLayout(layoutDoc: LayoutMetadata): Promise<SeatingLayout> {
-    const [floors, sections, resources, placements] = await Promise.all([
+    const [floors, sections, resources] = await Promise.all([
       this.floorModel.find().sort({ ordinal: 1 }).lean().exec(),
       this.sectionModel.find().sort({ ordinal: 1 }).lean().exec(),
       this.resourceModel.find().lean().exec(),
-      this.placementModel.find().lean().exec(),
     ]);
 
     return {
@@ -75,7 +74,6 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
       floors: floors.map((f) => ({ ...f, id: f._id.toString() })),
       sections: sections.map((s) => ({ ...s, id: s._id.toString() })),
       resources: resources.map((r) => ({ ...r, id: r._id.toString() })),
-      placements: placements.map((p) => ({ ...p, id: p._id.toString() })),
     };
   }
 }

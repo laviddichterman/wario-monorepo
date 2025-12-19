@@ -24,10 +24,10 @@ import {
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
 
 import { AppConfigService } from '../../../config/app-config.service';
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import { WOrderInstance } from '../../../infrastructure/database/mongoose/models/orders/WOrderInstance';
 
 const WCP = 'Windy City Pie';
@@ -58,7 +58,7 @@ export class OrderNotificationService {
     @Inject(GoogleService) private googleService: GoogleService,
     @Inject(CatalogProviderService) private catalogProviderService: CatalogProviderService,
     @Inject(DataProviderService) private dataProvider: DataProviderService,
-  ) {}
+  ) { }
 
   // Public methods
 
@@ -261,13 +261,12 @@ export class OrderNotificationService {
         } else {
           return `Received payment of ${MoneyToDisplayString(payment.amount, true)} from credit card ending in ${payment.payment.last4}.
           ${lineBreak}
-          ${
-            payment.payment.receiptUrl
+          ${payment.payment.receiptUrl
               ? isHtml
                 ? `<a href="${payment.payment.receiptUrl}">Receipt link</a>${lineBreak}`
                 : `Receipt: ${payment.payment.receiptUrl}${lineBreak}`
               : ''
-          }`;
+            }`;
         }
       case PaymentMethod.StoreCredit:
         return `Applied store credit value ${MoneyToDisplayString(payment.amount, true)} using code ${payment.payment.code}.${lineBreak}`;

@@ -7,16 +7,16 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 // import { startTransition } from 'react';
 import timelinePlugin from '@fullcalendar/timeline';
 
-import { DialogTitle } from '@mui/material';
+import { Box, Drawer, IconButton, Typography } from '@mui/material';
 import Card from '@mui/material/Card';
-import Dialog from '@mui/material/Dialog';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { useTheme } from '@mui/material/styles';
 
 import { useBoolean } from '@/hooks/useBoolean';
 import { useSetState } from '@/hooks/useSetState';
 
 import { fIsAfter, fIsBetween } from '@/utils/dateFunctions';
+
+import { Iconify } from '@/components/iconify';
 
 import { useTranslate } from '@/locales';
 
@@ -53,7 +53,6 @@ export function CalendarComponent({
   businessHours,
   datesSet, // NEW
 }: CalendarProps) {
-  const theme = useTheme();
   // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
   const openFilters = useBoolean();
 
@@ -99,31 +98,42 @@ export function CalendarComponent({
     flexDirection: 'column',
   };
 
-  const renderCreateFormDialog = () => (
-    <Dialog
-      fullWidth
-      // maxWidth="xs"
+  const renderOrderDrawer = () => (
+    <Drawer
+      anchor="right"
       open={openForm}
       onClose={onCloseForm}
-      transitionDuration={{
-        enter: theme.transitions.duration.shortest,
-        exit: theme.transitions.duration.shortest - 80,
-      }}
       slotProps={{
         paper: {
           sx: {
+            width: { xs: '100%', sm: 480 },
             display: 'flex',
-            overflow: 'hidden',
             flexDirection: 'column',
-            '& form': { ...flexStyles, minHeight: 0 },
+            overflow: 'hidden',
           },
         },
       }}
     >
-      <DialogTitle sx={{ minHeight: 76 }}>{openForm && <> {eventById(selectedEventId)?.title} event</>}</DialogTitle>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
+        <Typography variant="h6">{eventById(selectedEventId)?.title}</Typography>
+        <IconButton onClick={onCloseForm} edge="end">
+          <Iconify icon="mingcute:close-line" />
+        </IconButton>
+      </Box>
 
-      <CalendarForm currentEvent={eventById(selectedEventId) ?? null} onClose={onCloseForm} />
-    </Dialog>
+      <Box sx={{ flex: 1, overflow: 'auto', p: 0 }}>
+        <CalendarForm currentEvent={eventById(selectedEventId) ?? null} onClose={onCloseForm} />
+      </Box>
+    </Drawer>
   );
 
   const renderFiltersDrawer = () => (
@@ -199,7 +209,7 @@ export function CalendarComponent({
         </CalendarRoot>
       </Card>
 
-      {renderCreateFormDialog()}
+      {renderOrderDrawer()}
       {renderFiltersDrawer()}
     </>
   );

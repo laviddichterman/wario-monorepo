@@ -24,7 +24,7 @@ export class MongooseToNewMigrator {
     @InjectConnection() private readonly mongoConnection: Connection,
     @InjectPinoLogger(MongooseToNewMigrator.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   // ========== Helper Functions ==========
 
@@ -85,7 +85,7 @@ export class MongooseToNewMigrator {
     const productInstanceCollection = this.mongoConnection.collection('wproductinstanceschemas');
     const optionTypeCollection = this.mongoConnection.collection('woptiontypeschemas');
     const optionCollection = this.mongoConnection.collection('woptionschemas');
-    const settingsCollection = this.mongoConnection.collection('settings');
+    const settingsCollection = this.mongoConnection.collection('settingsschemas');
     const fulfillmentCollection = this.mongoConnection.collection('fulfillmentschemas');
     const orderCollection = this.mongoConnection.collection('orderinstances');
 

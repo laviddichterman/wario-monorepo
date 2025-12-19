@@ -16,9 +16,6 @@ We use three distinct libraries for state management. **Do not mix these up.**
 | **Global State** | **Zustand**        | App-wide singletons, session data, or complex multi-step wizards.      | `useCartStore`, `useUserStore`          |
 | **Atomic State** | **Jotai**          | Fine-grained, high-frequency UI state shared between a few components. | `dialogueStateAtom`, `productFormAtom`  |
 
-> [!WARNING]
-> **Redux is Banned**. If you see Redux code, it is legacy. Do not write new Redux code.
-
 ### When to Use Zustand vs. Jotai
 
 - **Use Zustand** if:

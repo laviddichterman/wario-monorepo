@@ -2,7 +2,7 @@
  * Pure functions for catalog square synchronization operations.
  */
 import type { PinoLogger } from 'nestjs-pino';
-import type { CatalogObject } from 'square';
+import type { CatalogObject } from 'square/legacy';
 
 import type {
   ICatalog,

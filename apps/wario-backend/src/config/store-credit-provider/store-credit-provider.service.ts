@@ -23,11 +23,11 @@ import {
   WDateUtils,
 } from '@wcp/wario-shared';
 
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
 
 import aes256gcm from '../crypto-aes-256-gcm';
-import { DataProviderService } from '../data-provider/data-provider.service';
 import { CreateOrderStoreCredit } from '../square-wario-bridge';
 
 const ACTIVE_SHEET = 'CurrentWARIO';
@@ -41,7 +41,7 @@ export class StoreCreditProviderService {
     @Inject(DataProviderService) private readonly dataProviderService: DataProviderService,
     @InjectPinoLogger(StoreCreditProviderService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   GenerateCreditCode = () => {
     const reference_id = Date.now().toString(36).toUpperCase();
@@ -242,11 +242,11 @@ export class StoreCreditProviderService {
     const valid = expiration === null || !isValid(expiration) || !isBefore(expiration, startOfDay(Date.now()));
     return valid
       ? {
-          valid: true,
-          credit_type: StoreCreditType[entry[2] as keyof typeof StoreCreditType],
-          lock: { enc: lock.enc, iv: ivAsString, auth: authAsString },
-          amount: { amount: balance, currency: CURRENCY.USD },
-        }
+        valid: true,
+        credit_type: StoreCreditType[entry[2] as keyof typeof StoreCreditType],
+        lock: { enc: lock.enc, iv: ivAsString, auth: authAsString },
+        amount: { amount: balance, currency: CURRENCY.USD },
+      }
       : { valid: false };
   };
 

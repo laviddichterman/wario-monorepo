@@ -10,7 +10,7 @@ import {
   type CatalogModifierList,
   type CatalogObject,
   type CatalogObjectBatch,
-} from 'square';
+} from 'square/legacy';
 
 import {
   type SquareProviderApiCallReturnSuccess,

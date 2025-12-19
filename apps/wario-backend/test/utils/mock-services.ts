@@ -1,8 +1,8 @@
-import { DataProviderService } from '../../src/config/data-provider/data-provider.service';
 import { StoreCreditProviderService } from '../../src/config/store-credit-provider/store-credit-provider.service';
 import { OrderManagerService } from '../../src/domain/order/order-manager/order-manager.service';
 import { SocketIoService } from '../../src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from '../../src/modules/catalog-provider/catalog-provider.service';
+import { DataProviderService } from '../../src/modules/data-provider/data-provider.service';
 import { GoogleService } from '../../src/modules/integrations/google/google.service';
 import { SquareService } from '../../src/modules/integrations/square/square.service';
 

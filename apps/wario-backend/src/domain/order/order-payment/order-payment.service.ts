@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { Order as SquareOrder } from 'square';
+import { Order as SquareOrder } from 'square/legacy';
 
 import {
   CURRENCY,
@@ -13,9 +13,9 @@ import {
   ValidateLockAndSpendSuccess,
 } from '@wcp/wario-shared';
 
+import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareError, SquareService } from 'src/modules/integrations/square/square.service';
 
-import { DataProviderService } from '../../../config/data-provider/data-provider.service';
 import { CreateOrderStoreCreditForRefund } from '../../../config/square-wario-bridge';
 import { StoreCreditProviderService } from '../../../config/store-credit-provider/store-credit-provider.service';
 
@@ -27,7 +27,7 @@ export class OrderPaymentService {
     private dataProvider: DataProviderService,
     @InjectPinoLogger(OrderPaymentService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   /**
    * Issues a store credit refund for an order cancellation.
@@ -40,18 +40,18 @@ export class OrderPaymentService {
   ): Promise<
     | ({ success: true } & { [k: string]: unknown })
     | {
-        success: false;
-        result: null;
-        error: SquareError[];
-      }
+      success: false;
+      result: null;
+      error: SquareError[];
+    }
   > => {
     let undoPaymentResponse:
       | ({ success: true } & { [k: string]: unknown })
       | {
-          success: false;
-          result: null;
-          error: SquareError[];
-        };
+        success: false;
+        result: null;
+        error: SquareError[];
+      };
     // refund to store credit
     const create_order_store_credit = await this.squareService.CreateOrder(
       CreateOrderStoreCreditForRefund(
@@ -87,16 +87,16 @@ export class OrderPaymentService {
           issue_credit_response.status === 200
             ? { success: true, result: issue_credit_response, error: [] }
             : {
-                success: false,
-                result: null,
-                error: [
-                  {
-                    category: 'API_ERROR',
-                    code: 'INTERNAL_SERVER_ERROR',
-                    detail: 'Failed issuing store credit',
-                  },
-                ],
-              };
+              success: false,
+              result: null,
+              error: [
+                {
+                  category: 'API_ERROR',
+                  code: 'INTERNAL_SERVER_ERROR',
+                  detail: 'Failed issuing store credit',
+                },
+              ],
+            };
       }
     }
     return undoPaymentResponse;
