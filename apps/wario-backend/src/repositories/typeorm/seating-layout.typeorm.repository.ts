@@ -24,7 +24,7 @@ export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository 
     private readonly sectionRepo: Repository<SeatingSectionEntity>,
     @InjectRepository(SeatingResourceEntity)
     private readonly resourceRepo: Repository<SeatingResourceEntity>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingLayout | null> {
     const layout = await this.layoutRepo.findOne({ where: { id } });
@@ -81,4 +81,3 @@ export class SeatingLayoutTypeOrmRepository implements ISeatingLayoutRepository 
     };
   }
 }
-

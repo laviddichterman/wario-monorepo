@@ -5,10 +5,9 @@ import { RepositoryModule } from '../../repositories/repository.module';
 
 import { SeatingService } from './seating.service';
 
-
 @Module({
   imports: [SettingsModule, RepositoryModule],
   providers: [SeatingService],
   exports: [SeatingService],
 })
-export class SeatingModule { }
+export class SeatingModule {}

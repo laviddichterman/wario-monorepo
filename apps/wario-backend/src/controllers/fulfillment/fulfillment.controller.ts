@@ -23,7 +23,7 @@ export class FulfillmentController {
     private readonly dataProvider: DataProviderService,
     private readonly catalogProvider: CatalogProviderService,
     private readonly socketIoService: SocketIoService,
-  ) { }
+  ) {}
 
   @Post()
   @Scopes('write:config')

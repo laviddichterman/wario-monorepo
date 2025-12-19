@@ -12,14 +12,7 @@ import type { App } from 'supertest/types';
 
 import { AppModule } from '../src/app.module';
 
-import {
-  createE2EClient,
-  type E2EClient,
-  expectError,
-  expectSuccess,
-  overrideE2EAuth,
-  TestUsers,
-} from './utils';
+import { createE2EClient, type E2EClient, expectError, expectSuccess, overrideE2EAuth, TestUsers } from './utils';
 
 describe('Order API (e2e)', () => {
   let app: INestApplication<App>;

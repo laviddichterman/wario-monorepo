@@ -2,12 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
-import type {
-  SeatingFloor,
-  SeatingLayout,
-  SeatingLayoutSection,
-  SeatingResource,
-} from '@wcp/wario-shared';
+import type { SeatingFloor, SeatingLayout, SeatingLayoutSection, SeatingResource } from '@wcp/wario-shared';
 
 import type { ISeatingLayoutRepository } from '../interfaces/seating-layout.repository.interface';
 
@@ -24,7 +19,7 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
     private readonly sectionModel: Model<SeatingLayoutSection>,
     @InjectModel('SeatingResource')
     private readonly resourceModel: Model<SeatingResource>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<SeatingLayout | null> {
     const layout = await this.layoutModel.findById(id).exec();

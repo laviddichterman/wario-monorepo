@@ -5,7 +5,7 @@ import { DataProviderService } from 'src/modules/data-provider/data-provider.ser
 
 @Controller('api/v1/config/kvstore')
 export class KeyValueStoreController {
-  constructor(private readonly dataProvider: DataProviderService) { }
+  constructor(private readonly dataProvider: DataProviderService) {}
 
   @Get()
   getKvStore() {

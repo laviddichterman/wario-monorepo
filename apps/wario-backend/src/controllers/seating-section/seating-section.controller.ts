@@ -17,7 +17,7 @@ import { SeatingService } from 'src/modules/seating/seating.service';
 
 @Controller('api/v1/config/seating-section')
 export class SeatingSectionController {
-  constructor(private readonly seatingService: SeatingService) { }
+  constructor(private readonly seatingService: SeatingService) {}
 
   @Get()
   async getSections() {

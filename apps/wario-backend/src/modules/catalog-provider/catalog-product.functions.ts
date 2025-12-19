@@ -383,31 +383,31 @@ export const batchUpsertProduct = async (
         return x.instance.displayFlags.pos.hide
           ? []
           : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              x.instance,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              existingSquareObjects,
-              ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
-            ),
-          ];
+              ProductInstanceToSquareCatalogObject(
+                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+                b.product,
+                x.instance,
+                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+                deps.catalogSelectors,
+                existingSquareObjects,
+                ('0000000' + (b.batchIter * 1000 + j)).slice(-7),
+              ),
+            ];
       });
       const insertCatalogObjects = b.insertInstances.flatMap((x, k) => {
         return x.instance.displayFlags.pos.hide
           ? []
           : [
-            ProductInstanceToSquareCatalogObject(
-              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-              b.product,
-              x.instance,
-              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-              deps.catalogSelectors,
-              [],
-              ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
-            ),
-          ];
+              ProductInstanceToSquareCatalogObject(
+                getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+                b.product,
+                x.instance,
+                b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+                deps.catalogSelectors,
+                [],
+                ('0000000' + (b.batchIter * 1000 + b.updateInstances.length + k)).slice(-7),
+              ),
+            ];
       });
       return [...updateCatalogObjects, ...insertCatalogObjects];
     }),
@@ -816,17 +816,17 @@ export const batchUpdateProductInstance = async (
       return mergedInstance.displayFlags.pos.hide
         ? []
         : [
-          ProductInstanceToSquareCatalogObject(
-            getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
-            b.product,
-            mergedInstance,
-            b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
-            deps.catalogSelectors,
-            existingSquareObjects,
+            ProductInstanceToSquareCatalogObject(
+              getLocationsConsidering3pFlag(deps, b.product.displayFlags.is3p),
+              b.product,
+              mergedInstance,
+              b.product.printerGroup ? deps.printerGroups[b.product.printerGroup] : null,
+              deps.catalogSelectors,
+              existingSquareObjects,
 
-            ('000' + i).slice(-3),
-          ),
-        ];
+              ('000' + i).slice(-3),
+            ),
+          ];
     })
     .flat();
   if (catalogObjects.length > 0) {

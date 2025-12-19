@@ -47,7 +47,7 @@ export class SeatingService {
     private readonly dataProvider: DataProviderService,
     @InjectPinoLogger(SeatingService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   // --- FLOORS ---
 
@@ -297,7 +297,10 @@ export class SeatingService {
     return this.seatingSectionRepository.create(section);
   }
 
-  async updateSection(id: string, update: Partial<Omit<SeatingLayoutSection, 'id'>>): Promise<SeatingLayoutSection | null> {
+  async updateSection(
+    id: string,
+    update: Partial<Omit<SeatingLayoutSection, 'id'>>,
+  ): Promise<SeatingLayoutSection | null> {
     return this.seatingSectionRepository.update(id, update);
   }
 
@@ -331,9 +334,6 @@ export class SeatingService {
 
   private async notifyResourceChanges() {
     await this.dataProvider.syncSeatingResources();
-    this.socketIoService.EmitSeatingResourcesTo(
-      this.socketIoService.server,
-      this.dataProvider.getSeatingResources()
-    );
+    this.socketIoService.EmitSeatingResourcesTo(this.socketIoService.server, this.dataProvider.getSeatingResources());
   }
 }

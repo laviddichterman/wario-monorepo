@@ -11,7 +11,7 @@ export class CategoryMongooseRepository implements ICategoryRepository {
   constructor(
     @InjectModel('WCategorySchema')
     private readonly model: Model<ICategory>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<ICategory | null> {
     const doc = await this.model.findById(id).lean().exec();

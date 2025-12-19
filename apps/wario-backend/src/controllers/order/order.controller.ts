@@ -38,7 +38,7 @@ function parseAndNormalizeDate(date: string | null | undefined) {
 
 @Controller('api/v1/order')
 export class OrderController {
-  constructor(private readonly orderManager: OrderManagerService) { }
+  constructor(private readonly orderManager: OrderManagerService) {}
 
   @Post()
   @Scopes('write:order')
@@ -160,8 +160,6 @@ export class OrderController {
     }
     return response;
   }
-
-
 
   @Get()
   @Scopes('read:order')

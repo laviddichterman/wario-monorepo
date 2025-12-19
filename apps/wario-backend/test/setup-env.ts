@@ -9,4 +9,3 @@ import { setE2EEnvironment } from './e2e-config';
 
 // Apply all E2E environment variables
 setE2EEnvironment();
-

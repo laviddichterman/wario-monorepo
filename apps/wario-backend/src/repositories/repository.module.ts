@@ -338,4 +338,4 @@ const mongooseRepos = [
     SETTINGS_REPOSITORY,
   ],
 })
-export class RepositoryModule { }
+export class RepositoryModule {}

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- Theme config utilities, not React components */
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
 import type { FilledInputClasses, FilledInputProps } from '@mui/material/FilledInput';
 import { filledInputClasses } from '@mui/material/FilledInput';

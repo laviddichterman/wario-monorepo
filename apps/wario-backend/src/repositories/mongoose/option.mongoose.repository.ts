@@ -11,7 +11,7 @@ export class OptionMongooseRepository implements IOptionRepository {
   constructor(
     @InjectModel('WOptionSchema')
     private readonly model: Model<IOption>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<IOption | null> {
     const doc = await this.model.findById(id).lean().exec();

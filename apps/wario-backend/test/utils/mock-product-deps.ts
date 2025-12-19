@@ -15,12 +15,11 @@ import {
 } from '@wcp/wario-shared/testing';
 
 import { type AppConfigService } from 'src/config/app-config.service';
+import type { ProductDeps } from 'src/modules/catalog-provider/catalog-product.functions';
+import type { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { type SquareService } from 'src/modules/integrations/square/square.service';
-
-import type { DataProviderService } from '../../src/config/data-provider/data-provider.service';
-import type { ProductDeps } from '../../src/modules/catalog-provider/catalog-product.functions';
-import type { IProductInstanceRepository } from '../../src/repositories/interfaces/product-instance.repository.interface';
-import type { IProductRepository } from '../../src/repositories/interfaces/product.repository.interface';
+import type { IProductInstanceRepository } from 'src/repositories/interfaces/product-instance.repository.interface';
+import type { IProductRepository } from 'src/repositories/interfaces/product.repository.interface';
 
 export interface CreateMockProductDepsOptions {
   catalog?: CreateMockCatalogOptions;
@@ -79,7 +78,8 @@ export function createMockProductDeps(options: CreateMockProductDepsOptions = {}
     BatchRetrieveCatalogObjects: jest.fn(),
   } as unknown as jest.Mocked<SquareService>;
 
-  const dataProviderService = {
+
+  const dataProviderService: jest.Mocked<DataProviderService> = {
     KeyValueConfig: {
       SQUARE_LOCATION: 'sq_loc_1',
       SQUARE_LOCATION_ALTERNATE: 'sq_loc_alt',
@@ -107,7 +107,8 @@ export function createMockProductDeps(options: CreateMockProductDepsOptions = {}
     productInstanceRepository,
     logger,
     squareService,
-    dataProviderService,
+
+    dataProviderService: dataProviderService as unknown as DataProviderService,
     appConfig,
     catalog,
     catalogSelectors,

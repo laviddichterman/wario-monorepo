@@ -13,7 +13,7 @@ export class OrderTypeOrmRepository implements IOrderRepository {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly repo: Repository<OrderEntity>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<WOrderInstance | null> {
     return this.repo.findOne({ where: { id } });

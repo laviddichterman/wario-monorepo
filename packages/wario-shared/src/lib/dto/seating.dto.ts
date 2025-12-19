@@ -186,8 +186,6 @@ export class SeatingResourceDto {
   disabled!: boolean;
 }
 
-
-
 /**
  * Aggregate DTO containing a complete seating layout configuration.
  *

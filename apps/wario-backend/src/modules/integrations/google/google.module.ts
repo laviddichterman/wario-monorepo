@@ -22,4 +22,4 @@ import { GoogleService } from './google.service';
   providers: [GoogleService],
   exports: [GoogleService],
 })
-export class GoogleModule { }
+export class GoogleModule {}

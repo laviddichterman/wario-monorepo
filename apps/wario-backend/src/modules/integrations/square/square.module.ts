@@ -23,10 +23,7 @@ import { SquareService } from './square.service';
     DataProviderModule, // MUST complete onModuleInit before SquareService
     AppConfigurationModule,
   ],
-  providers: [
-    MigrationFlagsService,
-    SquareService,
-  ],
+  providers: [MigrationFlagsService, SquareService],
   exports: [MigrationFlagsService, SquareService],
 })
-export class SquareModule { }
+export class SquareModule {}

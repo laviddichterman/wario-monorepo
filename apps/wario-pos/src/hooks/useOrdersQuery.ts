@@ -13,7 +13,12 @@ import {
   WOrderStatus,
 } from '@wcp/wario-shared/logic';
 import { type CoreCartEntry, type WOrderInstance } from '@wcp/wario-shared/types';
-import { useCatalogSelectors, useCurrentTime, useFulfillmentById, useValueFromFulfillmentById } from '@wcp/wario-ux-shared/query';
+import {
+  useCatalogSelectors,
+  useCurrentTime,
+  useFulfillmentById,
+  useValueFromFulfillmentById,
+} from '@wcp/wario-ux-shared/query';
 
 import axiosInstance from '@/utils/axios';
 import { uuidv4 } from '@/utils/uuidv4';
@@ -45,7 +50,6 @@ export type OrderQueryOptions = {
   endDate?: string | null;
   status?: WOrderStatus | null;
 };
-
 
 // Hook to get orders
 // Requires at least one constraint (date, endDate, or status) to prevent unbounded queries

@@ -1,6 +1,6 @@
 /**
  * Zustand store for Seating Builder state management.
- * 
+ *
  * DESIGN: Stores normalized state directly in Zustand for stable references.
  * The SeatingLayoutStore class is used only for load/save serialization,
  * not for runtime state management.
@@ -131,8 +131,6 @@ export interface SeatingBuilderState {
   findAvailablePosition: (sectionId: string, gridSize?: number) => { x: number; y: number };
 }
 
-
-
 //
 
 // ---------- Initial State Factory ----------
@@ -183,7 +181,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     loadLayout: (apiLayout) => {
       // Sort arrays by ordinal
       const sortByOrdinal = <T extends { ordinal: number; id: string }>(xs: T[]) =>
-        [...xs].sort((a, b) => (a.ordinal - b.ordinal) || a.id.localeCompare(b.id));
+        [...xs].sort((a, b) => a.ordinal - b.ordinal || a.id.localeCompare(b.id));
 
       // Parse floors
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -277,7 +275,9 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
       });
     },
 
-    markClean: () => { set({ isDirty: false }); },
+    markClean: () => {
+      set({ isDirty: false });
+    },
 
     setActiveFloor: (floorId) => {
       set((s) => {
@@ -507,7 +507,9 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
       });
     },
 
-    setInteractionMode: (mode) => { set({ interactionMode: mode }); },
+    setInteractionMode: (mode) => {
+      set({ interactionMode: mode });
+    },
 
     toLayout: (): UpsertSeatingLayoutRequest => {
       const { layout, serverEntityIds } = get();
@@ -541,11 +543,13 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
         .filter(Boolean)
         .map((floor) => cleanEntity(floor, !serverEntityIds.has(floor.id)));
 
-      const sections = Object.values(layout.sectionsById)
-        .map((section) => cleanEntity(section, !serverEntityIds.has(section.id)));
+      const sections = Object.values(layout.sectionsById).map((section) =>
+        cleanEntity(section, !serverEntityIds.has(section.id)),
+      );
 
-      const resources = Object.values(layout.resourcesById)
-        .map((resource) => cleanEntity(resource, !serverEntityIds.has(resource.id)));
+      const resources = Object.values(layout.resourcesById).map((resource) =>
+        cleanEntity(resource, !serverEntityIds.has(resource.id)),
+      );
 
       return {
         id: layout.id,

@@ -11,7 +11,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
   constructor(
     @InjectModel('WProductInstanceSchema')
     private readonly model: Model<IProductInstance>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<IProductInstance | null> {
     const doc = await this.model.findById(id).lean().exec();

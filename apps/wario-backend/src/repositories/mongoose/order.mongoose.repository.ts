@@ -11,7 +11,7 @@ export class OrderMongooseRepository implements IOrderRepository {
   constructor(
     @InjectModel('WOrderInstance')
     private readonly model: Model<WOrderInstance>,
-  ) { }
+  ) {}
 
   async findById(id: string): Promise<WOrderInstance | null> {
     const doc = await this.model.findById(id).lean().exec();

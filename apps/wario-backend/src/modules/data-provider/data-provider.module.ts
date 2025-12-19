@@ -26,4 +26,4 @@ import { DataProviderService } from './data-provider.service';
   providers: [DataProviderService],
   exports: [DataProviderService],
 })
-export class DataProviderModule { }
+export class DataProviderModule {}

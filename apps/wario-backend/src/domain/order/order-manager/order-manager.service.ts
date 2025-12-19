@@ -97,7 +97,7 @@ export class OrderManagerService {
     @Inject(PrinterService) private printerService: PrinterService,
     @InjectPinoLogger(OrderManagerService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Sends orders that are ready for fulfillment.
@@ -283,10 +283,10 @@ export class OrderManagerService {
           let undoPaymentResponse:
             | ({ success: true } & { [k: string]: unknown })
             | {
-              success: false;
-              result: null;
-              error: SquareError[];
-            };
+                success: false;
+                result: null;
+                error: SquareError[];
+              };
           if (payment.status === TenderBaseStatus.COMPLETED) {
             if (!refundToOriginalPayment && payment.t === PaymentMethod.CreditCard) {
               // refund to store credit

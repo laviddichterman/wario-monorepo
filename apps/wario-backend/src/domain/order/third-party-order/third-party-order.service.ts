@@ -37,7 +37,7 @@ export class ThirdPartyOrderService {
     private dataProvider: DataProviderService,
     @InjectPinoLogger(ThirdPartyOrderService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   /**
    * Maps a 3rd party source name to a short code.

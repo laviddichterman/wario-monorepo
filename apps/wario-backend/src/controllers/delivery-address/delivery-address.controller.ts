@@ -13,7 +13,7 @@ const client = new Client({});
 @Controller('api/v1/addresses')
 @Public()
 export class DeliveryAddressController {
-  constructor(private readonly dataProvider: DataProviderService) { }
+  constructor(private readonly dataProvider: DataProviderService) {}
 
   @Get()
   async validateAddress(@Body() body: DeliveryAddressValidateRequestDto) {

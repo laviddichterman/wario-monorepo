@@ -41,7 +41,7 @@ export class StoreCreditProviderService {
     @Inject(DataProviderService) private readonly dataProviderService: DataProviderService,
     @InjectPinoLogger(StoreCreditProviderService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   GenerateCreditCode = () => {
     const reference_id = Date.now().toString(36).toUpperCase();
@@ -242,11 +242,11 @@ export class StoreCreditProviderService {
     const valid = expiration === null || !isValid(expiration) || !isBefore(expiration, startOfDay(Date.now()));
     return valid
       ? {
-        valid: true,
-        credit_type: StoreCreditType[entry[2] as keyof typeof StoreCreditType],
-        lock: { enc: lock.enc, iv: ivAsString, auth: authAsString },
-        amount: { amount: balance, currency: CURRENCY.USD },
-      }
+          valid: true,
+          credit_type: StoreCreditType[entry[2] as keyof typeof StoreCreditType],
+          lock: { enc: lock.enc, iv: ivAsString, auth: authAsString },
+          amount: { amount: balance, currency: CURRENCY.USD },
+        }
       : { valid: false };
   };
 

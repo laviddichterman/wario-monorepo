@@ -26,4 +26,4 @@ import { SquareModule } from './square/square.module';
   ],
   exports: [DataProviderModule, SquareModule, GoogleModule],
 })
-export class IntegrationsModule { }
+export class IntegrationsModule {}

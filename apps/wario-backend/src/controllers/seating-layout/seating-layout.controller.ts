@@ -11,16 +11,13 @@ import {
   Post,
 } from '@nestjs/common';
 
-import {
-  CreateSeatingLayoutRequestDto,
-  UpdateSeatingLayoutRequestDto,
-} from '@wcp/wario-shared';
+import { CreateSeatingLayoutRequestDto, UpdateSeatingLayoutRequestDto } from '@wcp/wario-shared';
 
 import { SeatingService } from 'src/modules/seating/seating.service';
 
 @Controller('api/v1/config/seating-layout')
 export class SeatingLayoutController {
-  constructor(private readonly seatingService: SeatingService) { }
+  constructor(private readonly seatingService: SeatingService) {}
 
   @Get()
   async getLayouts() {

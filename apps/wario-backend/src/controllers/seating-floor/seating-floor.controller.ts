@@ -17,7 +17,7 @@ import { SeatingService } from 'src/modules/seating/seating.service';
 
 @Controller('api/v1/config/seating-floor')
 export class SeatingFloorController {
-  constructor(private readonly seatingService: SeatingService) { }
+  constructor(private readonly seatingService: SeatingService) {}
 
   @Get()
   async getFloors() {

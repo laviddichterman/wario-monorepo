@@ -419,4 +419,3 @@ export type UncommittedICategory = Omit<UncommittedICategoryDto, never>;
 export type CreateSeatingLayoutRequest = Omit<CreateSeatingLayoutRequestDto, never>;
 export type UpdateSeatingLayoutRequest = Omit<UpdateSeatingLayoutRequestDto, never>;
 export type UpsertSeatingLayoutRequest = CreateSeatingLayoutRequest | UpdateSeatingLayoutRequest;
-

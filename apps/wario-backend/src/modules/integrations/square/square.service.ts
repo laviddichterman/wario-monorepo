@@ -45,7 +45,7 @@ import {
   UpdateOrderRequest,
   UpdateOrderResponse,
   UpsertCatalogObjectRequest,
-  UpsertCatalogObjectResponse
+  UpsertCatalogObjectResponse,
 } from 'square/legacy';
 
 export { SquareError };
@@ -411,18 +411,18 @@ export class SquareService implements OnModuleInit {
       sourceId: storeCreditPayment ? 'EXTERNAL' : sourceId,
       externalDetails: storeCreditPayment
         ? {
-          type: 'STORED_BALANCE',
-          source: 'WARIO',
-          sourceId: storeCreditPayment.payment.code,
-        }
+            type: 'STORED_BALANCE',
+            source: 'WARIO',
+            sourceId: storeCreditPayment.payment.code,
+          }
         : undefined,
       ...(sourceId === 'CASH'
         ? {
-          cashDetails: {
-            buyerSuppliedMoney: IMoneyToBigIntMoney(amount),
-            changeBackMoney: { amount: 0n, currency: amount.currency },
-          },
-        }
+            cashDetails: {
+              buyerSuppliedMoney: IMoneyToBigIntMoney(amount),
+              changeBackMoney: { amount: 0n, currency: amount.currency },
+            },
+          }
         : {}),
       amountMoney: IMoneyToBigIntMoney({
         currency: amount.currency,
@@ -451,50 +451,50 @@ export class SquareService implements OnModuleInit {
         success: true,
         result: storeCreditPayment
           ? {
-            ...storeCreditPayment,
-            status: paymentStatus,
-            processorId,
-            payment: {
-              ...(storeCreditPayment.payment as StoreCreditPaymentData),
-            },
-          }
-          : response.result.payment.sourceType === 'CASH'
-            ? {
-              t: PaymentMethod.Cash,
-              createdAt,
-              processorId,
-              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
-              tipAmount: tipMoney,
+              ...storeCreditPayment,
               status: paymentStatus,
+              processorId,
               payment: {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                amountTendered: BigIntMoneyToIntMoney(response.result.payment.cashDetails!.buyerSuppliedMoney),
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                change: response.result.payment.cashDetails!.changeBackMoney
-                  ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                  BigIntMoneyToIntMoney(response.result.payment.cashDetails!.changeBackMoney)
-                  : { currency: amount.currency, amount: 0 },
+                ...(storeCreditPayment.payment as StoreCreditPaymentData),
               },
             }
+          : response.result.payment.sourceType === 'CASH'
+            ? {
+                t: PaymentMethod.Cash,
+                createdAt,
+                processorId,
+                amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
+                tipAmount: tipMoney,
+                status: paymentStatus,
+                payment: {
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  amountTendered: BigIntMoneyToIntMoney(response.result.payment.cashDetails!.buyerSuppliedMoney),
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  change: response.result.payment.cashDetails!.changeBackMoney
+                    ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                      BigIntMoneyToIntMoney(response.result.payment.cashDetails!.changeBackMoney)
+                    : { currency: amount.currency, amount: 0 },
+                },
+              }
             : {
-              t: PaymentMethod.CreditCard,
-              createdAt,
-              processorId,
-              amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
-              tipAmount: tipMoney,
-              status: paymentStatus,
-              payment: {
-                processor: 'SQUARE',
-                billingZip: response.result.payment.billingAddress?.postalCode ?? undefined,
-                cardBrand: response.result.payment.cardDetails?.card?.cardBrand ?? undefined,
-                expYear: response.result.payment.cardDetails?.card?.expYear?.toString(),
-                last4: response.result.payment.cardDetails?.card?.last4 ?? '',
-                receiptUrl:
-                  response.result.payment.receiptUrl ??
-                  `https://squareup.com/receipt/preview/${response.result.payment.id as string}`,
-                cardholderName: response.result.payment.cardDetails?.card?.cardholderName ?? undefined,
+                t: PaymentMethod.CreditCard,
+                createdAt,
+                processorId,
+                amount: BigIntMoneyToIntMoney(response.result.payment.totalMoney as Money),
+                tipAmount: tipMoney,
+                status: paymentStatus,
+                payment: {
+                  processor: 'SQUARE',
+                  billingZip: response.result.payment.billingAddress?.postalCode ?? undefined,
+                  cardBrand: response.result.payment.cardDetails?.card?.cardBrand ?? undefined,
+                  expYear: response.result.payment.cardDetails?.card?.expYear?.toString(),
+                  last4: response.result.payment.cardDetails?.card?.last4 ?? '',
+                  receiptUrl:
+                    response.result.payment.receiptUrl ??
+                    `https://squareup.com/receipt/preview/${response.result.payment.id as string}`,
+                  cardholderName: response.result.payment.cardDetails?.card?.cardholderName ?? undefined,
+                },
               },
-            },
         error: [],
       };
     }

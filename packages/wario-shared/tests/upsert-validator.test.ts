@@ -1,4 +1,3 @@
-
 import { IsNotEmpty, IsString, validateSync } from 'class-validator';
 
 import { IsUpsertArray } from '../src/lib/dto/api.dto';
@@ -47,10 +46,7 @@ describe('IsUpsertArray Validator', () => {
 
   it('should validate mixed Create and Update items', () => {
     const parent = new TestParentDto();
-    parent.items = [
-      { name: 'Create Item' },
-      { id: '123', name: 'Update Item' },
-    ];
+    parent.items = [{ name: 'Create Item' }, { id: '123', name: 'Update Item' }];
 
     const errors = validateSync(parent);
     expect(errors).toHaveLength(0);
@@ -108,6 +104,8 @@ describe('IsUpsertArray Validator', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     parent.items = 'fail' as any;
     const errors = validateSync(parent);
-    expect(errors[0].constraints?.IsUpsertArrayConstraint).toContain('valid TestCreateDto (no id) or TestUpdateDto (with id)');
+    expect(errors[0].constraints?.IsUpsertArrayConstraint).toContain(
+      'valid TestCreateDto (no id) or TestUpdateDto (with id)',
+    );
   });
 });
