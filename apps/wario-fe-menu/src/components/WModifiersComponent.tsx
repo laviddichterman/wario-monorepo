@@ -135,3 +135,5 @@ export function WModifiersComponent({ item, fulfillmentId }: { item: VisibleProd
     </>
   );
 }
+
+export default WModifiersComponent;

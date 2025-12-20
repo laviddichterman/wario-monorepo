@@ -26,9 +26,9 @@ import { Separator } from '@wcp/wario-ux-shared/styled';
 
 import { useCurrentTimeForDefaultFulfillment, useMenuCategoryId } from '@/hooks/useQuery';
 
-import { WMenuDataGrid } from './WMenuTableComponent';
-import { WModifiersComponent } from './WModifiersComponent';
-import { ProductDisplay } from './WProductComponent';
+const WMenuTableComponent = React.lazy(() => import('@/components/WMenuTableComponent'));
+const WModifiersComponent = React.lazy(() => import('@/components/WModifiersComponent'));
+const ProductDisplay = React.lazy(() => import('@/components/WProductComponent'));
 
 interface WMenuDisplayProps {
   categoryId: string;
@@ -246,7 +246,7 @@ WMenuRecursive = ({ categoryId, fulfillmentId }: WMenuDisplayProps) => {
         <WMenuFlat categoryId={categoryId} fulfillmentId={fulfillmentId} />
       );
     case CategoryDisplay.TABLE:
-      return <WMenuDataGrid categoryId={categoryId} fulfillmentId={fulfillmentId} />;
+      return <WMenuTableComponent categoryId={categoryId} fulfillmentId={fulfillmentId} />;
     case CategoryDisplay.FLAT:
     default:
       return <WMenuFlat categoryId={categoryId} fulfillmentId={fulfillmentId} />;
