@@ -13,7 +13,10 @@ import {
   type CreateIOptionTypeRequestBodyDto,
   type CreateIProductInstanceRequestDto,
   type CreateIProductRequestDto,
-  type CreateSeatingLayoutRequestDto,
+  type CreateSeatingFloorDto,
+  type CreateSeatingLayoutDto,
+  type CreateSeatingLayoutSectionDto,
+  type CreateSeatingResourceDto,
   type IssueStoreCreditRequestDto,
   type PaymentBasePartialDto,
   type PurchaseStoreCreditRequestBaseDto,
@@ -26,7 +29,10 @@ import {
   type UpdateIOptionTypeRequestBodyDto,
   type UpdateIProductInstanceRequestDto,
   type UpdateIProductRequestDto,
-  type UpdateSeatingLayoutRequestDto,
+  type UpdateSeatingFloorDto,
+  type UpdateSeatingLayoutDto,
+  type UpdateSeatingLayoutSectionDto,
+  type UpdateSeatingResourceDto,
   type ValidateLockAndSpendRequestDto,
 } from './dto/api.dto';
 import type { CategoryDisplayFlagsDto, ICategoryDto, UncommittedCategoryDto } from './dto/category.dto';
@@ -296,6 +302,14 @@ export type AbstractOrderExpression =
 export type OrderInstanceFunction = Omit<OrderInstanceFunctionDto, never>;
 
 // =============================================================================
+// Seating (from seating.dto.ts)
+// =============================================================================
+export type SeatingResource = Omit<SeatingResourceDto, never>;
+export type SeatingFloor = Omit<SeatingFloorDto, never>;
+export type SeatingLayoutSection = Omit<SeatingLayoutSectionDto, never>;
+export type SeatingLayout = Omit<SeatingLayoutDto, never>;
+
+// =============================================================================
 // Printer Group (from printer-group.dto.ts)
 // =============================================================================
 export type PrinterGroup = Omit<PrinterGroupDto, never>;
@@ -307,10 +321,6 @@ export type DeletePrinterGroupRequest = DeletePrinterGroupNoReassignRequest | De
 // Order Types (from order.dto.ts)
 // =============================================================================
 
-export type SeatingResource = Omit<SeatingResourceDto, never>;
-export type SeatingFloor = Omit<SeatingFloorDto, never>;
-export type SeatingLayoutSection = Omit<SeatingLayoutSectionDto, never>;
-export type SeatingLayout = Omit<SeatingLayoutDto, never>;
 export type WSeatingInfo = Omit<WSeatingInfoDto, never>;
 export type DineInInfo = Omit<DineInInfoDto, never>;
 export type ThirdPartyInfo = Omit<ThirdPartyInfoDto, never>;
@@ -318,7 +328,7 @@ export type FulfillmentTime = Omit<FulfillmentTimeDto, never>;
 export type FulfillmentData = DistributiveOmit<FulfillmentDataDto, never>;
 export type CustomerInfoData = Omit<CustomerInfoDataDto, never>;
 export type WCPProductV2 = Omit<WCPProductV2Dto, never>;
-export type CoreCartEntry<T = WCPProductV2> = Omit<CoreCartEntryDto, 'product'> & {
+export type CoreCartEntry<T = WCPProductV2> = Omit<Omit<CoreCartEntryDto, never>, 'product'> & {
   product: T;
 };
 export type Metrics = Omit<MetricsDto, never>;
@@ -415,7 +425,27 @@ export type UpsertIOptionTypeRequestBody = CreateIOptionTypeRequestBody | Update
 // Category DTOs
 export type UncommittedICategory = Omit<UncommittedICategoryDto, never>;
 
-// Seating Layout DTOs
-export type CreateSeatingLayoutRequest = Omit<CreateSeatingLayoutRequestDto, never>;
-export type UpdateSeatingLayoutRequest = Omit<UpdateSeatingLayoutRequestDto, never>;
-export type UpsertSeatingLayoutRequest = CreateSeatingLayoutRequest | UpdateSeatingLayoutRequest;
+// --- Seating Layout DTOs ---
+export type CreateSeatingLayout = Omit<CreateSeatingLayoutDto, never>;
+export type UpdateSeatingLayout = Omit<UpdateSeatingLayoutDto, never>;
+export type UpsertSeatingLayout = CreateSeatingLayout | UpdateSeatingLayout;
+
+
+// Seating Floors
+export type CreateSeatingFloor = Omit<CreateSeatingFloorDto, never>;
+export type UpdateSeatingFloor = Omit<UpdateSeatingFloorDto, never>;
+export type UpsertSeatingFloor = CreateSeatingFloor | UpdateSeatingFloor;
+export type UpsertSeatingFloorArrayElement = UpsertSeatingFloor | string;
+
+
+// Seating Sections
+export type CreateSeatingLayoutSection = Omit<CreateSeatingLayoutSectionDto, never>;
+export type UpdateSeatingLayoutSection = Omit<UpdateSeatingLayoutSectionDto, never>;
+export type UpsertSeatingLayoutSection = CreateSeatingLayoutSection | UpdateSeatingLayoutSection;
+export type UpsertSeatingLayoutSectionArrayElement = UpsertSeatingLayoutSection | string;
+
+// Seating Resources
+export type CreateSeatingResource = Omit<CreateSeatingResourceDto, never>;
+export type UpdateSeatingResource = Omit<UpdateSeatingResourceDto, never>;
+export type UpsertSeatingResource = CreateSeatingResource | UpdateSeatingResource;
+export type UpsertSeatingResourceArrayElement = UpsertSeatingResource | string;

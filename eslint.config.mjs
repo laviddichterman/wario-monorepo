@@ -1,38 +1,29 @@
-import { parser as tsParser, plugin as tseslint, configs as typescriptEslintConfigs } from "typescript-eslint";
-import react from "eslint-plugin-react";
-import reactHooks from "eslint-plugin-react-hooks";
-import reactRefresh from "eslint-plugin-react-refresh";
-import packageJsonPlugin from "eslint-plugin-package-json";
-import jsoncParser from "jsonc-eslint-parser";
-import perfectionist from "eslint-plugin-perfectionist";
-import pluginQuery from '@tanstack/eslint-plugin-query'
+import { parser as tsParser, plugin as tseslint, configs as typescriptEslintConfigs } from 'typescript-eslint';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import packageJsonPlugin from 'eslint-plugin-package-json';
+import jsoncParser from 'jsonc-eslint-parser';
+import perfectionist from 'eslint-plugin-perfectionist';
+import pluginQuery from '@tanstack/eslint-plugin-query';
 import globals from 'globals';
-import { defineConfig } from "eslint/config";
-import eslintConfigPrettier from "eslint-config-prettier";
+import { defineConfig } from 'eslint/config';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 const basicRules = () => {
   return {
-    "@typescript-eslint/consistent-type-imports": [
-      "warn",
-      { fixStyle: "inline-type-imports" },
-    ],
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
-    ],
-    "react/jsx-no-target-blank": "error",
-    "react-refresh/only-export-components": [
-      "warn",
-      { allowConstantExport: true },
-    ],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
-    "@typescript-eslint/no-extraneous-class": [
-      "error",
+    '@typescript-eslint/consistent-type-imports': ['warn', { fixStyle: 'inline-type-imports' }],
+    '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    'react/jsx-no-target-blank': 'error',
+    'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+    '@typescript-eslint/no-extraneous-class': [
+      'error',
       {
-        "allowWithDecorator": true
-      }
-    ]
+        allowWithDecorator: true,
+      },
+    ],
   };
 };
 
@@ -51,89 +42,93 @@ const sortImportsRules = () => {
 
   return {
     // 1) Whole import statement ordering
-    'perfectionist/sort-imports': ['warn', {
-      type: 'natural',
-      ignoreCase: true,
-      environment: 'node',
-      // classify internal paths (monorepo + common app aliases)
-      internalPattern: ['^@/.+', '^src/.+', '^\.\./', '^\./'],
+    'perfectionist/sort-imports': [
+      'warn',
+      {
+        type: 'natural',
+        ignoreCase: true,
+        environment: 'node',
+        // classify internal paths (monorepo + common app aliases)
+        internalPattern: ['^@/.+', '^src/.+', '^\.\./', '^\./'],
 
-      // one blank line between groups (stable, readable)
-      newlinesBetween: 1,
+        // one blank line between groups (stable, readable)
+        newlinesBetween: 1,
 
-      // explicit, predictable groups (value/type pairs)
-      groups: [
-        'side-effect-style',                 // e.g. import './reset.css'
-        'side-effect-import',                // e.g. import './setup'
-        ['value-builtin', 'type-builtin'],
-        ['value-external', 'type-external'],
+        // explicit, predictable groups (value/type pairs)
+        groups: [
+          'side-effect-style', // e.g. import './reset.css'
+          'side-effect-import', // e.g. import './setup'
+          ['value-builtin', 'type-builtin'],
+          ['value-external', 'type-external'],
 
-        // your custom buckets come next
-        groups.mui,
-        groups.wcp,
-        groups.routes,
-        groups.hooks,
-        groups.utils,
-        groups.components,
-        groups.sections,
-        groups.auth,
-        groups.types,
+          // your custom buckets come next
+          groups.mui,
+          groups.wcp,
+          groups.routes,
+          groups.hooks,
+          groups.utils,
+          groups.components,
+          groups.sections,
+          groups.auth,
+          groups.types,
 
-        ['value-internal', 'type-internal'],
-        ['value-parent', 'type-parent'],
-        ['value-sibling', 'type-sibling'],
-        ['value-index', 'type-index'],
+          ['value-internal', 'type-internal'],
+          ['value-parent', 'type-parent'],
+          ['value-sibling', 'type-sibling'],
+          ['value-index', 'type-index'],
 
-        'value-style',
-        'unknown'
-      ],
+          'value-style',
+          'unknown',
+        ],
 
-      // mirror patterns for value and type, so type-only imports stick with their group
-      customGroups: {
-        value: {
-          [groups.mui]: ['^@mui/.+'],
-          [groups.wcp]: ['^@wcp/.+'],
-          [groups.auth]: ['^src/auth/.+', '^@/auth/.+'],
-          [groups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
-          [groups.utils]: ['^src/utils/.+', '^@/utils/.+'],
-          [groups.types]: ['^src/types/.+', '^@/types/.+'],
-          [groups.routes]: ['^src/routes/.+', '^@/routes/.+'],
-          [groups.sections]: ['^src/sections/.+', '^@/sections/.+'],
-          [groups.components]: ['^src/components/.+', '^@/components/.+'],
-        },
-        type: {
-          [groups.mui]: ['^@mui/.+'],
-          [groups.wcp]: ['^@wcp/.+'],
-          [groups.auth]: ['^src/auth/.+', '^@/auth/.+'],
-          [groups.hooks]: ['^src/hooks/.+', '^@/hooks/.+'],
-          [groups.utils]: ['^src/utils/.+', '^@/utils/.+'],
-          [groups.types]: ['^src/types/.+', '^@/types/.+'],
-          [groups.routes]: ['^src/routes/.+', '^@/routes/.+'],
-          [groups.sections]: ['^src/sections/.+', '^@/sections/.+'],
-          [groups.components]: ['^src/components/.+', '^@/components/.+'],
-        }
-      }
-    }],
+        // Array-based customGroups for perfectionist v5+ (value imports first, then type imports)
+        customGroups: [
+          // Value imports
+          { groupName: groups.mui, elementNamePattern: '^@mui/.+' },
+          { groupName: groups.wcp, elementNamePattern: '^@wcp/.+' },
+          { groupName: groups.auth, elementNamePattern: ['^src/auth/.+', '^@/auth/.+'] },
+          { groupName: groups.hooks, elementNamePattern: ['^src/hooks/.+', '^@/hooks/.+'] },
+          { groupName: groups.utils, elementNamePattern: ['^src/utils/.+', '^@/utils/.+'] },
+          { groupName: groups.types, elementNamePattern: ['^src/types/.+', '^@/types/.+'] },
+          { groupName: groups.routes, elementNamePattern: ['^src/routes/.+', '^@/routes/.+'] },
+          { groupName: groups.sections, elementNamePattern: ['^src/sections/.+', '^@/sections/.+'] },
+          { groupName: groups.components, elementNamePattern: ['^src/components/.+', '^@/components/.+'] },
+          // Type imports (same patterns with selector: 'type')
+          { groupName: groups.mui, elementNamePattern: '^@mui/.+', selector: 'type' },
+          { groupName: groups.wcp, elementNamePattern: '^@wcp/.+', selector: 'type' },
+          { groupName: groups.auth, elementNamePattern: ['^src/auth/.+', '^@/auth/.+'], selector: 'type' },
+          { groupName: groups.hooks, elementNamePattern: ['^src/hooks/.+', '^@/hooks/.+'], selector: 'type' },
+          { groupName: groups.utils, elementNamePattern: ['^src/utils/.+', '^@/utils/.+'], selector: 'type' },
+          { groupName: groups.types, elementNamePattern: ['^src/types/.+', '^@/types/.+'], selector: 'type' },
+          { groupName: groups.routes, elementNamePattern: ['^src/routes/.+', '^@/routes/.+'], selector: 'type' },
+          { groupName: groups.sections, elementNamePattern: ['^src/sections/.+', '^@/sections/.+'], selector: 'type' },
+          {
+            groupName: groups.components,
+            elementNamePattern: ['^src/components/.+', '^@/components/.+'],
+            selector: 'type',
+          },
+        ],
+      },
+    ],
 
     // 2) Named specifier ordering (inside a single import/export)
     'perfectionist/sort-named-imports': ['warn', { type: 'natural', order: 'asc', ignoreCase: true }],
     'perfectionist/sort-named-exports': ['warn', { type: 'natural', order: 'asc', ignoreCase: true }],
 
     // 3) Exports order (by statement)
-    'perfectionist/sort-exports': ['warn', { type: 'natural', order: 'asc', groupKind: 'values-first' }],
+    'perfectionist/sort-exports': ['warn', { type: 'natural', order: 'asc' }],
   };
 };
 
-
 const packageJsonConfig = {
-  files: ["**/package.json"],
+  files: ['**/package.json'],
   languageOptions: { parser: jsoncParser },
-  plugins: { "package-json": packageJsonPlugin },
+  plugins: { 'package-json': packageJsonPlugin },
   rules: {
     // Canonical top-level key order (name, version, scripts, deps, etc.)
-    "package-json/order-properties": "error",
+    'package-json/order-properties': 'error',
     // Alphabetize dependency blocks (dependencies, devDependencies, peerDependencies, etc.)
-    "package-json/sort-collections": "error",
+    'package-json/sort-collections': 'error',
   },
 };
 
@@ -148,28 +143,25 @@ const tsConfig = {
     },
   },
   plugins: {
-    "@typescript-eslint": tseslint,
+    '@typescript-eslint': tseslint,
     react,
-    "react-hooks": reactHooks,
-    "react-refresh": reactRefresh,
+    'react-hooks': reactHooks,
+    'react-refresh': reactRefresh,
     perfectionist,
     '@tanstack/query': pluginQuery,
-
   },
-  settings: { react: { version: "detect" } },
-  extends: [
-    typescriptEslintConfigs.strictTypeChecked
-  ],
+  settings: { react: { version: 'detect' } },
+  extends: [typescriptEslintConfigs.strictTypeChecked],
   rules: {
     ...basicRules(),
     ...sortImportsRules(),
     '@tanstack/query/exhaustive-deps': 'error',
-  }
+  },
 };
 
 export default defineConfig([
   {
-    ignores: ["**/dist/**", "**/build/**", "**/.next/**", "**/coverage/**", "**/node_modules/**", "**/eslint.config.*"],
+    ignores: ['**/dist/**', '**/build/**', '**/.next/**', '**/coverage/**', '**/node_modules/**', '**/eslint.config.*'],
   },
   tsConfig,
   packageJsonConfig,

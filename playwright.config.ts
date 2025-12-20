@@ -123,6 +123,15 @@ export default defineConfig({
             reuseExistingServer: !process.env.CI,
             timeout: 120000,
           },
+          {
+            command: 'pnpm pos:dev',
+            url: `http://localhost:${APP_PORTS.pos}`,
+            reuseExistingServer: !process.env.CI,
+            timeout: 120000,
+            env: {
+              VITE_AUTH_SKIP: 'true',
+            },
+          },
         ],
       }),
 });

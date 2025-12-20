@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -8,7 +7,6 @@ import {
   IsNumber,
   IsString,
   Min,
-  ValidateNested,
 } from 'class-validator';
 
 import { SeatingShape, WSeatingStatus } from '../enums';
@@ -26,7 +24,6 @@ import { SeatingShape, WSeatingStatus } from '../enums';
  * const floor: SeatingFloor = {
  *   id: 'floor-1',
  *   name: 'Main Floor',
- *   ordinal: 0,
  *   disabled: false,
  * };
  * ```
@@ -42,14 +39,15 @@ export class SeatingFloorDto {
   @IsNotEmpty()
   name!: string;
 
-  /** Sort order for display (0-indexed, lower values appear first) */
-  @IsInt()
-  @Min(0)
-  ordinal!: number;
-
   /** If true, floor is hidden from staff/customer views but retained in data */
   @IsBoolean()
   disabled!: boolean;
+
+
+  /** All section IDs on this floor, in display order */
+  @IsArray()
+  @IsString({ each: true })
+  sections!: string[];
 }
 
 /**
@@ -74,33 +72,21 @@ export class SeatingLayoutSectionDto {
   @IsNotEmpty()
   id!: string;
 
-  /** Parent floor ID (foreign key to SeatingFloorDto.id) */
-  @IsString()
-  @IsNotEmpty()
-  floorId!: string;
-
-  /** Sort order within the parent floor */
-  @IsInt()
-  @Min(0)
-  ordinal!: number;
-
   /** Human-readable display name */
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  /** If true, section is hidden but retained in data */
-  @IsBoolean()
-  disabled!: boolean;
+  /** All resource IDs in this section, in display order */
+  @IsArray()
+  @IsString({ each: true })
+  resources!: string[];
 }
-
-// Seating
 
 /**
  * Represents a table or seating resource definition.
  *
  * This defines the table's intrinsic properties (name, capacity, shape, size).
- * The table's position on the floor canvas is stored separately in `SeatingPlacementDto`.
  *
  * **Shape Dimensions (`shapeDimX`, `shapeDimY`)**:
  * - For `RECTANGLE`: half-width and half-height (full table is 2x these values)
@@ -110,11 +96,10 @@ export class SeatingLayoutSectionDto {
  * @example
  * ```ts
  * const table: SeatingResource = {
- *   id: 'table-1',
+ *   id: 'GeneratedUUID',
  *   name: 'Table 1',
  *   capacity: 4,
  *   shape: SeatingShape.RECTANGLE,
- *   sectionId: 'sec-1',
  *   shapeDimX: 30,  // half-width = 30, full width = 60
  *   shapeDimY: 20,  // half-height = 20, full height = 40
  *   disabled: false,
@@ -144,11 +129,6 @@ export class SeatingResourceDto {
   @IsEnum(SeatingShape)
   @IsNotEmpty()
   shape!: SeatingShape;
-
-  /** Parent section ID (foreign key to SeatingLayoutSectionDto.id) */
-  @IsString()
-  @IsNotEmpty()
-  sectionId!: string;
 
   /**
    * X dimension in layout units (half-width for rect, x-radius for ellipse).
@@ -197,10 +177,7 @@ export class SeatingResourceDto {
  * const layout: SeatingLayout = {
  *   id: 'layout-main',
  *   name: 'Main Restaurant Layout',
- *   floors: [...],
- *   sections: [...],
- *   resources: [...],
- *   placements: [...],
+ *   floors: [...]
  * };
  * ```
  */
@@ -215,23 +192,10 @@ export class SeatingLayoutDto {
   @IsNotEmpty()
   name!: string;
 
-  /** All floors in this layout, ordered by ordinal */
+  /** All floor IDs in this layout, in display order */
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SeatingFloorDto)
-  floors!: SeatingFloorDto[];
-
-  /** All sections across all floors */
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SeatingLayoutSectionDto)
-  sections!: SeatingLayoutSectionDto[];
-
-  /** All table/resource definitions (includes position and rotation) */
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SeatingResourceDto)
-  resources!: SeatingResourceDto[];
+  @IsString({ each: true })
+  floors!: string[];
 }
 
 /**

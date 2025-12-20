@@ -78,7 +78,6 @@ export function createMockProductDeps(options: CreateMockProductDepsOptions = {}
     BatchRetrieveCatalogObjects: jest.fn(),
   } as unknown as jest.Mocked<SquareService>;
 
-
   const dataProviderService: jest.Mocked<DataProviderService> = {
     KeyValueConfig: {
       SQUARE_LOCATION: 'sq_loc_1',

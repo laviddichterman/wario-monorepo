@@ -12,12 +12,19 @@ import {
   BatchUpsertProductRequestDto,
   CreateIProductInstanceRequestDto,
   CreateIProductRequestDto,
+  CreateSeatingLayoutRequestDto,
   IsUpsertArrayConstraint,
   IsUpsertProductInstanceArrayConstraint,
+
   UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
 } from '../src/lib/dto/api.dto';
-import { PriceDisplay } from '../src/lib/enums';
+import {   // Seating
+  type SeatingFloorDto,
+  type SeatingLayoutSectionDto,
+  type SeatingResourceDto,
+} from '../src/lib/dto/seating.dto';
+import { PriceDisplay, SeatingShape } from '../src/lib/enums';
 
 // ============================================================================
 // Test Helpers
@@ -686,5 +693,129 @@ describe('BatchUpsertProductRequestDto', () => {
       const productsError = errors.find((e) => e.property === 'products');
       expect(productsError).toBeDefined();
     });
+  });
+});
+
+// ============================================================================
+// Seating Layout Validation Tests
+// ============================================================================
+
+describe('CreateSeatingLayoutRequestDto', () => {
+  function createValidFloor(): Omit<SeatingFloorDto, 'id'> {
+    return {
+      name: 'Test Floor',
+      ordinal: 0,
+      disabled: false,
+    };
+  }
+
+  it('should pass validation with new floor (no id)', () => {
+    const payload = {
+      name: 'New Layout',
+      floors: [createValidFloor()], // No ID
+      sections: [],
+      resources: [],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  it('should pass validation with existing floor (with id)', () => {
+    const payload = {
+      name: 'Update Layout',
+      floors: [{ id: 'floor-1', ...createValidFloor() }], // With ID
+      sections: [],
+      resources: [],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  it('should fail validation with invalid floor', () => {
+    const payload = {
+      name: 'Invalid Layout',
+      floors: [{ ordinal: 0 }], // Missing required fields (name)
+      sections: [],
+      resources: [],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].property).toBe('floors');
+  });
+
+  function createValidSection(): Omit<SeatingLayoutSectionDto, 'id'> {
+    return {
+      name: 'Test Section',
+      floorId: 'floor-1',
+      ordinal: 0,
+      disabled: false,
+    };
+  }
+
+  it('should pass validation with new section (no id)', () => {
+    const payload = {
+      name: 'Layout with Section',
+      floors: [],
+      sections: [createValidSection()],
+      resources: [],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  function createValidResource(): Omit<SeatingResourceDto, 'id'> {
+    return {
+      name: 'Test Table',
+      sectionId: 'section-1',
+      shape: SeatingShape.RECTANGLE,
+      centerX: 10,
+      centerY: 10,
+      rotation: 0,
+      shapeDimX: 50,
+      shapeDimY: 50,
+      capacity: 4,
+      disabled: false,
+    };
+  }
+
+  it('should pass validation with new resource (no id)', () => {
+    const payload = {
+      name: 'Layout with Resource',
+      floors: [],
+      sections: [],
+      resources: [createValidResource()],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  it('should fail validation with empty string id', () => {
+    const payload = {
+      name: 'Invalid Layout',
+      floors: [{ id: '', name: 'Floor', ordinal: 0, disabled: false }],
+      sections: [],
+      resources: [],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0].property).toBe('floors');
   });
 });

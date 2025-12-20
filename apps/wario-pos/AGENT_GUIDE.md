@@ -89,6 +89,38 @@ Located in `src/sections/order`.
 
 - **Real-time**: Leverages `useSocketData` (from `wario-ux-shared`) to listen for 'order:created' events, triggering a query refetch.
 
+### Seating Layout Builder
+
+Located in `src/sections/seating`. A touch-optimized floor plan editor for configuring restaurant layouts.
+
+**State Management**: Uses **Zustand** (`src/stores/useSeatingBuilderStore.ts`) for complex local state with:
+
+- Normalized layout data (floors, sections, resources)
+- Undo/redo history (50-level snapshots)
+- Selection and drag state
+- Dirty tracking for unsaved changes
+
+**Key Components**:
+| Component | Purpose |
+|-----------|---------|
+| `SeatingBuilderView` | Main view with layout selector, floor/section tabs |
+| `SeatingCanvas` | SVG canvas with dnd-kit, pan/zoom, drag constraints |
+| `SeatingToolbar` | Quick-add, undo/redo, rotate, delete, save |
+| `DraggableResource` | Individual table with resize handles |
+| `TableEditDialog` | Double-click edit for table properties |
+
+**API Hooks** (`src/hooks/useSeatingLayoutQuery.ts`):
+
+- `useSeatingLayoutsQuery` / `useSeatingLayoutQuery(id)` - List and detail fetching
+- `useCreateSeatingLayoutMutation` / `useUpdateSeatingLayoutMutation` / `useDeleteSeatingLayoutMutation`
+
+**Utilities** (`src/sections/seating/utils/bounding-utils.ts`):
+
+- Shape-aware bounding box calculations for rotated rectangles/ellipses
+- Canvas boundary clamping for drag, resize, and position edits
+
+**Documentation**: See `documentation/seating-layout-builder/` for detailed task tracker, implementation plans, and walkthroughs.
+
 ## 4. Developer Guide
 
 ### Running Locally

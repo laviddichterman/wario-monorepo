@@ -18,6 +18,8 @@ import {
   type ValidatorConstraintInterface,
 } from 'class-validator';
 
+import { SeatingFloorDto, SeatingLayoutDto, SeatingLayoutSectionDto, SeatingResourceDto } from './seating.dto';
+
 export type ClassConstructor<T = unknown> = new (...args: unknown[]) => T;
 
 import { PaymentMethod, StoreCreditType } from '../enums';
@@ -42,10 +44,12 @@ export class IsUpsertArrayConstraint implements ValidatorConstraintInterface {
       if (typeof item !== 'object' || item === null) return false;
 
       const record = item as Record<string, unknown>;
-      // Check if id exists and is a non-empty string
-      const hasId = typeof record.id === 'string' && record.id !== '';
+      // Check if id property exists (UpdateDto validation will check if it's non-empty)
+      const hasId = 'id' in record;
 
-      const transformed = hasId ? plainToInstance(UpdateDto, item) : plainToInstance(CreateDto, item);
+      const transformed = hasId
+        ? plainToInstance(UpdateDto, item)
+        : plainToInstance(CreateDto, item);
 
       const errors = validateSync(transformed as object);
 
@@ -72,6 +76,67 @@ export function IsUpsertArray(
       options: validationOptions,
       constraints: [CreateDto, UpdateDto],
       validator: IsUpsertArrayConstraint,
+    });
+  };
+}
+
+/**
+ * Custom validator constraint for validating an array of upsert requests for a child type.
+ * Discriminates between Create and Update based on presence of 'id' property.
+ * Also accepts bare strings as valid instance IDs (equivalent to { id: 'the_string' }).
+ */
+@ValidatorConstraint({ async: false })
+export class IsUpsertOfChildTypeArrayConstraint implements ValidatorConstraintInterface {
+  validate(instances: unknown[], args: ValidationArguments): boolean {
+    if (!Array.isArray(instances)) return false;
+
+    const [UpdateDto, CreateDto] = args.constraints as [ClassConstructor, ClassConstructor];
+
+    for (const instance of instances) {
+      // Handle bare string case - treat as update with just an ID
+      if (typeof instance === 'string') {
+        if (instance === '') {
+          return false; // Empty string is not a valid ID
+        }
+        // Valid non-empty string ID, continue to next instance
+        continue;
+      }
+
+      const record = instance as Record<string, unknown>;
+      const hasId = 'id' in record;
+
+      const transformed = hasId
+        ? plainToInstance(UpdateDto, instance)
+        : plainToInstance(CreateDto, instance);
+      const errors = validateSync(transformed as object);
+
+      if (errors.length > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  defaultMessage(): string {
+    return 'Each instance must be a valid CreateDto (no id), UpdateDto (with id), or a non-empty string (instance ID)';
+  }
+}
+
+/**
+ * Decorator for validating an array of UpsertIProductInstanceRequestDto.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs.
+ */
+export function IsUpsertOfChildTypeArray(
+  CreateDto: ClassConstructor,
+  UpdateDto: ClassConstructor,
+  validationOptions?: ValidationOptions,) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      target: object.constructor,
+      propertyName,
+      options: validationOptions,
+      constraints: [CreateDto, UpdateDto],
+      validator: IsUpsertOfChildTypeArrayConstraint,
     });
   };
 }
@@ -216,7 +281,7 @@ export class PaymentBasePartialDto {
 /**
  * DTO for creating a new product instance
  */
-export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) {}
+export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) { }
 
 export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProductInstanceRequestDto) {
   @IsString()
@@ -229,62 +294,14 @@ export type UpsertIProductInstanceRequestDto = CreateIProductInstanceRequestDto 
 /**
  * special case for the instances field in UpdateIProductRequestDto where we allow a bare string to be passed in as the id field
  */
-export type UpdateIProductRequestInstances = UpsertIProductInstanceRequestDto | string;
-
-/**
- * Custom validator constraint for validating an array of product instance upsert requests.
- * Discriminates between Create and Update based on presence of 'id' property.
- * Also accepts bare strings as valid instance IDs (equivalent to { id: 'the_string' }).
- */
-@ValidatorConstraint({ async: false })
-export class IsUpsertProductInstanceArrayConstraint implements ValidatorConstraintInterface {
-  validate(instances: unknown[]): boolean {
-    if (!Array.isArray(instances)) return false;
-
-    for (const instance of instances) {
-      // Handle bare string case - treat as update with just an ID
-      if (typeof instance === 'string') {
-        if (instance === '') {
-          return false; // Empty string is not a valid ID
-        }
-        // Valid non-empty string ID, continue to next instance
-        continue;
-      }
-
-      const record = instance as Record<string, unknown>;
-      const hasId = typeof record.id === 'string' && record.id !== '';
-
-      const transformed = hasId
-        ? plainToInstance(UpdateIProductInstanceRequestDto, instance)
-        : plainToInstance(CreateIProductInstanceRequestDto, instance);
-      const errors = validateSync(transformed);
-
-      if (errors.length > 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  defaultMessage(): string {
-    return 'Each instance must be a valid CreateIProductInstanceRequestDto (no id), UpdateIProductInstanceRequestDto (with id), or a non-empty string (instance ID)';
-  }
-}
+export type UpsertIProductRequestInstancesDto = UpsertIProductInstanceRequestDto | string;
 
 /**
  * Decorator for validating an array of UpsertIProductInstanceRequestDto.
- * Uses presence of 'id' to discriminate between Create and Update DTOs.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs, allowing bare strings as valid instance IDs.
  */
 export function IsUpsertProductInstanceArray(validationOptions?: ValidationOptions) {
-  return function (object: object, propertyName: string) {
-    registerDecorator({
-      target: object.constructor,
-      propertyName,
-      options: validationOptions,
-      constraints: [],
-      validator: IsUpsertProductInstanceArrayConstraint,
-    });
-  };
+  return IsUpsertOfChildTypeArray(CreateIProductInstanceRequestDto, UpdateIProductInstanceRequestDto, validationOptions);
 }
 
 /**
@@ -318,7 +335,7 @@ export class UpdateIProductRequestDto extends PartialType(OmitType(IProductDto, 
 
   @IsArray()
   @IsUpsertProductInstanceArray()
-  instances!: UpdateIProductRequestInstances[];
+  instances!: UpsertIProductRequestInstancesDto[];
 }
 
 export type UpsertProductRequestDto = CreateIProductRequestDto | UpdateIProductRequestDto;
@@ -333,7 +350,7 @@ export class BatchUpsertProductRequestDto {
   products!: UpsertProductRequestDto[];
 }
 
-export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) {}
+export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) { }
 
 export class CreateIOptionPropsDto {
   @IsString()
@@ -345,7 +362,7 @@ export class CreateIOptionPropsDto {
   option!: CreateIOptionRequestBodyDto;
 }
 
-export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) {}
+export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) { }
 
 export class UpdateIOptionPropsDto {
   @IsString()
@@ -371,7 +388,7 @@ export class CreateIOptionTypeRequestBodyDto extends OmitType(IOptionTypeDto, ['
   @IsOptional()
   options?: CreateIOptionRequestBodyDto[];
 }
-export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) {}
+export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) { }
 
 export class UpdateIOptionTypePropsDto {
   @IsString()
@@ -385,49 +402,15 @@ export class UpdateIOptionTypePropsDto {
 
 export type UpsertIOptionTypeRequestBodyDto = CreateIOptionTypeRequestBodyDto | UpdateIOptionTypeRequestBodyDto;
 
-export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) {}
+export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) { }
 
 // =============================================================================
 // Seating Upsert DTOs
 // =============================================================================
 
-import { SeatingFloorDto, SeatingLayoutDto, SeatingLayoutSectionDto, SeatingResourceDto } from './seating.dto';
-
-// --- Seating Floors ---
-
-export class CreateSeatingFloorDto extends OmitType(SeatingFloorDto, ['id']) {}
-
-export class UpdateSeatingFloorDto extends PartialType(CreateSeatingFloorDto) {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-}
-
-export type UpsertSeatingFloorDto = CreateSeatingFloorDto | UpdateSeatingFloorDto;
-
-export function IsUpsertSeatingFloorArray(validationOptions?: ValidationOptions) {
-  return IsUpsertArray(CreateSeatingFloorDto, UpdateSeatingFloorDto, validationOptions);
-}
-
-// --- Seating Sections ---
-
-export class CreateSeatingLayoutSectionDto extends OmitType(SeatingLayoutSectionDto, ['id']) {}
-
-export class UpdateSeatingLayoutSectionDto extends PartialType(CreateSeatingLayoutSectionDto) {
-  @IsString()
-  @IsNotEmpty()
-  id!: string;
-}
-
-export type UpsertSeatingSectionDto = CreateSeatingLayoutSectionDto | UpdateSeatingLayoutSectionDto;
-
-export function IsUpsertSeatingSectionArray(validationOptions?: ValidationOptions) {
-  return IsUpsertArray(CreateSeatingLayoutSectionDto, UpdateSeatingLayoutSectionDto, validationOptions);
-}
-
 // --- Seating Resources ---
 
-export class CreateSeatingResourceDto extends OmitType(SeatingResourceDto, ['id']) {}
+export class CreateSeatingResourceDto extends OmitType(SeatingResourceDto, ['id']) { }
 
 export class UpdateSeatingResourceDto extends PartialType(CreateSeatingResourceDto) {
   @IsString()
@@ -437,38 +420,111 @@ export class UpdateSeatingResourceDto extends PartialType(CreateSeatingResourceD
 
 export type UpsertSeatingResourceDto = CreateSeatingResourceDto | UpdateSeatingResourceDto;
 
+export type UpsertSeatingResourceArrayElementDto = UpsertSeatingResourceDto | string;
+
+/**
+ * Decorator for validating an array of UpsertSeatingResourceArrayElementDto.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs, allowing bare strings as valid instance IDs.
+ */
 export function IsUpsertSeatingResourceArray(validationOptions?: ValidationOptions) {
-  return IsUpsertArray(CreateSeatingResourceDto, UpdateSeatingResourceDto, validationOptions);
+  return IsUpsertOfChildTypeArray(CreateSeatingResourceDto, UpdateSeatingResourceDto, validationOptions);
 }
 
-// --- Seating Layout Use DTOs ---
+// --- Seating Sections ---
 
-export class CreateSeatingLayoutRequestDto extends OmitType(SeatingLayoutDto, [
-  'id',
-  'floors',
-  'sections',
-  'resources',
-]) {
+export class CreateSeatingLayoutSectionDto extends OmitType(SeatingLayoutSectionDto, ['id', 'resources']) {
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SeatingFloorDto)
-  floors!: SeatingFloorDto[];
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SeatingLayoutSectionDto)
-  sections!: SeatingLayoutSectionDto[];
-
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => SeatingResourceDto)
-  resources!: SeatingResourceDto[];
+  @Type(() => CreateSeatingResourceDto)
+  @IsOptional()
+  resources?: CreateSeatingResourceDto[];
 }
 
-export class UpdateSeatingLayoutRequestDto extends PartialType(CreateSeatingLayoutRequestDto) {
+export class UpdateSeatingLayoutSectionDto extends PartialType(OmitType(SeatingLayoutSectionDto, ['id', 'resources'])) {
   @IsString()
   @IsNotEmpty()
   id!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @IsUpsertSeatingResourceArray()
+  resources?: UpsertSeatingResourceArrayElementDto[];
 }
 
-export type UpsertSeatingLayoutRequestDto = CreateSeatingLayoutRequestDto | UpdateSeatingLayoutRequestDto;
+export type UpsertSeatingLayoutSectionDto = CreateSeatingLayoutSectionDto | UpdateSeatingLayoutSectionDto;
+
+export type UpsertSeatingLayoutSectionArrayElementDto = UpsertSeatingLayoutSectionDto | string;
+
+/**
+ * Decorator for validating an array of UpsertSeatingLayoutSectionArrayElementDto.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs, allowing bare strings as valid instance IDs.
+ */
+export function IsUpsertSeatingLayoutSectionArray(validationOptions?: ValidationOptions) {
+  return IsUpsertOfChildTypeArray(CreateSeatingLayoutSectionDto, UpdateSeatingLayoutSectionDto, validationOptions);
+}
+
+// --- Seating Floors ---
+
+export class CreateSeatingFloorDto extends OmitType(SeatingFloorDto, ['id', 'sections']) {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateSeatingLayoutSectionDto)
+  @IsOptional()
+  sections?: CreateSeatingLayoutSectionDto[];
+}
+
+export class UpdateSeatingFloorDto extends PartialType(OmitType(SeatingFloorDto, ['id', 'sections'])) {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @IsUpsertSeatingLayoutSectionArray()
+  sections?: UpsertSeatingLayoutSectionArrayElementDto[];
+}
+
+export type UpsertSeatingFloorDto = CreateSeatingFloorDto | UpdateSeatingFloorDto;
+
+export type UpsertSeatingFloorArrayElementDto = UpsertSeatingFloorDto | string;
+
+/**
+ * Decorator for validating an array of UpsertSeatingFloorDto.
+ * Uses presence of 'id' to discriminate between Create and Update DTOs, allowing bare strings as valid instance IDs.
+ */
+export function IsUpsertSeatingFloorArray(validationOptions?: ValidationOptions) {
+  return IsUpsertOfChildTypeArray(CreateSeatingFloorDto, UpdateSeatingFloorDto, validationOptions);
+}
+
+// --- Seating Layout DTOs ---
+
+export class CreateSeatingLayoutDto extends OmitType(SeatingLayoutDto, [
+  'id',
+  'floors',
+]) {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateSeatingFloorDto)
+  @IsOptional()
+  floors?: CreateSeatingFloorDto[];
+}
+
+export class UpdateSeatingLayoutDto extends PartialType(OmitType(SeatingLayoutDto, [
+  'id',
+  'floors',
+])) {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @IsOptional()
+  @IsUpsertSeatingFloorArray()
+  floors?: UpsertSeatingFloorArrayElementDto[];
+}
+
+export type UpsertSeatingLayoutDto = CreateSeatingLayoutDto | UpdateSeatingLayoutDto;
+
