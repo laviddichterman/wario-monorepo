@@ -1,13 +1,4 @@
-import {
-  IsArray,
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  Min,
-} from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsInt, IsNotEmpty, IsNumber, IsString, Min } from 'class-validator';
 
 import { SeatingShape, WSeatingStatus } from '../enums';
 
@@ -43,7 +34,6 @@ export class SeatingFloorDto {
   @IsBoolean()
   disabled!: boolean;
 
-
   /** All section IDs on this floor, in display order */
   @IsArray()
   @IsString({ each: true })
@@ -76,7 +66,6 @@ export class SeatingLayoutSectionDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
-
 
   /** If true, section is hidden */
   @IsBoolean()

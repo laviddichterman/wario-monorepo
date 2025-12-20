@@ -430,13 +430,11 @@ export type CreateSeatingLayout = Omit<CreateSeatingLayoutDto, never>;
 export type UpdateSeatingLayout = Omit<UpdateSeatingLayoutDto, never>;
 export type UpsertSeatingLayout = CreateSeatingLayout | UpdateSeatingLayout;
 
-
 // Seating Floors
 export type CreateSeatingFloor = Omit<CreateSeatingFloorDto, never>;
 export type UpdateSeatingFloor = Omit<UpdateSeatingFloorDto, never>;
 export type UpsertSeatingFloor = CreateSeatingFloor | UpdateSeatingFloor;
 export type UpsertSeatingFloorArrayElement = UpsertSeatingFloor | string;
-
 
 // Seating Sections
 export type CreateSeatingLayoutSection = Omit<CreateSeatingLayoutSectionDto, never>;

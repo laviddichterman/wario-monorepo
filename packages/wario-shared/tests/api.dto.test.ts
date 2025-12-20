@@ -12,14 +12,14 @@ import {
   BatchUpsertProductRequestDto,
   CreateIProductInstanceRequestDto,
   CreateIProductRequestDto,
-  CreateSeatingLayoutRequestDto,
+  CreateSeatingLayoutDto,
   IsUpsertArrayConstraint,
-  IsUpsertProductInstanceArrayConstraint,
-
+  IsUpsertOfChildTypeArrayConstraint,
   UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
 } from '../src/lib/dto/api.dto';
-import {   // Seating
+import {
+  // Seating
   type SeatingFloorDto,
   type SeatingLayoutSectionDto,
   type SeatingResourceDto,
@@ -81,28 +81,31 @@ function createValidUpdateProductPayload(instances: Array<Record<string, unknown
 // IsUpsertProductInstanceArrayConstraint Tests
 // ============================================================================
 
-describe('IsUpsertProductInstanceArrayConstraint', () => {
-  let constraint: IsUpsertProductInstanceArrayConstraint;
-
+describe('IsUpsertOfChildTypeArrayConstraint', () => {
+  let constraint: IsUpsertOfChildTypeArrayConstraint;
+  let mockArgs: ValidationArguments;
   beforeEach(() => {
-    constraint = new IsUpsertProductInstanceArrayConstraint();
+    mockArgs = {
+      constraints: [CreateIProductInstanceRequestDto, UpdateIProductInstanceRequestDto],
+    } as unknown as ValidationArguments;
+    constraint = new IsUpsertOfChildTypeArrayConstraint();
   });
 
   describe('validate()', () => {
     it('should return false for non-array input', () => {
-      expect(constraint.validate('not an array' as unknown as unknown[])).toBe(false);
-      expect(constraint.validate(null as unknown as unknown[])).toBe(false);
-      expect(constraint.validate(undefined as unknown as unknown[])).toBe(false);
-      expect(constraint.validate({} as unknown as unknown[])).toBe(false);
+      expect(constraint.validate('not an array' as unknown as unknown[], mockArgs)).toBe(false);
+      expect(constraint.validate(null as unknown as unknown[], mockArgs)).toBe(false);
+      expect(constraint.validate(undefined as unknown as unknown[], mockArgs)).toBe(false);
+      expect(constraint.validate({} as unknown as unknown[], mockArgs)).toBe(false);
     });
 
     it('should return true for empty array', () => {
-      expect(constraint.validate([])).toBe(true);
+      expect(constraint.validate([], mockArgs)).toBe(true);
     });
 
     it('should return true for valid create instance (no id)', () => {
       const createInstance = createValidProductInstancePayload();
-      const result = constraint.validate([createInstance]);
+      const result = constraint.validate([createInstance], mockArgs);
       expect(result).toBe(true);
     });
 
@@ -111,7 +114,7 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
         id: 'pi_existing',
         // All other fields optional due to PartialType
       };
-      expect(constraint.validate([updateInstance])).toBe(true);
+      expect(constraint.validate([updateInstance], mockArgs)).toBe(true);
     });
 
     it('should return true for valid update instance with partial fields', () => {
@@ -119,23 +122,23 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
         id: 'pi_existing',
         displayName: 'Updated Name',
       };
-      expect(constraint.validate([updateInstance])).toBe(true);
+      expect(constraint.validate([updateInstance], mockArgs)).toBe(true);
     });
 
     it('should return true for mixed create and update instances', () => {
       const createInstance = createValidProductInstancePayload();
       const updateInstance = { id: 'pi_existing' };
 
-      expect(constraint.validate([createInstance, updateInstance])).toBe(true);
+      expect(constraint.validate([createInstance, updateInstance], mockArgs)).toBe(true);
     });
 
-    it('should treat empty string id as create (not update)', () => {
+    it('should treat empty string id as update (not create) which will fail validation for the empty string id', () => {
       const instanceWithEmptyId = {
         id: '',
         ...createValidProductInstancePayload(),
       };
-      // Empty id should be treated as create, which requires all fields
-      expect(constraint.validate([instanceWithEmptyId])).toBe(true);
+      // Empty id should be treated as update, but ID cannot be empty string, so this should fail
+      expect(constraint.validate([instanceWithEmptyId], mockArgs)).toBe(false);
     });
 
     it('should return false for invalid create instance (missing required fields)', () => {
@@ -143,50 +146,50 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
         // Missing displayName and other required fields
         shortcode: 'TI',
       };
-      expect(constraint.validate([invalidCreateInstance])).toBe(false);
+      expect(constraint.validate([invalidCreateInstance], mockArgs)).toBe(false);
     });
 
     it('should return false for update instance with invalid id type', () => {
       const invalidUpdateInstance = {
         id: 123, // id must be string
       };
-      expect(constraint.validate([invalidUpdateInstance])).toBe(false);
+      expect(constraint.validate([invalidUpdateInstance], mockArgs)).toBe(false);
     });
 
     it('should return false if any instance in array is invalid', () => {
       const validInstance = { id: 'pi_existing' };
       const invalidInstance = { shortcode: 'X' }; // Missing required fields for create
 
-      expect(constraint.validate([validInstance, invalidInstance])).toBe(false);
+      expect(constraint.validate([validInstance, invalidInstance], mockArgs)).toBe(false);
     });
 
     // New tests for bare string ID support
     describe('bare string ID support', () => {
       it('should return true for a valid bare string ID', () => {
-        expect(constraint.validate(['pi_123'])).toBe(true);
+        expect(constraint.validate(['pi_123'], mockArgs)).toBe(true);
       });
 
       it('should return true for multiple bare string IDs', () => {
-        expect(constraint.validate(['pi_1', 'pi_2', 'pi_3'])).toBe(true);
+        expect(constraint.validate(['pi_1', 'pi_2', 'pi_3'], mockArgs)).toBe(true);
       });
 
       it('should return false for an empty string', () => {
-        expect(constraint.validate([''])).toBe(false);
+        expect(constraint.validate([''], mockArgs)).toBe(false);
       });
 
       it('should return false if any bare string is empty', () => {
-        expect(constraint.validate(['pi_1', '', 'pi_3'])).toBe(false);
+        expect(constraint.validate(['pi_1', '', 'pi_3'], mockArgs)).toBe(false);
       });
 
       it('should return true for mixed bare strings and update objects', () => {
-        expect(constraint.validate(['pi_1', { id: 'pi_2' }, 'pi_3'])).toBe(true);
+        expect(constraint.validate(['pi_1', { id: 'pi_2' }, 'pi_3'], mockArgs)).toBe(true);
       });
 
       it('should return true for mixed bare strings, update objects, and create objects', () => {
         const createInstance = createValidProductInstancePayload();
-        expect(constraint.validate(['pi_1', { id: 'pi_2', displayName: 'Updated' }, createInstance, 'pi_3'])).toBe(
-          true,
-        );
+        expect(
+          constraint.validate(['pi_1', { id: 'pi_2', displayName: 'Updated' }, createInstance, 'pi_3'], mockArgs),
+        ).toBe(true);
       });
     });
   });
@@ -194,9 +197,9 @@ describe('IsUpsertProductInstanceArrayConstraint', () => {
   describe('defaultMessage()', () => {
     it('should return appropriate error message', () => {
       const message = constraint.defaultMessage();
-      expect(message).toContain('CreateIProductInstanceRequestDto');
-      expect(message).toContain('UpdateIProductInstanceRequestDto');
-      expect(message).toContain('non-empty string');
+      expect(message).toBe(
+        'Each instance must be a valid CreateDto (no id), UpdateDto (with id), or a non-empty string (instance ID)',
+      );
     });
   });
 });
@@ -700,85 +703,26 @@ describe('BatchUpsertProductRequestDto', () => {
 // Seating Layout Validation Tests
 // ============================================================================
 
-describe('CreateSeatingLayoutRequestDto', () => {
+describe('CreateSeatingLayoutDto', () => {
   function createValidFloor(): Omit<SeatingFloorDto, 'id'> {
     return {
       name: 'Test Floor',
-      ordinal: 0,
       disabled: false,
+      sections: [], // Array of section IDs
     };
   }
-
-  it('should pass validation with new floor (no id)', () => {
-    const payload = {
-      name: 'New Layout',
-      floors: [createValidFloor()], // No ID
-      sections: [],
-      resources: [],
-    };
-
-    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
-    const errors = validateSync(dto);
-
-    expect(errors.length).toBe(0);
-  });
-
-  it('should pass validation with existing floor (with id)', () => {
-    const payload = {
-      name: 'Update Layout',
-      floors: [{ id: 'floor-1', ...createValidFloor() }], // With ID
-      sections: [],
-      resources: [],
-    };
-
-    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
-    const errors = validateSync(dto);
-
-    expect(errors.length).toBe(0);
-  });
-
-  it('should fail validation with invalid floor', () => {
-    const payload = {
-      name: 'Invalid Layout',
-      floors: [{ ordinal: 0 }], // Missing required fields (name)
-      sections: [],
-      resources: [],
-    };
-
-    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
-    const errors = validateSync(dto);
-
-    expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('floors');
-  });
 
   function createValidSection(): Omit<SeatingLayoutSectionDto, 'id'> {
     return {
       name: 'Test Section',
-      floorId: 'floor-1',
-      ordinal: 0,
       disabled: false,
+      resources: [], // Array of resource IDs
     };
   }
-
-  it('should pass validation with new section (no id)', () => {
-    const payload = {
-      name: 'Layout with Section',
-      floors: [],
-      sections: [createValidSection()],
-      resources: [],
-    };
-
-    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
-    const errors = validateSync(dto);
-
-    expect(errors.length).toBe(0);
-  });
 
   function createValidResource(): Omit<SeatingResourceDto, 'id'> {
     return {
       name: 'Test Table',
-      sectionId: 'section-1',
       shape: SeatingShape.RECTANGLE,
       centerX: 10,
       centerY: 10,
@@ -790,32 +734,129 @@ describe('CreateSeatingLayoutRequestDto', () => {
     };
   }
 
-  it('should pass validation with new resource (no id)', () => {
+  it('should pass validation with valid floor (no id)', () => {
     const payload = {
-      name: 'Layout with Resource',
-      floors: [],
-      sections: [],
-      resources: [createValidResource()],
+      name: 'New Layout',
+      floors: [createValidFloor()],
     };
 
-    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
     const errors = validateSync(dto);
 
     expect(errors.length).toBe(0);
   });
 
-  it('should fail validation with empty string id', () => {
+  it('should pass validation with no floors', () => {
     const payload = {
-      name: 'Invalid Layout',
-      floors: [{ id: '', name: 'Floor', ordinal: 0, disabled: false }],
-      sections: [],
-      resources: [],
+      name: 'Empty Layout',
     };
 
-    const dto = plainToInstance(CreateSeatingLayoutRequestDto, payload);
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  it('should fail validation with invalid floor (missing name)', () => {
+    const payload = {
+      name: 'Invalid Layout',
+      floors: [{ disabled: false, sections: [] }], // Missing required 'name' field
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
     const errors = validateSync(dto);
 
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors[0].property).toBe('floors');
+  });
+
+  it('should fail validation when layout name is missing', () => {
+    const payload = {
+      floors: [createValidFloor()],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBeGreaterThan(0);
+    const nameError = errors.find((e) => e.property === 'name');
+    expect(nameError).toBeDefined();
+  });
+
+  it('should pass validation with nested section creation', () => {
+    const payload = {
+      name: 'Layout with Nested Section',
+      floors: [
+        {
+          ...createValidFloor(),
+          sections: [createValidSection()], // Nested section object for creation
+        },
+      ],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  it('should pass validation with nested resource creation in section', () => {
+    const payload = {
+      name: 'Layout with Nested Resource',
+      floors: [
+        {
+          ...createValidFloor(),
+          sections: [
+            {
+              ...createValidSection(),
+              resources: [createValidResource()], // Nested resource object for creation
+            },
+          ],
+        },
+      ],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBe(0);
+  });
+
+  it('should fail validation with invalid nested section (missing name)', () => {
+    const payload = {
+      name: 'Invalid Nested Section',
+      floors: [
+        {
+          ...createValidFloor(),
+          sections: [{ disabled: false, resources: [] }], // Missing 'name'
+        },
+      ],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('should fail validation with invalid nested resource (missing required fields)', () => {
+    const payload = {
+      name: 'Invalid Nested Resource',
+      floors: [
+        {
+          ...createValidFloor(),
+          sections: [
+            {
+              ...createValidSection(),
+              resources: [{ name: 'Table', disabled: false }], // Missing shape, dimensions, etc.
+            },
+          ],
+        },
+      ],
+    };
+
+    const dto = plainToInstance(CreateSeatingLayoutDto, payload);
+    const errors = validateSync(dto);
+
+    expect(errors.length).toBeGreaterThan(0);
   });
 });

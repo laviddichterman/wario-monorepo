@@ -47,9 +47,7 @@ export class IsUpsertArrayConstraint implements ValidatorConstraintInterface {
       // Check if id property exists (UpdateDto validation will check if it's non-empty)
       const hasId = 'id' in record;
 
-      const transformed = hasId
-        ? plainToInstance(UpdateDto, item)
-        : plainToInstance(CreateDto, item);
+      const transformed = hasId ? plainToInstance(UpdateDto, item) : plainToInstance(CreateDto, item);
 
       const errors = validateSync(transformed as object);
 
@@ -90,7 +88,7 @@ export class IsUpsertOfChildTypeArrayConstraint implements ValidatorConstraintIn
   validate(instances: unknown[], args: ValidationArguments): boolean {
     if (!Array.isArray(instances)) return false;
 
-    const [UpdateDto, CreateDto] = args.constraints as [ClassConstructor, ClassConstructor];
+    const [CreateDto, UpdateDto] = args.constraints as [ClassConstructor, ClassConstructor];
 
     for (const instance of instances) {
       // Handle bare string case - treat as update with just an ID
@@ -105,9 +103,7 @@ export class IsUpsertOfChildTypeArrayConstraint implements ValidatorConstraintIn
       const record = instance as Record<string, unknown>;
       const hasId = 'id' in record;
 
-      const transformed = hasId
-        ? plainToInstance(UpdateDto, instance)
-        : plainToInstance(CreateDto, instance);
+      const transformed = hasId ? plainToInstance(UpdateDto, instance) : plainToInstance(CreateDto, instance);
       const errors = validateSync(transformed as object);
 
       if (errors.length > 0) {
@@ -129,7 +125,8 @@ export class IsUpsertOfChildTypeArrayConstraint implements ValidatorConstraintIn
 export function IsUpsertOfChildTypeArray(
   CreateDto: ClassConstructor,
   UpdateDto: ClassConstructor,
-  validationOptions?: ValidationOptions,) {
+  validationOptions?: ValidationOptions,
+) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
@@ -281,7 +278,7 @@ export class PaymentBasePartialDto {
 /**
  * DTO for creating a new product instance
  */
-export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) { }
+export class CreateIProductInstanceRequestDto extends OmitType(IProductInstanceDto, ['id']) {}
 
 export class UpdateIProductInstanceRequestDto extends PartialType(CreateIProductInstanceRequestDto) {
   @IsString()
@@ -301,7 +298,11 @@ export type UpsertIProductRequestInstancesDto = UpsertIProductInstanceRequestDto
  * Uses presence of 'id' to discriminate between Create and Update DTOs, allowing bare strings as valid instance IDs.
  */
 export function IsUpsertProductInstanceArray(validationOptions?: ValidationOptions) {
-  return IsUpsertOfChildTypeArray(CreateIProductInstanceRequestDto, UpdateIProductInstanceRequestDto, validationOptions);
+  return IsUpsertOfChildTypeArray(
+    CreateIProductInstanceRequestDto,
+    UpdateIProductInstanceRequestDto,
+    validationOptions,
+  );
 }
 
 /**
@@ -350,7 +351,7 @@ export class BatchUpsertProductRequestDto {
   products!: UpsertProductRequestDto[];
 }
 
-export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) { }
+export class CreateIOptionRequestBodyDto extends OmitType(IOptionDto, ['id']) {}
 
 export class CreateIOptionPropsDto {
   @IsString()
@@ -362,7 +363,7 @@ export class CreateIOptionPropsDto {
   option!: CreateIOptionRequestBodyDto;
 }
 
-export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) { }
+export class UpdateIOptionRequestBodyDto extends PartialType(CreateIOptionRequestBodyDto) {}
 
 export class UpdateIOptionPropsDto {
   @IsString()
@@ -388,7 +389,7 @@ export class CreateIOptionTypeRequestBodyDto extends OmitType(IOptionTypeDto, ['
   @IsOptional()
   options?: CreateIOptionRequestBodyDto[];
 }
-export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) { }
+export class UpdateIOptionTypeRequestBodyDto extends PartialType(OmitType(IOptionTypeDto, ['id'])) {}
 
 export class UpdateIOptionTypePropsDto {
   @IsString()
@@ -402,7 +403,7 @@ export class UpdateIOptionTypePropsDto {
 
 export type UpsertIOptionTypeRequestBodyDto = CreateIOptionTypeRequestBodyDto | UpdateIOptionTypeRequestBodyDto;
 
-export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) { }
+export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) {}
 
 // =============================================================================
 // Seating Upsert DTOs
@@ -410,7 +411,7 @@ export class UncommittedICategoryDto extends OmitType(ICategoryDto, ['id']) { }
 
 // --- Seating Resources ---
 
-export class CreateSeatingResourceDto extends OmitType(SeatingResourceDto, ['id']) { }
+export class CreateSeatingResourceDto extends OmitType(SeatingResourceDto, ['id']) {}
 
 export class UpdateSeatingResourceDto extends PartialType(CreateSeatingResourceDto) {
   @IsString()
@@ -500,10 +501,7 @@ export function IsUpsertSeatingFloorArray(validationOptions?: ValidationOptions)
 
 // --- Seating Layout DTOs ---
 
-export class CreateSeatingLayoutDto extends OmitType(SeatingLayoutDto, [
-  'id',
-  'floors',
-]) {
+export class CreateSeatingLayoutDto extends OmitType(SeatingLayoutDto, ['id', 'floors']) {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateSeatingFloorDto)
@@ -511,10 +509,7 @@ export class CreateSeatingLayoutDto extends OmitType(SeatingLayoutDto, [
   floors?: CreateSeatingFloorDto[];
 }
 
-export class UpdateSeatingLayoutDto extends PartialType(OmitType(SeatingLayoutDto, [
-  'id',
-  'floors',
-])) {
+export class UpdateSeatingLayoutDto extends PartialType(OmitType(SeatingLayoutDto, ['id', 'floors'])) {
   @IsString()
   @IsNotEmpty()
   id!: string;
@@ -527,4 +522,3 @@ export class UpdateSeatingLayoutDto extends PartialType(OmitType(SeatingLayoutDt
 }
 
 export type UpsertSeatingLayoutDto = CreateSeatingLayoutDto | UpdateSeatingLayoutDto;
-

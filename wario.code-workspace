@@ -91,7 +91,18 @@
       "autograt",
       "Autogratuity",
       "WARIO"
-    ]
+    ],
+    // Ensure consistent formatting across all workspace folders
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "typescript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+    "javascript.format.insertSpaceAfterOpeningAndBeforeClosingEmptyBraces": false,
+    "prettier.requireConfig": true
   },
   "launch": {
     "version": "0.2.0",

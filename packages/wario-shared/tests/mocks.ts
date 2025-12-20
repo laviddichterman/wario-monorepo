@@ -36,6 +36,12 @@ import type {
   PrepTiming,
   SEMVER,
 } from '../src/lib/derived-types';
+import type {
+  SeatingFloorDto,
+  SeatingLayoutDto,
+  SeatingLayoutSectionDto,
+  SeatingResourceDto,
+} from '../src/lib/dto/seating.dto';
 import {
   CALL_LINE_DISPLAY,
   CategoryDisplay,
@@ -47,6 +53,7 @@ import {
   OrderInstanceFunctionType,
   PriceDisplay,
   ProductInstanceFunctionType,
+  SeatingShape,
 } from '../src/lib/enums';
 import { CatalogGenerator, ICatalogSelectorWrapper } from '../src/lib/objects/ICatalog';
 import type { ICatalog, ICatalogSelectors } from '../src/lib/types';
@@ -393,4 +400,47 @@ export const createMockProductInstanceFunction = (
     'discriminator' in (overrides.expression ?? {})
       ? (overrides.expression as IAbstractExpression)
       : createMockAbstractExpression(overrides.expression),
+});
+
+// ============================================================================
+// Seating Helpers
+// ============================================================================
+
+export const createMockSeatingResource = (overrides: Partial<SeatingResourceDto> = {}): SeatingResourceDto => ({
+  id: 'res1',
+  name: 'Table 1',
+  capacity: 4,
+  shape: SeatingShape.RECTANGLE,
+  shapeDimX: 30,
+  shapeDimY: 20,
+  centerX: 100,
+  centerY: 100,
+  rotation: 0,
+  disabled: false,
+  ...overrides,
+});
+
+export const createMockSeatingLayoutSection = (
+  overrides: Partial<SeatingLayoutSectionDto> = {},
+): SeatingLayoutSectionDto => ({
+  id: 'sec1',
+  name: 'Main Section',
+  disabled: false,
+  resources: [],
+  ...overrides,
+});
+
+export const createMockSeatingFloor = (overrides: Partial<SeatingFloorDto> = {}): SeatingFloorDto => ({
+  id: 'floor1',
+  name: 'Main Floor',
+  disabled: false,
+  sections: [],
+  ...overrides,
+});
+
+export const createMockSeatingLayout = (overrides: Partial<SeatingLayoutDto> = {}): SeatingLayoutDto => ({
+  id: 'layout1',
+  name: 'Default Layout',
+  floors: [],
+  ...overrides,
 });
