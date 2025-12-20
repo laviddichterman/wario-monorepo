@@ -77,6 +77,11 @@ export class SeatingLayoutSectionDto {
   @IsNotEmpty()
   name!: string;
 
+
+  /** If true, section is hidden */
+  @IsBoolean()
+  disabled!: boolean;
+
   /** All resource IDs in this section, in display order */
   @IsArray()
   @IsString({ each: true })
