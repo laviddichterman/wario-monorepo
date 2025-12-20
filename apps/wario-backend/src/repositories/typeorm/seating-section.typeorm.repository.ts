@@ -23,10 +23,6 @@ export class SeatingSectionTypeOrmRepository implements ISeatingSectionRepositor
     return this.repo.find({ order: { ordinal: 'ASC' } });
   }
 
-  async findByFloorId(floorId: string): Promise<SeatingLayoutSection[]> {
-    return this.repo.find({ where: { floorId }, order: { ordinal: 'ASC' } });
-  }
-
   async create(section: Omit<SeatingLayoutSection, 'id'>): Promise<SeatingLayoutSection> {
     const entity = this.repo.create({
       ...section,

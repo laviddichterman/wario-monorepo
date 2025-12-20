@@ -11,7 +11,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { SeatingFloorDto } from '@wcp/wario-shared';
+import { CreateSeatingFloorDto, UpdateSeatingFloorDto } from '@wcp/wario-shared';
 
 import { SeatingService } from 'src/modules/seating/seating.service';
 
@@ -35,12 +35,12 @@ export class SeatingFloorController {
 
   @Post()
   @HttpCode(201)
-  async createFloor(@Body() body: SeatingFloorDto) {
+  async createFloor(@Body() body: CreateSeatingFloorDto) {
     return this.seatingService.createFloor(body);
   }
 
   @Patch(':id')
-  async updateFloor(@Param('id') id: string, @Body() body: Partial<SeatingFloorDto>) {
+  async updateFloor(@Param('id') id: string, @Body() body: UpdateSeatingFloorDto) {
     try {
       const updated = await this.seatingService.updateFloor(id, body);
       if (!updated) {

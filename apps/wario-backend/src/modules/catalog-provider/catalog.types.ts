@@ -5,8 +5,8 @@ import {
   type PrinterGroup,
   type UpdateIProductInstanceRequestDto,
   type UpdateIProductRequestDto,
-  type UpdateIProductRequestInstances,
   type UpsertIProductInstanceRequest,
+  type UpsertIProductRequestInstancesDto,
 } from '@wcp/wario-shared';
 
 // Shared helper for determining Square locations based on 3P flag
@@ -34,13 +34,13 @@ export function isUpdateProduct(
 }
 
 export function isUpdateProductInstance(
-  instance: UpdateIProductRequestInstances,
+  instance: UpsertIProductRequestInstancesDto,
 ): instance is UpdateIProductInstanceRequestDto {
   return typeof instance === 'object' && 'id' in instance;
 }
 
 export function isCreateProductInstance(
-  instance: UpdateIProductRequestInstances,
+  instance: UpsertIProductRequestInstancesDto,
 ): instance is CreateIProductInstanceRequestDto {
   return typeof instance === 'object' && !('id' in instance);
 }

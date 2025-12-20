@@ -447,3 +447,17 @@ export type CreateSeatingResource = Omit<CreateSeatingResourceDto, never>;
 export type UpdateSeatingResource = Omit<UpdateSeatingResourceDto, never>;
 export type UpsertSeatingResource = CreateSeatingResource | UpdateSeatingResource;
 export type UpsertSeatingResourceArrayElement = UpsertSeatingResource | string;
+
+// Full Seating Layout (denormalized GET response structure)
+export interface FullSeatingSection extends Omit<SeatingLayoutSection, 'resources'> {
+  resources: SeatingResource[];
+}
+export interface FullSeatingFloor extends Omit<SeatingFloor, 'sections'> {
+  sections: FullSeatingSection[];
+}
+export interface FullSeatingLayout extends Omit<SeatingLayout, 'floors'> {
+  floors: FullSeatingFloor[];
+}
+
+// Upsert request type alias (for backwards compatibility)
+export type UpsertSeatingLayoutRequest = UpsertSeatingLayout;

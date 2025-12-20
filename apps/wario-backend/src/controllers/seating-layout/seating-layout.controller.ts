@@ -11,7 +11,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { CreateSeatingLayoutRequestDto, UpdateSeatingLayoutRequestDto } from '@wcp/wario-shared';
+import { CreateSeatingLayoutDto, UpdateSeatingLayoutDto } from '@wcp/wario-shared';
 
 import { SeatingService } from 'src/modules/seating/seating.service';
 
@@ -26,7 +26,8 @@ export class SeatingLayoutController {
 
   @Get(':id')
   async getLayout(@Param('id') id: string) {
-    const layout = await this.seatingService.getLayout(id);
+    // Return fully assembled layout with floors, sections, and resources
+    const layout = await this.seatingService.getFullLayout(id);
     if (!layout) {
       throw new NotFoundException(`Seating Layout with ID ${id} not found`);
     }
@@ -35,12 +36,12 @@ export class SeatingLayoutController {
 
   @Post()
   @HttpCode(201)
-  async createLayout(@Body() body: CreateSeatingLayoutRequestDto) {
+  async createLayout(@Body() body: CreateSeatingLayoutDto) {
     return this.seatingService.createLayout(body);
   }
 
   @Patch(':id')
-  async updateLayout(@Param('id') id: string, @Body() body: UpdateSeatingLayoutRequestDto) {
+  async updateLayout(@Param('id') id: string, @Body() body: UpdateSeatingLayoutDto) {
     try {
       const updated = await this.seatingService.updateLayout(id, body);
       if (!updated) {

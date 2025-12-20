@@ -19,7 +19,7 @@ export class SeatingFloorMongooseRepository implements ISeatingFloorRepository {
   }
 
   async findAll(): Promise<SeatingFloor[]> {
-    const docs = await this.model.find().sort({ ordinal: 1 }).lean().exec();
+    const docs = await this.model.find().lean().exec();
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 

@@ -11,7 +11,8 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { CreateSeatingResourceDto, UpdateSeatingResourceDto } from 'src/dtos/seating-resource.dto';
+import { CreateSeatingResourceDto, UpdateSeatingResource, UpdateSeatingResourceDto } from '@wcp/wario-shared';
+
 import { SeatingService } from 'src/modules/seating/seating.service';
 
 @Controller('api/v1/config/seating')
@@ -32,7 +33,10 @@ export class SeatingResourceController {
   @Patch(':srid')
   async patchSeatingResource(@Param('srid') seatingResourceId: string, @Body() body: UpdateSeatingResourceDto) {
     try {
-      return await this.seatingService.updateResource(seatingResourceId, body);
+      return await this.seatingService.updateResource(seatingResourceId, {
+        ...(body as UpdateSeatingResource),
+        id: seatingResourceId,
+      });
     } catch (error) {
       throw new NotFoundException(error);
     }

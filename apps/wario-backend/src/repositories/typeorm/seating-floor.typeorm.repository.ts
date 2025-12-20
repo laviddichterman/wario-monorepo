@@ -20,7 +20,7 @@ export class SeatingFloorTypeOrmRepository implements ISeatingFloorRepository {
   }
 
   async findAll(): Promise<SeatingFloor[]> {
-    return this.repo.find({ order: { ordinal: 'ASC' } });
+    return this.repo.find();
   }
 
   async create(floor: Omit<SeatingFloor, 'id'>): Promise<SeatingFloor> {

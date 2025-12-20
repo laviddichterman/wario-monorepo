@@ -11,7 +11,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import { SeatingLayoutSectionDto } from '@wcp/wario-shared';
+import { CreateSeatingLayoutSectionDto, UpdateSeatingLayoutSectionDto } from '@wcp/wario-shared';
 
 import { SeatingService } from 'src/modules/seating/seating.service';
 
@@ -35,12 +35,12 @@ export class SeatingSectionController {
 
   @Post()
   @HttpCode(201)
-  async createSection(@Body() body: SeatingLayoutSectionDto) {
+  async createSection(@Body() body: CreateSeatingLayoutSectionDto) {
     return this.seatingService.createSection(body);
   }
 
   @Patch(':id')
-  async updateSection(@Param('id') id: string, @Body() body: Partial<SeatingLayoutSectionDto>) {
+  async updateSection(@Param('id') id: string, @Body() body: UpdateSeatingLayoutSectionDto) {
     try {
       const updated = await this.seatingService.updateSection(id, body);
       if (!updated) {

@@ -13,10 +13,11 @@ export const SeatingResourceSchema = new Schema<MT>(
       required: true,
     },
     shape: { type: String, enum: SeatingShape, required: true },
-    sectionId: { type: String, required: true },
-
     shapeDimX: { type: Number, required: true },
     shapeDimY: { type: Number, required: true },
+    centerX: { type: Number, required: true, default: 0 },
+    centerY: { type: Number, required: true, default: 0 },
+    rotation: { type: Number, required: true, default: 0 },
     disabled: { type: Boolean, default: false },
   },
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },

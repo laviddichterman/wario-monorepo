@@ -19,12 +19,7 @@ export class SeatingSectionMongooseRepository implements ISeatingSectionReposito
   }
 
   async findAll(): Promise<SeatingLayoutSection[]> {
-    const docs = await this.model.find().sort({ ordinal: 1 }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
-  }
-
-  async findByFloorId(floorId: string): Promise<SeatingLayoutSection[]> {
-    const docs = await this.model.find({ floorId }).sort({ ordinal: 1 }).lean().exec();
+    const docs = await this.model.find().lean().exec();
     return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
   }
 

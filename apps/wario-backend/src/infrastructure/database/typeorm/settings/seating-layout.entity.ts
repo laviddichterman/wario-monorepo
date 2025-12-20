@@ -4,17 +4,20 @@ import type { SeatingLayout } from '@wcp/wario-shared';
 
 /**
  * SeatingLayout entity - represents a named layout configuration.
- * The layout references floors, sections, resources, and placements stored in separate tables.
- * This entity stores the layout metadata (id, name) and can be used to query related entities.
- * Non-temporal as seating layouts are configuration.
+ * Contains floor IDs that reference SeatingFloor entities.
+ * Display order is determined by array position.
  */
 @Entity('seating_layout')
-export class SeatingLayoutEntity implements Omit<SeatingLayout, 'floors' | 'sections' | 'resources' | 'placements'> {
+export class SeatingLayoutEntity implements SeatingLayout {
   @PrimaryColumn('varchar', { length: 36 })
   id!: string;
 
   @Column('varchar', { length: 255 })
   name!: string;
+
+  /** Array of floor IDs, in display order */
+  @Column('text', { array: true, default: [] })
+  floors!: string[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;

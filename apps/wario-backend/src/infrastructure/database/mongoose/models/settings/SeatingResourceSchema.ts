@@ -7,7 +7,6 @@ export const SeatingResourceSchema = new Schema<Omit<SeatingResource, 'id'>>(
     name: { type: String, required: true },
     capacity: { type: Number, required: true },
     shape: { type: String, enum: SeatingShape, required: true },
-    sectionId: { type: String, required: true },
     shapeDimX: { type: Number, required: true },
     shapeDimY: { type: Number, required: true },
     centerX: { type: Number, required: true, default: 0 },
