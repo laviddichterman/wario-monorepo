@@ -21,42 +21,33 @@ import { useBoolean } from '@/hooks/useBoolean';
 
 import { toast } from '@/components/snackbar';
 
-import { useActiveFloorId, useActiveSectionId, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
+import { useActiveFloor, useActiveSectionIndex, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 
 export const SectionTabs = memo(function SectionTabs() {
-  const activeFloorId = useActiveFloorId();
-  const activeSectionId = useActiveSectionId();
+  const activeFloor = useActiveFloor();
+  const activeSectionIndex = useActiveSectionIndex();
 
-  // Select raw data (stable references) instead of derived arrays
-  const sectionIdsByFloorId = useSeatingBuilderStore((s) => s.layout.sectionIdsByFloorId);
-  const sectionsById = useSeatingBuilderStore((s) => s.layout.sectionsById);
-  const resourceIdsBySectionId = useSeatingBuilderStore((s) => s.layout.resourceIdsBySectionId);
-
-  // Memoize derived sections array to prevent infinite re-renders
-  const sections = useMemo(() => {
-    if (!activeFloorId) return [];
-    const sectionIds = sectionIdsByFloorId[activeFloorId] ?? [];
-    return sectionIds.map((id) => sectionsById[id]).filter(Boolean);
-  }, [activeFloorId, sectionIdsByFloorId, sectionsById]);
+  // Get sections from the active floor - memoized to stabilize useCallback dependencies
+  const sections = useMemo(() => activeFloor?.sections ?? [], [activeFloor?.sections]);
 
   const setActiveSection = useSeatingBuilderStore((s) => s.setActiveSection);
   const addSection = useSeatingBuilderStore((s) => s.addSection);
   const deleteSection = useSeatingBuilderStore((s) => s.deleteSection);
 
   const addDialog = useBoolean();
-  const [deleteDialogSectionId, setDeleteDialogSectionId] = useState<string | null>(null);
+  const [deleteDialogSectionIndex, setDeleteDialogSectionIndex] = useState<number | null>(null);
 
   // Get section info for delete dialog
-  const sectionToDelete = deleteDialogSectionId ? sectionsById[deleteDialogSectionId] : null;
-  const tableCountToDelete = deleteDialogSectionId ? (resourceIdsBySectionId[deleteDialogSectionId] ?? []).length : 0;
+  const sectionToDelete = deleteDialogSectionIndex !== null ? sections[deleteDialogSectionIndex] : null;
+  const tableCountToDelete = sectionToDelete?.resources.length ?? 0;
 
   const canDeleteSection = sections.length > 1;
 
   const handleSectionClick = useCallback(
-    (sectionId: string) => {
-      setActiveSection(sectionId);
+    (sectionIndex: number) => {
+      setActiveSection(sectionIndex);
     },
     [setActiveSection],
   );
@@ -64,40 +55,38 @@ export const SectionTabs = memo(function SectionTabs() {
   const handleAddSection = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      if (!activeFloorId) return;
+      if (!activeFloor) return;
 
       const formData = new FormData(e.currentTarget);
       const name = formData.get('sectionName') as string;
       if (name.trim()) {
-        addSection(activeFloorId, name.trim());
+        addSection(name.trim());
         addDialog.onFalse();
       }
     },
-    [activeFloorId, addSection, addDialog],
+    [activeFloor, addSection, addDialog],
   );
 
   const handleDeleteSection = useCallback(
-    (sectionId: string) => {
-      const section = sectionsById[sectionId] as { name: string } | undefined;
-      deleteSection(sectionId);
-      setDeleteDialogSectionId(null);
-
-      if (section) {
-        toast.success(`Deleted section "${section.name}"`);
-      }
+    (sectionIndex: number) => {
+      const section = sections[sectionIndex];
+      const sectionName = section.name;
+      deleteSection(sectionIndex);
+      setDeleteDialogSectionIndex(null);
+      toast.success(`Deleted section "${sectionName}"`);
     },
-    [deleteSection, sectionsById],
+    [deleteSection, sections],
   );
 
-  if (!activeFloorId) {
+  if (!activeFloor) {
     return null;
   }
 
   return (
     <>
       <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ py: 1 }}>
-        {sections.map((section) => {
-          const isActive = section.id === activeSectionId;
+        {sections.map((section, index) => {
+          const isActive = index === activeSectionIndex;
 
           return (
             <Tooltip
@@ -110,12 +99,12 @@ export const SectionTabs = memo(function SectionTabs() {
                 variant={isActive ? 'filled' : 'outlined'}
                 color={isActive ? 'primary' : 'default'}
                 onClick={() => {
-                  handleSectionClick(section.id);
+                  handleSectionClick(index);
                 }}
                 onDelete={
                   canDeleteSection
                     ? () => {
-                        setDeleteDialogSectionId(section.id);
+                        setDeleteDialogSectionIndex(index);
                       }
                     : undefined
                 }
@@ -162,13 +151,13 @@ export const SectionTabs = memo(function SectionTabs() {
 
       {/* Delete Section Confirmation Dialog */}
       <DeleteConfirmDialog
-        open={deleteDialogSectionId !== null}
+        open={deleteDialogSectionIndex !== null}
         onClose={() => {
-          setDeleteDialogSectionId(null);
+          setDeleteDialogSectionIndex(null);
         }}
         onConfirm={() => {
-          if (deleteDialogSectionId) {
-            handleDeleteSection(deleteDialogSectionId);
+          if (deleteDialogSectionIndex !== null) {
+            handleDeleteSection(deleteDialogSectionIndex);
           }
         }}
         title="Delete Section"

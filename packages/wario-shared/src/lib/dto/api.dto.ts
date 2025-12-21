@@ -1,5 +1,5 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
-import { plainToInstance, Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
@@ -28,6 +28,37 @@ import { ICategoryDto } from './category.dto';
 import { EncryptStringLockDto, IMoneyDto } from './common.dto';
 import { IOptionDto, IOptionTypeDto } from './modifier.dto';
 import { IProductDto, IProductInstanceDto } from './product.dto';
+
+// =============================================================================
+// Transform Helpers
+// =============================================================================
+
+/**
+ * Transform helper for normalizing upsert array items.
+ *
+ * When NestJS ValidationPipe + class-transformer process Update DTOs that use
+ * @nestjs/mapped-types (PartialType, OmitType), nested arrays without @Type
+ * decorators can become corrupted "array-with-properties" objects. This helper
+ * normalizes them back to plain objects using object spread.
+ *
+ * Use with @Transform decorator on array properties in Update DTOs.
+ *
+ * @example
+ * @Transform(normalizeUpsertArrayItems)
+ * @IsArray()
+ * @IsUpsertSomeArray()
+ * items?: SomeDto[];
+ */
+export const normalizeUpsertArrayItems = ({ value }: { value: unknown }): unknown => {
+  if (!Array.isArray(value)) return value;
+  return value.map((item: unknown) => {
+    if (typeof item === 'string') return item; // Bare string IDs are valid
+    if (typeof item === 'object' && item !== null) {
+      return { ...item }; // Normalize to plain object
+    }
+    return item;
+  });
+};
 
 // =============================================================================
 // Generic Validator
@@ -85,28 +116,37 @@ export function IsUpsertArray(
  */
 @ValidatorConstraint({ async: false })
 export class IsUpsertOfChildTypeArrayConstraint implements ValidatorConstraintInterface {
+  private lastErrors: string[] = [];
+
   validate(instances: unknown[], args: ValidationArguments): boolean {
     if (!Array.isArray(instances)) return false;
 
     const [CreateDto, UpdateDto] = args.constraints as [ClassConstructor, ClassConstructor];
+    this.lastErrors = [];
 
-    for (const instance of instances) {
+    for (let i = 0; i < instances.length; i++) {
+      const instance = instances[i];
       // Handle bare string case - treat as update with just an ID
       if (typeof instance === 'string') {
         if (instance === '') {
-          return false; // Empty string is not a valid ID
+          this.lastErrors.push(`[${String(i)}] Empty string is not a valid ID`);
+          return false;
         }
-        // Valid non-empty string ID, continue to next instance
         continue;
       }
 
       const record = instance as Record<string, unknown>;
       const hasId = 'id' in record;
+      const DtoClass = hasId ? UpdateDto : CreateDto;
 
-      const transformed = hasId ? plainToInstance(UpdateDto, instance) : plainToInstance(CreateDto, instance);
+      const transformed = plainToInstance(DtoClass, instance);
       const errors = validateSync(transformed as object);
 
       if (errors.length > 0) {
+        const errorDetails = errors
+          .map((e) => `${e.property || 'undefined'}: ${JSON.stringify(e.constraints)}`)
+          .join(', ');
+        this.lastErrors.push(`[${String(i)}] ${DtoClass.name} validation failed: ${errorDetails}`);
         return false;
       }
     }
@@ -114,6 +154,9 @@ export class IsUpsertOfChildTypeArrayConstraint implements ValidatorConstraintIn
   }
 
   defaultMessage(): string {
+    if (this.lastErrors.length > 0) {
+      return `Validation failed: ${this.lastErrors.join('; ')}`;
+    }
     return 'Each instance must be a valid CreateDto (no id), UpdateDto (with id), or a non-empty string (instance ID)';
   }
 }
@@ -334,6 +377,8 @@ export class UpdateIProductRequestDto extends PartialType(OmitType(IProductDto, 
   @IsNotEmpty()
   id!: string;
 
+  // Use normalizeUpsertArrayItems for defensive consistency with seating DTOs
+  @Transform(normalizeUpsertArrayItems)
   @IsArray()
   @IsUpsertProductInstanceArray()
   instances!: UpsertIProductRequestInstancesDto[];
@@ -446,8 +491,9 @@ export class UpdateSeatingLayoutSectionDto extends PartialType(OmitType(SeatingL
   @IsNotEmpty()
   id!: string;
 
+  // Use normalizeUpsertArrayItems to fix class-transformer creating corrupted array-objects
+  @Transform(normalizeUpsertArrayItems)
   @IsArray()
-  @ValidateNested({ each: true })
   @IsOptional()
   @IsUpsertSeatingResourceArray()
   resources?: UpsertSeatingResourceArrayElementDto[];
@@ -480,8 +526,9 @@ export class UpdateSeatingFloorDto extends PartialType(OmitType(SeatingFloorDto,
   @IsNotEmpty()
   id!: string;
 
+  // Use normalizeUpsertArrayItems to fix class-transformer creating corrupted array-objects
+  @Transform(normalizeUpsertArrayItems)
   @IsArray()
-  @ValidateNested({ each: true })
   @IsOptional()
   @IsUpsertSeatingLayoutSectionArray()
   sections?: UpsertSeatingLayoutSectionArrayElementDto[];
@@ -514,8 +561,9 @@ export class UpdateSeatingLayoutDto extends PartialType(OmitType(SeatingLayoutDt
   @IsNotEmpty()
   id!: string;
 
+  // Use normalizeUpsertArrayItems to fix class-transformer creating corrupted array-objects
+  @Transform(normalizeUpsertArrayItems)
   @IsArray()
-  @ValidateNested({ each: true })
   @IsOptional()
   @IsUpsertSeatingFloorArray()
   floors?: UpsertSeatingFloorArrayElementDto[];

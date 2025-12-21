@@ -2,11 +2,12 @@ import mongoose, { Schema } from 'mongoose';
 
 import type { SeatingLayout } from '@wcp/wario-shared';
 
-// SeatingLayout only stores id and name in the entity
-// floors, sections, resources, and placements are stored in separate tables
-export const SeatingLayoutSchema = new Schema<Pick<SeatingLayout, 'name'>>(
+// SeatingLayout stores the layout metadata and references to floors
+// Floors, sections, resources are stored in separate collections
+export const SeatingLayoutSchema = new Schema<Omit<SeatingLayout, 'id'>>(
   {
     name: { type: String, required: true },
+    floors: { type: [String], default: [] },
   },
   { id: true, toJSON: { virtuals: true }, toObject: { virtuals: true } },
 );

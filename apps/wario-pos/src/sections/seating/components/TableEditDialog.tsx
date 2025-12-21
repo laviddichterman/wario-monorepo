@@ -45,10 +45,13 @@ interface FormState {
 }
 
 export const TableEditDialog = memo(function TableEditDialog({ resourceId, open, onClose }: TableEditDialogProps) {
-  const resourcesById = useSeatingBuilderStore((s) => s.layout.resourcesById);
+  const layout = useSeatingBuilderStore((s) => s.layout);
   const updateResource = useSeatingBuilderStore((s) => s.updateResource);
 
-  const resource = resourceId ? resourcesById[resourceId] : null;
+  // Find resource in nested structure
+  const resource = resourceId
+    ? (layout.floors.flatMap((f) => f.sections.flatMap((s) => s.resources)).find((r) => r.id === resourceId) ?? null)
+    : null;
 
   const [form, setForm] = useState<FormState>({
     name: '',

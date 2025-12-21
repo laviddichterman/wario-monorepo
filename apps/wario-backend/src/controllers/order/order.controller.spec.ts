@@ -23,7 +23,7 @@ import { APP_INTERCEPTOR, Reflector } from '@nestjs/core';
 import { getModelToken } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 
-import { WOrderStatus } from '@wcp/wario-shared';
+import { type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 
 import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
 
@@ -194,7 +194,7 @@ describe('OrderController', () => {
         result: { ...lockedOrder, status: WOrderStatus.CANCELED },
       });
 
-      const result = await controller.putCancelOrder(lockedOrder, {
+      const result = await controller.putCancelOrder(lockedOrder as WOrderInstance & Required<{ locked: string }>, {
         reason: 'Customer request',
         emailCustomer: true,
         refundToOriginalPayment: true,
@@ -216,7 +216,9 @@ describe('OrderController', () => {
         error: [{ category: 'API_ERROR', code: 'INTERNAL_SERVER_ERROR', detail: '' }],
       });
 
-      await expect(controller.putCancelOrder(lockedOrder, { reason: 'test' })).rejects.toThrow(HttpException);
+      await expect(
+        controller.putCancelOrder(lockedOrder as WOrderInstance & Required<{ locked: string }>, { reason: 'test' }),
+      ).rejects.toThrow(HttpException);
     });
   });
 
@@ -233,7 +235,7 @@ describe('OrderController', () => {
         result: { ...lockedOrder, status: WOrderStatus.CONFIRMED },
       });
 
-      const result = await controller.putConfirmOrder(lockedOrder);
+      const result = await controller.putConfirmOrder(lockedOrder as WOrderInstance & Required<{ locked: string }>);
 
       expect(result.status).toBe(200);
       expect(mockOrderManager.ConfirmLockedOrder).toHaveBeenCalledWith(lockedOrder);

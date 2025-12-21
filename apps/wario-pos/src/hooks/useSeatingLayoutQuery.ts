@@ -5,7 +5,7 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import type { SeatingLayout, UpsertSeatingLayoutRequest } from '@wcp/wario-shared/types';
+import type { FullSeatingLayout, SeatingLayout, UpsertSeatingLayoutRequest } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 import { uuidv4 } from '@/utils/uuidv4';
@@ -20,8 +20,8 @@ const fetchLayouts = async (token: string): Promise<SeatingLayout[]> => {
   return response.data;
 };
 
-const fetchLayoutById = async (token: string, id: string): Promise<SeatingLayout> => {
-  const response = await axiosInstance.get<SeatingLayout>(`/api/v1/config/seating-layout/${id}`, {
+const fetchLayoutById = async (token: string, id: string): Promise<FullSeatingLayout> => {
+  const response = await axiosInstance.get<FullSeatingLayout>(`/api/v1/config/seating-layout/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
@@ -72,7 +72,7 @@ export function useCreateSeatingLayoutMutation() {
   return useMutation({
     mutationFn: async (layout: UpsertSeatingLayoutRequest) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:settings' } });
-      const response = await axiosInstance.post<SeatingLayout>('/api/v1/config/seating-layout', layout, {
+      const response = await axiosInstance.post<FullSeatingLayout>('/api/v1/config/seating-layout', layout, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export function useUpdateSeatingLayoutMutation() {
   return useMutation({
     mutationFn: async ({ id, layout }: { id: string; layout: UpsertSeatingLayoutRequest }) => {
       const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:settings' } });
-      const response = await axiosInstance.patch<SeatingLayout>(`/api/v1/config/seating-layout/${id}`, layout, {
+      const response = await axiosInstance.patch<FullSeatingLayout>(`/api/v1/config/seating-layout/${id}`, layout, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -122,7 +122,7 @@ export function useDeleteSeatingLayoutMutation() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:settings' } });
+      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:settings' } });
       await axiosInstance.delete(`/api/v1/config/seating-layout/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });

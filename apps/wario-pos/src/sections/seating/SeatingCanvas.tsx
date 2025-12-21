@@ -23,8 +23,8 @@ import Box from '@mui/material/Box';
 
 import {
   type SeatingResourceRenderModel,
-  useActiveFloorId,
-  useActiveSectionId,
+  useActiveFloor,
+  useActiveSection,
   useSeatingBuilderStore,
 } from '@/stores/useSeatingBuilderStore';
 
@@ -36,6 +36,7 @@ import {
   CANVAS_WIDTH,
   clampDeltaForGroup,
   clampResizeDimensions,
+  getRotatedBoundingBox,
   type ResourceBounds,
 } from './utils/bounding-utils';
 
@@ -71,6 +72,14 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
   // State for clamped drag delta during move operations (for visual feedback)
   const [clampedDragDelta, setClampedDragDelta] = useState<{ dx: number; dy: number } | null>(null);
 
+  // Lasso selection state
+  const [lassoState, setLassoState] = useState<{
+    start: { x: number; y: number };
+    current: { x: number; y: number };
+    isLassoing: boolean;
+    initialSelection: string[]; // Selection content when lasso started (for Shift+Drag)
+  } | null>(null);
+
   // Track SVG size for accurate coordinate conversion
   // Using generic resizing detection (could use ResizeObserver)
   const updateSize = useCallback(() => {
@@ -100,52 +109,49 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
   const scaleX = svgSize.width > 0 ? viewBox.width / svgSize.width : 1;
   const scaleY = svgSize.height > 0 ? viewBox.height / svgSize.height : 1;
 
-  // Select raw data (stable references) instead of derived arrays
-  const activeFloorId = useActiveFloorId();
-  const activeSectionId = useActiveSectionId();
-  const sectionIdsByFloorId = useSeatingBuilderStore((s) => s.layout.sectionIdsByFloorId);
-  const resourceIdsBySectionId = useSeatingBuilderStore((s) => s.layout.resourceIdsBySectionId);
-  const resourcesById = useSeatingBuilderStore((s) => s.layout.resourcesById);
+  // Select data from store - now using nested structure
+  const activeFloor = useActiveFloor();
+  const activeSection = useActiveSection();
   const selectedResourceIds = useSeatingBuilderStore((s) => s.editor.selectedResourceIds);
 
   // Memoize derived render models array - now renders ALL sections on active floor
   const renderModels = useMemo((): SeatingResourceRenderModel[] => {
-    if (!activeFloorId) return [];
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!activeFloor) return [];
 
-    // Get all section IDs for the active floor
-    const floorSectionIds = sectionIdsByFloorId[activeFloorId] ?? [];
     const selectedSet = new Set(selectedResourceIds);
+    const activeSectionId = activeSection.id;
 
     // Collect resources from ALL sections on this floor
-    return floorSectionIds.flatMap((sectionId) => {
-      const resourceIds = resourceIdsBySectionId[sectionId] ?? [];
-      const isActiveSection = sectionId === activeSectionId;
+    return activeFloor.sections.flatMap((section) => {
+      const isActiveSection = section.id === activeSectionId;
 
-      return resourceIds
-        .map((id) => {
-          const resource = resourcesById[id];
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          if (!resource) return null;
-
-          return {
-            id: resource.id,
-            name: resource.name,
-            sectionId: resource.sectionId,
-            capacity: resource.capacity,
-            shape: resource.shape,
-            shapeDimX: resource.shapeDimX,
-            shapeDimY: resource.shapeDimY,
-            disabled: resource.disabled || !isActiveSection,
-            centerX: resource.centerX,
-            centerY: resource.centerY,
-            rotation: resource.rotation,
-            isSelected: selectedSet.has(id) && isActiveSection,
-            isActiveSection,
-          };
-        })
-        .filter(Boolean) as SeatingResourceRenderModel[];
+      return section.resources.map((resource) => ({
+        id: resource.id,
+        name: resource.name,
+        sectionId: section.id,
+        capacity: resource.capacity,
+        shape: resource.shape,
+        shapeDimX: resource.shapeDimX,
+        shapeDimY: resource.shapeDimY,
+        disabled: resource.disabled || !isActiveSection,
+        centerX: resource.centerX,
+        centerY: resource.centerY,
+        rotation: resource.rotation,
+        isSelected: selectedSet.has(resource.id) && isActiveSection,
+        isActiveSection,
+      }));
     });
-  }, [activeFloorId, activeSectionId, sectionIdsByFloorId, resourceIdsBySectionId, resourcesById, selectedResourceIds]);
+  }, [activeFloor, activeSection, selectedResourceIds]);
+
+  // Create a lookup map for resources by ID (for drag/resize operations)
+  const resourcesById = useMemo(() => {
+    const map: Record<string, SeatingResourceRenderModel> = {};
+    for (const model of renderModels) {
+      map[model.id] = model;
+    }
+    return map;
+  }, [renderModels]);
 
   const selectResources = useSeatingBuilderStore((s) => s.selectResources);
   const clearSelection = useSeatingBuilderStore((s) => s.clearSelection);
@@ -233,6 +239,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
         // Resize operation: update dimensions based on handle dragged
         const { resourceId, handle } = dragData;
         const resource = resourcesById[resourceId];
+
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!resource) return;
 
@@ -355,6 +362,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
         // Resize operation
         const { resourceId, handle } = dragData;
         const resource = resourcesById[resourceId];
+
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!resource) return;
 
@@ -445,48 +453,170 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
     [resourcesById, viewBox, resizePreview, clampedDragDelta, selectedResourceIds],
   );
 
-  // Handle background click (deselect)
-  const handleBackgroundClick = useCallback(
-    (e: React.MouseEvent) => {
-      // Only deselect if clicking directly on background, not a child
-      if (e.target === e.currentTarget || (e.target as SVGElement).tagName === 'rect') {
-        clearSelection();
+  // Pan handling (2-finger on touch, middle-click on desktop)
+  // Lasso handling (left-click on background)
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      // Middle mouse button or touch with 2 fingers (handled separately)
+      if (e.button === 1) {
+        e.preventDefault();
+        setIsPanning(true);
+        panStart.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
+
+      // Left mouse button on background for lasso
+      if (e.button === 0 && !readOnly) {
+        // Only trigger if clicking directly on background or resource placeholder rect
+        // (real resources capture events via dnd-kit or their own handlers, preventing this bubble if stopped?
+        // actually dnd-kit uses listeners on the element. But we also have onClick on DraggableResource)
+        // We check target to ensure we aren't starting lasso on a UI element that bubbles
+        // We check target to ensure we aren't starting lasso on a UI element that bubbles
+        const target = e.target as Element;
+        // Strict check: only trigger lasso on background or grid overlay
+        if (target.id === 'seating-canvas-bg' || target.id === 'seating-canvas-grid') {
+          const svgRect = svgRef.current?.getBoundingClientRect();
+          if (!svgRect) return;
+
+          // Convert screen to SVG coords
+          // Note: e.clientX/Y are client coordinates.
+          const mouseX = ((e.clientX - svgRect.left) / svgRect.width) * viewBox.width + viewBox.x;
+          const mouseY = ((e.clientY - svgRect.top) / svgRect.height) * viewBox.height + viewBox.y;
+
+          // If shift key is held, we want to ADD to selection (or toggle), so keep initial.
+          // If not detailed, we clear immediately? No, standard behavior is clear on click, but if dragging starts, we select.
+          // Better: Keep track of initial selection. If it turns into a click, clear. If it turns into a drag, use initial + new.
+
+          setLassoState({
+            start: { x: mouseX, y: mouseY },
+            current: { x: mouseX, y: mouseY },
+            isLassoing: true,
+            initialSelection: e.shiftKey ? selectedResourceIds : [],
+          });
+
+          // Capturing pointer ensures we get move/up events even if cursor leaves SVG
+          (e.currentTarget as Element).setPointerCapture(e.pointerId);
+        }
       }
     },
-    [clearSelection],
+    [readOnly, viewBox, selectedResourceIds],
   );
-
-  // Pan handling (2-finger on touch, middle-click on desktop)
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    // Middle mouse button or touch with 2 fingers (handled separately)
-    if (e.button === 1) {
-      e.preventDefault();
-      setIsPanning(true);
-      panStart.current = { x: e.clientX, y: e.clientY };
-    }
-  }, []);
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!isPanning) return;
+      // 1. Handle Pan
+      if (isPanning) {
+        const dx = e.clientX - panStart.current.x;
+        const dy = e.clientY - panStart.current.y;
 
-      const dx = e.clientX - panStart.current.x;
-      const dy = e.clientY - panStart.current.y;
+        setViewBox((prev) => ({
+          ...prev,
+          x: prev.x - dx,
+          y: prev.y - dy,
+        }));
 
-      setViewBox((prev) => ({
-        ...prev,
-        x: prev.x - dx,
-        y: prev.y - dy,
-      }));
+        panStart.current = { x: e.clientX, y: e.clientY };
+        return;
+      }
 
-      panStart.current = { x: e.clientX, y: e.clientY };
+      // 2. Handle Lasso
+      if (lassoState?.isLassoing) {
+        const svgRect = svgRef.current?.getBoundingClientRect();
+        if (!svgRect) return;
+
+        const mouseX = ((e.clientX - svgRect.left) / svgRect.width) * viewBox.width + viewBox.x;
+        const mouseY = ((e.clientY - svgRect.top) / svgRect.height) * viewBox.height + viewBox.y;
+
+        setLassoState((prev) => (prev ? { ...prev, current: { x: mouseX, y: mouseY } } : null));
+
+        // Update selection in real-time
+        // Calculate lasso rect
+        const startX = lassoState.start.x;
+        const startY = lassoState.start.y;
+        const rectX = Math.min(startX, mouseX);
+        const rectY = Math.min(startY, mouseY);
+        const rectW = Math.abs(mouseX - startX);
+        const rectH = Math.abs(mouseY - startY);
+
+        // Find intersecting resources
+        const intersectingIds: string[] = [];
+
+        renderModels.forEach((model) => {
+          // Skip if disabled or not in active section (though renderModels already filters active floor)
+          // We only select in active section. renderModels has 'isActiveSection' flag.
+          if (!model.isActiveSection) return;
+
+          const bounds = getRotatedBoundingBox({
+            centerX: model.centerX,
+            centerY: model.centerY,
+            shapeDimX: model.shapeDimX,
+            shapeDimY: model.shapeDimY,
+            rotation: model.rotation,
+            shape: model.shape,
+          });
+
+          // Check AABB intersection
+          // AABB overlap: maxA >= minB && maxB >= minA (for both axes)
+          const overlaps =
+            bounds.maxX >= rectX &&
+            rectX + rectW >= bounds.minX &&
+            bounds.maxY >= rectY &&
+            rectY + rectH >= bounds.minY;
+
+          if (overlaps) {
+            intersectingIds.push(model.id);
+          }
+        });
+
+        // Update global selection
+        // usage: if shift held (initialSelection not empty), merge. Else replace.
+        // Actually we stored initialSelection.
+        // If Shift was held, initialSelection has items. We MERGE.
+        // If Shift NOT held, initialSelection is empty. We REPLACE (so intersectingIds IS the new selection).
+
+        if (lassoState.initialSelection.length > 0) {
+          // Union of initial + current intersection
+          const newSet = new Set([...lassoState.initialSelection, ...intersectingIds]);
+          // Note: simple union. Standard Shift behavior usually adds. Cmd/Ctrl behavior toggles?
+          // Let's stick to additive for Shift for now as per plan.
+          selectResources(Array.from(newSet));
+        } else {
+          selectResources(intersectingIds);
+        }
+      }
     },
-    [isPanning],
+    [isPanning, lassoState, viewBox, renderModels, selectResources],
   );
 
-  const handlePointerUp = useCallback(() => {
-    setIsPanning(false);
-  }, []);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (isPanning) {
+        setIsPanning(false);
+      }
+
+      if (lassoState?.isLassoing) {
+        (e.currentTarget as Element).releasePointerCapture(e.pointerId);
+
+        // Check for click vs drag (threshold)
+        const dx = Math.abs(lassoState.current.x - lassoState.start.x);
+        const dy = Math.abs(lassoState.current.y - lassoState.start.y);
+
+        // If it was a tiny movement (< 2 units), treat as click -> clear selection
+        // unless Shift was held (which we checked at start)
+        if (dx < 2 && dy < 2) {
+          // It's a click
+          if (lassoState.initialSelection.length === 0) {
+            clearSelection();
+          }
+          // If initialSelection existed (Shift click on background), we technically did nothing to it.
+          // Just reset.
+        }
+
+        setLassoState(null);
+      }
+    },
+    [isPanning, lassoState, clearSelection],
+  );
 
   // Wheel zoom (requires Ctrl/Cmd key to avoid capturing page scroll)
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -547,8 +677,8 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
           viewBox={`${String(viewBox.x)} ${String(viewBox.y)} ${String(viewBox.width)} ${String(viewBox.height)}`}
           preserveAspectRatio="none"
           style={{ touchAction: 'none' }}
-          onClick={handleBackgroundClick}
-          onPointerDown={handlePointerDown}
+          // onClick={handleBackgroundClick} // Replaced by pointer events for lasso/deselect
+          onPointerDownCapture={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
@@ -584,6 +714,20 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
               </g>
             ))}
           </g>
+
+          {/* Lasso Selection Rect */}
+          {lassoState?.isLassoing && (
+            <rect
+              x={Math.min(lassoState.start.x, lassoState.current.x)}
+              y={Math.min(lassoState.start.y, lassoState.current.y)}
+              width={Math.abs(lassoState.current.x - lassoState.start.x)}
+              height={Math.abs(lassoState.current.y - lassoState.start.y)}
+              fill="rgba(33, 150, 243, 0.2)"
+              stroke="rgba(33, 150, 243, 0.8)"
+              strokeWidth={1 / scaleX} // Keep stroke width constant in screen pixels roughly
+              style={{ pointerEvents: 'none' }}
+            />
+          )}
         </svg>
       </DndContext>
 

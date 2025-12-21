@@ -527,17 +527,9 @@ describe('bounding-utils', () => {
         shape: SeatingShape.RECTANGLE,
       };
 
-      const rectangleResult = clampResizeDimensions(
-        baseResource,
-        80,
-        80,
-      );
+      const rectangleResult = clampResizeDimensions(baseResource, 80, 80);
 
-      const ellipseResult = clampResizeDimensions(
-        { ...baseResource, shape: SeatingShape.ELLIPSE },
-        80,
-        80,
-      );
+      const ellipseResult = clampResizeDimensions({ ...baseResource, shape: SeatingShape.ELLIPSE }, 80, 80);
 
       // Ellipse bounding box is tighter, so it can be larger
       expect(ellipseResult.width).toBeGreaterThanOrEqual(rectangleResult.width);

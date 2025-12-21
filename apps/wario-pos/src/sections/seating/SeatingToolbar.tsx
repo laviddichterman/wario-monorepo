@@ -26,7 +26,7 @@ import { useCreateSeatingLayoutMutation, useUpdateSeatingLayoutMutation } from '
 import { toast } from '@/components/snackbar';
 
 import {
-  useActiveSectionId,
+  useActiveSection,
   useCanRedo,
   useCanUndo,
   useIsDirty,
@@ -39,7 +39,7 @@ const QUICK_ADD_SIZE = 40;
 const QUICK_ADD_CAPACITY = 2;
 
 export const SeatingToolbar = memo(function SeatingToolbar() {
-  const activeSectionId = useActiveSectionId();
+  const activeSection = useActiveSection();
   const selectedResourceIds = useSelectedResourceIds();
   const isDirty = useIsDirty();
   const canUndo = useCanUndo();
@@ -51,7 +51,6 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
   const getNextTableNumber = useSeatingBuilderStore((s) => s.getNextTableNumber);
   const findAvailablePosition = useSeatingBuilderStore((s) => s.findAvailablePosition);
   const toLayout = useSeatingBuilderStore((s) => s.toLayout);
-  const markClean = useSeatingBuilderStore((s) => s.markClean);
   const originalLayoutId = useSeatingBuilderStore((s) => s.originalLayoutId);
   const undo = useSeatingBuilderStore((s) => s.undo);
   const redo = useSeatingBuilderStore((s) => s.redo);
@@ -64,13 +63,14 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
 
   // Quick-add handlers
   const handleAddRoundTable = useCallback(() => {
-    if (!activeSectionId) return;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!activeSection) return;
 
     const tableNum = getNextTableNumber();
-    const position = findAvailablePosition(activeSectionId);
+    const position = findAvailablePosition();
 
     addResource({
-      sectionId: activeSectionId,
+      sectionId: activeSection.id,
       name: `Table ${String(tableNum)}`,
       capacity: QUICK_ADD_CAPACITY,
       shape: SeatingShape.ELLIPSE,
@@ -81,16 +81,17 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
     });
 
     toast.success('Round table added');
-  }, [activeSectionId, addResource, getNextTableNumber, findAvailablePosition]);
+  }, [activeSection, addResource, getNextTableNumber, findAvailablePosition]);
 
   const handleAddSquareTable = useCallback(() => {
-    if (!activeSectionId) return;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!activeSection) return;
 
     const tableNum = getNextTableNumber();
-    const position = findAvailablePosition(activeSectionId);
+    const position = findAvailablePosition();
 
     addResource({
-      sectionId: activeSectionId,
+      sectionId: activeSection.id,
       name: `Table ${String(tableNum)}`,
       capacity: QUICK_ADD_CAPACITY,
       shape: SeatingShape.RECTANGLE,
@@ -101,7 +102,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
     });
 
     toast.success('Square table added');
-  }, [activeSectionId, addResource, getNextTableNumber, findAvailablePosition]);
+  }, [activeSection, addResource, getNextTableNumber, findAvailablePosition]);
 
   const handleDeleteSelected = useCallback(() => {
     if (selectedResourceIds.length === 0) return;
@@ -135,20 +136,20 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
 
     try {
       if (originalLayoutId) {
-        await updateMutation.mutateAsync({ id: originalLayoutId, layout });
+        // Update existing layout and reload to sync server-generated IDs for any new entities
+        const updated = await updateMutation.mutateAsync({ id: originalLayoutId, layout });
+        loadLayout(updated);
         toast.success('Changes committed');
-        markClean();
       } else {
         // Create new layout and reload server response to get server-generated IDs
         const created = await createMutation.mutateAsync(layout);
         loadLayout(created);
         toast.success('Layout created');
-        // loadLayout already marks as clean and sets originalLayoutId
       }
     } catch {
       toast.error('Failed to save changes');
     }
-  }, [toLayout, originalLayoutId, updateMutation, createMutation, markClean]);
+  }, [toLayout, originalLayoutId, updateMutation, createMutation]);
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
@@ -157,7 +158,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
       {/* Quick-Add Round Table */}
       <Tooltip title="Add Round Table (80×80)">
         <span>
-          <IconButton color="primary" onClick={handleAddRoundTable} disabled={!activeSectionId}>
+          <IconButton color="primary" onClick={handleAddRoundTable} disabled={!activeSection}>
             <CircleOutlined />
           </IconButton>
         </span>
@@ -166,7 +167,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
       {/* Quick-Add Square Table */}
       <Tooltip title="Add Square Table (80×80)">
         <span>
-          <IconButton color="primary" onClick={handleAddSquareTable} disabled={!activeSectionId}>
+          <IconButton color="primary" onClick={handleAddSquareTable} disabled={!activeSection}>
             <SquareOutlined />
           </IconButton>
         </span>

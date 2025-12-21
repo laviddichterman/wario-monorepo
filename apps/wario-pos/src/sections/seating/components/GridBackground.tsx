@@ -45,10 +45,10 @@ export const GridBackground = memo(function GridBackground({
       </defs>
 
       {/* Background fill */}
-      <rect x={0} y={0} width={width} height={height} fill={theme.palette.background.default} />
+      <rect id="seating-canvas-bg" x={0} y={0} width={width} height={height} fill={theme.palette.background.default} />
 
       {/* Grid pattern overlay */}
-      <rect x={0} y={0} width={width} height={height} fill={`url(#${patternId})`} />
+      <rect id="seating-canvas-grid" x={0} y={0} width={width} height={height} fill={`url(#${patternId})`} />
     </g>
   );
 });

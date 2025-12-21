@@ -353,4 +353,3 @@ export function clampResizeDimensions(
 
   return { width: clampedWidth, height: clampedHeight };
 }
-

@@ -28,23 +28,16 @@ import { useBoolean } from '@/hooks/useBoolean';
 
 import { toast } from '@/components/snackbar';
 
-import { useActiveFloorId, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
+import { useActiveFloorIndex, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
 
 const ADD_FLOOR_VALUE = '__add__';
 
 export const FloorSelector = memo(function FloorSelector() {
-  // Select raw data (stable references) instead of derived arrays
-  const floorIds = useSeatingBuilderStore((s) => s.layout.floorIds);
-  const floorsById = useSeatingBuilderStore((s) => s.layout.floorsById);
-  const sectionIdsByFloorId = useSeatingBuilderStore((s) => s.layout.sectionIdsByFloorId);
-  const resourceIdsBySectionId = useSeatingBuilderStore((s) => s.layout.resourceIdsBySectionId);
-
-  // Memoize the derived floors array to prevent infinite re-renders
-  const floors = useMemo(() => floorIds.map((id) => floorsById[id]).filter(Boolean), [floorIds, floorsById]);
-
-  const activeFloorId = useActiveFloorId();
+  // Use nested floors array directly
+  const floors = useSeatingBuilderStore((s) => s.layout.floors);
+  const activeFloorIndex = useActiveFloorIndex();
   const setActiveFloor = useSeatingBuilderStore((s) => s.setActiveFloor);
   const addFloor = useSeatingBuilderStore((s) => s.addFloor);
   const deleteFloor = useSeatingBuilderStore((s) => s.deleteFloor);
@@ -54,19 +47,18 @@ export const FloorSelector = memo(function FloorSelector() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Compute counts for the active floor (for delete confirmation)
-  const activeFloor = activeFloorId ? floorsById[activeFloorId] : null;
-  const activeSectionIds = useMemo(
-    () => (activeFloorId ? (sectionIdsByFloorId[activeFloorId] ?? []) : []),
-    [activeFloorId, sectionIdsByFloorId],
-  );
-  const activeSectionCount = activeSectionIds.length;
+  const activeFloor = floors[activeFloorIndex] ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const activeSectionCount = activeFloor?.sections.length ?? 0;
   const activeTableCount = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!activeFloor) return 0;
     let count = 0;
-    for (const sectionId of activeSectionIds) {
-      count += (resourceIdsBySectionId[sectionId] ?? []).length;
+    for (const section of activeFloor.sections) {
+      count += section.resources.length;
     }
     return count;
-  }, [activeSectionIds, resourceIdsBySectionId]);
+  }, [activeFloor]);
 
   const canDeleteFloor = floors.length > 1;
 
@@ -76,7 +68,8 @@ export const FloorSelector = memo(function FloorSelector() {
       if (value === ADD_FLOOR_VALUE) {
         addDialog.onTrue();
       } else {
-        setActiveFloor(value);
+        // Value is the index as string
+        setActiveFloor(Number(value));
       }
     },
     [setActiveFloor, addDialog],
@@ -101,11 +94,12 @@ export const FloorSelector = memo(function FloorSelector() {
   );
 
   const handleDeleteFloor = useCallback(() => {
-    if (!activeFloorId || !activeFloor) return;
-    deleteFloor(activeFloorId);
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (!activeFloor) return;
+    deleteFloor(activeFloorIndex);
     setDeleteDialogOpen(false);
     toast.success(`Deleted floor "${activeFloor.name}"`);
-  }, [activeFloorId, activeFloor, deleteFloor]);
+  }, [activeFloorIndex, activeFloor, deleteFloor]);
 
   // Build warning items for delete confirmation
   const deleteWarningItems = useMemo(() => {
@@ -126,12 +120,12 @@ export const FloorSelector = memo(function FloorSelector() {
         <Select
           labelId="floor-select-label"
           id="floor-select"
-          value={activeFloorId ?? ''}
+          value={String(activeFloorIndex)}
           label="Floor"
           onChange={handleFloorChange}
         >
-          {floors.map((floor) => (
-            <MenuItem key={floor.id} value={floor.id} disabled={floor.disabled}>
+          {floors.map((floor, index) => (
+            <MenuItem key={floor.id} value={String(index)} disabled={floor.disabled}>
               {floor.name}
             </MenuItem>
           ))}
@@ -191,6 +185,7 @@ export const FloorSelector = memo(function FloorSelector() {
         }}
         onConfirm={handleDeleteFloor}
         title="Delete Floor"
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         entityName={activeFloor?.name ?? 'Floor'}
         warningItems={deleteWarningItems.length > 0 ? deleteWarningItems : undefined}
       />

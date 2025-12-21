@@ -58,15 +58,13 @@ export function SeatingBuilderView() {
   const originalLayoutId = useSeatingBuilderStore((s) => s.originalLayoutId);
   const undo = useSeatingBuilderStore((s) => s.undo);
   const redo = useSeatingBuilderStore((s) => s.redo);
-  const layoutName = useSeatingBuilderStore((s) => s.layout.name);
-  const floorIds = useSeatingBuilderStore((s) => s.layout.floorIds);
-  const sectionIdsByFloorId = useSeatingBuilderStore((s) => s.layout.sectionIdsByFloorId);
-  const resourceIdsBySectionId = useSeatingBuilderStore((s) => s.layout.resourceIdsBySectionId);
+  const layout = useSeatingBuilderStore((s) => s.layout);
+  const layoutName = layout.name;
   const isDirty = useSeatingBuilderStore((s) => s.isDirty);
   const toLayout = useSeatingBuilderStore((s) => s.toLayout);
   const markClean = useSeatingBuilderStore((s) => s.markClean);
   // Store starts with a default layout, so this is always true initially
-  const layoutId = useSeatingBuilderStore((s) => s.layout.id);
+  const layoutId = layout.id;
 
   // Track which layout ID to fetch fully
   const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(null);
@@ -180,21 +178,20 @@ export function SeatingBuilderView() {
   // Compute layout counts for delete warning
   const deleteWarningItems = useMemo(() => {
     const items: string[] = [];
-    const floorCount = floorIds.length;
+    const floorCount = layout.floors.length;
     let sectionCount = 0;
     let tableCount = 0;
-    for (const floorId of floorIds) {
-      const sectionIds = sectionIdsByFloorId[floorId] ?? [];
-      sectionCount += sectionIds.length;
-      for (const sectionId of sectionIds) {
-        tableCount += (resourceIdsBySectionId[sectionId] ?? []).length;
+    for (const floor of layout.floors) {
+      sectionCount += floor.sections.length;
+      for (const section of floor.sections) {
+        tableCount += section.resources.length;
       }
     }
     if (floorCount > 0) items.push(`${String(floorCount)} floor${floorCount > 1 ? 's' : ''}`);
     if (sectionCount > 0) items.push(`${String(sectionCount)} section${sectionCount > 1 ? 's' : ''}`);
     if (tableCount > 0) items.push(`${String(tableCount)} table${tableCount > 1 ? 's' : ''}`);
     return items;
-  }, [floorIds, sectionIdsByFloorId, resourceIdsBySectionId]);
+  }, [layout]);
 
   const handleDeleteLayout = useCallback(async () => {
     if (!originalLayoutId) return;
