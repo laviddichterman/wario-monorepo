@@ -5,6 +5,7 @@ import {
   CreateIOptionTypeRequestBodyDto,
   UpdateIOptionTypeRequestBodyDto,
 } from '@wcp/wario-shared';
+import { AuthScopes } from '@wcp/wario-shared-private';
 
 import { UpdateOptionDto } from 'src/dtos/modifier.dto';
 import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
@@ -20,7 +21,7 @@ export class ModifierController {
   ) {}
 
   @Post()
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   async CreateModifierType(@Body() body: CreateIOptionTypeRequestBodyDto) {
     const doc = await this.catalogProvider.CreateModifierType(body);
     this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
@@ -28,7 +29,7 @@ export class ModifierController {
   }
 
   @Patch(':id')
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   async UpdateModifierType(@Param('id') id: string, @Body() body: UpdateIOptionTypeRequestBodyDto) {
     const doc = await this.catalogProvider.UpdateModifierType({
       id,
@@ -39,7 +40,7 @@ export class ModifierController {
   }
 
   @Delete(':id')
-  @Scopes('delete:catalog')
+  @Scopes(AuthScopes.DELETE_CATALOG)
   async DeleteModifierType(@Param('id') id: string) {
     const doc = await this.catalogProvider.DeleteModifierType(id);
     this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
@@ -47,7 +48,7 @@ export class ModifierController {
   }
 
   @Post(':mtid')
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   async CreateOption(@Body() body: CreateIOptionRequestBodyDto, @Param('mtid') mtid: string) {
     const doc = await this.catalogProvider.CreateOption(mtid, body);
     this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
@@ -55,7 +56,7 @@ export class ModifierController {
   }
 
   @Patch(':mtid/:id')
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   async UpdateModifierOption(@Body() body: UpdateOptionDto, @Param('id') id: string, @Param('mtid') mtid: string) {
     const doc = await this.catalogProvider.UpdateModifierOption({
       id,
@@ -67,7 +68,7 @@ export class ModifierController {
   }
 
   @Delete(':mtid/:id')
-  @Scopes('delete:catalog')
+  @Scopes(AuthScopes.DELETE_CATALOG)
   async DeleteModifierOption(@Param('id') id: string, @Param('mtid') mtid: string) {
     const doc = await this.catalogProvider.DeleteModifierOption(mtid, id);
     this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());

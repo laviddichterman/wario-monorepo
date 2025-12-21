@@ -24,10 +24,42 @@ This package primarily contains:
 src/
 ├── index.ts              # Main entry point
 └── lib/
-    └── bridge-messages.ts # Message types for printer, KDS, POS communication
+    ├── bridge-messages.ts # Message types for printer, KDS, POS communication
+    └── auth-scopes.ts     # Auth0 scope constants and types
 ```
 
 ## Key Types
+
+### Auth Scopes
+
+The `auth-scopes.ts` file provides type-safe Auth0 scope constants:
+
+| Constant             | Value                | Usage                          |
+| -------------------- | -------------------- | ------------------------------ |
+| `READ_SETTINGS`      | `read:settings`      | Read KV store, seating layouts |
+| `WRITE_SETTINGS`     | `write:settings`     | Update KV store                |
+| `READ_ORDER`         | `read:order`         | Fetch orders                   |
+| `WRITE_ORDER`        | `write:order`        | Confirm, reschedule, move      |
+| `CANCEL_ORDER`       | `cancel:order`       | Cancel orders                  |
+| `SEND_ORDER`         | `send:order`         | Force send to kitchen          |
+| `WRITE_CATALOG`      | `write:catalog`      | Create/update menu items       |
+| `DELETE_CATALOG`     | `delete:catalog`     | Delete menu items              |
+| `WRITE_CONFIG`       | `write:config`       | Update fulfillments            |
+| `DELETE_CONFIG`      | `delete:config`      | Delete fulfillments            |
+| `WRITE_ORDER_CONFIG` | `write:order_config` | Lead times, block-offs         |
+| `EDIT_STORE_CREDIT`  | `edit:store_credit`  | Issue/redeem store credits     |
+
+**Usage:**
+
+```typescript
+import { AuthScopes } from '@wcp/wario-shared-private';
+
+// In wario-pos hooks:
+const token = await getToken(AuthScopes.WRITE_CATALOG);
+
+// In wario-backend controllers:
+@Scopes(AuthScopes.WRITE_CATALOG)
+```
 
 ### Bridge Messages
 

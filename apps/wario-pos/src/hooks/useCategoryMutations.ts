@@ -1,11 +1,13 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import type { ICategory } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
 import { type CategoryFormState, toCategoryApiBody } from '@/atoms/forms/categoryFormAtoms';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // ============================================================================
 // Types
@@ -30,11 +32,11 @@ interface DeleteCategoryRequest {
  * Mutation hook for adding a category
  */
 export function useAddCategoryMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (form: CategoryFormState) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const body = toCategoryApiBody(form);
 
       const response = await axiosInstance.post<ICategory>('/api/v1/menu/category', body, {
@@ -55,11 +57,11 @@ export function useAddCategoryMutation() {
  * If dirtyFields is provided, only the modified fields are sent (partial update).
  */
 export function useEditCategoryMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ id, form, dirtyFields }: EditCategoryRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       // Only send dirty fields for PATCH/update
       const body = dirtyFields ? toCategoryApiBody(form, dirtyFields) : toCategoryApiBody(form);
 
@@ -79,11 +81,11 @@ export function useEditCategoryMutation() {
  * Mutation hook for deleting a category
  */
 export function useDeleteCategoryMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ id, deleteContainedProducts }: DeleteCategoryRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CATALOG);
 
       const response = await axiosInstance.delete<ICategory>(`/api/v1/menu/category/${id}`, {
         headers: {

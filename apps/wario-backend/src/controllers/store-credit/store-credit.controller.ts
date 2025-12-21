@@ -8,6 +8,7 @@ import {
   type SpendCreditResponse,
   ValidateLockAndSpendRequestDto,
 } from '@wcp/wario-shared';
+import { AuthScopes } from '@wcp/wario-shared-private';
 
 import { Public } from 'src/auth/decorators/public.decorator';
 
@@ -32,7 +33,7 @@ export class StoreCreditController {
   }
 
   @Post('spend')
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   @HttpCode(200)
   async postSpendCredit(@Body() body: ValidateLockAndSpendRequestDto) {
     const spending_result = await this.storeCreditProvider.ValidateLockAndSpend(body);
@@ -64,7 +65,7 @@ export class StoreCreditController {
   }
 
   @Post('issue')
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   @HttpCode(201)
   async postIssueCredit(@Body() body: IssueStoreCreditRequestDto) {
     const create_result = await this.storeCreditProvider.IssueCredit(body);

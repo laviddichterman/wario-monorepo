@@ -7,6 +7,7 @@ import {
   UpdateIProductInstanceRequestDto,
   UpdateIProductRequestDto,
 } from '@wcp/wario-shared';
+import { AuthScopes } from '@wcp/wario-shared-private';
 
 import { BatchDeleteProductClassDto } from 'src/dtos/product.dto';
 import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
@@ -27,7 +28,7 @@ export class ProductController {
   ) {}
 
   @Post()
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   @HttpCode(201)
   async postProductClass(@Body() body: CreateIProductRequestDto) {
     const createProductResult = await this.catalogProvider.CreateProduct(body);
@@ -42,7 +43,7 @@ export class ProductController {
   }
 
   @Post('batch')
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   @HttpCode(201)
   async batchPostProducts(@Body() body: BatchUpsertProductRequestDto) {
     const createBatchesResult = await this.catalogProvider.BatchUpsertProduct(body.products);
@@ -57,7 +58,7 @@ export class ProductController {
   }
 
   @Patch(':pid')
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   async patchProductClass(@Param('pid') productId: string, @Body() body: UpdateIProductRequestDto) {
     const doc = await this.catalogProvider.UpdateProduct(productId, body);
     if (!doc) {
@@ -68,7 +69,7 @@ export class ProductController {
   }
 
   @Delete(':pid')
-  @Scopes('delete:catalog')
+  @Scopes(AuthScopes.DELETE_CATALOG)
   async deleteProductClass(@Param('pid') productId: string) {
     const doc = await this.catalogProvider.DeleteProduct(productId);
     if (!doc) {
@@ -79,7 +80,7 @@ export class ProductController {
   }
 
   @Post('batch/batchDelete')
-  @Scopes('delete:catalog')
+  @Scopes(AuthScopes.DELETE_CATALOG)
   @HttpCode(200)
   async batchDeleteProductClasses(@Body() body: BatchDeleteProductClassDto) {
     const doc = await this.catalogProvider.BatchDeleteProduct(body.pids);
@@ -129,7 +130,7 @@ export class ProductController {
   }
 
   @Delete(':pid/:piid')
-  @Scopes('delete:catalog')
+  @Scopes(AuthScopes.DELETE_CATALOG)
   async deleteProductInstance(@Param('piid') productInstanceId: string) {
     const doc = await this.catalogProvider.DeleteProductInstance(productInstanceId);
     if (!doc) {

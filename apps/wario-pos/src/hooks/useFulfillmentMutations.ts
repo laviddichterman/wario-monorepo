@@ -1,11 +1,13 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import type { FulfillmentConfig } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
 import { type FulfillmentFormState, toFulfillmentApiBody } from '@/atoms/forms/fulfillmentFormAtoms';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // ============================================================================
 // Types
@@ -25,11 +27,11 @@ interface EditFulfillmentRequest {
  * Mutation hook for adding a fulfillment
  */
 export function useAddFulfillmentMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (form: FulfillmentFormState) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CONFIG);
       const body = toFulfillmentApiBody(form);
 
       const response = await axiosInstance.post<FulfillmentConfig>('/api/v1/config/fulfillment/', body, {
@@ -49,11 +51,11 @@ export function useAddFulfillmentMutation() {
  * If dirtyFields is provided, only the modified fields are sent (partial update).
  */
 export function useEditFulfillmentMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ id, form, dirtyFields }: EditFulfillmentRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CONFIG);
       // Only send dirty fields for PATCH/update
       const body = dirtyFields ? toFulfillmentApiBody(form, dirtyFields) : toFulfillmentApiBody(form);
 
@@ -73,11 +75,11 @@ export function useEditFulfillmentMutation() {
  * Mutation hook for deleting a fulfillment
  */
 export function useDeleteFulfillmentMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CONFIG);
 
       const response = await axiosInstance.delete<FulfillmentConfig>(`/api/v1/config/fulfillment/${id}`, {
         headers: {

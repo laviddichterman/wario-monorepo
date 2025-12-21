@@ -1,10 +1,12 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import type { PrinterGroup } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 /**
  * Query key for printer groups
@@ -30,12 +32,12 @@ async function fetchPrinterGroups(token: string): Promise<PrinterGroup[]> {
  * Returns printer groups as an array
  */
 export function usePrinterGroupsQuery() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useQuery({
     queryKey: PRINTER_GROUPS_QUERY_KEY,
     queryFn: async () => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.WRITE_ORDER);
       return fetchPrinterGroups(token);
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -101,11 +103,11 @@ interface DeletePrinterGroupRequest {
  */
 export function useAddPrinterGroupMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (data: AddPrinterGroupRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
 
       const response = await axiosInstance.post<PrinterGroup>('/api/v1/menu/printergroup', data, {
         headers: {
@@ -128,11 +130,11 @@ export function useAddPrinterGroupMutation() {
  */
 export function useEditPrinterGroupMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (data: EditPrinterGroupRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
 
       const response = await axiosInstance.patch<PrinterGroup>(
         `/api/v1/menu/printergroup/${data.id}`,
@@ -159,11 +161,11 @@ export function useEditPrinterGroupMutation() {
  */
 export function useDeletePrinterGroupMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (data: DeletePrinterGroupRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CATALOG);
 
       const response = await axiosInstance.delete<PrinterGroup>(`/api/v1/menu/printergroup/${data.id}`, {
         headers: {

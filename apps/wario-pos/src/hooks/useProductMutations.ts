@@ -1,6 +1,6 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import type {
   CreateIProductInstanceRequest,
   CreateIProductRequest,
@@ -13,6 +13,8 @@ import type {
 } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // ============================================================================
 // Types
@@ -40,11 +42,11 @@ export type BatchUpsertProductResponse = {
  * Mutation hook for adding a new product with its base instance
  */
 export function useAddProductMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (req: CreateIProductRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const response = await axiosInstance.post<IProduct>('/api/v1/menu/product/', req, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -61,11 +63,11 @@ export function useAddProductMutation() {
  * Mutation hook for BATCH adding new products with a single base instance each
  */
 export function useBatchUpsertProductMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (products: UpsertIProductRequest[]) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
 
       // Backend expects { products: [...] } matching BatchUpsertProductRequest
       const response = await axiosInstance.post<BatchUpsertProductResponse>(
@@ -88,11 +90,11 @@ export function useBatchUpsertProductMutation() {
  * Mutation hook for editing a product
  */
 export function useEditProductMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (props: UpdateIProductRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       // Destructure id from props - it goes in URL, not body
       const { id, ...updateFields } = props;
       const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${id}`, updateFields, {
@@ -111,11 +113,11 @@ export function useEditProductMutation() {
  * Mutation hook for deleting a product
  */
 export function useDeleteProductMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async (productId: string) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CATALOG);
 
       const response = await axiosInstance.delete<IProduct>(`/api/v1/menu/product/${productId}`, {
         headers: {
@@ -134,11 +136,11 @@ export function useDeleteProductMutation() {
  * Used for enable, disable, and disable_until_eod operations
  */
 export function useSetProductDisabledMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ id, disabled }: SetProductDisabledRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const response = await axiosInstance.patch<IProduct>(
         `/api/v1/menu/product/${id}`,
         { disabled },
@@ -160,11 +162,11 @@ export function useSetProductDisabledMutation() {
  * THIS SUCKS, make a batch delete endpoint
  */
 export function useBatchDeleteProductsMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ productIds }: BatchDeleteProductsRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CATALOG);
 
       // Delete products sequentially to avoid overwhelming the server
       const results: IProduct[] = [];
@@ -187,11 +189,11 @@ export function useBatchDeleteProductsMutation() {
  * Mutation hook for adding a new product instance
  */
 export function useCreateProductInstanceMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ productId, body }: { productId: string; body: CreateIProductInstanceRequest }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, body, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -208,7 +210,7 @@ export function useCreateProductInstanceMutation() {
  * Mutation hook for updating a product instance
  */
 export function useUpdateProductInstanceMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({
@@ -220,7 +222,7 @@ export function useUpdateProductInstanceMutation() {
       instanceId: string;
       body: UpdateIProductInstanceRequest;
     }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
 
       const response = await axiosInstance.patch<IProductInstance>(
         `/api/v1/menu/product/${productId}/${instanceId}`,

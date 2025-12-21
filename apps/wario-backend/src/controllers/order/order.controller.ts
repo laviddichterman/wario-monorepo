@@ -14,6 +14,7 @@ import {
 import { isValid, parseISO } from 'date-fns';
 
 import { CreateOrderRequestV2Dto, WDateUtils, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+import { AuthScopes } from '@wcp/wario-shared-private';
 
 import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
 import { CancelOrderRequestDto, MoveOrderRequestDto, RescheduleOrderRequestDto } from 'src/dtos/order.dto';
@@ -41,7 +42,7 @@ export class OrderController {
   constructor(private readonly orderManager: OrderManagerService) {}
 
   @Post()
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   @HttpCode(201)
   async postOrder(@Body() body: CreateOrderRequestV2Dto, @RealIp() ipAddress: string) {
     const response = await this.orderManager.CreateOrder(body, ipAddress);
@@ -52,7 +53,7 @@ export class OrderController {
   }
 
   @Put(':oId/cancel')
-  @Scopes('cancel:order')
+  @Scopes(AuthScopes.CANCEL_ORDER)
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putCancelOrder(
@@ -75,7 +76,7 @@ export class OrderController {
   }
 
   @Put(':oId/confirm')
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putConfirmOrder(@LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined) {
@@ -90,7 +91,7 @@ export class OrderController {
   }
 
   @Put(':oId/move')
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putMoveOrder(
@@ -112,7 +113,7 @@ export class OrderController {
   }
 
   @Put(':oId/reschedule')
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putAdjustOrderTime(
@@ -130,14 +131,14 @@ export class OrderController {
   }
 
   @Put('unlock')
-  @Scopes('write:order')
+  @Scopes(AuthScopes.WRITE_ORDER)
   async putUnlock() {
     await this.orderManager.ObliterateLocks();
     return { ok: 'yay!' };
   }
 
   @Put(':oId/send')
-  @Scopes('send:order')
+  @Scopes(AuthScopes.SEND_ORDER)
   @UseInterceptors(OrderLockInterceptor)
   @LockOrder()
   async putSendOrder(@LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined) {
@@ -152,7 +153,7 @@ export class OrderController {
   }
 
   @Get(':oId')
-  @Scopes('read:order')
+  @Scopes(AuthScopes.READ_ORDER)
   async getOrder(@Param('oId') orderId: string) {
     const response = await this.orderManager.GetOrder(orderId);
     if (!response.success) {
@@ -162,7 +163,7 @@ export class OrderController {
   }
 
   @Get()
-  @Scopes('read:order')
+  @Scopes(AuthScopes.READ_ORDER)
   async getOrders(@Query('date') date: string, @Query('endDate') endDate: string, @Query('status') status: string) {
     const queryDate = parseAndNormalizeDate(date);
     const queryEndDate = parseAndNormalizeDate(endDate);

@@ -1,7 +1,7 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import {
   CreateProductWithMetadataFromV2,
   EventTitleStringBuilder,
@@ -24,6 +24,8 @@ import axiosInstance from '@/utils/axios';
 import { uuidv4 } from '@/utils/uuidv4';
 
 import { toast } from '@/components/snackbar';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // Fetch orders function
 const fetchOrders = async (
@@ -54,7 +56,7 @@ export type OrderQueryOptions = {
 // Hook to get orders
 // Requires at least one constraint (date, endDate, or status) to prevent unbounded queries
 export function useOrdersQuery(options: OrderQueryOptions | null = null) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   const date = options?.date ?? null;
   const endDate = options?.endDate ?? null;
@@ -66,7 +68,7 @@ export function useOrdersQuery(options: OrderQueryOptions | null = null) {
   return useQuery({
     queryKey: ['orders', date, endDate, status],
     queryFn: async () => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
+      const token = await getToken(AuthScopes.READ_ORDER);
       return fetchOrders(token, date, endDate, status);
     },
     // Disable query if no constraints provided - prevents unbounded queries
@@ -75,13 +77,13 @@ export function useOrdersQuery(options: OrderQueryOptions | null = null) {
 }
 
 export function usePendingOrdersQuery() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
   const currentDate = useCurrentTime();
   const currentDateStr = WDateUtils.formatISODate(currentDate);
   return useQuery({
     queryKey: ['orders', 'pending', currentDateStr],
     queryFn: async () => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
+      const token = await getToken(AuthScopes.READ_ORDER);
       return fetchOrders(token, currentDateStr, null, WOrderStatus.OPEN);
     },
     refetchInterval: 30000,
@@ -99,13 +101,13 @@ const fetchOrderById = async (token: string, orderId: string): Promise<WOrderIns
 
 // Hook to get a single order by ID using dedicated API endpoint
 export function useOrderById(orderId: string | null): WOrderInstance | null {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   const { data } = useQuery({
     queryKey: ['order', orderId],
     queryFn: async () => {
       // orderId is guaranteed non-null when queryFn runs due to enabled check
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:order' } });
+      const token = await getToken(AuthScopes.READ_ORDER);
       return fetchOrderById(token, orderId as string);
     },
     enabled: orderId !== null,
@@ -117,11 +119,11 @@ export function useOrderById(orderId: string | null): WOrderInstance | null {
 // Mutation hooks
 export function useConfirmOrderMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ orderId, additionalMessage }: { orderId: string; additionalMessage?: string }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.WRITE_ORDER);
       await axiosInstance.put(
         `/api/v1/order/${orderId}/confirm`,
         { additionalMessage },
@@ -146,7 +148,7 @@ export function useConfirmOrderMutation() {
 
 export function useCancelOrderMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({
@@ -158,7 +160,7 @@ export function useCancelOrderMutation() {
       reason: string;
       emailCustomer?: boolean;
     }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.CANCEL_ORDER);
       await axiosInstance.put(
         `/api/v1/order/${orderId}/cancel`,
         { reason, emailCustomer },
@@ -183,11 +185,11 @@ export function useCancelOrderMutation() {
 
 export function useRescheduleOrderMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ orderId, newDate, newTime }: { orderId: string; newDate: string; newTime: number }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.WRITE_ORDER);
       await axiosInstance.put(
         `/api/v1/order/${orderId}/reschedule`,
         { newDate, newTime },
@@ -212,7 +214,7 @@ export function useRescheduleOrderMutation() {
 
 export function useMoveOrderMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({
@@ -224,7 +226,7 @@ export function useMoveOrderMutation() {
       destination: string;
       additionalMessage: string;
     }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.WRITE_ORDER);
       await axiosInstance.put(
         `/api/v1/order/${orderId}/move`,
         { destination, additionalMessage },
@@ -249,11 +251,11 @@ export function useMoveOrderMutation() {
 
 export function useForceSendOrderMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ orderId }: { orderId: string }) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.SEND_ORDER);
       await axiosInstance.put(
         `/api/v1/order/${orderId}/send`,
         {},
@@ -278,11 +280,11 @@ export function useForceSendOrderMutation() {
 
 export function useUnlockOrdersMutation() {
   const queryClient = useQueryClient();
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async () => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:order' } });
+      const token = await getToken(AuthScopes.WRITE_ORDER);
       await axiosInstance.put(
         '/api/v1/order/unlock',
         {},

@@ -44,6 +44,7 @@
     "@tanstack/react-query": "^5.90.12",
     "@wcp/wario-fe-ux-shared": "workspace:*",
     "@wcp/wario-shared": "workspace:*",
+    "@wcp/wario-shared-private": "workspace:*",
     "@wcp/wario-ux-shared": "workspace:*",
     "axios": "^1.13.2",
     "date-fns": "^4.1.0",

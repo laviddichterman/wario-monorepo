@@ -1,11 +1,13 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import type { CreateIProductInstanceRequest, IProductInstance } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
 import { type ProductInstanceFormState, toProductInstanceApiBody } from '@/atoms/forms/productInstanceFormAtoms';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // ============================================================================
 // Types
@@ -35,11 +37,11 @@ interface DeleteProductInstanceRequest {
  * Mutation hook for adding a product instance to an existing product
  */
 export function useAddProductInstanceMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ productId, form }: AddProductInstanceRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const body: CreateIProductInstanceRequest = toProductInstanceApiBody(form);
 
       const response = await axiosInstance.post<IProductInstance>(`/api/v1/menu/product/${productId}`, body, {
@@ -58,11 +60,11 @@ export function useAddProductInstanceMutation() {
  * Mutation hook for editing a product instance
  */
 export function useEditProductInstanceMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ productId, instanceId, form }: EditProductInstanceRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const body = toProductInstanceApiBody(form);
 
       const response = await axiosInstance.patch<IProductInstance>(
@@ -85,11 +87,11 @@ export function useEditProductInstanceMutation() {
  * Mutation hook for deleting a product instance
  */
 export function useDeleteProductInstanceMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ productId, instanceId }: DeleteProductInstanceRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CATALOG);
 
       const response = await axiosInstance.delete<IProductInstance>(`/api/v1/menu/product/${productId}/${instanceId}`, {
         headers: {

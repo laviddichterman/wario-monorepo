@@ -10,6 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
+
 import { CreateFulfillmentDto, UpdateFulfillmentDto } from 'src/dtos/fulfillment.dto';
 import { SocketIoService } from 'src/infrastructure/messaging/socket-io/socket-io.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
@@ -26,7 +28,7 @@ export class FulfillmentController {
   ) {}
 
   @Post()
-  @Scopes('write:config')
+  @Scopes(AuthScopes.WRITE_CONFIG)
   @HttpCode(201)
   async postFulfillment(@Body() body: CreateFulfillmentDto) {
     try {
@@ -40,7 +42,7 @@ export class FulfillmentController {
   }
 
   @Patch(':fid')
-  @Scopes('write:config')
+  @Scopes(AuthScopes.WRITE_CONFIG)
   async patchFulfillment(@Param('fid') fulfillmentId: string, @Body() body: UpdateFulfillmentDto) {
     try {
       // TODO: FIX!
@@ -55,7 +57,7 @@ export class FulfillmentController {
   }
 
   @Delete(':fid')
-  @Scopes('delete:config')
+  @Scopes(AuthScopes.DELETE_CONFIG)
   async deleteFulfillment(@Param('fid') fulfillmentId: string) {
     try {
       await this.catalogProvider.BackfillRemoveFulfillment(fulfillmentId);

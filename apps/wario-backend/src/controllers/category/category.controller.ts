@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
 import { UncommittedICategoryDto } from '@wcp/wario-shared';
+import { AuthScopes } from '@wcp/wario-shared-private';
 
 import { Scopes } from 'src/auth/decorators/scopes.decorator';
 
@@ -17,7 +18,7 @@ export class CategoryController {
   ) {}
 
   @Post()
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   @HttpCode(201)
   async postCategory(@Body() body: UncommittedICategoryDto) {
     const doc = await this.catalogProvider.CreateCategory(body);
@@ -26,7 +27,7 @@ export class CategoryController {
   }
 
   @Patch(':catid')
-  @Scopes('write:catalog')
+  @Scopes(AuthScopes.WRITE_CATALOG)
   async patchCategory(@Param('catid') catid: string, @Body() body: UpdateCategoryDto) {
     // todo: UpdateCategoryDto needs to allow partial updates
     const doc = await this.catalogProvider.UpdateCategory(catid, body);
@@ -38,7 +39,7 @@ export class CategoryController {
   }
 
   @Delete(':catid')
-  @Scopes('delete:catalog')
+  @Scopes(AuthScopes.DELETE_CATALOG)
   async deleteCategory(@Param('catid') catid: string, @Body() body: DeleteCategoryDto) {
     const delete_contained_products = body.delete_contained_products ?? false;
     const doc = await this.catalogProvider.DeleteCategory(catid, delete_contained_products);

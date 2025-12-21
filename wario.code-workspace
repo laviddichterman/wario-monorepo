@@ -39,6 +39,10 @@
     {
       "name": "wario-shared",
       "path": "packages/wario-shared"
+    },
+    {
+      "name": "wario-shared-private",
+      "path": "packages/wario-shared-private"
     }
   ],
   "settings": {

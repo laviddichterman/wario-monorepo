@@ -65,6 +65,37 @@ For catalog entity add/edit operations, use the Form Atoms pattern (`src/atoms/f
   - `use*Form()` - hook with `updateField()` that auto-tracks dirty fields
 - **Usage in Mutations**: Pass `dirtyFields` to edit mutations for partial updates
 
+##### Auth Token Hook Pattern
+
+For authenticated API calls, use the `useGetAuthToken` hook (`src/hooks/useGetAuthToken.ts`):
+
+- **Type-Safe Scopes**: Uses `AuthScopes` constants from `@wcp/wario-shared-private`
+- **Error Handling**: Provides user-friendly error messages for auth failures
+- **Dev Warnings**: Warns in development if an unknown scope is used
+
+**Usage:**
+
+```typescript
+import { AuthScopes } from '@wcp/wario-shared-private';
+import { useGetAuthToken } from './useGetAuthToken';
+
+export function useMyMutation() {
+  const { getToken } = useGetAuthToken();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
+      return axiosInstance.post('/api/...', data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    },
+  });
+}
+```
+
+> [!IMPORTANT]
+> **Never use hardcoded scope strings** like `'write:catalog'`. Always use `AuthScopes.WRITE_CATALOG` for type safety and consistency.
+
 #### 3. Global App State (Context/Zustand)
 
 **Session & Singletons**.

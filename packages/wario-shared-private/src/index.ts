@@ -6,3 +6,4 @@
  */
 
 export * from './lib/bridge-messages';
+export * from './lib/auth-scopes';

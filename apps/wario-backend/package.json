@@ -75,6 +75,7 @@
     "@turf/invariant": "^7.3.1",
     "@turf/turf": "^7.3.1",
     "@wcp/wario-shared": "workspace:*",
+    "@wcp/wario-shared-private": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "cors": "^2.8.5",

@@ -116,7 +116,6 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
 
   // Memoize derived render models array - now renders ALL sections on active floor
   const renderModels = useMemo((): SeatingResourceRenderModel[] => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!activeFloor) return [];
 
     const selectedSet = new Set(selectedResourceIds);

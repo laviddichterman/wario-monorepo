@@ -1,7 +1,10 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useQuery } from '@tanstack/react-query';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
+
 import axiosInstance from '@/utils/axios';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // ============================================================================
 // Queries
@@ -11,12 +14,12 @@ import axiosInstance from '@/utils/axios';
  * Query hook for fetching the Key Value Store
  */
 export function useKeyValueStoreQuery() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useQuery({
     queryKey: ['kvstore'],
     queryFn: async () => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'read:settings' } });
+      const token = await getToken(AuthScopes.READ_SETTINGS);
       const response = await axiosInstance.get<Record<string, string>>('/api/v1/config/kvstore', {
         headers: {
           Authorization: `Bearer ${token}`,

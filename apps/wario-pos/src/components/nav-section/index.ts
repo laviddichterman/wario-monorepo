@@ -6,8 +6,8 @@ export * from './mini';
 
 export * from './styles';
 
+export type * from './types';
+
 export * from './utils';
 
 export * from './vertical';
-
-export type * from './types';

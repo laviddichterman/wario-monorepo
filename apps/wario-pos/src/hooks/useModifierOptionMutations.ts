@@ -1,11 +1,13 @@
-import { useAuth0 } from '@auth0/auth0-react';
 import { useMutation } from '@tanstack/react-query';
 
+import { AuthScopes } from '@wcp/wario-shared-private';
 import type { IOption, IWInterval } from '@wcp/wario-shared/types';
 
 import axiosInstance from '@/utils/axios';
 
 import { type ModifierOptionFormState, toModifierOptionApiBody } from '@/atoms/forms/modifierOptionFormAtoms';
+
+import { useGetAuthToken } from './useGetAuthToken';
 
 // ============================================================================
 // Types
@@ -42,11 +44,11 @@ interface DisableModifierOptionRequest {
  * Mutation hook for adding a modifier option
  */
 export function useAddModifierOptionMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ modifierTypeId, form }: AddModifierOptionRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const body = toModifierOptionApiBody(form);
 
       const response = await axiosInstance.post<IOption>(`/api/v1/menu/option/${modifierTypeId}/`, body, {
@@ -65,11 +67,11 @@ export function useAddModifierOptionMutation() {
  * Mutation hook for editing a modifier option
  */
 export function useEditModifierOptionMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ modifierTypeId, optionId, form, dirtyFields }: EditModifierOptionRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       const body = toModifierOptionApiBody(form, dirtyFields || new Set());
 
       const response = await axiosInstance.patch<IOption>(`/api/v1/menu/option/${modifierTypeId}/${optionId}`, body, {
@@ -88,11 +90,11 @@ export function useEditModifierOptionMutation() {
  * Mutation hook for deleting a modifier option
  */
 export function useDeleteModifierOptionMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ modifierTypeId, optionId }: DeleteModifierOptionRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'delete:catalog' } });
+      const token = await getToken(AuthScopes.DELETE_CATALOG);
 
       const response = await axiosInstance.delete<IOption>(`/api/v1/menu/option/${modifierTypeId}/${optionId}`, {
         headers: {
@@ -111,11 +113,11 @@ export function useDeleteModifierOptionMutation() {
  * Used for enable, disable, and disable_until_eod operations
  */
 export function useSetModifierOptionDisabledMutation() {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getToken } = useGetAuthToken();
 
   return useMutation({
     mutationFn: async ({ modifierTypeId, option, disabled }: DisableModifierOptionRequest) => {
-      const token = await getAccessTokenSilently({ authorizationParams: { scope: 'write:catalog' } });
+      const token = await getToken(AuthScopes.WRITE_CATALOG);
       // Only send the fields we want to update (partial update matching UpdateIOptionRequestBody)
       const body = { disabled };
 
