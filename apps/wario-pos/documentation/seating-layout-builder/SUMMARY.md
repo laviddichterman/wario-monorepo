@@ -150,7 +150,7 @@ src/sections/seating/
 ├── SeatingBuilderView.tsx    # Main view, layout switching
 ├── SeatingCanvas.tsx         # SVG canvas, drag/lasso handling
 ├── SeatingToolbar.tsx        # Toolbar with undo/redo/save
-├── FloorTabs.tsx             # Floor navigation
+├── FloorSelector.tsx             # Floor navigation
 ├── SectionTabs.tsx           # Section navigation
 ├── components/
 │   ├── DraggableResource.tsx # Table with resize handles
@@ -190,8 +190,8 @@ src/hooks/
 
 - [x] Multi-select via lasso/drag-selection box _(Completed - see §7)_
 - [x] Bulk move with grid snapping _(Completed - implemented in drag handlers)_
+- [x] Floor/section rename and UI consistency _(Completed - see [walkthrough](file:///Users/lavid/Documents/wario-monorepo/apps/wario-pos/documentation/seating-layout-builder/naming-ui-consistency/walkthrough.md))_
 - [ ] Complete E2E tests for lasso selection
 - [ ] Improve touch targets for resize handles
-- [ ] Floor/section rename and reorder UI
 - [ ] Table template presets
 - [ ] Performance profiling for 50+ tables

@@ -6,24 +6,29 @@
  * - Delete section with confirmation (cascade deletes tables)
  */
 
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 
 import Add from '@mui/icons-material/Add';
-import Button from '@mui/material/Button';
+import Delete from '@mui/icons-material/Delete';
+import Edit from '@mui/icons-material/Edit';
+import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
+import FormControl from '@mui/material/FormControl';
+import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
-import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-
-import { AppDialog } from '@wcp/wario-ux-shared/containers';
-
-import { useBoolean } from '@/hooks/useBoolean';
 
 import { toast } from '@/components/snackbar';
 
 import { useActiveFloor, useActiveSectionIndex, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
+import { NamePopover } from './components/NamePopover';
 
 export const SectionTabs = memo(function SectionTabs() {
   const activeFloor = useActiveFloor();
@@ -35,9 +40,16 @@ export const SectionTabs = memo(function SectionTabs() {
   const setActiveSection = useSeatingBuilderStore((s) => s.setActiveSection);
   const addSection = useSeatingBuilderStore((s) => s.addSection);
   const deleteSection = useSeatingBuilderStore((s) => s.deleteSection);
+  const renameSection = useSeatingBuilderStore((s) => s.renameSection);
 
-  const addDialog = useBoolean();
+  const [addAnchorEl, setAddAnchorEl] = useState<HTMLElement | null>(null);
   const [deleteDialogSectionIndex, setDeleteDialogSectionIndex] = useState<number | null>(null);
+  const [renameAnchor, setRenameAnchor] = useState<{ el: HTMLElement; index: number } | null>(null);
+  const sectionSelectorRef = useRef<HTMLDivElement>(null);
+  const [renameDropdownOpen, setRenameDropdownOpen] = useState(false);
+
+  // Threshold for switching to dropdown
+  const useDropdown = sections.length > 5;
 
   // Get section info for delete dialog
   const sectionToDelete = deleteDialogSectionIndex !== null ? sections[deleteDialogSectionIndex] : null;
@@ -53,18 +65,11 @@ export const SectionTabs = memo(function SectionTabs() {
   );
 
   const handleAddSection = useCallback(
-    (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (!activeFloor) return;
-
-      const formData = new FormData(e.currentTarget);
-      const name = formData.get('sectionName') as string;
-      if (name.trim()) {
-        addSection(name.trim());
-        addDialog.onFalse();
-      }
+    (name: string) => {
+      addSection(name);
+      toast.success(`Added section "${name}"`);
     },
-    [activeFloor, addSection, addDialog],
+    [addSection],
   );
 
   const handleDeleteSection = useCallback(
@@ -78,76 +83,157 @@ export const SectionTabs = memo(function SectionTabs() {
     [deleteSection, sections],
   );
 
+  const handleRenameSection = useCallback(
+    (newName: string) => {
+      // Handle chip mode (double-click)
+      if (renameAnchor !== null) {
+        renameSection(renameAnchor.index, newName);
+        toast.success(`Renamed section to "${newName}"`);
+        setRenameAnchor(null);
+        return;
+      }
+      // Handle dropdown mode (edit button)
+      if (renameDropdownOpen) {
+        renameSection(activeSectionIndex, newName);
+        toast.success(`Renamed section to "${newName}"`);
+        setRenameDropdownOpen(false);
+      }
+    },
+    [renameAnchor, renameDropdownOpen, activeSectionIndex, renameSection],
+  );
+
+  // Compute which section is being renamed for popup
+  const sectionToRename =
+    renameAnchor !== null ? sections[renameAnchor.index] : renameDropdownOpen ? sections[activeSectionIndex] : null;
+
+  // Compute popover anchor element based on mode
+  const popoverAnchorEl = renameAnchor?.el ?? (renameDropdownOpen ? sectionSelectorRef.current : null);
+
   if (!activeFloor) {
     return null;
   }
 
   return (
     <>
-      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ py: 1 }}>
-        {sections.map((section, index) => {
-          const isActive = index === activeSectionIndex;
+      {useDropdown ? (
+        // Dropdown mode for many sections
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Box ref={sectionSelectorRef}>
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel id="section-select-label">Section</InputLabel>
+              <Select
+                labelId="section-select-label"
+                value={String(activeSectionIndex)}
+                label="Section"
+                onChange={(e: SelectChangeEvent) => {
+                  const value = e.target.value;
+                  if (value === '__add__') {
+                    setAddAnchorEl(sectionSelectorRef.current);
+                  } else {
+                    setActiveSection(Number(value));
+                  }
+                }}
+              >
+                {sections.map((section, index) => (
+                  <MenuItem key={section.id} value={String(index)} disabled={section.disabled}>
+                    {section.name}
+                  </MenuItem>
+                ))}
+                <Divider />
+                <MenuItem value="__add__">
+                  <Add sx={{ mr: 1, fontSize: 20 }} />
+                  Add Section...
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
-          return (
-            <Tooltip
-              key={section.id}
-              title={canDeleteSection ? 'Right-click to delete' : 'Cannot delete the only section'}
-              enterDelay={1000}
+          {/* Rename Section Button */}
+          <Tooltip title="Rename current section">
+            <IconButton
+              size="small"
+              onClick={() => {
+                setRenameDropdownOpen(true);
+              }}
             >
-              <Chip
-                label={section.name}
-                variant={isActive ? 'filled' : 'outlined'}
-                color={isActive ? 'primary' : 'default'}
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
+          {/* Delete Section Button */}
+          <Tooltip title={canDeleteSection ? 'Delete current section' : 'Cannot delete the only section'}>
+            <span>
+              <IconButton
+                size="small"
+                color="error"
                 onClick={() => {
-                  handleSectionClick(index);
+                  setDeleteDialogSectionIndex(activeSectionIndex);
                 }}
-                onDelete={
-                  canDeleteSection
-                    ? () => {
-                        setDeleteDialogSectionIndex(index);
-                      }
-                    : undefined
-                }
-                disabled={section.disabled}
-                sx={{
-                  fontWeight: isActive ? 600 : 400,
-                  '& .MuiChip-deleteIcon': {
-                    opacity: 0.5,
-                    '&:hover': { opacity: 1 },
-                  },
-                }}
-              />
-            </Tooltip>
-          );
-        })}
+                disabled={!canDeleteSection}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
+      ) : (
+        // Chip mode for few sections
+        <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ py: 1 }}>
+          {sections.map((section, index) => {
+            const isActive = index === activeSectionIndex;
 
-        <Button size="small" variant="text" startIcon={<Add />} onClick={addDialog.onTrue}>
-          Section
-        </Button>
-      </Stack>
+            return (
+              <Tooltip key={section.id} title="Double-click to rename" enterDelay={1000}>
+                <Chip
+                  label={section.name}
+                  variant={isActive ? 'filled' : 'outlined'}
+                  color={isActive ? 'primary' : 'default'}
+                  onClick={() => {
+                    handleSectionClick(index);
+                  }}
+                  onDoubleClick={(e) => {
+                    setRenameAnchor({ el: e.currentTarget, index });
+                  }}
+                  onDelete={
+                    canDeleteSection
+                      ? () => {
+                          setDeleteDialogSectionIndex(index);
+                        }
+                      : undefined
+                  }
+                  disabled={section.disabled}
+                  sx={{
+                    fontWeight: isActive ? 600 : 400,
+                    '& .MuiChip-deleteIcon': {
+                      opacity: 0.5,
+                      '&:hover': { opacity: 1 },
+                    },
+                  }}
+                />
+              </Tooltip>
+            );
+          })}
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              setAddAnchorEl(e.currentTarget);
+            }}
+          >
+            <Add fontSize="small" />
+          </IconButton>
+        </Stack>
+      )}
 
-      {/* Add Section Dialog */}
-      <AppDialog.Root open={addDialog.value} onClose={addDialog.onFalse} maxWidth="xs" fullWidth>
-        <form onSubmit={handleAddSection}>
-          <AppDialog.Header onClose={addDialog.onFalse} title="Add Section" />
-          <AppDialog.Content>
-            <TextField
-              autoFocus
-              name="sectionName"
-              label="Section Name"
-              placeholder="e.g., Dining Room, Bar Area, Patio"
-              fullWidth
-              required
-            />
-          </AppDialog.Content>
-          <AppDialog.Actions>
-            <Button onClick={addDialog.onFalse}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              Add
-            </Button>
-          </AppDialog.Actions>
-        </form>
-      </AppDialog.Root>
+      {/* Add Section Popover */}
+      <NamePopover
+        anchorEl={addAnchorEl}
+        onClose={() => {
+          setAddAnchorEl(null);
+        }}
+        onConfirm={handleAddSection}
+        label="Add Section"
+        placeholder="e.g., Dining Room, Bar Area"
+      />
 
       {/* Delete Section Confirmation Dialog */}
       <DeleteConfirmDialog
@@ -167,6 +253,18 @@ export const SectionTabs = memo(function SectionTabs() {
             ? [`${String(tableCountToDelete)} table${tableCountToDelete > 1 ? 's' : ''}`]
             : undefined
         }
+      />
+
+      {/* Rename Section Popover */}
+      <NamePopover
+        anchorEl={popoverAnchorEl}
+        onClose={() => {
+          setRenameAnchor(null);
+          setRenameDropdownOpen(false);
+        }}
+        onConfirm={handleRenameSection}
+        currentName={sectionToRename?.name ?? ''}
+        label="Rename Section"
       />
     </>
   );

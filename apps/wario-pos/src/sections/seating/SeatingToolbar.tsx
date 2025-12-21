@@ -7,6 +7,7 @@
 import { memo, useCallback } from 'react';
 
 import CircleOutlined from '@mui/icons-material/CircleOutlined';
+import ContentCopy from '@mui/icons-material/ContentCopy';
 import Delete from '@mui/icons-material/Delete';
 import Redo from '@mui/icons-material/Redo';
 import RotateRight from '@mui/icons-material/RotateRight';
@@ -48,6 +49,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
   const addResource = useSeatingBuilderStore((s) => s.addResource);
   const deleteResources = useSeatingBuilderStore((s) => s.deleteResources);
   const rotateResources = useSeatingBuilderStore((s) => s.rotateResources);
+  const copyResources = useSeatingBuilderStore((s) => s.copyResources);
   const getNextTableNumber = useSeatingBuilderStore((s) => s.getNextTableNumber);
   const findAvailablePosition = useSeatingBuilderStore((s) => s.findAvailablePosition);
   const toLayout = useSeatingBuilderStore((s) => s.toLayout);
@@ -115,6 +117,12 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
     rotateResources(selectedResourceIds, 90);
     toast.success('Rotated 90°');
   }, [selectedResourceIds, rotateResources]);
+
+  const handleCopySelected = useCallback(() => {
+    if (selectedResourceIds.length === 0) return;
+    copyResources(selectedResourceIds);
+    toast.success(`Copied ${String(selectedResourceIds.length)} table(s)`);
+  }, [selectedResourceIds, copyResources]);
 
   const handleUndo = useCallback(() => {
     const label = undo();
@@ -202,6 +210,15 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
         </span>
       </Tooltip>
 
+      {/* Copy */}
+      <Tooltip title="Copy Selected">
+        <span>
+          <IconButton onClick={handleCopySelected} disabled={!hasSelection}>
+            <ContentCopy />
+          </IconButton>
+        </span>
+      </Tooltip>
+
       {/* Delete */}
       <Tooltip title="Delete Selected">
         <span>
@@ -223,13 +240,7 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
         }}
         disabled={!isDirty || isSaving}
       >
-        {isSaving
-          ? originalLayoutId
-            ? 'Saving...'
-            : 'Creating...'
-          : originalLayoutId
-            ? 'Commit Changes'
-            : 'Create Layout'}
+        {isSaving ? 'Saving...' : 'Save'}
       </Button>
     </Stack>
   );

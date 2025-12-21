@@ -152,6 +152,27 @@ Located in `src/sections/seating`. A touch-optimized floor plan editor for confi
 
 **Documentation**: See `documentation/seating-layout-builder/` for detailed task tracker, implementation plans, and walkthroughs.
 
+### Navigation Guard
+
+Reusable components for blocking navigation when there are unsaved changes:
+
+- **Hook**: `src/hooks/useNavigationGuard.ts` - Wraps `react-router`'s `useBlocker` to intercept client-side navigation and optionally block browser back/forward/close via `beforeunload`.
+- **Dialog**: `src/components/navigation-guard/NavigationGuardDialog.tsx` - Generic confirmation dialog with Discard/Stay/Save options.
+
+**Usage**:
+
+```tsx
+const { isBlocked, proceed, cancel } = useNavigationGuard({ when: isDirty });
+
+<NavigationGuardDialog
+  open={isBlocked}
+  entityName={formName}
+  onDiscard={proceed}
+  onCancel={cancel}
+  onSave={handleSaveAndLeave}
+/>;
+```
+
 ## 4. Developer Guide
 
 ### Running Locally

@@ -8,27 +8,25 @@
  * - Toolbar for CRUD operations
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Add from '@mui/icons-material/Add';
 import Delete from '@mui/icons-material/Delete';
-import MoreVert from '@mui/icons-material/MoreVert';
+import Edit from '@mui/icons-material/Edit';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
 import IconButton from '@mui/material/IconButton';
 import InputLabel from '@mui/material/InputLabel';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
+import { useNavigationGuard } from '@/hooks/useNavigationGuard';
 import {
   useCreateSeatingLayoutMutation,
   useDeleteSeatingLayoutMutation,
@@ -37,13 +35,15 @@ import {
   useUpdateSeatingLayoutMutation,
 } from '@/hooks/useSeatingLayoutQuery';
 
+import { NavigationGuardDialog } from '@/components/navigation-guard';
 import { toast } from '@/components/snackbar';
 
 import { useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
 import { DeleteConfirmDialog } from './components/DeleteConfirmDialog';
+import { NamePopover } from './components/NamePopover';
 import { UnsavedChangesDialog } from './components/UnsavedChangesDialog';
-import { FloorTabs } from './FloorTabs';
+import { FloorSelector } from './FloorSelector';
 import { SeatingCanvas } from './SeatingCanvas';
 import { SeatingToolbar } from './SeatingToolbar';
 import { SectionTabs } from './SectionTabs';
@@ -63,21 +63,30 @@ export function SeatingBuilderView() {
   const isDirty = useSeatingBuilderStore((s) => s.isDirty);
   const toLayout = useSeatingBuilderStore((s) => s.toLayout);
   const markClean = useSeatingBuilderStore((s) => s.markClean);
+  const renameLayout = useSeatingBuilderStore((s) => s.renameLayout);
   // Store starts with a default layout, so this is always true initially
   const layoutId = layout.id;
 
   // Track which layout ID to fetch fully
   const [selectedLayoutId, setSelectedLayoutId] = useState<string | null>(null);
-  const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [unsavedDialogOpen, setUnsavedDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{ type: 'switch'; layoutId: string } | { type: 'new' } | null>(
-    null,
-  );
+  const [pendingAction, setPendingAction] = useState<
+    { type: 'switch'; layoutId: string } | { type: 'new'; name: string } | null
+  >(null);
+
+  // Add layout popover state
+  const [addLayoutOpen, setAddLayoutOpen] = useState(false);
+  const [renameLayoutOpen, setRenameLayoutOpen] = useState(false);
+  const layoutSelectorRef = useRef<HTMLDivElement>(null);
 
   // Mutations for save & switch
   const createMutation = useCreateSeatingLayoutMutation();
   const updateMutation = useUpdateSeatingLayoutMutation();
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  // Navigation guard for unsaved changes
+  const { isBlocked, proceed, cancel } = useNavigationGuard({ when: isDirty });
 
   // Fetch full layout data when a layout is selected
   const {
@@ -116,21 +125,32 @@ export function SeatingBuilderView() {
     [isDirty],
   );
 
-  const handleCreateNew = useCallback(() => {
-    if (isDirty) {
-      setPendingAction({ type: 'new' });
-      setUnsavedDialogOpen(true);
-    } else {
-      createEmptyLayout('New Layout');
-    }
-  }, [isDirty, createEmptyLayout]);
+  const handleCreateNew = useCallback(
+    (name: string) => {
+      if (isDirty) {
+        setPendingAction({ type: 'new', name });
+        setUnsavedDialogOpen(true);
+      } else {
+        createEmptyLayout(name);
+      }
+    },
+    [isDirty, createEmptyLayout],
+  );
+
+  const handleAddLayoutConfirm = useCallback(
+    (name: string) => {
+      handleCreateNew(name);
+      toast.success(`Created layout "${name}"`);
+    },
+    [handleCreateNew],
+  );
 
   const handleUnsavedDiscard = useCallback(() => {
     setUnsavedDialogOpen(false);
     if (pendingAction?.type === 'switch') {
       setSelectedLayoutId(pendingAction.layoutId);
     } else if (pendingAction?.type === 'new') {
-      createEmptyLayout('New Layout');
+      createEmptyLayout(pendingAction.name);
     }
     setPendingAction(null);
   }, [pendingAction, createEmptyLayout]);
@@ -158,7 +178,7 @@ export function SeatingBuilderView() {
       if (pendingAction?.type === 'switch') {
         setSelectedLayoutId(pendingAction.layoutId);
       } else if (pendingAction?.type === 'new') {
-        createEmptyLayout('New Layout');
+        createEmptyLayout(pendingAction.name);
       }
       setPendingAction(null);
     } catch {
@@ -199,7 +219,6 @@ export function SeatingBuilderView() {
     try {
       await deleteLayoutMutation.mutateAsync(originalLayoutId);
       setDeleteDialogOpen(false);
-      setMenuAnchorEl(null);
       toast.success(`Deleted layout "${layoutName}"`);
 
       // Load another layout or reset to default
@@ -277,67 +296,72 @@ export function SeatingBuilderView() {
           <Paper variant="outlined" sx={{ px: 2, py: 1 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
               {/* Layout selector */}
-              <FormControl size="small" sx={{ minWidth: 180 }}>
-                <InputLabel>Layout</InputLabel>
-                <Select
-                  value={originalLayoutId || (layoutId ? '__new__' : '')}
-                  label="Layout"
-                  onChange={(e) => {
-                    if (e.target.value !== '__new__') {
-                      handleLayoutChange(e.target.value);
-                    }
-                  }}
-                >
-                  {layoutId && !originalLayoutId && (
-                    <MenuItem value="__new__">
-                      <em>New Layout (unsaved)</em>
+              <Box ref={layoutSelectorRef}>
+                <FormControl size="small" sx={{ minWidth: 180 }}>
+                  <InputLabel>Layout</InputLabel>
+                  <Select
+                    value={originalLayoutId || (layoutId ? '__new__' : '')}
+                    label="Layout"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === '__add__') {
+                        setAddLayoutOpen(true);
+                      } else if (value !== '__new__') {
+                        handleLayoutChange(value);
+                      }
+                    }}
+                  >
+                    {layoutId && !originalLayoutId && (
+                      <MenuItem value="__new__">
+                        <em>{layoutName} (unsaved)</em>
+                      </MenuItem>
+                    )}
+                    {layouts?.map((layout) => (
+                      <MenuItem key={layout.id} value={layout.id}>
+                        {layout.name}
+                      </MenuItem>
+                    ))}
+                    <Divider />
+                    <MenuItem value="__add__">
+                      <Add sx={{ mr: 1, fontSize: 20 }} />
+                      Add Layout...
                     </MenuItem>
-                  )}
-                  {layouts?.map((layout) => (
-                    <MenuItem key={layout.id} value={layout.id}>
-                      {layout.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  </Select>
+                </FormControl>
+              </Box>
 
-              <Button variant="outlined" size="small" startIcon={<Add />} onClick={handleCreateNew}>
-                New
-              </Button>
-
-              {/* Layout overflow menu */}
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  setMenuAnchorEl(e.currentTarget);
-                }}
-              >
-                <MoreVert />
-              </IconButton>
-              <Menu
-                anchorEl={menuAnchorEl}
-                open={Boolean(menuAnchorEl)}
-                onClose={() => {
-                  setMenuAnchorEl(null);
-                }}
-              >
-                <MenuItem
+              {/* Rename Layout Button */}
+              <Tooltip title="Rename current layout">
+                <IconButton
+                  size="small"
                   onClick={() => {
-                    setDeleteDialogOpen(true);
+                    setRenameLayoutOpen(true);
                   }}
-                  disabled={!originalLayoutId}
                 >
-                  <ListItemIcon>
-                    <Delete fontSize="small" color="error" />
-                  </ListItemIcon>
-                  <ListItemText primary="Delete Layout" />
-                </MenuItem>
-              </Menu>
+                  <Edit fontSize="small" />
+                </IconButton>
+              </Tooltip>
+
+              {/* Delete Layout Button - inline like floor delete */}
+              <Tooltip title={originalLayoutId ? 'Delete current layout' : 'Cannot delete unsaved layout'}>
+                <span>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => {
+                      setDeleteDialogOpen(true);
+                    }}
+                    disabled={!originalLayoutId}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
 
               <Divider orientation="vertical" flexItem />
 
               {/* Floor tabs inline */}
-              <FloorTabs />
+              <FloorSelector />
             </Stack>
           </Paper>
 
@@ -369,7 +393,6 @@ export function SeatingBuilderView() {
         open={deleteDialogOpen}
         onClose={() => {
           setDeleteDialogOpen(false);
-          setMenuAnchorEl(null);
         }}
         onConfirm={() => {
           void handleDeleteLayout();
@@ -380,7 +403,32 @@ export function SeatingBuilderView() {
         isPending={deleteLayoutMutation.isPending}
       />
 
-      {/* Unsaved Changes Confirmation Dialog */}
+      {/* Add Layout Popover */}
+      <NamePopover
+        anchorEl={addLayoutOpen ? layoutSelectorRef.current : null}
+        onClose={() => {
+          setAddLayoutOpen(false);
+        }}
+        onConfirm={handleAddLayoutConfirm}
+        label="Add Layout"
+        placeholder="e.g., Main Dining, Happy Hour"
+      />
+
+      {/* Rename Layout Popover */}
+      <NamePopover
+        anchorEl={renameLayoutOpen ? layoutSelectorRef.current : null}
+        onClose={() => {
+          setRenameLayoutOpen(false);
+        }}
+        onConfirm={(newName) => {
+          renameLayout(newName);
+          toast.success(`Renamed layout to "${newName}"`);
+        }}
+        currentName={layoutName}
+        label="Rename Layout"
+      />
+
+      {/* Unsaved Changes Confirmation Dialog (for layout switching) */}
       <UnsavedChangesDialog
         open={unsavedDialogOpen}
         layoutName={layoutName}
@@ -389,7 +437,34 @@ export function SeatingBuilderView() {
         onSaveAndProceed={() => {
           void handleSaveAndProceed();
         }}
-        isSaving={createMutation.isPending || updateMutation.isPending}
+        isSaving={isSaving}
+      />
+
+      {/* Navigation Guard Dialog (for leaving the page) */}
+      <NavigationGuardDialog
+        open={isBlocked}
+        entityName={layoutName}
+        entityType="changes"
+        onDiscard={proceed}
+        onCancel={cancel}
+        onSave={() => {
+          void (async () => {
+            try {
+              const layoutData = toLayout();
+              if (originalLayoutId) {
+                const updated = await updateMutation.mutateAsync({ id: originalLayoutId, layout: layoutData });
+                loadLayout(updated);
+              } else {
+                const created = await createMutation.mutateAsync(layoutData);
+                loadLayout(created);
+              }
+              proceed();
+            } catch {
+              toast.error('Failed to save changes');
+            }
+          })();
+        }}
+        isSaving={isSaving}
       />
     </Stack>
   );

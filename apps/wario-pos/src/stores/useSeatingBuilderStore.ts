@@ -123,6 +123,10 @@ export interface SeatingBuilderState {
   deleteFloor: (floorIndex: number) => void;
   deleteSection: (sectionIndex: number) => void;
   rotateResources: (ids: string[], degrees: number) => void;
+  copyResources: (ids: string[]) => void;
+  renameLayout: (newName: string) => void;
+  renameFloor: (floorIndex: number, newName: string) => void;
+  renameSection: (sectionIndex: number, newName: string) => void;
   setInteractionMode: (mode: 'SELECT' | 'PAN' | 'ADD_TABLE') => void;
   resetToDefaultLayout: () => void;
   toLayout: () => UpsertSeatingLayoutRequest;
@@ -158,18 +162,18 @@ const findResource = (
 };
 
 // Create default empty layout
-const createDefaultLayout = (name = 'New Layout'): FullSeatingLayout => ({
+const createDefaultLayout = (name = 'Default'): FullSeatingLayout => ({
   id: generateLocalKey(),
   name,
   floors: [
     {
       id: generateLocalKey(),
-      name: 'Main Floor',
+      name: 'Main',
       disabled: false,
       sections: [
         {
           id: generateLocalKey(),
-          name: 'Main Area',
+          name: 'Main',
           disabled: false,
           resources: [],
         },
@@ -308,7 +312,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
           sections: [
             {
               id: generateLocalKey(),
-              name: 'Main Area',
+              name: 'Main',
               disabled: false,
               resources: [],
             },
@@ -496,6 +500,110 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
       });
     },
 
+    copyResources: (ids) => {
+      if (ids.length === 0) return;
+      get().pushUndoCheckpoint(`Copy ${String(ids.length)} table(s)`);
+
+      set((s) => {
+        const layout = cloneLayout(s.layout);
+        const floor = layout.floors[s.editor.activeFloorIndex];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!floor) return s;
+        const section = floor.sections[s.editor.activeSectionIndex];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (!section) return s;
+
+        const idSet = new Set(ids);
+        const newIds: string[] = [];
+        const offset = 30; // Offset for copied tables
+
+        // Find resources to copy across all sections
+        for (const flr of layout.floors) {
+          for (const sect of flr.sections) {
+            for (const resource of sect.resources) {
+              if (idSet.has(resource.id)) {
+                const newResource: SeatingResource = {
+                  id: generateLocalKey(),
+                  name: `${resource.name} (copy)`,
+                  capacity: resource.capacity,
+                  shape: resource.shape,
+                  shapeDimX: resource.shapeDimX,
+                  shapeDimY: resource.shapeDimY,
+                  centerX: resource.centerX + offset,
+                  centerY: resource.centerY + offset,
+                  rotation: resource.rotation,
+                  disabled: false,
+                };
+                // Add copy to the active section
+                section.resources.push(newResource);
+                newIds.push(newResource.id);
+              }
+            }
+          }
+        }
+
+        return {
+          layout,
+          editor: { ...s.editor, selectedResourceIds: newIds },
+          isDirty: true,
+        };
+      });
+    },
+
+    renameLayout: (newName) => {
+      const oldName = get().layout.name;
+      get().pushUndoCheckpoint(`Rename layout "${oldName}" to "${newName}"`);
+
+      set((s) => {
+        const layout = cloneLayout(s.layout);
+        layout.name = newName;
+        return { layout, isDirty: true };
+      });
+    },
+
+    renameFloor: (floorIndex, newName) => {
+      const floor = get().layout.floors[floorIndex];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!floor) return;
+
+      const oldName = floor.name;
+      get().pushUndoCheckpoint(`Rename floor "${oldName}" to "${newName}"`);
+
+      set((s) => {
+        const layout = cloneLayout(s.layout);
+        const flr = layout.floors[floorIndex];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (flr) {
+          flr.name = newName;
+        }
+        return { layout, isDirty: true };
+      });
+    },
+
+    renameSection: (sectionIndex, newName) => {
+      const { layout, editor } = get();
+      const floor = layout.floors[editor.activeFloorIndex];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const section = floor?.sections[sectionIndex];
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!section) return;
+
+      const oldName = section.name;
+      get().pushUndoCheckpoint(`Rename section "${oldName}" to "${newName}"`);
+
+      set((s) => {
+        const newLayout = cloneLayout(s.layout);
+        const flr = newLayout.floors[s.editor.activeFloorIndex];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const sect = flr?.sections[sectionIndex];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (sect) {
+          sect.name = newName;
+        }
+        return { layout: newLayout, isDirty: true };
+      });
+    },
+
     setInteractionMode: (mode) => {
       set({ interactionMode: mode });
     },
@@ -638,16 +746,15 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
       const floor = layout.floors[editor.activeFloorIndex];
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!floor) return { x: 200, y: 200 };
-      const section = floor.sections[editor.activeSectionIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      if (!section) return { x: 200, y: 200 };
 
-      // Simple grid-based placement
+      // Check ALL sections on the floor to avoid placing on top of tables in other sections
       const occupied = new Set<string>();
-      for (const resource of section.resources) {
-        const gx = Math.floor(resource.centerX / 100);
-        const gy = Math.floor(resource.centerY / 100);
-        occupied.add(`${String(gx)},${String(gy)}`);
+      for (const section of floor.sections) {
+        for (const resource of section.resources) {
+          const gx = Math.floor(resource.centerX / 100);
+          const gy = Math.floor(resource.centerY / 100);
+          occupied.add(`${String(gx)},${String(gy)}`);
+        }
       }
 
       // Find first unoccupied grid cell
