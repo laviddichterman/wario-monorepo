@@ -29,6 +29,10 @@
       "path": "apps/wario-backend"
     },
     {
+      "name": "wario-bridge",
+      "path": "apps/wario-bridge"
+    },
+    {
       "name": "wario-fe-ux-shared",
       "path": "packages/wario-fe-ux-shared"
     },
