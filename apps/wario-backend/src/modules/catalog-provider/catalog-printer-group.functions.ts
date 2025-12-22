@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
 /**
  * Pure functions for printer group CRUD operations.
  */
@@ -105,7 +104,7 @@ export const batchUpdatePrinterGroup = async (
       [deps.dataProviderService.getKeyValueConfig().SQUARE_LOCATION_ALTERNATE], // message only needs to go to the alternate location
       { ...oldPGs[i], ...b.printerGroup },
       existingSquareObjects,
-      ('000' + i).slice(-3),
+      i.toString().padStart(3, '0'),
     ),
   );
   const upsertResponse = await deps.squareService.BatchUpsertCatalogObjects(
@@ -122,7 +121,7 @@ export const batchUpdatePrinterGroup = async (
     batches.map(async (b, i) => {
       const updatedPG = await deps.printerGroupRepository.update(b.id, {
         ...b.printerGroup,
-        externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, ('000' + i).slice(-3))],
+        externalIDs: [...newExternalIdses[i], ...IdMappingsToExternalIds(mappings, i.toString().padStart(3, '0'))],
       });
       return updatedPG;
     }),

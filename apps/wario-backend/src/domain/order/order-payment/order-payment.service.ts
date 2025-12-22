@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Order as SquareOrder } from 'square/legacy';
 
@@ -13,6 +13,7 @@ import {
   ValidateLockAndSpendSuccess,
 } from '@wcp/wario-shared';
 
+import { AppConfigService } from 'src/config/app-config.service';
 import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareError, SquareService } from 'src/modules/integrations/square/square.service';
 
@@ -25,6 +26,7 @@ export class OrderPaymentService {
     private squareService: SquareService,
     private storeCreditService: StoreCreditProviderService,
     private dataProvider: DataProviderService,
+    @Inject(AppConfigService) private appConfig: AppConfigService,
     @InjectPinoLogger(OrderPaymentService.name)
     private readonly logger: PinoLogger,
   ) {}
@@ -55,6 +57,7 @@ export class OrderPaymentService {
     // refund to store credit
     const create_order_store_credit = await this.squareService.CreateOrder(
       CreateOrderStoreCreditForRefund(
+        this.appConfig.isProduction,
         this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
         squareOrder.referenceId as string,
         amount,

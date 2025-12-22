@@ -19,6 +19,7 @@ import {
   type WOrderInstance,
 } from '@wcp/wario-shared';
 
+import { AppConfigService } from 'src/config/app-config.service';
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
 import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
@@ -64,6 +65,7 @@ export class PrinterService {
     private squareService: SquareService,
     private dataProvider: DataProviderService,
     private catalogProviderService: CatalogProviderService,
+    @Inject(AppConfigService) private appConfig: AppConfigService,
     @InjectPinoLogger(PrinterService.name)
     private readonly logger: PinoLogger,
   ) {}
@@ -114,6 +116,7 @@ export class PrinterService {
       const flatCart = Object.values(rebuiltCart).flat();
 
       const messageOrders = CreateOrdersForPrintingFromCart(
+        this.appConfig.isProduction,
         this.PrinterLocation,
         order.id,
         eventTitle,

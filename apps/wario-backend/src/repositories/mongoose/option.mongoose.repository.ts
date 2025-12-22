@@ -6,6 +6,8 @@ import type { IOption } from '@wcp/wario-shared';
 
 import type { IOptionRepository } from '../interfaces/option.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class OptionMongooseRepository implements IOptionRepository {
   constructor(
@@ -15,7 +17,7 @@ export class OptionMongooseRepository implements IOptionRepository {
 
   async findById(id: string): Promise<IOption | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<IOption>(doc) : null;
   }
 
   async findByIds(ids: string[]): Promise<IOption[]> {
@@ -24,18 +26,17 @@ export class OptionMongooseRepository implements IOptionRepository {
       .find({ _id: { $in: ids } })
       .lean()
       .exec();
-    return found.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return found.map((doc) => toEntity<IOption>(doc));
   }
 
   async findAll(): Promise<IOption[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IOption>(doc));
   }
 
   async create(option: Omit<IOption, 'id'>): Promise<IOption> {
     const created = await this.model.create(option);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<IOption>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<IOption, 'id'>>): Promise<IOption | null> {
@@ -43,7 +44,7 @@ export class OptionMongooseRepository implements IOptionRepository {
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<IOption>(updated);
   }
 
   async delete(id: string): Promise<boolean> {
@@ -55,10 +56,7 @@ export class OptionMongooseRepository implements IOptionRepository {
   async bulkCreate(options: Omit<IOption, 'id'>[]): Promise<IOption[]> {
     if (options.length === 0) return [];
     const docs = await this.model.insertMany(options);
-    return docs.map((doc) => {
-      const obj = doc.toObject();
-      return { ...obj, id: obj._id.toString() };
-    });
+    return docs.map((doc) => toEntity<IOption>(doc.toObject()));
   }
 
   async bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IOption, 'id'>> }>): Promise<number> {
@@ -70,7 +68,7 @@ export class OptionMongooseRepository implements IOptionRepository {
       },
     }));
     const result = await this.model.bulkWrite(bulkOps);
-    return result.modifiedCount;
+    return result.matchedCount;
   }
 
   async bulkDelete(ids: string[]): Promise<number> {

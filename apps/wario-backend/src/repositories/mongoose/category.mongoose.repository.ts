@@ -6,6 +6,8 @@ import type { ICategory } from '@wcp/wario-shared';
 
 import type { ICategoryRepository } from '../interfaces/category.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class CategoryMongooseRepository implements ICategoryRepository {
   constructor(
@@ -15,12 +17,12 @@ export class CategoryMongooseRepository implements ICategoryRepository {
 
   async findById(id: string): Promise<ICategory | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<ICategory>(doc) : null;
   }
 
   async findAll(): Promise<ICategory[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<ICategory>(doc));
   }
 
   async findByIds(ids: string[]): Promise<ICategory[]> {
@@ -29,13 +31,12 @@ export class CategoryMongooseRepository implements ICategoryRepository {
       .find({ _id: { $in: ids } })
       .lean()
       .exec();
-    return found.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return found.map((doc) => toEntity<ICategory>(doc));
   }
 
   async create(category: Omit<ICategory, 'id'>): Promise<ICategory> {
     const created = await this.model.create(category);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<ICategory>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<ICategory, 'id'>>): Promise<ICategory | null> {
@@ -43,7 +44,7 @@ export class CategoryMongooseRepository implements ICategoryRepository {
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<ICategory>(updated);
   }
 
   async delete(id: string): Promise<boolean> {

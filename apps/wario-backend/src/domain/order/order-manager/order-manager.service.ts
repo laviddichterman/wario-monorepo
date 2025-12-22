@@ -1111,6 +1111,7 @@ export class OrderManagerService {
       // Payment Part B: make an order
       const squareOrderResponse = await this.squareService.CreateOrder(
         CreateOrderFromCart(
+          this.appConfigService.isProduction,
           this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
           referenceId,
           discounts,

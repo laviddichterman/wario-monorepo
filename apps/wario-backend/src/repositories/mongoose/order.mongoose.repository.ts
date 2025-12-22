@@ -6,6 +6,8 @@ import type { WFulfillmentStatus, WOrderInstance, WOrderStatus } from '@wcp/wari
 
 import type { IOrderRepository } from '../interfaces/order.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class OrderMongooseRepository implements IOrderRepository {
   constructor(
@@ -15,7 +17,7 @@ export class OrderMongooseRepository implements IOrderRepository {
 
   async findById(id: string): Promise<WOrderInstance | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<WOrderInstance>(doc) : null;
   }
 
   async findBy({
@@ -38,7 +40,7 @@ export class OrderMongooseRepository implements IOrderRepository {
       })
       .lean()
       .exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<WOrderInstance>(doc));
   }
 
   async save(order: WOrderInstance): Promise<WOrderInstance> {
@@ -47,17 +49,16 @@ export class OrderMongooseRepository implements IOrderRepository {
       if (!updated) {
         throw new Error(`Order ${order.id} not found`);
       }
-      return { ...updated, id: updated._id.toString() };
+      return toEntity<WOrderInstance>(updated);
     }
 
     const created = await this.model.create(order);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<WOrderInstance>(created.toObject());
   }
 
   async updateStatus(id: string, status: WOrderStatus): Promise<WOrderInstance | null> {
     const updated = await this.model.findByIdAndUpdate(id, { $set: { status } }, { new: true }).lean().exec();
-    return updated ? { ...updated, id: updated._id.toString() } : null;
+    return updated ? toEntity<WOrderInstance>(updated) : null;
   }
 
   async delete(id: string): Promise<boolean> {
@@ -73,7 +74,7 @@ export class OrderMongooseRepository implements IOrderRepository {
       })
       .lean()
       .exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<WOrderInstance>(doc));
   }
 
   async updateWithLock(
@@ -85,7 +86,7 @@ export class OrderMongooseRepository implements IOrderRepository {
       .findOneAndUpdate({ _id: id, locked: lock }, { $set: updates }, { new: true })
       .lean()
       .exec();
-    return updated ? { ...updated, id: updated._id.toString() } : null;
+    return updated ? toEntity<WOrderInstance>(updated) : null;
   }
 
   async releaseLock(id: string): Promise<void> {
@@ -94,18 +95,17 @@ export class OrderMongooseRepository implements IOrderRepository {
 
   async bulkCreate(orders: Omit<WOrderInstance, 'id'>[]): Promise<WOrderInstance[]> {
     const docs = await this.model.insertMany(orders);
-    return docs.map((doc) => ({ ...doc.toObject(), id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<WOrderInstance>(doc.toObject()));
   }
 
   async create(order: Omit<WOrderInstance, 'id'>): Promise<WOrderInstance> {
     const created = await this.model.create(order);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<WOrderInstance>(created.toObject());
   }
 
   async findByLock(lock: string): Promise<WOrderInstance[]> {
     const docs = await this.model.find({ locked: lock }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<WOrderInstance>(doc));
   }
 
   async lockReadyOrders(
@@ -139,9 +139,7 @@ export class OrderMongooseRepository implements IOrderRepository {
       .findOneAndUpdate({ _id: id, locked: null, status }, { $set: { locked: lock } }, { new: true })
       .lean()
       .exec();
-    return updated
-      ? ({ ...updated, id: updated._id.toString() } as WOrderInstance & Required<{ locked: string }>)
-      : null;
+    return updated ? (toEntity<WOrderInstance>(updated) as WOrderInstance & Required<{ locked: string }>) : null;
   }
 
   async tryAcquireLock(id: string, lock: string): Promise<(WOrderInstance & Required<{ locked: string }>) | null> {
@@ -149,9 +147,7 @@ export class OrderMongooseRepository implements IOrderRepository {
       .findOneAndUpdate({ _id: id, locked: null }, { $set: { locked: lock } }, { new: true })
       .lean()
       .exec();
-    return updated
-      ? ({ ...updated, id: updated._id.toString() } as WOrderInstance & Required<{ locked: string }>)
-      : null;
+    return updated ? (toEntity<WOrderInstance>(updated) as WOrderInstance & Required<{ locked: string }>) : null;
   }
 
   async unlockAll(): Promise<number> {

@@ -10,7 +10,6 @@ import {
   type ICatalog,
   type IOption,
   type IOptionType,
-  type IOptionTypeDisplayFlags,
   type IProductInstanceFunction,
   type KeyValue,
   type UpdateIOptionProps,
@@ -101,6 +100,7 @@ export const validateOption = (
 
 export const createModifierType = async (deps: ModifierDeps, body: CreateIOptionTypeRequestBody) => {
   const options = body.options || [];
+
   // validate options
   options.forEach((opt) => {
     if (!validateOption(body, opt)) {
@@ -138,6 +138,129 @@ export const createModifierType = async (deps: ModifierDeps, body: CreateIOption
   return created;
 };
 
+const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
+  deps: ModifierDeps,
+  batch: UpdateIOptionTypeProps,
+  forceDeepUpsert: boolean,
+) => {
+  const externalIdsToPullFromForSquareCatalogDeletion: KeyValue[] = [];
+  const externalIdsToFetchFromSquare: string[] = [];
+
+  // 1. Validate modifier type exists
+  const oldMT = deps.catalog.modifiers[batch.id] as IOptionType | undefined;
+  if (!oldMT) {
+    throw Error(`Modifier type ${batch.id} not found`);
+  }
+  const { id: _mtid, ...oldModifierTypeData } = oldMT;
+
+  let optionOrderChanged = false;
+  // 2. Validate options list is not changing which options belong to this modifier type
+  if (batch.modifierType.options) {
+    // TODO DETERMINE WHAT THIS MEANS IF THE LIST REMOVES OPTIONS
+    if (
+      batch.modifierType.options.length !== oldMT.options.length ||
+      !batch.modifierType.options.every((opt) => oldMT.options.includes(opt))
+    ) {
+      deps.logger.warn(
+        {
+          oldOptions: oldMT.options,
+          newOptions: batch.modifierType.options,
+        },
+        `Cannot perform batch update on modifier type ${batch.id} with different options inside the options list`,
+      );
+      throw Error(
+        `Cannot perform batch update on modifier type ${batch.id} with different options inside the options list`,
+      );
+    }
+    for (let i = 0; i < batch.modifierType.options.length; i++) {
+      if (batch.modifierType.options[i] !== oldMT.options[i]) {
+        optionOrderChanged = true;
+      }
+    }
+  }
+
+  const updatedModifierType = {
+    ...oldModifierTypeData,
+    ...(batch.modifierType as UpdateIOptionTypeRequestBody),
+  };
+  // 3. validate options exist
+  const existingOptions = updatedModifierType.options
+    .map((optId) => deps.modifierOptions.find((o) => o.id === optId))
+    .filter((o) => !!o);
+  if (existingOptions.length !== updatedModifierType.options.length) {
+    throw Error(`Modifier type ${batch.id} has options that do not exist`);
+  }
+  let updatedOptions = existingOptions.slice();
+
+  const modifierTypeSquareExternalIds = GetSquareExternalIds(oldModifierTypeData.externalIDs);
+  const existingOptionsHave_MODIFIER_WHOLE = existingOptions.reduce(
+    (acc, x) => acc && GetSquareIdIndexFromExternalIds(x.externalIDs, 'MODIFIER_WHOLE') !== -1,
+    true,
+  );
+  const missingSquareCatalogObjects = !existingOptionsHave_MODIFIER_WHOLE || modifierTypeSquareExternalIds.length === 0;
+  const is3pChanging = updatedModifierType.displayFlags.is3p !== oldModifierTypeData.displayFlags.is3p;
+  const nameAttributeIsChanging =
+    updatedModifierType.name !== oldModifierTypeData.name ||
+    updatedModifierType.displayName !== oldModifierTypeData.displayName;
+  const otsOrSplitAllowingOptions =
+    existingOptions.filter((x) => x.metadata.allowOTS || x.metadata.can_split).length > 0;
+  if (updatedModifierType.max_selected === 1 && otsOrSplitAllowingOptions) {
+    const errorDetail =
+      'Unable to transition modifiers to single select as some modifier options have split or OTS enabled.';
+    deps.logger.warn(errorDetail);
+    throw Error(errorDetail);
+  }
+  let deepUpdate = false;
+  let updateModifierOptionsAndProducts = false;
+  // we need to do some deep updates if...
+  // * final modifier options length > 0
+  // * AND ...
+  //    * is3pChanging
+  //    * ordinalIsChanging
+  //    * nameAttributeIsChanging
+  //    * selection type is changing (switchingSelectionType)
+  //    * or if the MT or MOs are missing external IDs (missingSquareCatalogObjects)
+  if (
+    updatedOptions.length > 0 &&
+    (forceDeepUpsert || is3pChanging || optionOrderChanged || nameAttributeIsChanging || missingSquareCatalogObjects)
+  ) {
+    if (missingSquareCatalogObjects || forceDeepUpsert) {
+      // make sure all square external IDs are removed from the new external IDs for the MT, because the externalIds might be explicitly updated here
+      updatedModifierType.externalIDs = GetNonSquareExternalIds(updatedModifierType.externalIDs);
+
+      // add the square catalog objects to the list of catalog objects to nuke
+      externalIdsToPullFromForSquareCatalogDeletion.push(
+        ...modifierTypeSquareExternalIds,
+        ...updatedOptions.map((x) => x.externalIDs).flat(),
+      );
+
+      // nuke the IDs from the modifier options we be clobbering
+      updatedOptions = updatedOptions.map((x) => ({ ...x, externalIDs: GetNonSquareExternalIds(x.externalIDs) }));
+      deepUpdate = true;
+    }
+    updateModifierOptionsAndProducts = true;
+  }
+  if (updateModifierOptionsAndProducts || deepUpdate) {
+    // because we allow overriding the deepUpdate via forceDeepUpsert, we need to get any relevant external IDs outside of where deepUpdate = true is set above.
+    externalIdsToFetchFromSquare.push(
+      ...GetSquareExternalIds([
+        ...updatedModifierType.externalIDs,
+        ...updatedOptions.map((x) => x.externalIDs).flat(),
+      ]).map((x) => x.value),
+    );
+  }
+  return {
+    externalIdsToFetchFromSquare,
+    externalIdsToPullFromForSquareCatalogDeletion,
+    batch,
+    oldMT,
+    updatedModifierType,
+    updatedOptions,
+    deepUpdate,
+    updateModifierOptionsAndProducts,
+  };
+};
+
 export const batchUpdateModifierType = async (
   deps: ModifierDeps,
   batches: UpdateIOptionTypeProps[],
@@ -151,93 +274,52 @@ export const batchUpdateModifierType = async (
     'Updating modifier type(s)',
   );
 
-  // 1. Get old modifier type and options
-  // create a merged modifier type and determine if we need to update modifier options and products
-  const batchData = batches.map((b) => {
-    const oldMT = deps.catalog.modifiers[b.id];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!oldMT) {
-      throw Error(`Modifier type ${b.id} not found`);
-    }
-    let thisBatchUpdateModifierOptionsAndProducts = updateModifierOptionsAndProducts;
-    if (b.modifierType.options) {
-      // TODO DETERMINE WHAT THIS MEANS IF THE LIST REMOVES OPTIONS
-      if (
-        !(
-          b.modifierType.options.length === oldMT.options.length &&
-          b.modifierType.options.every((opt) => {
-            return oldMT.options.includes(opt);
-          })
-        )
-      ) {
-        throw Error(
-          `Cannot perform batch update on modifier type ${b.id} with different options inside the options list, old: ${JSON.stringify(oldMT.options)}, new: ${JSON.stringify(b.modifierType.options)}`,
-        );
-      }
-      // batch will re-order the options, so we need to adjust the ordering in square, meaning we need to run an update on the options
-      // we're not going to be precious, so we're going to update all of the options
-      thisBatchUpdateModifierOptionsAndProducts = true;
-    }
-    // Get options that belong to this modifier type from its options array
-    const { id: _mtid, ...oldModifierTypeData } = oldMT;
-    const optionsForMT = oldMT.options.map((optId) => deps.modifierOptions.find((o) => o.id === optId) as IOption);
-    return {
-      batch: b,
-      oldMT,
-      updatedModifierType: { ...oldModifierTypeData, ...(b.modifierType as UpdateIOptionTypeRequestBody) },
-      updatedOptions: optionsForMT.map((o) => {
-        const { id: oid, ...oldOptionData } = o;
-        return { id: oid, data: { ...oldOptionData, ...(b.modifierType.displayFlags as IOptionTypeDisplayFlags) } };
-      }),
-      updateModifierOptionsAndProducts: thisBatchUpdateModifierOptionsAndProducts,
-    };
-  });
+  // 1. Get old modifier type and options, perform validation and aggregation
+  const batchData = batches.map((b) =>
+    ValidateAndAggregateDataForUpdateModifierTypeBatch(deps, b, updateModifierOptionsAndProducts),
+  );
 
-  /**
-   * @todo POST MIGRATION TO NEW WARIO_SHARED @TODO: we need to update the modifier options at some point and I think it needs to be here?
-   */
-
-  // 2. Get all existing square objects across all batches
-  const existingSquareExternalIds: string[] = [];
-  batchData.forEach((b) => {
-    existingSquareExternalIds.push(...GetSquareExternalIds(b.oldMT.externalIDs).map((x) => x.value));
-    existingSquareExternalIds.push(
-      ...b.updatedOptions.flatMap((o) => GetSquareExternalIds(o.data.externalIDs)).map((x) => x.value),
-    );
-  });
-
+  // 2. pull relevant square objects
+  const externalIdsToFetchFromSquare: string[] = batchData.map((b) => b.externalIdsToFetchFromSquare).flat();
   let existingSquareObjects: CatalogObject[] = [];
-  if (existingSquareExternalIds.length > 0) {
+  if (externalIdsToFetchFromSquare.length > 0) {
     const batchRetrieveCatalogObjectsResponse = await deps.squareService.BatchRetrieveCatalogObjects(
-      existingSquareExternalIds,
+      externalIdsToFetchFromSquare,
       false,
     );
     if (!batchRetrieveCatalogObjectsResponse.success) {
       deps.logger.error(
-        { err: batchRetrieveCatalogObjectsResponse.error },
+        { error: batchRetrieveCatalogObjectsResponse.error },
         'Getting current square CatalogObjects failed',
       );
-      return null;
+      throw new Error('Getting current square CatalogObjects failed');
     }
     existingSquareObjects = batchRetrieveCatalogObjectsResponse.result.objects ?? [];
   }
 
+  // 3. delete relevant square objects
+  await deps.batchDeleteCatalogObjectsFromExternalIds(
+    batchData.map((b) => b.externalIdsToPullFromForSquareCatalogDeletion).flat(),
+  );
+
   // 3. create square objects for upsert
+  const mappings: CatalogIdMapping[] = [];
   const catalogObjectsForUpsert: CatalogObject[] = [];
   batchData.forEach((b, i) => {
-    catalogObjectsForUpsert.push(
-      ModifierTypeToSquareCatalogObject(
-        getLocationsConsidering3pFlag(deps, b.updatedModifierType.displayFlags.is3p),
-        b.updatedModifierType,
-        b.updatedModifierType.ordinal,
-        b.updatedOptions.map((o) => o.data),
-        existingSquareObjects,
-        ('000' + String(i)).slice(-3),
-      ),
-    );
+    if (b.updateModifierOptionsAndProducts) {
+      catalogObjectsForUpsert.push(
+        ModifierTypeToSquareCatalogObject(
+          getLocationsConsidering3pFlag(deps, b.updatedModifierType.displayFlags.is3p),
+          b.updatedModifierType,
+          b.updatedModifierType.ordinal,
+          b.updatedOptions,
+          existingSquareObjects,
+          i.toString().padStart(3, '0'),
+        ),
+      );
+    }
   });
 
-  const mappings: CatalogIdMapping[] = [];
   if (catalogObjectsForUpsert.length > 0) {
     const upsertResponse = await deps.squareService.BatchUpsertCatalogObjects(
       chunk(catalogObjectsForUpsert, deps.appConfig.squareBatchChunkSize).map((x) => ({
@@ -259,22 +341,26 @@ export const batchUpdateModifierType = async (
         ...batch.updatedModifierType,
         externalIDs: [
           ...batch.updatedModifierType.externalIDs,
-          ...IdMappingsToExternalIds(mappings, ('000' + String(batchId)).slice(-3)),
+
+          ...IdMappingsToExternalIds(mappings, batchId.toString().padStart(3, '0')),
         ],
       },
-      options: batch.updatedOptions.map((opt, i) => ({
-        id: opt.id,
-        data: {
-          ...opt.data,
-          externalIDs: [
-            ...opt.data.externalIDs,
-            ...IdMappingsToExternalIds(
-              mappings,
-              `${('000' + String(batchId)).slice(-3)}S${('000' + String(i)).slice(-3)}S`,
-            ),
-          ],
-        },
-      })),
+      options: batch.updatedOptions.map((opt, i) => {
+        const { id, ...rest } = opt;
+        return {
+          id,
+          data: {
+            ...rest,
+            externalIDs: [
+              ...opt.externalIDs,
+              ...IdMappingsToExternalIds(
+                mappings,
+                `${batchId.toString().padStart(3, '0')}S${i.toString().padStart(3, '0')}S`,
+              ),
+            ],
+          },
+        };
+      }),
     };
   });
 
@@ -285,7 +371,10 @@ export const batchUpdateModifierType = async (
     return null;
   }
 
-  const updatedModifierTypes = updatedWarioObjects.map((x) => ({ id: x.id, data: x.modifierType }));
+  const updatedModifierTypes = updatedWarioObjects.map((x) => ({ id: x.id, data: x.modifierType })) satisfies {
+    id: string;
+    data: Partial<Omit<IOptionType, 'id'>>;
+  }[];
   const updatedModifierTypeCount = await deps.optionTypeRepository.bulkUpdate(updatedModifierTypes);
   if (updatedModifierTypeCount !== updatedModifierTypes.length) {
     deps.logger.error({ updatedModifierTypeCount, updatedModifierTypes }, 'Failed to update modifier types in batch');
@@ -498,7 +587,7 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
         i, // modifierTypeOrdinal
         options,
         existingSquareObjects,
-        ('000' + String(i)).slice(-3),
+        i.toString().padStart(3, '0'),
       ),
     );
   });
@@ -525,7 +614,7 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
         ...b.updatedOption,
         externalIDs: [
           ...b.updatedOption.externalIDs,
-          ...IdMappingsToExternalIds(mappings, ('000' + String(i)).slice(-3)),
+          ...IdMappingsToExternalIds(mappings, i.toString().padStart(3, '0')),
         ],
       },
     };

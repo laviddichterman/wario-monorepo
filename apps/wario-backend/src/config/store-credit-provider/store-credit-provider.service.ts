@@ -23,6 +23,7 @@ import {
   WDateUtils,
 } from '@wcp/wario-shared';
 
+import { AppConfigService } from 'src/config/app-config.service';
 import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { GoogleService } from 'src/modules/integrations/google/google.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
@@ -38,6 +39,8 @@ export class StoreCreditProviderService {
   constructor(
     @Inject(GoogleService) private readonly googleService: GoogleService,
     @Inject(SquareService) private readonly squareService: SquareService,
+    @Inject(AppConfigService) private appConfig: AppConfigService,
+
     @Inject(DataProviderService) private readonly dataProviderService: DataProviderService,
     @InjectPinoLogger(StoreCreditProviderService.name)
     private readonly logger: PinoLogger,
@@ -413,6 +416,7 @@ export class StoreCreditProviderService {
 
     const create_order_response = await this.squareService.CreateOrder(
       CreateOrderStoreCredit(
+        this.appConfig.isProduction,
         this.dataProviderService.getKeyValueConfig().SQUARE_LOCATION,
         referenceId,
         request.amount,

@@ -6,6 +6,8 @@ import type { IProductInstance } from '@wcp/wario-shared';
 
 import type { IProductInstanceRepository } from '../interfaces/product-instance.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class ProductInstanceMongooseRepository implements IProductInstanceRepository {
   constructor(
@@ -15,7 +17,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
 
   async findById(id: string): Promise<IProductInstance | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<IProductInstance>(doc) : null;
   }
 
   async findByIds(ids: string[]): Promise<IProductInstance[]> {
@@ -24,12 +26,12 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
       .find({ _id: { $in: ids } })
       .lean()
       .exec();
-    return found.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return found.map((doc) => toEntity<IProductInstance>(doc));
   }
 
   async findAll(): Promise<IProductInstance[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IProductInstance>(doc));
   }
 
   async findAllWithModifierOptions(optionIds: string[]): Promise<IProductInstance[]> {
@@ -41,18 +43,17 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
       })
       .lean()
       .exec();
-    return product_instances_to_update.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return product_instances_to_update.map((doc) => toEntity<IProductInstance>(doc));
   }
 
   async findByProductId(productId: string): Promise<IProductInstance[]> {
     const docs = await this.model.find({ productId }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IProductInstance>(doc));
   }
 
   async create(instance: Omit<IProductInstance, 'id'>): Promise<IProductInstance> {
     const created = await this.model.create(instance);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<IProductInstance>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<IProductInstance, 'id'>>): Promise<IProductInstance | null> {
@@ -60,7 +61,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<IProductInstance>(updated);
   }
 
   async delete(id: string): Promise<boolean> {
@@ -72,10 +73,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
   async bulkCreate(instances: Omit<IProductInstance, 'id'>[]): Promise<IProductInstance[]> {
     if (instances.length === 0) return [];
     const docs = await this.model.insertMany(instances);
-    return docs.map((doc) => {
-      const obj = doc.toObject();
-      return { ...obj, id: obj._id.toString() };
-    });
+    return docs.map((doc) => toEntity<IProductInstance>(doc.toObject()));
   }
 
   async bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IProductInstance, 'id'>> }>): Promise<number> {
@@ -87,7 +85,7 @@ export class ProductInstanceMongooseRepository implements IProductInstanceReposi
       },
     }));
     const result = await this.model.bulkWrite(bulkOps);
-    return result.modifiedCount;
+    return result.matchedCount;
   }
 
   async bulkDelete(ids: string[]): Promise<number> {

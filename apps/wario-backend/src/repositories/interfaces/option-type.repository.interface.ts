@@ -9,7 +9,7 @@ export interface IOptionTypeRepository {
 
   // Bulk operations
   bulkCreate(optionTypes: Omit<IOptionType, 'id'>[]): Promise<IOptionType[]>;
-  bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IOptionType, 'id'>> }>): Promise<number>;
+  bulkUpdate(updates: { id: string; data: Partial<Omit<IOptionType, 'id'>> }[]): Promise<number>;
 }
 
 export const OPTION_TYPE_REPOSITORY = Symbol('IOptionTypeRepository');

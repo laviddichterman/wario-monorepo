@@ -22,7 +22,11 @@ import {
   GetSquareExternalIds,
   GetSquareIdIndexFromExternalIds,
 } from 'src/config/square-wario-bridge';
+import { type IProductInstanceRepository } from 'src/repositories';
 
+import type { IOptionTypeRepository } from '../../repositories/interfaces/option-type.repository.interface';
+import type { IOptionRepository } from '../../repositories/interfaces/option.repository.interface';
+import type { IProductRepository } from '../../repositories/interfaces/product.repository.interface';
 import type { SquareService } from '../integrations/square/square.service';
 
 import type { UpdatePrinterGroupProps, UpsertProductInstanceProps } from './catalog.types';
@@ -37,6 +41,11 @@ export interface SquareSyncDeps {
   // State
   printerGroups: Record<string, PrinterGroup>;
   catalog: ICatalog;
+
+  optionRepository: IOptionRepository;
+  optionTypeRepository: IOptionTypeRepository;
+  productRepository: IProductRepository;
+  productInstanceRepository: IProductInstanceRepository;
 
   // Callbacks to other services/operations
   batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<(PrinterGroup | null)[]>;
@@ -120,6 +129,9 @@ export const checkAllPrinterGroupsSquareIdsAndFixIfNeeded = async (deps: SquareS
 };
 
 export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {
+  const updatedModifierTypeIds: string[] = [];
+
+  // 1. check all modifier types for square ids by extracting the external IDs and checking if they exist in square
   const squareCatalogObjectIds = Object.values(deps.catalog.modifiers)
     .map((modifierType) => GetSquareExternalIds(modifierType.externalIDs).map((x) => x.value))
     .flat();
@@ -144,7 +156,7 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
               externalIDs: GetNonSquareExternalIds(mt.externalIDs),
             },
           });
-          deps.logger.info(`Pruning square catalog IDs from options: ${mt.options.join(', ')}`);
+          deps.logger.info({ options: mt.options }, 'Pruning square catalog IDs from options');
           optionUpdates.push(
             ...mt.options.map((oId) => ({
               id: oId,
@@ -153,21 +165,23 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
             })),
           );
         });
+      // these are the modifier types that we couldn't find the square IDs for
       if (missingSquareCatalogObjectBatches.length > 0) {
-        await deps.batchUpdateModifierType(missingSquareCatalogObjectBatches, false, false);
-      }
-      if (optionUpdates.length > 0) {
-        await deps.batchUpdateModifierOption(
-          optionUpdates.map((x) => ({
-            id: x.id,
-            modifierTypeId: x.modifierTypeId,
-            option: { externalIDs: x.externalIDs },
-          })),
+        const bulkUpdate = await deps.optionRepository.bulkUpdate(
+          optionUpdates.map((x) => ({ id: x.id, data: { externalIDs: x.externalIDs } })),
         );
+        deps.logger.info(
+          `Bulk upsert of options with square ids scrubbed successful, updated ${bulkUpdate.toString()}`,
+        );
+        await deps.syncOptions();
+        deps.recomputeCatalog();
+        const updated = await deps.batchUpdateModifierType(missingSquareCatalogObjectBatches, true, false);
+        updatedModifierTypeIds.push(...(updated || []).map((x) => x.id));
+        deps.recomputeCatalog();
       }
     }
   }
-  const batches = Object.values(deps.catalog.modifiers)
+  const modifierTypeBatches = Object.values(deps.catalog.modifiers)
     .filter(
       (mt) =>
         GetSquareIdIndexFromExternalIds(mt.externalIDs, 'MODIFIER_LIST') === -1 ||
@@ -179,8 +193,8 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
     )
     .map((mt) => ({ id: mt.id, modifierType: {} }));
 
-  if (batches.length > 0) {
-    const result = await deps.batchUpdateModifierType(batches, false, false);
+  if (modifierTypeBatches.length > 0) {
+    const result = await deps.batchUpdateModifierType(modifierTypeBatches, true, false);
     if (!result) {
       throw new Error('Failed to update modifier types');
     }
@@ -240,8 +254,7 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
     .map((p) =>
       p.instances
         .filter((piid) => {
-          const pi = deps.catalog.productInstances[piid];
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+          const pi = deps.catalog.productInstances[piid] as IProductInstance | undefined;
           return pi && !pi.displayFlags.pos.hide && GetSquareIdIndexFromExternalIds(pi.externalIDs, 'ITEM') === -1;
         })
         .map((piid) => ({

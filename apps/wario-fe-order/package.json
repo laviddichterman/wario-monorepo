@@ -42,7 +42,7 @@
     "react-hook-form": "^7.69.0",
     "react-phone-number-input": "^3.4.14",
     "react-square-web-payments-sdk": "3.2.4-beta.1",
-    "socket.io-client": "^4.8.1",
+    "socket.io-client": "^4.8.2",
     "zod": "^4.2.1",
     "zustand": "^5.0.9"
   },
@@ -60,7 +60,7 @@
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^16.5.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.0",
+    "typescript-eslint": "^8.50.1",
     "vite": "^7.3.0",
     "vite-plugin-checker": "^0.12.0"
   }

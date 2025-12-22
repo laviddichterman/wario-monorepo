@@ -7,6 +7,8 @@ import type { IProductInstanceFunction } from '@wcp/wario-shared';
 import { toPartialUpdateQuery } from '../../utils/partial-update';
 import type { IProductInstanceFunctionRepository } from '../interfaces/product-instance-function.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class ProductInstanceFunctionMongooseRepository implements IProductInstanceFunctionRepository {
   constructor(
@@ -16,18 +18,17 @@ export class ProductInstanceFunctionMongooseRepository implements IProductInstan
 
   async findById(id: string): Promise<IProductInstanceFunction | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<IProductInstanceFunction>(doc) : null;
   }
 
   async findAll(): Promise<IProductInstanceFunction[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IProductInstanceFunction>(doc));
   }
 
   async create(fn: Omit<IProductInstanceFunction, 'id'>): Promise<IProductInstanceFunction> {
     const created = await this.model.create(fn);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<IProductInstanceFunction>(created.toObject());
   }
 
   async update(
@@ -35,7 +36,7 @@ export class ProductInstanceFunctionMongooseRepository implements IProductInstan
     partial: Partial<Omit<IProductInstanceFunction, 'id'>>,
   ): Promise<IProductInstanceFunction | null> {
     const updated = await this.model.findByIdAndUpdate(id, toPartialUpdateQuery(partial), { new: true }).lean().exec();
-    return updated ? { ...updated, id: updated._id.toString() } : null;
+    return updated ? toEntity<IProductInstanceFunction>(updated) : null;
   }
 
   async save(fn: Omit<IProductInstanceFunction, 'id'> & { id?: string }): Promise<IProductInstanceFunction> {

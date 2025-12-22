@@ -6,6 +6,8 @@ import type { FulfillmentConfig } from '@wcp/wario-shared';
 
 import type { IFulfillmentRepository } from '../interfaces/fulfillment.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class FulfillmentMongooseRepository implements IFulfillmentRepository {
   constructor(
@@ -15,23 +17,22 @@ export class FulfillmentMongooseRepository implements IFulfillmentRepository {
 
   async findById(id: string): Promise<FulfillmentConfig | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<FulfillmentConfig>(doc) : null;
   }
 
   async findAll(): Promise<FulfillmentConfig[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<FulfillmentConfig>(doc));
   }
 
   async findByService(service: string): Promise<FulfillmentConfig[]> {
     const docs = await this.model.find({ service }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<FulfillmentConfig>(doc));
   }
 
   async create(fulfillment: Omit<FulfillmentConfig, 'id'>): Promise<FulfillmentConfig> {
     const created = await this.model.create(fulfillment);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<FulfillmentConfig>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<FulfillmentConfig, 'id'>>): Promise<FulfillmentConfig | null> {
@@ -39,7 +40,7 @@ export class FulfillmentMongooseRepository implements IFulfillmentRepository {
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<FulfillmentConfig>(updated);
   }
 
   async delete(id: string): Promise<boolean> {

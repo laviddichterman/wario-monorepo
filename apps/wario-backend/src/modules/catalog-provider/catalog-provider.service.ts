@@ -210,6 +210,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       squareService: this.squareService,
       printerGroups: this.printerGroups,
       catalog: this.catalog,
+      optionRepository: this.optionRepository,
+      optionTypeRepository: this.optionTypeRepository,
+      productRepository: this.productRepository,
+      productInstanceRepository: this.productInstanceRepository,
       batchUpdatePrinterGroup: (b) => PrinterGroupFns.batchUpdatePrinterGroup(this.printerGroupDeps, b),
       batchUpdateModifierType: (b, s, u) => ModifierFns.batchUpdateModifierType(this.modifierDeps, b, s, u),
       batchUpdateModifierOption: (b) => ModifierFns.batchUpdateModifierOption(this.modifierDeps, b),
@@ -635,7 +639,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         try {
           await SquareSyncFns.checkAllProductsHaveSquareIdsAndFixIfNeeded(this.squareSyncDeps);
         } catch (err: unknown) {
-          this._logger.error({ err }, 'Failed checking all products for consistency. Check that the Square token is correct.');
+          this._logger.error(
+            { err },
+            'Failed checking all products for consistency. Check that the Square token is correct.',
+          );
         }
         if (modifierTypeIdsUpdated.length > 0) {
           this._logger.info(
@@ -644,13 +651,18 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
           try {
             await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsUpdated);
           } catch (err: unknown) {
-            this._logger.error({ err }, 'Failed updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call');
+            this._logger.error(
+              { err },
+              'Failed updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call',
+            );
           }
         }
       } catch (err: unknown) {
-        this._logger.error({ err }, 'Failed checking all modifier types for consistency. Check that the Square token is correct.');
+        this._logger.error(
+          { err },
+          'Failed checking all modifier types for consistency. Check that the Square token is correct.',
+        );
       }
-
     }
 
     try {
@@ -716,10 +728,10 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
         };
       })
       .filter((update) => update.product !== null) as Array<{
-        piid: string;
-        product: IProduct;
-        productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
-      }>;
+      piid: string;
+      product: IProduct;
+      productInstance: { id: string; modifiers: IProductInstance['modifiers'] };
+    }>;
 
     if (batchProductInstanceUpdates.length > 0) {
       this.RecomputeCatalog();

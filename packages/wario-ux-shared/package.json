@@ -83,7 +83,7 @@
     "globals": "^16.5.0",
     "libphonenumber-metadata-generator": "^2.0.3",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.50.0",
+    "typescript-eslint": "^8.50.1",
     "vite": "^7.3.0",
     "vite-plugin-checker": "^0.12.0",
     "vite-plugin-dts": "^4.5.4",

@@ -4,6 +4,8 @@ import { Model } from 'mongoose';
 
 import type { SeatingLayout, UpdateSeatingLayout } from '@wcp/wario-shared';
 
+import { toEntity } from 'src/repositories/mongoose/mongoose-entity.utils';
+
 import type { ISeatingLayoutRepository } from '../interfaces/seating-layout.repository.interface';
 
 type LayoutMetadata = Omit<SeatingLayout, 'floors'>;
@@ -20,16 +22,12 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
     if (!layout) {
       return null;
     }
-    return {
-      id: layout._id.toString(),
-      name: layout.name,
-      floors: layout.floors,
-    };
+    return toEntity<SeatingLayout>(layout);
   }
 
   async findAll(): Promise<LayoutMetadata[]> {
     const docs = await this.layoutModel.find().lean().exec();
-    return docs.map((doc) => ({ id: doc._id.toString(), name: doc.name }));
+    return docs.map((doc) => toEntity<SeatingLayout>(doc));
   }
 
   async create(layoutData: Omit<SeatingLayout, 'id'>): Promise<SeatingLayout> {
@@ -37,12 +35,7 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
       name: layoutData.name,
       floors: layoutData.floors,
     });
-    const doc = created.toObject();
-    return {
-      id: doc._id.toString(),
-      name: doc.name,
-      floors: doc.floors,
-    };
+    return toEntity<SeatingLayout>(created.toObject());
   }
 
   async update(id: string, partial: Omit<UpdateSeatingLayout, 'id'>): Promise<SeatingLayout | null> {
@@ -50,11 +43,7 @@ export class SeatingLayoutMongooseRepository implements ISeatingLayoutRepository
     if (!updated) {
       return null;
     }
-    return {
-      id: updated._id.toString(),
-      name: updated.name,
-      floors: updated.floors,
-    };
+    return toEntity<SeatingLayout>(updated);
   }
 
   async delete(id: string): Promise<boolean> {

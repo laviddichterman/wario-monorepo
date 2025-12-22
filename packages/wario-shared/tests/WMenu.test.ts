@@ -3,6 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import type { IProductModifier, ProductInstanceModifierEntry } from '../src/lib/derived-types';
 import { CURRENCY, DISABLE_REASON, OptionPlacement, OptionQualifier } from '../src/lib/enums';
 import {
+  CategoryIdHasCycleIfChildOfProposedCategoryId,
   CheckRequiredModifiersAreAvailable,
   ComputeCategoryVisibilityMap,
   FilterProductSelector,
@@ -451,5 +452,120 @@ describe('ComputeCategoryVisibilityMap', () => {
       strictFilter,
     );
     expect(resultStrict.products.get('root')?.length).toBe(0);
+  });
+});
+
+describe('CategoryIdHasCycleIfChildOfProposedCategoryId', () => {
+  it('should return true when categoryId equals proposedCategoryId (self-reference)', () => {
+    const catA = createMockCategory({ id: 'A', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA] });
+
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('A', 'A', catalogSelectors.category)).toBe(true);
+  });
+
+  it('should return false when proposedCategoryId has no children', () => {
+    // A and B are siblings with no relationship
+    const catA = createMockCategory({ id: 'A', children: [] });
+    const catB = createMockCategory({ id: 'B', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA, catB] });
+
+    // Can B become a child of A? Yes, no cycle
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('A', 'B', catalogSelectors.category)).toBe(false);
+  });
+
+  it('should return false when proposedCategoryId is already a child of categoryId', () => {
+    // Tree: A → B → C
+    // Testing: Can C become a child of A? Yes, A is not a descendant of C
+    const catA = createMockCategory({ id: 'A', children: ['B'] });
+    const catB = createMockCategory({ id: 'B', children: ['C'] });
+    const catC = createMockCategory({ id: 'C', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA, catB, catC] });
+
+    // C is already a grandchild of A. Making C a direct child of A is fine (no cycle).
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('A', 'C', catalogSelectors.category)).toBe(false);
+  });
+
+  it('should return true when categoryId is a descendant of proposedCategoryId', () => {
+    // Tree: A → B → C
+    // Testing: Can A become a child of C? No, C is a descendant of A, so this would create a cycle
+    const catA = createMockCategory({ id: 'A', children: ['B'] });
+    const catB = createMockCategory({ id: 'B', children: ['C'] });
+    const catC = createMockCategory({ id: 'C', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA, catB, catC] });
+
+    // If we make A a child of C: C → A → B → C (cycle!)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('C', 'A', catalogSelectors.category)).toBe(true);
+  });
+
+  it('should return true when categoryId is a direct child of proposedCategoryId', () => {
+    // Tree: A → B
+    // Testing: Can A become a child of B? No, B is a child of A
+    const catA = createMockCategory({ id: 'A', children: ['B'] });
+    const catB = createMockCategory({ id: 'B', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA, catB] });
+
+    // If we make A a child of B: B → A → B (cycle!)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('B', 'A', catalogSelectors.category)).toBe(true);
+  });
+
+  it('should return false for unrelated categories in different branches', () => {
+    // Tree: Root → A, Root → B → C
+    // Testing: Can C become a child of A? Yes, A is not in C's subtree
+    const catRoot = createMockCategory({ id: 'Root', children: ['A', 'B'] });
+    const catA = createMockCategory({ id: 'A', children: [] });
+    const catB = createMockCategory({ id: 'B', children: ['C'] });
+    const catC = createMockCategory({ id: 'C', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catRoot, catA, catB, catC] });
+
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('A', 'C', catalogSelectors.category)).toBe(false);
+  });
+
+  it('should return false when proposedCategoryId does not exist', () => {
+    const catA = createMockCategory({ id: 'A', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA] });
+
+    // NonExistent category can become child of A (returns undefined, which means no cycle possible)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('A', 'NonExistent', catalogSelectors.category)).toBe(false);
+  });
+
+  it('should handle deep nesting correctly', () => {
+    // Deep tree: A → B → C → D → E
+    const catA = createMockCategory({ id: 'A', children: ['B'] });
+    const catB = createMockCategory({ id: 'B', children: ['C'] });
+    const catC = createMockCategory({ id: 'C', children: ['D'] });
+    const catD = createMockCategory({ id: 'D', children: ['E'] });
+    const catE = createMockCategory({ id: 'E', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({ categories: [catA, catB, catC, catD, catE] });
+
+    // Can A become a child of E? No, because A → ... → E already
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('E', 'A', catalogSelectors.category)).toBe(true);
+
+    // Can E become a child of A? Yes, E has no children containing A
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('A', 'E', catalogSelectors.category)).toBe(false);
+  });
+
+  it('should handle categories with multiple children', () => {
+    // Tree: A → [B, C, D], B → [E], D → [F]
+    const catA = createMockCategory({ id: 'A', children: ['B', 'C', 'D'] });
+    const catB = createMockCategory({ id: 'B', children: ['E'] });
+    const catC = createMockCategory({ id: 'C', children: [] });
+    const catD = createMockCategory({ id: 'D', children: ['F'] });
+    const catE = createMockCategory({ id: 'E', children: [] });
+    const catF = createMockCategory({ id: 'F', children: [] });
+    const catalogSelectors = createMockCatalogSelectorsFromArrays({
+      categories: [catA, catB, catC, catD, catE, catF],
+    });
+
+    // Can A become child of E? No (A → B → E)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('E', 'A', catalogSelectors.category)).toBe(true);
+
+    // Can A become child of F? No (A → D → F)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('F', 'A', catalogSelectors.category)).toBe(true);
+
+    // Can E become child of D? Yes (E is not an ancestor of D)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('D', 'E', catalogSelectors.category)).toBe(false);
+
+    // Can E become child of F? Yes (no relationship)
+    expect(CategoryIdHasCycleIfChildOfProposedCategoryId('F', 'E', catalogSelectors.category)).toBe(false);
   });
 });

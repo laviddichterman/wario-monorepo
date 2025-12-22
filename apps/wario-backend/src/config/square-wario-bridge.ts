@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { formatRFC3339 } from 'date-fns';
 import { type PinoLogger } from 'nestjs-pino';
@@ -41,8 +40,6 @@ import {
   type WProduct,
 } from '@wcp/wario-shared';
 
-import { IS_PRODUCTION } from '../utils/utils';
-
 // Interface to replace direct dependency on CatalogProviderInstance
 export interface ICatalogContext {
   getCatalog(): ICatalog;
@@ -55,15 +52,16 @@ export interface ICatalogContext {
 
 // * add note to payment or whatever so the SQ receipt makes some sense, see https://squareup.com/receipt/preview/jXnAjUa3wdk6al0EofHUg8PUZzFZY
 // this all needs to be stored as part of the square configuration for the merchant. it should be bootstrapped and managed via the catalog sync process
-export const SQUARE_TAX_RATE_CATALOG_ID = IS_PRODUCTION ? 'TMG7E3E5E45OXHJTBOHG2PMS' : 'LOFKVY5UC3SLKPT2WANSBPZQ';
-export const SQUARE_WARIO_EXTERNAL_ID = IS_PRODUCTION ? 'L75RYR2NI3ED7VM7VKXO2DKO' : 'NDV2QHR54XWVXCKOHXK43ZLE';
-export const SQUARE_BANKERS_ADJUSTED_TAX_RATE_CATALOG_ID = IS_PRODUCTION
-  ? 'R77FWA4SNHB4RWNY4KNNQHJD'
-  : 'HIUHEOWWVR6MB3PP7ORCUVZW';
-export const VARIABLE_PRICE_STORE_CREDIT_CATALOG_ID = IS_PRODUCTION
-  ? 'DNP5YT6QDIWTB53H46F3ECIN'
-  : 'RBYUD52HGFHPL4IG55LBHQAG';
-export const DISCOUNT_CATALOG_ID = IS_PRODUCTION ? 'AKIYDPB5WJD2HURCWWZSAIF5' : 'PAMEV3WAZYEBJKFUAVQATS3K';
+// TODO: all these need to be config based and part of the square bootstrap process on a new location
+//    const SQUARE_TAX_RATE_CATALOG_ID = isProduction ? 'TMG7E3E5E45OXHJTBOHG2PMS' : 'LOFKVY5UC3SLKPT2WANSBPZQ';
+//    const SQUARE_WARIO_EXTERNAL_ID = isProduction ? 'L75RYR2NI3ED7VM7VKXO2DKO' : 'NDV2QHR54XWVXCKOHXK43ZLE';
+//    const SQUARE_BANKERS_ADJUSTED_TAX_RATE_CATALOG_ID = isProduction
+//   ? 'R77FWA4SNHB4RWNY4KNNQHJD'
+//   : 'HIUHEOWWVR6MB3PP7ORCUVZW';
+// const VARIABLE_PRICE_STORE_CREDIT_CATALOG_ID = isProduction
+//   ? 'DNP5YT6QDIWTB53H46F3ECIN'
+//   : 'RBYUD52HGFHPL4IG55LBHQAG';
+// const DISCOUNT_CATALOG_ID = isProduction ? 'AKIYDPB5WJD2HURCWWZSAIF5' : 'PAMEV3WAZYEBJKFUAVQATS3K';
 
 export const WARIO_SQUARE_ID_METADATA_KEY = 'SQID_';
 
@@ -302,11 +300,14 @@ export const MapPaymentStatus = (sqStatus: string) => {
 };
 
 export const CreateOrderStoreCredit = (
+  isProduction: boolean,
   locationId: string,
   referenceId: string,
   amount: IMoney,
   note: string,
 ): Order => {
+  const VARIABLE_PRICE_STORE_CREDIT_CATALOG_ID = isProduction ? 'DNP5YT6QDIWTB53H46F3ECIN' : 'RBYUD52HGFHPL4IG55LBHQAG';
+
   return {
     referenceId: referenceId,
     lineItems: [
@@ -323,13 +324,14 @@ export const CreateOrderStoreCredit = (
 };
 
 export const CreateOrderStoreCreditForRefund = (
+  isProduction: boolean,
   locationId: string,
   referenceId: string,
   amount: IMoney,
   note: string,
 ): Order => {
   return {
-    ...CreateOrderStoreCredit(locationId, referenceId, amount, note),
+    ...CreateOrderStoreCredit(isProduction, locationId, referenceId, amount, note),
     discounts: [
       {
         type: 'FIXED_AMOUNT',
@@ -347,6 +349,7 @@ export const CreateOrderStoreCreditForRefund = (
 };
 
 export const CreateOrdersForPrintingFromCart = (
+  isProduction: boolean,
   locationId: string,
   referenceId: string,
   ticketName: string,
@@ -386,6 +389,7 @@ export const CreateOrdersForPrintingFromCart = (
   }
   return carts.map((cart) => {
     return CreateOrderFromCart(
+      isProduction,
       locationId,
       referenceId,
       [
@@ -486,6 +490,7 @@ const WProductModifiersToSquareModifiers = (
 };
 
 export const CreateOrderFromCart = (
+  isProduction: boolean,
   locationId: string,
   referenceId: string,
   discounts: OrderLineDiscount[],
@@ -496,6 +501,10 @@ export const CreateOrderFromCart = (
   fulfillmentInfo: SquareOrderFulfillmentInfo | null,
   catalogContext: ICatalogContext,
 ): Order => {
+  const SQUARE_TAX_RATE_CATALOG_ID = isProduction ? 'TMG7E3E5E45OXHJTBOHG2PMS' : 'LOFKVY5UC3SLKPT2WANSBPZQ';
+  const SQUARE_BANKERS_ADJUSTED_TAX_RATE_CATALOG_ID = isProduction
+    ? 'R77FWA4SNHB4RWNY4KNNQHJD'
+    : 'HIUHEOWWVR6MB3PP7ORCUVZW';
   return {
     referenceId,
     lineItems: Object.values(cart).map((x) => {
@@ -659,16 +668,93 @@ export const PrinterGroupToSquareCatalogObjectPlusDummyProduct = (
   ];
 };
 
-export const ProductInstanceToSquareCatalogObject = (
+export interface ExistingSquareCatalogObjectInfoForProduct {
+  squareItemId: string;
+  squareItem: Pick<CatalogObject, 'id' | 'version' | 'itemData'> | undefined;
+  squareItemVariationId: string;
+  squareItemVariation: Pick<CatalogObject, 'id' | 'version' | 'itemData'> | undefined;
+}
+
+export const GetExistingSquareCatalogObjectInfoForProduct = (
+  productInstance: Omit<IProductInstance, 'id'>,
+  currentObjects: Pick<CatalogObject, 'id' | 'version' | 'itemData'>[],
+  batch: string,
+): ExistingSquareCatalogObjectInfoForProduct => {
+  const squareItemId = GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM');
+  const foundSquareItem = squareItemId ? currentObjects.find((x) => x.id === squareItemId) : undefined;
+  const squareItemVariationId =
+    GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM_VARIATION') ?? `#${batch}_ITEM_VARIATION`;
+  const foundSquareItemVariation = squareItemVariationId
+    ? currentObjects.find((x) => x.id === squareItemVariationId)
+    : undefined;
+  const hasSquareCatalogData = foundSquareItem !== undefined && foundSquareItemVariation !== undefined;
+
+  return {
+    squareItemId: hasSquareCatalogData ? (squareItemId as string) : `#${batch}_ITEM`,
+    squareItem: foundSquareItem,
+    squareItemVariationId: hasSquareCatalogData ? squareItemVariationId : `#${batch}_ITEM_VARIATION`,
+    squareItemVariation: foundSquareItemVariation,
+  };
+};
+
+export const ProductInstanceToSquareCatalogHelper = (
+  isProduction: boolean,
   locationIds: string[],
   product: Pick<IProduct, 'modifiers' | 'price' | 'disabled'>,
   productInstance: Omit<IProductInstance, 'id'>,
   printerGroup: PrinterGroup | null,
   catalogSelectors: ICatalogSelectors,
-
   currentObjects: Pick<CatalogObject, 'id' | 'version' | 'itemData'>[],
   batch: string,
-  logger?: PinoLogger,
+  logger: PinoLogger,
+): {
+  catalogObject: CatalogObject;
+  squareItemsToDelete: string[];
+} => {
+  const existingSquareCatalogObjectInfo = GetExistingSquareCatalogObjectInfoForProduct(
+    productInstance,
+    currentObjects,
+    batch,
+  );
+  const existingSquareIDs = GetSquareExternalIds(productInstance.externalIDs).map((x) => x.value);
+  const catalogObject = ProductInstanceToSquareCatalogObject(
+    isProduction,
+    locationIds,
+    product,
+    productInstance,
+    printerGroup,
+    catalogSelectors,
+    existingSquareCatalogObjectInfo,
+    logger,
+  );
+  if (
+    existingSquareIDs.length > 0 &&
+    (!existingSquareCatalogObjectInfo.squareItem || !existingSquareCatalogObjectInfo.squareItemVariation)
+  ) {
+    logger.warn(
+      {
+        existingSquareIDs,
+        squareItem: existingSquareCatalogObjectInfo.squareItem,
+        squareItemVariation: existingSquareCatalogObjectInfo.squareItemVariation,
+      },
+      'Square item or item variation for product instance not found. Deleting the old IDs (for insurance) and creating new square item and item variation',
+    );
+    const squareItemsToDelete = [...existingSquareIDs];
+    return { catalogObject, squareItemsToDelete };
+  }
+  return { catalogObject, squareItemsToDelete: [] };
+};
+// todo: we need a way to handle naming of split/super custom product instances
+
+export const ProductInstanceToSquareCatalogObject = (
+  isProduction: boolean,
+  locationIds: string[],
+  product: Pick<IProduct, 'modifiers' | 'price' | 'disabled'>,
+  productInstance: Omit<IProductInstance, 'id'>,
+  printerGroup: PrinterGroup | null,
+  catalogSelectors: ICatalogSelectors,
+  existingSquareCatalogObjectInfo: ExistingSquareCatalogObjectInfoForProduct,
+  logger: PinoLogger,
 ): CatalogObject => {
   // todo: we need a way to handle naming of split/super custom product instances
   // do we need to add an additional variation on the square item corresponding to the base product instance for split and otherwise unruly product instances likely with pricingType: VARIABLE?
@@ -676,12 +762,12 @@ export const ProductInstanceToSquareCatalogObject = (
   // maybe we can just set variationName on the line item and call it good?
   // TODO: when we transition off the square POS, if we're still using the finance or employee management or whatever, we'll need to pull pre-selected modifiers off of the ITEM_VARIATIONs for a product instance
   //
-  const squareItemId = GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM') ?? `#${batch}_ITEM`;
-  const versionItem = currentObjects.find((x) => x.id === squareItemId)?.version ?? null;
-  const productTypeItem = currentObjects.find((x) => x.id === squareItemId)?.itemData?.productType ?? 'REGULAR';
-  const squareItemVariationId =
-    GetSquareIdFromExternalIds(productInstance.externalIDs, 'ITEM_VARIATION') ?? `#${batch}_ITEM_VARIATION`;
-  const versionItemVariation = currentObjects.find((x) => x.id === squareItemVariationId)?.version ?? null;
+  const SQUARE_TAX_RATE_CATALOG_ID = isProduction ? 'TMG7E3E5E45OXHJTBOHG2PMS' : 'LOFKVY5UC3SLKPT2WANSBPZQ';
+
+  const { squareItem, squareItemId, squareItemVariationId, squareItemVariation } = existingSquareCatalogObjectInfo;
+  const versionItem = squareItem?.version ?? null;
+  const productTypeItem = squareItem?.itemData?.productType ?? 'REGULAR';
+  const versionItemVariation = squareItemVariation?.version ?? null;
   const isBlanketDisabled = product.disabled && product.disabled.start > product.disabled.end;
   let instancePriceWithoutSingleSelectModifiers = product.price.amount;
   const modifierListInfo: CatalogItemModifierListInfo[] = [];
@@ -693,11 +779,11 @@ export const ProductInstanceToSquareCatalogObject = (
       // single select modifiers get added to the square product
       const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.externalIDs, 'MODIFIER_LIST');
       if (squareModifierListId === null) {
-        logger?.error({ externalIDs: modifierEntry.externalIDs }, 'Missing MODIFIER_LIST');
+        logger.error({ externalIDs: modifierEntry.externalIDs }, 'Missing MODIFIER_LIST');
         return;
       }
       if (selectedOptionsForModifierType.length > 1) {
-        logger?.error(
+        logger.error(
           {
             selectedOptions: selectedOptionsForModifierType,
             modifierType: mtspec,
@@ -726,7 +812,7 @@ export const ProductInstanceToSquareCatalogObject = (
       // add the modifier to the list
       const squareModifierListId = GetSquareIdFromExternalIds(modifierEntry.externalIDs, 'MODIFIER_LIST');
       if (squareModifierListId === null) {
-        logger?.error({ externalIDs: modifierEntry.externalIDs }, 'Missing MODIFIER_LIST');
+        logger.error({ externalIDs: modifierEntry.externalIDs }, 'Missing MODIFIER_LIST');
         return;
       }
       modifierListInfo.push({
@@ -748,12 +834,11 @@ export const ProductInstanceToSquareCatalogObject = (
 
   // we need to pass the categories otherwise square will overwrite them with empty categories, so we need to pull out non-reporting categories
   // won't be needed once we address https://app.asana.com/1/961497487611345/project/1189134071799993/task/1210817402795310?focus=true
-  const currentItemCategories = currentObjects.find((x) => x.id === squareItemId)?.itemData?.categories ?? [];
+  const currentItemCategories = squareItem?.itemData?.categories ?? [];
   const newPrinterGroupCategory = printerGroup
     ? GetSquareIdFromExternalIds(printerGroup.externalIDs, 'CATEGORY')!
     : null;
-  const oldPrinterGroupCategory =
-    currentObjects.find((x) => x.id === squareItemId)?.itemData?.reportingCategory?.id ?? null;
+  const oldPrinterGroupCategory = squareItem?.itemData?.reportingCategory?.id ?? null;
   const otherCategories = currentItemCategories.filter((x) => x.id !== oldPrinterGroupCategory);
 
   return {
@@ -953,7 +1038,7 @@ export const ModifierTypeToSquareCatalogObject = (
   const displayName = modifierType.displayName.length > 0 ? modifierType.displayName : modifierType.name;
   const squareName = modifierType.displayFlags.is3p
     ? displayName
-    : `${('0000' + modifierTypeOrdinal * 100).slice(-4)}| ${displayName}`;
+    : `${(modifierTypeOrdinal * 100).toString().padStart(4, '0')}| ${displayName}`;
   return {
     id: modifierListId,
     ...(version !== null ? { version } : {}),
@@ -973,31 +1058,12 @@ export const ModifierTypeToSquareCatalogObject = (
             o,
             i, // pass index as ordinal
             currentObjects,
-            `${batch}S${('000' + i).slice(-3)}S`,
+            `${batch}S${i.toString().padStart(3, '0')}S`,
           ),
         )
         .flat(),
     },
   };
-};
-
-/**
- * Merges the original and updated external IDs into a single array, making sure to preserve the original Square external IDs.
- *
- * @param originalExternalIds - The original external IDs, potentially containing the square external IDs.
- * @param updateExternalIds - The updated external IDs, with any SquareIDs removed already.
- * @returns The merged array of external IDs.
- */
-export const ProductInstanceUpdateMergeExternalIds = (
-  originalExternalIds: KeyValue[] | undefined,
-  updateExternalIds: KeyValue[] | undefined,
-) => {
-  if (updateExternalIds && originalExternalIds) {
-    const squareExternalIds = GetSquareExternalIds(originalExternalIds);
-    const updateSquareExternalIds = updateExternalIds;
-    return [...squareExternalIds, ...updateSquareExternalIds];
-  }
-  return updateExternalIds ?? originalExternalIds ?? [];
 };
 
 /**

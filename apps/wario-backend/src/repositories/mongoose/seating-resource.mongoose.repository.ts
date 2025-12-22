@@ -6,6 +6,8 @@ import type { SeatingResource } from '@wcp/wario-shared';
 
 import type { ISeatingResourceRepository } from '../interfaces/seating-resource.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class SeatingResourceMongooseRepository implements ISeatingResourceRepository {
   constructor(
@@ -15,23 +17,22 @@ export class SeatingResourceMongooseRepository implements ISeatingResourceReposi
 
   async findById(id: string): Promise<SeatingResource | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<SeatingResource>(doc) : null;
   }
 
   async findAll(): Promise<SeatingResource[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<SeatingResource>(doc));
   }
 
   async findBySectionId(sectionId: string): Promise<SeatingResource[]> {
     const docs = await this.model.find({ sectionId }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<SeatingResource>(doc));
   }
 
   async create(resource: Omit<SeatingResource, 'id'>): Promise<SeatingResource> {
     const created = await this.model.create(resource);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<SeatingResource>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<SeatingResource, 'id'>>): Promise<SeatingResource | null> {
@@ -39,7 +40,7 @@ export class SeatingResourceMongooseRepository implements ISeatingResourceReposi
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<SeatingResource>(updated);
   }
 
   async delete(id: string): Promise<boolean> {

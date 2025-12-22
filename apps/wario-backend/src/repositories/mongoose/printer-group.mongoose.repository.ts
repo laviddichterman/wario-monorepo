@@ -6,6 +6,8 @@ import type { PrinterGroup } from '@wcp/wario-shared';
 
 import type { IPrinterGroupRepository } from '../interfaces/printer-group.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class PrinterGroupMongooseRepository implements IPrinterGroupRepository {
   constructor(
@@ -15,18 +17,17 @@ export class PrinterGroupMongooseRepository implements IPrinterGroupRepository {
 
   async findById(id: string): Promise<PrinterGroup | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<PrinterGroup>(doc) : null;
   }
 
   async findAll(): Promise<PrinterGroup[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<PrinterGroup>(doc));
   }
 
   async create(group: Omit<PrinterGroup, 'id'>): Promise<PrinterGroup> {
     const created = await this.model.create(group);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<PrinterGroup>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<PrinterGroup, 'id'>>): Promise<PrinterGroup | null> {
@@ -34,7 +35,7 @@ export class PrinterGroupMongooseRepository implements IPrinterGroupRepository {
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<PrinterGroup>(updated);
   }
 
   async delete(id: string): Promise<boolean> {

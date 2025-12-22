@@ -6,6 +6,8 @@ import type { IProduct } from '@wcp/wario-shared';
 
 import type { IProductRepository } from '../interfaces/product.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class ProductMongooseRepository implements IProductRepository {
   constructor(
@@ -15,28 +17,27 @@ export class ProductMongooseRepository implements IProductRepository {
 
   async findById(id: string): Promise<IProduct | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<IProduct>(doc) : null;
   }
 
   async findAll(): Promise<IProduct[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IProduct>(doc));
   }
 
   async findByCategoryId(categoryId: string): Promise<IProduct[]> {
     const docs = await this.model.find({ category_ids: categoryId }).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IProduct>(doc));
   }
 
   async findByQuery(filter: Partial<IProduct>): Promise<IProduct[]> {
     const docs = await this.model.find(filter).lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<IProduct>(doc));
   }
 
   async create(product: Omit<IProduct, 'id'>): Promise<IProduct> {
     const created = await this.model.create(product);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<IProduct>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<IProduct, 'id'>>): Promise<IProduct | null> {
@@ -44,7 +45,7 @@ export class ProductMongooseRepository implements IProductRepository {
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<IProduct>(updated);
   }
 
   async delete(id: string): Promise<boolean> {
@@ -56,10 +57,7 @@ export class ProductMongooseRepository implements IProductRepository {
   async bulkCreate(products: Omit<IProduct, 'id'>[]): Promise<IProduct[]> {
     if (products.length === 0) return [];
     const docs = await this.model.insertMany(products);
-    return docs.map((doc) => {
-      const obj = doc.toObject();
-      return { ...obj, id: obj._id.toString() };
-    });
+    return docs.map((doc) => toEntity<IProduct>(doc.toObject()));
   }
 
   async bulkUpdate(updates: Array<{ id: string; data: Partial<Omit<IProduct, 'id'>> }>): Promise<number> {
@@ -71,7 +69,7 @@ export class ProductMongooseRepository implements IProductRepository {
       },
     }));
     const result = await this.model.bulkWrite(bulkOps);
-    return result.modifiedCount;
+    return result.matchedCount;
   }
 
   async bulkDelete(ids: string[]): Promise<number> {

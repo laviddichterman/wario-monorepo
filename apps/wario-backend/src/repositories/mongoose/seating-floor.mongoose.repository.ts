@@ -6,6 +6,8 @@ import type { SeatingFloor } from '@wcp/wario-shared';
 
 import type { ISeatingFloorRepository } from '../interfaces/seating-floor.repository.interface';
 
+import { toEntity } from './mongoose-entity.utils';
+
 @Injectable()
 export class SeatingFloorMongooseRepository implements ISeatingFloorRepository {
   constructor(
@@ -15,18 +17,17 @@ export class SeatingFloorMongooseRepository implements ISeatingFloorRepository {
 
   async findById(id: string): Promise<SeatingFloor | null> {
     const doc = await this.model.findById(id).lean().exec();
-    return doc ? { ...doc, id: doc._id.toString() } : null;
+    return doc ? toEntity<SeatingFloor>(doc) : null;
   }
 
   async findAll(): Promise<SeatingFloor[]> {
     const docs = await this.model.find().lean().exec();
-    return docs.map((doc) => ({ ...doc, id: doc._id.toString() }));
+    return docs.map((doc) => toEntity<SeatingFloor>(doc));
   }
 
   async create(floor: Omit<SeatingFloor, 'id'>): Promise<SeatingFloor> {
     const created = await this.model.create(floor);
-    const doc = created.toObject();
-    return { ...doc, id: doc._id.toString() };
+    return toEntity<SeatingFloor>(created.toObject());
   }
 
   async update(id: string, partial: Partial<Omit<SeatingFloor, 'id'>>): Promise<SeatingFloor | null> {
@@ -34,7 +35,7 @@ export class SeatingFloorMongooseRepository implements ISeatingFloorRepository {
     if (!updated) {
       return null;
     }
-    return { ...updated, id: updated._id.toString() };
+    return toEntity<SeatingFloor>(updated);
   }
 
   async delete(id: string): Promise<boolean> {

@@ -457,26 +457,29 @@ export const SortByOrderingArray = <T>(items: T[], ordering: string[], idGetter:
 };
 
 /**
- * Checks if a category has a cycle if it were to be made a child of another category.
- * Useful for checking if a category can be moved to another parent.
- * @param categoryId
- * @param proposedCategoryId
- * @param categorySelector
- * @returns true only if there would be a cycle if the category were to be made a child of the proposed category
+ * Checks if adding proposedCategoryId as a child of categoryId would create a cycle.
+ * A cycle would occur if categoryId is already a descendant of proposedCategoryId.
+ * @param categoryId - the parent category we want to add a child to
+ * @param proposedCategoryId - the category we're proposing to add as a child
+ * @param categorySelector - function to look up category by ID
+ * @returns true if adding proposedCategoryId as a child of categoryId would create a cycle
  */
 export const CategoryIdHasCycleIfChildOfProposedCategoryId = (
   categoryId: string,
   proposedCategoryId: string,
   categorySelector: Selector<ICategory>,
 ): boolean => {
+  // A cycle would occur if categoryId is already reachable from proposedCategoryId
+  // (i.e., proposedCategoryId is an ancestor of categoryId in the current tree)
   if (categoryId === proposedCategoryId) {
     return true;
   }
-  const category = categorySelector(categoryId);
-  if (category === undefined || category.children.length === 0) {
+  // Traverse down from proposedCategoryId to see if we can reach categoryId
+  const proposedCategory = categorySelector(proposedCategoryId);
+  if (proposedCategory === undefined || proposedCategory.children.length === 0) {
     return false;
   }
-  return category.children.some((childId) =>
-    CategoryIdHasCycleIfChildOfProposedCategoryId(childId, proposedCategoryId, categorySelector),
+  return proposedCategory.children.some((childId) =>
+    CategoryIdHasCycleIfChildOfProposedCategoryId(categoryId, childId, categorySelector),
   );
 };
