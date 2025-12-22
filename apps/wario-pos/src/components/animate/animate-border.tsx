@@ -174,8 +174,7 @@ const MovingBorder = forwardRef<HTMLSpanElement, MovingBorderProps>((props, ref)
   const calculateTransform = (val: number) => {
     if (!svgRectRef.current) return { x: 0, y: 0 };
     try {
-      const point = svgRectRef.current.getPointAtLength(val);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const point = svgRectRef.current.getPointAtLength(val) as DOMPoint | null;
       return point ? { x: point.x, y: point.y } : { x: 0, y: 0 };
     } catch {
       return { x: 0, y: 0 };

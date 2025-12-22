@@ -65,7 +65,6 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
 
   // Quick-add handlers
   const handleAddRoundTable = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!activeSection) return;
 
     const tableNum = getNextTableNumber();
@@ -86,7 +85,6 @@ export const SeatingToolbar = memo(function SeatingToolbar() {
   }, [activeSection, addResource, getNextTableNumber, findAvailablePosition]);
 
   const handleAddSquareTable = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!activeSection) return;
 
     const tableNum = getNextTableNumber();

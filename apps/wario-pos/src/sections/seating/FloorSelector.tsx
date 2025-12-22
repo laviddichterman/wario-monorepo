@@ -22,6 +22,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Tooltip from '@mui/material/Tooltip';
 
+import type { FullSeatingFloor } from '@wcp/wario-shared/logic';
+
 import { toast } from '@/components/snackbar';
 
 import { useActiveFloorIndex, useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
@@ -46,11 +48,9 @@ export const FloorSelector = memo(function FloorSelector() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Compute counts for the active floor (for delete confirmation)
-  const activeFloor = floors[activeFloorIndex] ?? null;
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  const activeFloor = floors[activeFloorIndex] as FullSeatingFloor | undefined;
   const activeSectionCount = activeFloor?.sections.length ?? 0;
   const activeTableCount = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!activeFloor) return 0;
     let count = 0;
     for (const section of activeFloor.sections) {
@@ -83,7 +83,6 @@ export const FloorSelector = memo(function FloorSelector() {
   );
 
   const handleDeleteFloor = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!activeFloor) return;
     deleteFloor(activeFloorIndex);
     setDeleteDialogOpen(false);
@@ -92,7 +91,6 @@ export const FloorSelector = memo(function FloorSelector() {
 
   const handleRenameFloor = useCallback(
     (newName: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!activeFloor) return;
       renameFloor(activeFloorIndex, newName);
       toast.success(`Renamed floor to "${newName}"`);
@@ -185,7 +183,6 @@ export const FloorSelector = memo(function FloorSelector() {
         }}
         onConfirm={handleDeleteFloor}
         title="Delete Floor"
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         entityName={activeFloor?.name ?? 'Floor'}
         warningItems={deleteWarningItems.length > 0 ? deleteWarningItems : undefined}
       />
@@ -197,7 +194,6 @@ export const FloorSelector = memo(function FloorSelector() {
           setRenameOpen(false);
         }}
         onConfirm={handleRenameFloor}
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         currentName={activeFloor?.name ?? ''}
         label="Rename Floor"
       />

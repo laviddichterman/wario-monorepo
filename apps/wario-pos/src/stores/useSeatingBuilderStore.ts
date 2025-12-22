@@ -256,8 +256,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
     setActiveSection: (sectionIndex) => {
       const { layout, editor } = get();
-      const floor = layout.floors[editor.activeFloorIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const floor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
       if (floor && sectionIndex >= 0 && sectionIndex < floor.sections.length) {
         set({
           editor: {
@@ -336,8 +335,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
       set((s) => {
         const layout = cloneLayout(s.layout);
-        const floor = layout.floors[s.editor.activeFloorIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const floor = layout.floors[s.editor.activeFloorIndex] as FullSeatingFloor | undefined;
         if (!floor) return s;
 
         floor.sections.push({
@@ -363,11 +361,9 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
       set((s) => {
         const layout = cloneLayout(s.layout);
-        const floor = layout.floors[s.editor.activeFloorIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const floor = layout.floors[s.editor.activeFloorIndex] as FullSeatingFloor | undefined;
         if (!floor) return s;
-        const section = floor.sections[s.editor.activeSectionIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const section = floor.sections[s.editor.activeSectionIndex] as FullSeatingSection | undefined;
         if (!section) return s;
 
         const resource: SeatingResource = {
@@ -451,16 +447,14 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
     deleteSection: (sectionIndex) => {
       const { layout, editor } = get();
-      const floor = layout.floors[editor.activeFloorIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const floor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
       if (!floor || floor.sections.length <= 1) return; // Keep at least one section
 
       get().pushUndoCheckpoint(`Delete section`);
 
       set((s) => {
         const newLayout = cloneLayout(s.layout);
-        const flr = newLayout.floors[s.editor.activeFloorIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const flr = newLayout.floors[s.editor.activeFloorIndex] as FullSeatingFloor | undefined;
         if (!flr) return s;
 
         flr.sections.splice(sectionIndex, 1);
@@ -506,11 +500,9 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
       set((s) => {
         const layout = cloneLayout(s.layout);
-        const floor = layout.floors[s.editor.activeFloorIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const floor = layout.floors[s.editor.activeFloorIndex] as FullSeatingFloor | undefined;
         if (!floor) return s;
-        const section = floor.sections[s.editor.activeSectionIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const section = floor.sections[s.editor.activeSectionIndex] as FullSeatingSection | undefined;
         if (!section) return s;
 
         const idSet = new Set(ids);
@@ -562,8 +554,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
     },
 
     renameFloor: (floorIndex, newName) => {
-      const floor = get().layout.floors[floorIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const floor = get().layout.floors[floorIndex] as FullSeatingFloor | undefined;
       if (!floor) return;
 
       const oldName = floor.name;
@@ -571,8 +562,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
       set((s) => {
         const layout = cloneLayout(s.layout);
-        const flr = layout.floors[floorIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const flr = layout.floors[floorIndex] as FullSeatingFloor | undefined;
         if (flr) {
           flr.name = newName;
         }
@@ -582,10 +572,9 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
     renameSection: (sectionIndex, newName) => {
       const { layout, editor } = get();
-      const floor = layout.floors[editor.activeFloorIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-      const section = floor?.sections[sectionIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const floor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
+      if (!floor) return;
+      const section = floor.sections[sectionIndex] as FullSeatingSection | undefined;
       if (!section) return;
 
       const oldName = section.name;
@@ -593,10 +582,8 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
       set((s) => {
         const newLayout = cloneLayout(s.layout);
-        const flr = newLayout.floors[s.editor.activeFloorIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const flr = newLayout.floors[s.editor.activeFloorIndex] as FullSeatingFloor | undefined;
         const sect = flr?.sections[sectionIndex];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (sect) {
           sect.name = newName;
         }
@@ -743,8 +730,7 @@ export const useSeatingBuilderStore = create<SeatingBuilderState>()((set, get) =
 
     findAvailablePosition: (_gridSize = 10) => {
       const { layout, editor } = get();
-      const floor = layout.floors[editor.activeFloorIndex];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const floor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
       if (!floor) return { x: 200, y: 200 };
 
       // Check ALL sections on the floor to avoid placing on top of tables in other sections
@@ -780,8 +766,7 @@ export const useActiveFloor = (): FullSeatingFloor | null =>
 // Get active section object
 export const useActiveSection = () =>
   useSeatingBuilderStore((s) => {
-    const floor = s.layout.floors[s.editor.activeFloorIndex];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const floor = s.layout.floors[s.editor.activeFloorIndex] as FullSeatingFloor | undefined;
     return floor?.sections[s.editor.activeSectionIndex] ?? null;
   });
 
@@ -805,8 +790,7 @@ export const useCanRedo = () => useSeatingBuilderStore((s) => s.redoStack.length
 export const useAllResourceRenderModels = (): SeatingResourceRenderModel[] =>
   useSeatingBuilderStore((s) => {
     const { layout, editor } = s;
-    const activeFloor = layout.floors[editor.activeFloorIndex];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const activeFloor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
     const activeSectionId = activeFloor?.sections[editor.activeSectionIndex]?.id;
     const selectedSet = new Set(editor.selectedResourceIds);
 
@@ -830,10 +814,8 @@ export const useAllResourceRenderModels = (): SeatingResourceRenderModel[] =>
 export const useActiveSectionResourceRenderModels = (): SeatingResourceRenderModel[] =>
   useSeatingBuilderStore((s) => {
     const { layout, editor } = s;
-    const activeFloor = layout.floors[editor.activeFloorIndex];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const activeFloor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
     const activeSection = activeFloor?.sections[editor.activeSectionIndex];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!activeSection) return [];
 
     const selectedSet = new Set(editor.selectedResourceIds);

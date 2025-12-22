@@ -119,7 +119,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
     if (!activeFloor) return [];
 
     const selectedSet = new Set(selectedResourceIds);
-    const activeSectionId = activeSection.id;
+    const activeSectionId = activeSection?.id;
 
     // Collect resources from ALL sections on this floor
     return activeFloor.sections.flatMap((section) => {
@@ -237,9 +237,8 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
       if (dragData?.type === 'resize' && dragData.resourceId && dragData.handle) {
         // Resize operation: update dimensions based on handle dragged
         const { resourceId, handle } = dragData;
-        const resource = resourcesById[resourceId];
+        const resource = resourcesById[resourceId] as SeatingResourceRenderModel | undefined;
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!resource) return;
 
         let newWidth = resource.shapeDimX;
@@ -360,9 +359,8 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
       if (dragData?.type === 'resize' && dragData.resourceId && dragData.handle) {
         // Resize operation
         const { resourceId, handle } = dragData;
-        const resource = resourcesById[resourceId];
+        const resource = resourcesById[resourceId] as SeatingResourceRenderModel | undefined;
 
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!resource) return;
 
         // Clear move delta state for resize

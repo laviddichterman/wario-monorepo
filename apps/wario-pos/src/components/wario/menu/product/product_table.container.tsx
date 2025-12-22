@@ -7,7 +7,7 @@ import { Box, InputAdornment, TextField, Tooltip } from '@mui/material';
 import type { GridRenderCellParams, GridRowId, GridRowParams } from '@mui/x-data-grid-premium';
 import { GridActionsCellItem, useGridApiRef } from '@mui/x-data-grid-premium';
 
-import { DISABLE_REASON, DisableDataCheck } from '@wcp/wario-shared/logic';
+import { DISABLE_REASON, DisableDataCheck, type IProduct } from '@wcp/wario-shared/logic';
 import { useCatalogQuery, useProductById, useServerTime } from '@wcp/wario-ux-shared/query';
 
 import { useAuthContext } from '@/hooks/useAuthContext';
@@ -55,8 +55,7 @@ const useProductRows = (productIds: string[]) => {
   return useMemo(() => {
     if (!catalog) return [];
     return productIds.map((x) => {
-      const product = catalog.products[x];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const product = catalog.products[x] as IProduct | undefined;
       if (!product)
         return {
           id: x,

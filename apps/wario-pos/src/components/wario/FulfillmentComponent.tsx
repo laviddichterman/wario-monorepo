@@ -409,7 +409,7 @@ export const FulfillmentFormBody = () => {
             updateField('serviceCharge', v);
           }}
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-          getOptionLabel={(option) => catalog.orderInstanceFunctions[option].name ?? 'CORRUPT DATA'}
+          getOptionLabel={(option) => catalog.orderInstanceFunctions[option]?.name ?? 'CORRUPT DATA'}
           isOptionEqualToValue={(o, v) => o === v}
           renderInput={(params) => <TextField {...params} label="Service Charge Function" />}
         />

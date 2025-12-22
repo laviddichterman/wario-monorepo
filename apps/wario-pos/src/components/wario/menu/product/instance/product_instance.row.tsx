@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { ExpandMore } from '@mui/icons-material';
 import { Accordion, AccordionDetails, AccordionSummary, Grid, Typography } from '@mui/material';
 
-import { type IProduct } from '@wcp/wario-shared/types';
+import { type IProduct, type IProductInstance } from '@wcp/wario-shared/types';
 import type { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -41,8 +41,7 @@ export const ProductInstanceRow = ({
   useEffect(() => {
     // Initialize form from entity if not already set
     if (!form) {
-      const ent = catalogSelectors.productInstance(instanceId);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      const ent = catalogSelectors.productInstance(instanceId) as IProductInstance | undefined;
       if (ent) {
         setForm(fromProductInstanceEntity(ent));
       }

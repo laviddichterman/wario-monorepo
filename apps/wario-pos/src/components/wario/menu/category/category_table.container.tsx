@@ -15,6 +15,7 @@ import {
   useGridApiRef,
 } from '@mui/x-data-grid-premium';
 
+import type { ICategory } from '@wcp/wario-shared/types';
 import { useCatalogQuery, useCategoryIds, useValueFromCategoryById } from '@wcp/wario-ux-shared/query';
 
 import {
@@ -117,8 +118,7 @@ const useCategoryIdsWithTreePath = () => {
 
     const ComputePath: (cId: string) => string[] = (cId) => {
       if (!Object.hasOwn(pathMap, cId)) {
-        const cat = catalog.categories[cId];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const cat = catalog.categories[cId] as ICategory | undefined;
         if (!cat) return []; // Should not happen if data is consistent
         const parentId = parentLookup[cId];
         pathMap[cId] = parentId !== null ? [...ComputePath(parentId), cat.name] : [cat.name];

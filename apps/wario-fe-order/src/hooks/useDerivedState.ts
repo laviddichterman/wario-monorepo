@@ -9,6 +9,7 @@ import {
   GenerateCategoryOrderList,
   GetNextAvailableServiceDate,
   GroupAndOrderCart,
+  type IOptionType,
   type IProductInstance,
   IsModifierTypeVisible,
   type MetadataModifierMap,
@@ -196,8 +197,7 @@ export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSe
   const catalogSelectors = useCatalogSelectors();
   return useMemo(() => {
     if (!catalogSelectors) return false;
-    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId) as IOptionType | undefined;
     if (!modifierTypeEntry) return false;
     return (
       !modifierTypeEntry.displayFlags.hidden &&

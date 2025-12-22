@@ -54,8 +54,7 @@ export const fromPrinterGroupEntity = (entity: PrinterGroup): PrinterGroupFormSt
   name: entity.name,
   singleItemPerTicket: entity.singleItemPerTicket,
   isExpo: entity.isExpo,
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  externalIds: entity.externalIDs || [],
+  externalIds: entity.externalIDs,
 });
 
 export const usePrinterGroupForm = () => {

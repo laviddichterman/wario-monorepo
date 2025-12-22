@@ -126,8 +126,7 @@ export const fromCategoryEntity = (entity: ICategory): CategoryFormState => ({
   subheading: entity.subheading || '',
   footnotes: entity.footnotes || '',
   callLineName: entity.display_flags.call_line_name,
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  serviceDisable: entity.serviceDisable || [],
+  serviceDisable: entity.serviceDisable,
   callLineDisplay: entity.display_flags.call_line_display,
   nestedDisplay: entity.display_flags.nesting,
   children: entity.children,

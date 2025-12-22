@@ -9,7 +9,7 @@
 import { useMemo } from 'react';
 
 import { IsModifierTypeVisible, WDateUtils } from '@wcp/wario-shared/logic';
-import type { MetadataModifierMap } from '@wcp/wario-shared/types';
+import type { IOptionType, MetadataModifierMap } from '@wcp/wario-shared/types';
 import { useCatalogSelectors, useFulfillmentOperatingHours } from '@wcp/wario-ux-shared/query';
 
 /**
@@ -35,8 +35,7 @@ export function useSelectableModifiers(mMap: MetadataModifierMap) {
       return {};
     }
     return Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-      const modifierEntry = catalogSelectors.modifierEntry(k);
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierEntry can be undefined at runtime
+      const modifierEntry = catalogSelectors.modifierEntry(k) as IOptionType | undefined;
       if (!modifierEntry) return acc;
       const omit_section_if_no_available_options = modifierEntry.displayFlags.omit_section_if_no_available_options;
       const hidden = modifierEntry.displayFlags.hidden;
@@ -54,8 +53,7 @@ export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSe
 
   return useMemo(() => {
     if (!catalogSelectors) return false;
-    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId);
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- modifierTypeEntry can be undefined at runtime
+    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId) as IOptionType | undefined;
     if (!modifierTypeEntry) return false;
     return IsModifierTypeVisible(modifierTypeEntry, hasSelectable);
   }, [catalogSelectors, modifierTypeId, hasSelectable]);
