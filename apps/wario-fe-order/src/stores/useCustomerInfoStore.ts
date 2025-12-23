@@ -29,7 +29,7 @@ export const customerInfoSchema = z.object({
       },
       {
         message:
-          "Please enter a valid US mobile phone number. If you don't have one please, send us an email so we can provide alternate instructions.",
+          "Please enter a valid US mobile phone number. If you don't have one, please send us an email so we can provide alternate instructions.",
       },
     ),
   email: ZodEmailSchema,

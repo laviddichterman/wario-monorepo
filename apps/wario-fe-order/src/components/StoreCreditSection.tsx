@@ -21,12 +21,11 @@ export function StoreCreditSection() {
 
   const validateCreditMutation = useValidateStoreCreditMutation({ axiosInstance });
 
-  const [useCreditCheckbox, setUseCreditCheckbox] = useState<boolean>(validateCreditMutation.isSuccess);
-  const [localCreditCode, setLocalCreditCode] = useState<string>(storeCreditInput);
-  const isCreditValidated = useMemo(
-    () => validateCreditMutation.isSuccess && storeCreditValidations.length > 0,
-    [validateCreditMutation.isSuccess, storeCreditValidations],
+  const [useCreditCheckbox, setUseCreditCheckbox] = useState<boolean>(
+    storeCreditValidations.length > 0 || storeCreditInput.length > 0,
   );
+  const [localCreditCode, setLocalCreditCode] = useState<string>(storeCreditInput);
+  const isCreditValidated = useMemo(() => storeCreditValidations.length > 0, [storeCreditValidations]);
   const isCreditInvalid = useMemo(
     () => validateCreditMutation.isError || (validateCreditMutation.isSuccess && storeCreditValidations.length === 0),
     [validateCreditMutation.isError, validateCreditMutation.isSuccess, storeCreditValidations],
@@ -60,7 +59,7 @@ export function StoreCreditSection() {
     setUseCreditCheckbox(checked);
   };
   return (
-    <Grid container alignContent={'center'}>
+    <Grid container alignContent={'center'} size={12}>
       <Grid
         sx={{ pt: 2 }}
         size={{
@@ -95,6 +94,7 @@ export function StoreCreditSection() {
             name="Credit Code"
             label="Code:"
             id="store_credit_code"
+            sx={{ width: '220px' }}
             disabled={isCreditValidated || validateCreditMutation.isPending}
             value={localCreditCode}
             onChange={(e: { target: { value: string } }) => {
@@ -103,7 +103,7 @@ export function StoreCreditSection() {
           />
         </Grid>
       )}
-      {isCreditValidated && (
+      {isCreditInvalid && (
         <Grid size={12}>
           <ErrorResponseOutput>
             Code entered looks to be invalid. Please check your input and try again. Please copy/paste from the e-mail

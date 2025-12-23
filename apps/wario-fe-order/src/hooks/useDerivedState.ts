@@ -34,7 +34,7 @@ import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } fro
 import { usePaymentStore } from '@/stores/usePaymentStore';
 
 export function useMainCategoryOrderListForFulfillment() {
-  const mainCategoryId = usePropertyFromSelectedFulfillment('menuBaseCategoryId');
+  const mainCategoryId = usePropertyFromSelectedFulfillment('orderBaseCategoryId');
   const catalogSelectors = useCatalogSelectors();
   return useMemo(() => {
     if (!catalogSelectors || !mainCategoryId) return [];

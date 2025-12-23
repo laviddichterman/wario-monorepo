@@ -28,7 +28,7 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
   const submitToWario = () => {
     if (order) {
       rescheduleMutation.mutate(
-        { orderId: order.id, newDate: selectedDate, newTime: selectedTime },
+        { orderId: order.id, selectedDate: selectedDate, selectedTime: selectedTime },
         {
           onSuccess: () => {},
         },

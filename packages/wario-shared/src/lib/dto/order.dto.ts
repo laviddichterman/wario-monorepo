@@ -18,11 +18,44 @@ import {
   DeliveryInfoDto,
   EncryptStringLockDto,
   IMoneyDto,
+  IsWarioISODate,
   TipSelectionAmountDto,
   TipSelectionPercentageDto,
 } from './common.dto';
 import { ProductInstanceModifierEntryDto } from './product.dto';
 import { WSeatingInfoDto } from './seating.dto';
+
+type TipSelectionInput = {
+  isPercentage: boolean;
+};
+
+const isTipSelectionInput = (value: unknown): value is TipSelectionInput => {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  return typeof (value as Record<string, unknown>).isPercentage === 'boolean';
+};
+
+const getPropertyValue = (container: unknown, property: unknown): unknown => {
+  if (typeof property !== 'string') {
+    return container;
+  }
+
+  if (typeof container !== 'object' || container === null) {
+    return undefined;
+  }
+
+  return (container as Record<string, unknown>)[property];
+};
+
+const resolveTipSelectionType = (value: unknown): typeof TipSelectionPercentageDto | typeof TipSelectionAmountDto => {
+  if (isTipSelectionInput(value)) {
+    return value.isPercentage ? TipSelectionPercentageDto : TipSelectionAmountDto;
+  }
+
+  return TipSelectionPercentageDto;
+};
 
 export class DineInInfoDto {
   @IsInt()
@@ -46,9 +79,8 @@ export class ThirdPartyInfoDto {
 }
 
 export class FulfillmentTimeDto {
-  // as formatISODate
-  @IsString()
-  @IsNotEmpty()
+  // as WDateUtils.formatISODate aka iso without the hypens
+  @IsWarioISODate()
   selectedDate!: string;
 
   @IsNumber()
@@ -469,16 +501,7 @@ export class WOrderInstancePartialDto {
 
   // Tip can be either percentage or amount, discriminated by isPercentage field
   @ValidateNested()
-  @Type(() => TipSelectionPercentageDto, {
-    discriminator: {
-      property: 'isPercentage',
-      subTypes: [
-        { value: TipSelectionPercentageDto, name: 'true' },
-        { value: TipSelectionAmountDto, name: 'false' },
-      ],
-    },
-    keepDiscriminatorProperty: true,
-  })
+  @Type((options) => resolveTipSelectionType(getPropertyValue(options?.object, options?.property)))
   readonly tip!: TipSelectionPercentageDto | TipSelectionAmountDto;
 
   @IsString()

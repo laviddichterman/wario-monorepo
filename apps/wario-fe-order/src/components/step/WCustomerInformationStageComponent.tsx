@@ -85,7 +85,6 @@ export default function WCustomerInformationStage() {
               name="mobileNumRaw"
               error={errors.mobileNumRaw}
               label={'Mobile Phone Number:'}
-              control={cIForm.control}
             />
           </Grid>
           <Grid sx={{ p: 1 }} size={12}>

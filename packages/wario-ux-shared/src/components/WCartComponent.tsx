@@ -159,7 +159,9 @@ export function WCheckoutCartComponent(props: WCheckoutCartComponentProps) {
             {props.taxValue && props.taxValue.amount > 0 && (
               <TableRow>
                 <TableCell colSpan={3}>
-                  <ProductTitle>Sales Tax ({fPercent(props.taxRate)})</ProductTitle>
+                  <ProductTitle>
+                    Sales Tax ({fPercent(props.taxRate * 100, undefined, { maximumFractionDigits: 2 })})
+                  </ProductTitle>
                 </TableCell>
                 <TableCell colSpan={2} align="right">
                   <ProductPrice>{MoneyToDisplayString(props.taxValue, false)}</ProductPrice>

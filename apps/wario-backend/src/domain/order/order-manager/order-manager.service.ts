@@ -1260,7 +1260,7 @@ export class OrderManagerService {
         //this.socketIoProvider.EmitOrder(savedOrder);
 
         // success!
-        return { status: 200, success: true, result: savedOrder };
+        return { status: 201, success: true, result: savedOrder };
       } catch (error: unknown) {
         const errorDetail = `Caught error while saving calendary entry: ${JSON.stringify(error)}`;
         this.logger.error({ err: error }, 'Caught error while saving calendary entry');

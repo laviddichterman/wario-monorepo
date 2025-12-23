@@ -117,13 +117,11 @@ export default function WCheckoutStage() {
   }, [customTipAmount]);
 
   useEffect(() => {
-    // console.log('WCheckoutStageComponent effect', { allowTipping, selectedTip, autogratEnabled, TwentyPercentTipValue, selectedTipValue });
     if (allowTipping) {
       if (
         selectedTip === null ||
         (autogratEnabled && selectedTip !== TIP_SUGGESTION_20 && TwentyPercentTipValue.amount > selectedTipValue.amount)
       ) {
-        // console.log('Setting tip to 20%', { selectedTip, TwentyPercentTipValue, selectedTipValue });
         setTip(TIP_SUGGESTION_20);
       }
     } else if (selectedTip === null) {
@@ -221,7 +219,6 @@ export default function WCheckoutStage() {
       createPaymentRequest={createPaymentRequest}
       cardTokenizeResponseReceived={cardTokenizeResponseReceived}
     >
-      {' '}
       {!submitOrderMutation.isSuccess ? (
         <Box>
           {submitOrderMutation.isPending && <LoadingScreen />}
@@ -350,7 +347,7 @@ export default function WCheckoutStage() {
               </Grid>
             </Grid>
             <Navigation
-              canBack={submitOrderMutation.isPending}
+              canBack={!submitOrderMutation.isPending}
               hasNext={false}
               canNext={false}
               handleBack={backStage}

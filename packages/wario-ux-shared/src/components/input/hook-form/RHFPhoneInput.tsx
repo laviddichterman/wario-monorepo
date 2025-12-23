@@ -5,47 +5,50 @@ import PhoneInput, { type Country } from 'react-phone-number-input/react-hook-fo
 import { type TextFieldProps } from '@mui/material/TextField';
 import TextField from '@mui/material/TextField';
 
+import { normalizeSlotProps } from '@/common';
 import { PHONE_METADATA as LIBPHONE_METADATA } from '@/common/phone-metadata';
-interface IPhoneInputParams {
-  name: string;
+
+type PhoneInputTextFieldProps = Omit<TextFieldProps, 'ref'>;
+
+const PhoneInputTextField = React.forwardRef<HTMLInputElement, PhoneInputTextFieldProps>(
+  function PhoneInputTextField(props, ref) {
+    return <TextField {...props} inputRef={ref} />;
+  },
+);
+PhoneInputTextField.displayName = 'PhoneInputTextField';
+
+type PhoneInputProps = Parameters<typeof PhoneInput<PhoneInputTextFieldProps>>[0];
+
+export type RHFPhoneInputProps = Omit<
+  PhoneInputProps,
+  'metadata' | 'inputComponent' | 'error' | 'control' | 'country' | 'label'
+> & {
   country: Country;
-  error: FieldError | undefined;
   label: React.ReactNode;
-  placeholder?: TextFieldProps['placeholder'];
-  [x: string]: unknown;
-}
+  error?: FieldError;
+};
 
-export function RHFPhoneInput({
-  placeholder,
-  error,
-  label,
-  country,
-  name,
-  ...other
-}: IPhoneInputParams & Omit<TextFieldProps, 'error' | 'name' | 'label'>) {
-  const InputComponent = React.forwardRef((props, ref) => (
-    <TextField
-      {...props}
-      inputRef={ref}
-      error={!!error}
-      inputMode="tel"
-      autoComplete="mobile tel"
-      helperText={error?.message ?? ' '}
-      placeholder={placeholder}
-      label={label}
-      {...other}
-    />
-  ));
-
+export function RHFPhoneInput({ error, slotProps, ...other }: RHFPhoneInputProps) {
   const { control } = useFormContext();
+  const mergedSlotProps: PhoneInputTextFieldProps['slotProps'] = {
+    ...slotProps,
+    htmlInput: {
+      inputMode: 'tel',
+      ...normalizeSlotProps(slotProps?.htmlInput),
+    },
+  };
+
   return (
-    <PhoneInput
+    <PhoneInput<PhoneInputTextFieldProps>
       smartCaret
       control={control}
-      name={name}
       metadata={LIBPHONE_METADATA}
-      country={country}
-      inputComponent={InputComponent}
+      inputComponent={PhoneInputTextField}
+      error={!!error}
+      autoComplete="mobile tel"
+      helperText={error?.message ?? ' '}
+      slotProps={mergedSlotProps}
+      {...other}
     />
   );
 }

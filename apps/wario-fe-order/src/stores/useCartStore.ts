@@ -216,6 +216,7 @@ export const findDuplicateInCart = (
  */
 export const selectCartAsDto = (cart: CartEntry[]): CoreCartEntry[] =>
   cart.map((x) => ({
-    ...x,
+    quantity: x.quantity,
+    categoryId: x.categoryId,
     product: { modifiers: x.product.p.modifiers, pid: x.product.p.productId },
   }));

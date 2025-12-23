@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { Type } from 'class-transformer';
 import {
+  Equals,
   IsBoolean,
   IsEnum,
   IsInt,
@@ -9,10 +10,49 @@ import {
   IsOptional,
   IsString,
   Min,
+  registerDecorator,
   ValidateNested,
+  type ValidationOptions,
 } from 'class-validator';
 
 import { CURRENCY } from '../enums';
+
+/**
+ * Regular expression for validating WDateUtils.formatISODate format (YYYYMMDD).
+ * - Year: 4 digits (1000-9999)
+ * - Month: 01-12
+ * - Day: 01-31
+ */
+const WARIO_ISO_DATE_REGEX = /^\d{4}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])$/;
+
+/**
+ * Validates that a string matches the Wario ISO date format (YYYYMMDD).
+ * This is the format produced by WDateUtils.formatISODate (date-fns formatISO with basic format).
+ *
+ * @example
+ * class MyDto {
+ *   @IsWarioISODate()
+ *   selectedDate!: string; // e.g., "20251224"
+ * }
+ */
+export function IsWarioISODate(validationOptions?: ValidationOptions) {
+  return function (object: object, propertyName: string) {
+    registerDecorator({
+      name: 'isWarioISODate',
+      target: object.constructor,
+      propertyName,
+      options: {
+        message: `${propertyName} must be a valid date in YYYYMMDD format (e.g., 20251224)`,
+        ...validationOptions,
+      },
+      validator: {
+        validate(value: unknown): boolean {
+          return typeof value === 'string' && WARIO_ISO_DATE_REGEX.test(value);
+        },
+      },
+    });
+  };
+}
 
 /**
  * Represents a Semantic Versioning (SemVer) triplet.
@@ -179,7 +219,7 @@ export class TipSelectionPercentageDto {
   isSuggestion!: boolean;
 
   /** Discriminator: always true for percentage tips. */
-  @IsBoolean()
+  @Equals(true)
   isPercentage!: true;
 }
 
@@ -197,7 +237,7 @@ export class TipSelectionAmountDto {
   isSuggestion!: boolean;
 
   /** Discriminator: always false for fixed amount tips. */
-  @IsBoolean()
+  @Equals(false)
   isPercentage!: false;
 }
 

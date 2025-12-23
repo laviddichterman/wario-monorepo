@@ -16,6 +16,8 @@ import { isValid, parseISO } from 'date-fns';
 import { CreateOrderRequestV2Dto, WDateUtils, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
 import { AuthScopes } from '@wcp/wario-shared-private';
 
+import { Public } from 'src/auth/decorators/public.decorator';
+
 import { OrderManagerService } from 'src/domain/order/order-manager/order-manager.service';
 import { CancelOrderRequestDto, MoveOrderRequestDto, RescheduleOrderRequestDto } from 'src/dtos/order.dto';
 
@@ -42,8 +44,8 @@ export class OrderController {
   constructor(private readonly orderManager: OrderManagerService) {}
 
   @Post()
-  @Scopes(AuthScopes.WRITE_ORDER)
   @HttpCode(201)
+  @Public()
   async postOrder(@Body() body: CreateOrderRequestV2Dto, @RealIp() ipAddress: string) {
     const response = await this.orderManager.CreateOrder(body, ipAddress);
     if (response.status !== 201) {

@@ -188,11 +188,28 @@ export function useRescheduleOrderMutation() {
   const { getToken } = useGetAuthToken();
 
   return useMutation({
-    mutationFn: async ({ orderId, newDate, newTime }: { orderId: string; newDate: string; newTime: number }) => {
+    mutationFn: async ({
+      orderId,
+      selectedDate,
+      selectedTime,
+      emailCustomer,
+      additionalMessage,
+    }: {
+      emailCustomer?: boolean;
+      additionalMessage?: string;
+      orderId: string;
+      selectedDate: string;
+      selectedTime: number;
+    }) => {
       const token = await getToken(AuthScopes.WRITE_ORDER);
       await axiosInstance.put(
         `/api/v1/order/${orderId}/reschedule`,
-        { newDate, newTime },
+        {
+          selectedDate,
+          selectedTime,
+          emailCustomer: emailCustomer ?? true,
+          additionalMessage: additionalMessage ?? '',
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
