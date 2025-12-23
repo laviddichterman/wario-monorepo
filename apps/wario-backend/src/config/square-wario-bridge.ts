@@ -1100,7 +1100,8 @@ export const ValidateModifiersForInstance = function (
   productModifierSpecification: IProductModifier[],
   instanceModifierSpecification: ProductInstanceModifierEntry[],
 ) {
-  const mtidsInInstanceSpec = new Set(...instanceModifierSpecification.map((x) => x.modifierTypeId));
-  const mtidsInProductSpec = new Set(...productModifierSpecification.map((x) => x.mtid));
-  return new Array(...mtidsInInstanceSpec).filter((x) => !mtidsInProductSpec.has(x)).length === 0;
+  const mtidsInInstanceSpec = instanceModifierSpecification.map((x) => x.modifierTypeId);
+  const mtidsInProductSpec = productModifierSpecification.map((x) => x.mtid);
+  const mtidsInInstanceSpecNotInProductSpec = mtidsInInstanceSpec.filter((x) => !mtidsInProductSpec.includes(x));
+  return mtidsInInstanceSpecNotInProductSpec.length === 0;
 };
