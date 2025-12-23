@@ -198,7 +198,6 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       productRepository: this.productRepository,
       logger: this._logger,
       fulfillments: this.dataProviderService.getFulfillments(),
-      categories: this.categories,
       catalog: this.catalog,
       batchDeleteProducts: async (pids, suppress) => this.BatchDeleteProduct(pids, suppress),
     };
@@ -316,9 +315,6 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       appConfig: this.appConfig,
 
       catalog: this.catalog,
-      modifierTypes: this.modifier_types,
-      modifierOptions: this.options,
-      productInstanceFunctions: this.getProductInstanceFunctions(),
 
       syncModifierTypes: () => this.SyncModifierTypes(),
       syncOptions: () => this.SyncOptions(),
@@ -401,8 +397,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ProductFns.batchUpsertProduct(this.productDeps, batches);
   };
 
-  UpdateProduct = async (pid: string, product: UpdateIProductRequest) => {
-    return ProductFns.updateProduct(this.productDeps, pid, product);
+  UpdateProduct = async (product: UpdateIProductRequest) => {
+    return ProductFns.updateProduct(this.productDeps, product);
   };
 
   BatchDeleteProduct = async (p_ids: string[], suppress_catalog_recomputation: boolean = false) => {

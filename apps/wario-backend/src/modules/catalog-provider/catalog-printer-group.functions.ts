@@ -127,7 +127,7 @@ export const batchUpdatePrinterGroup = async (
     }),
   );
 
-  void deps.syncPrinterGroups();
+  await deps.syncPrinterGroups();
   return updated;
 };
 

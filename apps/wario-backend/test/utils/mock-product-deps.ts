@@ -76,6 +76,7 @@ export function createMockProductDeps(options: CreateMockProductDepsOptions = {}
   const squareService = {
     BatchUpsertCatalogObjects: jest.fn(),
     BatchRetrieveCatalogObjects: jest.fn(),
+    BatchDeleteCatalogObjects: jest.fn().mockResolvedValue({ success: true, result: { deletedObjectIds: [] } }),
   } as unknown as jest.Mocked<SquareService>;
 
   const dataProviderService: jest.Mocked<DataProviderService> = {

@@ -10,7 +10,6 @@ import {
   type ICatalog,
   type IOption,
   type IOptionType,
-  type IProductInstanceFunction,
   type KeyValue,
   type UpdateIOptionProps,
   type UpdateIOptionRequestBody,
@@ -25,6 +24,7 @@ import {
   GetSquareIdIndexFromExternalIds,
   IdMappingsToExternalIds,
   ModifierTypeToSquareCatalogObject,
+  SquareExternalIdKey,
 } from 'src/config/square-wario-bridge';
 import { type DeleteProductInstanceFunctionResult } from 'src/modules/catalog-provider/catalog-function.functions';
 import type { DataProviderService } from 'src/modules/data-provider/data-provider.service';
@@ -50,9 +50,6 @@ export interface ModifierDeps {
 
   // State
   catalog: ICatalog; // For reading modifiers/options
-  modifierTypes: IOptionType[];
-  modifierOptions: IOption[];
-  productInstanceFunctions: Record<string, IProductInstanceFunction>;
 
   // Callbacks
   syncModifierTypes: () => Promise<boolean>;
@@ -184,9 +181,7 @@ const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
     ...(batch.modifierType as UpdateIOptionTypeRequestBody),
   };
   // 3. validate options exist
-  const existingOptions = updatedModifierType.options
-    .map((optId) => deps.modifierOptions.find((o) => o.id === optId))
-    .filter((o) => !!o);
+  const existingOptions = updatedModifierType.options.map((optId) => deps.catalog.options[optId]);
   if (existingOptions.length !== updatedModifierType.options.length) {
     throw Error(`Modifier type ${batch.id} has options that do not exist`);
   }
@@ -194,7 +189,7 @@ const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
 
   const modifierTypeSquareExternalIds = GetSquareExternalIds(oldModifierTypeData.externalIDs);
   const existingOptionsHave_MODIFIER_WHOLE = existingOptions.reduce(
-    (acc, x) => acc && GetSquareIdIndexFromExternalIds(x.externalIDs, 'MODIFIER_WHOLE') !== -1,
+    (acc, x) => acc && GetSquareIdIndexFromExternalIds(x.externalIDs, SquareExternalIdKey.MODIFIER_WHOLE) !== -1,
     true,
   );
   const missingSquareCatalogObjects = !existingOptionsHave_MODIFIER_WHOLE || modifierTypeSquareExternalIds.length === 0;
@@ -427,7 +422,7 @@ export const deleteModifierType = async (deps: ModifierDeps, mt_id: string) => {
 
   // need to delete any ProductInstanceFunctions that use this MT
   await Promise.all(
-    Object.values(deps.productInstanceFunctions).map(async (pif) => {
+    Object.values(deps.catalog.productInstanceFunctions).map(async (pif) => {
       if (FindModifierPlacementExpressionsForMTID(pif.expression, mt_id).length > 0) {
         deps.logger.debug({ mt_id, pifId: pif.id }, 'Found product instance function composed of MT, removing PIF');
         // the PIF and any dependent objects will be synced, but the catalog will not be recomputed / emitted
@@ -512,32 +507,32 @@ export const batchUpdateModifierOption = async (deps: ModifierDeps, batches: Upd
     if (b.batch.option.metadata) {
       if (!b.batch.option.metadata.allowHeavy && b.oldOption.metadata.allowHeavy) {
         const kv = b.updatedOption.externalIDs.splice(
-          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_HEAVY'),
+          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, SquareExternalIdKey.MODIFIER_HEAVY),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kv.value);
       }
       if (!b.batch.option.metadata.allowLite && b.oldOption.metadata.allowLite) {
         const kv = b.updatedOption.externalIDs.splice(
-          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_LITE'),
+          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, SquareExternalIdKey.MODIFIER_LITE),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kv.value);
       }
       if (!b.batch.option.metadata.allowOTS && b.oldOption.metadata.allowOTS) {
         const kv = b.updatedOption.externalIDs.splice(
-          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_OTS'),
+          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, SquareExternalIdKey.MODIFIER_OTS),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kv.value);
       }
       if (!b.batch.option.metadata.can_split && b.oldOption.metadata.can_split) {
         const kvL = b.updatedOption.externalIDs.splice(
-          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_LEFT'),
+          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, SquareExternalIdKey.MODIFIER_LEFT),
           1,
         )[0];
         const kvR = b.updatedOption.externalIDs.splice(
-          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, 'MODIFIER_RIGHT'),
+          GetSquareIdIndexFromExternalIds(b.updatedOption.externalIDs, SquareExternalIdKey.MODIFIER_RIGHT),
           1,
         )[0];
         squareCatalogObjectsToDelete.push(kvL.value, kvR.value);
@@ -669,7 +664,7 @@ export const deleteModifierOption = async (
   await deps.syncOptions();
   // need to delete any ProductInstanceFunctions that use this MO
   await Promise.all(
-    Object.values(deps.productInstanceFunctions).map(async (pif) => {
+    Object.values(deps.catalog.productInstanceFunctions).map(async (pif) => {
       const dependent_pfi_expressions = FindModifierPlacementExpressionsForMTID(
         pif.expression,
         modifierTypeId,

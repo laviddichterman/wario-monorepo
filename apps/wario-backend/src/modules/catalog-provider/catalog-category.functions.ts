@@ -28,8 +28,7 @@ export interface CategoryDeps {
 
   // State needed for validation/logic
   fulfillments: Record<string, FulfillmentConfig>;
-  categories: Record<string, ICategory>;
-  catalog: ICatalog; // For accessing catalog.categories[id].products
+  catalog: ICatalog; // Single source of truth for categories
 
   // Callbacks for external impacts
   batchDeleteProducts: (productIds: string[], suppressRecompute: boolean) => Promise<unknown>;
@@ -54,7 +53,7 @@ export async function updateCategory(
   categoryId: string,
   category: Partial<Omit<ICategory, 'id'>>,
 ): Promise<ICategory | null> {
-  if (!Object.hasOwn(deps.categories, categoryId)) {
+  if (!Object.hasOwn(deps.catalog.categories, categoryId)) {
     throw Error(`Category ${categoryId} not found`);
   }
 
@@ -116,7 +115,7 @@ export async function deleteCategory(
   // This is very inefficient, but it's the only way to do it AT THE MOMENT
   // TODO: in a post mongoose world, migrate this to be more efficient
   await Promise.all(
-    Object.values(deps.categories).map(async (cat) => {
+    Object.values(deps.catalog.categories).map(async (cat) => {
       if (cat.children.includes(categoryId)) {
         const updatedChildren = cat.children.filter((id) => id !== categoryId);
         await deps.categoryRepository.update(cat.id, { children: updatedChildren });

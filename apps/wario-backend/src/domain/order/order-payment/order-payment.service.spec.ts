@@ -21,6 +21,7 @@ import { Test, type TestingModule } from '@nestjs/testing';
 
 import { CURRENCY, TenderBaseStatus, type ValidateLockAndSpendSuccess } from '@wcp/wario-shared';
 
+import { AppConfigService } from 'src/config/app-config.service';
 import { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 import { SquareService } from 'src/modules/integrations/square/square.service';
 
@@ -63,6 +64,7 @@ describe('OrderPaymentService', () => {
         { provide: SquareService, useValue: mockSquareSvc },
         { provide: StoreCreditProviderService, useValue: mockStoreCreditSvc },
         { provide: DataProviderService, useValue: mockDataProvider },
+        { provide: AppConfigService, useValue: { isProduction: false } },
         { provide: 'PinoLogger:OrderPaymentService', useValue: mockLogger },
       ],
     }).compile();

@@ -16,6 +16,7 @@ import {
   createMockCreateProductRequest,
   createMockProduct,
   createMockProductInstance,
+  createMockUpdateProductRequest,
   mockCatalogProviderService,
   mockSocketIoService,
 } from 'test/utils';
@@ -101,22 +102,19 @@ describe('ProductController', () => {
       const mockProduct = createMockProduct({ id: 'prod-123' });
       (mockCatalogService.UpdateProduct as jest.Mock).mockResolvedValue(mockProduct);
 
-      const result = await controller.patchProductClass(
-        'prod-123',
-        {} as Parameters<typeof controller.patchProductClass>[1],
-      );
+      const body = createMockUpdateProductRequest({ id: 'prod-123' });
+      const result = await controller.patchProductClass('prod-123', body);
 
       expect(result).toEqual(mockProduct);
-      expect(mockCatalogService.UpdateProduct).toHaveBeenCalledWith('prod-123', expect.anything());
+      expect(mockCatalogService.UpdateProduct).toHaveBeenCalledWith(body);
       expect(mockSocketService.EmitCatalog).toHaveBeenCalled();
     });
 
     it('should throw ProductNotFoundException when product not found', async () => {
       (mockCatalogService.UpdateProduct as jest.Mock).mockResolvedValue(null);
 
-      await expect(
-        controller.patchProductClass('nonexistent', {} as Parameters<typeof controller.patchProductClass>[1]),
-      ).rejects.toThrow(ProductNotFoundException);
+      const body = createMockUpdateProductRequest({ id: 'nonexistent' });
+      await expect(controller.patchProductClass('nonexistent', body)).rejects.toThrow(ProductNotFoundException);
     });
   });
 

@@ -685,7 +685,7 @@ export const createProduct = async (deps: ProductDeps, product: CreateIProductRe
   return result ? result[0] : null;
 };
 
-export const updateProduct = async (deps: ProductDeps, pid: string, product: UpdateIProductRequest) => {
+export const updateProduct = async (deps: ProductDeps, product: UpdateIProductRequest) => {
   const result = await batchUpsertProduct(deps, [product]);
   return result ? result[0].product : null;
 };

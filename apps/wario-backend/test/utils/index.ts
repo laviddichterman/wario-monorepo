@@ -52,12 +52,28 @@ export {
   TestUsers,
 } from './mock-auth';
 
+// Deps mock factories
+export { createMockCategoryDeps, type CreateMockCategoryDepsOptions } from './mock-category-deps';
+
 // Database mocks
-export { createAllMockModelProviders, createMockModel, createMockModelProvider, ModelNames } from './mock-database';
-
-// Product deps mocks
+export {
+  createAllMockModelProviders,
+  createMockCategoryRepository,
+  createMockModel,
+  createMockModelProvider,
+  createMockOptionRepository,
+  createMockOptionTypeRepository,
+  createMockOrderInstanceFunctionRepository,
+  createMockPrinterGroupRepository,
+  createMockProductInstanceFunctionRepository,
+  createMockProductInstanceRepository,
+  createMockProductRepository,
+  ModelNames,
+} from './mock-database';
+export { createMockFunctionDeps, type CreateMockFunctionDepsOptions } from './mock-function-deps';
+export { createMockModifierDeps, type CreateMockModifierDepsOptions } from './mock-modifier-deps';
+export { createMockPrinterGroupDeps, type CreateMockPrinterGroupDepsOptions } from './mock-printer-group-deps';
 export { createMockProductDeps, type CreateMockProductDepsOptions } from './mock-product-deps';
-
 // Service mocks
 export {
   mockCatalogProviderService,
@@ -87,6 +103,8 @@ export {
   createSquareSuccessResponse,
   SquareIdMappingTracker,
 } from './mock-square';
+
+export { createMockSquareSyncDeps, type CreateMockSquareSyncDepsOptions } from './mock-square-sync-deps';
 
 // Order mocks
 export {

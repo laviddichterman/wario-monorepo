@@ -65,6 +65,29 @@ export interface ICatalogContext {
 
 export const WARIO_SQUARE_ID_METADATA_KEY = 'SQID_';
 
+/**
+ * Constants for Square external ID key specifiers.
+ * Used with GetSquareIdFromExternalIds and GetSquareIdIndexFromExternalIds.
+ */
+export const SquareExternalIdKey = {
+  // Catalog object types
+  CATEGORY: 'CATEGORY',
+  ITEM: 'ITEM',
+  ITEM_VARIATION: 'ITEM_VARIATION',
+  MODIFIER_LIST: 'MODIFIER_LIST',
+  MODIFIER: 'MODIFIER',
+
+  // Modifier placement variants
+  MODIFIER_WHOLE: 'MODIFIER_WHOLE',
+  MODIFIER_LEFT: 'MODIFIER_LEFT',
+  MODIFIER_RIGHT: 'MODIFIER_RIGHT',
+  MODIFIER_HEAVY: 'MODIFIER_HEAVY',
+  MODIFIER_LITE: 'MODIFIER_LITE',
+  MODIFIER_OTS: 'MODIFIER_OTS',
+} as const;
+
+export type SquareExternalIdKeyType = (typeof SquareExternalIdKey)[keyof typeof SquareExternalIdKey];
+
 export const BigIntMoneyToIntMoney = (bigIntMoney: Money): IMoney => ({
   amount: Number(bigIntMoney.amount),
   currency: bigIntMoney.currency!,
@@ -230,26 +253,29 @@ export const CreateFulfillment = (info: SquareOrderFulfillmentInfo): OrderFulfil
   };
 };
 
-const OptionInstanceToSquareIdSpecifier = (optionInstance: IOptionInstance, logger?: PinoLogger) => {
+const OptionInstanceToSquareIdSpecifier = (
+  optionInstance: IOptionInstance,
+  logger?: PinoLogger,
+): SquareExternalIdKeyType => {
   switch (optionInstance.placement) {
     case OptionPlacement.LEFT:
-      return 'MODIFIER_LEFT';
+      return SquareExternalIdKey.MODIFIER_LEFT;
     case OptionPlacement.RIGHT:
-      return 'MODIFIER_RIGHT';
+      return SquareExternalIdKey.MODIFIER_RIGHT;
     case OptionPlacement.WHOLE:
       switch (optionInstance.qualifier) {
         case OptionQualifier.REGULAR:
-          return 'MODIFIER_WHOLE';
+          return SquareExternalIdKey.MODIFIER_WHOLE;
         case OptionQualifier.HEAVY:
-          return 'MODIFIER_HEAVY';
+          return SquareExternalIdKey.MODIFIER_HEAVY;
         case OptionQualifier.LITE:
-          return 'MODIFIER_LITE';
+          return SquareExternalIdKey.MODIFIER_LITE;
         case OptionQualifier.OTS:
-          return 'MODIFIER_OTS';
+          return SquareExternalIdKey.MODIFIER_OTS;
       }
   }
   logger?.error({ optionInstance }, 'UNHANDLED OPTION INSTANCE');
-  return 'MODIFIER_WHOLE';
+  return SquareExternalIdKey.MODIFIER_WHOLE;
 };
 
 // const CreateWarioCustomAttribute = (locationIds: string[]): CatalogObject => {

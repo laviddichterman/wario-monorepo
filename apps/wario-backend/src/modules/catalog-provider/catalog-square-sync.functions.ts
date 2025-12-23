@@ -21,6 +21,7 @@ import {
   GetNonSquareExternalIds,
   GetSquareExternalIds,
   GetSquareIdIndexFromExternalIds,
+  SquareExternalIdKey,
 } from 'src/config/square-wario-bridge';
 import { type IProductInstanceRepository } from 'src/repositories';
 
@@ -120,9 +121,9 @@ export const checkAllPrinterGroupsSquareIdsAndFixIfNeeded = async (deps: SquareS
   const batches = Object.values(printerGroups)
     .filter(
       (pg) =>
-        GetSquareIdIndexFromExternalIds(pg.externalIDs, 'CATEGORY') === -1 ||
-        GetSquareIdIndexFromExternalIds(pg.externalIDs, 'ITEM') === -1 ||
-        GetSquareIdIndexFromExternalIds(pg.externalIDs, 'ITEM_VARIATION') === -1,
+        GetSquareIdIndexFromExternalIds(pg.externalIDs, SquareExternalIdKey.CATEGORY) === -1 ||
+        GetSquareIdIndexFromExternalIds(pg.externalIDs, SquareExternalIdKey.ITEM) === -1 ||
+        GetSquareIdIndexFromExternalIds(pg.externalIDs, SquareExternalIdKey.ITEM_VARIATION) === -1,
     )
     .map((pg) => ({ id: pg.id, printerGroup: {} }));
   return batches.length > 0 ? await deps.batchUpdatePrinterGroup(batches) : null;
@@ -184,10 +185,11 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
   const modifierTypeBatches = Object.values(deps.catalog.modifiers)
     .filter(
       (mt) =>
-        GetSquareIdIndexFromExternalIds(mt.externalIDs, 'MODIFIER_LIST') === -1 ||
+        GetSquareIdIndexFromExternalIds(mt.externalIDs, SquareExternalIdKey.MODIFIER_LIST) === -1 ||
         mt.options.reduce(
           (acc, oId) =>
-            acc || GetSquareIdIndexFromExternalIds(deps.catalog.options[oId].externalIDs, 'MODIFIER') === -1,
+            acc ||
+            GetSquareIdIndexFromExternalIds(deps.catalog.options[oId].externalIDs, SquareExternalIdKey.MODIFIER) === -1,
           false,
         ),
     )
@@ -255,7 +257,11 @@ export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSy
       p.instances
         .filter((piid) => {
           const pi = deps.catalog.productInstances[piid] as IProductInstance | undefined;
-          return pi && !pi.displayFlags.pos.hide && GetSquareIdIndexFromExternalIds(pi.externalIDs, 'ITEM') === -1;
+          return (
+            pi &&
+            !pi.displayFlags.pos.hide &&
+            GetSquareIdIndexFromExternalIds(pi.externalIDs, SquareExternalIdKey.ITEM) === -1
+          );
         })
         .map((piid) => ({
           piid,
@@ -288,10 +294,10 @@ export const forceSquareCatalogCompleteUpsert = async (deps: SquareSyncDeps) => 
     modifierType: {},
   }));
   await deps.batchUpdateModifierType(modifierTypeUpdates, true, true);
-  void deps.syncModifierTypes();
-  void deps.syncOptions();
-  void deps.syncProductInstances();
-  void deps.syncProducts();
+  await deps.syncModifierTypes();
+  await deps.syncOptions();
+  await deps.syncProductInstances();
+  await deps.syncProducts();
   deps.recomputeCatalog();
 
   // update all products
@@ -299,9 +305,9 @@ export const forceSquareCatalogCompleteUpsert = async (deps: SquareSyncDeps) => 
   await deps.batchUpsertProduct(allProducts);
   deps.recomputeCatalog();
 
-  void deps.syncModifierTypes();
-  void deps.syncOptions();
-  void deps.syncProductInstances();
-  void deps.syncProducts();
+  await deps.syncModifierTypes();
+  await deps.syncOptions();
+  await deps.syncProductInstances();
+  await deps.syncProducts();
   deps.recomputeCatalog();
 };

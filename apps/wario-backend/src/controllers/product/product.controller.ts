@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common';
 
 import {
   BatchUpsertProductRequestDto,
@@ -60,7 +60,10 @@ export class ProductController {
   @Patch(':pid')
   @Scopes(AuthScopes.WRITE_CATALOG)
   async patchProductClass(@Param('pid') productId: string, @Body() body: UpdateIProductRequestDto) {
-    const doc = await this.catalogProvider.UpdateProduct(productId, body);
+    if (body.id !== productId) {
+      throw new BadRequestException('Product ID mismatch');
+    }
+    const doc = await this.catalogProvider.UpdateProduct(body);
     if (!doc) {
       throw new ProductNotFoundException(productId);
     }
