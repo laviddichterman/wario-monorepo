@@ -49,13 +49,10 @@ describe('ProductController', () => {
       configurable: true,
     });
 
-    // Setup CatalogSelectors for patchProductInstance
+    // Setup getCatalogSelectors for patchProductInstance
     // In 2025 schema, productEntry returns IProduct directly (no .product wrapper)
-    Object.defineProperty(mockCatalogService, 'CatalogSelectors', {
-      get: () => ({
-        productEntry: jest.fn().mockReturnValue(createMockProduct({ id: 'prod-123' })),
-      }),
-      configurable: true,
+    (mockCatalogService.getCatalogSelectors as jest.Mock).mockReturnValue({
+      productEntry: jest.fn().mockReturnValue(createMockProduct({ id: 'prod-123' })),
     });
 
     const module: TestingModule = await Test.createTestingModule({
@@ -90,6 +87,33 @@ describe('ProductController', () => {
 
       const body = createMockCreateProductRequest();
       await expect(controller.postProductClass(body)).rejects.toThrow(CatalogOperationException);
+    });
+  });
+
+  // =========================================================================
+  // POST /api/v1/menu/product/batch Tests
+  // =========================================================================
+
+  describe('batchPostProducts', () => {
+    it('should batch upsert products and emit catalog', async () => {
+      const mockProducts = [createMockProduct({ id: 'prod-1' }), createMockProduct({ id: 'prod-2' })];
+      (mockCatalogService.BatchUpsertProduct as jest.Mock).mockResolvedValue(mockProducts);
+
+      const body = { products: [createMockCreateProductRequest(), createMockCreateProductRequest()] };
+      const result = await controller.batchPostProducts(body as Parameters<typeof controller.batchPostProducts>[0]);
+
+      expect(result).toEqual(mockProducts);
+      expect(mockCatalogService.BatchUpsertProduct).toHaveBeenCalledWith(body.products);
+      expect(mockSocketService.EmitCatalog).toHaveBeenCalled();
+    });
+
+    it('should throw CatalogOperationException when batch upsert fails', async () => {
+      (mockCatalogService.BatchUpsertProduct as jest.Mock).mockResolvedValue(null);
+
+      const body = { products: [createMockCreateProductRequest()] };
+      await expect(
+        controller.batchPostProducts(body as Parameters<typeof controller.batchPostProducts>[0]),
+      ).rejects.toThrow(CatalogOperationException);
     });
   });
 
@@ -141,6 +165,35 @@ describe('ProductController', () => {
   });
 
   // =========================================================================
+  // POST /api/v1/menu/product/batch/batchDelete Tests
+  // =========================================================================
+
+  describe('batchDeleteProductClasses', () => {
+    it('should batch delete products and emit catalog', async () => {
+      const deleteResult = { deletedCount: 2, acknowledged: true };
+      (mockCatalogService.BatchDeleteProduct as jest.Mock).mockResolvedValue(deleteResult);
+
+      const body = { pids: ['prod-1', 'prod-2'] };
+      const result = await controller.batchDeleteProductClasses(
+        body as Parameters<typeof controller.batchDeleteProductClasses>[0],
+      );
+
+      expect(result).toEqual(deleteResult);
+      expect(mockCatalogService.BatchDeleteProduct).toHaveBeenCalledWith(body.pids);
+      expect(mockSocketService.EmitCatalog).toHaveBeenCalled();
+    });
+
+    it('should throw CatalogOperationException when batch delete fails', async () => {
+      (mockCatalogService.BatchDeleteProduct as jest.Mock).mockResolvedValue(null);
+
+      const body = { pids: ['prod-1'] };
+      await expect(
+        controller.batchDeleteProductClasses(body as Parameters<typeof controller.batchDeleteProductClasses>[0]),
+      ).rejects.toThrow(CatalogOperationException);
+    });
+  });
+
+  // =========================================================================
   // POST /api/v1/menu/product/:pid (Product Instance) Tests
   // =========================================================================
 
@@ -172,6 +225,62 @@ describe('ProductController', () => {
   });
 
   // =========================================================================
+  // PATCH /api/v1/menu/product/:pid/:piid Tests
+  // =========================================================================
+
+  describe('patchProductInstance', () => {
+    it('should update product instance and emit catalog', async () => {
+      const mockInstance = createMockProductInstance({ id: 'pi-123' });
+      (mockCatalogService.UpdateProductInstance as jest.Mock).mockResolvedValue(mockInstance);
+
+      const body = { displayName: 'Updated Instance' };
+      const result = await controller.patchProductInstance(
+        'prod-123',
+        'pi-123',
+        body as Parameters<typeof controller.patchProductInstance>[2],
+      );
+
+      expect(result).toEqual(mockInstance);
+      expect(mockCatalogService.UpdateProductInstance).toHaveBeenCalledWith({
+        piid: 'pi-123',
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        product: expect.objectContaining({ id: 'prod-123' }),
+        productInstance: body,
+      });
+      expect(mockSocketService.EmitCatalog).toHaveBeenCalled();
+    });
+
+    it('should throw ProductNotFoundException when product not found', async () => {
+      // Override getCatalogSelectors to return null for productEntry
+      (mockCatalogService.getCatalogSelectors as jest.Mock).mockReturnValue({
+        productEntry: jest.fn().mockReturnValue(null),
+      });
+
+      const body = { displayName: 'Updated Instance' };
+      await expect(
+        controller.patchProductInstance(
+          'nonexistent',
+          'pi-123',
+          body as Parameters<typeof controller.patchProductInstance>[2],
+        ),
+      ).rejects.toThrow(ProductNotFoundException);
+    });
+
+    it('should throw ProductInstanceNotFoundException when instance not found', async () => {
+      (mockCatalogService.UpdateProductInstance as jest.Mock).mockResolvedValue(null);
+
+      const body = { displayName: 'Updated Instance' };
+      await expect(
+        controller.patchProductInstance(
+          'prod-123',
+          'nonexistent',
+          body as Parameters<typeof controller.patchProductInstance>[2],
+        ),
+      ).rejects.toThrow(ProductInstanceNotFoundException);
+    });
+  });
+
+  // =========================================================================
   // DELETE /api/v1/menu/product/:pid/:piid Tests
   // =========================================================================
 
@@ -180,16 +289,22 @@ describe('ProductController', () => {
       const mockInstance = createMockProductInstance({ id: 'pi-123' });
       (mockCatalogService.DeleteProductInstance as jest.Mock).mockResolvedValue(mockInstance);
 
-      const result = await controller.deleteProductInstance('pi-123');
+      const result = await controller.deleteProductInstance('prod-123', 'pi-123');
 
       expect(result).toEqual(mockInstance);
+      expect(mockCatalogService.DeleteProductInstance).toHaveBeenCalledWith('prod-123', 'pi-123');
       expect(mockSocketService.EmitCatalog).toHaveBeenCalled();
     });
 
     it('should throw ProductInstanceNotFoundException when instance not found', async () => {
-      (mockCatalogService.DeleteProductInstance as jest.Mock).mockResolvedValue(null);
+      // Service now throws directly instead of returning null
+      (mockCatalogService.DeleteProductInstance as jest.Mock).mockRejectedValue(
+        new ProductInstanceNotFoundException('nonexistent'),
+      );
 
-      await expect(controller.deleteProductInstance('nonexistent')).rejects.toThrow(ProductInstanceNotFoundException);
+      await expect(controller.deleteProductInstance('prod-123', 'nonexistent')).rejects.toThrow(
+        ProductInstanceNotFoundException,
+      );
     });
   });
 });

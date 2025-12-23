@@ -116,7 +116,7 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "Backend: Nest debug (inspect 9229)",
+        "name": "Backend: Run backend:dev (inspect 9229)",
         "type": "node",
         "request": "attach",
         "port": 9229,
@@ -124,6 +124,13 @@
         "protocol": "inspector",
         "cwd": "${workspaceFolder:wario-backend}",
         "preLaunchTask": "backend:dev"
+      },
+      {
+        "name": "Backend: Attach to already running NestJS App (inspect 9229)",
+        "type": "node",
+        "request": "attach",
+        "port": 9229,
+        "cwd": "${workspaceFolder:wario-backend}",
       },
       {
         "name": "Chrome: wario-pos (http://localhost:3003)",

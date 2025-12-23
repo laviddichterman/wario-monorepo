@@ -134,11 +134,8 @@ export class ProductController {
 
   @Delete(':pid/:piid')
   @Scopes(AuthScopes.DELETE_CATALOG)
-  async deleteProductInstance(@Param('piid') productInstanceId: string) {
-    const doc = await this.catalogProvider.DeleteProductInstance(productInstanceId);
-    if (!doc) {
-      throw new ProductInstanceNotFoundException(productInstanceId);
-    }
+  async deleteProductInstance(@Param('pid') productId: string, @Param('piid') productInstanceId: string) {
+    const doc = await this.catalogProvider.DeleteProductInstance(productId, productInstanceId);
     this.socketIoService.EmitCatalog(this.catalogProvider.getCatalog());
     return doc;
   }

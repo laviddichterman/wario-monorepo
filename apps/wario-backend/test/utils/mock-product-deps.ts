@@ -66,17 +66,26 @@ export function createMockProductDeps(options: CreateMockProductDepsOptions = {}
   const productRepository = {
     bulkCreate: jest.fn(),
     bulkUpdate: jest.fn(),
+    bulkDelete: jest.fn(),
+    findById: jest.fn(),
+    delete: jest.fn(),
+    update: jest.fn(),
   } as unknown as jest.Mocked<IProductRepository>;
 
   const productInstanceRepository = {
     bulkCreate: jest.fn(),
     bulkUpdate: jest.fn(),
+    bulkDelete: jest.fn(),
+    findById: jest.fn(),
+    delete: jest.fn(),
+    create: jest.fn(),
   } as unknown as jest.Mocked<IProductInstanceRepository>;
 
   const squareService = {
     BatchUpsertCatalogObjects: jest.fn(),
     BatchRetrieveCatalogObjects: jest.fn(),
     BatchDeleteCatalogObjects: jest.fn().mockResolvedValue({ success: true, result: { deletedObjectIds: [] } }),
+    UpsertCatalogObject: jest.fn(),
   } as unknown as jest.Mocked<SquareService>;
 
   const dataProviderService: jest.Mocked<DataProviderService> = {

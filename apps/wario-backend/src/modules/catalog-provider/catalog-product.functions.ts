@@ -31,6 +31,7 @@ import {
   ProductInstanceToSquareCatalogObject,
   ValidateModifiersForInstance,
 } from 'src/config/square-wario-bridge';
+import { ProductInstanceNotFoundException } from 'src/exceptions';
 import type { DataProviderService } from 'src/modules/data-provider/data-provider.service';
 
 import type { IProductInstanceRepository } from '../../repositories/interfaces/product-instance.repository.interface';
@@ -136,14 +137,23 @@ export const batchUpsertProduct = async (
       deps,
     )
   ) {
-    return null;
+    throw new Error('Invalid modifiers, functions, categories, or printer groups');
   }
   // split out the two classes of operations
   // keep track by using indexed batches
   const indexedBatches = batches.map((x, i) => ({ product: x, index: i })) as IndexedUpsertIProductRequest[];
   const updateBatches = indexedBatches.filter((b) => isUpdateProduct(b.product)) as IndexedUpdateIProductRequest[];
   const updateBatchesWithSplitInstances: IndexedUpdateProductWithSplitInstances[] = updateBatches.map((b) => {
-    const indexedInstances = b.product.instances.map((x, i) => ({ instance: x, index: i }));
+    if (!Object.hasOwn(deps.catalog.products, b.product.id)) {
+      // check product being updated exists
+      deps.logger.error(`Product ${b.product.id} does not exist`);
+      throw new Error(`Product ${b.product.id} does not exist`);
+    }
+    const existingProduct = deps.catalog.products[b.product.id];
+    const indexedInstances = (b.product.instances ?? existingProduct.instances).map((x, i) => ({
+      instance: x,
+      index: i,
+    }));
     const noOpInstances = indexedInstances.filter((b) => typeof b.instance === 'string') as {
       instance: string;
       index: number;
@@ -169,38 +179,40 @@ export const batchUpsertProduct = async (
   if (!IsSetOfUniqueStrings(updateProductIds)) {
     //an IProduct to update can only appear once, otherwise an error is returned.
     deps.logger.error({ IDs: updateProductIds }, `Batch request specifies multiple of the same Product ID`);
-    return null;
+    throw new Error(`Batch request specifies multiple of the same Product ID`);
   }
   for (const b of updateBatchesWithSplitInstances) {
     const noOpInstances = b.noOpInstances;
     const updateIProductInstances = b.updateIProductInstances;
     const insertInstances = b.insertIProductInstances;
-    if (!Object.hasOwn(deps.catalog.products, b.product.id)) {
-      // check product being updated exists
-      deps.logger.error(`Product ${b.product.id} does not exist`);
-      return null;
-    }
     const referencedProductInstanceIds = [
       ...updateIProductInstances.map((x) => x.instance.id),
       ...noOpInstances.map((x) => x.instance),
     ];
     if (!IsSetOfUniqueStrings(referencedProductInstanceIds)) {
       deps.logger.error(`Product ${b.product.id} contains duplicate product instance ids`);
-      return null;
+      throw new Error(`Product ${b.product.id} contains duplicate product instance ids`);
     }
     const existingProduct = deps.catalog.products[b.product.id];
-    const updateInstancesContainsAllExistingProductInstances = referencedProductInstanceIds.every((x) =>
-      existingProduct.instances.includes(x),
+    // Check 1: All referenced instance IDs must belong to this product
+    const allReferencedIdsAreValid = referencedProductInstanceIds.every((x) => existingProduct.instances.includes(x));
+    if (!allReferencedIdsAreValid) {
+      deps.logger.error(`Product ${b.product.id} references instance IDs that do not belong to it`);
+      throw new Error(`Product ${b.product.id} references instance IDs that do not belong to it`);
+    }
+    // Check 2: All existing product instances must be referenced (no orphans)
+    const allExistingInstancesAreReferenced = existingProduct.instances.every((x) =>
+      referencedProductInstanceIds.includes(x),
     );
-    if (!updateInstancesContainsAllExistingProductInstances) {
+    if (!allExistingInstancesAreReferenced) {
       deps.logger.error(`Product ${b.product.id} does not contain all existing product instances`);
-      return null;
+      throw new Error(`Product ${b.product.id} does not contain all existing product instances`);
     }
     for (const productInstanceId of referencedProductInstanceIds) {
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!deps.catalog.productInstances[productInstanceId]) {
         deps.logger.error(`Product Instance with id ${productInstanceId} does not exist`);
-        return null;
+        throw new Error(`Product Instance with id ${productInstanceId} does not exist`);
       }
     }
     for (const update of updateIProductInstances) {
@@ -211,7 +223,7 @@ export const batchUpsertProduct = async (
         )
       ) {
         deps.logger.error(`Product ${b.product.id} has invalid modifiers for instance ${update.instance.id}`);
-        return null;
+        throw new Error(`Product ${b.product.id} has invalid modifiers for instance ${update.instance.id}`);
       }
     }
     for (const insert of insertInstances) {
@@ -222,7 +234,9 @@ export const batchUpsertProduct = async (
         )
       ) {
         deps.logger.error({ instance: insert.instance }, `Product ${b.product.id} has invalid modifiers for instance`);
-        return null;
+        throw new Error(
+          `Product ${b.product.id} has invalid modifiers for new instance at index ${String(insert.index)}`,
+        );
       }
     }
   }
@@ -230,12 +244,12 @@ export const batchUpsertProduct = async (
   for (const b of insertBatches) {
     if (b.product.instances.length === 0) {
       deps.logger.error({ b }, 'Product has no instances');
-      return null;
+      throw new Error('Product has no instances');
     }
     for (const instance of b.product.instances) {
       if (!ValidateModifiersForInstance(b.product.modifiers, instance.modifiers)) {
         deps.logger.error({ instance }, 'Invalid modifiers for instance');
-        return null;
+        throw new Error('Invalid modifiers for instance');
       }
     }
   }
@@ -371,7 +385,7 @@ export const batchUpsertProduct = async (
         { err: batchRetrieveCatalogObjectsResponse.error },
         'Getting current square CatalogObjects failed',
       );
-      return null;
+      throw new Error('Getting current square CatalogObjects failed');
     }
     existingSquareObjects.push(...(batchRetrieveCatalogObjectsResponse.result.objects ?? []));
   }
@@ -476,7 +490,7 @@ export const batchUpsertProduct = async (
     );
     if (!upsertResponse.success) {
       deps.logger.error({ err: upsertResponse.error }, 'Failed to save square products');
-      return null;
+      throw new Error('Failed to save square products. CATALOG MAY BE INCONSISTENT');
     }
     mappings = upsertResponse.result.idMappings ?? [];
   }
@@ -486,7 +500,7 @@ export const batchUpsertProduct = async (
     const deleteResponse = await deps.squareService.BatchDeleteCatalogObjects(externalIdsToDelete);
     if (!deleteResponse.success) {
       deps.logger.error({ err: deleteResponse.error }, 'Failed to delete square products');
-      return null;
+      throw new Error('Failed to delete square products. CATALOG MAY BE INCONSISTENT');
     }
   }
 
@@ -952,45 +966,55 @@ export const updateProductInstance = async (
 
 export const deleteProductInstance = async (
   deps: ProductDeps,
+  productId: string,
   pi_id: string,
   suppress_catalog_recomputation: boolean = false,
 ) => {
   const instance = deps.catalog.productInstances[pi_id] as IProductInstance | undefined;
-  if (instance) {
-    // Find the product that contains this instance
-    const productId = Object.keys(deps.catalog.products).find((pid) =>
-      deps.catalog.products[pid].instances.includes(pi_id),
-    );
-    if (!productId) {
-      deps.logger.warn({ pi_id }, 'Could not find product for product instance');
-      return null;
-    }
-    const product = deps.catalog.products[productId];
-    // Cannot delete the base product instance (first in the instances array)
-    if (product.instances[0] === pi_id) {
-      deps.logger.warn({ productId }, 'Attempted to delete base product instance for product');
-      return null;
-    }
-
-    deps.logger.debug({ pi_id }, 'Removing Product Instance');
-
-    const existing = await deps.productInstanceRepository.findById(pi_id);
-    if (!existing) {
-      return null;
-    }
-
-    const deleted = await deps.productInstanceRepository.delete(pi_id);
-    if (!deleted) {
-      return null;
-    }
-
-    await deps.batchDeleteCatalogObjectsFromExternalIds(existing.externalIDs);
-
-    if (!suppress_catalog_recomputation) {
-      await deps.syncProductInstances();
-      deps.recomputeCatalog();
-    }
-    return existing;
+  if (!instance) {
+    deps.logger.warn({ pi_id }, 'Product instance not found in catalog');
+    throw new Error('Product instance not found in catalog');
   }
-  return null;
+
+  // Verify the product exists and contains this instance
+  const product = deps.catalog.products[productId] as IProduct | undefined;
+  if (!product) {
+    deps.logger.warn({ productId, pi_id }, 'Product not found for product instance');
+    throw new ProductInstanceNotFoundException(pi_id);
+  }
+  if (!product.instances.includes(pi_id)) {
+    deps.logger.warn({ productId, pi_id }, 'Product does not contain this product instance');
+    throw new ProductInstanceNotFoundException(pi_id);
+  }
+
+  // Cannot delete the base product instance (first in the instances array)
+  if (product.instances[0] === pi_id) {
+    deps.logger.warn({ productId }, 'Attempted to delete base product instance for product');
+    throw new Error('Attempted to delete base product instance for product');
+  }
+
+  deps.logger.debug({ productId, pi_id }, 'Removing Product Instance');
+
+  const existing = await deps.productInstanceRepository.findById(pi_id);
+  if (!existing) {
+    throw new ProductInstanceNotFoundException(pi_id);
+  }
+
+  const deleted = await deps.productInstanceRepository.delete(pi_id);
+  if (!deleted) {
+    throw new Error('Failed to delete product instance from database');
+  }
+
+  // Remove the instance ID from the parent product's instances array
+  const updatedInstances = product.instances.filter((id) => id !== pi_id);
+  await deps.productRepository.update(productId, { instances: updatedInstances });
+
+  await deps.batchDeleteCatalogObjectsFromExternalIds(existing.externalIDs);
+
+  if (!suppress_catalog_recomputation) {
+    await deps.syncProducts();
+    await deps.syncProductInstances();
+    deps.recomputeCatalog();
+  }
+  return existing;
 };

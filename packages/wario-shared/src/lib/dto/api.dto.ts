@@ -369,19 +369,22 @@ export class CreateIProductRequestDto extends OmitType(IProductDto, ['id', 'inst
 
 /**
  * An update request for a single product with its instances.
- * Does not support removing instances as part of the update
- * Can add instances and/or reorder them
+ * - If `instances` is omitted, existing instances are unchanged.
+ * - If `instances` is provided, it replaces the existing instances list (can add/reorder).
+ * - Sending an empty array would remove all instances (likely an error).
  */
 export class UpdateIProductRequestDto extends PartialType(OmitType(IProductDto, ['id', 'instances'])) {
   @IsString()
   @IsNotEmpty()
   id!: string;
 
-  // Use normalizeUpsertArrayItems for defensive consistency with seating DTOs
+  // Optional: only send instances if you're modifying the instances list
   @Transform(normalizeUpsertArrayItems)
   @IsArray()
+  @IsOptional()
+  @ArrayMinSize(1)
   @IsUpsertProductInstanceArray()
-  instances!: UpsertIProductRequestInstancesDto[];
+  instances?: UpsertIProductRequestInstancesDto[];
 }
 
 export type UpsertProductRequestDto = CreateIProductRequestDto | UpdateIProductRequestDto;

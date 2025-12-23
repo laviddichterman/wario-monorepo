@@ -427,8 +427,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     return ProductFns.updateProductInstance(this.productDeps, props, suppress_catalog_recomputation);
   };
 
-  DeleteProductInstance = async (pi_id: string, suppress_catalog_recomputation: boolean = false) => {
-    return ProductFns.deleteProductInstance(this.productDeps, pi_id, suppress_catalog_recomputation);
+  DeleteProductInstance = async (productId: string, pi_id: string, suppress_catalog_recomputation: boolean = false) => {
+    return ProductFns.deleteProductInstance(this.productDeps, productId, pi_id, suppress_catalog_recomputation);
   };
 
   // ============================================================================
