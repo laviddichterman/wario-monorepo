@@ -56,7 +56,7 @@ export function useCatalogQuery(options?: Omit<UseQueryOptions<ICatalog | null>,
  */
 export function useCategoryIds() {
   const { data: catalog } = useCatalogQuery();
-  return catalog ? Object.keys(catalog.categories) : [];
+  return useMemo(() => (catalog ? Object.keys(catalog.categories) : []), [catalog]);
 }
 
 /**
@@ -375,10 +375,12 @@ export function usePopulatedSubcategoryIdsInCategory(
   fulfillmentId: string,
 ) {
   const catalogSelectors = useCatalogSelectors();
-  if (!catalogSelectors) {
-    return [];
-  }
-  return selectPopulatedSubcategoryIdsInCategory(catalogSelectors, categoryId, filter, order_time, fulfillmentId);
+  return useMemo(() => {
+    if (!catalogSelectors) {
+      return [];
+    }
+    return selectPopulatedSubcategoryIdsInCategory(catalogSelectors, categoryId, filter, order_time, fulfillmentId);
+  }, [catalogSelectors, categoryId, filter, order_time, fulfillmentId]);
 }
 
 // end added for wario-fe-menu

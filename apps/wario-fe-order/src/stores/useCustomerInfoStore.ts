@@ -87,12 +87,10 @@ export const useCustomerInfoStore = create<CustomerInfoStore>()(
   ),
 );
 
-// Selectors
-export const selectCustomerInfo = (state: CustomerInfoStore): CustomerInfoRHF => ({
-  givenName: state.givenName,
-  familyName: state.familyName,
-  mobileNum: state.mobileNum,
-  mobileNumRaw: state.mobileNumRaw,
-  email: state.email,
-  referral: state.referral,
-});
+// Selectors - individual field selectors for stable references
+export const selectGivenName = (state: CustomerInfoStore) => state.givenName;
+export const selectFamilyName = (state: CustomerInfoStore) => state.familyName;
+export const selectMobileNum = (state: CustomerInfoStore) => state.mobileNum;
+export const selectMobileNumRaw = (state: CustomerInfoStore) => state.mobileNumRaw;
+export const selectEmail = (state: CustomerInfoStore) => state.email;
+export const selectReferral = (state: CustomerInfoStore) => state.referral;

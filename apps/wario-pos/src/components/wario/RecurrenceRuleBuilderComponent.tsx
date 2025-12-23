@@ -19,7 +19,6 @@ import {
   AccordionDetails,
   AccordionSummary,
   Autocomplete,
-  FormControlLabel,
   Grid,
   IconButton,
   TextField,
@@ -87,18 +86,36 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
       }
     }
   }, [useRRule, frequency, count, rInterval, byWeekDay, byMonth]);
+
+  // Compute the new value that would be synced to parent
+  const newRRule = currentRRule?.toString() ?? '';
+
+  // Sync local state to parent - only when actual value changes
   useEffect(() => {
-    if (
+    const isInvalid =
       (useRRule && localInterval.start > localInterval.end) ||
       (useRRule && currentRRule === undefined) ||
-      (!useRRule && localInterval.start > 0 && localInterval.end > 0 && localInterval.start > localInterval.end)
-    ) {
+      (!useRRule && localInterval.start > 0 && localInterval.end > 0 && localInterval.start > localInterval.end);
+
+    if (isInvalid) {
       setAvailabilityIsValid(false);
       return;
     }
-    setValue({ interval: localInterval, rrule: currentRRule?.toString() ?? '' });
+
+    // Only call setValue if the value has actually changed
+    const currentInterval = props.value?.interval;
+    const currentRRuleStr = props.value?.rrule ?? '';
+    if (
+      currentInterval?.start !== localInterval.start ||
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      currentInterval?.end !== localInterval.end ||
+      currentRRuleStr !== newRRule
+    ) {
+      setValue({ interval: localInterval, rrule: newRRule });
+    }
     setAvailabilityIsValid(true);
-  }, [localInterval, currentRRule, useRRule, setAvailabilityIsValid, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setValue/setAvailabilityIsValid are inline callbacks with unstable identity
+  }, [localInterval.start, localInterval.end, newRRule, useRRule]);
 
   const handleSetUseRRule = (newValue: boolean) => {
     if (useRRule && !newValue) {
@@ -117,41 +134,33 @@ const RecurrenceRuleBuilderComponent = (props: RecurrenceRuleBuilderComponentPro
       }}
     >
       <AccordionSummary expandIcon={<ExpandMore />}>
-        <Grid container>
-          <Grid size="grow">
-            <Typography sx={{ ml: 4 }}>
-              {props.value !== null && props.availabilityIsValid
-                ? currentRRule
-                  ? `${currentRRule.toText()} from ${WDateUtils.MinutesToPrintTime(localInterval.start)} to ${WDateUtils.MinutesToPrintTime(localInterval.end)}`
-                  : `${localInterval.start === -1 ? 'The Beginning of Time' : format(localInterval.start, WDateUtils.ISODateTimeNoOffset)} to ${
-                      localInterval.end === -1
-                        ? 'The End of Time'
-                        : format(localInterval.end, WDateUtils.ISODateTimeNoOffset)
-                    }`
-                : 'Availability is not valid'}
-            </Typography>
-          </Grid>
-          <Grid size={2}>
-            <FormControlLabel
-              sx={{ float: 'right' }}
-              control={
-                <IconButton
-                  edge="end"
-                  size="small"
-                  disabled={props.disabled}
-                  aria-label="delete"
-                  onClick={() => {
-                    props.setValue(null);
-                  }}
-                ></IconButton>
-              }
-              label="Delete"
-            />
-          </Grid>
-        </Grid>
+        <Typography sx={{ ml: 4 }}>
+          {props.value !== null && props.availabilityIsValid
+            ? currentRRule
+              ? `${currentRRule.toText()} from ${WDateUtils.MinutesToPrintTime(localInterval.start)} to ${WDateUtils.MinutesToPrintTime(localInterval.end)}`
+              : `${localInterval.start === -1 ? 'The Beginning of Time' : format(localInterval.start, WDateUtils.ISODateTimeNoOffset)} to ${
+                  localInterval.end === -1
+                    ? 'The End of Time'
+                    : format(localInterval.end, WDateUtils.ISODateTimeNoOffset)
+                }`
+            : 'Availability is not valid'}
+        </Typography>
       </AccordionSummary>
       <AccordionDetails>
         <Grid container spacing={2}>
+          <Grid size={12} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <IconButton
+              size="small"
+              disabled={props.disabled}
+              aria-label="delete availability"
+              color="error"
+              onClick={() => {
+                props.setValue(null);
+              }}
+            >
+              <Typography variant="caption">Delete</Typography>
+            </IconButton>
+          </Grid>
           <Grid size={6}>
             <ToggleBooleanPropertyComponent
               disabled={props.disabled}

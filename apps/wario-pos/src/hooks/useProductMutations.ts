@@ -95,9 +95,8 @@ export function useEditProductMutation() {
   return useMutation({
     mutationFn: async (props: UpdateIProductRequest) => {
       const token = await getToken(AuthScopes.WRITE_CATALOG);
-      // Destructure id from props - it goes in URL, not body
-      const { id, ...updateFields } = props;
-      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${id}`, updateFields, {
+      // Body must include id - backend validates body.id === URL param
+      const response = await axiosInstance.patch<IProduct>(`/api/v1/menu/product/${props.id}`, props, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -37,7 +37,8 @@ export function WOrderCartEntry({
   isProductEditDialogOpen,
   setProductToEdit,
 }: { cartEntry: CartEntry } & IOrderCart) {
-  const { removeFromCart, updateCartQuantity } = useCartStore();
+  const removeFromCart = useCartStore((s) => s.removeFromCart);
+  const updateCartQuantity = useCartStore((s) => s.updateCartQuantity);
   const hasSelectableModifiers = useHasSelectableModifiers(cartEntry.product.m.modifier_map);
   const setRemoveEntry = () => {
     removeFromCart(cartEntry.id);

@@ -118,7 +118,6 @@ export class IProductDisplayFlagsDto {
    * Used in generated text (e.g. "Select your Pizza").
    */
   @IsString()
-  @IsNotEmpty()
   singular_noun!: string;
 
   /**
@@ -258,9 +257,9 @@ export class IProductInstanceDisplayFlagsPosDto {
   /**
    * Override name for POS buttons/receipts.
    * Useful to clarify names that would be the same on the menu, due to the category context in which they appear but need to be included in a product search.
+   * If an empty string, the name will be taken from the product.
    */
   @IsString()
-  @IsNotEmpty()
   name!: string;
 
   /**

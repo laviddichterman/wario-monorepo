@@ -885,26 +885,26 @@ importers:
         specifier: ^5.2.8
         version: 5.2.8
       '@fullcalendar/core':
-        specifier: ^6.1.19
-        version: 6.1.19
+        specifier: ^6.1.20
+        version: 6.1.20
       '@fullcalendar/daygrid':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
       '@fullcalendar/interaction':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
       '@fullcalendar/list':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
       '@fullcalendar/react':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@fullcalendar/timegrid':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
       '@fullcalendar/timeline':
-        specifier: ^6.1.19
-        version: 6.1.19(@fullcalendar/core@6.1.19)
+        specifier: ^6.1.20
+        version: 6.1.20(@fullcalendar/core@6.1.20)
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.69.0(react@19.2.3))
@@ -2372,50 +2372,50 @@ packages:
   '@fontsource/barlow@5.2.8':
     resolution: {integrity: sha512-iuFOnY4OI2cd1STrJ3NdJNzWjhcwv6JarmqfdoZzAmz9g0jTVjES86MNbuBxqVR3ydbTEjo4opEl24GXScRM7w==}
 
-  '@fullcalendar/core@6.1.19':
-    resolution: {integrity: sha512-z0aVlO5e4Wah6p6mouM0UEqtRf1MZZPt4mwzEyU6kusaNL+dlWQgAasF2cK23hwT4cmxkEmr4inULXgpyeExdQ==}
+  '@fullcalendar/core@6.1.20':
+    resolution: {integrity: sha512-1cukXLlePFiJ8YKXn/4tMKsy0etxYLCkXk8nUCFi11nRONF2Ba2CD5b21/ovtOO2tL6afTJfwmc1ed3HG7eB1g==}
 
-  '@fullcalendar/daygrid@6.1.19':
-    resolution: {integrity: sha512-IAAfnMICnVWPjpT4zi87i3FEw0xxSza0avqY/HedKEz+l5MTBYvCDPOWDATpzXoLut3aACsjktIyw9thvIcRYQ==}
+  '@fullcalendar/daygrid@6.1.20':
+    resolution: {integrity: sha512-AO9vqhkLP77EesmJzuU+IGXgxNulsA8mgQHynclJ8U70vSwAVnbcLG9qftiTAFSlZjiY/NvhE7sflve6cJelyQ==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
-  '@fullcalendar/interaction@6.1.19':
-    resolution: {integrity: sha512-GOciy79xe8JMVp+1evAU3ytdwN/7tv35t5i1vFkifiuWcQMLC/JnLg/RA2s4sYmQwoYhTw/p4GLcP0gO5B3X5w==}
+  '@fullcalendar/interaction@6.1.20':
+    resolution: {integrity: sha512-p6txmc5txL0bMiPaJxe2ip6o0T384TyoD2KGdsU6UjZ5yoBlaY+dg7kxfnYKpYMzEJLG58n+URrHr2PgNL2fyA==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
-  '@fullcalendar/list@6.1.19':
-    resolution: {integrity: sha512-knZHpAVF0LbzZpSJSUmLUUzF0XlU/MRGK+Py2s0/mP93bCtno1k2L3XPs/kzh528hSjehwLm89RgKTSfW1P6cA==}
+  '@fullcalendar/list@6.1.20':
+    resolution: {integrity: sha512-7Hzkbb7uuSqrXwTyD0Ld/7SwWNxPD6SlU548vtkIpH55rZ4qquwtwYdMPgorHos5OynHA4OUrZNcH51CjrCf2g==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
-  '@fullcalendar/premium-common@6.1.19':
-    resolution: {integrity: sha512-bOWHm1u1dUy6M4fQ0hNK7qEI7SrVWrN1ovv/z4/FE/ybfM19ukz7SFs907Ur7KUBWLNKTQYXBtdrY/ginwWraw==}
+  '@fullcalendar/premium-common@6.1.20':
+    resolution: {integrity: sha512-rT+AitNnRyZuFEtYvsB1OJ2g1Bq2jmTR6qdn/dEU6LwkIj/4L499goLtMOena/JyJ31VBztdHrccX//36QrY3w==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
-  '@fullcalendar/react@6.1.19':
-    resolution: {integrity: sha512-FP78vnyylaL/btZeHig8LQgfHgfwxLaIG6sKbNkzkPkKEACv11UyyBoTSkaavPsHtXvAkcTED1l7TOunAyPEnA==}
+  '@fullcalendar/react@6.1.20':
+    resolution: {integrity: sha512-1w0pZtceaUdfAnxMSCGHCQalhi+mR1jOe76sXzyAXpcPz/Lf0zHSdcGK/U2XpZlnQgQtBZW+d+QBnnzVQKCxAA==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
       react: ^16.7.0 || ^17 || ^18 || ^19
       react-dom: ^16.7.0 || ^17 || ^18 || ^19
 
-  '@fullcalendar/scrollgrid@6.1.19':
-    resolution: {integrity: sha512-S1pbiYHvmV0ep6z5sWXJQfgW4Y/jrS5iLIAqSagDFPK0jr327nBxl7Ryi3Zb5UdMIP0/O4GXs8jwZabQPd8SOg==}
+  '@fullcalendar/scrollgrid@6.1.20':
+    resolution: {integrity: sha512-M55m0hxpou4IPObto5f0nVcXvIj3rkSTba0ypclSFDwBz3JxuCPS6l8kaUznqlZCr2Ld/HFJr+jwyvY070AafQ==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
-  '@fullcalendar/timegrid@6.1.19':
-    resolution: {integrity: sha512-OuzpUueyO9wB5OZ8rs7TWIoqvu4v3yEqdDxZ2VcsMldCpYJRiOe7yHWKr4ap5Tb0fs7Rjbserc/b6Nt7ol6BRg==}
+  '@fullcalendar/timegrid@6.1.20':
+    resolution: {integrity: sha512-4H+/MWbz3ntA50lrPif+7TsvMeX3R1GSYjiLULz0+zEJ7/Yfd9pupZmAwUs/PBpA6aAcFmeRr0laWfcz1a9V1A==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
-  '@fullcalendar/timeline@6.1.19':
-    resolution: {integrity: sha512-d2P961mnUTXtJeWNmIq1neoDmZcrPUaK7nGFoc+jQAlnmG3aNSVWQmD1ia694AMqLWtcWkwipW9MuaJgx2QvrA==}
+  '@fullcalendar/timeline@6.1.20':
+    resolution: {integrity: sha512-yhTgMNDWfB+XqEUTLWrpPjM4fcvGYLOA9DvTp1ysdeqhRGoZnRK9Iv2WW5BaKT+VXhXoAPrj2Ud/lXt6youWAQ==}
     peerDependencies:
-      '@fullcalendar/core': ~6.1.19
+      '@fullcalendar/core': ~6.1.20
 
   '@googlemaps/google-maps-services-js@3.4.2':
     resolution: {integrity: sha512-QjxiJSt8woyPaaQIUUDNL1nRfCEXTiv8KfJSNq/YzKEUVXABT75GLG+Zo267UwOcq70n8OsZbaro5VrY962mJg==}
@@ -10756,47 +10756,47 @@ snapshots:
 
   '@fontsource/barlow@5.2.8': {}
 
-  '@fullcalendar/core@6.1.19':
+  '@fullcalendar/core@6.1.20':
     dependencies:
       preact: 10.12.1
 
-  '@fullcalendar/daygrid@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/daygrid@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
+      '@fullcalendar/core': 6.1.20
 
-  '@fullcalendar/interaction@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/interaction@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
+      '@fullcalendar/core': 6.1.20
 
-  '@fullcalendar/list@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/list@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
+      '@fullcalendar/core': 6.1.20
 
-  '@fullcalendar/premium-common@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/premium-common@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
+      '@fullcalendar/core': 6.1.20
 
-  '@fullcalendar/react@6.1.19(@fullcalendar/core@6.1.19)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@fullcalendar/react@6.1.20(@fullcalendar/core@6.1.20)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
+      '@fullcalendar/core': 6.1.20
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  '@fullcalendar/scrollgrid@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/scrollgrid@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
-      '@fullcalendar/premium-common': 6.1.19(@fullcalendar/core@6.1.19)
+      '@fullcalendar/core': 6.1.20
+      '@fullcalendar/premium-common': 6.1.20(@fullcalendar/core@6.1.20)
 
-  '@fullcalendar/timegrid@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/timegrid@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
-      '@fullcalendar/daygrid': 6.1.19(@fullcalendar/core@6.1.19)
+      '@fullcalendar/core': 6.1.20
+      '@fullcalendar/daygrid': 6.1.20(@fullcalendar/core@6.1.20)
 
-  '@fullcalendar/timeline@6.1.19(@fullcalendar/core@6.1.19)':
+  '@fullcalendar/timeline@6.1.20(@fullcalendar/core@6.1.20)':
     dependencies:
-      '@fullcalendar/core': 6.1.19
-      '@fullcalendar/premium-common': 6.1.19(@fullcalendar/core@6.1.19)
-      '@fullcalendar/scrollgrid': 6.1.19(@fullcalendar/core@6.1.19)
+      '@fullcalendar/core': 6.1.20
+      '@fullcalendar/premium-common': 6.1.20(@fullcalendar/core@6.1.20)
+      '@fullcalendar/scrollgrid': 6.1.20(@fullcalendar/core@6.1.20)
 
   '@googlemaps/google-maps-services-js@3.4.2':
     dependencies:

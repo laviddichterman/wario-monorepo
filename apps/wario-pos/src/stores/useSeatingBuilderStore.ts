@@ -9,6 +9,7 @@
  * Local keys (prefixed 'local-') are used for React keying of new entities.
  */
 
+import { useMemo } from 'react';
 import { create } from 'zustand';
 
 import {
@@ -786,13 +787,17 @@ export const useIsDirty = () => useSeatingBuilderStore((s) => s.isDirty);
 export const useCanUndo = () => useSeatingBuilderStore((s) => s.undoStack.length > 0);
 export const useCanRedo = () => useSeatingBuilderStore((s) => s.redoStack.length > 0);
 
-// Get all resources as render models
-export const useAllResourceRenderModels = (): SeatingResourceRenderModel[] =>
-  useSeatingBuilderStore((s) => {
-    const { layout, editor } = s;
-    const activeFloor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
-    const activeSectionId = activeFloor?.sections[editor.activeSectionIndex]?.id;
-    const selectedSet = new Set(editor.selectedResourceIds);
+// Get all resources as render models - uses useMemo for referential stability
+export function useAllResourceRenderModels(): SeatingResourceRenderModel[] {
+  const layout = useSeatingBuilderStore((s) => s.layout);
+  const activeFloorIndex = useSeatingBuilderStore((s) => s.editor.activeFloorIndex);
+  const activeSectionIndex = useSeatingBuilderStore((s) => s.editor.activeSectionIndex);
+  const selectedResourceIds = useSeatingBuilderStore((s) => s.editor.selectedResourceIds);
+
+  return useMemo(() => {
+    const activeFloor = layout.floors[activeFloorIndex] as FullSeatingFloor | undefined;
+    const activeSectionId = activeFloor?.sections[activeSectionIndex]?.id;
+    const selectedSet = new Set(selectedResourceIds);
 
     const models: SeatingResourceRenderModel[] = [];
     for (const floor of layout.floors) {
@@ -808,21 +813,27 @@ export const useAllResourceRenderModels = (): SeatingResourceRenderModel[] =>
       }
     }
     return models;
-  });
+  }, [layout, activeFloorIndex, activeSectionIndex, selectedResourceIds]);
+}
 
-// Get active section's resources as render models
-export const useActiveSectionResourceRenderModels = (): SeatingResourceRenderModel[] =>
-  useSeatingBuilderStore((s) => {
-    const { layout, editor } = s;
-    const activeFloor = layout.floors[editor.activeFloorIndex] as FullSeatingFloor | undefined;
-    const activeSection = activeFloor?.sections[editor.activeSectionIndex];
+// Get active section's resources as render models - uses useMemo for referential stability
+export function useActiveSectionResourceRenderModels(): SeatingResourceRenderModel[] {
+  const layout = useSeatingBuilderStore((s) => s.layout);
+  const activeFloorIndex = useSeatingBuilderStore((s) => s.editor.activeFloorIndex);
+  const activeSectionIndex = useSeatingBuilderStore((s) => s.editor.activeSectionIndex);
+  const selectedResourceIds = useSeatingBuilderStore((s) => s.editor.selectedResourceIds);
+
+  return useMemo(() => {
+    const activeFloor = layout.floors[activeFloorIndex] as FullSeatingFloor | undefined;
+    const activeSection = activeFloor?.sections[activeSectionIndex];
     if (!activeSection) return [];
 
-    const selectedSet = new Set(editor.selectedResourceIds);
+    const selectedSet = new Set(selectedResourceIds);
     return activeSection.resources.map((resource) => ({
       ...resource,
       sectionId: activeSection.id,
       isSelected: selectedSet.has(resource.id),
       isActiveSection: true,
     }));
-  });
+  }, [layout, activeFloorIndex, activeSectionIndex, selectedResourceIds]);
+}
