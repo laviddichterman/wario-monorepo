@@ -1,8 +1,8 @@
 import { useAtomValue, useStore } from 'jotai';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { Add } from '@mui/icons-material';
-import { Box, Button } from '@mui/material';
+import { Add, Delete } from '@mui/icons-material';
+import { Box, Button, IconButton, Tooltip } from '@mui/material';
 import type {
   GridColDef,
   GridRenderCellParams,
@@ -15,6 +15,7 @@ import { DataGridPremium, useGridApiRef } from '@mui/x-data-grid-premium';
 import { type IProduct } from '@wcp/wario-shared/types';
 import type { useCatalogSelectors } from '@wcp/wario-ux-shared/query';
 
+import { productInstancesDirtyAtom } from '@/atoms/forms/productFormAtoms';
 import {
   DEFAULT_PRODUCT_INSTANCE_FORM,
   fromProductInstanceEntity,
@@ -97,6 +98,28 @@ export const ProductInstancesDataGrid = ({
     [instanceIds],
   );
 
+  const handleRemoveVariation = useCallback(
+    (instanceId: string) => {
+      // Only allow removing uncommitted (temp_) variations
+      if (!instanceId.startsWith('temp_')) return;
+
+      // Remove from instance IDs
+      setInstanceIds((prev) => prev.filter((id) => id !== instanceId));
+
+      // Cleanup form atoms
+      productInstanceFormFamily.remove(instanceId);
+      productInstanceExpandedFamily.remove(instanceId);
+
+      // Remove from expanded rows
+      setExpandedRowIds((prev) => {
+        const next = new Set(prev);
+        next.delete(instanceId);
+        return next;
+      });
+    },
+    [setInstanceIds],
+  );
+
   const columns: GridColDef<ProductInstanceRow>[] = useMemo(
     () => [
       {
@@ -129,8 +152,29 @@ export const ProductInstancesDataGrid = ({
             </Box>
           ) : null,
       },
+      {
+        field: 'actions',
+        headerName: '',
+        width: 50,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<ProductInstanceRow>) =>
+          params.row.id.startsWith('temp_') ? (
+            <Tooltip title="Remove new variation">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveVariation(params.row.id);
+                }}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : null,
+      },
     ],
-    [],
+    [handleRemoveVariation],
   );
 
   const handleDetailPanelExpandedRowIdsChange = useCallback((ids: Set<GridRowId>) => {
@@ -150,6 +194,7 @@ export const ProductInstancesDataGrid = ({
     const tempId = `temp_${String(Date.now())}`;
     store.set(productInstanceFormFamily(tempId), { ...DEFAULT_PRODUCT_INSTANCE_FORM });
     store.set(productInstanceExpandedFamily(tempId), true);
+    store.set(productInstancesDirtyAtom, true);
     setInstanceIds((prev) => [...prev, tempId]);
     // Expand the new row
     setExpandedRowIds((prev) => new Set(prev).add(tempId));
@@ -175,8 +220,9 @@ export const ProductInstancesDataGrid = ({
       const [moved] = newInstanceIds.splice(params.oldIndex, 1);
       newInstanceIds.splice(params.targetIndex, 0, moved);
       setInstanceIds(newInstanceIds);
+      store.set(productInstancesDirtyAtom, true);
     },
-    [instanceIds, setInstanceIds],
+    [instanceIds, setInstanceIds, store],
   );
 
   return (

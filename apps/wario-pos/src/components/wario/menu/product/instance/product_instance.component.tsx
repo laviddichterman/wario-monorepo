@@ -40,6 +40,7 @@ import { StringEnumPropertyComponent } from '@/components/wario/property-compone
 import { StringPropertyComponent } from '@/components/wario/property-components/StringPropertyComponent';
 import { ToggleBooleanPropertyComponent } from '@/components/wario/property-components/ToggleBooleanPropertyComponent';
 
+import { productInstancesDirtyAtom } from '@/atoms/forms/productFormAtoms';
 import {
   productInstanceFormAtom,
   productInstanceFormDirtyFieldsAtom,
@@ -122,6 +123,7 @@ const ProductInstanceFormBodyInner = ({
 }) => {
   const isProcessing = useAtomValue(productInstanceFormProcessingAtom);
   const setDirtyFields = useSetAtom(productInstanceFormDirtyFieldsAtom);
+  const setInstancesDirty = useSetAtom(productInstancesDirtyAtom);
   const theme = useTheme();
   const useToggleEndLabel = !useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
@@ -131,6 +133,7 @@ const ProductInstanceFormBodyInner = ({
   const updateField = <K extends keyof ProductInstanceFormState>(field: K, value: ProductInstanceFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
     setDirtyFields((prev) => new Set(prev).add(field));
+    setInstancesDirty(true);
   };
 
   const normalizedModifers = useMemo(

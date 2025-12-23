@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/base';
+import { expect, test } from '../fixtures/base';
 import { isIntegrationMode } from '../fixtures/base';
 
 /**
@@ -56,9 +56,9 @@ test.describe('Order Page - With Data', () => {
 test.describe('Order Page - Mocked Data', () => {
   test('can display content with mocked API responses', async ({ page }) => {
     // Setup API mocks before navigating
-    await page.route('**/socket.io/**', (route) => {
+    await page.route('**/socket.io/**', async (route) => {
       // Let socket.io requests through but could mock if needed
-      route.continue();
+      await route.continue();
     });
 
     await page.goto('/');

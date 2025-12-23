@@ -38,8 +38,10 @@
     "e2e": "playwright test",
     "e2e:codegen": "playwright codegen",
     "e2e:integration": "E2E_MODE=integration playwright test",
+    "e2e:lint": "eslint e2e",
     "e2e:order": "playwright test --project=order-chromium",
     "e2e:order:integration": "E2E_MODE=integration playwright test --project=order-chromium",
+    "e2e:typecheck": "tsc -p e2e/tsconfig.json --noEmit",
     "e2e:ui": "playwright test --ui",
     "faq:build": "pnpm -r --filter \"./apps/wario-fe-faq\" run build",
     "faq:clean": "pnpm -r --filter \"./apps/wario-fe-faq\" run clean",
@@ -53,7 +55,7 @@
     "faq:typecheck": "pnpm -r --filter \"./apps/wario-fe-faq\" run typecheck",
     "format": "prettier --write \"apps/**/*.{ts,tsx,js,jsx,json,css,scss,md}\" \"packages/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"apps/**/*.{ts,tsx,js,jsx,json,css,scss,md}\" \"packages/**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
-    "lint": "pnpm -r --filter \"./{apps,packages}/*\" run lint",
+    "lint": "pnpm -r --filter \"./{apps,packages}/*\" run lint && pnpm e2e:lint",
     "menu:build": "pnpm -r --filter \"./apps/wario-fe-menu\" run build",
     "menu:clean": "pnpm -r --filter \"./apps/wario-fe-menu\" run clean",
     "menu:deploy:prod": "pnpm -r --filter \"./apps/wario-fe-menu\" run deploy:prod",
@@ -92,7 +94,7 @@
     "test:react": "vitest run",
     "test:react:coverage": "vitest run --coverage",
     "test:react:watch": "vitest",
-    "typecheck": "pnpm -r --filter \"./{apps,packages}/*\" run typecheck",
+    "typecheck": "pnpm -r --filter \"./{apps,packages}/*\" run typecheck && pnpm e2e:typecheck",
     "version-packages": "changeset version"
   },
   "devDependencies": {

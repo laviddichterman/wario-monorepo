@@ -67,6 +67,21 @@ export const productFormAtom = atom<ProductFormState | null>(null);
 /** Dirty fields tracking - marks which fields have been modified in edit mode */
 export const productFormDirtyFieldsAtom = atom<Set<keyof ProductFormState>>(new Set<keyof ProductFormState>());
 
+/**
+ * Tracks whether any product instance has been modified during edit.
+ * This is set to true when:
+ * - An instance form is modified
+ * - An instance is added
+ * - Instances are reordered
+ */
+export const productInstancesDirtyAtom = atom(false);
+
+/**
+ * Tracks the current list of product instance IDs for validation purposes.
+ * This is synchronized with the local state in the edit container.
+ */
+export const productInstanceIdsAtom = atom<string[]>([]);
+
 export const productFormProcessingAtom = atom(false);
 
 export const productFormIsValidAtom = atom((get) => {

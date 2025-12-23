@@ -112,6 +112,28 @@ export const productInstanceCopyFlagFamily = atomFamily((_param: string | number
 /** Family for 'Expanded' accordion state in Copy Container */
 export const productInstanceExpandedFamily = atomFamily((_param: string | number) => atom(false));
 
+// Avoid circular imports by using a late-binding pattern
+// productInstanceIdsAtom is defined in productFormAtoms.ts
+import { productInstanceIdsAtom } from './productFormAtoms';
+
+/**
+ * Derived atom: checks if ALL product instances are valid.
+ * Returns true if every instance in productInstanceIdsAtom passes validateProductInstanceForm.
+ * Used to disable Save when any instance is incomplete (e.g., new variation without fields filled).
+ */
+export const allProductInstancesValidAtom = atom((get) => {
+  const instanceIds = get(productInstanceIdsAtom);
+
+  for (const id of instanceIds) {
+    const form = get(productInstanceFormFamily(id));
+    if (!validateProductInstanceForm(form)) {
+      return false;
+    }
+  }
+
+  return true;
+});
+
 // ===================================
 // Converters
 // ===================================

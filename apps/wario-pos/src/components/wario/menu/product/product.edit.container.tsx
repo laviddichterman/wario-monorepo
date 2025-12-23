@@ -1,14 +1,10 @@
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { type IProduct } from '@wcp/wario-shared/types';
+import type { IProduct, UpsertIProductInstanceRequest } from '@wcp/wario-shared/types';
 import { useBaseProductNameByProductId, useCatalogSelectors, useProductById } from '@wcp/wario-ux-shared/query';
 
-import {
-  useCreateProductInstanceMutation,
-  useEditProductMutation,
-  useUpdateProductInstanceMutation,
-} from '@/hooks/useProductMutations';
+import { useEditProductMutation } from '@/hooks/useProductMutations';
 
 import { toast } from '@/components/snackbar';
 
@@ -17,9 +13,12 @@ import {
   productFormAtom,
   productFormDirtyFieldsAtom,
   productFormProcessingAtom,
+  productInstanceIdsAtom,
+  productInstancesDirtyAtom,
   toProductApiBody,
 } from '@/atoms/forms/productFormAtoms';
 import {
+  allProductInstancesValidAtom,
   productInstanceExpandedFamily,
   productInstanceFormFamily,
   toProductInstanceApiBody,
@@ -63,30 +62,51 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
   const setProductForm = useSetAtom(productFormAtom);
   const setDirtyFields = useSetAtom(productFormDirtyFieldsAtom);
   const setIsProcessing = useSetAtom(productFormProcessingAtom);
+  const setInstancesDirty = useSetAtom(productInstancesDirtyAtom);
+  const setInstanceIdsAtom = useSetAtom(productInstanceIdsAtom);
   const productForm = useAtomValue(productFormAtom);
   const dirtyFields = useAtomValue(productFormDirtyFieldsAtom);
+  const instancesDirty = useAtomValue(productInstancesDirtyAtom);
+  const allInstancesValid = useAtomValue(allProductInstancesValidAtom);
 
   const editMutation = useEditProductMutation();
-  const createInstanceMutation = useCreateProductInstanceMutation();
-  const updateInstanceMutation = useUpdateProductInstanceMutation();
 
   const [instanceIds, setInstanceIds] = useState<string[]>([]);
+  // Track original instance IDs to detect reordering/additions
+  const originalInstanceIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
     setProductForm(fromProductEntity(productEntry));
     setDirtyFields(new Set());
+    setInstancesDirty(false);
     setInstanceIds(productEntry.instances);
+    setInstanceIdsAtom(productEntry.instances);
+    originalInstanceIdsRef.current = productEntry.instances;
     return () => {
       setProductForm(null);
       setDirtyFields(new Set());
+      setInstancesDirty(false);
+      setInstanceIdsAtom([]);
       // Cleanup family atoms
-      // Cleanup loaded instances
       productEntry.instances.forEach((id) => {
         productInstanceFormFamily.remove(id);
         productInstanceExpandedFamily.remove(id);
       });
     };
-  }, [productEntry, setProductForm, setDirtyFields]);
+  }, [productEntry, setProductForm, setDirtyFields, setInstancesDirty, setInstanceIdsAtom]);
+
+  // Sync local instanceIds state with the atom for validation
+  useEffect(() => {
+    setInstanceIdsAtom(instanceIds);
+  }, [instanceIds, setInstanceIdsAtom]);
+
+  // Determine if there are any changes to save
+  const hasProductChanges = dirtyFields.size > 0;
+  const hasInstanceChanges = instancesDirty;
+  const hasOrderChanges =
+    instanceIds.length !== originalInstanceIdsRef.current.length ||
+    instanceIds.some((id, idx) => originalInstanceIdsRef.current[idx] !== id);
+  const hasAnyChanges = hasProductChanges || hasInstanceChanges || hasOrderChanges;
 
   const editProduct = async () => {
     if (!productForm || editMutation.isPending) return;
@@ -94,31 +114,43 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
     setIsProcessing(true);
 
     try {
-      // 1. Update Product (instances are handled separately below)
-      await editMutation.mutateAsync({ id: productEntry.id, instances: [], ...toProductApiBody(productForm) });
+      // Build the instances array if there are any instance changes
+      // The API accepts: bare string (existing unchanged), CreateIProductInstanceRequest (new), or UpdateIProductInstanceRequest (update)
+      let instancesPayload: (string | UpsertIProductInstanceRequest)[] | undefined;
 
-      // 2. Process Instances
-      const instancePromises = instanceIds.map(async (id) => {
-        const instanceForm = store.get(productInstanceFormFamily(id));
-        if (!instanceForm) return; // Not loaded/modified
+      if (hasInstanceChanges || hasOrderChanges) {
+        instancesPayload = instanceIds.map((id): string | UpsertIProductInstanceRequest => {
+          const instanceForm = store.get(productInstanceFormFamily(id));
 
-        const apiBody = toProductInstanceApiBody(instanceForm);
+          if (id.startsWith('temp_')) {
+            // New instance - must have a form and use CreateIProductInstanceRequest
+            if (!instanceForm) {
+              throw new Error(`Missing form for new instance ${id}`);
+            }
+            return toProductInstanceApiBody(instanceForm);
+          } else {
+            // Existing instance
+            if (!instanceForm) {
+              // Instance wasn't expanded/loaded, just pass the ID to preserve it
+              return id;
+            }
+            // Return update format with ID
+            return {
+              id,
+              ...toProductInstanceApiBody(instanceForm),
+            };
+          }
+        });
+      }
 
-        if (id.startsWith('temp_')) {
-          await createInstanceMutation.mutateAsync({
-            productId: productEntry.id,
-            body: apiBody,
-          });
-        } else {
-          await updateInstanceMutation.mutateAsync({
-            productId: productEntry.id,
-            instanceId: id,
-            body: { ...apiBody, id },
-          });
-        }
-      });
+      // Build the product update request
+      const productPayload = {
+        id: productEntry.id,
+        ...toProductApiBody(productForm, dirtyFields),
+        ...(instancesPayload !== undefined ? { instances: instancesPayload } : {}),
+      };
 
-      await Promise.all(instancePromises);
+      await editMutation.mutateAsync(productPayload);
 
       toast.success(`Updated ${productName}.`);
       onCloseCallback();
@@ -139,7 +171,7 @@ const ProductEditContainerInner = ({ productEntry, productName, onCloseCallback 
       onConfirmClick={() => {
         void editProduct();
       }}
-      disableConfirm={dirtyFields.size === 0}
+      disableConfirm={!hasAnyChanges || !allInstancesValid}
       productInstancesContent={
         <ProductInstancesDataGrid
           instanceIds={instanceIds}

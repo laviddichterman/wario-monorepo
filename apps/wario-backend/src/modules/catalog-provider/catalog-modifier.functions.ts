@@ -138,7 +138,7 @@ export const createModifierType = async (deps: ModifierDeps, body: CreateIOption
 const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
   deps: ModifierDeps,
   batch: UpdateIOptionTypeProps,
-  forceDeepUpsert: boolean,
+  forceSquareRegeneration: boolean,
 ) => {
   const externalIdsToPullFromForSquareCatalogDeletion: KeyValue[] = [];
   const externalIdsToFetchFromSquare: string[] = [];
@@ -205,8 +205,8 @@ const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
     deps.logger.warn(errorDetail);
     throw Error(errorDetail);
   }
-  let deepUpdate = false;
-  let updateModifierOptionsAndProducts = false;
+  let clearExistingSquareIds = false;
+  let requiresSquareUpsert = false;
   // we need to do some deep updates if...
   // * final modifier options length > 0
   // * AND ...
@@ -217,9 +217,13 @@ const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
   //    * or if the MT or MOs are missing external IDs (missingSquareCatalogObjects)
   if (
     updatedOptions.length > 0 &&
-    (forceDeepUpsert || is3pChanging || optionOrderChanged || nameAttributeIsChanging || missingSquareCatalogObjects)
+    (forceSquareRegeneration ||
+      is3pChanging ||
+      optionOrderChanged ||
+      nameAttributeIsChanging ||
+      missingSquareCatalogObjects)
   ) {
-    if (missingSquareCatalogObjects || forceDeepUpsert) {
+    if (missingSquareCatalogObjects || forceSquareRegeneration) {
       // make sure all square external IDs are removed from the new external IDs for the MT, because the externalIds might be explicitly updated here
       updatedModifierType.externalIDs = GetNonSquareExternalIds(updatedModifierType.externalIDs);
 
@@ -231,12 +235,13 @@ const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
 
       // nuke the IDs from the modifier options we be clobbering
       updatedOptions = updatedOptions.map((x) => ({ ...x, externalIDs: GetNonSquareExternalIds(x.externalIDs) }));
-      deepUpdate = true;
+      clearExistingSquareIds = true;
     }
-    updateModifierOptionsAndProducts = true;
+    requiresSquareUpsert = true;
   }
-  if (updateModifierOptionsAndProducts || deepUpdate) {
-    // because we allow overriding the deepUpdate via forceDeepUpsert, we need to get any relevant external IDs outside of where deepUpdate = true is set above.
+  if (requiresSquareUpsert || clearExistingSquareIds) {
+    // Because we allow forcing regeneration via forceSquareRegeneration, we need to get any relevant external IDs
+    // outside of where clearExistingSquareIds = true is set above.
     externalIdsToFetchFromSquare.push(
       ...GetSquareExternalIds([
         ...updatedModifierType.externalIDs,
@@ -251,16 +256,26 @@ const ValidateAndAggregateDataForUpdateModifierTypeBatch = (
     oldMT,
     updatedModifierType,
     updatedOptions,
-    deepUpdate,
-    updateModifierOptionsAndProducts,
+    clearExistingSquareIds,
+    requiresSquareUpsert,
   };
 };
 
+/**
+ * Batch update modifier types with Square catalog synchronization.
+ *
+ * @param deps - Modifier function dependencies
+ * @param batches - List of modifier type updates to apply
+ * @param suppressFullRecomputation - If true, skip catalog recomputation and product updates after DB save
+ * @param forceSquareRegeneration - If true, clear all existing Square IDs and regenerate fresh ones.
+ *   When false, Square IDs are only regenerated if changes require it (e.g., missing IDs, name changes).
+ * @returns Updated modifier types, or null on failure
+ */
 export const batchUpdateModifierType = async (
   deps: ModifierDeps,
   batches: UpdateIOptionTypeProps[],
   suppressFullRecomputation: boolean,
-  updateModifierOptionsAndProducts: boolean,
+  forceSquareRegeneration: boolean,
 ): Promise<IOptionType[] | null> => {
   deps.logger.debug(
     {
@@ -271,7 +286,7 @@ export const batchUpdateModifierType = async (
 
   // 1. Get old modifier type and options, perform validation and aggregation
   const batchData = batches.map((b) =>
-    ValidateAndAggregateDataForUpdateModifierTypeBatch(deps, b, updateModifierOptionsAndProducts),
+    ValidateAndAggregateDataForUpdateModifierTypeBatch(deps, b, forceSquareRegeneration),
   );
 
   // 2. pull relevant square objects
@@ -301,7 +316,7 @@ export const batchUpdateModifierType = async (
   const mappings: CatalogIdMapping[] = [];
   const catalogObjectsForUpsert: CatalogObject[] = [];
   batchData.forEach((b, i) => {
-    if (b.updateModifierOptionsAndProducts) {
+    if (b.requiresSquareUpsert) {
       catalogObjectsForUpsert.push(
         ModifierTypeToSquareCatalogObject(
           getLocationsConsidering3pFlag(deps, b.updatedModifierType.displayFlags.is3p),
@@ -382,7 +397,7 @@ export const batchUpdateModifierType = async (
   if (!suppressFullRecomputation) {
     deps.recomputeCatalog();
     await deps.updateProductsReferencingModifierTypeId(
-      batchData.filter((x) => x.updateModifierOptionsAndProducts).map((x) => x.batch.id),
+      batchData.filter((x) => x.requiresSquareUpsert).map((x) => x.batch.id),
     );
     await deps.syncProductInstances();
 

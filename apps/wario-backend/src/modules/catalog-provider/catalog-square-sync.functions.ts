@@ -50,10 +50,11 @@ export interface SquareSyncDeps {
 
   // Callbacks to other services/operations
   batchUpdatePrinterGroup: (batches: UpdatePrinterGroupProps[]) => Promise<(PrinterGroup | null)[]>;
+  /** Batch updates modifier types, optionally regenerating Square catalog objects */
   batchUpdateModifierType: (
     batches: UpdateIOptionTypeProps[],
-    suppress: boolean,
-    updateRelated: boolean,
+    suppressRecomputation: boolean,
+    forceSquareRegeneration: boolean,
   ) => Promise<IOptionType[] | null>;
   batchUpdateModifierOption: (batches: UpdateIOptionProps[]) => Promise<IOption[] | null>;
   batchUpdateProductInstance: (
@@ -130,7 +131,8 @@ export const checkAllPrinterGroupsSquareIdsAndFixIfNeeded = async (deps: SquareS
 };
 
 export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {
-  const updatedModifierTypeIds: string[] = [];
+  // Track IDs where we actually made Square-related changes
+  const modifiedModifierTypeIds: string[] = [];
 
   // 1. check all modifier types for square ids by extracting the external IDs and checking if they exist in square
   const squareCatalogObjectIds = Object.values(deps.catalog.modifiers)
@@ -168,6 +170,8 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
         });
       // these are the modifier types that we couldn't find the square IDs for
       if (missingSquareCatalogObjectBatches.length > 0) {
+        // We're pruning stale Square IDs, so these modifier types are definitely modified
+        modifiedModifierTypeIds.push(...missingSquareCatalogObjectBatches.map((b) => b.id));
         const bulkUpdate = await deps.optionRepository.bulkUpdate(
           optionUpdates.map((x) => ({ id: x.id, data: { externalIDs: x.externalIDs } })),
         );
@@ -176,8 +180,7 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
         );
         await deps.syncOptions();
         deps.recomputeCatalog();
-        const updated = await deps.batchUpdateModifierType(missingSquareCatalogObjectBatches, true, false);
-        updatedModifierTypeIds.push(...(updated || []).map((x) => x.id));
+        await deps.batchUpdateModifierType(missingSquareCatalogObjectBatches, true, false);
         deps.recomputeCatalog();
       }
     }
@@ -185,24 +188,31 @@ export const checkAllModifierTypesHaveSquareIdsAndFixIfNeeded = async (deps: Squ
   const modifierTypeBatches = Object.values(deps.catalog.modifiers)
     .filter(
       (mt) =>
+        // Check if modifier type is missing the MODIFIER_LIST Square ID
         GetSquareIdIndexFromExternalIds(mt.externalIDs, SquareExternalIdKey.MODIFIER_LIST) === -1 ||
+        // Check if any option is missing the MODIFIER_WHOLE Square ID
+        // (Options store MODIFIER_WHOLE, not MODIFIER - they may also have MODIFIER_LEFT, etc. for split modifiers)
         mt.options.reduce(
           (acc, oId) =>
             acc ||
-            GetSquareIdIndexFromExternalIds(deps.catalog.options[oId].externalIDs, SquareExternalIdKey.MODIFIER) === -1,
+            GetSquareIdIndexFromExternalIds(
+              deps.catalog.options[oId].externalIDs,
+              SquareExternalIdKey.MODIFIER_WHOLE,
+            ) === -1,
           false,
         ),
     )
     .map((mt) => ({ id: mt.id, modifierType: {} }));
 
   if (modifierTypeBatches.length > 0) {
+    // These modifier types are missing Square IDs, so they're definitely being modified
+    modifiedModifierTypeIds.push(...modifierTypeBatches.map((b) => b.id));
     const result = await deps.batchUpdateModifierType(modifierTypeBatches, true, false);
     if (!result) {
       throw new Error('Failed to update modifier types');
     }
-    return result.map((x) => x.id);
   }
-  return [];
+  return modifiedModifierTypeIds;
 };
 
 export const checkAllProductsHaveSquareIdsAndFixIfNeeded = async (deps: SquareSyncDeps) => {

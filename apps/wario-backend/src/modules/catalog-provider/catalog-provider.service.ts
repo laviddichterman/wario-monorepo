@@ -214,7 +214,8 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
       productRepository: this.productRepository,
       productInstanceRepository: this.productInstanceRepository,
       batchUpdatePrinterGroup: (b) => PrinterGroupFns.batchUpdatePrinterGroup(this.printerGroupDeps, b),
-      batchUpdateModifierType: (b, s, u) => ModifierFns.batchUpdateModifierType(this.modifierDeps, b, s, u),
+      batchUpdateModifierType: (batches, suppressRecomputation, forceSquareRegeneration) =>
+        ModifierFns.batchUpdateModifierType(this.modifierDeps, batches, suppressRecomputation, forceSquareRegeneration),
       batchUpdateModifierOption: (b) => ModifierFns.batchUpdateModifierOption(this.modifierDeps, b),
       batchUpdateProductInstance: (b, s) => ProductFns.batchUpdateProductInstance(this.productDeps, b, s),
       batchUpsertProduct: (b) => ProductFns.batchUpsertProduct(this.productDeps, b),
@@ -628,7 +629,7 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
     } else {
       await SquareSyncFns.checkAllPrinterGroupsSquareIdsAndFixIfNeeded(this.squareSyncDeps);
       try {
-        const modifierTypeIdsUpdated = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(
+        const modifierTypeIdsModified = await SquareSyncFns.checkAllModifierTypesHaveSquareIdsAndFixIfNeeded(
           this.squareSyncDeps,
         );
         this.RecomputeCatalog();
@@ -640,12 +641,12 @@ export class CatalogProviderService implements OnModuleInit, ICatalogContext {
             'Failed checking all products for consistency. Check that the Square token is correct.',
           );
         }
-        if (modifierTypeIdsUpdated.length > 0) {
+        if (modifierTypeIdsModified.length > 0) {
           this._logger.info(
-            `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsUpdated.length.toString()} modifier types`,
+            `Going back and updating product instances impacted by earlier CheckAllModifierTypesHaveSquareIdsAndFixIfNeeded call, for ${modifierTypeIdsModified.length.toString()} modifier types`,
           );
           try {
-            await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsUpdated);
+            await this.UpdateProductsReferencingModifierTypeId(modifierTypeIdsModified);
           } catch (err: unknown) {
             this._logger.error(
               { err },

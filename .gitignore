@@ -25,3 +25,6 @@ dist-ssr
 *.sln
 *.sw?
 packages/wario-ux-shared/src/generated/phone-metadata.custom.json
+
+# remove this
+apps/wario-pos/public/assets/

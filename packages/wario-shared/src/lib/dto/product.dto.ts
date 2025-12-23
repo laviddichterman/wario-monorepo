@@ -437,7 +437,6 @@ export class IProductInstanceDto {
    * Detailed description of this specific configuration.
    */
   @IsString()
-  @IsNotEmpty()
   description!: string;
 
   /**
