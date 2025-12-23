@@ -46,3 +46,17 @@ pnpm test:watch   # Watch mode
 - Utilities: Use `@wcp/wario-test-utils` for `renderWithProviders`, mock generators
 
 See `/.agent/workflows/react-testing.md` for testing workflow guidance.
+
+## 6. Performance Guidelines
+
+### React & Hooks Stability
+
+- **Stable Selectors**: When binding to stores (Zustand) or Queries, **ALWAYS** use stable selectors.
+  - ❌ `useStore(s => ({ a: s.a, b: s.b }))` (Returns new object reference every render = re-render)
+  - ✅ `useStore(useShallow(s => ({ a: s.a, b: s.b })))`
+  - ✅ `useStore(s => s.a)` (Primitive values are stable)
+
+- **Memoize Derived Data**: In Custom Hooks, especially those wrapping `TanStack Query`:
+  - ❌ `return data.filter(...)` (Runs on every render)
+  - ✅ `return useMemo(() => data.filter(...), [data])`
+- **Avoid Expensive Computations in Selectors**: Select raw data and compute in the component/hook with `useMemo`. Selectors run on _every_ store update.

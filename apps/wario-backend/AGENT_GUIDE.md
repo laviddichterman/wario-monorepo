@@ -163,6 +163,14 @@ The `DatabaseManagerService` handles the initial setup of the PostgreSQL databas
     - **Class Spreading**: Cast to Interface to avoid "unsafe spread".
       - `const plain = { ...(instance as IProduct) };`
 
+4.  **Mock Infrastructure**:
+    - **Use Factory Functions**: located in `test/utils/`.
+    - **Key Factories**:
+      - `createMockFunctionDeps()`: for core logic functions.
+      - `createMockSquareSyncDeps()`: for Square sync testing.
+      - `createMockProductDeps()`, `createMockCategoryDeps()`: for domain-specific tests.
+      - `createMock*Repository()`: for database layer mocks.
+
 ### Common Tasks
 
 - **Adding a new API Endpoint**:

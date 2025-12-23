@@ -64,6 +64,7 @@ For catalog entity add/edit operations, use the Form Atoms pattern (`src/atoms/f
   - `from*Entity(entity)` - API entity to form state converter
   - `use*Form()` - hook with `updateField()` that auto-tracks dirty fields
 - **Usage in Mutations**: Pass `dirtyFields` to edit mutations for partial updates
+- **Complex Forms**: For nested collections (e.g., Product Instances), use specialized atoms like `productInstancesDirtyAtom` to track additions/removals/reorders alongside field-level dirty states.
 
 ##### Auth Token Hook Pattern
 
