@@ -1267,8 +1267,16 @@ export class OrderManagerService {
         errors.push({ category: 'INTERNAL_SERVER_ERROR', code: 'INTERNAL_SERVER_ERROR', detail: errorDetail });
         throw errors;
       }
-    } catch {
-      // pass
+    } catch (caughtError: unknown) {
+      // Log the error - if it's not the expected errors array, it's an unexpected exception
+      if (!Array.isArray(caughtError)) {
+        this.logger.error({ err: caughtError }, 'Unexpected error during order creation');
+        errors.push({
+          category: 'INTERNAL_SERVER_ERROR',
+          code: 'INTERNAL_SERVER_ERROR',
+          detail: caughtError instanceof Error ? caughtError.message : 'Unknown error during order creation',
+        });
+      }
     }
 
     // Payment Appendix: if we're here, then we didn't charge the order and we need to back it out.

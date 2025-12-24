@@ -36,6 +36,31 @@ export {
   setupMockCatalog,
 } from './catalog-test-helpers';
 
+// CreateOrder request mocks (for OrderManagerService.CreateOrder tests)
+export {
+  createMockCreateOrderRequest,
+  type CreateMockCreateOrderRequestOptions,
+  createMockCreditCodeAmountDiscount,
+  type CreateMockCreditCodeAmountDiscountOptions,
+  createMockCreditPaymentProposed,
+  type CreateMockCreditPaymentProposedOptions,
+  createMockFulfillmentConfig,
+  createMockFulfillmentConfigMap,
+  type CreateMockFulfillmentConfigOptions,
+  createMockKeyValueConfig,
+  createMockSettings,
+  createMockSquareErrorResponse,
+  createMockSquareOrderSuccessResponse,
+  createMockSquarePaymentSuccessResponse,
+  createMockStoreCreditPaymentProposed,
+  type CreateMockStoreCreditPaymentProposedOptions,
+  createMockValidateLockAndSpendFailure,
+  createMockValidateLockAndSpendSuccess,
+  createOpenAllDayHours,
+  type FulfillmentConfigMap,
+  type SquareErrorMock,
+} from './create-order-mocks';
+
 // E2E test helpers
 export { createE2EClient, type E2EClient, expectError, expectSuccess, overrideE2EAuth } from './e2e-helpers';
 
@@ -54,7 +79,6 @@ export {
 
 // Deps mock factories
 export { createMockCategoryDeps, type CreateMockCategoryDepsOptions } from './mock-category-deps';
-
 // Database mocks
 export {
   createAllMockModelProviders,
@@ -74,6 +98,7 @@ export { createMockFunctionDeps, type CreateMockFunctionDepsOptions } from './mo
 export { createMockModifierDeps, type CreateMockModifierDepsOptions } from './mock-modifier-deps';
 export { createMockPrinterGroupDeps, type CreateMockPrinterGroupDepsOptions } from './mock-printer-group-deps';
 export { createMockProductDeps, type CreateMockProductDepsOptions } from './mock-product-deps';
+
 // Service mocks
 export {
   mockCatalogProviderService,

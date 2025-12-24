@@ -170,6 +170,15 @@ The `DatabaseManagerService` handles the initial setup of the PostgreSQL databas
       - `createMockSquareSyncDeps()`: for Square sync testing.
       - `createMockProductDeps()`, `createMockCategoryDeps()`: for domain-specific tests.
       - `createMock*Repository()`: for database layer mocks.
+      - **Order mocks** (`order-mocks.ts`): `createMockWOrderInstance()`, `createMockCreditPayment()`, `createMockStoreCreditPayment()`, `createMockFulfillmentData()`, `createMockCustomerInfo()`.
+      - **CreateOrder mocks** (`create-order-mocks.ts`): `createMockCreateOrderRequest()`, `createMockFulfillmentConfig()`, `createMockCreditPaymentProposed()`, `createMockStoreCreditPaymentProposed()`, Square/store credit response mocks.
+
+5.  **Mock Data Consistency** (lessons from CreateOrder tests):
+    - **Settings alignment**: Set `autogratThreshold` high (e.g., 999) to avoid tip minimum validation triggering unexpectedly.
+    - **Time slot steps**: Ensure `serviceDate` is rounded to the fulfillment's `timeStep` (usually 15-min intervals).
+    - **Catalog data**: When testing order creation, mock `getCatalog()` to return `productInstances` map.
+    - **Cart structure**: Cart entries should reference product instances, not raw products.
+    - **Price consistency**: Ensure `catalogProduct.price` is set when testing `CreateOrderFromCart`.
 
 ### Common Tasks
 
