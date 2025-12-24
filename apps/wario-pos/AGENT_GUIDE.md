@@ -51,6 +51,9 @@
 - **Example**: `src/atoms/catalog.ts`.
 - **Usage**: Instead of passing `setIsDialogOpen` down 10 levels, components subscribe to `dialogueStateAtom` and call `openCategoryEditAtom` to trigger actions.
 
+> [!NOTE]
+> **Location Rule**: All Jotai atoms must reside in `src/atoms/`. Do not use `src/states/` or component-local files for shared atoms.
+
 ##### Form Atoms Pattern
 
 For catalog entity add/edit operations, use the Form Atoms pattern (`src/atoms/forms/`):

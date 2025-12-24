@@ -4,11 +4,10 @@ import { Button, Drawer, Grid } from '@mui/material';
 
 import { paths } from '@/routes/paths';
 
-import { useConfirmOrderMutation } from '@/hooks/useOrdersQuery';
-
 import { CustomBreadcrumbs } from '@/components/custom-breadcrumbs';
 import { BlockOffComp } from '@/components/wario/blockoff.component';
 import { LeadTimesComp } from '@/components/wario/leadtimes.component';
+import { GlobalOrderDrawer } from '@/components/wario/orders/GlobalOrderDrawer';
 import { OrderCalendar } from '@/components/wario/orders/OrderCalendar';
 import { OrderManagerComponent } from '@/components/wario/orders/OrderManager';
 
@@ -16,7 +15,6 @@ import { DashboardContent } from '@/layouts/dashboard';
 
 export function OrderListView() {
   const [isTimingDrawerOpen, setIsTimingDrawerOpen] = useState<boolean>(false);
-  const confirmMutation = useConfirmOrderMutation();
   const toggleDrawer = useCallback(
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
       if (event.type === 'keydown' && ['Tab', 'Shift'].includes((event as React.KeyboardEvent).key)) {
@@ -27,14 +25,6 @@ export function OrderListView() {
     [],
   );
 
-  const handleConfirmOrder = (orderId: string) => {
-    confirmMutation.mutate(
-      { orderId: orderId, additionalMessage: '' },
-      {
-        onSuccess: () => {},
-      },
-    );
-  };
   return (
     <>
       <DashboardContent>
@@ -74,10 +64,11 @@ export function OrderListView() {
                 </Grid>
               </Grid>
             </Drawer>
-            <OrderManagerComponent handleConfirmOrder={handleConfirmOrder} />
+            <OrderManagerComponent />
+            <GlobalOrderDrawer />
           </Grid>
           <Grid size={12}>
-            <OrderCalendar initialView="listWeek" handleConfirmOrder={handleConfirmOrder} />
+            <OrderCalendar initialView="listWeek" />
           </Grid>
         </Grid>
       </DashboardContent>

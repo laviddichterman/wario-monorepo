@@ -1,4 +1,4 @@
-import type { BusinessHoursInput, DatesSetArg } from '@fullcalendar/core/';
+import type { BusinessHoursInput, DatesSetArg, EventClickArg } from '@fullcalendar/core/';
 import esLocale from '@fullcalendar/core/locales/es';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -34,6 +34,8 @@ export type CalendarProps = {
   initialDate?: Date | string | number;
   initialView?: ICalendarView;
   eventById: (id: string) => ICalendarEvent | undefined;
+  /** Optional component to render a custom title in the drawer header. Receives eventId. */
+  DrawerTitle?: React.ComponentType<{ eventId: string }>;
   CalendarForm: React.ComponentType<{
     currentEvent: ICalendarEvent | null;
     onClose: () => void;
@@ -41,6 +43,8 @@ export type CalendarProps = {
   updateEvent: (event: Partial<ICalendarEvent>) => void;
   businessHours?: BusinessHoursInput;
   datesSet?: (arg: DatesSetArg) => void;
+  onEventClick?: (arg: EventClickArg) => void; // Optional override
+  disableDrawer?: boolean; // Optional flag to disable built-in drawer
 };
 
 export function CalendarComponent({
@@ -50,8 +54,11 @@ export function CalendarComponent({
   initialView,
   CalendarForm,
   eventById,
+  DrawerTitle,
   businessHours,
-  datesSet, // NEW
+  datesSet,
+  onEventClick,
+  disableDrawer = false,
 }: CalendarProps) {
   // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
   const openFilters = useBoolean();
@@ -98,43 +105,48 @@ export function CalendarComponent({
     flexDirection: 'column',
   };
 
-  const renderOrderDrawer = () => (
-    <Drawer
-      anchor="right"
-      open={openForm}
-      onClose={onCloseForm}
-      slotProps={{
-        paper: {
-          sx: {
-            width: { xs: '100%', sm: 480 },
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
+  const renderOrderDrawer = () => {
+    if (disableDrawer) return null;
+    return (
+      <Drawer
+        anchor="right"
+        open={openForm}
+        onClose={onCloseForm}
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: '100%', sm: 480 },
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            },
           },
-        },
-      }}
-    >
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          p: 2,
-          borderBottom: 1,
-          borderColor: 'divider',
         }}
       >
-        <Typography variant="h6">{eventById(selectedEventId)?.title}</Typography>
-        <IconButton onClick={onCloseForm} edge="end">
-          <Iconify icon="mingcute:close-line" />
-        </IconButton>
-      </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            p: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Typography variant="h6">
+            {DrawerTitle ? <DrawerTitle eventId={selectedEventId} /> : eventById(selectedEventId)?.title}
+          </Typography>
+          <IconButton onClick={onCloseForm} edge="end">
+            <Iconify icon="mingcute:close-line" />
+          </IconButton>
+        </Box>
 
-      <Box sx={{ flex: 1, overflow: 'auto', p: 0 }}>
-        <CalendarForm currentEvent={eventById(selectedEventId) ?? null} onClose={onCloseForm} />
-      </Box>
-    </Drawer>
-  );
+        <Box sx={{ flex: 1, overflow: 'auto', p: 0 }}>
+          <CalendarForm currentEvent={eventById(selectedEventId) ?? null} onClose={onCloseForm} />
+        </Box>
+      </Drawer>
+    );
+  };
 
   const renderFiltersDrawer = () => (
     <CalendarFilters
@@ -190,7 +202,7 @@ export function CalendarComponent({
             initialDate={initialDate}
             events={dataFiltered}
             select={onSelectRange}
-            eventClick={onClickEvent}
+            eventClick={onEventClick || onClickEvent}
             businessHours={businessHours}
             datesSet={datesSet}
             scrollTimeReset={false}

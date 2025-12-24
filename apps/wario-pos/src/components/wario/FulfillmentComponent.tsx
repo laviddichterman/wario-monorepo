@@ -529,7 +529,7 @@ export const FulfillmentFormBody = () => {
 // =============================================================================
 
 export interface FulfillmentComponentProps {
-  onCloseCallback: React.MouseEventHandler<HTMLButtonElement>;
+  onCloseCallback: ((event?: React.MouseEvent<HTMLButtonElement>) => void) | null;
   onConfirmClick: React.MouseEventHandler<HTMLButtonElement>;
   isProcessing: boolean;
   disableConfirmOn: boolean;

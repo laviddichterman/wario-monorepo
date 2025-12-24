@@ -14,7 +14,7 @@ const GenerateActionsHtmlFromList = (actions: React.ReactNode[]) =>
   );
 
 export interface ElementActionComponentProps {
-  onCloseCallback: React.MouseEventHandler<HTMLButtonElement> | null;
+  onCloseCallback: ((event?: React.MouseEvent<HTMLButtonElement>) => void) | null;
   onConfirmClick: React.MouseEventHandler<HTMLButtonElement>;
   isProcessing: boolean;
   disableConfirmOn: boolean;

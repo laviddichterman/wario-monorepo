@@ -1,14 +1,31 @@
 import type { BusinessHoursInput, DatesSetArg } from '@fullcalendar/core';
+import { useSetAtom } from 'jotai';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DateTimeIntervalBuilder, WDateUtils, WOrderStatus } from '@wcp/wario-shared/logic';
-import { useFulfillments } from '@wcp/wario-ux-shared/query';
+import {
+  DateTimeIntervalBuilder,
+  EventTitleStringBuilder,
+  GenerateCategoryOrderList,
+  RebuildAndSortCart,
+  WDateUtils,
+  WOrderStatus,
+} from '@wcp/wario-shared/logic';
+import { useCatalogSelectors, useFulfillments } from '@wcp/wario-ux-shared/query';
 
-import { useOrdersQuery } from '@/hooks/useOrdersQuery';
+import { useEventTitleStringForOrder, useOrderById, useOrdersQuery } from '@/hooks/useOrdersQuery';
 
 import { CalendarComponent } from '@/components/calendar/calendar-component';
 import type { ICalendarEvent, ICalendarRange, ICalendarView } from '@/components/calendar/types';
-import { WOrderComponentCard } from '@/components/wario/orders/WOrderComponentCard';
+import { WOrderDrawerContent } from '@/components/wario/orders/WOrderDrawerContent';
+
+import { orderDrawerAtom } from '@/atoms/drawerState';
+
+// Component that computes the event title using hooks
+function OrderDrawerTitle({ eventId }: { eventId: string }) {
+  const order = useOrderById(eventId);
+  const title = useEventTitleStringForOrder(order);
+  return <>{title || 'Loading...'}</>;
+}
 
 /**
  * Converts minutes from midnight to a time string in HH:MM format
@@ -21,12 +38,17 @@ function minutesToTimeString(minutes: number): string {
 
 export type OrderCalendarProps = {
   initialView?: ICalendarView;
-  handleConfirmOrder: (id: string) => void;
 };
 
-export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendarProps) {
+// Helper component to wrap WOrderDrawerContent for use as CalendarForm
+function OrderDrawerWrapper({ orderId, onClose }: { orderId: string; onClose: () => void }) {
+  return <WOrderDrawerContent orderId={orderId} onClose={onClose} key={orderId} />;
+}
+
+export function OrderCalendar({ initialView }: OrderCalendarProps) {
   const [activeRange, setActiveRange] = useState<ICalendarRange>(null);
   const fulfillments = useFulfillments();
+  const catalogSelectors = useCatalogSelectors();
 
   // Capture the initial date only once on mount to prevent scroll position resets
   const initialDateRef = useRef<number>(Date.now());
@@ -80,6 +102,27 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
     return result.length > 0 ? result : false;
   }, [fulfillments]);
 
+  const fulfillmentCategoryMaps = useMemo(() => {
+    if (!catalogSelectors || fulfillments.length === 0) return {};
+
+    const map: Record<string, Record<string, number>> = {};
+
+    for (const fulfillment of fulfillments) {
+      const fulfillmentMainCategory = fulfillment.orderBaseCategoryId;
+      const fulfillmentSecondaryCategory = fulfillment.orderSupplementaryCategoryId as string | undefined;
+
+      const categoryOrderArrayMain = GenerateCategoryOrderList(fulfillmentMainCategory, catalogSelectors.category);
+      const categoryOrderArraySecondary = fulfillmentSecondaryCategory
+        ? GenerateCategoryOrderList(fulfillmentSecondaryCategory, catalogSelectors.category)
+        : [];
+
+      map[fulfillment.id] = Object.fromEntries(
+        [...categoryOrderArrayMain, ...categoryOrderArraySecondary].map((x, i) => [x, i]),
+      );
+    }
+    return map;
+  }, [catalogSelectors, fulfillments]);
+
   const ordersAsEvents: ICalendarEvent[] = useMemo(
     () =>
       Object.values(ordersMap)
@@ -88,18 +131,56 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
           // Default maxDuration to 30 since getFulfillmentById is missing
           const maxDuration = 30;
           const dateTimeInterval = DateTimeIntervalBuilder(order.fulfillment, maxDuration);
+
+          let title = `${order.customerInfo.givenName} ${order.customerInfo.familyName} `;
+
+          if (catalogSelectors) {
+            const fulfillment = fulfillments.find((f) => f.id === order.fulfillment.selectedService);
+            const orderMap = fulfillment ? fulfillmentCategoryMaps[fulfillment.id] : null;
+
+            if (fulfillment && orderMap) {
+              const serviceTime = WDateUtils.ComputeServiceDateTime(order.fulfillment);
+              const cart = RebuildAndSortCart(
+                order.cart,
+                catalogSelectors,
+                serviceTime,
+                order.fulfillment.selectedService,
+              );
+              title = EventTitleStringBuilder(
+                catalogSelectors,
+                orderMap,
+                fulfillment,
+                title,
+                order.fulfillment,
+                cart,
+                order.specialInstructions ?? '',
+              );
+            }
+          }
+
           return {
             id: order.id,
-            title: `${order.customerInfo.givenName} ${order.customerInfo.familyName} `,
+            title,
             allDay: false,
             start: dateTimeInterval.start,
             end: dateTimeInterval.end,
           };
         }),
-    [ordersMap],
+    [ordersMap, catalogSelectors, fulfillments, fulfillmentCategoryMaps],
   );
 
   const getEventById = useCallback((id: string) => ordersAsEvents.find((x) => x.id === id), [ordersAsEvents]);
+
+  // Memoize CalendarForm component to prevent remounting on parent re-renders
+  const CalendarFormComponent = useMemo(
+    () =>
+      function CalendarForm({ currentEvent, onClose }: { currentEvent: ICalendarEvent | null; onClose: () => void }) {
+        return currentEvent ? <OrderDrawerWrapper orderId={currentEvent.id} onClose={onClose} /> : null;
+      },
+    [],
+  );
+
+  const setDrawerState = useSetAtom(orderDrawerAtom);
 
   return (
     <CalendarComponent
@@ -108,20 +189,15 @@ export function OrderCalendar({ initialView, handleConfirmOrder }: OrderCalendar
       initialDate={initialDateRef.current}
       initialView={initialView}
       eventById={getEventById}
+      DrawerTitle={OrderDrawerTitle}
       updateEvent={() => undefined}
       businessHours={businessHours}
-      CalendarForm={({ currentEvent, onClose }) => {
-        return (
-          currentEvent && (
-            <WOrderComponentCard
-              orderId={currentEvent.id}
-              handleConfirmOrder={handleConfirmOrder}
-              onCloseCallback={onClose}
-            />
-          )
-        );
-      }}
+      CalendarForm={CalendarFormComponent}
       datesSet={handleDatesSet}
+      disableDrawer={true}
+      onEventClick={(arg) => {
+        setDrawerState({ orderId: arg.event.id, isOpen: true });
+      }}
     />
   );
 }

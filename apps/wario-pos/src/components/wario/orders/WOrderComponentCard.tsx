@@ -84,8 +84,7 @@ export const WOrderComponentCard = ({
             slotProps={{
               indicator: { hidden: true },
             }}
-            scrollButtons={false}
-            centered
+            scrollButtons="auto"
             onChange={(_, v: ComponentCardMode) => {
               setMode(v);
             }}

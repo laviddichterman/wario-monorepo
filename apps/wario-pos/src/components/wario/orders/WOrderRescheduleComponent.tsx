@@ -30,19 +30,25 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
       rescheduleMutation.mutate(
         { orderId: order.id, selectedDate: selectedDate, selectedTime: selectedTime },
         {
-          onSuccess: () => {},
+          onSuccess: () => {
+            // Return to main drawer view after successful reschedule
+            props.onCloseCallback?.();
+          },
         },
       );
     }
   };
 
   if (!order) return null;
+
+  // Only enable Update if date or time has changed (order is guaranteed non-null here)
+  const hasChanges = selectedDate !== order.fulfillment.selectedDate || selectedTime !== order.fulfillment.selectedTime;
   return (
     <ElementActionComponent
       onCloseCallback={props.onCloseCallback}
       onConfirmClick={submitToWario}
       isProcessing={rescheduleMutation.isPending}
-      disableConfirmOn={rescheduleMutation.isPending}
+      disableConfirmOn={rescheduleMutation.isPending || !hasChanges}
       confirmText={'Update'}
       body={
         <>
@@ -64,6 +70,9 @@ const WOrderRescheduleComponent = (props: WOrderRescheduleComponentProps) => {
               slotProps={{
                 toolbar: {
                   hidden: true,
+                },
+                actionBar: {
+                  sx: { display: 'none' },
                 },
               }}
             />
