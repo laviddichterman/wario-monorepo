@@ -14,7 +14,12 @@ import { WDateUtils, WOrderStatus } from '@wcp/wario-shared/logic';
 import { type WOrderInstance } from '@wcp/wario-shared/types';
 import { FullScreenPulsingContainer } from '@wcp/wario-ux-shared/containers';
 
-import { useConfirmOrderMutation, usePendingOrdersQuery, useUnlockOrdersMutation } from '@/hooks/useOrdersQuery';
+import {
+  useConfirmOrderMutation,
+  useEventTitleStringForOrder,
+  usePendingOrdersQuery,
+  useUnlockOrdersMutation,
+} from '@/hooks/useOrdersQuery';
 
 import { orderDrawerAtom } from '@/atoms/drawerState';
 
@@ -26,8 +31,8 @@ type RowType = WOrderInstance;
 
 const EventTitle = (params: GridRenderCellParams<RowType>) => {
   const order = params.row;
-  const title = `${order.customerInfo.givenName} ${order.customerInfo.familyName}`;
-  return <>{title}</>;
+  const title = useEventTitleStringForOrder(order);
+  return <>{title || 'Loading...'}</>;
 };
 
 export const OrderManagerComponent = () => {

@@ -264,4 +264,50 @@ describe('OrderController', () => {
       expect(mockOrderManager.ObliterateLocks).toHaveBeenCalled();
     });
   });
+
+  // =========================================================================
+  // PUT /api/v1/order/:oId/info Tests
+  // =========================================================================
+
+  describe('putUpdateOrderInfo', () => {
+    it('should update order info when lock acquired', async () => {
+      const lockedOrder = createMockWOrderInstance({ id: 'order-123' });
+      mockOrderManager.UpdateLockedOrderInfo.mockResolvedValue({
+        status: 200,
+        success: true,
+        result: { ...lockedOrder, specialInstructions: 'Updated instructions' },
+      });
+
+      const updateBody = { specialInstructions: 'Updated instructions' };
+      const result = await controller.putUpdateOrderInfo(
+        lockedOrder as WOrderInstance & Required<{ locked: string }>,
+        updateBody as Parameters<typeof controller.putUpdateOrderInfo>[1],
+      );
+
+      expect(result.status).toBe(200);
+      expect(mockOrderManager.UpdateLockedOrderInfo).toHaveBeenCalledWith(lockedOrder, updateBody);
+    });
+
+    it('should throw BadRequestException when lock not acquired', async () => {
+      await expect(
+        controller.putUpdateOrderInfo(undefined, {} as Parameters<typeof controller.putUpdateOrderInfo>[1]),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw HttpException on update failure', async () => {
+      const lockedOrder = createMockWOrderInstance();
+      mockOrderManager.UpdateLockedOrderInfo.mockResolvedValue({
+        status: 400,
+        success: false,
+        error: [{ category: 'INVALID_REQUEST_ERROR', code: 'INVALID_FULFILLMENT_SERVICE', detail: '' }],
+      });
+
+      await expect(
+        controller.putUpdateOrderInfo(
+          lockedOrder as WOrderInstance & Required<{ locked: string }>,
+          {} as Parameters<typeof controller.putUpdateOrderInfo>[1],
+        ),
+      ).rejects.toThrow(HttpException);
+    });
+  });
 });

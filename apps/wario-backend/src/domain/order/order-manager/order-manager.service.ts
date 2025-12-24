@@ -11,6 +11,7 @@ import { Order, Order as SquareOrder } from 'square/legacy';
 import {
   CreateOrderRequestV2,
   CrudOrderResponse,
+  CustomerInfoData,
   DateTimeIntervalBuilder,
   DetermineCartBasedLeadTime,
   DiscountMethod,
@@ -589,6 +590,7 @@ export class OrderManagerService {
   /**
    * Adjust the fulfillment time of a pre-locked order.
    * The order must already be locked before calling this method.
+   * This is a convenience method that delegates to UpdateLockedOrderInfo with the appropriate options.
    * @param lockedOrder The order that has been atomically locked
    * @param newTime The new fulfillment time
    * @param emailCustomer Whether to email the customer about the reschedule
@@ -599,133 +601,258 @@ export class OrderManagerService {
     emailCustomer: boolean,
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
     const fulfillmentConfig = this.dataProvider.getFulfillments()[lockedOrder.fulfillment.selectedService];
-    const categoryOrderMap = GenerateCategoryOrderMapForOrder(
-      fulfillmentConfig,
-      this.catalogService.getCatalogSelectors().category,
-    );
     const is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
-    const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
-    const oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
-    this.logger.info(
-      `Adjusting order in status: ${lockedOrder.status} with fulfillment status ${lockedOrder.fulfillment.status} to new time of ${format(promisedTime.start, WDateUtils.ISODateTimeNoOffset)}`,
-    );
-    const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
-    const rebuiltCart = RebuildAndSortCart(
-      lockedOrder.cart,
-      this.catalogService.getCatalogSelectors(),
-      promisedTime.start,
-      fulfillmentConfig.id,
-    );
-    const eventTitle = EventTitleStringBuilder(
-      this.catalogService.getCatalogSelectors(),
-      categoryOrderMap,
-      fulfillmentConfig,
-      customerName,
-      lockedOrder.fulfillment,
-      rebuiltCart,
-      lockedOrder.specialInstructions ?? '',
-    );
 
-    const SQORDER_MSG = lockedOrder.metadata.find((x) => x.key === 'SQORDER_MSG')?.value?.split(',') ?? [];
-    const _SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value?.split(',') ?? [];
-    // * Send message on adjustment to relevant printer groups if the order's fulfillment is in state SENT
-    if (
-      lockedOrder.fulfillment.status === WFulfillmentStatus.SENT ||
-      lockedOrder.fulfillment.status === WFulfillmentStatus.PROCESSING
-    ) {
-      const printResult = await this.printerService.SendTimeChangeTicket(
-        lockedOrder,
-        rebuiltCart,
-        fulfillmentConfig,
-        oldPromisedTime,
-      );
-
-      if (printResult.success) {
-        SQORDER_MSG.push(...printResult.squareOrderIds);
-      }
-    }
-
-    // adjust square fulfillment(s)
-    const squareOrderId = lockedOrder.metadata.find((x) => x.key === 'SQORDER')!.value;
-    const retrieveSquareOrderResponse = await this.squareService.RetrieveOrder(squareOrderId);
-    if (retrieveSquareOrderResponse.success) {
-      const squareOrder = retrieveSquareOrderResponse.result.order!;
-      const _updateSquareOrderResponse = await this.squareService.OrderUpdate(
-        this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
-        squareOrderId,
-        squareOrder.version as number,
-        {
-          fulfillments:
-            squareOrder.fulfillments?.map((x) => ({
-              uid: x.uid,
-              pickupDetails: { pickupAt: formatRFC3339(newTime.selectedTime) },
-            })) ?? [],
-        },
-        [],
-      );
-    }
-
-    const fulfillmentDto: FulfillmentData = {
+    const updatedFulfillment: FulfillmentData = {
       ...(lockedOrder.fulfillment as FulfillmentData),
       selectedDate: newTime.selectedDate,
       selectedTime: newTime.selectedTime,
     };
 
-    // send email if we're supposed to
-    if (!is3pOrder && emailCustomer) {
-      await this.orderNotificationService.CreateExternalEmailForOrderReschedule(
-        fulfillmentConfig,
-        fulfillmentDto,
-        lockedOrder.customerInfo,
-        '',
-      );
-    }
+    this.logger.info(
+      `Adjusting order time via UpdateLockedOrderInfo: order ${lockedOrder.id}, emailCustomer=${String(emailCustomer)}, is3pOrder=${String(is3pOrder)}`,
+    );
 
-    // adjust calendar event
-    const gCalEventId = lockedOrder.metadata.find((x) => x.key === 'GCALEVENT')?.value;
-    if (gCalEventId) {
-      const dateTimeInterval = DateTimeIntervalBuilder(fulfillmentDto, fulfillmentConfig.maxDuration);
-      const updatedOrderEventJson = this.orderNotificationService.GenerateOrderEventJson(
-        eventTitle,
-        lockedOrder,
-        rebuiltCart,
-        dateTimeInterval,
-        RecomputeTotals({
-          cart: rebuiltCart,
-          fulfillment: fulfillmentConfig,
-          order: lockedOrder,
-          payments: lockedOrder.payments,
-          discounts: lockedOrder.discounts,
-          config: {
-            SERVICE_CHARGE: 0,
-            AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
-            TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE || 0.1035,
-            CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
-          },
-        }),
-      );
-      await this.orderCalendarService.ModifyCalendarEvent(gCalEventId, updatedOrderEventJson);
-    }
+    return this.UpdateLockedOrderInfo(
+      lockedOrder,
+      { fulfillment: updatedFulfillment },
+      {
+        emailInfo:
+          emailCustomer && !is3pOrder
+            ? {
+                fulfillmentConfig,
+                fulfillmentData: updatedFulfillment,
+                customerInfo: lockedOrder.customerInfo,
+              }
+            : null,
+        sendUpdateTicket: { type: 'TIME_CHANGE' },
+      },
+    );
+  };
 
-    // adjust DB event
+  /**
+   * Update order info (customer, fulfillment, special instructions) for a pre-locked order.
+   * The order must already be locked before calling this method.
+   * This method syncs changes to Square (fulfillment time) and Google Calendar (event details).
+   * @param lockedOrder The order that has been atomically locked
+   * @param updates The fields to update (customerInfo, fulfillment, specialInstructions)
+   * @param options Optional callbacks for sending emails and printer tickets
+   */
+  public UpdateLockedOrderInfo = async (
+    lockedOrder: WOrderInstance & Required<{ locked: string }>,
+    updates: {
+      customerInfo?: WOrderInstance['customerInfo'];
+      fulfillment?: WOrderInstance['fulfillment'];
+      specialInstructions?: string;
+    },
+    options?: {
+      /**
+       * If provided, sends a reschedule email to the customer using the provided info.
+       */
+      emailInfo?: {
+        fulfillmentConfig: FulfillmentConfig;
+        fulfillmentData: FulfillmentData;
+        customerInfo: CustomerInfoData;
+      } | null;
+      /**
+       * If provided, sends a printer ticket about the update.
+       * The type indicates what kind of update occurred.
+       */
+      sendUpdateTicket?: {
+        type: 'TIME_CHANGE' | 'INFO_UPDATE';
+      } | null;
+    },
+  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
+    this.logger.debug({ orderId: lockedOrder.id, updateFields: Object.keys(updates) }, 'Updating order info');
+
     try {
-      const updatedOrder = await this.orderRepository.updateWithLock(lockedOrder.id, lockedOrder.locked, {
-        locked: null,
-        fulfillment: fulfillmentDto,
-        metadata: [
-          ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
-          ...(SQORDER_MSG.length > 0 ? [{ key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') }] : []),
-        ],
-      });
-      // this.socketIoService.EmitOrder(updatedOrder!); // TODO: Implement EmitOrder in SocketIoService
+      // Get the fulfillment config - use updated service if provided, else existing
+      const selectedService = updates.fulfillment?.selectedService ?? lockedOrder.fulfillment.selectedService;
+      const fulfillmentConfig = this.dataProvider.getFulfillments()[selectedService];
+
+      // Validate fulfillment service if provided
+      if (updates.fulfillment !== undefined && !fulfillmentConfig) {
+        return {
+          status: 400,
+          success: false,
+          error: [
+            {
+              category: 'INVALID_REQUEST_ERROR',
+              code: 'INVALID_FULFILLMENT_SERVICE',
+              detail: `Invalid fulfillment service: ${updates.fulfillment.selectedService}`,
+            },
+          ],
+        };
+      }
+
+      // Build the updated order state for generating event info
+      const updatedFulfillment =
+        updates.fulfillment !== undefined
+          ? (updates.fulfillment as FulfillmentData)
+          : (lockedOrder.fulfillment as FulfillmentData);
+      const updatedCustomerInfo = updates.customerInfo ?? lockedOrder.customerInfo;
+      const updatedSpecialInstructions = updates.specialInstructions ?? lockedOrder.specialInstructions ?? '';
+
+      // Track metadata updates for printer ticket IDs
+      const SQORDER_MSG = lockedOrder.metadata.find((x) => x.key === 'SQORDER_MSG')?.value?.split(',') ?? [];
+
+      // === SEND PRINTER TICKET ===
+      if (options?.sendUpdateTicket?.type === 'TIME_CHANGE') {
+        // Only send ticket if order fulfillment is SENT or PROCESSING
+        if (
+          lockedOrder.fulfillment.status === WFulfillmentStatus.SENT ||
+          lockedOrder.fulfillment.status === WFulfillmentStatus.PROCESSING
+        ) {
+          const _categoryOrderMap = GenerateCategoryOrderMapForOrder(
+            fulfillmentConfig,
+            this.catalogService.getCatalogSelectors().category,
+          );
+          const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
+          const oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
+          const rebuiltCart = RebuildAndSortCart(
+            lockedOrder.cart,
+            this.catalogService.getCatalogSelectors(),
+            promisedTime.start,
+            fulfillmentConfig.id,
+          );
+
+          const printResult = await this.printerService.SendTimeChangeTicket(
+            lockedOrder,
+            rebuiltCart,
+            fulfillmentConfig,
+            oldPromisedTime,
+          );
+
+          if (printResult.success) {
+            SQORDER_MSG.push(...printResult.squareOrderIds);
+          }
+        }
+      }
+
+      // === SYNC TO SQUARE ===
+      // If fulfillment time is being updated, sync to Square
+      if (updates.fulfillment !== undefined) {
+        const squareOrderId = lockedOrder.metadata.find((x) => x.key === 'SQORDER')?.value;
+        if (squareOrderId) {
+          const retrieveSquareOrderResponse = await this.squareService.RetrieveOrder(squareOrderId);
+          if (retrieveSquareOrderResponse.success) {
+            const squareOrder = retrieveSquareOrderResponse.result.order!;
+            await this.squareService.OrderUpdate(
+              this.dataProvider.getKeyValueConfig().SQUARE_LOCATION,
+              squareOrderId,
+              squareOrder.version as number,
+              {
+                fulfillments:
+                  squareOrder.fulfillments?.map((x) => ({
+                    uid: x.uid,
+                    pickupDetails: { pickupAt: formatRFC3339(updates.fulfillment!.selectedTime) },
+                  })) ?? [],
+              },
+              [],
+            );
+          }
+        }
+      }
+
+      // === SEND EMAIL ===
+      if (options?.emailInfo) {
+        await this.orderNotificationService.CreateExternalEmailForOrderReschedule(
+          options.emailInfo.fulfillmentConfig,
+          options.emailInfo.fulfillmentData,
+          options.emailInfo.customerInfo,
+          '',
+        );
+      }
+
+      // === SYNC TO GOOGLE CALENDAR ===
+      const gCalEventId = lockedOrder.metadata.find((x) => x.key === 'GCALEVENT')?.value;
+      if (gCalEventId) {
+        // Rebuild cart and generate event title with updated info
+        const categoryOrderMap = GenerateCategoryOrderMapForOrder(
+          fulfillmentConfig,
+          this.catalogService.getCatalogSelectors().category,
+        );
+        const dateTimeInterval = DateTimeIntervalBuilder(updatedFulfillment, fulfillmentConfig.maxDuration);
+        const customerName = `${updatedCustomerInfo.givenName} ${updatedCustomerInfo.familyName}`;
+        const rebuiltCart = RebuildAndSortCart(
+          lockedOrder.cart,
+          this.catalogService.getCatalogSelectors(),
+          dateTimeInterval.start,
+          fulfillmentConfig.id,
+        );
+        const eventTitle = EventTitleStringBuilder(
+          this.catalogService.getCatalogSelectors(),
+          categoryOrderMap,
+          fulfillmentConfig,
+          customerName,
+          updatedFulfillment,
+          rebuiltCart,
+          updatedSpecialInstructions,
+        );
+        const updatedOrderEventJson = this.orderNotificationService.GenerateOrderEventJson(
+          eventTitle,
+          { ...lockedOrder, customerInfo: updatedCustomerInfo, fulfillment: updatedFulfillment },
+          rebuiltCart,
+          dateTimeInterval,
+          RecomputeTotals({
+            cart: rebuiltCart,
+            fulfillment: fulfillmentConfig,
+            order: lockedOrder,
+            payments: lockedOrder.payments,
+            discounts: lockedOrder.discounts,
+            config: {
+              SERVICE_CHARGE: 0,
+              AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
+              TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE || 0.1035,
+              CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
+            },
+          }),
+        );
+        await this.orderCalendarService.ModifyCalendarEvent(gCalEventId, updatedOrderEventJson);
+      }
+
+      // Build the update object with only provided fields using spread
+      const updatePayload: Partial<WOrderInstance> = {
+        locked: null, // Release the lock on update
+        ...(updates.customerInfo !== undefined && { customerInfo: updates.customerInfo }),
+        ...(updates.fulfillment !== undefined && { fulfillment: updates.fulfillment as FulfillmentData }),
+        ...(updates.specialInstructions !== undefined && { specialInstructions: updates.specialInstructions }),
+        // Include metadata updates if ticket IDs were added
+        ...(SQORDER_MSG.length > 0 && {
+          metadata: [
+            ...lockedOrder.metadata.filter((x) => !['SQORDER_MSG'].includes(x.key)),
+            { key: 'SQORDER_MSG', value: SQORDER_MSG.join(',') },
+          ],
+        }),
+      };
+
+      // Update the order in the database
+      const updatedOrder = await this.orderRepository.updateWithLock(lockedOrder.id, lockedOrder.locked, updatePayload);
+
+      if (!updatedOrder) {
+        return {
+          status: 404,
+          success: false,
+          error: [
+            {
+              category: 'API_ERROR',
+              code: 'NOT_FOUND',
+              detail: 'Order not found or lock mismatch',
+            },
+          ],
+        };
+      }
+
+      this.logger.info({ orderId: updatedOrder.id }, 'Order info updated successfully');
+
       return {
         status: 200,
         success: true as const,
-        result: updatedOrder!,
+        result: updatedOrder,
       };
     } catch (err: unknown) {
-      const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
-      this.logger.error({ err }, 'Unable to commit update to order to release lock and update fulfillment time');
+      const errorDetail = `Unable to update order info. Got error: ${JSON.stringify(err, null, 2)}`;
+      this.logger.error({ err }, 'Unable to update order info');
       return {
         status: 500,
         success: false,

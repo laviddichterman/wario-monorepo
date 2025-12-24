@@ -36,6 +36,8 @@ export interface DraggableResourceProps {
   onClick?: (id: string, shiftKey: boolean) => void;
   /** Double-click handler for edit dialog */
   onDoubleClick?: (id: string) => void;
+  /** Status color for live table view (e.g., green=seated, yellow=waiting) */
+  statusColor?: string;
 }
 
 export const DraggableResource = memo(function DraggableResource({
@@ -46,6 +48,7 @@ export const DraggableResource = memo(function DraggableResource({
   clampedDelta,
   onClick,
   onDoubleClick,
+  statusColor,
 }: DraggableResourceProps) {
   const interactionMode = useSeatingBuilderStore((s) => s.interactionMode);
 
@@ -138,6 +141,7 @@ export const DraggableResource = memo(function DraggableResource({
             shapeDimY={displayHeight}
             isSelected={model.isSelected}
             disabled={model.disabled}
+            statusColor={statusColor}
           />
         </g>
       </g>

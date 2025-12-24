@@ -120,6 +120,7 @@ import type {
   TenderBaseAllocatedDto,
   TenderBaseProposedDto,
   ThirdPartyInfoDto,
+  UpdateOrderInfoRequestDto,
   WCPProductV2Dto,
   WOrderInstanceDto,
   WOrderInstancePartialDto,
@@ -373,6 +374,7 @@ export type OrderTax = Omit<OrderTaxDto, never>;
 export type IssueStoreCreditRequest = Omit<IssueStoreCreditRequestDto, never>;
 export type WOrderInstancePartial = Omit<WOrderInstancePartialDto, never>;
 export type CreateOrderRequestV2 = Omit<CreateOrderRequestV2Dto, never>;
+export type UpdateOrderInfoRequest = Omit<UpdateOrderInfoRequestDto, never>;
 export type WOrderInstance = Omit<WOrderInstanceDto, never>;
 
 // =============================================================================

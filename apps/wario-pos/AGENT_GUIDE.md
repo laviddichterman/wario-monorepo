@@ -144,6 +144,12 @@ Located in `src/sections/seating`. A touch-optimized floor plan editor for confi
 | `DraggableResource` | Individual table with resize handles |
 | `TableEditDialog` | Double-click edit for table properties |
 
+**SeatingCanvas Modes** (`mode` prop):
+
+- `builder` (default): Full editing with drag, resize, lasso, double-click edit
+- `readonly`: No interaction (for display/status views)
+- `selection`: Click/lasso to select, no drag/resize (for table assignment dialog)
+
 **API Hooks** (`src/hooks/useSeatingLayoutQuery.ts`):
 
 - `useSeatingLayoutsQuery` / `useSeatingLayoutQuery(id)` - List and detail fetching

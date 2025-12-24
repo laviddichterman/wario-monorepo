@@ -6,10 +6,11 @@ import { z } from 'zod';
 import { Alert, Autocomplete, Box, Button, Divider, Stack, TextField, Typography } from '@mui/material';
 
 import { FulfillmentType } from '@wcp/wario-shared/logic';
+import type { FulfillmentData } from '@wcp/wario-shared/types';
 import { ZodEmailSchema } from '@wcp/wario-ux-shared/common';
 import { useFulfillments } from '@wcp/wario-ux-shared/query';
 
-import { useOrderById } from '@/hooks/useOrdersQuery';
+import { useOrderById, useUpdateOrderInfoMutation } from '@/hooks/useOrdersQuery';
 
 // Validation Schema
 const modifyOrderSchema = z.object({
@@ -43,6 +44,7 @@ export type WOrderModifyComponentProps = {
 export function WOrderModifyComponent({ orderId, onCloseCallback }: WOrderModifyComponentProps) {
   const order = useOrderById(orderId);
   const fulfillments = useFulfillments();
+  const updateOrderInfo = useUpdateOrderInfoMutation();
 
   // Initialize form with order data
   const defaultValues: ModifyOrderFormData = useMemo(
@@ -135,16 +137,62 @@ export function WOrderModifyComponent({ orderId, onCloseCallback }: WOrderModify
   };
 
   const onSubmit = (data: ModifyOrderFormData) => {
-    // TODO: Placeholder - actual backend integration deferred
+    if (!order) return;
 
-    console.log('Order modification submitted:', {
-      orderId,
-      changes: data,
-      originalOrder: order,
-    });
+    // Build the update payload - only include fields that changed
+    const customerInfo = {
+      givenName: data.givenName,
+      familyName: data.familyName,
+      mobileNum: data.mobileNum,
+      email: data.email,
+      referral: order.customerInfo.referral,
+    };
 
-    // For now, just close the form
-    onCloseCallback();
+    // Build fulfillment update, preserving unchanged fields and ensuring proper type
+    const fulfillment: FulfillmentData = {
+      selectedDate: order.fulfillment.selectedDate,
+      selectedTime: order.fulfillment.selectedTime,
+      selectedService: data.selectedService,
+      status: order.fulfillment.status,
+      ...(requiresPartySize && data.partySize
+        ? {
+            dineInInfo: {
+              partySize: data.partySize,
+              seating: order.fulfillment.dineInInfo?.seating,
+            },
+          }
+        : order.fulfillment.dineInInfo
+          ? { dineInInfo: order.fulfillment.dineInInfo }
+          : {}),
+      ...(requiresDeliveryInfo
+        ? {
+            deliveryInfo: {
+              address: data.deliveryStreet,
+              address2: data.deliveryUnit,
+              zipcode: data.deliveryZip,
+              deliveryInstructions: data.deliveryInstructions,
+              validation: order.fulfillment.deliveryInfo?.validation,
+            },
+          }
+        : order.fulfillment.deliveryInfo
+          ? { deliveryInfo: order.fulfillment.deliveryInfo }
+          : {}),
+      ...(order.fulfillment.thirdPartyInfo ? { thirdPartyInfo: order.fulfillment.thirdPartyInfo } : {}),
+    };
+
+    updateOrderInfo.mutate(
+      {
+        orderId,
+        customerInfo,
+        fulfillment,
+        specialInstructions: data.specialInstructions,
+      },
+      {
+        onSuccess: () => {
+          onCloseCallback();
+        },
+      },
+    );
   };
 
   if (!order) {

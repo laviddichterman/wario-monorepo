@@ -1,11 +1,12 @@
 import { format } from 'date-fns';
 import { useState } from 'react';
 
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import { ExpandMore as ExpandMoreIcon, InfoOutlined } from '@mui/icons-material';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Chip,
   Divider,
@@ -32,6 +33,7 @@ import WOrderRescheduleComponent from '@/components/wario/orders/WOrderReschedul
 import CancelOrderDialog from './CancelOrderDialog';
 import ForceSendOrderDialog from './ForceSendOrderDialog';
 import OrderActionsBar from './OrderActionsBar';
+import { TableAssignmentStatus } from './TableAssignmentStatus';
 import { WOrderCheckoutCartContainer } from './WOrderCheckoutCartContainer';
 import { WOrderServiceInfoTableContainer } from './WOrderServiceInfoTableContainer';
 
@@ -167,6 +169,24 @@ export function WOrderDrawerContent({ orderId, onClose: _onClose }: WOrderDrawer
         </Stack>
       </Box>
 
+      {/* Special Instructions - Prominently Displayed */}
+      {order.specialInstructions && (
+        <Alert
+          severity="warning"
+          icon={<InfoOutlined />}
+          sx={{
+            mx: 2,
+            mt: 1.5,
+            '& .MuiAlert-message': { width: '100%' },
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Special Instructions
+          </Typography>
+          <Typography variant="body2">{order.specialInstructions}</Typography>
+        </Alert>
+      )}
+
       {/* Scrollable Content */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
         {/* Order Summary - Always Visible */}
@@ -193,6 +213,9 @@ export function WOrderDrawerContent({ orderId, onClose: _onClose }: WOrderDrawer
             <WOrderServiceInfoTableContainer order={order} />
           </AccordionDetails>
         </Accordion>
+
+        {/* Table Assignment (Dine-In orders only) */}
+        <TableAssignmentStatus order={order} />
 
         <Divider />
 

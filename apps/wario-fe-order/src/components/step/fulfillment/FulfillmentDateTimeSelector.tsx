@@ -77,7 +77,7 @@ export default function FulfillmentDateTimeSelector() {
   const onSetServiceDate = useCallback(
     (v: Date | number | null) => {
       if (v !== null) {
-        const serviceDateString = formatISO(v, { representation: 'date' });
+        const serviceDateString = WDateUtils.formatISODate(v);
         // Check if the selected service time is valid in the new service date
         if (selectedTime !== null) {
           if (!selectedService || !fulfillment) {

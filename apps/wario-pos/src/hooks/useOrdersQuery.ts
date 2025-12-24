@@ -12,7 +12,12 @@ import {
   WDateUtils,
   WOrderStatus,
 } from '@wcp/wario-shared/logic';
-import { type CoreCartEntry, type WOrderInstance } from '@wcp/wario-shared/types';
+import {
+  type CoreCartEntry,
+  type CustomerInfoData,
+  type FulfillmentData,
+  type WOrderInstance,
+} from '@wcp/wario-shared/types';
 import {
   useCatalogSelectors,
   useCurrentTime,
@@ -316,6 +321,43 @@ export function useUnlockOrdersMutation() {
     },
     onError: (error) => {
       toast.error('Failed to unlock orders');
+      console.error(error);
+    },
+  });
+}
+
+export type UpdateOrderInfoPayload = {
+  orderId: string;
+  customerInfo?: CustomerInfoData;
+  fulfillment?: FulfillmentData;
+  specialInstructions?: string;
+};
+
+export function useUpdateOrderInfoMutation() {
+  const queryClient = useQueryClient();
+  const { getToken } = useGetAuthToken();
+
+  return useMutation({
+    mutationFn: async ({ orderId, customerInfo, fulfillment, specialInstructions }: UpdateOrderInfoPayload) => {
+      const token = await getToken(AuthScopes.WRITE_ORDER);
+      await axiosInstance.put(
+        `/api/v1/order/${orderId}/info`,
+        { customerInfo, fulfillment, specialInstructions },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Idempotency-Key': uuidv4(),
+          },
+        },
+      );
+    },
+    onSuccess: async (_data, variables) => {
+      toast.success('Order updated successfully');
+      await queryClient.invalidateQueries({ queryKey: ['orders'] });
+      await queryClient.invalidateQueries({ queryKey: ['order', variables.orderId] });
+    },
+    onError: (error) => {
+      toast.error('Failed to update order');
       console.error(error);
     },
   });

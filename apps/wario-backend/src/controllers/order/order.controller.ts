@@ -13,7 +13,13 @@ import {
 } from '@nestjs/common';
 import { isValid, parseISO } from 'date-fns';
 
-import { CreateOrderRequestV2Dto, WDateUtils, type WOrderInstance, WOrderStatus } from '@wcp/wario-shared';
+import {
+  CreateOrderRequestV2Dto,
+  UpdateOrderInfoRequestDto,
+  WDateUtils,
+  type WOrderInstance,
+  WOrderStatus,
+} from '@wcp/wario-shared';
 import { AuthScopes } from '@wcp/wario-shared-private';
 
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -126,6 +132,24 @@ export class OrderController {
       throw new BadRequestException('Failed to acquire lock on order');
     }
     const response = await this.orderManager.AdjustLockedOrderTime(order, body, body.emailCustomer ?? false);
+    if (response.status !== 200) {
+      throw new HttpException(response, response.status);
+    }
+    return response;
+  }
+
+  @Put(':oId/info')
+  @Scopes(AuthScopes.WRITE_ORDER)
+  @UseInterceptors(OrderLockInterceptor)
+  @LockOrder()
+  async putUpdateOrderInfo(
+    @LockedOrder() order: (WOrderInstance & Required<{ locked: string }>) | undefined,
+    @Body() body: UpdateOrderInfoRequestDto,
+  ) {
+    if (!order) {
+      throw new BadRequestException('Failed to acquire lock on order');
+    }
+    const response = await this.orderManager.UpdateLockedOrderInfo(order, body);
     if (response.status !== 200) {
       throw new HttpException(response, response.status);
     }

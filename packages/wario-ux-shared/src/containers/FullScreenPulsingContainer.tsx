@@ -15,7 +15,7 @@ export const RootStyle = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: theme.vars?.palette.background.default ?? theme.palette.background.default,
 }));
 
 export const FullScreenPulsingContainer = (props: { children: ReactNode }) => {

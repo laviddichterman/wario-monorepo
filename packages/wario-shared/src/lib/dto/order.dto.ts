@@ -1,3 +1,4 @@
+import { PartialType, PickType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -521,6 +522,15 @@ export class CreateOrderRequestV2Dto extends WOrderInstancePartialDto {
   @IsArray()
   readonly proposedDiscounts!: OrderLineDiscountCodeAmountDto[];
 }
+
+/**
+ * DTO for updating order info (customer, fulfillment, special instructions).
+ * All fields are optional - only provided fields will be updated.
+ * Used by staff to modify existing orders.
+ */
+export class UpdateOrderInfoRequestDto extends PartialType(
+  PickType(WOrderInstancePartialDto, ['customerInfo', 'fulfillment', 'specialInstructions']),
+) {}
 
 export class KeyValueOrderDto {
   @IsString()

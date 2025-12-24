@@ -128,17 +128,16 @@ export function OrderCalendar({ initialView }: OrderCalendarProps) {
       Object.values(ordersMap)
         .filter((order) => order.status !== WOrderStatus.CANCELED)
         .map((order) => {
-          // Default maxDuration to 30 since getFulfillmentById is missing
-          const maxDuration = 30;
+          // Find the fulfillment config to get the correct maxDuration
+          const fulfillment = fulfillments.find((f) => f.id === order.fulfillment.selectedService);
+          const maxDuration = fulfillment?.maxDuration ?? 30;
           const dateTimeInterval = DateTimeIntervalBuilder(order.fulfillment, maxDuration);
 
           let title = `${order.customerInfo.givenName} ${order.customerInfo.familyName} `;
 
-          if (catalogSelectors) {
-            const fulfillment = fulfillments.find((f) => f.id === order.fulfillment.selectedService);
-            const orderMap = fulfillment ? fulfillmentCategoryMaps[fulfillment.id] : null;
-
-            if (fulfillment && orderMap) {
+          if (catalogSelectors && fulfillment) {
+            const orderMap = fulfillmentCategoryMaps[fulfillment.id] as Record<string, number> | undefined;
+            if (orderMap) {
               const serviceTime = WDateUtils.ComputeServiceDateTime(order.fulfillment);
               const cart = RebuildAndSortCart(
                 order.cart,

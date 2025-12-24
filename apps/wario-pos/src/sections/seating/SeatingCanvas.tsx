@@ -50,12 +50,36 @@ function SnapToGrid(value: number, gridSize: number): number {
   return Math.round(value / gridSize) * gridSize;
 }
 
-export interface SeatingCanvasProps {
-  /** Whether the canvas is in read-only mode (for live status view) */
-  readOnly?: boolean;
+export type SeatingCanvasMode = 'builder' | 'readonly' | 'selection';
+
+export interface TableStatusMapEntry {
+  /** Status color to display */
+  color: string;
+  /** Order ID if occupied */
+  orderId?: string | null;
 }
 
-export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
+export interface SeatingCanvasProps {
+  /**
+   * Canvas interaction mode:
+   * - 'builder': Full editing (drag, resize, lasso, double-click edit)
+   * - 'readonly': No interaction (for display only)
+   * - 'selection': Click/lasso to select, no drag/resize (for table assignment)
+   */
+  mode?: SeatingCanvasMode;
+  /**
+   * Optional map of tableId -> status info for live table visualization.
+   * When provided, tables will display status colors.
+   */
+  tableStatusMap?: Record<string, TableStatusMapEntry>;
+  /**
+   * Optional click handler for table clicks (used in readonly mode for live view).
+   * Called with tableId and associated orderId (if any).
+   */
+  onTableClick?: (tableId: string, orderId: string | null) => void;
+}
+
+export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }: SeatingCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [svgSize, setSvgSize] = useState({ width: 0, height: 0 });
 
@@ -180,7 +204,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
   // Handle resource click for selection
   const handleResourceClick = useCallback(
     (id: string, shiftKey: boolean) => {
-      if (readOnly) return;
+      if (mode === 'readonly') return;
 
       if (shiftKey) {
         // Shift+click: toggle selection (add to current)
@@ -195,13 +219,14 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
         selectResources([id]);
       }
     },
-    [readOnly, selectResources, selectedResourceIds],
+    [mode, selectResources, selectedResourceIds],
   );
 
   // Handle drag start - select the dragged resource if not already part of selection
   // This ensures the dragged table is included in selectedResourceIds when handleDragEnd runs
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
+      // In selection mode, we still want to select on drag start, but not actually move
       const { active } = event;
       const dragData = active.data.current as { type?: string } | undefined;
 
@@ -220,6 +245,9 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
   // Handle drag end (move or resize)
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      // Disable move/resize in selection mode
+      if (mode !== 'builder') return;
+
       const { delta, active } = event;
       if (delta.x === 0 && delta.y === 0) return;
 
@@ -339,7 +367,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
       setResizePreview(null);
       setClampedDragDelta(null);
     },
-    [gridSize, selectedResourceIds, moveResources, updateResource, pushUndoCheckpoint, resourcesById, viewBox],
+    [mode, gridSize, selectedResourceIds, moveResources, updateResource, pushUndoCheckpoint, resourcesById, viewBox],
   );
 
   // Handle drag move (live clamping preview)
@@ -463,7 +491,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
       }
 
       // Left mouse button on background for lasso
-      if (e.button === 0 && !readOnly) {
+      if (e.button === 0 && mode !== 'readonly') {
         // Only trigger if clicking directly on background or resource placeholder rect
         // (real resources capture events via dnd-kit or their own handlers, preventing this bubble if stopped?
         // actually dnd-kit uses listeners on the element. But we also have onClick on DraggableResource)
@@ -496,7 +524,7 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
         }
       }
     },
-    [readOnly, viewBox, selectedResourceIds],
+    [mode, viewBox, selectedResourceIds],
   );
 
   const handlePointerMove = useCallback(
@@ -686,30 +714,42 @@ export function SeatingCanvas({ readOnly = false }: SeatingCanvasProps) {
             gridSize={gridSize || DEFAULT_GRID_SIZE}
             width={CANVAS_WIDTH}
             height={CANVAS_HEIGHT}
-            visible={!readOnly}
+            visible={mode === 'builder'}
           />
 
           {/* Resources layer */}
           <g id="resources-layer">
-            {renderModels.map((model) => (
-              <g key={model.id} className="resource-layer">
-                <DraggableResource
-                  model={model}
-                  scaleX={scaleX}
-                  scaleY={scaleY}
-                  resizePreview={resizePreview?.resourceId === model.id ? resizePreview : null}
-                  clampedDelta={clampedDragDelta && selectedResourceIds.includes(model.id) ? clampedDragDelta : null}
-                  onClick={readOnly ? undefined : handleResourceClick}
-                  onDoubleClick={
-                    readOnly
-                      ? undefined
-                      : (id) => {
-                          setEditingResourceId(id);
-                        }
-                  }
-                />
-              </g>
-            ))}
+            {renderModels.map((model) => {
+              const statusEntry = tableStatusMap?.[model.id];
+              return (
+                <g key={model.id} className="resource-layer">
+                  <DraggableResource
+                    model={model}
+                    scaleX={scaleX}
+                    scaleY={scaleY}
+                    resizePreview={resizePreview?.resourceId === model.id ? resizePreview : null}
+                    clampedDelta={clampedDragDelta && selectedResourceIds.includes(model.id) ? clampedDragDelta : null}
+                    onClick={
+                      mode === 'readonly' && onTableClick
+                        ? (id) => {
+                            onTableClick(id, statusEntry?.orderId ?? null);
+                          }
+                        : mode !== 'readonly'
+                          ? handleResourceClick
+                          : undefined
+                    }
+                    onDoubleClick={
+                      mode === 'builder'
+                        ? (id) => {
+                            setEditingResourceId(id);
+                          }
+                        : undefined
+                    }
+                    statusColor={statusEntry?.color}
+                  />
+                </g>
+              );
+            })}
           </g>
 
           {/* Lasso Selection Rect */}
