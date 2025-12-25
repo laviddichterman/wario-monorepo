@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import { Button, Drawer, Grid } from '@mui/material';
+import { Close as CloseIcon } from '@mui/icons-material';
+import { Box, Button, Divider, Drawer, IconButton, Stack, Typography } from '@mui/material';
 
 import { paths } from '@/routes/paths';
 
@@ -38,39 +39,55 @@ export function OrderListView() {
           sx={{ mb: { xs: 3, md: 5 } }}
         />
 
-        <Grid container spacing={2}>
-          <Grid size={12}>
-            <Button variant="outlined" onClick={toggleDrawer(true)} sx={{ textTransform: 'capitalize' }}>
-              Manage Order Timing
-            </Button>
+        <Button variant="outlined" onClick={toggleDrawer(true)} sx={{ textTransform: 'capitalize', mb: 2 }}>
+          Manage Order Timing
+        </Button>
 
-            <Drawer anchor={'bottom'} open={isTimingDrawerOpen} onClose={toggleDrawer(false)}>
-              <Grid container spacing={3}>
-                <Grid
-                  size={{
-                    xs: 12,
-                    md: 12,
-                  }}
-                >
-                  <LeadTimesComp />
-                </Grid>
-                <Grid
-                  size={{
-                    xs: 12,
-                    md: 12,
-                  }}
-                >
-                  <BlockOffComp />
-                </Grid>
-              </Grid>
-            </Drawer>
-            <OrderManagerComponent />
-            <GlobalOrderDrawer />
-          </Grid>
-          <Grid size={12}>
-            <OrderCalendar initialView="listWeek" />
-          </Grid>
-        </Grid>
+        <Drawer
+          anchor="right"
+          open={isTimingDrawerOpen}
+          onClose={toggleDrawer(false)}
+          slotProps={{
+            paper: {
+              sx: {
+                width: { xs: '100%', sm: 420 },
+                maxWidth: '100vw',
+              },
+            },
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            {/* Header */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 2,
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Typography variant="h6">Manage Order Timing</Typography>
+              <IconButton onClick={toggleDrawer(false)} size="small">
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Scrollable Content */}
+            <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+              <Stack spacing={2}>
+                <LeadTimesComp />
+                <Divider />
+                <BlockOffComp />
+              </Stack>
+            </Box>
+          </Box>
+        </Drawer>
+
+        <OrderManagerComponent />
+        <GlobalOrderDrawer />
+        <OrderCalendar initialView="listWeek" />
       </DashboardContent>
     </>
   );

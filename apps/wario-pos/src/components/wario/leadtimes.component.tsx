@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-import { Button, Card, CardHeader, Grid } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 
 import { useFulfillments } from '@wcp/wario-ux-shared/query';
 
@@ -62,14 +62,12 @@ export const LeadTimesComp = () => {
       updateMutation.mutate(leadtimesToUpdate, {
         onSuccess: () => {
           toast.success(
-            `
-              Updated lead time(s): ${Object.entries(leadtimesToUpdate)
-                .map(
-                  ([key, value]) =>
-                    `${fulfillments.find((x) => x.id === key)?.displayName ?? key}: ${value.toString()} minutes`,
-                )
-                .join(', ')}
-            `,
+            `Updated lead time(s): ${Object.entries(leadtimesToUpdate)
+              .map(
+                ([key, value]) =>
+                  `${fulfillments.find((x) => x.id === key)?.displayName ?? key}: ${value.toString()} min`,
+              )
+              .join(', ')}`,
           );
 
           setDirty(fulfillments.reduce((acc, fulfillment) => ({ ...acc, [fulfillment.id]: false }), {}));
@@ -82,63 +80,39 @@ export const LeadTimesComp = () => {
       });
     }
   };
+
   return (
-    <div>
-      <Card>
-        <CardHeader title="Single pizza lead time:" sx={{ mb: 3 }} />
-        <Grid container spacing={2} justifyContent="center">
-          <Grid
-            spacing={2}
-            container
-            alignItems={'center'}
-            size={{
-              xs: 8,
-              md: 10,
+    <Box>
+      <Typography variant="body2" fontWeight="medium" sx={{ mb: 1 }}>
+        Lead Time (min)
+      </Typography>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+        {Object.values(fulfillments).map((fulfillment) => (
+          <IntNumericPropertyComponent
+            key={fulfillment.id}
+            sx={{ width: 120 }}
+            size="small"
+            min={1}
+            color={dirty[fulfillment.id] ? 'warning' : 'primary'}
+            disabled={isProcessing}
+            label={fulfillment.displayName}
+            value={dirty[fulfillment.id] ? localLeadTime[fulfillment.id] : fulfillment.leadTime}
+            setValue={(e: number) => {
+              onChangeLeadTimes(fulfillment.id, e);
             }}
-          >
-            {Object.values(fulfillments).map((fulfillment) => {
-              return (
-                <Grid
-                  key={fulfillment.id}
-                  size={{
-                    xs: fulfillments.length % 2 === 0 ? 6 : 12,
-                    md: fulfillments.length % 2 === 0 ? 6 : fulfillments.length % 3 === 0 ? 4 : 12,
-                  }}
-                >
-                  <IntNumericPropertyComponent
-                    sx={{ ml: 3, mb: 2, mr: 1 }}
-                    min={1}
-                    color={dirty[fulfillment.id] ? 'warning' : 'primary'}
-                    disabled={isProcessing}
-                    label={fulfillment.displayName}
-                    value={dirty[fulfillment.id] ? localLeadTime[fulfillment.id] : fulfillment.leadTime}
-                    setValue={(e: number) => {
-                      onChangeLeadTimes(fulfillment.id, e);
-                    }}
-                  />
-                </Grid>
-              );
-            })}
-          </Grid>
-          <Grid
-            sx={{ py: 2 }}
-            size={{
-              xs: 4,
-              md: 2,
-            }}
-          >
-            <Button
-              sx={{ mx: 3, px: 1, py: 2 }}
-              disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0}
-              onClick={() => {
-                onSubmit();
-              }}
-            >
-              Push Changes
-            </Button>
-          </Grid>
-        </Grid>
-      </Card>
-    </div>
+          />
+        ))}
+        <Button
+          variant="contained"
+          size="small"
+          disabled={isProcessing || Object.keys(leadtimesToUpdate).length === 0}
+          onClick={() => {
+            onSubmit();
+          }}
+        >
+          Save
+        </Button>
+      </Box>
+    </Box>
   );
 };

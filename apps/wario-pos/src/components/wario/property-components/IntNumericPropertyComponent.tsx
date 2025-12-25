@@ -10,6 +10,7 @@ export type IntNumericPropertyComponentProps = {
   disabled: boolean;
   color?: CheckedNumericInputProps['color'];
   sx?: CheckedNumericInputProps['sx'];
+  size?: 'small' | 'medium';
 } & ValSetVal<number>;
 
 export function IntNumericPropertyComponent(props: IntNumericPropertyComponentProps) {
@@ -18,12 +19,13 @@ export function IntNumericPropertyComponent(props: IntNumericPropertyComponentPr
       sx={props.sx}
       type="number"
       fullWidth
+      size={props.size}
       color={props.color}
       label={props.label}
       numberProps={{
         allowEmpty: false,
         defaultValue: props.value,
-        formatFunction: (i) => formatDecimal(i, 2),
+        formatFunction: (i) => formatDecimal(i, 0),
         parseFunction: parseInteger,
         min: props.min ?? 0,
         max: props.max ?? 43200,
