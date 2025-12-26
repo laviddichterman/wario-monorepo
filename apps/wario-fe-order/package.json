@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
+    "build:test": "vite build --mode development",
     "clean": "rm -rf ./dist",
     "deploy:prod": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/worder/dist/",
     "deploy:test": "rsync -avzhe ssh --progress --chown \"www-data:www-data\" ./dist/* root@windycitypie.com:/var/www/html/wp-content/reactpress/apps/wordertest/dist/",

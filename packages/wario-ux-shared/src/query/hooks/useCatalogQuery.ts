@@ -32,21 +32,32 @@ import type { ProductCategoryFilter } from '@/common/shared';
 
 import { QUERY_KEYS } from '../types';
 
+import { useSocket } from './useSocket';
+
 /**
  * Hook to query catalog data
  * Data is populated via Socket.io events, not HTTP requests
  * Uses infinite staleTime since data is push-based from socket
  */
 export function useCatalogQuery(options?: Omit<UseQueryOptions<ICatalog | null>, 'queryKey' | 'queryFn'>) {
+  const { hostAPI } = useSocket();
   return useQuery<ICatalog | null>({
-    queryKey: QUERY_KEYS.catalog,
-    queryFn: () => {
-      // Data is set via socket events, not fetched
-      // Initial value is null until socket pushes data
-      return null;
+    queryKey: [...QUERY_KEYS.catalog, hostAPI],
+    queryFn: async () => {
+      // Use HTTP fetch for initial load to avoid socket handshake delay
+      // Socket events will update the cache later if needed
+      if (!hostAPI) return null;
+      const response = await fetch(`${hostAPI}/api/v1/catalog`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch catalog');
+      }
+      return response.json() as Promise<ICatalog>;
     },
-    staleTime: Infinity, // Never refetch - data comes from socket
+    staleTime: Infinity, // Data updates via socket, but initial fetch is good forever until overwritten
     gcTime: Infinity, // Keep in cache forever
+    retry: 2,
     ...options,
   });
 }

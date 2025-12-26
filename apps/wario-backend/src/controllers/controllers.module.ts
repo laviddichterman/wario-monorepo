@@ -5,6 +5,7 @@ import { SeatingModule } from '../modules/seating/seating.module';
 import { RepositoryModule } from '../repositories/repository.module';
 
 import { AccountingController } from './accounting/accounting.controller';
+import { CatalogController } from './catalog/catalog.controller';
 import { CategoryController } from './category/category.controller';
 import { DeliveryAddressController } from './delivery-address/delivery-address.controller';
 import { FulfillmentController } from './fulfillment/fulfillment.controller';
@@ -40,6 +41,7 @@ import { StoreCreditController } from './store-credit/store-credit.controller';
     SeatingFloorController,
     SeatingLayoutController,
     SeatingSectionController,
+    CatalogController,
   ],
 })
 export class ControllersModule {}

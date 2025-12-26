@@ -9,16 +9,25 @@ import type { IWSettings } from '@wcp/wario-shared/types';
 
 import { QUERY_KEYS } from '../types';
 
+import { useSocket } from './useSocket';
+
 /**
  * Hook to query settings data
  * Data is populated via Socket.io events, not HTTP requests
  */
 export function useSettingsQuery(options?: Omit<UseQueryOptions<IWSettings | null>, 'queryKey' | 'queryFn'>) {
+  const { hostAPI } = useSocket();
   return useQuery<IWSettings | null>({
-    queryKey: QUERY_KEYS.settings,
-    queryFn: () => {
-      // Data is set via socket events, not fetched
-      return null;
+    queryKey: [...QUERY_KEYS.settings, hostAPI],
+    queryFn: async () => {
+      if (!hostAPI) return null;
+      const response = await fetch(`${hostAPI}/api/v1/catalog/settings`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch settings');
+      }
+      return response.json() as Promise<IWSettings>;
     },
     staleTime: Infinity, // Never refetch - data comes from socket
     gcTime: Infinity,

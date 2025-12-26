@@ -16,10 +16,12 @@ export interface SocketContextValue {
   status: SocketStatus;
   /** Socket.io instance (null until connected) */
   socket: Socket | null;
-  /** Connect to socket (idempotent) */
+  /** Connect function */
   connect: () => void;
-  /** Disconnect from socket */
+  /** Disconnect function */
   disconnect: () => void;
+  /** API host URL */
+  hostAPI: string;
 }
 
 export const SocketContext = createContext<SocketContextValue | null>(null);

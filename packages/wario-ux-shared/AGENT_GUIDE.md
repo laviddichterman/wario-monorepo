@@ -22,7 +22,25 @@
 - Used by: `wario-pos`, dev tools.
 - **Not** typically used by `wario-fe-order` (which needs a lighter bundle), although some generic helpers might be shared.
 
-## 4. 2025 Schema Update Notes
+## 4. Socket/Query Key Pattern
+
+**CRITICAL**: When updating TanStack Query cache from socket events in `SocketContext.tsx`, the query keys **must match** the keys used in the query hooks.
+
+All query hooks (e.g., `useFulfillmentsQuery`) use `[...QUERY_KEYS.xxx, hostAPI]` as their query key. Socket event handlers must use the same format:
+
+```typescript
+// ✅ Correct - includes hostAPI
+socket.on(SOCKET_EVENTS.FULFILLMENTS, (data) => {
+  queryClient.setQueryData([...QUERY_KEYS.fulfillments, hostAPI], Object.values(data));
+});
+
+// ❌ Wrong - missing hostAPI, cache update won't apply
+socket.on(SOCKET_EVENTS.FULFILLMENTS, (data) => {
+  queryClient.setQueryData(QUERY_KEYS.fulfillments, Object.values(data));
+});
+```
+
+## 5. 2025 Schema Update Notes
 
 The catalog data structure has been updated. See `src/query/IMPLEMENTATION_SUMMARY.md` for details.
 
@@ -32,7 +50,7 @@ The catalog data structure has been updated. See `src/query/IMPLEMENTATION_SUMMA
 - Intermediate Entry types (`CatalogModifierEntry`, etc.) still exist in the codebase for backward compatibility, but new code should use the ordering arrays on parent types directly
 - Use `IdOrdinalMap` for sorting instead of selector functions where possible
 
-## 5. Testing
+## 6. Testing
 
 This package uses **Vitest** for unit testing.
 
@@ -47,7 +65,7 @@ pnpm test:watch   # Watch mode
 
 See `/.agent/workflows/react-testing.md` for testing workflow guidance.
 
-## 6. Performance Guidelines
+## 7. Performance Guidelines
 
 ### React & Hooks Stability
 

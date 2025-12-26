@@ -10,6 +10,8 @@ import { type FulfillmentConfig } from '@wcp/wario-shared/types';
 
 import { QUERY_KEYS } from '../types';
 
+import { useSocket } from './useSocket';
+
 /**
  * Hook to query fulfillments data
  * Data is populated via Socket.io events, not HTTP requests
@@ -17,11 +19,18 @@ import { QUERY_KEYS } from '../types';
 export function useFulfillmentsQuery(
   options?: Omit<UseQueryOptions<FulfillmentConfig[] | null>, 'queryKey' | 'queryFn'>,
 ) {
+  const { hostAPI } = useSocket();
   return useQuery<FulfillmentConfig[] | null>({
-    queryKey: QUERY_KEYS.fulfillments,
-    queryFn: () => {
-      // Data is set via socket events, not fetched
-      return null;
+    queryKey: [...QUERY_KEYS.fulfillments, hostAPI],
+    queryFn: async () => {
+      if (!hostAPI) return null;
+      const response = await fetch(`${hostAPI}/api/v1/catalog/fulfillments`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch fulfillments');
+      }
+      return response.json() as Promise<FulfillmentConfig[]>;
     },
     staleTime: Infinity, // Never refetch - data comes from socket
     gcTime: Infinity,

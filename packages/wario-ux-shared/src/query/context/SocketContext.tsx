@@ -69,20 +69,21 @@ export function SocketProvider({ hostAPI, namespace, children, autoConnect = tru
     });
 
     // Data events - update TanStack Query cache
+    // Note: Query keys must match those used in hooks (include hostAPI)
     socket.on(SOCKET_EVENTS.CATALOG, (data: ICatalog) => {
-      queryClient.setQueryData(QUERY_KEYS.catalog, data);
+      queryClient.setQueryData([...QUERY_KEYS.catalog, hostAPI], data);
     });
 
     socket.on(SOCKET_EVENTS.FULFILLMENTS, (data: Record<string, FulfillmentConfig>) => {
-      queryClient.setQueryData(QUERY_KEYS.fulfillments, Object.values(data));
+      queryClient.setQueryData([...QUERY_KEYS.fulfillments, hostAPI], Object.values(data));
     });
 
     socket.on(SOCKET_EVENTS.SERVER_TIME, (data: ServerTimeData) => {
-      queryClient.setQueryData(QUERY_KEYS.serverTime, data);
+      queryClient.setQueryData([...QUERY_KEYS.serverTime, hostAPI], data);
     });
 
     socket.on(SOCKET_EVENTS.SETTINGS, (data: IWSettings) => {
-      queryClient.setQueryData(QUERY_KEYS.settings, data);
+      queryClient.setQueryData([...QUERY_KEYS.settings, hostAPI], data);
     });
   }, [hostAPI, namespace, queryClient]);
 
@@ -117,6 +118,7 @@ export function SocketProvider({ hostAPI, namespace, children, autoConnect = tru
     socket: socketRef.current,
     connect,
     disconnect,
+    hostAPI,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
