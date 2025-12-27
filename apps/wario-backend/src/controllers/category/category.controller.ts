@@ -29,7 +29,6 @@ export class CategoryController {
   @Patch(':catid')
   @Scopes(AuthScopes.WRITE_CATALOG)
   async patchCategory(@Param('catid') catid: string, @Body() body: UpdateCategoryDto) {
-    // todo: UpdateCategoryDto needs to allow partial updates
     const doc = await this.catalogProvider.UpdateCategory(catid, body);
     if (!doc) {
       throw new CategoryNotFoundException(catid);

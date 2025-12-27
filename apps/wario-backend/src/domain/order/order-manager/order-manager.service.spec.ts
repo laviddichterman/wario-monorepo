@@ -828,6 +828,9 @@ describe('OrderManagerService', () => {
 
       // Verify SendMoveTicket was NOT called (PENDING is a silent status)
       expect(deps.printerService.SendMoveTicket).not.toHaveBeenCalled();
+
+      // Verify Calendar was NOT updated (seating changes don't affect calendar)
+      expect(deps.orderCalendarService.ModifyCalendarEvent).not.toHaveBeenCalled();
     });
 
     it('should NOT send move ticket when assigning tables with status ASSIGNED', async () => {

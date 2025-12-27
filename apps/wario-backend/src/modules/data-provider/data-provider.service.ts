@@ -182,7 +182,6 @@ export class DataProviderService implements OnModuleInit {
     }
   };
 
-  // TODO: does this properly handle partial updates?
   updateFulfillment = async (id: string, fulfillment: Partial<Omit<FulfillmentConfig, 'id'>>) => {
     try {
       const updated = await this.fulfillmentRepository.update(id, fulfillment);

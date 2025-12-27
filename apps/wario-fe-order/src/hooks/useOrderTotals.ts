@@ -26,7 +26,7 @@ import { selectSelectedTip, selectStoreCreditValidations, usePaymentStore } from
 
 /**
  * Hook to compute service fee (currently always 0)
- * TODO: Implement actual service fee calculation when needed
+ * TODO: Implement actual service fee calculation on the fulfillment definition when needed should be an order function. Could just be a dumb function that returns a fixed amount based on the service.
  */
 export function useServiceFee(): IMoney {
   return useMemo(() => ({ amount: 0, currency: CURRENCY.USD }), []);

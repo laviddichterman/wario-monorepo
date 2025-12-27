@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { Alert, Box, Button, IconButton, Typography } from '@mui/material';
 
-import { WDateUtils } from '@wcp/wario-shared';
+import { WDateUtils } from '@wcp/wario-shared/logic';
 import type { CoreCartEntry, WProduct } from '@wcp/wario-shared/types';
 
 import { useGroupedAndSortedCart, useOrderById } from '@/hooks/useOrdersQuery';

@@ -1,6 +1,10 @@
 import type { BusinessHoursInput, DatesSetArg } from '@fullcalendar/core';
+import { formatISO, max } from 'date-fns';
 import { useSetAtom } from 'jotai';
 import { useCallback, useMemo, useRef, useState } from 'react';
+
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 
 import {
   DateTimeIntervalBuilder,
@@ -47,6 +51,7 @@ function OrderDrawerWrapper({ orderId, onClose }: { orderId: string; onClose: ()
 
 export function OrderCalendar({ initialView }: OrderCalendarProps) {
   const [activeRange, setActiveRange] = useState<ICalendarRange>(null);
+  const [showPastOrders, setShowPastOrders] = useState(false);
   const fulfillments = useFulfillments();
   const catalogSelectors = useCatalogSelectors();
 
@@ -57,16 +62,25 @@ export function OrderCalendar({ initialView }: OrderCalendarProps) {
     setActiveRange({ start: arg.start, end: arg.end });
   }, []);
 
-  const queryOptions = useMemo(
-    () =>
-      activeRange
-        ? {
-            date: new Date(activeRange.start).toISOString(),
-            endDate: new Date(activeRange.end).toISOString(),
-          }
-        : null,
-    [activeRange],
-  );
+  const queryOptions = useMemo(() => {
+    if (!activeRange) return null;
+
+    // When hidePastOrders is enabled (showPastOrders is false),
+    // clamp the start date to now to avoid fetching past orders
+    const rangeStart = activeRange.start;
+    const rangeEnd = activeRange.end;
+    const effectiveStart = showPastOrders ? rangeStart : max([Date.now(), rangeStart]);
+
+    // If the effective start is beyond the end of the range, return null to skip the query
+    if (effectiveStart >= rangeEnd) {
+      return null;
+    }
+
+    return {
+      date: formatISO(effectiveStart),
+      endDate: formatISO(rangeEnd),
+    };
+  }, [activeRange, showPastOrders]);
 
   const { data: ordersMap = {} } = useOrdersQuery(queryOptions);
 
@@ -197,6 +211,22 @@ export function OrderCalendar({ initialView }: OrderCalendarProps) {
       onEventClick={(arg) => {
         setDrawerState({ orderId: arg.event.id, isOpen: true });
       }}
+      toolbarSlot={
+        <FormControlLabel
+          control={
+            <Switch
+              checked={showPastOrders}
+              onChange={(e) => {
+                setShowPastOrders(e.target.checked);
+              }}
+              size="small"
+            />
+          }
+          label="Show past orders"
+          labelPlacement="start"
+          sx={{ mr: 1 }}
+        />
+      }
     />
   );
 }

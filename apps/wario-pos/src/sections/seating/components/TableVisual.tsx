@@ -13,6 +13,8 @@ import { useTheme } from '@mui/material/styles';
 
 import { SeatingShape } from '@wcp/wario-shared/types';
 
+export type SeatingCanvasMode = 'builder' | 'readonly' | 'selection';
+
 export interface TableVisualProps {
   /** Table shape: 'RECTANGLE' or 'ELLIPSE' */
   shape: SeatingShape;
@@ -20,6 +22,8 @@ export interface TableVisualProps {
   shapeDimX: number;
   /** Half-height for rect, y-radius for ellipse (in layout units) */
   shapeDimY: number;
+  /** Canvas mode - controls whether selection handles are shown */
+  mode?: SeatingCanvasMode;
   /** Fill color (defaults to theme surface) */
   fill?: string;
   /** Stroke color (defaults to theme outline) */
@@ -41,6 +45,7 @@ export const TableVisual = memo(function TableVisual({
   shape,
   shapeDimX,
   shapeDimY,
+  mode = 'builder',
   fill,
   stroke,
   isSelected = false,
@@ -53,15 +58,16 @@ export const TableVisual = memo(function TableVisual({
   const baseFill = disabled ? theme.palette.action.disabledBackground : (fill ?? theme.palette.background.paper);
   const baseStroke = disabled ? theme.palette.action.disabled : (stroke ?? theme.palette.divider);
   const selectedStroke = theme.palette.primary.main;
+  const selectedFill = theme.palette.primary.light + '40'; // 25% opacity primary color
   const selectedStrokeWidth = 3;
   const normalStrokeWidth = 1.5;
 
-  // Selection styling
-  const currentStroke = isSelected ? selectedStroke : baseStroke;
+  // Determine fill color priority: selection > status > base
+  // statusColor provides occupancy visualization in timeline/assignment views
+  const statusFill = statusColor ? statusColor + '60' : null; // 37% opacity for status
+  const currentFill = isSelected ? selectedFill : (statusFill ?? baseFill);
+  const currentStroke = isSelected ? selectedStroke : (statusColor ?? baseStroke);
   const currentStrokeWidth = isSelected ? selectedStrokeWidth : normalStrokeWidth;
-
-  // Status indicator (overlay circle)
-  const hasStatus = Boolean(statusColor);
 
   // Full dimensions
   const width = shapeDimX * 2;
@@ -80,10 +86,10 @@ export const TableVisual = memo(function TableVisual({
           height={height}
           rx={4}
           ry={4}
-          fill={baseFill}
+          fill={currentFill}
           stroke={currentStroke}
           strokeWidth={currentStrokeWidth}
-          style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
+          style={{ transition: 'fill 0.15s, stroke 0.15s, stroke-width 0.15s' }}
         />
       ) : (
         <ellipse
@@ -91,27 +97,15 @@ export const TableVisual = memo(function TableVisual({
           cy={0}
           rx={shapeDimX}
           ry={shapeDimY}
-          fill={baseFill}
+          fill={currentFill}
           stroke={currentStroke}
           strokeWidth={currentStrokeWidth}
-          style={{ transition: 'stroke 0.15s, stroke-width 0.15s' }}
+          style={{ transition: 'fill 0.15s, stroke 0.15s, stroke-width 0.15s' }}
         />
       )}
 
-      {/* Status indicator dot */}
-      {hasStatus && (
-        <circle
-          cx={shapeDimX - 6}
-          cy={-shapeDimY + 6}
-          r={6}
-          fill={statusColor}
-          stroke={theme.palette.background.paper}
-          strokeWidth={1.5}
-        />
-      )}
-
-      {/* Selection handles (shown when selected) */}
-      {isSelected && (
+      {/* Selection handles - only shown in builder mode */}
+      {mode === 'builder' && isSelected && (
         <>
           {/* Corner handles */}
           <circle cx={-shapeDimX} cy={-shapeDimY} r={4} fill={selectedStroke} />

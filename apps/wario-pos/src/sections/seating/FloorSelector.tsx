@@ -3,8 +3,8 @@
  *
  * Features:
  * - Floor dropdown selector
- * - Add Floor via dialog
- * - Delete Floor with confirmation (cascade deletes sections and tables)
+ * - Add Floor via dialog (editable mode only)
+ * - Delete Floor with confirmation (editable mode only)
  */
 
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -33,7 +33,12 @@ import { NamePopover } from './components/NamePopover';
 
 const ADD_FLOOR_VALUE = '__add__';
 
-export const FloorSelector = memo(function FloorSelector() {
+export interface FloorSelectorProps {
+  /** If true, hides all edit/add/delete controls */
+  readonly?: boolean;
+}
+
+export const FloorSelector = memo(function FloorSelector({ readonly = false }: FloorSelectorProps) {
   // Use nested floors array directly
   const floors = useSeatingBuilderStore((s) => s.layout.floors);
   const activeFloorIndex = useActiveFloorIndex();
@@ -65,13 +70,15 @@ export const FloorSelector = memo(function FloorSelector() {
     (event: SelectChangeEvent) => {
       const value = event.target.value;
       if (value === ADD_FLOOR_VALUE) {
-        setAddFloorOpen(true);
+        if (!readonly) {
+          setAddFloorOpen(true);
+        }
       } else {
         // Value is the index as string
         setActiveFloor(Number(value));
       }
     },
-    [setActiveFloor],
+    [setActiveFloor, readonly],
   );
 
   const handleAddFloor = useCallback(
@@ -127,42 +134,48 @@ export const FloorSelector = memo(function FloorSelector() {
                 {floor.name}
               </MenuItem>
             ))}
-            <Divider />
-            <MenuItem value={ADD_FLOOR_VALUE}>
-              <Add sx={{ mr: 1, fontSize: 20 }} />
-              Add Floor...
-            </MenuItem>
+            {!readonly && <Divider key="divider" />}
+            {!readonly && (
+              <MenuItem key="add-floor" value={ADD_FLOOR_VALUE}>
+                <Add sx={{ mr: 1, fontSize: 20 }} />
+                Add Floor...
+              </MenuItem>
+            )}
           </Select>
         </FormControl>
       </Box>
 
-      {/* Rename Floor Button */}
-      <Tooltip title="Rename current floor">
-        <IconButton
-          size="small"
-          onClick={() => {
-            setRenameOpen(true);
-          }}
-        >
-          <Edit fontSize="small" />
-        </IconButton>
-      </Tooltip>
-
-      {/* Delete Floor Button */}
-      <Tooltip title={canDeleteFloor ? 'Delete current floor' : 'Cannot delete the only floor'}>
-        <span>
+      {/* Rename Floor Button - hidden in readonly mode */}
+      {!readonly && (
+        <Tooltip title="Rename current floor">
           <IconButton
             size="small"
-            color="error"
             onClick={() => {
-              setDeleteDialogOpen(true);
+              setRenameOpen(true);
             }}
-            disabled={!canDeleteFloor}
           >
-            <Delete fontSize="small" />
+            <Edit fontSize="small" />
           </IconButton>
-        </span>
-      </Tooltip>
+        </Tooltip>
+      )}
+
+      {/* Delete Floor Button - hidden in readonly mode */}
+      {!readonly && (
+        <Tooltip title={canDeleteFloor ? 'Delete current floor' : 'Cannot delete the only floor'}>
+          <span>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => {
+                setDeleteDialogOpen(true);
+              }}
+              disabled={!canDeleteFloor}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      )}
 
       {/* Add Floor Popover */}
       <NamePopover

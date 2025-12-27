@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 
 import { Inject, Injectable } from '@nestjs/common';
 import { format, formatISO, formatRFC3339, Interval, isSameMinute } from 'date-fns';
+import { isEqual } from 'es-toolkit';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { Order, Order as SquareOrder } from 'square/legacy';
 
@@ -452,8 +453,6 @@ export class OrderManagerService {
             ],
           };
         }
-        // TODO: free up order slot and unblock time as appropriate
-        // this.socketIoService.EmitOrder(updatedOrder); // TODO: Implement EmitOrder in SocketIoService
         return { status: 200, success: true as const, result: updatedOrder };
       } catch (err: unknown) {
         const errorDetail = `Unable to commit update to order to release lock and cancel. Got error: ${JSON.stringify(err, null, 2)}`;
@@ -484,108 +483,6 @@ export class OrderManagerService {
         ],
       };
     }
-  };
-
-  private ModifyLockedOrder = async (
-    lockedOrder: WOrderInstance,
-    orderUpdate: Partial<
-      Pick<WOrderInstance, 'customerInfo' | 'cart' | 'discounts' | 'fulfillment' | 'specialInstructions' | 'tip'>
-    >,
-  ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    const updatedOrder = { ...lockedOrder, ...orderUpdate };
-    const fulfillmentConfig = this.dataProvider.getFulfillments()[updatedOrder.fulfillment.selectedService];
-    const categoryOrderMap = GenerateCategoryOrderMapForOrder(
-      fulfillmentConfig,
-      this.catalogService.getCatalogSelectors().category,
-    );
-
-    const _is3pOrder = fulfillmentConfig.service === FulfillmentType.ThirdParty;
-    const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
-    const _oldPromisedTime = WDateUtils.ComputeServiceDateTime(lockedOrder.fulfillment);
-    this.logger.info(
-      `Adjusting order in status: ${lockedOrder.status} with fulfillment status ${lockedOrder.fulfillment.status} to new time of ${format(promisedTime.start, WDateUtils.ISODateTimeNoOffset)}`,
-    );
-    const customerName = `${lockedOrder.customerInfo.givenName} ${lockedOrder.customerInfo.familyName}`;
-    const rebuiltCart = RebuildAndSortCart(
-      lockedOrder.cart,
-      this.catalogService.getCatalogSelectors(),
-      promisedTime.start,
-      fulfillmentConfig.id,
-    );
-    const eventTitle = EventTitleStringBuilder(
-      this.catalogService.getCatalogSelectors(),
-      categoryOrderMap,
-      fulfillmentConfig,
-      customerName,
-      lockedOrder.fulfillment,
-      rebuiltCart,
-      lockedOrder.specialInstructions ?? '',
-    );
-    const _flatCart = Object.values(rebuiltCart).flat();
-
-    // TODO: this doesn't work as it doesn't properly handle updated discounts or store credit redemptions
-    const recomputedTotals = RecomputeTotals({
-      cart: rebuiltCart,
-      fulfillment: fulfillmentConfig,
-      order: updatedOrder,
-      payments: updatedOrder.payments,
-      discounts: updatedOrder.discounts,
-      config: {
-        SERVICE_CHARGE: 0,
-        AUTOGRAT_THRESHOLD: this.appConfigService.autogratThreshold,
-        TAX_RATE: this.dataProvider.getSettings()?.TAX_RATE || 0.1025,
-        CATALOG_SELECTORS: this.catalogService.getCatalogSelectors(),
-      },
-    });
-
-    // adjust calendar event
-    const gCalEventId = lockedOrder.metadata.find((x) => x.key === 'GCALEVENT')?.value;
-    if (gCalEventId) {
-      const dateTimeInterval = DateTimeIntervalBuilder(updatedOrder.fulfillment, fulfillmentConfig.maxDuration);
-      const updatedOrderEventJson = this.orderNotificationService.GenerateOrderEventJson(
-        eventTitle,
-        updatedOrder,
-        rebuiltCart,
-        dateTimeInterval,
-        recomputedTotals,
-      );
-      await this.orderCalendarService.ModifyCalendarEvent(gCalEventId, updatedOrderEventJson);
-    }
-    throw Error("This shit doesn't work yet.");
-
-    // // adjust DB event
-    // return await this.orderModel
-    //   .findOneAndUpdate(
-    //     { locked: lockedOrder.locked, _id: lockedOrder.id },
-    //     {
-    //       ...updatedOrder,
-    //       locked: null,
-    //     },
-    //     { new: true },
-    //   )
-    //   .then(async (updatedOrder) => {
-    //     // return success/failure
-    //     // this.socketIoService.EmitOrder(updatedOrder!.toObject()); // TODO: Implement EmitOrder in SocketIoService
-    //     return { status: 200, success: true, error: [], result: updatedOrder! };
-    //   })
-    //   .catch((err: any) => {
-    //     const errorDetail = `Unable to commit update to order to release lock and update fulfillment time. Got error: ${JSON.stringify(err, null, 2)}`;
-    //     this.logger.error(
-    //       { err },
-    //       'Unable to commit update to order to release lock and update fulfillment time',
-    //     );
-    //     return {
-    //       status: 500,
-    //       success: false,
-    //       error: [
-    //         {
-    //           category: 'API_ERROR',
-    //           code: 'INTERNAL_SERVER_ERROR',
-    //           detail: errorDetail,
-    //         },
-    //       ],
-    //     };
-    //   });
   };
 
   /**
@@ -664,7 +561,7 @@ export class OrderManagerService {
       } | null;
     },
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
-    this.logger.debug({ orderId: lockedOrder.id, updateFields: Object.keys(updates) }, 'Updating order info');
+    this.logger.debug({ orderId: lockedOrder.id }, 'Updating order info');
 
     try {
       // Get the fulfillment config - use updated service if provided, else existing
@@ -823,7 +720,30 @@ export class OrderManagerService {
 
       // === SYNC TO GOOGLE CALENDAR ===
       const gCalEventId = lockedOrder.metadata.find((x) => x.key === 'GCALEVENT')?.value;
-      if (gCalEventId) {
+      const hasFulfillmentCalendarChanges = (oldF: FulfillmentData, newF?: FulfillmentData) => {
+        if (!newF) return false;
+        if (oldF.selectedDate !== newF.selectedDate) return true;
+        if (oldF.selectedTime !== newF.selectedTime) return true;
+        if (oldF.selectedService !== newF.selectedService) return true;
+        if (!isEqual(oldF.deliveryInfo, newF.deliveryInfo)) return true;
+        if (oldF.dineInInfo?.partySize !== newF.dineInInfo?.partySize) return true;
+        return false;
+      };
+
+      const hasCustomerInfoChanges = updates.customerInfo && !isEqual(updates.customerInfo, lockedOrder.customerInfo);
+
+      const hasInstructionChanges =
+        updates.specialInstructions !== undefined && updates.specialInstructions !== lockedOrder.specialInstructions;
+
+      const hasCalendarRelevantChanges =
+        hasFulfillmentCalendarChanges(
+          lockedOrder.fulfillment as FulfillmentData,
+          updates.fulfillment as FulfillmentData | undefined,
+        ) ||
+        hasCustomerInfoChanges ||
+        hasInstructionChanges;
+
+      if (gCalEventId && hasCalendarRelevantChanges) {
         // Rebuild cart and generate event title with updated info
         const categoryOrderMap = GenerateCategoryOrderMapForOrder(
           fulfillmentConfig,

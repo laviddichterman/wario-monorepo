@@ -1,6 +1,8 @@
 /**
  * AssignTableDialog - Modal dialog for selecting tables to assign to an order.
  * Supports both List View (grouped by floor/section) and Map View (using SeatingCanvas).
+ *
+ * Uses UNIFIED local state for selection that works with both views via controlled props.
  */
 
 import { useCallback, useState } from 'react';
@@ -22,12 +24,11 @@ import Typography from '@mui/material/Typography';
 
 import type { FullSeatingFloor } from '@wcp/wario-shared/types';
 
+import { useOrderById } from '@/hooks/useOrdersQuery';
 import { useSeatingLayoutQuery, useSeatingLayoutsQuery } from '@/hooks/useSeatingLayoutQuery';
 import { useAssignTableMutation } from '@/hooks/useTableAssignment';
 
 import { SeatingCanvas } from '@/sections/seating/SeatingCanvas';
-
-import { useSeatingBuilderStore } from '@/stores/useSeatingBuilderStore';
 
 export interface AssignTableDialogProps {
   open: boolean;
@@ -40,67 +41,38 @@ type ViewMode = 'list' | 'map';
 
 export function AssignTableDialog({ open, onClose, orderId, currentTableIds }: AssignTableDialogProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
+  // Single source of truth for selection - used by BOTH list and map views
   const [selectedIds, setSelectedIds] = useState<string[]>(currentTableIds);
   const [activeFloorIndex, setActiveFloorIndex] = useState(0);
 
-  const { mutate: assignTable, isLoading } = useAssignTableMutation();
+  const order = useOrderById(orderId);
+  const { mutate: assignTable, isPending: isLoading } = useAssignTableMutation();
 
   // Get layout data
   const { data: layouts } = useSeatingLayoutsQuery();
   const firstLayoutId = layouts?.[0]?.id ?? null;
   const { data: fullLayout } = useSeatingLayoutQuery(firstLayoutId);
 
-  // For Map View: sync with SeatingBuilderStore
-  const selectResources = useSeatingBuilderStore((s) => s.selectResources);
-  const selectedResourceIds = useSeatingBuilderStore((s) => s.editor.selectedResourceIds);
-  const setActiveFloorById = useSeatingBuilderStore((s) => s.setActiveFloor);
+  // Simple view mode toggle - no sync needed since both views use same state
+  const handleViewModeChange = useCallback((_: React.MouseEvent<HTMLElement>, newMode: ViewMode | null) => {
+    if (newMode === null) return;
+    setViewMode(newMode);
+  }, []);
 
-  // Sync selectedIds when switching to map view
-  const handleViewModeChange = useCallback(
-    (_: React.MouseEvent<HTMLElement>, newMode: ViewMode | null) => {
-      if (newMode === null) return;
-      setViewMode(newMode);
-
-      if (newMode === 'map') {
-        // Sync our local selection to the store
-        selectResources(selectedIds);
-        // Set active floor by index
-        const floors = fullLayout?.floors ?? [];
-        if (floors[activeFloorIndex]) {
-          const floorIdx = floors.findIndex((f) => f.id === floors[activeFloorIndex].id);
-          if (floorIdx >= 0) {
-            setActiveFloorById(floorIdx);
-          }
-        }
-      }
-    },
-    [selectedIds, selectResources, fullLayout, activeFloorIndex, setActiveFloorById],
-  );
-
-  // Sync from store when in map mode
-  const handleSyncFromMap = useCallback(() => {
-    setSelectedIds(selectedResourceIds);
-  }, [selectedResourceIds]);
-
+  // Toggle table selection (used by list view)
   const handleToggleTable = useCallback((tableId: string) => {
     setSelectedIds((prev) => (prev.includes(tableId) ? prev.filter((id) => id !== tableId) : [...prev, tableId]));
   }, []);
 
-  const handleFloorTabChange = useCallback(
-    (_: React.SyntheticEvent, newValue: number) => {
-      setActiveFloorIndex(newValue);
-      if (viewMode === 'map') {
-        setActiveFloorById(newValue);
-      }
-    },
-    [viewMode, setActiveFloorById],
-  );
+  const handleFloorTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
+    setActiveFloorIndex(newValue);
+  }, []);
 
   const handleConfirm = useCallback(() => {
-    const finalSelection = viewMode === 'map' ? selectedResourceIds : selectedIds;
-    void assignTable({ orderId, tableIds: finalSelection });
+    if (!order) return;
+    assignTable({ orderId, tableIds: selectedIds, order });
     onClose();
-  }, [viewMode, selectedResourceIds, selectedIds, assignTable, orderId, onClose]);
+  }, [selectedIds, assignTable, orderId, onClose, order]);
 
   const handleCancel = useCallback(() => {
     setSelectedIds(currentTableIds);
@@ -148,10 +120,14 @@ export function AssignTableDialog({ open, onClose, orderId, currentTableIds }: A
           <ListViewContent floor={floors[activeFloorIndex]} selectedIds={selectedIds} onToggle={handleToggleTable} />
         ) : (
           <Box sx={{ height: 400 }}>
-            <SeatingCanvas mode="selection" />
-            <Button size="small" onClick={handleSyncFromMap} sx={{ mt: 1 }}>
-              Update Selection from Map
-            </Button>
+            {/* Controlled SeatingCanvas - uses local selectedIds state */}
+            <SeatingCanvas
+              mode="selection"
+              layout={fullLayout}
+              activeFloorIndex={activeFloorIndex}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+            />
           </Box>
         )}
       </DialogContent>
@@ -159,9 +135,9 @@ export function AssignTableDialog({ open, onClose, orderId, currentTableIds }: A
       <DialogActions>
         <Stack direction="row" spacing={1} sx={{ width: '100%', justifyContent: 'space-between', px: 1, py: 0.5 }}>
           <Box>
-            {(viewMode === 'map' ? selectedResourceIds : selectedIds).length > 0 && (
+            {selectedIds.length > 0 && (
               <Typography variant="body2" color="text.secondary">
-                {(viewMode === 'map' ? selectedResourceIds : selectedIds).length} table(s) selected
+                {selectedIds.length} table(s) selected
               </Typography>
             )}
           </Box>

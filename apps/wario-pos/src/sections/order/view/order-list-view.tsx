@@ -12,10 +12,14 @@ import { GlobalOrderDrawer } from '@/components/wario/orders/GlobalOrderDrawer';
 import { OrderCalendar } from '@/components/wario/orders/OrderCalendar';
 import { OrderManagerComponent } from '@/components/wario/orders/OrderManager';
 
+import { SeatingTimelineDialog } from '@/sections/seating/SeatingTimelineDialog';
+
 import { DashboardContent } from '@/layouts/dashboard';
 
 export function OrderListView() {
   const [isTimingDrawerOpen, setIsTimingDrawerOpen] = useState<boolean>(false);
+  const [isTimelineDialogOpen, setIsTimelineDialogOpen] = useState<boolean>(false);
+
   const toggleDrawer = useCallback(
     (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
       if (event.type === 'keydown' && ['Tab', 'Shift'].includes((event as React.KeyboardEvent).key)) {
@@ -39,9 +43,20 @@ export function OrderListView() {
           sx={{ mb: { xs: 3, md: 5 } }}
         />
 
-        <Button variant="outlined" onClick={toggleDrawer(true)} sx={{ textTransform: 'capitalize', mb: 2 }}>
-          Manage Order Timing
-        </Button>
+        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+          <Button variant="outlined" onClick={toggleDrawer(true)} sx={{ textTransform: 'capitalize' }}>
+            Manage Order Timing
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setIsTimelineDialogOpen(true);
+            }}
+            sx={{ textTransform: 'capitalize' }}
+          >
+            View Seating Timeline
+          </Button>
+        </Stack>
 
         <Drawer
           anchor="right"
@@ -89,6 +104,13 @@ export function OrderListView() {
         <GlobalOrderDrawer />
         <OrderCalendar initialView="listWeek" />
       </DashboardContent>
+
+      <SeatingTimelineDialog
+        open={isTimelineDialogOpen}
+        onClose={() => {
+          setIsTimelineDialogOpen(false);
+        }}
+      />
     </>
   );
 }

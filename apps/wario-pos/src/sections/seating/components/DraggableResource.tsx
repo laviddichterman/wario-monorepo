@@ -15,6 +15,8 @@ import { type SeatingResourceRenderModel, useSeatingBuilderStore } from '@/store
 import { ResizeHandles } from './ResizeHandles';
 import { TableVisual } from './TableVisual';
 
+export type SeatingCanvasMode = 'builder' | 'readonly' | 'selection';
+
 export interface ResizePreview {
   resourceId: string;
   previewWidth: number;
@@ -24,6 +26,8 @@ export interface ResizePreview {
 export interface DraggableResourceProps {
   /** Resource render model from the store */
   model: SeatingResourceRenderModel;
+  /** Canvas interaction mode */
+  mode?: SeatingCanvasMode;
   /** X-axis scale factor (SVG units per screen pixel) */
   scaleX: number;
   /** Y-axis scale factor (SVG units per screen pixel) */
@@ -42,6 +46,7 @@ export interface DraggableResourceProps {
 
 export const DraggableResource = memo(function DraggableResource({
   model,
+  mode = 'builder',
   scaleX,
   scaleY,
   resizePreview,
@@ -52,12 +57,15 @@ export const DraggableResource = memo(function DraggableResource({
 }: DraggableResourceProps) {
   const interactionMode = useSeatingBuilderStore((s) => s.interactionMode);
 
+  // Disable dragging in selection/readonly mode, or when not in SELECT interaction mode
+  const isDragDisabled = mode !== 'builder' || interactionMode !== 'SELECT' || !model.isActiveSection;
+
   // dnd-kit draggable setup with long-press activation for touch
-  // Disable dragging for non-active section tables
+  // Disable dragging for non-active section tables or when not in builder mode
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: model.id,
     data: { type: 'resource', model },
-    disabled: interactionMode !== 'SELECT' || !model.isActiveSection,
+    disabled: isDragDisabled,
   });
 
   // Wrapper for setNodeRef that accepts SVGGElement
@@ -139,6 +147,7 @@ export const DraggableResource = memo(function DraggableResource({
             shape={model.shape}
             shapeDimX={displayWidth}
             shapeDimY={displayHeight}
+            mode={mode}
             isSelected={model.isSelected}
             disabled={model.disabled}
             statusColor={statusColor}
@@ -146,8 +155,8 @@ export const DraggableResource = memo(function DraggableResource({
         </g>
       </g>
 
-      {/* Resize handles rendered outside rotation - axis-aligned */}
-      {model.isSelected && (
+      {/* Resize handles rendered outside rotation - axis-aligned - only in builder mode */}
+      {mode === 'builder' && model.isSelected && (
         <ResizeHandles
           resourceId={model.id}
           width={displayWidth}

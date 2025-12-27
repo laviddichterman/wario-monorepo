@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule as NestConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -22,6 +22,7 @@ import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 import { OrdersModule } from './infrastructure/database/mongoose/models/orders/orders.module';
 import { QueryModule } from './infrastructure/database/mongoose/models/query/query.module';
 import { SettingsModule } from './infrastructure/database/mongoose/models/settings/settings.module';
+import { RequestDebugLoggingInterceptor } from './interceptors/request-debug-logging.interceptor';
 import { SeatingModule } from './modules/seating/seating.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 
@@ -31,6 +32,8 @@ import { TasksModule } from './modules/tasks/tasks.module';
     ScheduleModule.forRoot(),
     LoggerModule.forRoot({
       pinoHttp: {
+        // Set log level - 'debug' enables debug, info, warn, and error logs
+        level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
         // Use pino-pretty for development, JSON for production
         transport:
           process.env.NODE_ENV !== 'production'
@@ -42,7 +45,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
         autoLogging: true,
         // Custom log level based on response status
         customLogLevel: (_req, res, err) => {
-          if (res.statusCode >= 500 || err) return 'error';
+          if (res.statusCode >= 500 || err) return 'debug';
           if (res.statusCode >= 400) return 'warn';
           return 'info';
         },
@@ -133,6 +136,10 @@ import { TasksModule } from './modules/tasks/tasks.module';
     {
       provide: APP_GUARD,
       useExisting: ScopesGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestDebugLoggingInterceptor,
     },
   ],
 })

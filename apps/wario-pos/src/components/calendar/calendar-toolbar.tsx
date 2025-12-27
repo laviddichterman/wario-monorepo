@@ -31,6 +31,8 @@ type CalendarToolbarProps = Partial<UseCalendarReturn> & {
   }[];
   filterProps: React.ComponentProps<typeof CalendarFiltersResult>;
   onOpenFilters: () => void;
+  /** Optional slot for custom controls to render in the toolbar */
+  toolbarSlot?: React.ReactNode;
 };
 
 export function CalendarToolbar({
@@ -43,6 +45,7 @@ export function CalendarToolbar({
   onOpenFilters,
   onDateNavigation,
   filterProps,
+  toolbarSlot,
 }: CalendarToolbarProps) {
   const mobileActions = usePopover();
 
@@ -165,6 +168,7 @@ export function CalendarToolbar({
       {renderDesktopMenuItems()}
       {renderMobileMenuItems()}
       {renderDateNavigation()}
+      {toolbarSlot}
       {renderTodayFiltersAndResults()}
       {loading && renderLoading()}
     </Box>

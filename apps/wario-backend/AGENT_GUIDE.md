@@ -16,6 +16,7 @@
 - **NestJS**: Standard modular architecture.
 - **Database**: MongoDB via `mongoose`.
 - **Logging**: `nestjs-pino`. **Strict Rule**: _Never_ use `console.log`. Always inject `PinoLogger`.
+  - **Debug Logging**: Request details (body, query, params) are automatically logged at `debug` level via `RequestDebugLoggingInterceptor`.
 
 ### Directory Structure (`src/`)
 

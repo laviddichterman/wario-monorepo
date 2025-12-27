@@ -29,7 +29,10 @@ export const GridBackground = memo(function GridBackground({
   const theme = useTheme();
 
   if (!visible || gridSize <= 0) {
-    return <rect x={0} y={0} width={width} height={height} fill={theme.palette.background.default} />;
+    // Still need id for lasso selection to work in selection mode
+    return (
+      <rect id="seating-canvas-bg" x={0} y={0} width={width} height={height} fill={theme.palette.background.default} />
+    );
   }
 
   const patternId = `grid-pattern-${String(gridSize)}`;

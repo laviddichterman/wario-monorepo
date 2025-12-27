@@ -26,7 +26,10 @@ export default defineConfig({
   server: { port: PORT, host: true },
   preview: { port: PORT, host: true },
   build: { target: 'es2022' },
-  optimizeDeps: { esbuildOptions: { target: 'es2022' } },
+  optimizeDeps: {
+    esbuildOptions: { target: 'es2022' },
+    include: ['react-transition-group'],
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

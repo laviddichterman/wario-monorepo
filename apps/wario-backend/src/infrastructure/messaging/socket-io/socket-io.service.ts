@@ -53,7 +53,6 @@ export class SocketIoService implements OnGatewayConnection, OnGatewayDisconnect
     this.logger.trace({ fulfillmentCount, seatingCount }, 'Emitting initial data provider state');
     this.EmitFulfillmentsTo(client, this.dataProvider.getFulfillments());
     // incorrectly type cast to IWSettings so we can not worry about types during the migration
-    // @TODO: fix this when we can remove the IWSettingsDto.config field
     this.EmitSettingsTo(client, this.dataProvider.getSettings() as IWSettings);
     this.EmitSeatingResourcesTo(client, this.dataProvider.getSeatingResources());
 

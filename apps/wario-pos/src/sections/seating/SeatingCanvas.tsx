@@ -21,6 +21,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
 
+import type { FullSeatingLayout } from '@wcp/wario-shared/types';
+
 import {
   type SeatingResourceRenderModel,
   useActiveFloor,
@@ -67,6 +69,28 @@ export interface SeatingCanvasProps {
    * - 'selection': Click/lasso to select, no drag/resize (for table assignment)
    */
   mode?: SeatingCanvasMode;
+
+  // --- Controlled Props (optional - fallback to store if not provided) ---
+
+  /**
+   * Layout data. When provided, canvas uses this instead of global store.
+   */
+  layout?: FullSeatingLayout | null;
+  /**
+   * Active floor index. Required when layout is provided.
+   */
+  activeFloorIndex?: number;
+  /**
+   * Selected resource IDs. When provided, canvas uses this for selection state.
+   */
+  selectedIds?: string[];
+  /**
+   * Selection change callback. Required for selection to work when selectedIds is provided.
+   */
+  onSelectionChange?: (ids: string[]) => void;
+
+  // --- Other Props ---
+
   /**
    * Optional map of tableId -> status info for live table visualization.
    * When provided, tables will display status colors.
@@ -79,7 +103,15 @@ export interface SeatingCanvasProps {
   onTableClick?: (tableId: string, orderId: string | null) => void;
 }
 
-export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }: SeatingCanvasProps) {
+export function SeatingCanvas({
+  mode = 'builder',
+  layout: propLayout,
+  activeFloorIndex: propActiveFloorIndex,
+  selectedIds: propSelectedIds,
+  onSelectionChange,
+  tableStatusMap,
+  onTableClick,
+}: SeatingCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [svgSize, setSvgSize] = useState({ width: 0, height: 0 });
 
@@ -133,10 +165,19 @@ export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }
   const scaleX = svgSize.width > 0 ? viewBox.width / svgSize.width : 1;
   const scaleY = svgSize.height > 0 ? viewBox.height / svgSize.height : 1;
 
-  // Select data from store - now using nested structure
-  const activeFloor = useActiveFloor();
-  const activeSection = useActiveSection();
-  const selectedResourceIds = useSeatingBuilderStore((s) => s.editor.selectedResourceIds);
+  // --- Select data from store OR use controlled props ---
+  // If controlled props are provided, use them; otherwise fallback to store
+  const storeFloor = useActiveFloor();
+  const storeSection = useActiveSection();
+  const storeSelectedIds = useSeatingBuilderStore((s) => s.editor.selectedResourceIds);
+  const storeSelectResources = useSeatingBuilderStore((s) => s.selectResources);
+
+  // Determine which layout source to use
+  const isControlled = propLayout !== undefined;
+  const activeFloor = isControlled ? (propLayout?.floors[propActiveFloorIndex ?? 0] ?? null) : storeFloor;
+  const activeSection = isControlled ? null : storeSection; // No active section concept when controlled
+  const selectedResourceIds = propSelectedIds ?? storeSelectedIds;
+  const selectResources = onSelectionChange ?? storeSelectResources;
 
   // Memoize derived render models array - now renders ALL sections on active floor
   const renderModels = useMemo((): SeatingResourceRenderModel[] => {
@@ -147,7 +188,9 @@ export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }
 
     // Collect resources from ALL sections on this floor
     return activeFloor.sections.flatMap((section) => {
-      const isActiveSection = section.id === activeSectionId;
+      // In builder mode, only the active section is editable
+      // In selection/readonly modes, ALL sections are "active" (selectable/viewable)
+      const isActiveSection = mode === 'builder' ? section.id === activeSectionId : true;
 
       return section.resources.map((resource) => ({
         id: resource.id,
@@ -165,7 +208,7 @@ export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }
         isActiveSection,
       }));
     });
-  }, [activeFloor, activeSection, selectedResourceIds]);
+  }, [activeFloor, activeSection, selectedResourceIds, mode]);
 
   // Create a lookup map for resources by ID (for drag/resize operations)
   const resourcesById = useMemo(() => {
@@ -176,8 +219,10 @@ export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }
     return map;
   }, [renderModels]);
 
-  const selectResources = useSeatingBuilderStore((s) => s.selectResources);
-  const clearSelection = useSeatingBuilderStore((s) => s.clearSelection);
+  // clearSelection uses the selectResources callback with empty array
+  const clearSelection = useCallback(() => {
+    selectResources([]);
+  }, [selectResources]);
   const moveResources = useSeatingBuilderStore((s) => s.moveResources);
   const updateResource = useSeatingBuilderStore((s) => s.updateResource);
   const pushUndoCheckpoint = useSeatingBuilderStore((s) => s.pushUndoCheckpoint);
@@ -725,6 +770,7 @@ export function SeatingCanvas({ mode = 'builder', tableStatusMap, onTableClick }
                 <g key={model.id} className="resource-layer">
                   <DraggableResource
                     model={model}
+                    mode={mode}
                     scaleX={scaleX}
                     scaleY={scaleY}
                     resizePreview={resizePreview?.resourceId === model.id ? resizePreview : null}

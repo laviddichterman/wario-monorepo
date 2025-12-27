@@ -143,6 +143,8 @@ Located in `src/sections/seating`. A touch-optimized floor plan editor for confi
 | `SeatingToolbar` | Quick-add, undo/redo, rotate, delete, save |
 | `DraggableResource` | Individual table with resize handles |
 | `TableEditDialog` | Double-click edit for table properties |
+| `SeatingTimelineDialog` | View table occupancy timeline |
+| `TimelineScrubber` | Interactive time range scrubber |
 
 **SeatingCanvas Modes** (`mode` prop):
 

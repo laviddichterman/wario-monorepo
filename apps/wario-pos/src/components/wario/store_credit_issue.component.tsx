@@ -32,11 +32,6 @@ export const StoreCreditIssueComponent = () => {
   const [expiration, setExpiration] = useState<string | null>(WDateUtils.formatISODate(addDays(current_time, 60)));
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // const _validateRecipientEmail = () => {
-  //   //setRecipientEmailError(recipientEmail.length >= 1 && !EMAIL_REGEX.test(recipientEmail))
-  //   // TODO: use yup.isEmail
-  // }
-
   const issueMutation = useIssueStoreCreditMutation();
 
   const handleSubmit = () => {
@@ -113,6 +108,7 @@ export const StoreCreditIssueComponent = () => {
             md: 6,
           }}
         >
+          {/* TODO: use email RHF component. Should this be a RHF component? */}
           <StringPropertyComponent
             disabled={isProcessing}
             label="Customer E-mail"

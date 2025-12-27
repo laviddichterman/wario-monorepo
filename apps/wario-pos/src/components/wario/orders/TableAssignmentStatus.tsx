@@ -8,14 +8,20 @@ import { useCallback, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import type { SelectChangeEvent } from '@mui/material/Select';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
-import { type WOrderInstance, WSeatingStatus } from '@wcp/wario-shared/types';
+import { WSeatingStatus } from '@wcp/wario-shared/logic';
+import type { WOrderInstance } from '@wcp/wario-shared/types';
 
 import { useSeatingLayoutQuery, useSeatingLayoutsQuery } from '@/hooks/useSeatingLayoutQuery';
-import { useMarkArrivedMutation } from '@/hooks/useTableAssignment';
+import { useUpdateSeatingStatusMutation } from '@/hooks/useTableAssignment';
 
 import { AssignTableDialog } from './AssignTableDialog';
 
@@ -26,7 +32,7 @@ export interface TableAssignmentStatusProps {
 const STATUS_LABELS: Record<WSeatingStatus, string> = {
   [WSeatingStatus.PENDING]: 'Pending',
   [WSeatingStatus.ASSIGNED]: 'Assigned',
-  [WSeatingStatus.WAITING_ARRIVAL]: 'Waiting',
+  [WSeatingStatus.WAITING_ARRIVAL]: 'Waiting for Arrival',
   [WSeatingStatus.SEATED_WAITING]: 'Partially Seated',
   [WSeatingStatus.SEATED]: 'Seated',
   [WSeatingStatus.WAITING_FOR_CHECK]: 'Waiting for Check',
@@ -45,9 +51,24 @@ const STATUS_COLORS: Record<WSeatingStatus, 'default' | 'primary' | 'success' | 
   [WSeatingStatus.COMPLETED]: 'default',
 };
 
+/**
+ * Define valid status transitions.
+ * Staff can only move forward through the workflow (with some flexibility).
+ */
+const VALID_TRANSITIONS: Record<WSeatingStatus, WSeatingStatus[]> = {
+  [WSeatingStatus.PENDING]: [WSeatingStatus.ASSIGNED],
+  [WSeatingStatus.ASSIGNED]: [WSeatingStatus.WAITING_ARRIVAL, WSeatingStatus.SEATED],
+  [WSeatingStatus.WAITING_ARRIVAL]: [WSeatingStatus.SEATED_WAITING, WSeatingStatus.SEATED],
+  [WSeatingStatus.SEATED_WAITING]: [WSeatingStatus.SEATED],
+  [WSeatingStatus.SEATED]: [WSeatingStatus.WAITING_FOR_CHECK],
+  [WSeatingStatus.WAITING_FOR_CHECK]: [WSeatingStatus.PAID],
+  [WSeatingStatus.PAID]: [WSeatingStatus.COMPLETED],
+  [WSeatingStatus.COMPLETED]: [],
+};
+
 export function TableAssignmentStatus({ order }: TableAssignmentStatusProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { mutate: markArrived, isLoading: isMarkingArrived } = useMarkArrivedMutation();
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useUpdateSeatingStatusMutation();
 
   // Only render for DineIn orders
   const dineInInfo = order.fulfillment.dineInInfo;
@@ -78,6 +99,11 @@ export function TableAssignmentStatus({ order }: TableAssignmentStatusProps) {
   const tableIds = useMemo(() => seating?.tableId ?? [], [seating?.tableId]);
   const status = seating?.status ?? WSeatingStatus.PENDING;
 
+  // Get available transitions for current status
+  const availableStatuses = useMemo(() => {
+    return VALID_TRANSITIONS[status];
+  }, [status]);
+
   // Resolve table names
   const tableNames = useMemo(() => {
     return tableIds.map((id) => tableNameMap[id] || `Table ${id.slice(-4)}`);
@@ -91,12 +117,17 @@ export function TableAssignmentStatus({ order }: TableAssignmentStatusProps) {
     setDialogOpen(false);
   }, []);
 
-  const handleMarkArrived = useCallback(async () => {
-    await markArrived({
-      orderId: order.id,
-      status: WSeatingStatus.SEATED,
-    });
-  }, [markArrived, order.id]);
+  const handleStatusChange = useCallback(
+    (event: SelectChangeEvent<WSeatingStatus>) => {
+      const newStatus = event.target.value as WSeatingStatus;
+      updateStatus({
+        orderId: order.id,
+        status: newStatus,
+        order,
+      });
+    },
+    [updateStatus, order],
+  );
 
   // Don't render if not DineIn (check fulfillmentType if available, or just rely on dineInInfo existence)
   // We check if dineInInfo exists as primary indicator
@@ -113,7 +144,7 @@ export function TableAssignmentStatus({ order }: TableAssignmentStatusProps) {
   }
 
   const hasAssignment = tableIds.length > 0;
-  const canMarkArrived = hasAssignment && status === WSeatingStatus.ASSIGNED;
+  const canChangeStatus = hasAssignment && availableStatuses.length > 0;
 
   return (
     <>
@@ -137,22 +168,29 @@ export function TableAssignmentStatus({ order }: TableAssignmentStatusProps) {
           </Typography>
         )}
 
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Button variant="outlined" size="small" onClick={handleOpenDialog}>
             {hasAssignment ? 'Change Table' : 'Assign Table'}
           </Button>
-          {canMarkArrived && (
-            <Button
-              variant="contained"
-              size="small"
-              color="success"
-              onClick={() => {
-                void handleMarkArrived();
-              }}
-              disabled={isMarkingArrived}
-            >
-              Mark Arrived
-            </Button>
+
+          {canChangeStatus && (
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel id="seating-status-label">Update Status</InputLabel>
+              <Select
+                labelId="seating-status-label"
+                label="Update Status"
+                value=""
+                onChange={handleStatusChange}
+                disabled={isUpdatingStatus}
+                displayEmpty
+              >
+                {availableStatuses.map((nextStatus) => (
+                  <MenuItem key={nextStatus} value={nextStatus}>
+                    {STATUS_LABELS[nextStatus]}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           )}
         </Stack>
       </Box>

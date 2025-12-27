@@ -45,6 +45,8 @@ export type CalendarProps = {
   datesSet?: (arg: DatesSetArg) => void;
   onEventClick?: (arg: EventClickArg) => void; // Optional override
   disableDrawer?: boolean; // Optional flag to disable built-in drawer
+  /** Optional slot for custom controls to render in the toolbar */
+  toolbarSlot?: React.ReactNode;
 };
 
 export function CalendarComponent({
@@ -59,6 +61,7 @@ export function CalendarComponent({
   datesSet,
   onEventClick,
   disableDrawer = false,
+  toolbarSlot,
 }: CalendarProps) {
   // const currentEvent = useCallback((id: string) => eventById(id), [eventById]);
   const openFilters = useBoolean();
@@ -172,6 +175,7 @@ export function CalendarComponent({
             onChangeView={onChangeView}
             onDateNavigation={onDateNavigation}
             onOpenFilters={openFilters.onTrue}
+            toolbarSlot={toolbarSlot}
             filterProps={{ filters: filters, totalResults: dataFiltered.length, sx: { mb: { xs: 3, md: 5 } } }}
             viewOptions={[
               { value: 'dayGridMonth', label: 'Month', icon: 'mingcute:calendar-month-line' },
