@@ -1,5 +1,11 @@
 # @wcp/wario-fe-faq
 
+## 0.0.15
+
+### Patch Changes
+
+- @wcp/wario-fe-ux-shared@7.0.0
+
 ## 0.0.14
 
 ### Patch Changes

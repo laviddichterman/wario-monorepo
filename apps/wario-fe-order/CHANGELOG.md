@@ -1,5 +1,66 @@
 # @wcp/wario-fe-order
 
+## 1.1.0
+
+### Minor Changes
+
+- 0d21b6e: ### Backend: Seating Update Support
+  - Added seating change detection in `UpdateLockedOrderInfo` with move ticket printing when tables change for seated guests
+  - New `SEATING_CHANGE` update ticket type for expo notifications
+  - Move tickets include old and new table assignments
+
+  ### wario-pos: Order Contents Editor
+  - New `WOrderContentsEditor` component for editing order cart items after order creation
+  - Added `useOrderEditorStore` for managing cart modifications with add/edit/delete operations
+  - `ProductEditModal` for modifying individual product modifiers
+  - `ProductSearchBar` with autocomplete for adding products to orders
+  - Integrated `ProductModifierEditor` from shared package for consistent modifier UI
+
+  ### wario-fe-order: Shared Customizer Migration
+  - Migrated to shared `CustomerModifierCheckbox`, `CustomerModifierRadio`, `CustomerModifierToggle`, and `CustomerModifierTypeEditor` components from `@wcp/wario-ux-shared`
+  - Removed local implementations: `WModifierOptionCheckboxComponent`, `WModifierRadioComponent`, `WModifierOptionToggle`, `WModifierTypeCustomizerComponent`, `WProductCustomizerLogic`
+  - Simplified `WProductCustomizerComponent` to use shared `CustomizerProvider` context
+
+  ### wario-shared: Modifier State Functions
+  - New `modifier-state.ts` module with pure functions for modifier state manipulation
+  - `updateRadioModifierSelection`: Handles single-select radio modifier changes
+  - `updateCheckboxModifierSelection`: Handles multi-select checkbox modifier changes with placement support
+  - Unit tests for `IsModifierTypeVisible` function
+
+  ### wario-ux-shared: Product Customizer Module
+  - New `product-customizer/` module with context, hooks, and components for product modification UI
+  - `CustomizerProvider` and `useCustomizer` context for managing product customization state
+  - `ProductModifierEditor`, `ModifierTypeEditor` components with card/inline layout variants
+  - `CustomerModifierCheckbox`, `CustomerModifierRadio`, `CustomerModifierToggle` with size variants (`small`/`medium`)
+  - New `EditableCartItem` component for displaying and editing cart items
+  - New `PlacementIcons` (left/right/whole half-circle icons) for split modifier visualization
+  - `useHasSelectableModifiers` hook moved to query module for better reusability
+
+### Patch Changes
+
+- b00e8b2: Updated Seating Upsert DTOs to correctly support nested object creation in a single request. Adjusted `CreateSeatingLayoutRequestDto` and related DTOs to use `UpdateXxxItem` union types, matching the runtime validation behavior. Also includes dependency updates and documentation improvements.
+- fdeee52: add public REST enpoints for data normally synced via socketIO.
+  consume the endpoints as a first sync attempt before socket data arrives
+
+  We might want to revert this if we determine this isn't the best way to get data sooner or as part of graphQL migration. The goal in making the changes was to reduce the perceived "loading time" for things like the order page or menu.
+
+- 8c35c75: - **wario-backend**: Added `RequestDebugLoggingInterceptor` for debug-level request logging and optimized calendar event updates.
+  - **wario-pos**: Introduced Seating Timeline feature with `SeatingTimelineDialog` and `TimelineScrubber`.
+  - **wario-fe-order**: Minor updates to `useOrderTotals` hook.
+- Updated dependencies [026f831]
+- Updated dependencies [0bbd895]
+- Updated dependencies [b040a6d]
+- Updated dependencies [0d21b6e]
+- Updated dependencies [b00e8b2]
+- Updated dependencies [1322f50]
+- Updated dependencies [fdeee52]
+- Updated dependencies [d1fc9af]
+- Updated dependencies [f94c3b1]
+- Updated dependencies [913bc08]
+  - @wcp/wario-shared@2.1.0
+  - @wcp/wario-ux-shared@10.0.0
+  - @wcp/wario-fe-ux-shared@7.0.0
+
 ## 1.0.1
 
 ### Patch Changes
