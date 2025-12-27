@@ -1,7 +1,8 @@
 import FormControlLabel from '@mui/material/FormControlLabel';
-import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
+import Typography from '@mui/material/Typography';
 
 interface FulfillmentServiceSelectorProps {
   options: { label: string; value: string; disabled?: boolean }[];
@@ -15,14 +16,27 @@ export default function FulfillmentServiceSelector({
   onServiceChange,
 }: FulfillmentServiceSelectorProps) {
   return (
-    <Grid
-      sx={{ pl: 3, pb: 5 }}
-      size={{
-        xs: 12,
-        xl: 4,
+    <Paper
+      variant="outlined"
+      sx={{
+        p: { xs: 2, md: 3 },
+        borderRadius: 2,
+        width: '100%',
       }}
     >
-      <span>Requested Service:</span>
+      <Typography
+        variant="subtitle2"
+        sx={{
+          fontFamily: 'Source Sans Pro',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          fontWeight: 600,
+          mb: 1.5,
+          color: 'text.secondary',
+        }}
+      >
+        Requested Service
+      </Typography>
       <RadioGroup
         row
         onChange={(_e, value: string) => {
@@ -36,11 +50,10 @@ export default function FulfillmentServiceSelector({
             value={option.value}
             control={<Radio />}
             label={option.label}
-            // passing the disabled prop gives react fragment warning
-            // disabled={option.disabled}
+            sx={{ mr: 3 }}
           />
         ))}
       </RadioGroup>
-    </Grid>
+    </Paper>
   );
 }

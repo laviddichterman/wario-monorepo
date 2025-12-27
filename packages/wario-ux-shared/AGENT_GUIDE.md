@@ -15,12 +15,14 @@
 ### Key Exports
 
 - `components/`: Loading screens, common dialogs.
+  - `cart/`: Shared cart item components (`EditableCartItem`) for both `wario-pos` and `wario-fe-order`.
+- `product-customizer/`: Product customization context and components.
 - `query/`: **CRITICAL**. Contains the Logic for transforming raw API data into usable Selectors (e.g., `useCatalogSelectors`). This bridges the gap between `wario-shared` (raw types) and the UI.
 
 ## 3. Usage
 
-- Used by: `wario-pos`, dev tools.
-- **Not** typically used by `wario-fe-order` (which needs a lighter bundle), although some generic helpers might be shared.
+- Used by: `wario-pos`, `wario-fe-order` (shared cart and customizer components).
+- **Note**: When importing, prefer specific sub-paths (e.g., `@wcp/wario-ux-shared/components`) to avoid pulling unnecessary code.
 
 ## 4. Socket/Query Key Pattern
 

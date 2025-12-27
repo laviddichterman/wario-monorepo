@@ -35,6 +35,7 @@ import ForceSendOrderDialog from './ForceSendOrderDialog';
 import OrderActionsBar from './OrderActionsBar';
 import { TableAssignmentStatus } from './TableAssignmentStatus';
 import { WOrderCheckoutCartContainer } from './WOrderCheckoutCartContainer';
+import { WOrderContentsEditor } from './WOrderContentsEditor';
 import { WOrderServiceInfoTableContainer } from './WOrderServiceInfoTableContainer';
 
 export type WOrderDrawerContentProps = {
@@ -42,7 +43,7 @@ export type WOrderDrawerContentProps = {
   onClose: (() => void) | null;
 };
 
-type ActiveAction = 'none' | 'reschedule' | 'move' | 'modify';
+type ActiveAction = 'none' | 'reschedule' | 'move' | 'modify' | 'edit-contents';
 
 /**
  * Main drawer content for order management.
@@ -124,6 +125,10 @@ export function WOrderDrawerContent({ orderId, onClose: _onClose }: WOrderDrawer
         <WOrderModifyComponent orderId={orderId} onCloseCallback={handleBackToMain} />
       </Box>
     );
+  }
+
+  if (activeAction === 'edit-contents') {
+    return <WOrderContentsEditor orderId={orderId} onClose={handleBackToMain} />;
   }
 
   if (activeAction === 'move') {
@@ -233,6 +238,9 @@ export function WOrderDrawerContent({ orderId, onClose: _onClose }: WOrderDrawer
             }}
             onModify={() => {
               setActiveAction('modify');
+            }}
+            onEditContents={() => {
+              setActiveAction('edit-contents');
             }}
             onCancel={() => {
               setCancelDialogOpen(true);

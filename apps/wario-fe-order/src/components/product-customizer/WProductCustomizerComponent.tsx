@@ -5,21 +5,28 @@ import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 
-import {
-  type ICatalogSelectors,
-  type IProductDisplayFlags,
-  type WProduct,
-  type WProductMetadata,
+import type {
+  ICatalogSelectors,
+  IProduct,
+  IProductDisplayFlags,
+  WProduct,
+  WProductMetadata,
 } from '@wcp/wario-shared/types';
 import { scrollToIdOffsetAfterDelay } from '@wcp/wario-ux-shared/common';
-import { useAllowAdvanced, useCatalogSelectors, useValueFromProductById } from '@wcp/wario-ux-shared/query';
+import {
+  CustomerModifierTypeEditor,
+  CustomizerProvider,
+  useOrderModifierEditor,
+} from '@wcp/wario-ux-shared/product-customizer';
+import {
+  useAllowAdvanced,
+  useCatalogSelectors,
+  useProductById,
+  useValueFromProductById,
+} from '@wcp/wario-ux-shared/query';
 import { Separator, StageTitle, WarioButton } from '@wcp/wario-ux-shared/styled';
 
-import {
-  useProductMetadataWithCurrentFulfillmentData,
-  useSelectedCartEntry,
-  useSortedVisibleModifiers,
-} from '@/hooks/useDerivedState';
+import { useProductMetadataWithCurrentFulfillmentData, useSelectedCartEntry } from '@/hooks/useDerivedState';
 
 import { findDuplicateInCart, selectCart, useCartStore } from '@/stores/useCartStore';
 import {
@@ -28,8 +35,10 @@ import {
   selectShowAdvanced,
   useCustomizerStore,
 } from '@/stores/useCustomizerStore';
+import { selectSelectedService, selectServiceDateTime, useFulfillmentStore } from '@/stores/useFulfillmentStore';
 import { useMetricsStore } from '@/stores/useMetricsStore';
 
+import { ModifierOptionTooltip } from '../ModifierOptionTooltip';
 import {
   OrderGuideErrorsComponent,
   OrderGuideMessagesComponent,
@@ -37,13 +46,17 @@ import {
 } from '../WOrderGuideMessages';
 import { ProductDisplay } from '../WProductComponent';
 
-import { WModifierTypeCustomizerComponent } from './WModifierTypeCustomizerComponent';
 import { WOptionDetailModal } from './WOptionDetailModal';
+
+// =============================================================================
+// Components
+// =============================================================================
 
 interface IProductCustomizerComponentProps {
   suppressGuide?: boolean;
   scrollToWhenDone: string;
 }
+
 export const WProductCustomizerComponent = forwardRef<HTMLDivElement, IProductCustomizerComponentProps>(
   ({ suppressGuide, scrollToWhenDone }, ref) => {
     const categoryId = useCustomizerStore(selectCategoryId);
@@ -70,8 +83,10 @@ export const WProductCustomizerComponentInner = forwardRef<
   const { enqueueSnackbar } = useSnackbar();
   const setTimeToFirstProductIfUnset = useMetricsStore((s) => s.setTimeToFirstProductIfUnset);
   const catalog = useCatalogSelectors() as ICatalogSelectors;
+  const productType = useProductById(product.p.productId) as IProduct | undefined;
   const setShowAdvanced = useCustomizerStore((s) => s.setShowAdvanced);
   const clearCustomizer = useCustomizerStore((s) => s.clearCustomizer);
+  const setAdvancedModifierOption = useCustomizerStore((s) => s.setAdvancedModifierOption);
   const addToCart = useCartStore((s) => s.addToCart);
   const updateCartQuantity = useCartStore((s) => s.updateCartQuantity);
   const updateCartProduct = useCartStore((s) => s.updateCartProduct);
@@ -90,7 +105,18 @@ export const WProductCustomizerComponentInner = forwardRef<
     () => (selectedProductNoun ? `your ${selectedProductNoun}` : 'it'),
     [selectedProductNoun],
   );
-  const filteredModifiers = useSortedVisibleModifiers(product.p.productId, product.p.modifiers);
+
+  // Use shared modifier editor hook
+  const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
+  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
+  const updateCustomizerProduct = useCustomizerStore((s) => s.updateCustomizerProduct);
+  const { selectRadio, toggleCheckbox, getOptionState, visibleModifiers } = useOrderModifierEditor({
+    product,
+    fulfillmentId,
+    serviceDateTime,
+    onProductChange: updateCustomizerProduct,
+  });
+
   const cartEntry = useSelectedCartEntry();
   const allowAdvancedOptionPromptGlobalSetting = useAllowAdvanced() || false;
   const showAdvanced = useCustomizerStore(selectShowAdvanced);
@@ -157,20 +183,48 @@ export const WProductCustomizerComponentInner = forwardRef<
     }
     unselectProduct();
   };
+
+  if (!productType) {
+    return null;
+  }
+
   return (
     <div ref={ref}>
-      {mtid_moid !== null && <WOptionDetailModal mtid_moid={mtid_moid} />}
+      {mtid_moid !== null && (
+        <WOptionDetailModal mtid_moid={mtid_moid} toggleCheckbox={toggleCheckbox} getOptionState={getOptionState} />
+      )}
       <StageTitle>Customize {customizerTitle}!</StageTitle>
       <Separator sx={{ pb: 3 }} />
       <ProductDisplay productMetadata={selectedProductMetadata} description price displayContext="order" />
       <Separator />
-      <Grid container>
-        {filteredModifiers.map((productModifier, i) => (
-          <Grid container key={i} size={12}>
-            <WModifierTypeCustomizerComponent mtid={productModifier.mtid} product={product.p} />
-          </Grid>
-        ))}
-      </Grid>
+      <CustomizerProvider
+        product={product}
+        catalogSelectors={catalog}
+        productType={productType}
+        fulfillmentId={fulfillmentId}
+        serviceDateTime={serviceDateTime}
+      >
+        <Grid container>
+          {visibleModifiers.map((entry, i) => (
+            <Grid container key={i} size={12}>
+              <CustomerModifierTypeEditor
+                mtid={entry.mtid}
+                enableSplitMode={showAdvanced}
+                onSelectRadio={selectRadio}
+                onToggleCheckbox={toggleCheckbox}
+                onOpenAdvanced={(mt, optId) => {
+                  setAdvancedModifierOption([mt, optId]);
+                }}
+                renderOptionWrapper={(option, enableState, children) => (
+                  <ModifierOptionTooltip product={product.p} option={option} enableState={enableState.enable_whole}>
+                    {children}
+                  </ModifierOptionTooltip>
+                )}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      </CustomizerProvider>
       {suppressGuide === true ? (
         <></>
       ) : (

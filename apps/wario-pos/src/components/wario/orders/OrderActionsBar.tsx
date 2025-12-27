@@ -8,6 +8,7 @@ import {
   LocalShipping as MoveIcon,
   Code as RawDataIcon,
   CalendarMonth as RescheduleIcon,
+  ShoppingCart as ShoppingCartIcon,
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -30,6 +31,7 @@ export type OrderActionsBarProps = {
   hasExpoPrinter: boolean;
   onReschedule: () => void;
   onModify: () => void;
+  onEditContents: () => void;
   onMove: () => void;
   onCancel: () => void;
   onForceSend: () => void;
@@ -46,6 +48,7 @@ export function OrderActionsBar({
   hasExpoPrinter,
   onReschedule,
   onModify,
+  onEditContents,
   onMove,
   onCancel,
   onForceSend,
@@ -113,6 +116,21 @@ export function OrderActionsBar({
               <EditIcon />
             </IconButton>
           </Tooltip>
+
+          {isOpen && (
+            <Tooltip title="Edit Contents">
+              <IconButton
+                onClick={onEditContents}
+                sx={{
+                  border: 1,
+                  borderColor: 'divider',
+                  '&:hover': { borderColor: 'primary.main' },
+                }}
+              >
+                <ShoppingCartIcon />
+              </IconButton>
+            </Tooltip>
+          )}
 
           {showMoveAction && (
             <Tooltip title="Move to Expo">

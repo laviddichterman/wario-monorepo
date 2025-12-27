@@ -12,6 +12,7 @@
 export * from './lib/common';
 export * from './lib/derived-types';
 export * from './lib/enums';
+export * from './lib/modifiers';
 export * from './lib/numbers';
 export * from './lib/objects/ICatalog';
 export * from './lib/objects/OrderFunctional';

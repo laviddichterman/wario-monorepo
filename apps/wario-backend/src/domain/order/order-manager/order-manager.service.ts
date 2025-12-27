@@ -42,6 +42,7 @@ import {
   WOrderInstance,
   WOrderInstancePartial,
   WOrderStatus,
+  WSeatingStatus,
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
@@ -659,7 +660,7 @@ export class OrderManagerService {
        * The type indicates what kind of update occurred.
        */
       sendUpdateTicket?: {
-        type: 'TIME_CHANGE' | 'INFO_UPDATE';
+        type: 'TIME_CHANGE' | 'INFO_UPDATE' | 'SEATING_CHANGE';
       } | null;
     },
   ): Promise<ResponseWithStatusCode<CrudOrderResponse>> => {
@@ -725,6 +726,62 @@ export class OrderManagerService {
 
           if (printResult.success) {
             SQORDER_MSG.push(...printResult.squareOrderIds);
+          }
+        }
+      }
+
+      // === SEND SEATING CHANGE MOVE TICKET ===
+      // Check if seating tables have changed and if we should notify expo
+      if (updates.fulfillment?.dineInInfo?.seating !== undefined) {
+        const oldSeating = (lockedOrder.fulfillment as FulfillmentData).dineInInfo?.seating;
+        const newSeating = updates.fulfillment.dineInInfo.seating;
+
+        // Detect if tables have actually changed
+        const oldTableIds = oldSeating?.tableId ?? [];
+        const newTableIds = newSeating?.tableId ?? [];
+        const tablesChanged =
+          oldTableIds.length !== newTableIds.length ||
+          !oldTableIds.every((id) => newTableIds.includes(id)) ||
+          !newTableIds.every((id) => oldTableIds.includes(id));
+
+        if (tablesChanged && newSeating) {
+          // Determine if a move ticket should be sent based on seating status
+          // Silent statuses: PENDING, ASSIGNED, WAITING_ARRIVAL, COMPLETED
+          // Notify statuses: SEATED_WAITING, SEATED, WAITING_FOR_CHECK, PAID
+          const silentStatuses: WSeatingStatus[] = [
+            WSeatingStatus.PENDING,
+            WSeatingStatus.ASSIGNED,
+            WSeatingStatus.WAITING_ARRIVAL,
+            WSeatingStatus.COMPLETED,
+          ];
+          const shouldNotify = !silentStatuses.includes(newSeating.status);
+
+          if (shouldNotify) {
+            // Build destination string from table names
+            // For now, use table IDs; in the future could resolve to table names
+            const destination = `Table(s): ${newTableIds.join(', ')}`;
+            const additionalMessage =
+              oldTableIds.length > 0 ? `Previously at: ${oldTableIds.join(', ')}` : 'New table assignment';
+
+            const promisedTime = DateTimeIntervalBuilder(lockedOrder.fulfillment, fulfillmentConfig.maxDuration);
+            const rebuiltCart = RebuildAndSortCart(
+              lockedOrder.cart,
+              this.catalogService.getCatalogSelectors(),
+              promisedTime.start,
+              fulfillmentConfig.id,
+            );
+
+            const printResult = await this.printerService.SendMoveTicket(
+              lockedOrder,
+              rebuiltCart,
+              destination,
+              additionalMessage,
+              fulfillmentConfig,
+            );
+
+            if (printResult.success) {
+              SQORDER_MSG.push(...printResult.squareOrderIds);
+            }
           }
         }
       }

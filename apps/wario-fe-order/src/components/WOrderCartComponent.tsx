@@ -1,31 +1,13 @@
-import Clear from '@mui/icons-material/Clear';
-import Edit from '@mui/icons-material/Edit';
-import Grid from '@mui/material/Grid';
-import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { styled } from '@mui/material/styles';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 
-import { type CartEntry, formatDecimal, parseInteger } from '@wcp/wario-shared/logic';
-import { CheckedNumericInput } from '@wcp/wario-ux-shared/components';
+import { type CartEntry } from '@wcp/wario-shared/logic';
+import { EditableCartItem } from '@wcp/wario-ux-shared/components';
 
-import { useGroupedAndOrderedCart, useHasSelectableModifiers } from '@/hooks/useDerivedState';
+import { useGroupedAndOrderedCart } from '@/hooks/useDerivedState';
 
 import { useCartStore } from '@/stores/useCartStore';
-
-import { ProductDisplay } from './WProductComponent';
-
-const RemoveFromCart = styled(Clear)(() => ({
-  border: '1px solid',
-  borderRadius: 16,
-  padding: 4,
-}));
 
 interface IOrderCart {
   isProductEditDialogOpen: boolean;
@@ -39,70 +21,22 @@ export function WOrderCartEntry({
 }: { cartEntry: CartEntry } & IOrderCart) {
   const removeFromCart = useCartStore((s) => s.removeFromCart);
   const updateCartQuantity = useCartStore((s) => s.updateCartQuantity);
-  const hasSelectableModifiers = useHasSelectableModifiers(cartEntry.product.m.modifier_map);
-  const setRemoveEntry = () => {
-    removeFromCart(cartEntry.id);
-  };
-  const setEntryQuantity = (quantity: number | null) => {
-    if (quantity !== null) {
-      updateCartQuantity(cartEntry.id, quantity);
-    }
-  };
+
   return (
-    <TableRow className={`cart-item${hasSelectableModifiers ? ' editible' : ''}`}>
-      <TableCell sx={{ py: 0 }}>
-        <ProductDisplay productMetadata={cartEntry.product.m} description displayContext="order" />
-      </TableCell>
-      <TableCell sx={{ py: 1 }}>
-        <Grid container alignContent={'center'}>
-          <Grid sx={{ p: 1, alignContent: 'center' }} size={12}>
-            <CheckedNumericInput
-              size="small"
-              fullWidth
-              pattern={'[0-9]*'}
-              step={1}
-              inputMode={'numeric'}
-              numberProps={{
-                allowEmpty: false,
-                defaultValue: cartEntry.quantity,
-                formatFunction: (v) => formatDecimal(v, 0),
-                parseFunction: parseInteger,
-                min: 1,
-                max: 99,
-              }}
-              value={cartEntry.quantity}
-              disabled={cartEntry.isLocked}
-              onChange={(value: number) => {
-                setEntryQuantity(value);
-              }}
-            />
-          </Grid>
-          <Grid sx={{ py: 1, pl: 1, textAlign: 'center' }} size={6}>
-            <IconButton
-              disabled={cartEntry.isLocked}
-              name="remove"
-              onClick={() => {
-                setRemoveEntry();
-              }}
-            >
-              <RemoveFromCart />
-            </IconButton>
-          </Grid>
-          <Grid sx={{ py: 1, pr: 1, textAlign: 'center' }} size={6}>
-            {hasSelectableModifiers && (
-              <IconButton
-                disabled={isProductEditDialogOpen || cartEntry.isLocked}
-                onClick={() => {
-                  setProductToEdit(cartEntry);
-                }}
-              >
-                <Edit />
-              </IconButton>
-            )}
-          </Grid>
-        </Grid>
-      </TableCell>
-    </TableRow>
+    <EditableCartItem
+      entry={cartEntry}
+      onEdit={() => {
+        setProductToEdit(cartEntry);
+      }}
+      onDelete={() => {
+        removeFromCart(cartEntry.id);
+      }}
+      onQuantityChange={(newQuantity) => {
+        updateCartQuantity(cartEntry.id, newQuantity);
+      }}
+      isEditDisabled={isProductEditDialogOpen}
+      showPrice
+    />
   );
 }
 
@@ -111,36 +45,24 @@ export function WOrderCart({ isProductEditDialogOpen, setProductToEdit }: IOrder
   return groupedCart.length === 0 ? (
     <></>
   ) : (
-    <div id="orderCart">
+    <Box id="orderCart">
       <Typography variant="h4" sx={{ p: 2, textTransform: 'uppercase', fontFamily: 'Source Sans Pro' }}>
         Current Order
       </Typography>
-      <TableContainer elevation={0} component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell width={'85%'}>Item</TableCell>
-              <TableCell sx={{ minWidth: 100 }} align="center">
-                Quantity
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {groupedCart
-              .map((x) =>
-                x[1].map((cartEntry: CartEntry) => (
-                  <WOrderCartEntry
-                    key={cartEntry.id}
-                    cartEntry={cartEntry}
-                    isProductEditDialogOpen={isProductEditDialogOpen}
-                    setProductToEdit={setProductToEdit}
-                  />
-                )),
-              )
-              .flat()}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </div>
+      <Paper elevation={0}>
+        {groupedCart
+          .map((x) =>
+            x[1].map((cartEntry: CartEntry) => (
+              <WOrderCartEntry
+                key={cartEntry.id}
+                cartEntry={cartEntry}
+                isProductEditDialogOpen={isProductEditDialogOpen}
+                setProductToEdit={setProductToEdit}
+              />
+            )),
+          )
+          .flat()}
+      </Paper>
+    </Box>
   );
 }

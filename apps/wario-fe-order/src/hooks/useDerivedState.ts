@@ -9,19 +9,15 @@ import {
   GenerateCategoryOrderList,
   GetNextAvailableServiceDate,
   GroupAndOrderCart,
-  type IOptionType,
   type IProductInstance,
-  IsModifierTypeVisible,
-  type MetadataModifierMap,
   type ProductInstanceModifierEntry,
-  SortAndFilterModifierOptions,
   WDateUtils,
 } from '@wcp/wario-shared/logic';
 import {
   useCatalogSelectors,
   useDefaultFulfillmentId,
   useFulfillmentById,
-  useProductById,
+  useHasSelectableModifiers,
   useProductInstanceById,
   useProductMetadata,
   useServerTime,
@@ -92,22 +88,6 @@ export function useGroupedAndOrderedCart() {
   }, [cart, categoryOrderingMap, catalogSelectors]);
 }
 
-export function useSelectableModifiers(mMap: MetadataModifierMap) {
-  const catalogSelectors = useCatalogSelectors();
-  return useMemo(() => {
-    if (!catalogSelectors) return {};
-    return Object.entries(mMap).reduce<MetadataModifierMap>((acc, [k, v]) => {
-      const modifierEntry = catalogSelectors.modifierEntry(k);
-      return IsModifierTypeVisible(modifierEntry, v.has_selectable) ? { ...acc, [k]: v } : acc;
-    }, {});
-  }, [mMap, catalogSelectors]);
-}
-
-export function useHasSelectableModifiers(mMap: MetadataModifierMap) {
-  const selectableModifiers = useSelectableModifiers(mMap);
-  return useMemo(() => Object.keys(selectableModifiers).length > 0, [selectableModifiers]);
-}
-
 /** Computes the number of products in the cart that are in the main category tree */
 export function useMainProductCategoryCartCount() {
   const mainCategoryTreeIdList = useMainCategoryOrderListForFulfillment();
@@ -147,36 +127,6 @@ export function useProductMetadataWithCurrentFulfillmentData(
   return metadata;
 }
 
-export function useVisibleModifierOptions(productId: string, modifiers: ProductInstanceModifierEntry[], mtId: string) {
-  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers);
-  const catalogSelectors = useCatalogSelectors();
-  const serviceDateTime = useFulfillmentStore(selectServiceDateTime) as Date;
-
-  return useMemo(() => {
-    if (!catalogSelectors || !metadata) return [];
-    const modifierTypeEntry = catalogSelectors.modifierEntry(mtId);
-    return SortAndFilterModifierOptions(metadata, modifierTypeEntry, catalogSelectors.option, serviceDateTime);
-  }, [metadata, mtId, catalogSelectors, serviceDateTime]);
-}
-
-export function useSortedVisibleModifiers(productId: string, modifiers: ProductInstanceModifierEntry[]) {
-  const fulfillmentId = useFulfillmentStore(selectSelectedService) as string;
-  const metadata = useProductMetadataWithCurrentFulfillmentData(productId, modifiers);
-  const productType = useProductById(productId);
-  const catalogSelectors = useCatalogSelectors();
-
-  return useMemo(() => {
-    if (!productType || !metadata || !catalogSelectors) return [];
-    return productType.modifiers
-      .filter((x) => x.serviceDisable.indexOf(fulfillmentId) === -1)
-      .map((x) => ({ entry: catalogSelectors.modifierEntry(x.mtid), pm: x, md: metadata.modifier_map[x.mtid] }))
-
-      .filter((x) => IsModifierTypeVisible(x.entry, x.md.has_selectable))
-      .sort((a, b) => a.entry.ordinal - b.entry.ordinal)
-      .map((x) => x.pm);
-  }, [productType, fulfillmentId, metadata, catalogSelectors]);
-}
-
 /**
  * Selects/Computes the product metadata for a catalog product instance using the currently populated fulfillment info
  */
@@ -191,19 +141,6 @@ export function useProductMetadataFromProductInstanceIdWithCurrentFulfillmentDat
 export function useProductHasSelectableModifiersByProductInstanceId(productId: string, productInstanceId: string) {
   const metadata = useProductMetadataFromProductInstanceIdWithCurrentFulfillmentData(productId, productInstanceId);
   return useHasSelectableModifiers(metadata?.modifier_map || {});
-}
-
-export function useShouldFilterModifierTypeDisplay(modifierTypeId: string, hasSelectable: boolean) {
-  const catalogSelectors = useCatalogSelectors();
-  return useMemo(() => {
-    if (!catalogSelectors) return false;
-    const modifierTypeEntry = catalogSelectors.modifierEntry(modifierTypeId) as IOptionType | undefined;
-    if (!modifierTypeEntry) return false;
-    return (
-      !modifierTypeEntry.displayFlags.hidden &&
-      (!modifierTypeEntry.displayFlags.omit_section_if_no_available_options || hasSelectable)
-    );
-  }, [modifierTypeId, hasSelectable, catalogSelectors]);
 }
 
 export function useSelectedServiceTimeDisplayString() {

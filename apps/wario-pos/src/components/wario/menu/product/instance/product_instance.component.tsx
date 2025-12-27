@@ -1,37 +1,20 @@
 import { type PrimitiveAtom, useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { CallSplit, Link as LinkIcon } from '@mui/icons-material';
 import { TabContext, TabList, TabPanel } from '@mui/lab';
-import {
-  Box,
-  Card,
-  CardContent,
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  FormLabel,
-  Grid,
-  IconButton,
-  InputAdornment,
-  Radio,
-  RadioGroup,
-  Tab,
-  Tooltip,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Box, Grid, IconButton, InputAdornment, Tab, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 
-import { OptionPlacement, OptionQualifier, PriceDisplay } from '@wcp/wario-shared/logic';
+import { PriceDisplay } from '@wcp/wario-shared/logic';
+import { type ICatalog, type IProduct, type ProductInstanceModifierEntry } from '@wcp/wario-shared/types';
 import {
-  type ICatalog,
-  type IOption,
-  type IOptionType,
-  type IProduct,
-  type ProductInstanceModifierEntry,
-} from '@wcp/wario-shared/types';
+  minimizeModifierSelections,
+  ProductModifierEditor,
+  useModifierEditor,
+} from '@wcp/wario-ux-shared/product-customizer';
 import { useCatalogQuery } from '@wcp/wario-ux-shared/query';
+
+type UncommittedIProduct = Omit<IProduct, 'id' | 'instances'>;
 
 import { ExternalIdsExpansionPanelComponent } from '@/components/wario/ExternalIdsExpansionPanelComponent';
 import { ElementActionComponent } from '@/components/wario/menu/element.action.component';
@@ -48,41 +31,6 @@ import {
   type ProductInstanceFormState,
   useProductInstanceForm,
 } from '@/atoms/forms/productInstanceFormAtoms';
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-type UncommittedIProduct = Omit<IProduct, 'id' | 'instances'>;
-
-const normalizeModifiersAndOptions = (
-  parent_product: UncommittedIProduct,
-  modifier_types_map: Record<string, IOptionType>,
-  minimizedModifiers: ProductInstanceModifierEntry[],
-): ProductInstanceModifierEntry[] =>
-  parent_product.modifiers.map((modifier_entry) => {
-    const modEntry = minimizedModifiers.find((x) => x.modifierTypeId === modifier_entry.mtid);
-    const modOptions = modEntry ? modEntry.options : [];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const mtOptions = modifier_types_map[modifier_entry.mtid]?.options ?? [];
-    return {
-      modifierTypeId: modifier_entry.mtid,
-      options: mtOptions.map((optionId: string) => {
-        const foundOptionState = modOptions.find((x) => x.optionId === optionId);
-        return {
-          optionId,
-          placement: foundOptionState ? foundOptionState.placement : OptionPlacement.NONE,
-          qualifier: foundOptionState ? foundOptionState.qualifier : OptionQualifier.REGULAR,
-        };
-      }),
-    };
-  });
-
-const minimizeModifiers = (normalized_modifiers: ProductInstanceModifierEntry[]): ProductInstanceModifierEntry[] =>
-  normalized_modifiers.reduce<ProductInstanceModifierEntry[]>((acc, modifier) => {
-    const filtered_options = modifier.options.filter((x) => x.placement !== OptionPlacement.NONE);
-    return filtered_options.length ? [...acc, { ...modifier, options: filtered_options }] : acc;
-  }, []);
 
 // =============================================================================
 // Form Body
@@ -127,122 +75,26 @@ const ProductInstanceFormBodyInner = ({
   const theme = useTheme();
   const useToggleEndLabel = !useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
-  const modifierOptionsMap = catalog.options;
-  const modifier_types_map = catalog.modifiers;
-
   const updateField = <K extends keyof ProductInstanceFormState>(field: K, value: ProductInstanceFormState[K]) => {
     setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
     setDirtyFields((prev) => new Set(prev).add(field));
     setInstancesDirty(true);
   };
 
-  const normalizedModifers = useMemo(
-    () => normalizeModifiersAndOptions(parent_product, catalog.modifiers, form.modifiers),
-    [parent_product, form.modifiers, catalog],
-  );
-
-  const handleSetModifiers = (mods: ProductInstanceModifierEntry[]) => {
-    updateField('modifiers', minimizeModifiers(mods));
+  // Use shared modifier editor hook
+  const handleModifiersChange = (mods: ProductInstanceModifierEntry[]) => {
+    updateField('modifiers', minimizeModifierSelections(mods));
   };
 
-  const handleToggle = (mtid: string, oidx: number) => {
-    const foundModifierEntryIndex = normalizedModifers.findIndex((x) => x.modifierTypeId === mtid);
-    const currentOption = normalizedModifers[foundModifierEntryIndex].options[oidx];
+  const { normalizedModifiers, selectRadio, toggleCheckbox, getModifierType } = useModifierEditor({
+    productModifiers: parent_product.modifiers,
+    currentSelections: form.modifiers,
+    onSelectionsChange: handleModifiersChange,
+    catalog,
+  });
 
-    handleSetModifiers([
-      ...normalizedModifers.slice(0, foundModifierEntryIndex),
-      {
-        modifierTypeId: mtid,
-        options: [
-          ...normalizedModifers[foundModifierEntryIndex].options.slice(0, oidx),
-          {
-            optionId: currentOption.optionId,
-            qualifier: currentOption.qualifier,
-            placement: currentOption.placement === OptionPlacement.WHOLE ? OptionPlacement.NONE : OptionPlacement.WHOLE,
-          },
-          ...normalizedModifers[foundModifierEntryIndex].options.slice(oidx + 1),
-        ],
-      },
-      ...normalizedModifers.slice(foundModifierEntryIndex + 1),
-    ]);
-  };
-
-  const handleRadioChange = (mtid: string, oidx: number) => {
-    const foundModifierEntryIndex = normalizedModifers.findIndex((x) => x.modifierTypeId === mtid);
-    handleSetModifiers([
-      ...normalizedModifers.slice(0, foundModifierEntryIndex),
-      {
-        modifierTypeId: mtid,
-        options: normalizedModifers[foundModifierEntryIndex].options.map((opt, idx) => ({
-          optionId: opt.optionId,
-          placement: idx === oidx ? OptionPlacement.WHOLE : OptionPlacement.NONE,
-          qualifier: OptionQualifier.REGULAR,
-        })),
-      },
-      ...normalizedModifers.slice(foundModifierEntryIndex + 1),
-    ]);
-  };
-
-  const renderModifierOptions = (
-    modifier_entry: ProductInstanceModifierEntry,
-    modifier_types_map: Record<string, IOptionType>,
-    modifierOptionsMap: Record<string, IOption>,
-    mtid: string,
-  ) => {
-    const mt = modifier_types_map[mtid];
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    const mt_options = mt?.options ?? [];
-
-    if (mt.min_selected === 1 && mt.max_selected === 1) {
-      return (
-        <RadioGroup
-          aria-label={mt.id}
-          name={mt.name}
-          row
-          value={modifier_entry.options.findIndex((o) => o.placement === OptionPlacement.WHOLE)}
-          onChange={(e) => {
-            handleRadioChange(mtid, parseInt(e.target.value));
-          }}
-        >
-          {mt_options.map((oId: string, oidx) => (
-            <FormControlLabel
-              key={oidx}
-              control={<Radio disableRipple />}
-              value={oidx}
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              label={modifierOptionsMap[oId]?.displayName ?? oId}
-            />
-          ))}
-        </RadioGroup>
-      );
-    } else {
-      return (
-        <FormGroup row>
-          {mt_options.map((oId: string, oidx) => (
-            <FormControlLabel
-              key={oidx}
-              control={
-                <Checkbox
-                  checked={modifier_entry.options[oidx]?.placement === OptionPlacement.WHOLE}
-                  onChange={() => {
-                    handleToggle(mtid, oidx);
-                  }}
-                  disableRipple
-                  slotProps={{
-                    input: {
-                      'aria-labelledby': String(oidx),
-                    },
-                  }}
-                />
-              }
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-              label={modifierOptionsMap[oId]?.displayName ?? oId}
-            />
-          ))}
-        </FormGroup>
-      );
-    }
-  };
+  // Create getOption helper for ProductModifierEditor
+  const getOption = (optionId: string) => catalog.options[optionId];
 
   return (
     <>
@@ -523,28 +375,14 @@ const ProductInstanceFormBodyInner = ({
           TAB: MODIFIERS
          ============================== */}
       <TabPanel value="modifiers">
-        <Grid container spacing={2}>
-          {normalizedModifers.map((modifier_entry) => (
-            <Grid key={modifier_entry.modifierTypeId} size={{ xs: 12 }}>
-              <Card variant="outlined">
-                <CardContent>
-                  <FormControl component="fieldset">
-                    <FormLabel component="legend">
-                      {/* eslint-disable-next-line @typescript-eslint/no-unnecessary-condition */}
-                      {modifier_types_map[modifier_entry.modifierTypeId]?.name ?? modifier_entry.modifierTypeId}
-                    </FormLabel>
-                    {renderModifierOptions(
-                      modifier_entry,
-                      modifier_types_map,
-                      modifierOptionsMap,
-                      modifier_entry.modifierTypeId,
-                    )}
-                  </FormControl>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        <ProductModifierEditor
+          modifierEntries={normalizedModifiers}
+          getModifierType={getModifierType}
+          getOption={getOption}
+          onSelectRadio={selectRadio}
+          onToggleCheckbox={toggleCheckbox}
+          layout="cards"
+        />
       </TabPanel>
     </>
   );

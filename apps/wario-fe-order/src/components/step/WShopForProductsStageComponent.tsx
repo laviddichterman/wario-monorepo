@@ -130,16 +130,18 @@ function ShopClickableProductDisplay({
   ]);
 
   return (
-    <ClickableProductDisplay
-      {...props}
-      onClick={onProductSelection}
-      productMetadata={metadata}
-      allowAdornment
-      description
-      dots
-      price
-      displayContext="order"
-    />
+    <Grid sx={{ pt: 2.5, pb: 1, px: 0.25 }} size={12}>
+      <ClickableProductDisplay
+        {...props}
+        onClick={onProductSelection}
+        productMetadata={metadata}
+        allowAdornment
+        description
+        dots
+        price
+        displayContext="order"
+      />
+    </Grid>
   );
 }
 
@@ -212,7 +214,7 @@ function AccordionSubCategory({
             returnToId="WARIO_order"
             sourceCategoryId={categoryId}
             setScrollToOnReturn={setScrollToOnReturn}
-            sx={{ mb: 3.75, mx: 2 }}
+            //sx={{ mb: 0, mx: 0 }}
           />
         </Grid>
       </AccordionDetails>

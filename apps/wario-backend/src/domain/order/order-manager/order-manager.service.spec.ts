@@ -25,9 +25,11 @@ import {
   CALL_LINE_DISPLAY,
   CURRENCY,
   type FulfillmentConfig,
+  type FulfillmentData,
   FulfillmentType,
   WFulfillmentStatus,
   WOrderStatus,
+  WSeatingStatus,
 } from '@wcp/wario-shared';
 
 import { CatalogProviderService } from 'src/modules/catalog-provider/catalog-provider.service';
@@ -778,4 +780,314 @@ describe('OrderManagerService', () => {
       });
     });
   });
+
+  // =========================================================================
+  // UpdateLockedOrderInfo Seating Tests
+  // =========================================================================
+
+  describe('UpdateLockedOrderInfo - Seating Updates', () => {
+    it('should NOT send move ticket when assigning tables with status PENDING', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-pending',
+        locked: 'lock-token-seating-pending',
+        status: WOrderStatus.CONFIRMED,
+        fulfillment: {
+          status: WFulfillmentStatus.SENT,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: { partySize: 4 }, // No seating yet
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        fulfillment: {
+          ...lockedOrder.fulfillment,
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.PENDING, mtime: Date.now() },
+          },
+        },
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.PENDING, mtime: Date.now() },
+          },
+        },
+      });
+
+      // Verify SendMoveTicket was NOT called (PENDING is a silent status)
+      expect(deps.printerService.SendMoveTicket).not.toHaveBeenCalled();
+    });
+
+    it('should NOT send move ticket when assigning tables with status ASSIGNED', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-assigned',
+        locked: 'lock-token-seating-assigned',
+        status: WOrderStatus.CONFIRMED,
+        fulfillment: {
+          status: WFulfillmentStatus.SENT,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: { partySize: 4 },
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.ASSIGNED, mtime: Date.now() },
+          },
+        },
+      });
+
+      expect(deps.printerService.SendMoveTicket).not.toHaveBeenCalled();
+    });
+
+    it('should send move ticket when table changes with status SEATED', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      // Mock SendMoveTicket to return success
+      (deps.printerService.SendMoveTicket as jest.Mock).mockResolvedValue({
+        success: true,
+        squareOrderIds: ['move-ticket-sq-id'],
+      });
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-seated',
+        locked: 'lock-token-seating-seated',
+        status: WOrderStatus.CONFIRMED,
+        fulfillment: {
+          status: WFulfillmentStatus.SENT,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.SEATED, mtime: Date.now() },
+          },
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T2'], status: WSeatingStatus.SEATED, mtime: Date.now() },
+          },
+        },
+      });
+
+      // Verify SendMoveTicket WAS called (SEATED is a notify status)
+      expect(deps.printerService.SendMoveTicket).toHaveBeenCalledWith(
+        lockedOrder,
+        expect.any(Object), // rebuiltCart
+        expect.stringContaining('T2'), // destination should contain new table
+        expect.any(String), // additionalMessage
+        expect.objectContaining({ id: config.id }), // fulfillmentConfig
+      );
+    });
+
+    it('should send move ticket when table changes with status SEATED_WAITING', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      (deps.printerService.SendMoveTicket as jest.Mock).mockResolvedValue({
+        success: true,
+        squareOrderIds: [],
+      });
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-seated-waiting',
+        locked: 'lock-token-seating-seated-waiting',
+        status: WOrderStatus.CONFIRMED,
+        fulfillment: {
+          status: WFulfillmentStatus.SENT,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.SEATED_WAITING, mtime: Date.now() },
+          },
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T3'], status: WSeatingStatus.SEATED_WAITING, mtime: Date.now() },
+          },
+        },
+      });
+
+      expect(deps.printerService.SendMoveTicket).toHaveBeenCalled();
+    });
+
+    it('should NOT send move ticket when status is COMPLETED even if tables change', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-completed',
+        locked: 'lock-token-seating-completed',
+        status: WOrderStatus.COMPLETED,
+        fulfillment: {
+          status: WFulfillmentStatus.COMPLETED,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.COMPLETED, mtime: Date.now() },
+          },
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T5'], status: WSeatingStatus.COMPLETED, mtime: Date.now() },
+          },
+        },
+      });
+
+      // COMPLETED is a silent status, no move ticket
+      expect(deps.printerService.SendMoveTicket).not.toHaveBeenCalled();
+    });
+
+    it('should NOT send move ticket when tables have not changed', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      const sameSeating = { tableId: ['T1'], status: WSeatingStatus.SEATED, mtime: Date.now() };
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-same',
+        locked: 'lock-token-seating-same',
+        status: WOrderStatus.CONFIRMED,
+        fulfillment: {
+          status: WFulfillmentStatus.SENT,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: { partySize: 4, seating: sameSeating },
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: { partySize: 4, seating: sameSeating },
+        },
+      });
+
+      // Same tables, no move ticket even though status is SEATED
+      expect(deps.printerService.SendMoveTicket).not.toHaveBeenCalled();
+    });
+
+    it('should update SQORDER_MSG metadata with move ticket Square order IDs', async () => {
+      const { config } = setupAdjustTimeMocks(deps);
+
+      (deps.printerService.SendMoveTicket as jest.Mock).mockResolvedValue({
+        success: true,
+        squareOrderIds: ['move-sq-id-1', 'move-sq-id-2'],
+      });
+
+      const lockedOrder = createMockWOrderInstance({
+        id: 'order-seating-metadata',
+        locked: 'lock-token-seating-metadata',
+        status: WOrderStatus.CONFIRMED,
+        fulfillment: {
+          status: WFulfillmentStatus.SENT,
+          selectedDate: '20240115',
+          selectedTime: 600,
+          selectedService: config.id,
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T1'], status: WSeatingStatus.SEATED, mtime: Date.now() },
+          },
+        },
+        cart: [],
+        metadata: [],
+      });
+
+      deps.orderRepository.updateWithLock.mockResolvedValue({
+        ...lockedOrder,
+        locked: null,
+      });
+
+      await service.UpdateLockedOrderInfo(lockedOrder as typeof lockedOrder & Required<{ locked: string }>, {
+        fulfillment: {
+          ...(lockedOrder.fulfillment as FulfillmentData),
+          dineInInfo: {
+            partySize: 4,
+            seating: { tableId: ['T2'], status: WSeatingStatus.SEATED, mtime: Date.now() },
+          },
+        },
+      });
+
+      // Verify DB update includes SQORDER_MSG with move ticket IDs
+      expect(deps.orderRepository.updateWithLock).toHaveBeenCalledWith(
+        'order-seating-metadata',
+        'lock-token-seating-metadata',
+        expect.objectContaining({
+          metadata: expect.arrayContaining([{ key: 'SQORDER_MSG', value: 'move-sq-id-1,move-sq-id-2' }]),
+        }),
+      );
+    });
+  });
+  /* eslint-enable @typescript-eslint/no-misused-spread, @typescript-eslint/no-unsafe-assignment */
 });

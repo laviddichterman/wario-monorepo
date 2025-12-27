@@ -31,8 +31,18 @@
       "import": "./dist/containers.js",
       "default": "./dist/containers.js"
     },
+    "./icons": {
+      "types": "./dist/types/icons/index.d.ts",
+      "import": "./dist/icons.js",
+      "default": "./dist/icons.js"
+    },
     "./phone-metadata.custom.json": {
       "default": "./dist/phone-metadata.custom.json"
+    },
+    "./product-customizer": {
+      "types": "./dist/types/product-customizer/index.d.ts",
+      "import": "./dist/product-customizer.js",
+      "default": "./dist/product-customizer.js"
     },
     "./query": {
       "types": "./dist/types/query/index.d.ts",
@@ -94,6 +104,7 @@
     "@emotion/styled": "^11.14.1",
     "@hookform/error-message": "2.0.1",
     "@hookform/resolvers": "^5.2.2",
+    "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
     "@mui/system": "^7.3.3",
     "@mui/x-date-pickers": "^8.17.0",

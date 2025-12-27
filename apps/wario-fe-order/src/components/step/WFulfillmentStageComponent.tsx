@@ -1,7 +1,9 @@
 import { enqueueSnackbar } from 'notistack';
 import { useMemo } from 'react';
 
+import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
+import Stack from '@mui/material/Stack';
 
 import { FulfillmentType, WDateUtils } from '@wcp/wario-shared/logic';
 import { useFulfillments, useFulfillmentService } from '@wcp/wario-ux-shared/query';
@@ -50,6 +52,11 @@ export default function WFulfillmentStageComponent() {
   const setService = useFulfillmentStore((s) => s.setService);
   const hasServiceTerms = useSelectedFulfillmentHasServiceTerms();
   const serviceServiceEnum = useFulfillmentService(selectedService);
+
+  // Determine if there's content for the right column
+  const showPartySize = serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null;
+  const showDeliveryForm = serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null;
+  const hasRightColumnContent = hasServiceTerms || showPartySize || showDeliveryForm;
 
   const hasAgreedToTermsIfAny = useMemo(
     () => !hasServiceTerms || hasAgreedToTerms,
@@ -105,23 +112,49 @@ export default function WFulfillmentStageComponent() {
     <>
       <StageTitle>How and when would you like your order?</StageTitle>
       <Separator sx={{ pb: 3 }} />
-      <Grid container alignItems="center">
+      <Stack spacing={2} sx={{ width: '100%' }}>
+        {/* Service Type Selection - always full width */}
         <FulfillmentServiceSelector
           options={fulfillments}
           selectedService={selectedService}
           onServiceChange={setService}
         />
-        <FulfillmentTerms />
-        <FulfillmentDateTimeSelector />
-        {serviceServiceEnum === FulfillmentType.DineIn && serviceDate !== null && <FulfillmentPartySizeSelector />}
 
-        {serviceServiceEnum === FulfillmentType.Delivery && serviceDate !== null && (
-          <Grid size={12}>
-            <DeliveryInfoForm />
+        {/* Main Content Row: Date/Time + Right Column (Terms/Party Size/Delivery) */}
+        <Grid container spacing={2}>
+          {/* Left Column: Date & Time */}
+          <Grid
+            size={{
+              xs: 12,
+              md: hasRightColumnContent ? 6 : 12,
+            }}
+          >
+            <FulfillmentDateTimeSelector />
           </Grid>
-        )}
-      </Grid>
-      {/* maybe move this to the calendar? */}
+
+          {/* Right Column: Terms + Fulfillment-specific details (stacked) */}
+          {hasRightColumnContent && (
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Stack spacing={2}>
+                {/* Terms & Conditions */}
+                <FulfillmentTerms />
+
+                {/* Party Size (Dine-In only) */}
+                {showPartySize && <FulfillmentPartySizeSelector />}
+
+                {/* Delivery Form (Delivery only) */}
+                {showDeliveryForm && (
+                  <Box sx={{ width: '100%' }}>
+                    <DeliveryInfoForm />
+                  </Box>
+                )}
+              </Stack>
+            </Grid>
+          )}
+        </Grid>
+      </Stack>
+
+      {/* Expiration Warning */}
       {hasSelectedDateExpired && (
         <ErrorResponseOutput>The previously selected service date has expired.</ErrorResponseOutput>
       )}

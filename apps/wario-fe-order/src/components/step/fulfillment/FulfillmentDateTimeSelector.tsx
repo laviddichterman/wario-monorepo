@@ -2,8 +2,10 @@ import { add, formatISO, parseISO, startOfDay } from 'date-fns';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import Autocomplete from '@mui/material/Autocomplete';
-import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { StaticDatePicker } from '@mui/x-date-pickers/StaticDatePicker';
@@ -16,7 +18,6 @@ import {
   useNextAvailableServiceDateTimeForSelectedOrDefaultFulfillment,
   useOptionsForFulfillmentAndDate,
   useSelectedFulfillment,
-  useSelectedFulfillmentHasServiceTerms,
 } from '@/hooks/useDerivedState';
 
 import { useFulfillmentStore } from '@/stores/useFulfillmentStore';
@@ -46,7 +47,6 @@ export default function FulfillmentDateTimeSelector() {
   const cartBasedLeadTime = useCartBasedLeadTime();
   const { currentTime } = useServerTime();
   const nextAvailableDateTime = useNextAvailableServiceDateTimeForSelectedOrDefaultFulfillment();
-  const hasServiceTerms = useSelectedFulfillmentHasServiceTerms();
   const hasOptionsForSameDay = useHasOptionsForSameDay();
 
   // Get options for the currently selected date
@@ -135,70 +135,85 @@ export default function FulfillmentDateTimeSelector() {
   const timeOptionsArray = Object.values(timeOptions);
 
   return (
-    <>
-      <Grid
-        sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex', pb: 3 }}
-        size={{
-          xs: 12,
-          xl: hasServiceTerms ? 6 : 4,
-          lg: 6,
+    <Paper
+      variant="outlined"
+      sx={{
+        p: { xs: 2, md: 3 },
+        borderRadius: 2,
+        width: '100%',
+      }}
+    >
+      <Typography
+        variant="subtitle2"
+        sx={{
+          fontFamily: 'Source Sans Pro',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          fontWeight: 600,
+          mb: 2,
+          color: 'text.secondary',
         }}
       >
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <StaticDatePicker
-            displayStaticWrapperAs="desktop"
-            openTo="day"
-            disableHighlightToday={!hasOptionsForSameDay}
-            disablePast
-            minDate={minDate}
-            maxDate={maxDate}
-            shouldDisableDate={(date: Date) => !hasOptionsForDate(date)}
-            value={selectedDate ? parseISO(selectedDate) : null}
-            onChange={onSetServiceDate}
-            slotProps={{ actionBar: { actions: [] } }}
-          />
-        </LocalizationProvider>
-      </Grid>
-      <Grid
-        container
-        sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex' }}
-        size={{
-          xs: 12,
-          xl: hasServiceTerms ? 6 : 4,
-          lg: 6,
+        Select Date & Time
+      </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          alignItems: 'center',
         }}
       >
-        <Grid sx={{ pb: 5 }} size={12}>
-          <Autocomplete
-            sx={{ justifyContent: 'center', alignContent: 'center', display: 'flex', width: 300, margin: 'auto' }}
-            openOnFocus
-            disableClearable
-            noOptionsText={'Select an available service date first'}
-            id="service-time"
-            options={timeOptionsArray.map((x) => x.value)}
-            getOptionDisabled={(o) => timeOptionsArray.find((x) => x.value === o)?.disabled ?? true}
-            isOptionEqualToValue={(o, v) => o === v}
-            getOptionLabel={(o) => (o ? WDateUtils.MinutesToPrintTime(o) : '')}
-            // @ts-expect-error needed to keep the component controlled. We get "MUI: A component is changing the uncontrolled value state of Autocomplete to be controlled." if switching to || undefined
-            value={selectedTime || null}
-            onChange={(_, v) => {
-              onSetServiceTime(v);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Time"
-                error={hasSelectedTimeExpired}
-                helperText={
-                  hasSelectedTimeExpired
-                    ? 'The previously selected service time has expired.'
-                    : 'Please note this time can change depending on what you order. Times are confirmed after orders are sent.'
-                }
-              />
-            )}
-          />
-        </Grid>
-      </Grid>
-    </>
+        {/* Calendar Section */}
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <StaticDatePicker
+              displayStaticWrapperAs="desktop"
+              openTo="day"
+              disableHighlightToday={!hasOptionsForSameDay}
+              disablePast
+              minDate={minDate}
+              maxDate={maxDate}
+              shouldDisableDate={(date: Date) => !hasOptionsForDate(date)}
+              value={selectedDate ? parseISO(selectedDate) : null}
+              onChange={onSetServiceDate}
+              slotProps={{ actionBar: { actions: [] } }}
+            />
+          </LocalizationProvider>
+        </Box>
+        {/* Time Selection */}
+        <Autocomplete
+          sx={{
+            width: { xs: '100%', sm: 300 },
+            maxWidth: '100%',
+          }}
+          openOnFocus
+          disableClearable
+          noOptionsText={'Select an available service date first'}
+          id="service-time"
+          options={timeOptionsArray.map((x) => x.value)}
+          getOptionDisabled={(o) => timeOptionsArray.find((x) => x.value === o)?.disabled ?? true}
+          isOptionEqualToValue={(o, v) => o === v}
+          getOptionLabel={(o) => (o ? WDateUtils.MinutesToPrintTime(o) : '')}
+          // @ts-expect-error needed to keep the component controlled. We get "MUI: A component is changing the uncontrolled value state of Autocomplete to be controlled." if switching to || undefined
+          value={selectedTime || null}
+          onChange={(_, v) => {
+            onSetServiceTime(v);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Time"
+              error={hasSelectedTimeExpired}
+              helperText={
+                hasSelectedTimeExpired
+                  ? 'The previously selected service time has expired.'
+                  : 'Please note this time can change depending on what you order. Times are confirmed after orders are sent.'
+              }
+            />
+          )}
+        />
+      </Box>
+    </Paper>
   );
 }

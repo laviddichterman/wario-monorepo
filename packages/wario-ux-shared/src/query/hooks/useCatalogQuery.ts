@@ -414,3 +414,53 @@ export function useFilterSelectableModifiers(mMap: MetadataModifierMap) {
   );
   return mods;
 }
+
+// =============================================================================
+// Modifier Selectability Hooks (Moved from product-customizer for reduced coupling)
+// =============================================================================
+
+/**
+ * Hook to check if a product instance has selectable modifiers.
+ *
+ * Uses the provided service time and fulfillment to compute product metadata
+ * and determine if there are any modifiers that the user can select.
+ */
+export function useProductHasSelectableModifiers(
+  productId: string,
+  productInstanceId: string,
+  serviceDateTime: Date | number,
+  fulfillmentId: string,
+): boolean {
+  const productInstance = useProductInstanceById(productInstanceId) as IProductInstance | undefined;
+  const metadata = useProductMetadata(productId, productInstance?.modifiers ?? [], serviceDateTime, fulfillmentId);
+
+  const catalogSelectors = useCatalogSelectors();
+
+  return useMemo(() => {
+    if (!metadata || !catalogSelectors) return false;
+    const modifierMap = metadata.modifier_map;
+
+    // Check if any modifier type is visible and has selectable options
+    return Object.entries(modifierMap).some(([mtId, entry]) => {
+      const modifierType = catalogSelectors.modifierEntry(mtId) as IOptionType | undefined;
+      return modifierType && IsModifierTypeVisible(modifierType, entry.has_selectable);
+    });
+  }, [metadata, catalogSelectors]);
+}
+
+/**
+ * Hook to determine if a modifier map has any selectable modifiers.
+ * Directly operates on a modifier map without needing product/instance IDs.
+ */
+export function useHasSelectableModifiers(modifierMap: MetadataModifierMap): boolean {
+  const catalogSelectors = useCatalogSelectors();
+
+  return useMemo(() => {
+    if (!catalogSelectors) return false;
+
+    return Object.entries(modifierMap).some(([mtId, entry]) => {
+      const modifierType = catalogSelectors.modifierEntry(mtId) as IOptionType | undefined;
+      return modifierType && IsModifierTypeVisible(modifierType, entry.has_selectable);
+    });
+  }, [modifierMap, catalogSelectors]);
+}
