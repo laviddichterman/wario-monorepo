@@ -37,5 +37,11 @@
   "[json]": {
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
-  }
+  },
+  "cSpell.words": [
+    "codegen",
+    "Lichterman",
+    "lavid",
+    "customizer"
+  ]
 }

@@ -99,7 +99,7 @@ export function useMainProductCategoryCartCount() {
 }
 
 export function useIsAutogratuityEnabled() {
-  const autoGratutityThreshold = 3;
+  const autoGratuityThreshold = 3;
   const mainProductCategoryCount = useMainProductCategoryCartCount();
   const deliveryInfo = useFulfillmentStore((s) => s.deliveryInfo);
   const dineInInfo = useFulfillmentStore((s) => s.dineInInfo);
@@ -108,10 +108,10 @@ export function useIsAutogratuityEnabled() {
     return (
       deliveryInfo !== null ||
       dineInInfo !== null ||
-      mainProductCategoryCount >= autoGratutityThreshold ||
+      mainProductCategoryCount >= autoGratuityThreshold ||
       (specialInstructions && specialInstructions.length > 20)
     );
-  }, [deliveryInfo, dineInInfo, mainProductCategoryCount, autoGratutityThreshold, specialInstructions]);
+  }, [deliveryInfo, dineInInfo, mainProductCategoryCount, autoGratuityThreshold, specialInstructions]);
 }
 
 /**

@@ -344,7 +344,7 @@ export class OrderManagerService {
       const SQORDER_MSG = lockedOrder.metadata.find((x) => x.key === 'SQORDER_MSG')?.value?.split(',') ?? [];
       const SQORDER_PRINT = lockedOrder.metadata.find((x) => x.key === 'SQORDER_PRINT')?.value?.split(',') ?? [];
       // * Cancel the printer orders we previously sent if the order's fulfillment is in state SENT
-      // then send message on cancelation to relevant printer groups (this might not be necessary any longer)
+      // then send message on cancellation to relevant printer groups (this might not be necessary any longer)
       // do this here to give the refunds time to process, which hopefully results in the +2 increment in the order version
       if (
         lockedOrder.fulfillment.status === WFulfillmentStatus.SENT ||
@@ -418,7 +418,7 @@ export class OrderManagerService {
 
       // send email if we're supposed to
       if (!is3pOrder && emailCustomer) {
-        await this.orderNotificationService.CreateExternalCancelationEmail(lockedOrder, reason);
+        await this.orderNotificationService.CreateExternalCancellationEmail(lockedOrder, reason);
       }
 
       // delete calendar entry
@@ -1403,7 +1403,7 @@ export class OrderManagerService {
         }
       }
 
-      // THE GOAL YALL
+      // THE GOAL Y'ALL
       const completedOrderInstance: Omit<WOrderInstance, 'id' | 'metadata'> = {
         ...orderInstance,
         payments: sentPayments.slice(),
@@ -1446,8 +1446,8 @@ export class OrderManagerService {
         // success!
         return { status: 201, success: true, result: savedOrder };
       } catch (error: unknown) {
-        const errorDetail = `Caught error while saving calendary entry: ${JSON.stringify(error)}`;
-        this.logger.error({ err: error }, 'Caught error while saving calendary entry');
+        const errorDetail = `Caught error while saving calendar entry: ${JSON.stringify(error)}`;
+        this.logger.error({ err: error }, 'Caught error while saving calendar entry');
         errors.push({ category: 'INTERNAL_SERVER_ERROR', code: 'INTERNAL_SERVER_ERROR', detail: errorDetail });
         throw errors;
       }

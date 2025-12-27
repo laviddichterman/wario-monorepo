@@ -386,7 +386,7 @@ export function useGroupedAndSortedCart(order: WOrderInstance | null) {
   }, [order, catalogSelectors]);
 }
 
-const useCategoryOrderMapForFullfillment = (fulfillmentId: string) => {
+const useCategoryOrderMapForFulfillment = (fulfillmentId: string) => {
   const catalogSelectors = useCatalogSelectors();
   const fulfillmentMainCategory = useValueFromFulfillmentById(fulfillmentId, 'orderBaseCategoryId');
   const fulfillmentSecondaryCategory = useValueFromFulfillmentById(fulfillmentId, 'orderSupplementaryCategoryId');
@@ -410,7 +410,7 @@ const useCategoryOrderMapForFullfillment = (fulfillmentId: string) => {
 export function useEventTitleStringForOrder(order: WOrderInstance | null) {
   const catalogSelectors = useCatalogSelectors();
   const fulfillment = useFulfillmentById(order?.fulfillment.selectedService || null);
-  const orderMap = useCategoryOrderMapForFullfillment(order?.fulfillment.selectedService || '');
+  const orderMap = useCategoryOrderMapForFulfillment(order?.fulfillment.selectedService || '');
   return useMemo(() => {
     if (catalogSelectors && order && fulfillment) {
       const serviceTime = WDateUtils.ComputeServiceDateTime(order.fulfillment);

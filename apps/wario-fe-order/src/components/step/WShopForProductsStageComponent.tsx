@@ -65,7 +65,7 @@ function ShopClickableProductDisplay({
   setScrollToOnReturn,
   ...props
 }: ShopClickableProductDisplayProps) {
-  const { productEntry: productEntrySelector, modifierEntry: modiferEntrySelector } =
+  const { productEntry: productEntrySelector, modifierEntry: modifierEntrySelector } =
     useCatalogSelectors() as ICatalogSelectors;
   const cart = useCartStore(selectCart);
   const { setTimeToFirstProductIfUnset } = useMetricsStore();
@@ -88,7 +88,7 @@ function ShopClickableProductDisplay({
     ) {
       const matchInCart = findDuplicateInCart(
         cart,
-        modiferEntrySelector,
+        modifierEntrySelector,
         productEntrySelector,
         sourceCategoryId,
         productCopy.p,
@@ -120,7 +120,7 @@ function ShopClickableProductDisplay({
     setScrollToOnReturn,
     returnToId,
     cart,
-    modiferEntrySelector,
+    modifierEntrySelector,
     productEntrySelector,
     sourceCategoryId,
     updateCartQuantity,

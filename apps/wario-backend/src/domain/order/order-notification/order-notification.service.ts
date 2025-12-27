@@ -109,7 +109,7 @@ export class OrderNotificationService {
     );
   };
 
-  CreateExternalCancelationEmail = async (order: WOrderInstance, message: string) => {
+  CreateExternalCancellationEmail = async (order: WOrderInstance, message: string) => {
     const STORE_NAME = this.dataProvider.getKeyValueConfig().STORE_NAME;
     const EMAIL_ADDRESS = this.dataProvider.getKeyValueConfig().EMAIL_ADDRESS;
 
